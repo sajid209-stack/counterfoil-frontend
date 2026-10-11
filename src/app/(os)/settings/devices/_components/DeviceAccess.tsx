@@ -4,7 +4,7 @@ import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Check } from "lucide-react";
-import { Avatar, Select } from "@/components/ui";
+import { Avatar, Checkbox, Radio, Select, StatusPill } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { hasTillPin, peopleAllowedOn, type Device, type Role, type Staff } from "@/lib/api";
 import { SearchField, SettingRow, SettingsSection } from "../../_components/SettingsKit";
@@ -39,14 +39,8 @@ const SEARCH_FROM = 8;
 export function NoPinChip({ className }: { className?: string }) {
   const t = useTranslations("settings");
   return (
-    <span
-      data-testid="no-pin-chip"
-      className={cn(
-        "inline-flex items-center rounded-xs bg-warning/15 px-tight py-inline text-[12px] font-medium leading-snug text-warning ring-1 ring-inset ring-warning/35",
-        className,
-      )}
-    >
-      {t("devices.noPinChip")}
+    <span data-testid="no-pin-chip" className={cn("inline-flex", className)}>
+      <StatusPill tone="warning">{t("devices.noPinChip")}</StatusPill>
     </span>
   );
 }
@@ -58,7 +52,7 @@ export function SetPinLink({ person }: { person: Pick<Staff, "id" | "name"> }) {
     <Link
       href={`/settings/team/${person.id}`}
       aria-label={t("devices.setPinFor", { name: person.name })}
-      className="inline-flex min-h-11 shrink-0 items-center px-tight text-[13px] font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80"
+      className="inline-flex min-h-11 shrink-0 items-center px-tight text-sm font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80"
     >
       {t("devices.setPin")}
     </Link>
@@ -91,17 +85,17 @@ export function SignInSummary({
     <div aria-live="polite" data-testid="signin-summary" data-count={can.length} className="flex flex-col gap-inline">
       {none ? (
         showRefusal && (
-          <p className="text-sm font-medium text-danger">
+          <p className="text-base font-medium text-danger">
             {device.counterId ? t("devices.signInNone") : t("devices.signInNoneNoCounter")}
           </p>
         )
       ) : (
-        <p className="flex items-center gap-tight text-sm font-medium text-success">
+        <p className="flex items-center gap-tight text-base font-medium text-success">
           <Check aria-hidden size={16} strokeWidth={2.25} />
           {t("devices.signInCount", { count: can.length })}
         </p>
       )}
-      {noPin.length > 0 && <p className="text-[13px] text-warning">{t("devices.signInNoPin", { count: noPin.length })}</p>}
+      {noPin.length > 0 && <p className="text-sm text-warning">{t("devices.signInNoPin", { count: noPin.length })}</p>}
     </div>
   );
 }
@@ -200,28 +194,29 @@ export function AccessFields({
         {options.map((o) => {
           const checked = owner ? o.v === "assigned" : value.access === o.v;
           return (
-            <label
+            // The tile is the target; the kit Radio inside is the control.
+            <div
               key={o.v}
+              onClick={(e) => {
+                if (owner || (e.target as HTMLElement).closest("label,input")) return;
+                setMode(o.v);
+              }}
               className={cn(
-                "flex min-h-11 items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick",
+                "rounded-control px-tight transition-colors duration-quick",
                 owner ? "cursor-not-allowed" : "cursor-pointer",
                 checked ? "bg-card ring-2 ring-inset ring-ember-solid" : cn("bg-muted-wash", !owner && "hover:ring-1 hover:ring-inset hover:ring-line"),
               )}
             >
-              <input
-                type="radio"
+              <Radio
                 name={groupName}
                 value={o.v}
                 checked={checked}
                 disabled={!!owner}
                 onChange={() => setMode(o.v)}
-                className="mt-[3px] h-4 w-4 shrink-0 accent-ember"
+                label={<span className="font-medium">{o.label}</span>}
+                description={o.note}
               />
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium text-fg">{o.label}</span>
-                <span className="mt-inline block text-[13px] leading-relaxed text-muted">{o.note}</span>
-              </span>
-            </label>
+            </div>
           );
         })}
       </div>
@@ -229,20 +224,20 @@ export function AccessFields({
       {picking && (
         <div className="px-card py-section" data-field="people" tabIndex={-1}>
           <div className="flex flex-wrap items-center justify-between gap-tight">
-            <p id={`${groupName}-label`} className="text-sm font-medium text-fg">
+            <p id={`${groupName}-label`} className="text-base font-medium text-fg">
               {t("devices.pickLabel")}
             </p>
-            <p aria-live="polite" className="text-[13px] text-muted">
+            <p aria-live="polite" className="text-sm text-muted">
               {t("devices.pickCount", { count: value.staffIds.length })}
             </p>
           </div>
           {venueScope && narrowed && (
-            <p className="mt-inline text-[13px] text-muted">{t("devices.pickVenueNote", { place: venueScope.venueName })}</p>
+            <p className="mt-inline text-sm text-muted">{t("devices.pickVenueNote", { place: venueScope.venueName })}</p>
           )}
           {scope === "pending" ? (
-            <p className="mt-tight text-sm text-muted">{t("devices.pickCounterFirst")}</p>
+            <p className="mt-tight text-base text-muted">{t("devices.pickCounterFirst")}</p>
           ) : pickable.length === 0 ? (
-            <p className="mt-tight text-sm text-muted">{t("devices.pickNoPeople")}</p>
+            <p className="mt-tight text-base text-muted">{t("devices.pickNoPeople")}</p>
           ) : (
             <>
               {pickable.length > SEARCH_FROM && (
@@ -250,24 +245,19 @@ export function AccessFields({
                   <SearchField value={q} onChange={setQ} label={t("devices.pickSearch")} placeholder={t("devices.pickSearch")} />
                 </div>
               )}
-              <ul aria-labelledby={`${groupName}-label`} className="mt-tight divide-y divide-hairline overflow-hidden rounded-md border border-line">
+              <ul aria-labelledby={`${groupName}-label`} className="mt-tight divide-y divide-hairline overflow-hidden rounded-control border border-line">
                 {shown.map((s) => {
                   const on = value.staffIds.includes(s.id);
                   const blocked = s.status !== "active";
                   const noPin = !hasTillPin(s);
                   return (
-                    <li key={s.id} data-person={s.id} className="flex items-center transition-colors duration-quick hover:bg-muted-wash">
-                      <label className="flex min-h-14 min-w-0 flex-1 cursor-pointer items-center gap-comfortable px-comfortable py-tight">
-                        <input
-                          type="checkbox"
-                          checked={on}
-                          onChange={() => toggle(s.id)}
-                          className="h-4 w-4 shrink-0 accent-ember"
-                        />
+                    <li key={s.id} data-person={s.id} className="flex items-center gap-tight pl-tight transition-colors duration-quick hover:bg-muted-wash">
+                      <Checkbox id={`${groupName}-${s.id}`} checked={on} onChange={() => toggle(s.id)} />
+                      <label htmlFor={`${groupName}-${s.id}`} className="flex min-h-14 min-w-0 flex-1 cursor-pointer items-center gap-comfortable pr-comfortable py-tight">
                         <Avatar name={s.name} size={36} soft />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium text-fg">{s.name}</span>
-                          <span className="block truncate text-[13px] text-muted">
+                          <span className="block truncate text-base font-medium text-fg">{s.name}</span>
+                          <span className="block truncate text-sm text-muted">
                             {roleName(s.roleId)}
                             {blocked ? ` · ${t("team.tab.suspended")}` : ""}
                           </span>
@@ -282,13 +272,13 @@ export function AccessFields({
                     </li>
                   );
                 })}
-                {shown.length === 0 && <li className="px-comfortable py-section text-sm text-muted">{t("devices.pickEmpty")}</li>}
+                {shown.length === 0 && <li className="px-comfortable py-section text-base text-muted">{t("devices.pickEmpty")}</li>}
               </ul>
               {venueScope && (
                 <button
                   type="button"
                   onClick={() => setOthers((v) => !v)}
-                  className="mt-tight inline-flex min-h-11 items-center text-[13px] font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80"
+                  className="mt-tight inline-flex min-h-11 items-center text-sm font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80"
                 >
                   {others ? t("devices.pickOnlyVenue", { place: venueScope.venueName }) : t("devices.pickOthers")}
                 </button>
@@ -296,7 +286,7 @@ export function AccessFields({
             </>
           )}
           {error && (
-            <p role="alert" className="mt-tight text-[12px] text-danger">
+            <p role="alert" className="mt-tight text-xs text-danger">
               {error}
             </p>
           )}
@@ -327,7 +317,7 @@ export function AccessFields({
               ]}
             />
             {ownerPerson && (
-              <p className="mt-tight text-[13px] text-muted">{t("devices.ownerSummary", { name: firstName(ownerPerson) })}</p>
+              <p className="mt-tight text-sm text-muted">{t("devices.ownerSummary", { name: firstName(ownerPerson) })}</p>
             )}
             {ownerPerson && !hasTillPin(ownerPerson) && (
               <p className="mt-tight flex flex-wrap items-center gap-x-tight">

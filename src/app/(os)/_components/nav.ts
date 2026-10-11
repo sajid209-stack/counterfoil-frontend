@@ -7,6 +7,7 @@ import {
   Globe,
   HandCoins,
   LayoutDashboard,
+  Palette,
   Percent,
   ReceiptText,
   Settings,
@@ -80,6 +81,11 @@ export const NAV_MAIN: readonly NavDestination[] = [
 export const NAV_OPEN: readonly NavDestination[] = [
   { href: "/pos", key: "pos", icon: Store },
   { href: "/deck", key: "deck", icon: SquareStack },
+  /* The documentation surface for the design system itself — tokens and
+     components, live, in OS and Go and in light and dark. Outside the OS shell
+     like the other two, so it carries the same ↗. A palette: not a store and
+     not a stack of cards. */
+  { href: "/design-system", key: "designSystem", icon: Palette },
 ];
 
 /** One Settings entry, opening on the first section. Settings has no index

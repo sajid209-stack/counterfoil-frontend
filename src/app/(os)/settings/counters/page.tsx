@@ -91,15 +91,13 @@ export default function CountersPage() {
       {loading ? (
         <SectionSkeleton />
       ) : counters.length === 0 ? (
-        <div className="max-w-3xl">
-          <EmptyState
-            title={t("counters.emptyTitle")}
-            message={t("counters.emptyMessage")}
-            action={<Button onClick={() => router.push("/settings/counters/new")}>{t("counters.add")}</Button>}
-          />
-        </div>
+        <EmptyState
+          title={t("counters.emptyTitle")}
+          message={t("counters.emptyMessage")}
+          action={<Button onClick={() => router.push("/settings/counters/new")}>{t("counters.add")}</Button>}
+        />
       ) : (
-        <div className="flex max-w-4xl flex-col gap-section pb-hero">
+        <div className="flex flex-col gap-section pb-hero">
           {/* The first toolbar: the views, with the create button at the right of the
               same rule. A list has no header row above it for the button. */}
           <PageToolbar underline primary={primary}>
@@ -110,7 +108,7 @@ export default function CountersPage() {
             />
           </PageToolbar>
           {visible.length === 0 ? (
-            <p className="py-section text-sm text-muted">{t("counters.emptyTab")}</p>
+            <p className="py-section text-base text-muted">{t("counters.emptyTab")}</p>
           ) : (
             <div className="flex flex-col gap-major">
               {places.map((l) => {
@@ -120,7 +118,7 @@ export default function CountersPage() {
                 return (
                   <section key={l.id} aria-labelledby={headingId} className="flex flex-col gap-tight">
                     <div className="flex flex-wrap items-center gap-tight">
-                      <h2 id={headingId} className="text-base font-semibold text-fg">
+                      <h2 id={headingId} className="text-md font-semibold text-fg">
                         {l.name}
                       </h2>
                       {l.status !== "active" && <StatusPill status={l.status} />}

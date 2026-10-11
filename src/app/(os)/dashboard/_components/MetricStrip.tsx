@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
 export interface Metric {
@@ -53,17 +54,17 @@ export function MetricStrip({ items, loading = false, label, grid = false }: { i
           {/* The same anatomy the desktop tile has: label and change on one line,
               the figure, then what the figure does not say on its own. */}
           <div className="flex min-h-[22px] items-start justify-between gap-tight">
-            <p className="min-w-0 flex-1 pt-0.5 text-[12px] font-medium leading-snug text-muted">{m.label}</p>
+            <p className="min-w-0 flex-1 pt-0.5 text-xs font-medium leading-snug text-muted">{m.label}</p>
             {!loading && m.delta}
             {!grid && m.action}
           </div>
           {loading ? (
-            <span aria-hidden className="mt-tight block h-6 w-24 animate-pulse rounded-xs bg-line" />
+            <Skeleton className="mt-tight h-6 w-24" />
           ) : (
             <div className="mt-inline flex items-center justify-between gap-tight">
               <p
                 className={cn(
-                  "type-figure whitespace-nowrap text-[1.25rem] font-semibold leading-tight",
+                  "type-figure whitespace-nowrap text-xl font-semibold leading-tight",
                   m.tone === "warning" && "text-warning",
                   m.tone === "danger" && "text-danger",
                 )}
@@ -73,7 +74,7 @@ export function MetricStrip({ items, loading = false, label, grid = false }: { i
               {grid && m.action}
             </div>
           )}
-          {!loading && m.context && <p className={cn("mt-inline text-[12px] leading-snug", m.contextTone ?? "text-muted")}>{m.context}</p>}
+          {!loading && m.context && <p className={cn("mt-inline text-xs leading-snug", m.contextTone ?? "text-muted")}>{m.context}</p>}
         </div>
       ))}
     </div>

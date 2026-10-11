@@ -41,15 +41,15 @@ export function ReservationsCard({
         const p = products.find((x) => x.id === b.productId);
         const edit = bookingEditable(b.id, actor);
         return (
-          <div key={b.id} data-booking={b.id} className="flex flex-wrap items-center gap-x-section gap-y-tight border-b border-hairline py-tight text-sm first:pt-0 last:border-0 last:pb-0">
+          <div key={b.id} data-booking={b.id} className="flex flex-wrap items-center gap-x-section gap-y-tight border-b border-hairline py-tight text-base first:pt-0 last:border-0 last:pb-0">
             <div className="min-w-0 flex-1 basis-48">
               <p className="break-words font-medium">{p?.name ?? b.productId}</p>
-              <p className="text-[13px] tabular-nums text-muted">
+              <p className="text-sm tabular-nums text-muted">
                 {formatDay(b.slotStart.slice(0, 10), { weekday: true })} · {formatClock(b.slotStart.slice(11, 16))} · {t("party", { size: b.partySize })}
               </p>
             </div>
             {!edit.editable && (
-              <span className="flex min-w-0 items-center gap-inline rounded-sm bg-warning/10 px-tight py-0.5 text-[12px] text-warning">
+              <span className="flex min-w-0 items-center gap-inline rounded-control bg-warning-wash px-tight py-0.5 text-xs text-fg">
                 <Lock size={12} strokeWidth={2} className="shrink-0" />
                 <span className="min-w-0 break-words">{edit.reason}</span>
               </span>

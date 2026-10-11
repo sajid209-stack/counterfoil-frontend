@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Skeleton } from "@/components/ui";
 import type { ExpenseCategory, ExpenseSummary } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -98,44 +99,44 @@ export function Summary({
       <div className="grid gap-section lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-major">
         {/* Left: the figure and what it covers. */}
         <dl className="min-w-0">
-          <dt className="text-[12px] font-medium text-muted">{t("summary.total")}</dt>
+          <dt className="text-xs font-medium text-muted">{t("summary.total")}</dt>
           {summary ? (
             <>
-              <dd className="mt-inline text-[28px] font-semibold leading-tight tracking-[-0.025em] tabular-nums">{formatMoney(summary.total)}</dd>
-              <dd className="mt-inline text-[12px] text-muted">{t("summary.context", { count: summary.count, period: periodLabel })}</dd>
+              <dd className="type-figure mt-inline text-3xl font-semibold leading-tight">{formatMoney(summary.total)}</dd>
+              <dd className="mt-inline text-xs text-muted">{t("summary.context", { count: summary.count, period: periodLabel })}</dd>
             </>
           ) : (
             <>
-              <dd className="mt-inline"><Bar className="h-7 w-36 rounded-sm" /></dd>
-              <dd className="mt-inline"><Bar className="h-3 w-44 rounded-sm" /></dd>
+              <dd className="mt-inline"><Skeleton className="h-7 w-36" /></dd>
+              <dd className="mt-inline"><Skeleton className="h-3 w-44" /></dd>
             </>
           )}
         </dl>
 
         {/* Right: where it went. */}
         <div className="min-w-0">
-          <p className="text-[12px] font-medium text-muted">{t("summary.whereWent")}</p>
+          <p className="text-xs font-medium text-muted">{t("summary.whereWent")}</p>
           {!summary ? (
             <div className="mt-tight">
               <span role="status" className="sr-only">{t("loading")}</span>
-              <Bar className="h-2.5 w-full rounded-full" />
+              <Skeleton className="h-2.5 w-full" />
               {/* Rows the height of the real ones, so the card does not jump when the answer lands. */}
               <div className="-mx-tight mt-comfortable grid gap-x-major gap-y-inline sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                 {[0, 1, 2, 3, 4].map((i) => (
                   <div key={i} className="flex min-h-[44px] items-center px-tight sm:min-h-9">
-                    <Bar className="h-4 w-full rounded-sm" />
+                    <Skeleton className="h-4 w-full" />
                   </div>
                 ))}
               </div>
             </div>
           ) : empty ? (
-            <p className="mt-tight text-[13px] text-muted">{t("summary.none")}</p>
+            <p className="mt-tight text-sm text-muted">{t("summary.none")}</p>
           ) : (
             <>
               <div
                 role="img"
                 aria-label={t("summary.barLabel", { total: formatMoney(summary.total), parts: slices.map((s) => `${nameOf(s)} ${formatMoney(s.total)} (${pctOf(s)})`).join(", ") })}
-                className="mt-tight flex h-2.5 w-full gap-[2px]"
+                className="mt-tight flex h-2.5 w-full gap-0.5"
               >
                 {slices.map((s, i) => (
                   <span
@@ -147,13 +148,13 @@ export function Summary({
               </div>
               <ul className="-mx-tight mt-comfortable grid gap-x-major gap-y-inline sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                 {slices.map((s) => {
-                  const row = "grid min-h-[44px] w-full grid-cols-[10px_minmax(0,1fr)_auto_3rem] items-center gap-x-tight rounded-sm px-tight text-left sm:min-h-9";
+                  const row = "grid min-h-[44px] w-full grid-cols-[10px_minmax(0,1fr)_auto_3rem] items-center gap-x-tight rounded-control px-tight text-left sm:min-h-9";
                   const cells = (
                     <>
-                      <span aria-hidden style={{ backgroundColor: s.color }} className="h-2.5 w-2.5 rounded-[3px]" />
-                      <span className="min-w-0 truncate text-[13px]">{nameOf(s)}</span>
-                      <span className="whitespace-nowrap text-right text-[13px] font-medium tabular-nums">{formatMoney(s.total)}</span>
-                      <span className="text-right text-[12px] tabular-nums text-muted">{pctOf(s)}</span>
+                      <span aria-hidden style={{ backgroundColor: s.color }} className="h-2.5 w-2.5 rounded-xs" />
+                      <span className="min-w-0 truncate text-sm">{nameOf(s)}</span>
+                      <span className="whitespace-nowrap text-right text-sm font-medium tabular-nums">{formatMoney(s.total)}</span>
+                      <span className="text-right text-xs tabular-nums text-muted">{pctOf(s)}</span>
                     </>
                   );
                   const only = s.category !== undefined && selected.length === 1 && selected[0] === s.category;
@@ -186,6 +187,4 @@ export function Summary({
   );
 }
 
-function Bar({ className }: { className?: string }) {
-  return <span aria-hidden className={cn("block animate-pulse bg-line/60", className)} />;
-}
+

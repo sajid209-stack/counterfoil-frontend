@@ -143,7 +143,7 @@ export function ComparePicker({
         aria-label={t("compare.aria", { value: shown ? formatRange(shown.from, shown.to) : label.none })}
         onClick={() => (open ? close() : setOpen(true))}
         className={cn(
-          "flex h-11 w-full min-w-0 items-center gap-tight rounded-sm border bg-card px-comfortable text-left text-sm transition-colors duration-quick hover:border-strong md:h-9 md:w-auto",
+          "flex h-11 w-full min-w-0 items-center gap-tight rounded-control border bg-card px-comfortable text-left text-base transition-colors duration-quick hover:border-strong md:h-9 md:w-auto",
           open ? "border-inverse" : "border-line",
         )}
       >
@@ -170,7 +170,7 @@ export function ComparePicker({
           role="menu"
           aria-label={t("compare.menu")}
           onKeyDown={onMenuKey}
-          className="fixed inset-x-0 bottom-0 z-50 flex flex-col gap-0.5 rounded-t-md border border-line bg-card p-tight pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-xl md:absolute md:inset-x-auto md:bottom-auto md:left-0 md:top-[calc(100%+6px)] md:w-72 md:rounded-md md:pb-tight"
+          className="fixed inset-x-0 bottom-0 z-50 flex flex-col gap-0.5 rounded-t-sheet border border-line bg-card p-tight pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-float md:absolute md:inset-x-auto md:bottom-auto md:left-0 md:top-[calc(100%+6px)] md:w-72 md:rounded-card md:pb-tight"
         >
           {MODES.map((mode) => {
             const r = rangeOf(mode);
@@ -199,14 +199,14 @@ export function ComparePicker({
                 aria-disabled={off || undefined}
                 onClick={() => pick(mode, off)}
                 className={cn(
-                  "flex min-h-11 w-full items-center gap-tight rounded-sm px-comfortable py-inline text-left text-[0.8125rem] transition-colors duration-quick md:min-h-10",
+                  "flex min-h-11 w-full items-center gap-tight rounded-control px-comfortable py-inline text-left text-sm transition-colors duration-quick md:min-h-10",
                   off ? "cursor-not-allowed text-muted" : "hover:bg-muted-wash",
                   on && "bg-muted-wash font-medium",
                 )}
               >
                 <span className="min-w-0 flex-1">
                   <span className="block">{label[mode]}</span>
-                  {sub && <span className={cn("block text-[0.75rem] tabular-nums text-muted", on && "font-normal")}>{sub}</span>}
+                  {sub && <span className={cn("block text-xs tabular-nums text-muted", on && "font-normal")}>{sub}</span>}
                 </span>
                 {on && <Check size={14} strokeWidth={2} aria-hidden className="shrink-0" />}
               </button>

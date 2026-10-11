@@ -71,14 +71,14 @@ export function StorefrontView() {
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="grid grid-cols-1 items-center gap-major py-major lg:grid-cols-[1.05fr_1fr] lg:gap-hero lg:py-wide">
         <div className="min-w-0">
-          <p className="inline-flex min-h-8 items-center gap-tight rounded-full bg-subtle px-comfortable text-[14px] font-medium">
-            <span aria-hidden className={cn("h-2 w-2 rounded-full", hours.isOpen ? "bg-success" : "bg-[#8a8a85]")} />
+          <p className="inline-flex min-h-8 items-center gap-tight rounded-full bg-subtle px-comfortable text-base font-medium">
+            <span aria-hidden className={cn("h-2 w-2 rounded-full", hours.isOpen ? "bg-success" : "bg-muted")} />
             {hours.text}
           </p>
-          <h1 className="mt-section break-words text-balance text-[34px] font-semibold leading-[1.08] tracking-[-0.03em] sm:text-[44px] lg:text-[54px]">
+          <h1 className="mt-section break-words text-balance text-3xl font-semibold leading-tight tracking-figure sm:text-4xl lg:text-display">
             {sf.headline || location.name}
           </h1>
-          {sf.intro && <p className="mt-section max-w-[56ch] text-[16px] leading-relaxed text-muted sm:text-[18px]">{sf.intro}</p>}
+          {sf.intro && <p className="mt-section max-w-[56ch] text-md leading-relaxed text-muted sm:text-lg">{sf.intro}</p>}
           <div className="mt-major flex flex-col gap-tight sm:flex-row">
             {products.length > 0 && (
               <button type="button" onClick={scrollToId("whats-on")} className={sfBtn.primary}>
@@ -90,7 +90,7 @@ export function StorefrontView() {
               {t("hero.plan")}
             </button>
           </div>
-          <ul className="mt-major flex flex-col gap-tight text-[14px] sm:flex-row sm:flex-wrap sm:gap-x-major">
+          <ul className="mt-major flex flex-col gap-tight text-base sm:flex-row sm:flex-wrap sm:gap-x-major">
             <li className="flex items-center gap-tight">
               <MapPin size={16} strokeWidth={1.75} className="shrink-0 text-muted" aria-hidden />
               <span>{[location.addressLine1, location.city].filter(Boolean).join(", ")}</span>
@@ -115,12 +115,12 @@ export function StorefrontView() {
           city={location.city}
           seed={sf.id}
           stub={t("hero.stub")}
-          className="order-first aspect-[16/10] rounded-[20px] lg:order-none lg:aspect-[4/3]"
+          className="order-first aspect-[16/10] rounded-lg lg:order-none lg:aspect-[4/3]"
         />
       </section>
 
       {/* ── Why it is safe to book ───────────────────────────────────────── */}
-      <section aria-label={t("trust.label")} className="rounded-[16px] border border-hairline">
+      <section aria-label={t("trust.label")} className="rounded-lg border border-hairline">
         <ul className="grid grid-cols-1 divide-y divide-hairline sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {[
             { Icon: ShieldCheck, title: t("trust.instantTitle"), body: t("trust.instantBody") },
@@ -128,12 +128,12 @@ export function StorefrontView() {
             { Icon: Wallet, title: t("trust.payTitle"), body: t("trust.payBody") },
           ].map(({ Icon, title, body }) => (
             <li key={title} className="flex items-start gap-comfortable p-section">
-              <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--sf-soft)] text-[var(--sf-ink)]">
+              <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ember-wash text-brand-foreground">
                 <Icon size={20} strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
-                <p className="text-[14px] font-semibold">{title}</p>
-                <p className="text-[14px] text-muted">{body}</p>
+                <p className="text-base font-semibold">{title}</p>
+                <p className="text-base text-muted">{body}</p>
               </div>
             </li>
           ))}
@@ -144,8 +144,8 @@ export function StorefrontView() {
       <section id="whats-on" className="pt-hero">
         <div className="flex flex-col gap-comfortable sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-[26px] font-semibold tracking-[-0.02em] sm:text-[30px]">{t("whatsOn")}</h2>
-            {products.length > 0 && <p className="mt-inline text-[14px] text-muted">{t("count", { count: products.length })}</p>}
+            <h2 className="text-2xl font-semibold tracking-title sm:text-3xl">{t("whatsOn")}</h2>
+            {products.length > 0 && <p className="mt-inline text-base text-muted">{t("count", { count: products.length })}</p>}
           </div>
           {groups.length > 1 && (
             <div role="group" aria-label={t("filter.label")} className="-mx-gutter flex gap-tight overflow-x-auto px-gutter pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
@@ -158,8 +158,8 @@ export function StorefrontView() {
                     aria-pressed={on}
                     onClick={() => setGroup(g)}
                     className={cn(
-                      "flex min-h-11 shrink-0 items-center rounded-full border px-section text-[14px] font-medium transition-colors duration-quick",
-                      on ? "border-[var(--sf-fill)] bg-[var(--sf-fill)] text-[var(--sf-on-fill)]" : "border-line bg-white text-fg hover:border-fg",
+                      "flex min-h-11 shrink-0 items-center rounded-full border px-section text-base font-medium transition-colors duration-quick",
+                      on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg hover:border-fg",
                     )}
                   >
                     {t(`filter.${g}`)}
@@ -171,7 +171,7 @@ export function StorefrontView() {
         </div>
 
         {products.length === 0 ? (
-          <p className="mt-section text-[16px] text-muted">{t("nothingOn")}</p>
+          <p className="mt-section text-md text-muted">{t("nothingOn")}</p>
         ) : (
           <ul className="mt-major grid grid-cols-1 gap-major sm:grid-cols-2 lg:grid-cols-3">
             {shown.map((p) => (
@@ -185,16 +185,16 @@ export function StorefrontView() {
 
       {/* ── Plan your visit ──────────────────────────────────────────────── */}
       <section id="visit" className="pt-hero">
-        <h2 className="text-[26px] font-semibold tracking-[-0.02em] sm:text-[30px]">{t("planVisit")}</h2>
+        <h2 className="text-2xl font-semibold tracking-title sm:text-3xl">{t("planVisit")}</h2>
         <div className="mt-major grid grid-cols-1 gap-major lg:grid-cols-2">
-          <div className="flex flex-col rounded-[16px] border border-hairline p-major">
-            <h3 className="text-[18px] font-semibold">{t("openingHours")}</h3>
-            <p className="mt-inline flex items-center gap-tight text-[14px] text-muted">
-              <span aria-hidden className={cn("h-2 w-2 rounded-full", hours.isOpen ? "bg-success" : "bg-[#8a8a85]")} />
+          <div className="flex flex-col rounded-lg border border-hairline p-major">
+            <h3 className="text-lg font-semibold">{t("openingHours")}</h3>
+            <p className="mt-inline flex items-center gap-tight text-base text-muted">
+              <span aria-hidden className={cn("h-2 w-2 rounded-full", hours.isOpen ? "bg-success" : "bg-muted")} />
               {hours.text}
             </p>
             {location.openingHours.length === 0 ? (
-              <p className="mt-section text-[14px] text-muted">{t("hoursUnknown")}</p>
+              <p className="mt-section text-base text-muted">{t("hoursUnknown")}</p>
             ) : (
               <dl className="mt-section flex flex-col">
                 {WEEK_ORDER.map((d) => {
@@ -206,13 +206,13 @@ export function StorefrontView() {
                       key={d}
                       aria-current={isToday ? "date" : undefined}
                       className={cn(
-                        "flex min-h-12 items-center justify-between gap-comfortable border-b border-hairline px-comfortable text-[14px] last:border-b-0",
-                        isToday ? "-mx-comfortable rounded-[10px] border-transparent bg-[var(--sf-soft)] font-semibold" : "",
+                        "flex min-h-12 items-center justify-between gap-comfortable border-b border-hairline px-comfortable text-base last:border-b-0",
+                        isToday ? "-mx-comfortable rounded-md border-transparent bg-ember-wash font-semibold" : "",
                       )}
                     >
                       <dt className="flex items-center gap-tight">
                         {hours.dayName(d)}
-                        {isToday && <span className="rounded-full bg-white px-tight text-[12px] font-semibold text-fg">{t("today")}</span>}
+                        {isToday && <span className="rounded-full bg-card px-tight text-xs font-semibold text-fg">{t("today")}</span>}
                       </dt>
                       <dd className={cn("tnum text-right", !open && !isToday && "text-muted")}>
                         {open ? row!.intervals.map((i) => formatClockRange(i.opensAt, i.closesAt)).join(", ") : t("closed")}
@@ -224,12 +224,12 @@ export function StorefrontView() {
             )}
           </div>
 
-          <div className="flex flex-col overflow-hidden rounded-[16px] border border-hairline">
+          <div className="flex flex-col overflow-hidden rounded-lg border border-hairline">
             <Media bookingType="BT-04" alt="" seed={location.id} iconSize={22} className="aspect-[16/6] w-full" />
             <div className="flex flex-1 flex-col gap-section p-major">
               <div>
-                <h3 className="text-[18px] font-semibold">{t("gettingHere")}</h3>
-                <p className="mt-tight text-[16px]">
+                <h3 className="text-lg font-semibold">{t("gettingHere")}</h3>
+                <p className="mt-tight text-md">
                   {location.addressLine1}
                   {location.addressLine2 ? <>, {location.addressLine2}</> : null}
                   <br />
@@ -240,7 +240,7 @@ export function StorefrontView() {
                 <Navigation size={18} strokeWidth={1.75} aria-hidden />
                 {t("directions")}
               </a>
-              <ul className="flex flex-col text-[14px]">
+              <ul className="flex flex-col text-base">
                 {sf.contactPhone && (
                   <li>
                     <a href={`tel:${sf.contactPhone}`} className="flex min-h-11 items-center gap-tight hover:underline">
@@ -259,13 +259,13 @@ export function StorefrontView() {
                 )}
                 {sf.links.map((l) => (
                   <li key={l.id}>
-                    <a href={l.url} target="_blank" rel="noreferrer noopener" className="flex min-h-11 items-center text-[var(--sf-ink)] underline-offset-4 hover:underline">
+                    <a href={l.url} target="_blank" rel="noreferrer noopener" className="flex min-h-11 items-center text-brand-foreground underline-offset-4 hover:underline">
                       {l.label}
                     </a>
                   </li>
                 ))}
               </ul>
-              <p className="mt-auto flex items-start gap-tight rounded-[12px] bg-subtle p-comfortable text-[14px] text-muted">
+              <p className="mt-auto flex items-start gap-tight rounded-md bg-subtle p-comfortable text-base text-muted">
                 <QrCode size={18} strokeWidth={1.75} className="mt-0.5 shrink-0 text-fg" aria-hidden />
                 {t("atTheGate")}
               </p>
@@ -378,8 +378,8 @@ function ProductCard({
     else flow.updateLine(tierLine.id, { tiers: tierLine.tiers.map((x) => (x.tierId === tier.id ? { ...x, qty: Math.min(n, capQty) } : x)) });
   };
 
-  const openCls = "block focus-visible:outline-2 focus-visible:outline-offset-2";
-  const titleCls = "-my-2.5 block py-2.5 focus-visible:outline-2 focus-visible:outline-offset-2";
+  const openCls = "block";
+  const titleCls = "-my-2.5 block py-2.5";
   const openWith = (children: React.ReactNode, hidden?: boolean, cls: string = openCls) =>
     flow.mode === "preview" ? (
       <button
@@ -403,9 +403,9 @@ function ProductCard({
     );
 
   const cardBtn =
-    "inline-flex min-h-11 shrink-0 items-center justify-center gap-inline rounded-[12px] px-comfortable text-[14px] font-semibold leading-none transition-[filter,background-color] duration-quick focus-visible:outline-2 focus-visible:outline-offset-2";
-  const fillCls = "bg-[var(--sf-fill)] text-[var(--sf-on-fill)] hover:brightness-90";
-  const ghostCls = "border border-strong bg-white text-fg hover:border-fg";
+    "inline-flex min-h-11 shrink-0 items-center justify-center gap-inline rounded-md px-comfortable text-base font-semibold leading-none transition-[filter,background-color] duration-quick";
+  const fillCls = "bg-ember-solid text-on-solid hover:brightness-90";
+  const ghostCls = "border border-strong bg-card text-fg hover:border-fg";
   const detailsLabel = t("card.detailsAria", { name: p.name });
   const detailsBtn =
     flow.mode === "preview" ? (
@@ -421,16 +421,16 @@ function ProductCard({
   let addControl: React.ReactNode = null;
   if (canAdd && oneTap && tierQty > 0 && !flash) {
     addControl = (
-      <div role="group" aria-label={p.name} className="inline-flex min-h-11 shrink-0 items-center rounded-[12px] border border-[var(--sf-fill)] bg-[var(--sf-soft)]">
+      <div role="group" aria-label={p.name} className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-ember-solid bg-ember-wash">
         <button
           type="button"
           aria-label={t("card.lessOf", { name: p.name })}
           onClick={() => setQty(tierQty - 1)}
-          className="flex h-11 w-11 items-center justify-center rounded-[12px] text-fg hover:bg-white/60 focus-visible:outline-2"
+          className="flex h-11 w-11 items-center justify-center rounded-md text-fg hover:bg-card/60"
         >
           <Minus size={16} strokeWidth={2} aria-hidden />
         </button>
-        <span className="tnum min-w-4 text-center text-[16px] font-semibold" aria-live="polite">
+        <span className="tnum min-w-4 text-center text-md font-semibold" aria-live="polite">
           {tierQty}
         </span>
         <button
@@ -438,7 +438,7 @@ function ProductCard({
           aria-label={t("card.moreOf", { name: p.name })}
           disabled={tierQty >= capQty}
           onClick={() => setQty(tierQty + 1)}
-          className="flex h-11 w-11 items-center justify-center rounded-[12px] text-fg hover:bg-white/60 focus-visible:outline-2 disabled:text-[#8a8a85]"
+          className="flex h-11 w-11 items-center justify-center rounded-md text-fg hover:bg-card/60 disabled:text-faint"
         >
           <Plus size={16} strokeWidth={2} aria-hidden />
         </button>
@@ -476,15 +476,15 @@ function ProductCard({
   }
 
   return (
-    <article className="group flex h-full w-full flex-col overflow-hidden rounded-[16px] border border-hairline bg-white transition-[transform,box-shadow] duration-quick hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(0,0,0,0.10)]">
+    <article className="group flex h-full w-full flex-col overflow-hidden rounded-lg border border-hairline bg-card transition-[transform,box-shadow] duration-quick hover:-translate-y-0.5 hover:shadow-float">
       {openWith(
         <div className="relative">
           <Media src={p.images?.[0]?.url} alt="" bookingType={p.bookingType} seed={p.id} className="aspect-[16/10] w-full" />
-          <span className="absolute left-comfortable top-comfortable rounded-full bg-white px-comfortable py-inline text-[12px] font-semibold text-fg shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+          <span className="absolute left-comfortable top-comfortable rounded-full bg-card px-comfortable py-inline text-xs font-semibold text-fg shadow-card">
             {t(`filter.${typeGroup(p.bookingType)}`)}
           </span>
           {inBasket > 0 && (
-            <span className="tnum absolute right-comfortable top-comfortable inline-flex items-center gap-inline rounded-full bg-[var(--sf-fill)] px-comfortable py-inline text-[12px] font-semibold text-[var(--sf-on-fill)] shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+            <span className="tnum absolute right-comfortable top-comfortable inline-flex items-center gap-inline rounded-full bg-ember-solid px-comfortable py-inline text-xs font-semibold text-on-solid shadow-card">
               <Check size={12} strokeWidth={3} aria-hidden />
               {t("card.inBasket", { count: inBasket })}
             </span>
@@ -493,10 +493,10 @@ function ProductCard({
         true,
       )}
       <div className="flex flex-1 flex-col gap-tight p-section">
-        <h3 className="break-words text-[18px] font-semibold leading-snug tracking-[-0.01em]">
+        <h3 className="break-words text-lg font-semibold leading-snug">
           {openWith(<span className="hover:underline">{p.name}</span>, false, titleCls)}
         </h3>
-        <p className="flex flex-wrap items-center gap-x-comfortable gap-y-inline text-[14px] text-fg">
+        <p className="flex flex-wrap items-center gap-x-comfortable gap-y-inline text-base text-fg">
           <span className="inline-flex items-center gap-inline">
             <CalendarClock size={14} strokeWidth={1.75} className="shrink-0 text-muted" aria-hidden />
             {when}
@@ -508,18 +508,18 @@ function ProductCard({
             </span>
           )}
         </p>
-        <p className="text-[14px] text-muted">{subtitle(p, { resources: flow.resources, team: flow.team })}</p>
-        {p.description && <p className="line-clamp-2 text-[14px] text-muted">{p.description}</p>}
+        <p className="text-base text-muted">{subtitle(p, { resources: flow.resources, team: flow.team })}</p>
+        {p.description && <p className="line-clamp-2 text-base text-muted">{p.description}</p>}
         <div className="mt-auto flex flex-wrap items-end justify-between gap-x-comfortable gap-y-tight pt-comfortable">
           <p className="tnum min-w-0">
             {from === null ? (
-              <span className="text-[16px] font-semibold">{t("askAtTheDoor")}</span>
+              <span className="text-md font-semibold">{t("askAtTheDoor")}</span>
             ) : from === 0 ? (
-              <span className="text-[20px] font-semibold">{t("free")}</span>
+              <span className="text-xl font-semibold">{t("free")}</span>
             ) : (
               <>
-                <span className="block text-[12px] text-muted">{t("from")}</span>
-                <span className="text-[22px] font-semibold leading-none tracking-[-0.01em]">{formatPriceShort(from)}</span>
+                <span className="block text-xs text-muted">{t("from")}</span>
+                <span className="text-2xl font-semibold leading-none">{formatPriceShort(from)}</span>
               </>
             )}
           </p>

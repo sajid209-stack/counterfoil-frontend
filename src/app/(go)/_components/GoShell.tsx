@@ -9,6 +9,7 @@ import {
   CircleHelp,
   Clock,
   Ellipsis,
+  Palette,
   ScanLine,
   Settings,
   Store,
@@ -18,17 +19,17 @@ import {
   Users,
   Layers,
   ShoppingBag,
-  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
 import { LocaleToggle } from "@/components/LocaleProvider";
-import { Modal } from "@/components/ui";
+import { Modal, Sheet } from "@/components/ui";
 import { TillSwitcher } from "./TillSwitcher";
 import { CounterPicker } from "./CounterPicker";
 import { useActiveCounter } from "@/lib/activeCounter";
 import { useApiQuery } from "@/lib/useApi";
-import { listCounters, listProducts, peekCounters } from "@/lib/api";
+import { getOperator, getStaff, listCounters, listProducts, peekCounters } from "@/lib/api";
+import { DEMO_STAFF_ID } from "@/lib/session";
 import { isSlotBased } from "@/lib/schedule";
 import { liveSaleCount, onLiveSaleChange } from "../pos/_lib/liveSale";
 import { applyTillText, usePrefs } from "@/lib/prefs";
@@ -62,6 +63,8 @@ const MORE_ITEMS = [
   // because the tab bar is the shift's muscle memory, and it is the phone's
   // route to the switcher the header shows from `sm` up.
   { key: "tillDesign", icon: Layers, href: "/tills" },
+  /* The design system's reference, opened on the Go configuration. */
+  { key: "designSystem", icon: Palette, href: "/design-system?product=go" },
   { key: "shift", icon: Clock, href: "/shift/close" },
   { key: "mySales", icon: Banknote, action: "sales" },
   { key: "quickPass", icon: Ticket, href: "/quick-pass" },
@@ -115,6 +118,17 @@ export function GoShell({ children }: { children: React.ReactNode }) {
     applyTillText(prefs.tillText);
     return () => applyTillText(null);
   }, [prefs.tillText]);
+  /* The Go product theme lives on <html> so that portalled dialogs, menus and
+     toasts get it too. The boot script sets it before the first paint on a
+     full load; this keeps it in step on client-side navigation into and out of
+     the till. */
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.product = "go";
+    return () => {
+      delete root.dataset.product;
+    };
+  }, []);
   const t = useTranslations("nav");
   const tp = useTranslations("pos");
   const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
@@ -122,6 +136,13 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [salesOpen, setSalesOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  /* Who is signed in and whose business this is, read from the records rather
+     than typed here: a hard-coded name is a name that is wrong for every other
+     operator. */
+  const operatorQ = useApiQuery(() => getOperator(), []);
+  const staffQ = useApiQuery(() => getStaff(DEMO_STAFF_ID), []);
+  const myName = staffQ.data?.name ?? "";
+  const myInitial = myName.trim().charAt(0).toUpperCase() || "•";
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
   // Don't show an empty destination: Schedule only exists for slotted catalogues.
   const hasSlotted = (productsQ.data?.data ?? []).some((p) => isSlotBased(p.bookingType));
@@ -139,7 +160,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
         aria-current={active ? "page" : undefined}
         onClick={() => { if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
         className={cn(
-          "relative flex min-w-12 flex-1 flex-col items-center justify-center gap-inline rounded-full transition-colors duration-quick active:bg-ember/10",
+          "relative flex min-w-12 flex-1 flex-col items-center justify-center gap-inline rounded-control transition-colors duration-quick active:bg-muted-wash",
           rail ? "h-[64px] flex-none" : "h-[54px]",
           active ? "text-brand-foreground" : "text-muted",
         )}
@@ -147,9 +168,9 @@ export function GoShell({ children }: { children: React.ReactNode }) {
         {/* Selection is a soft ember pill behind the whole tab, the way the
             reference draws it — not a 2px rule on one edge. The heavier icon
             stroke says it a second way, so the tint is never doing it alone. */}
-        {active && <span aria-hidden className="absolute inset-0 rounded-full bg-ember/15" />}
+        {active && <span aria-hidden className="absolute inset-0 rounded-control bg-ember-wash" />}
         <Icon size={22} strokeWidth={active ? 2.25 : 1.6} className="relative" />
-        <span className="relative max-w-full truncate text-[0.6875rem] font-medium">{t(tab.key)}</span>
+        <span className="relative max-w-full truncate text-2xs font-medium">{t(tab.key)}</span>
       </Link>
     );
   };
@@ -159,12 +180,12 @@ export function GoShell({ children }: { children: React.ReactNode }) {
       type="button"
       onClick={() => setMoreOpen(true)}
       className={cn(
-        "flex min-w-12 flex-1 flex-col items-center justify-center gap-inline rounded-full text-muted transition-colors duration-quick active:bg-ember/10",
+        "flex min-w-12 flex-1 flex-col items-center justify-center gap-inline rounded-control text-muted transition-colors duration-quick active:bg-muted-wash",
         rail ? "h-[64px] flex-none" : "h-[54px]",
       )}
     >
       <Ellipsis size={22} strokeWidth={1.6} />
-      <span className="max-w-full truncate text-[0.6875rem] font-medium">{t("more")}</span>
+      <span className="max-w-full truncate text-2xs font-medium">{t("more")}</span>
     </button>
   );
 
@@ -187,24 +208,24 @@ export function GoShell({ children }: { children: React.ReactNode }) {
           is under it: the till's wall is inset 12px, every other Go screen 16.
           On the landscape rail the chip lines up with the rail's own tabs
           (8px) instead, because that is the column it sits above. */}
-      <header className={cn("flex items-center gap-tight py-1.5 rail:px-2", onATill ? "px-3" : "px-section")}>
+      <header className={cn("flex items-center gap-tight py-inline rail:px-tight", onATill ? "px-comfortable" : "px-section")}>
         {bare ? <span className="flex-1" /> : <CounterPicker saleCount={liveCount} />}
         {!bare && (
-          <span className="hidden shrink-0 text-[0.8125rem] tabular-nums text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
+          <span className="hidden shrink-0 text-sm tabular-nums text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
         )}
         <span className="flex-1 max-sm:hidden" />
         {/* Only on a till, and only where there is room for it. */}
         <TillSwitcher />
         <span className="flex shrink-0 items-center gap-tight">
           <ModeButton shape="round" />
-          {!bare && <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse text-[0.875rem] font-semibold text-inverse-fg" title={tp("shell.myProfile", { name: "Nadia Islam" })} aria-label={tp("shell.myProfile", { name: "Nadia Islam" })}>N</Link>}
+          {!bare && <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse text-base font-semibold text-inverse-fg" title={tp("shell.myProfile", { name: myName })} aria-label={tp("shell.myProfile", { name: myName })}>{myInitial}</Link>}
         </span>
       </header>
 
       <div className="flex min-h-0 flex-1">
         {/* Tablet-landscape left rail (88px, icon over label) */}
         {!bare && (
-          <nav aria-label={tp("shell.menu")} className="sticky top-0 hidden h-[calc(100vh-64px)] w-[88px] shrink-0 flex-col gap-inline p-tight rail:flex">
+          <nav aria-label={tp("shell.menu")} className="sticky top-0 hidden h-[calc(100dvh-64px)] w-[88px] shrink-0 flex-col gap-inline p-tight rail:flex">
             {tabs.map((t) => tabButton(t, true))}
             {moreButton(true)}
           </nav>
@@ -271,81 +292,76 @@ export function GoShell({ children }: { children: React.ReactNode }) {
         <Link
           href="/pos/cart"
           aria-label={t("cartFab", { count: liveCount })}
-          className="fixed right-comfortable z-30 flex h-14 w-14 items-center justify-center rounded-full bg-ember-solid text-white go-raised active:scale-95 rail:bottom-comfortable"
+          className="fixed right-comfortable z-30 flex h-14 w-14 items-center justify-center rounded-full bg-ember-solid text-on-solid go-raised active:scale-95 rail:bottom-comfortable"
           style={{ bottom: `calc(${BAR_CLEAR} + 12px)` }}
         >
           <ShoppingBag size={22} strokeWidth={1.75} aria-hidden />
           <span
             aria-hidden
-            className="absolute -right-0.5 -top-0.5 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-surface bg-inverse px-1 text-[0.75rem] font-semibold text-inverse-fg"
+            className="absolute -right-0.5 -top-0.5 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-surface bg-inverse px-1 text-sm font-semibold text-inverse-fg"
           >
             {liveCount}
           </span>
         </Link>
       )}
 
-      {/* More — bottom sheet grid */}
-      {moreOpen && (
-        <div className="fixed inset-0 z-50">
-          <div className="go-sheet-scrim absolute inset-0 bg-inverse/40" onClick={() => setMoreOpen(false)} aria-hidden />
-          <div className="go-sheet-panel absolute inset-x-0 bottom-0 rounded-t-go-lg bg-surface p-section shadow-go-pop" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
-            <div className="mb-section flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
-                <p className="text-[0.8125rem] text-muted">{tp("shell.shiftLine", { counter: activeCounter?.name ?? tp("counter"), time: "3:24" })}</p>
-              </div>
-              <div className="flex items-center gap-tight">
-                <LocaleToggle />
-                <button type="button" aria-label={tp("shell.close")} onClick={() => setMoreOpen(false)} className="flex h-12 w-12 items-center justify-center rounded-full active:bg-line">
-                  <X size={20} strokeWidth={1.5} />
-                </button>
-              </div>
-            </div>
-            {/* One card of cells divided by hairlines, a picture over a word in
-                each — the same drawing as the sell screen, so the menu reads as
-                part of the till rather than as a different app. */}
-            <div className="go-surface overflow-hidden rounded-go">
+      {/* More — the shared bottom sheet: dialog role, focus trap, Escape, scrim and
+          drag-down all come from the kit, so this menu behaves like every other
+          sheet in the product. */}
+      <Sheet
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        title={operatorQ.data?.name ?? t("more")}
+        closeLabel={tp("shell.close")}
+      >
+        <div className="bg-surface p-section">
+          <div className="mb-section flex items-center justify-between gap-tight">
+            {/* TODO(data): the elapsed shift time has no reader yet (no shift record
+                carries its start), so the 3:24 in this line is still the demo value. */}
+            <p className="min-w-0 text-sm text-muted">{tp("shell.shiftLine", { counter: activeCounter?.name ?? tp("counter"), time: "3:24" })}</p>
+            <LocaleToggle />
+          </div>
+          {/* One card of cells divided by hairlines, a picture over a word in
+              each — the same drawing as the sell screen, so the menu reads as
+              part of the till rather than as a different app. */}
+          <div className="card-surface overflow-hidden">
             <div className="-mb-px -mr-px grid grid-cols-3 sm:grid-cols-4">
               {MORE_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const inner = (
                   <>
                     <Icon size={24} strokeWidth={1.5} className="text-muted" aria-hidden />
-                    <span className="text-[0.875rem] font-medium">{t(item.key)}</span>
+                    <span className="text-base font-medium">{t(item.key)}</span>
                   </>
                 );
                 return "href" in item && item.href ? (
-                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} data-focus-inset className="flex h-[5.5rem] flex-col items-center justify-center gap-tight border-b border-r border-line bg-card text-fg transition-colors duration-quick active:bg-ember/10">
+                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} data-focus-inset className="flex h-[5.5rem] flex-col items-center justify-center gap-tight border-b border-r border-line bg-card text-fg transition-colors duration-quick active:bg-muted-wash">
                     {inner}
                   </Link>
                 ) : (
-                  <button key={item.key} type="button" onClick={() => runItem(item)} data-focus-inset className="flex h-[5.5rem] flex-col items-center justify-center gap-tight border-b border-r border-line bg-card text-fg transition-colors duration-quick active:bg-ember/10">
+                  <button key={item.key} type="button" onClick={() => runItem(item)} data-focus-inset className="flex h-[5.5rem] flex-col items-center justify-center gap-tight border-b border-r border-line bg-card text-fg transition-colors duration-quick active:bg-muted-wash">
                     {inner}
                   </button>
                 );
               })}
             </div>
-            </div>
-
-            {/* Appearance and text size used to be drawn here as well. They are
-                the till's settings and they now live on the till's own settings
-                page, which is what the Settings tile opens — one control, one
-                place, rather than the same two in a sheet and on a page. */}
           </div>
+          {/* Appearance and text size live on the till settings page, which is what
+              the Settings tile opens — one control, one place. */}
         </div>
-      )}
+      </Sheet>
 
       <Modal open={salesOpen} onClose={() => setSalesOpen(false)} title={tp("shell.salesTitle")}>
-        <div className="flex flex-col gap-tight font-mono text-sm tabular-nums">
-          <div className="flex justify-between border-b border-line pb-tight"><span className="font-sans text-muted">{tp("shell.takings")}</span><span>{formatMoney(1245000)}</span></div>
-          <div className="flex justify-between border-b border-line pb-tight"><span className="font-sans text-muted">{tp("shell.sales")}</span><span>9</span></div>
-          <div className="flex justify-between"><span className="font-sans text-muted">{tp("shell.cashInDrawer")}</span><span>{formatMoney(485000)}</span></div>
+        <div className="flex flex-col gap-tight text-base tabular-nums">
+          <div className="flex justify-between border-b border-line pb-tight"><span className="text-muted">{tp("shell.takings")}</span><span>{formatMoney(1245000)}</span></div>
+          <div className="flex justify-between border-b border-line pb-tight"><span className="text-muted">{tp("shell.sales")}</span><span>9</span></div>
+          <div className="flex justify-between"><span className="text-muted">{tp("shell.cashInDrawer")}</span><span>{formatMoney(485000)}</span></div>
         </div>
-        <p className="mt-section text-[0.8125rem] text-muted">{tp("shell.salesNote")}</p>
+        <p className="mt-section text-sm text-muted">{tp("shell.salesNote")}</p>
       </Modal>
 
       <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title={tp("shell.helpTitle")}>
-        <p className="text-sm text-muted">{tp.rich("shell.helpBody", { phone: (c) => <span className="font-mono text-fg">{c}</span> })}</p>
+        <p className="text-base text-muted">{tp.rich("shell.helpBody", { phone: (c) => <span className="font-mono text-fg">{c}</span> })}</p>
       </Modal>
     </div>
   );

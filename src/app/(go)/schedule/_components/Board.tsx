@@ -179,7 +179,7 @@ export function Board({
   const hourLines = `repeating-linear-gradient(to bottom, transparent 0, transparent ${HOUR_PX - 1}px, var(--color-line) ${HOUR_PX - 1}px, var(--color-line) ${HOUR_PX}px)`;
 
   return (
-    <div ref={card} className="go-surface flex min-h-[240px] flex-col overflow-hidden rounded-go">
+    <div ref={card} className="card-surface flex min-h-[240px] flex-col overflow-hidden">
       <div
         ref={box}
         className="relative min-h-0 flex-1 overflow-auto overscroll-contain"
@@ -190,8 +190,8 @@ export function Board({
           {/* Place names — pinned as the day scrolls under them. */}
           <div className="sticky top-0 z-20 flex border-b border-line bg-card" style={{ height: HEADER }}>
             <div className="sticky left-0 z-10 flex shrink-0 flex-col items-center justify-center bg-card text-center leading-tight" style={{ width: GUTTER }}>
-              <span className="text-[0.8125rem] text-muted">{corner[0]}</span>
-              <span className="text-[1rem] font-semibold tabular-nums leading-none text-fg">{corner[1]}</span>
+              <span className="text-sm text-muted">{corner[0]}</span>
+              <span className="text-md font-semibold tabular-nums leading-none text-fg">{corner[1]}</span>
             </div>
             {columns.map((c) => {
               const closed = !!c.resource?.outOfService;
@@ -202,9 +202,9 @@ export function Board({
                  looks for. */
               const body = (
                 <>
-                  <span className="line-clamp-2 block w-full break-words text-[0.875rem] font-semibold leading-tight text-fg" title={name}>{name}</span>
+                  <span className="line-clamp-2 block w-full break-words text-base font-semibold leading-tight text-fg" title={name}>{name}</span>
                   {closed && (
-                    <span className="mt-0.5 flex items-center justify-center gap-1 text-[0.8125rem] text-danger">
+                    <span className="mt-0.5 flex items-center justify-center gap-1 text-sm text-danger">
                       <Wrench size={12} strokeWidth={1.75} aria-hidden />
                       {t("board.closed")}
                     </span>
@@ -239,8 +239,8 @@ export function Board({
                       muted 13px it used to be was the faintest thing on
                       the board. */}
                   <span className="absolute inset-x-0 top-1 flex flex-col items-center leading-none text-fg">
-                    <span className="text-[1.0625rem] font-bold tabular-nums">{clockParts(m).h}</span>
-                    <span className="mt-0.5 text-[0.8125rem] font-semibold">{clockParts(m).ampm}</span>
+                    <span className="text-md font-bold tabular-nums">{clockParts(m).h}</span>
+                    <span className="mt-0.5 text-sm font-semibold">{clockParts(m).ampm}</span>
                   </span>
                 </div>
               ))}
@@ -275,6 +275,7 @@ export function Board({
                   )}
                   {/* Hour rules over the ground and the free cells, under
                       everything that is booked. */}
+                  {/* ds-exception: z-1..3 layers live inside one column and must stay under the z-10 sticky gutter */}
                   <div aria-hidden className="pointer-events-none absolute inset-0 z-[2]" style={{ backgroundImage: hourLines }} />
                   {list.map((b) =>
                     b.type === "free" ? null : (
@@ -295,9 +296,10 @@ export function Board({
             })}
 
             {showNow && (
+              /* ds-exception: now-line sits above the in-column layers (z-1..3) but under the z-10 sticky gutter */
               <div aria-hidden className="pointer-events-none absolute right-0 z-[5]" style={{ top: y(nowMinutes as number) + 1, left: GUTTER - 6 }}>
                 <div className="relative h-0.5 bg-danger">
-                  <span className="absolute -left-0 -top-[5px] h-3 w-3 rounded-full bg-danger" />
+                  <span className="absolute left-0 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-danger" />
                 </div>
               </div>
             )}
@@ -309,12 +311,12 @@ export function Board({
           it — the board scrolls, the key never does. */}
       <div data-board-foot hidden={hideKey} className="shrink-0 border-t border-line bg-card">
       {notice}
-      <ul aria-label={t("board.keyLabel")} className="flex flex-wrap items-center gap-x-tight gap-y-1 px-comfortable py-tight text-[0.8125rem] text-muted">
+      <ul aria-label={t("board.keyLabel")} className="flex flex-wrap items-center gap-x-tight gap-y-1 px-comfortable py-tight text-sm text-muted">
         <li className="flex items-center gap-1.5">
           <span aria-hidden className="flex h-4 w-5 items-center justify-center border border-line bg-card text-muted"><Plus size={11} strokeWidth={3} /></span>
           {t("board.keyFree")}
         </li>
-        <li className="flex items-center gap-1.5"><span aria-hidden className="h-4 w-5 border-l-[3px] border-l-ember-solid bg-ember/20" />{t("board.keyBooked")}</li>
+        <li className="flex items-center gap-1.5"><span aria-hidden className="h-4 w-5 border-l-[3px] border-l-ember-solid bg-ember-wash" />{t("board.keyBooked")}</li>
         <li className="flex items-center gap-1.5"><span aria-hidden className="h-4 w-5 border-l-[3px] border-l-market bg-market-wash" />{t("board.keyMarket")}</li>
         <li className="flex items-center gap-1.5">
           <span aria-hidden className="flex h-4 w-5 items-center justify-center border border-dashed border-strong" style={{ background: "repeating-linear-gradient(135deg, var(--color-muted-wash) 0 3px, var(--color-card) 3px 6px)" }}>
@@ -370,8 +372,9 @@ function FreeCell({
       aria-label={t("board.freeAria", { place, time: formatClock(b.time), price: formatPriceShort(b.price) })}
       data-focus-inset
       className={cn(
+        // ds-exception: in-column layer z-1 (free cells) under the z-10 sticky gutter
         "absolute inset-x-0 z-[1] flex flex-col items-center justify-center gap-0.5 transition-colors duration-quick",
-        selected ? "bg-ember-solid text-white" : "bg-card text-fg hover:bg-ember/5 active:bg-ember/10",
+        selected ? "bg-ember-solid text-on-solid" : "bg-card text-fg hover:bg-muted-wash active:bg-muted-wash",
       )}
       style={{ top, height }}
     >
@@ -381,7 +384,7 @@ function FreeCell({
         <Plus size={18} strokeWidth={2.5} className="text-muted" aria-hidden />
       )}
       {height >= 48 && (
-        <span className={cn("text-[0.8125rem] tabular-nums", selected ? "font-semibold" : "font-medium")}>{formatPriceShort(b.price)}</span>
+        <span className={cn("text-sm tabular-nums", selected ? "font-semibold" : "font-medium")}>{formatPriceShort(b.price)}</span>
       )}
     </button>
   );
@@ -409,7 +412,8 @@ function BlockView({
   const tall = height >= 52;
   /* A small inset so two bookings back to back read as two, and a small
      corner — a calendar block, not a card. */
-  const frame = "absolute inset-x-[3px] z-[3] overflow-hidden rounded-sm text-left";
+  // ds-exception: in-column layer z-3 (booked blocks) under the z-10 sticky gutter
+  const frame = "absolute inset-x-1 z-[3] overflow-hidden rounded-sm text-left";
   const style = { top: top + 2, height: height - 3 };
 
   if (b.type === "booking") {
@@ -441,11 +445,11 @@ function BlockView({
               ? "border-l-success bg-success-wash text-fg"
               : src
                 ? "border-l-market bg-market-wash text-fg"
-                : "border-l-ember-solid bg-ember/20 text-fg",
+                : "border-l-ember-solid bg-ember-wash text-fg",
         )}
         style={style}
       >
-        <span className="flex items-center gap-1 text-[0.8125rem] font-semibold leading-tight">
+        <span className="flex items-center gap-1 text-sm font-semibold leading-tight">
           {src && (
             <span className="hidden shrink-0 @min-[3rem]:inline-flex">
               <MarketBadge id={src.marketplaceId} size="go" />
@@ -457,8 +461,8 @@ function BlockView({
         </span>
         {tall && (
           refunding
-            ? <span className="block truncate text-[0.8125rem] font-semibold leading-tight text-warning">{t("refund.boardBadge")}</span>
-            : <span className="block truncate text-[0.8125rem] leading-tight opacity-80">{b.product?.name ?? ""}</span>
+            ? <span className="block truncate text-sm font-semibold leading-tight text-warning">{t("refund.boardBadge")}</span>
+            : <span className="block truncate text-sm leading-tight opacity-80">{b.product?.name ?? ""}</span>
         )}
       </button>
     );
@@ -476,11 +480,11 @@ function BlockView({
           background: "repeating-linear-gradient(135deg, var(--color-muted-wash) 0 6px, var(--color-card) 6px 12px)",
         }}
       >
-        <span className="flex items-center gap-1 text-[0.8125rem] font-semibold leading-tight">
+        <span className="flex items-center gap-1 text-sm font-semibold leading-tight">
           <Lock size={13} strokeWidth={2} className="shrink-0 text-muted" aria-hidden />
           <span className="truncate">{b.hold.heldFor}</span>
         </span>
-        {tall && <span className="block truncate text-[0.8125rem] leading-tight text-muted">{t("board.onHold")}</span>}
+        {tall && <span className="block truncate text-sm leading-tight text-muted">{t("board.onHold")}</span>}
       </button>
     );
   }
@@ -498,23 +502,23 @@ function BlockView({
       className={cn(
         frame,
         "flex flex-col justify-start gap-0.5 border px-tight py-1",
-        disabled ? "border-line bg-subtle text-muted" : full ? "border-line bg-muted-wash text-muted" : "border-line bg-card text-fg hover:border-ember",
+        disabled ? "border-line bg-surface text-muted" : full ? "border-line bg-muted-wash text-muted" : "border-line bg-card text-fg hover:border-ember",
       )}
       style={style}
     >
       <span className="flex items-baseline justify-between gap-1">
-        <span className="text-[0.8125rem] font-semibold tabular-nums">{formatClock(b.time)}</span>
+        <span className="text-sm font-semibold tabular-nums">{formatClock(b.time)}</span>
         {!full && !disabled && <Plus size={16} strokeWidth={2.5} className="shrink-0 text-muted" aria-hidden />}
       </span>
       {/* The number that decides a sale, in words and large enough to read
           at a glance. A bar beside it read as "full" when it was full of
           empty seats. */}
       {tall && (
-        <span className={cn("truncate text-[0.9375rem] font-semibold leading-tight", !full && !disabled && pct <= 0.2 && "text-brand-foreground")}>
+        <span className={cn("truncate text-md font-semibold leading-tight", !full && !disabled && pct <= 0.2 && "text-brand-foreground")}>
           {full ? t("board.full") : t("board.seatsLeft", { count: b.remaining })}
         </span>
       )}
-      {tall && b.held.length > 0 && <span className="truncate text-[0.8125rem] leading-tight text-muted">{t("board.someHeld")}</span>}
+      {tall && b.held.length > 0 && <span className="truncate text-sm leading-tight text-muted">{t("board.someHeld")}</span>}
     </button>
   );
 }

@@ -2,8 +2,8 @@
 
 import { useRef } from "react";
 import { useTranslations } from "next-intl";
-import { ImagePlus, RefreshCw, Trash2, X } from "lucide-react";
-import { DateField, FormField, TimeInput } from "@/components/ui";
+import { ImagePlus, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { Button, DateField, FormField, TimeInput } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { categoryById, type CategoryId } from "@/lib/events/catalog";
 import { DEMO_TODAY } from "@/lib/schedule";
@@ -92,20 +92,16 @@ export function EventDetails({
             </Labelled>
             <div className="flex flex-col gap-inline">
               <TimeInput picker label={td("ends")} value={content.endTime} onChange={(v) => onContent({ endTime: v })} />
-              <button type="button" onClick={() => onContent({ endTime: "", endDate: "" })} className="flex min-h-11 items-center gap-inline self-start rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-muted-wash hover:text-fg md:min-h-9">
-                <X size={14} strokeWidth={1.5} aria-hidden /> {td("removeEnd")}
-              </button>
+              <Button variant="tertiary" size="sm" onClick={() => onContent({ endTime: "", endDate: "" })} icon={<X size={14} strokeWidth={1.5} aria-hidden />} className="self-start text-muted">
+                {td("removeEnd")}
+              </Button>
             </div>
-            {errors.ends && <p role="alert" className="text-[13px] text-danger sm:col-span-2">{errors.ends}</p>}
+            {errors.ends && <p role="alert" className="text-sm text-danger sm:col-span-2">{errors.ends}</p>}
           </>
         ) : (
-          <button
-            type="button"
-            onClick={() => onContent({ endTime: "23:00", endDate: content.date })}
-            className="flex min-h-11 items-center self-start text-[13px] font-medium text-brand-foreground hover:underline sm:col-span-2 md:min-h-0"
-          >
-            + {td("addEnd")}
-          </button>
+          <Button variant="tertiary" size="sm" onClick={() => onContent({ endTime: "23:00", endDate: content.date })} icon={<Plus size={14} strokeWidth={1.5} aria-hidden />} className="self-start text-brand-foreground sm:col-span-2">
+            {td("addEnd")}
+          </Button>
         )}
         {/* The same control the creation flow uses, with each day's own hours
             added — making an event is fast, refining one is here. */}
@@ -143,8 +139,8 @@ function Group({ title, help, children }: { title: string; help?: string; childr
   return (
     <section className="flex flex-col gap-section">
       <div>
-        <h3 className="text-base font-semibold text-fg">{title}</h3>
-        {help && <p className="mt-0.5 text-[13px] text-muted">{help}</p>}
+        <h3 className="text-md font-semibold text-fg">{title}</h3>
+        {help && <p className="mt-0.5 text-sm text-muted">{help}</p>}
       </div>
       <div className="grid items-start gap-section sm:grid-cols-2">{children}</div>
     </section>
@@ -154,12 +150,12 @@ function Group({ title, help, children }: { title: string; help?: string; childr
 function Labelled({ label, required, error, children }: { label: string; required?: boolean; error?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-tight" data-invalid={error ? "" : undefined}>
-      <span className="text-[0.8125rem] font-medium text-muted">
+      <span className="text-sm font-medium text-muted">
         {label}
         {required && <span className="ml-inline text-danger">*</span>}
       </span>
       {children}
-      {error && <p className="text-[12px] text-danger">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );
 }
@@ -181,16 +177,16 @@ function CoverUpload({ value, onChange, className }: { value: string; onChange: 
           <span
             role="img"
             aria-label={td("coverPreview")}
-            className="block aspect-[16/9] w-full max-w-sm rounded-sm bg-muted-wash bg-cover bg-center"
+            className="block aspect-[16/9] w-full max-w-sm rounded-control bg-muted-wash bg-cover bg-center"
             style={{ backgroundImage: `url("${value}")` }}
           />
           <span className="flex gap-tight">
-            <button type="button" onClick={() => input.current?.click()} className="flex min-h-11 items-center gap-inline rounded-sm border border-line bg-card px-comfortable text-[13px] font-medium hover:border-strong md:min-h-9">
-              <RefreshCw size={14} strokeWidth={1.5} aria-hidden /> {td("replace")}
-            </button>
-            <button type="button" onClick={() => onChange("")} className="flex min-h-11 items-center gap-inline rounded-sm border border-line bg-card px-comfortable text-[13px] font-medium text-danger hover:border-danger md:min-h-9">
-              <Trash2 size={14} strokeWidth={1.5} aria-hidden /> {td("remove")}
-            </button>
+            <Button variant="secondary" size="sm" onClick={() => input.current?.click()} icon={<RefreshCw size={14} strokeWidth={1.5} aria-hidden />}>
+              {td("replace")}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => onChange("")} icon={<Trash2 size={14} strokeWidth={1.5} aria-hidden />} className="text-danger">
+              {td("remove")}
+            </Button>
           </span>
         </div>
       ) : (
@@ -199,11 +195,11 @@ function CoverUpload({ value, onChange, className }: { value: string; onChange: 
           onClick={() => input.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => { e.preventDefault(); pick(e.dataTransfer.files); }}
-          className="flex h-32 w-full max-w-md flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-line bg-card text-muted transition-colors duration-quick hover:border-strong hover:text-fg"
+          className="flex h-32 w-full max-w-md flex-col items-center justify-center gap-inline rounded-control border border-dashed border-line bg-card text-muted transition-colors duration-quick hover:border-strong hover:text-fg"
         >
           <ImagePlus size={22} strokeWidth={1.5} aria-hidden />
-          <span className="text-[13px] font-medium text-fg">{td("upload")}</span>
-          <span className="text-[12px]">{td("uploadHint")}</span>
+          <span className="text-sm font-medium text-fg">{td("upload")}</span>
+          <span className="text-xs">{td("uploadHint")}</span>
         </button>
       )}
       <input ref={input} type="file" accept="image/*" className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = ""; }} />

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { Logo } from "@/components/ui";
+import { Logo, StatusPill } from "@/components/ui";
 import { TILLS } from "@/lib/tills";
 
 export async function generateMetadata() {
@@ -29,7 +29,7 @@ export default async function TillsPage() {
         <Logo size={28} />
         <Link
           href="/"
-          className="-my-tight inline-flex min-h-11 items-center gap-inline font-mono text-xs text-muted hover:text-ember sm:min-h-0"
+          className="-my-tight inline-flex min-h-11 items-center gap-inline text-sm text-muted hover:text-ember sm:min-h-0"
         >
           <ArrowLeft size={13} strokeWidth={1.5} aria-hidden /> {t("tills.home")}
         </Link>
@@ -46,9 +46,9 @@ export default async function TillsPage() {
             <Link
               key={till.id}
               href={till.href}
-              className="group flex items-start gap-comfortable rounded-go border border-line bg-card p-section transition-all duration-quick hover:-translate-y-0.5 hover:border-ember/40 hover:shadow-md"
+              className="card-surface card-interactive group flex items-start gap-comfortable p-card"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-subtle font-mono text-[13px] text-muted">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-subtle font-mono text-sm text-muted">
                 {till.short.slice(0, 2)}
               </span>
               <span className="min-w-0 flex-1">
@@ -56,7 +56,7 @@ export default async function TillsPage() {
                   <span className="type-h2 text-lg">{till.name}</span>
                   <span className="font-mono text-xs text-muted">{till.href}</span>
                 </span>
-                <span className="type-body mt-inline block text-[14px] text-muted">{till.blurb}</span>
+                <span className="type-body mt-inline block text-base text-muted">{till.blurb}</span>
               </span>
               <ArrowRight
                 size={18}
@@ -69,19 +69,17 @@ export default async function TillsPage() {
                so — a link that 404s is worse than an honest placeholder. */
             <div
               key={till.id}
-              className="flex items-start gap-comfortable rounded-go border border-dashed border-strong p-section opacity-70"
+              className="flex items-start gap-comfortable rounded-card border border-dashed border-strong p-card opacity-70"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-subtle font-mono text-[13px] text-muted">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-subtle font-mono text-sm text-muted">
                 {till.short.slice(0, 2)}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-tight">
                   <span className="type-h2 text-lg text-muted">{till.name}</span>
-                  <span className="rounded-full bg-subtle px-tight py-inline font-mono text-xs text-muted">
-                    {t("tills.beingBuilt")}
-                  </span>
+                  <StatusPill tone="neutral">{t("tills.beingBuilt")}</StatusPill>
                 </span>
-                <span className="type-body mt-inline block text-[14px] text-muted">{till.blurb}</span>
+                <span className="type-body mt-inline block text-base text-muted">{till.blurb}</span>
               </span>
             </div>
           ),
@@ -93,10 +91,9 @@ export default async function TillsPage() {
           aloud by a screen reader, and it made the link a 16px-tall target.
           Each row is now a real 44px target on a phone with the glyph
           nudging on hover. */}
-      <div className="mt-hero flex flex-wrap items-center gap-major border-t border-line pt-major font-mono text-xs text-muted">
+      <div className="mt-hero flex flex-wrap items-center gap-major border-t border-line pt-major text-sm text-muted">
         <Link href="/dashboard" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">{t("tills.osAdmin")}<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
-        <Link href="/tokens" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">{t("tills.tokens")}<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
-        <Link href="/kitchen-sink" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">{t("tills.primitives")}<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
+        <Link href="/design-system" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">{t("tills.tokens")}<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
       </div>
     </main>
   );

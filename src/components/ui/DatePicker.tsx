@@ -172,7 +172,7 @@ export function DatePicker({
     }
   };
 
-  const cell = shape === "go" ? "h-11 w-11 rounded-go-sm text-[0.9375rem]" : "h-9 w-9 rounded-sm text-[0.8125rem]";
+  const cell = shape === "go" ? "h-11 w-11 rounded-go-sm text-md" : "h-9 w-9 rounded-sm text-sm";
 
   return (
     <div
@@ -194,7 +194,7 @@ export function DatePicker({
         >
           <ChevronLeft size={16} strokeWidth={1.5} />
         </button>
-        <span aria-live="polite" className="text-sm font-medium tracking-tight">
+        <span aria-live="polite" className="text-base font-medium tracking-tight">
           {MONTH_FMT.format(cursor)}
         </span>
         <button
@@ -217,7 +217,7 @@ export function DatePicker({
           <span
             key={`${w}-${i}`}
             className={cn(
-              "flex h-6 items-center justify-center text-[0.75rem] font-medium text-muted",
+              "flex h-6 items-center justify-center text-xs font-medium text-muted",
               shape === "go" ? "w-11" : "w-9",
             )}
           >
@@ -277,7 +277,7 @@ export function DatePicker({
           if (!blocked(today)) onChange(today);
         }}
         className={cn(
-          "self-start px-tight text-[0.8125rem] text-brand-foreground transition-colors duration-quick hover:underline",
+          "self-start px-tight text-sm text-brand-foreground transition-colors duration-quick hover:underline",
           shape === "go" ? "h-11" : "h-8",
         )}
       >

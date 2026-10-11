@@ -236,7 +236,7 @@ export default function ScanPage() {
     const owing = tickets.find((x) => x.status === "issued" && due(x.orderId) > 0);
     return [
       valid && { key: "admit", label: t("screenAdmit"), code: valid.code, Icon: Check, tone: "bg-inverse text-inverse-fg" },
-      used && { key: "refuse", label: t("screenRefused"), code: used.code, Icon: X, tone: "bg-danger-solid text-white" },
+      used && { key: "refuse", label: t("screenRefused"), code: used.code, Icon: X, tone: "bg-danger-solid text-on-solid" },
       owing && { key: "owing", label: t("screenOwing"), code: owing.code, Icon: Wallet, tone: "bg-warning-wash text-fg" },
     ].filter(Boolean) as { key: string; label: string; code: string; Icon: typeof Check; tone: string }[];
   }, [ticketsQ.data, t]);
@@ -273,15 +273,15 @@ export default function ScanPage() {
         <div className="flex min-w-0 flex-col gap-section">
           <div>
             <h1 className="type-h1 text-xl">{t("title")}</h1>
-            <p className="text-[0.8125rem] text-muted">{t("subtitle")}</p>
+            <p className="text-sm text-muted">{t("subtitle")}</p>
           </div>
 
           {/* One object: the state of the gate, the field a scanner types
               into, and the two ways to send a code. */}
-          <section className="flex flex-col gap-comfortable rounded-go p-section go-surface">
+          <section className="flex flex-col gap-comfortable p-section card-surface">
             <p className="flex items-center gap-tight">
               <span aria-hidden className={cn("h-2 w-2 shrink-0 rounded-full", busy ? "bg-muted" : "bg-ember-solid")} />
-              <span className="text-[0.8125rem] font-semibold text-brand-foreground">{busy ? t("checking") : t("armed")}</span>
+              <span className="text-sm font-semibold text-brand-foreground">{busy ? t("checking") : t("armed")}</span>
             </p>
             <span data-focus-host className="block">
               <input
@@ -297,26 +297,26 @@ export default function ScanPage() {
               inputMode="text"
               autoComplete="off"
               spellCheck={false}
-              className="h-16 w-full min-w-0 rounded-go border-2 border-line bg-card px-section font-mono text-lg tracking-[0.02em] outline-none transition-colors duration-quick focus:border-ember-solid lg:h-20 lg:text-xl"
+              className="h-16 w-full min-w-0 rounded-card border-2 border-line bg-card px-section font-mono text-lg tracking-wide transition-colors duration-quick focus:border-ember-solid lg:h-20 lg:text-xl"
               />
             </span>
             <div className="flex gap-tight">
-              <Button size="lg" shape="pill" fullWidth disabled={!code.trim() || busy} onClick={() => void submit(code)}>
+              <Button size="lg" fullWidth className="h-13 text-md font-semibold" disabled={!code.trim() || busy} onClick={() => void submit(code)}>
                 {t("check")}
               </Button>
               {cameraReady && (
-                <Button size="lg" shape="pill" variant="secondary" className="shrink-0" onClick={() => setCamOpen(true)}>
+                <Button size="lg" variant="secondary" className="h-13 shrink-0 text-md font-semibold" onClick={() => setCamOpen(true)}>
                   <Camera size={18} strokeWidth={1.5} aria-hidden />
                   {t("camera")}
                 </Button>
               )}
             </div>
-            <p className="text-[0.8125rem] text-muted">{t("armedHint")}</p>
+            <p className="text-sm text-muted">{t("armedHint")}</p>
           </section>
 
           {screens.length > 0 && (
             <section className="flex flex-col gap-tight">
-              <h2 className="text-[0.8125rem] font-semibold text-muted">{t("screensTitle")}</h2>
+              <h2 className="text-sm font-semibold text-muted">{t("screensTitle")}</h2>
               {/* Each button wears the treatment of the screen it opens — ink
                   for an admission, hatched danger for a refusal, amber for
                   money owing — so the row doubles as the key to the three. */}
@@ -326,7 +326,7 @@ export default function ScanPage() {
                     key={sc.key}
                     type="button"
                     onClick={() => void submit(sc.code, { preview: true })}
-                    className="flex min-h-12 items-center gap-tight rounded-full border border-line bg-card py-inline pl-inline pr-comfortable text-sm font-medium active:bg-ember/10"
+                    className="flex min-h-12 items-center gap-tight rounded-full border border-line bg-card py-inline pl-inline pr-comfortable text-base font-medium active:bg-muted-wash"
                   >
                     <span aria-hidden className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", sc.tone)}>
                       <sc.Icon size={16} strokeWidth={2.5} />
@@ -343,8 +343,8 @@ export default function ScanPage() {
             no record of its own scans cannot answer the one question a guest
             asks when they are refused. */}
         <aside className="flex flex-col gap-section">
-          <section className="flex flex-col gap-comfortable rounded-go p-section go-surface">
-            <h2 className="text-sm font-semibold">{t("sessionTitle")}</h2>
+          <section className="flex flex-col gap-comfortable p-section card-surface">
+            <h2 className="text-base font-semibold">{t("sessionTitle")}</h2>
             {log.length > 0 && (
             <div className="grid grid-cols-3 gap-tight text-center">
               {(
@@ -354,18 +354,18 @@ export default function ScanPage() {
                   ["balance", tally.balance, Wallet],
                 ] as const
               ).map(([key, value, Icon]) => (
-                <div key={key} className="flex flex-col items-center gap-inline rounded-go-sm border border-line py-comfortable">
+                <div key={key} className="flex flex-col items-center gap-inline rounded-inner border border-line py-comfortable">
                   <Icon size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
                   <span className="text-xl font-semibold tabular-nums">{value}</span>
-                  <span className="text-[0.8125rem] text-muted">{t(`tally_${key}`)}</span>
+                  <span className="text-sm text-muted">{t(`tally_${key}`)}</span>
                 </div>
               ))}
             </div>
             )}
 
-            {log.length > 0 && <h3 className="text-[0.8125rem] font-semibold text-muted">{t("recentTitle")}</h3>}
+            {log.length > 0 && <h3 className="text-sm font-semibold text-muted">{t("recentTitle")}</h3>}
             {log.length === 0 ? (
-              <p className="text-[0.8125rem] text-muted">{t("noScansYet")}</p>
+              <p className="text-sm text-muted">{t("noScansYet")}</p>
             ) : (
               <ul className="flex flex-col">
                 {log.map((e, i) => (
@@ -374,16 +374,16 @@ export default function ScanPage() {
                       aria-hidden
                       className={cn(
                         "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                        e.verdict === "refuse" ? "bg-danger-solid text-white" : e.verdict === "balance" ? "bg-warning-wash text-fg" : "bg-inverse text-inverse-fg",
+                        e.verdict === "refuse" ? "bg-danger-solid text-on-solid" : e.verdict === "balance" ? "bg-warning-wash text-fg" : "bg-inverse text-inverse-fg",
                       )}
                     >
                       {e.verdict === "refuse" ? <X size={13} strokeWidth={3} /> : e.verdict === "balance" ? <Wallet size={12} strokeWidth={2} /> : <Check size={13} strokeWidth={3} />}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-mono text-[0.8125rem]">{e.code}</span>
-                      <span className="block truncate text-[0.8125rem] text-muted">{e.title || t(`tally_${e.verdict === "refuse" ? "refuse" : e.verdict === "balance" ? "balance" : "admit"}`)}</span>
+                      <span className="block truncate font-mono text-sm">{e.code}</span>
+                      <span className="block truncate text-sm text-muted">{e.title || t(`tally_${e.verdict === "refuse" ? "refuse" : e.verdict === "balance" ? "balance" : "admit"}`)}</span>
                     </span>
-                    <span className="shrink-0 text-[0.8125rem] text-muted">{formatClockOf(e.at)}</span>
+                    <span className="shrink-0 text-sm text-muted">{formatClockOf(e.at)}</span>
                   </li>
                 ))}
               </ul>

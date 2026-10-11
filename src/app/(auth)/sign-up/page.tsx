@@ -13,12 +13,12 @@ export default function SignUpPage() {
 
   return (
     <div className="card-surface p-card">
-      <p className="type-label text-[13px] text-brand-foreground">Counterfoil</p>
+      <p className="text-sm font-medium text-brand-foreground">Counterfoil</p>
 
       {phase === "form" ? (
         <>
           <h1 className="type-h1 mt-inline text-2xl">{t("title")}</h1>
-          <p className="type-body mt-tight text-[13px] text-muted">{t("lead")}</p>
+          <p className="type-body mt-tight text-sm text-muted">{t("lead")}</p>
           <div className="mt-major flex flex-col gap-section">
             <FormField label={t("name")} autoComplete="name" placeholder={t("namePlaceholder")} />
             <FormField label={t("email")} variant="email" autoComplete="email" placeholder={t("emailPlaceholder")} />
@@ -27,7 +27,7 @@ export default function SignUpPage() {
           <Button fullWidth size="lg" className="mt-major" onClick={() => setPhase("verify")}>
             {t("submit")}
           </Button>
-          <p className="type-body mt-section text-center text-[13px] text-muted">
+          <p className="type-body mt-section text-center text-sm text-muted">
             {t("haveAccount")}{" "}
             <Link href="/sign-in" className="text-brand-foreground underline-offset-4 hover:underline">{t("signIn")}</Link>
           </p>
@@ -35,14 +35,14 @@ export default function SignUpPage() {
       ) : (
         <>
           <h1 className="type-h1 mt-inline text-2xl">{t("checkTitle")}</h1>
-          <p className="type-body mt-tight text-[13px] text-muted">{t("checkLead")}</p>
+          <p className="type-body mt-tight text-sm text-muted">{t("checkLead")}</p>
           <div className="mt-major">
             <FormField label={t("code")} inputMode="numeric" autoComplete="one-time-code" placeholder="000000" />
           </div>
           <Button fullWidth size="lg" className="mt-major" onClick={() => router.push("/onboarding")}>
             {t("confirm")}
           </Button>
-          <button type="button" onClick={() => setPhase("form")} className="mt-section flex min-h-11 w-full items-center justify-center text-[13px] text-muted hover:text-fg">
+          <button type="button" onClick={() => setPhase("form")} className="mt-section flex min-h-11 w-full items-center justify-center text-sm text-muted hover:text-fg">
             {t("back")}
           </button>
         </>

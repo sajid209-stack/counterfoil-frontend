@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { History, Landmark, Smartphone, type LucideIcon } from "lucide-react";
-import { Button, ConfirmDialog, Modal, useToast } from "@/components/ui";
+import { Button, ConfirmDialog, Modal, Radio, SegmentedControl, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatDateTime, formatDay } from "@/lib/format";
 import { useApiQuery } from "@/lib/useApi";
@@ -132,11 +132,11 @@ export function PaymentAccounts() {
     return (
       <div key={provider} className="flex flex-col gap-comfortable px-card py-section">
         <div className="flex flex-wrap items-center justify-between gap-tight">
-          <p className="flex items-center gap-tight text-sm font-medium text-fg">
+          <p className="flex items-center gap-tight text-base font-medium text-fg">
             <Icon size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
             {providerName(provider)}
           </p>
-          <div className="flex flex-wrap items-center gap-tight text-[12px] text-muted">
+          <div className="flex flex-wrap items-center gap-tight text-xs text-muted">
             <span>{row?.hasOwnCredentials ? t("settings.keysSavedOn", { date: formatDay(row.credentialsSavedAt?.slice(0, 10)) }) : t("settings.noKeys")}</span>
             <Button
               size="sm"
@@ -160,25 +160,32 @@ export function PaymentAccounts() {
           {(["counterfoil", "own"] as const).map((c) => {
             const checked = current === c;
             return (
-              <label
+              // The tile is the target; the kit Radio inside is the control.
+              <div
                 key={c}
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).closest("label,input")) return;
+                  choose(locationId, provider, c);
+                }}
                 className={cn(
-                  "flex cursor-pointer items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember",
+                  "cursor-pointer rounded-control px-tight transition-colors duration-quick",
                   checked ? "bg-card ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:bg-line/40",
                 )}
               >
-                <input type="radio" name={name} checked={checked} onChange={() => choose(locationId, provider, c)} className="mt-[3px] h-4 w-4 shrink-0 accent-ember" />
-                <span className="min-w-0">
-                  <span className="block text-sm font-medium text-fg">{accountLabel(c)}</span>
-                  {rates && (
-                    <span className="mt-inline block text-[13px] leading-relaxed text-muted">
-                      {c === "counterfoil"
+                <Radio
+                  name={name}
+                  checked={checked}
+                  onChange={() => choose(locationId, provider, c)}
+                  label={<span className="font-medium">{accountLabel(c)}</span>}
+                  description={
+                    rates
+                      ? c === "counterfoil"
                         ? t("settings.counterfoilDisclosure", { platform: percentLabel(rates.platformFeeBp), gateway: percentLabel(rates.platformGatewayFeeBp), cadence })
-                        : t("settings.ownDisclosure", { platform: percentLabel(rates.platformFeeBp) })}
-                    </span>
-                  )}
-                </span>
-              </label>
+                        : t("settings.ownDisclosure", { platform: percentLabel(rates.platformFeeBp) })
+                      : undefined
+                  }
+                />
+              </div>
             );
           })}
         </div>
@@ -190,16 +197,16 @@ export function PaymentAccounts() {
     const rows = (historyQ.data ?? []).filter((c) => c.locationId === locationId);
     return (
       <details className="group px-card pb-section">
-        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-inline text-[13px] font-medium text-fg md:min-h-9 [&::-webkit-details-marker]:hidden">
+        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-inline text-sm font-medium text-fg md:min-h-9 [&::-webkit-details-marker]:hidden">
           <History size={14} strokeWidth={1.5} aria-hidden className="text-muted" />
           {t("settings.history")} <span className="font-normal text-muted">({rows.length})</span>
         </summary>
         {rows.length === 0 ? (
-          <p className="mt-tight text-[13px] text-muted">{t("settings.historyEmpty")}</p>
+          <p className="mt-tight text-sm text-muted">{t("settings.historyEmpty")}</p>
         ) : (
           <ul className="mt-tight divide-y divide-hairline rounded-sm bg-muted-wash">
             {rows.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-baseline justify-between gap-tight px-comfortable py-tight text-[13px]">
+              <li key={c.id} className="flex flex-wrap items-baseline justify-between gap-tight px-comfortable py-tight text-sm">
                 <span className="text-fg">{t("settings.historyRow", { provider: providerName(c.provider), from: accountLabel(c.from), to: accountLabel(c.to) })}</span>
                 <span className="text-muted">{t("settings.historyBy", { date: formatDateTime(c.at), who: c.who })}</span>
               </li>
@@ -238,8 +245,8 @@ export function PaymentAccounts() {
     <div id="accounts" className="flex scroll-mt-24 flex-col gap-section">
       <SettingsSection title={t("settings.accountsTitle")} description={t("settings.accountsDesc")}>
         <div className="px-card">
-          <p className="text-sm font-semibold text-fg">{t("settings.defaults")}</p>
-          <p className="mt-inline text-[13px] text-muted">{t("settings.defaultsDesc")}</p>
+          <p className="text-base font-semibold text-fg">{t("settings.defaults")}</p>
+          <p className="mt-inline text-sm text-muted">{t("settings.defaultsDesc")}</p>
         </div>
         <div className="divide-y divide-hairline">{GATEWAY_PROVIDERS.map((p) => providerRow(null, p))}</div>
       </SettingsSection>
@@ -251,36 +258,31 @@ export function PaymentAccounts() {
             return (
               <div key={l.id}>
                 <div className="flex flex-col gap-tight px-card pt-section sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm font-semibold text-fg">{l.name}</p>
-                  <div role="radiogroup" aria-label={l.name} className="inline-flex shrink-0 self-start rounded-sm border border-line bg-card p-[3px]">
-                    {([false, true] as const).map((v) => (
-                      <button
-                        key={String(v)}
-                        type="button"
-                        role="radio"
-                        aria-checked={own === v}
-                        onClick={async () => {
-                          if (own === v) return;
-                          if (!v) setPending({ kind: "follow", location: l });
-                          else {
-                            await setLocationOverride(l.id, true);
-                            reload();
-                          }
-                        }}
-                        className={cn(
-                          "inline-flex min-h-11 items-center rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick md:min-h-9",
-                          own === v ? "bg-ember-solid text-white" : "text-muted hover:text-fg",
-                        )}
-                      >
-                        {v ? t("settings.venueOwn") : t("settings.sameAsDefault")}
-                      </button>
-                    ))}
-                  </div>
+                  <p className="text-base font-semibold text-fg">{l.name}</p>
+                  <SegmentedControl
+                    size="sm"
+                    className="shrink-0 self-start"
+                    aria-label={l.name}
+                    value={own ? "own" : "default"}
+                    options={[
+                      { value: "default", label: t("settings.sameAsDefault") },
+                      { value: "own", label: t("settings.venueOwn") },
+                    ]}
+                    onChange={async (v) => {
+                      const next = v === "own";
+                      if (own === next) return;
+                      if (!next) setPending({ kind: "follow", location: l });
+                      else {
+                        await setLocationOverride(l.id, true);
+                        reload();
+                      }
+                    }}
+                  />
                 </div>
                 {own ? (
                   <div className="divide-y divide-hairline">{GATEWAY_PROVIDERS.map((p) => providerRow(l.id, p))}</div>
                 ) : (
-                  <p className="px-card pb-tight pt-tight text-[13px] text-muted">
+                  <p className="px-card pb-tight pt-tight text-sm text-muted">
                     {GATEWAY_PROVIDERS.map((p) => `${providerName(p)}: ${accountLabel(effectiveCollects(l.id, p, accounts))}`).join(" · ")}
                   </p>
                 )}
@@ -331,7 +333,7 @@ export function PaymentAccounts() {
               const id = `key-${f}`;
               return (
                 <div key={f}>
-                  <label htmlFor={id} className="text-[13px] font-medium text-fg">{t(`settings.field.${f}`)}</label>
+                  <label htmlFor={id} className="text-sm font-medium text-fg">{t(`settings.field.${f}`)}</label>
                   <input
                     id={id}
                     type={secret ? "password" : "text"}
@@ -342,7 +344,7 @@ export function PaymentAccounts() {
                     aria-invalid={!!keyErrors[f] || undefined}
                     className={cn(controlCls(!!keyErrors[f]), "mt-inline font-mono")}
                   />
-                  {keyErrors[f] && <p className="mt-inline text-[13px] text-danger">{keyErrors[f]}</p>}
+                  {keyErrors[f] && <p className="mt-inline text-sm text-danger">{keyErrors[f]}</p>}
                 </div>
               );
             })}

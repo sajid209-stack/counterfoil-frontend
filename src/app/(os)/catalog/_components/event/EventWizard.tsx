@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, Check, ChevronRight, Circle, Maximize2 } from "lucide-react";
-import { Button, Modal, useToast } from "@/components/ui";
+import { Button, Modal, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { createEvent, listLocations, slugify, type Channel, type EventCustomisation, type EventRecord } from "@/lib/api";
 import { useApiQuery } from "@/lib/useApi";
@@ -392,7 +392,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
       </Modal>
       <Modal open={bigPreview} onClose={() => setBigPreview(false)} title={t("customise.preview")}>
         {draft && (
-          <div className={cn("overflow-hidden rounded-sm", templateFontVars)}>
+          <div className={cn("overflow-hidden rounded-control", templateFontVars)}>
             <PreviewFrame width={1180}>
               <EventTemplate event={draft} device="desktop" labels={labels} now={now} />
             </PreviewFrame>
@@ -402,8 +402,8 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
 
       <div className="flex min-w-0 flex-col gap-section">
         {stepError && (
-          <p role="alert" tabIndex={-1} data-step-error className="flex items-start gap-tight rounded-sm border border-danger/40 bg-danger-wash px-comfortable py-tight text-[13px] font-medium text-danger outline-none">
-            <AlertTriangle size={15} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0" />
+          <p role="alert" tabIndex={-1} data-step-error className="flex items-start gap-tight rounded-card bg-danger-wash p-comfortable text-sm font-medium text-fg outline-none">
+            <AlertTriangle size={15} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0 text-danger" />
             {stepError}
           </p>
         )}
@@ -438,7 +438,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
                     </span>
                   </span>
                   <span className="block bg-card p-card">
-                    <span className="block text-[13px] text-muted">{t(`categoryBlurb.${c.key}`)}</span>
+                    <span className="block text-sm text-muted">{t(`categoryBlurb.${c.key}`)}</span>
                   </span>
                 </button>
               ))}
@@ -452,30 +452,20 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
                 is made of. Neither is a gate — an event can go on sale from
                 either, and the ready list says what is still missing. */}
             <div className="flex flex-wrap items-center justify-between gap-tight">
-              <div role="tablist" aria-label={tb("progress")} className="flex gap-inline rounded-sm bg-muted-wash p-inline">
-                {(["make", "design"] as Pane[]).map((p) => (
-                  <button
-                    key={p}
-                    role="tab"
-                    type="button"
-                    aria-selected={pane === p}
-                    onClick={() => setPane(p)}
-                    className={cn(
-                      "flex min-h-11 items-center rounded-sm px-comfortable text-[13px] font-medium transition-colors duration-quick sm:min-h-9",
-                      pane === p ? "bg-card text-fg shadow-sm" : "text-muted hover:text-fg",
-                    )}
-                  >
-                    {tb(`pane.${p}`)}
-                  </button>
-                ))}
-              </div>
+              <Tabs
+                variant="pill"
+                aria-label={tb("progress")}
+                items={(["make", "design"] as Pane[]).map((p) => ({ value: p, label: tb(`pane.${p}`) }))}
+                value={pane}
+                onChange={(v) => setPane(v as Pane)}
+              />
               {/* The kind, as a control rather than a sentence with a link in
                   it — and in ink, not the brand colour: on this screen orange
                   belongs to the one action that puts the event on sale. */}
               <Link
                 href="/catalog/new?kind=events"
                 title={tb("changeKind")}
-                className="inline-flex min-h-11 items-center gap-tight rounded-full border border-line px-comfortable text-[13px] transition-colors duration-quick hover:border-strong md:min-h-9"
+                className="inline-flex min-h-11 items-center gap-tight rounded-full border border-line px-comfortable text-sm transition-colors duration-quick hover:border-strong md:min-h-9"
               >
                 <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: custom.accent }} />
                 <span className="sr-only">{tb("adding")} </span>
@@ -507,8 +497,8 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
                 </div>
 
                 <section data-goto="tickets" className="card-surface p-card">
-                  <h2 className="text-base font-semibold text-fg">{tw("title.tickets")}</h2>
-                  <p className="mb-section mt-inline text-[13px] text-muted">{t("step.ticketsHelp")}</p>
+                  <h2 className="text-md font-semibold text-fg">{tw("title.tickets")}</h2>
+                  <p className="mb-section mt-inline text-sm text-muted">{t("step.ticketsHelp")}</p>
                   <TicketTiers rows={tiers} onChange={setTiers} errors={errors} days={content.days} />
                   <div className="mt-major border-t border-hairline pt-section">
                     <WhereSold
@@ -552,11 +542,11 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
 
         {/* ── The one action, pinned on a phone ───────────────────────────── */}
         {categoryId && (
-          <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-tight bg-chrome px-gutter pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-tight shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.18)] md:static md:z-auto md:bg-transparent md:p-0 md:shadow-none lg:hidden">
+          <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-tight border-t border-hairline bg-chrome px-gutter pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-tight md:static md:z-auto md:border-0 md:bg-transparent md:p-0 lg:hidden">
             <button
               type="button"
               onClick={() => setChecklistOpen(true)}
-              className={cn("flex min-h-11 items-center gap-inline text-[13px] font-medium", ready ? "text-success" : "text-muted")}
+              className={cn("flex min-h-11 items-center gap-inline text-sm font-medium", ready ? "text-success" : "text-muted")}
             >
               {ready ? <Check size={15} strokeWidth={2} aria-hidden /> : null}
               {ready ? tb("readyShort") : tb("leftShort", { count: checks.filter((c) => !c.done).length })}
@@ -580,11 +570,11 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
               1,400px tall. */}
           <div className="card-surface overflow-hidden">
             <div className="border-b border-hairline p-card">
-              <p className={cn("break-words text-[16px] font-semibold leading-snug", !content.title.trim() && "text-muted")}>{content.title.trim() || tw("untitled")}</p>
-              {whenText && <p className="mt-inline text-[13px]">{whenText}</p>}
-              {content.venueName.trim() && <p className="text-[13px] text-muted">{content.venueName.trim()}</p>}
+              <p className={cn("break-words text-md font-semibold leading-snug", !content.title.trim() && "text-muted")}>{content.title.trim() || tw("untitled")}</p>
+              {whenText && <p className="mt-inline text-sm">{whenText}</p>}
+              {content.venueName.trim() && <p className="text-sm text-muted">{content.venueName.trim()}</p>}
               {capacity > 0 && fromPrice !== null && (
-                <p className="mt-tight text-[13px] tabular-nums">
+                <p className="mt-tight text-sm tabular-nums">
                   {tw("fromAndCap", { price: fromPrice === 0 ? t("free") : formatPriceShort(fromPrice ?? 0), count: capacity.toLocaleString() })}
                 </p>
               )}
@@ -596,7 +586,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
                 <Button variant="secondary" loading={saving} onClick={() => publish(false)} className="w-full justify-center">{tb("saveOffSale")}</Button>
               </div>
               {/* Honest about the one thing the screen cannot promise yet. */}
-              <p className="mt-section flex items-start gap-tight text-[12px] text-muted">
+              <p className="mt-section flex items-start gap-tight text-xs text-muted">
                 <AlertTriangle size={13} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0 text-warning" />
                 {tw("notLiveYet")}
               </p>
@@ -608,18 +598,13 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
               press away rather than a column of scroll in a rail. */}
           <div className="card-surface overflow-hidden">
             <div className="flex items-center justify-between gap-tight border-b border-hairline px-card py-comfortable">
-              <p className="text-[12px] font-medium text-muted">{t("customise.preview")}</p>
-              <button
-                type="button"
-                onClick={() => setBigPreview(true)}
-                className="flex min-h-9 items-center gap-inline rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-muted-wash hover:text-fg"
-              >
-                <Maximize2 size={14} strokeWidth={1.5} aria-hidden />
+              <p className="text-xs font-medium text-muted">{t("customise.preview")}</p>
+              <Button variant="tertiary" size="sm" onClick={() => setBigPreview(true)} icon={<Maximize2 size={14} strokeWidth={1.5} aria-hidden />} className="text-muted">
                 {tb("fullPreview")}
-              </button>
+              </Button>
             </div>
             <div className="relative flex justify-center bg-muted-wash p-card">
-              <div className={cn("relative h-[26rem] w-[300px] overflow-hidden rounded-md shadow-md", templateFontVars)}>
+              <div className={cn("relative h-[26rem] w-[300px] overflow-hidden rounded-card shadow-md", templateFontVars)}>
                 <PreviewFrame width={390}>
                   <EventTemplate event={draft} device="mobile" labels={labels} now={now} />
                 </PreviewFrame>
@@ -638,8 +623,8 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
 function StepHead({ title, help }: { title: string; help: string }) {
   return (
     <div className="mb-section">
-      <h2 className="text-base font-semibold text-fg">{title}</h2>
-      <p className="mt-inline text-[13px] text-muted">{help}</p>
+      <h2 className="text-md font-semibold text-fg">{title}</h2>
+      <p className="mt-inline text-sm text-muted">{help}</p>
     </div>
   );
 }
@@ -673,7 +658,7 @@ function EventChecklist({
       {/* The count is the decision-relevant line, so it leads. It used to sit
           under the list in 13px grey beneath a 12px eyebrow that said nothing
           the list did not. */}
-      <p className={cn("mb-tight text-base font-semibold", ready ? "text-success" : "text-fg")}>
+      <p className={cn("mb-tight text-md font-semibold", ready ? "text-success" : "text-fg")}>
         {ready ? tb("readyYes") : tb("readyNo", { count: checks.filter((c) => !c.done).length })}
       </p>
       <ul className="flex flex-col gap-0.5">
@@ -683,7 +668,7 @@ function EventChecklist({
               type="button"
               disabled={!reachable(c.step)}
               onClick={() => onGo(c.step)}
-              className="flex min-h-11 w-full items-start gap-tight rounded-xs px-inline py-tight text-left text-[13px] transition-colors duration-quick enabled:hover:bg-muted-wash md:min-h-9"
+              className="flex min-h-11 w-full items-start gap-tight rounded-control px-inline py-tight text-left text-sm transition-colors duration-quick enabled:hover:bg-muted-wash md:min-h-9"
             >
               {c.done ? (
                 <Check size={16} strokeWidth={2} aria-hidden className="mt-px shrink-0 text-success" />
@@ -692,7 +677,7 @@ function EventChecklist({
               )}
               <span className="flex min-w-0 flex-col">
                 <span className={cn(!c.done && "text-muted")}>{tw(`check.${c.key}`)}</span>
-                {c.hint && <span className="text-[12px] text-warning">{c.hint}</span>}
+                {c.hint && <span className="text-xs text-warning">{c.hint}</span>}
               </span>
               <span className="sr-only">{c.done ? tb("checkDone") : tb("checkTodo")}</span>
             </button>

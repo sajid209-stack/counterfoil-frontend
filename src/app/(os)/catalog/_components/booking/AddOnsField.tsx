@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Boxes, Plus, Tag, Trash2 } from "lucide-react";
-import { Button, FormField, Modal, StatusPill } from "@/components/ui";
+import { Button, Checkbox, FormField, Modal, StatusPill } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { formatMoney } from "@/lib/format";
 import { listInventory, type InventoryItemView } from "@/lib/api";
@@ -78,7 +78,7 @@ export function AddOnsField({
   return (
     <div className="flex flex-col gap-tight">
       <div className="flex flex-wrap items-center justify-between gap-tight">
-        <span className="text-base font-semibold text-fg">{t("title")}</span>
+        <span className="text-md font-semibold text-fg">{t("title")}</span>
         <span className="flex items-center gap-tight">
           <Button size="sm" variant="secondary" icon={<Boxes size={14} strokeWidth={1.5} />} onClick={() => setPicking(true)}>
             {t("fromInventory")}
@@ -88,7 +88,7 @@ export function AddOnsField({
           </Button>
         </span>
       </div>
-      <p className="text-[0.8125rem] text-muted">{t("help")}</p>
+      <p className="text-sm text-muted">{t("help")}</p>
 
       <div className="divide-y divide-hairline">
       {addOns.map((a, i) => {
@@ -103,10 +103,10 @@ export function AddOnsField({
                  booking: renaming it here would mean the shelf and the till
                  call the same thing two different things. */
               <span className="flex min-w-0 flex-col gap-inline">
-                {i === 0 && <span className="text-[0.8125rem] font-medium text-muted">{t("colName")}</span>}
+                {i === 0 && <span className="text-sm font-medium text-muted">{t("colName")}</span>}
                 <span className="flex min-w-0 flex-wrap items-center gap-tight">
                   <Boxes size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
-                  <span className="min-w-0 truncate text-[13px] font-medium">{item.name}</span>
+                  <span className="min-w-0 truncate text-sm font-medium">{item.name}</span>
                   {item.tracked && (
                     <StatusPill tone={item.outOfStock ? "danger" : item.low ? "warning" : "neutral"}>
                       {t("left", { count: item.onHand, unit: item.unit })}
@@ -128,23 +128,20 @@ export function AddOnsField({
               value={a.price}
               onChange={(e) => update(i, { price: e.target.value })}
             />
-            <label className="flex items-center gap-inline pb-tight text-[13px]">
-              <input
-                type="checkbox"
-                checked={a.perPerson}
-                onChange={(e) => update(i, { perPerson: e.target.checked })}
-                className="h-4 w-4 accent-[var(--color-ember-solid)]"
-              />
-              {t("perPerson")}
-            </label>
-            <button
-              type="button"
+            <Checkbox
+              checked={a.perPerson}
+              onChange={(e) => update(i, { perPerson: e.target.checked })}
+              label={t("perPerson")}
+            />
+            <Button
+              variant="tertiary"
+              size="icon"
               aria-label={t("remove", { name: item?.name ?? a.name })}
               onClick={() => onChange(addOns.filter((_, idx) => idx !== i))}
-              className="flex h-11 w-11 items-center justify-center rounded-sm text-danger hover:bg-muted-wash md:h-9 md:w-9"
+              className="text-danger"
             >
-              <Trash2 size={16} strokeWidth={1.5} />
-            </button>
+              <Trash2 size={16} strokeWidth={1.5} aria-hidden />
+            </Button>
           </div>
         );
       })}
@@ -153,7 +150,7 @@ export function AddOnsField({
       {picking && (
         <Modal open onClose={() => setPicking(false)} size="sm" title={t("pickTitle")} description={t("pickHelp")}>
           {offered.length === 0 ? (
-            <p className="text-[13px] text-muted">{t("pickEmpty")}</p>
+            <p className="text-sm text-muted">{t("pickEmpty")}</p>
           ) : (
             <ul className="flex flex-col">
               {offered.map((i) => (
@@ -164,8 +161,8 @@ export function AddOnsField({
                     className="flex min-h-11 w-full items-center gap-tight py-comfortable text-left transition-colors duration-quick hover:bg-muted-wash"
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-medium">{i.name}</span>
-                      <span className="block truncate text-[12px] text-muted">
+                      <span className="block truncate text-sm font-medium">{i.name}</span>
+                      <span className="block truncate text-xs text-muted">
                         {[
                           formatMoney(i.price),
                           i.tracked ? t("left", { count: i.onHand, unit: i.unit }) : t("notCounted"),

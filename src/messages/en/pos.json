@@ -486,7 +486,9 @@
     "business": "Business settings",
     "businessBody": "Payment methods, starting cash and allowed difference. Same for every counter.",
     "keypadOn": "The number pad always shows when taking cash.",
-    "keypadOff": "Cash opens at the exact amount. Tap Cash received to type another."
+    "keypadOff": "Cash opens at the exact amount. Tap Cash received to type another.",
+    "designSystem": "Design System",
+    "designSystemBody": "The colours, type, buttons and spacing this screen is drawn with, for the POS and Counterfoil OS."
   },
   "textSize": "Text size",
   "textSize_normal": "Normal",
@@ -563,8 +565,7 @@
     "intro": "Three ways to lay out the same counter. They sell the same things at the same prices. Only the way you build a sale is different.",
     "beingBuilt": "Being built",
     "osAdmin": "OS admin",
-    "tokens": "Design tokens",
-    "primitives": "Primitives"
+    "tokens": "Design system"
   },
   "categoryLabel": "What to show",
   "wall": {

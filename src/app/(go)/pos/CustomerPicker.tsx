@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Search, UserPlus } from "lucide-react";
-import { Button, FormField, Modal, useToast } from "@/components/ui";
+import { Button, FormField, Modal, Skeleton, useToast } from "@/components/ui";
 import {
   listCustomerRows,
   matchOrCreateCustomer,
@@ -51,7 +51,7 @@ export function CustomerPicker({
       footer={
         <>
           {attached && (
-            <Button shape="pill"
+            <Button
               variant="secondary"
               size="lg"
               onClick={() => {
@@ -62,7 +62,7 @@ export function CustomerPicker({
               {t("customerModal.remove")}
             </Button>
           )}
-          <Button shape="pill" variant="secondary" size="lg" onClick={onClose}>
+          <Button variant="secondary" size="lg" onClick={onClose}>
             {t("customerModal.close")}
           </Button>
         </>
@@ -154,10 +154,10 @@ function PickerBody({
           help={t("customerModal.phoneHelp")}
         />
         <div className="flex flex-wrap gap-tight">
-          <Button shape="pill" size="lg" loading={saving} disabled={!newName.trim()} onClick={createAndAttach}>
+          <Button size="lg" loading={saving} disabled={!newName.trim()} onClick={createAndAttach}>
             {t("customerModal.attach")}
           </Button>
-          <Button shape="pill" size="lg" variant="secondary" onClick={() => setCreating(false)}>
+          <Button size="lg" variant="secondary" onClick={() => setCreating(false)}>
             {t("customerModal.backToSearch")}
           </Button>
         </div>
@@ -180,14 +180,14 @@ function PickerBody({
           // the keyboard is already where they need it.
           autoFocus
           placeholder={t("customerModal.searchPlaceholder")}
-          className="h-12 w-full rounded-full border border-line bg-card pl-9 pr-comfortable text-sm outline-none focus:border-ember"
+          className="h-12 w-full rounded-full border border-line bg-card pl-9 pr-comfortable text-base"
         />
       </div>
 
-      {searching && <div className="h-12 animate-pulse rounded-go bg-subtle" />}
+      {searching && <Skeleton h={48} className="rounded-card" />}
 
       {!searching && query.trim().length >= 2 && results.length === 0 && (
-        <p className="text-[0.8125rem] text-muted">{t("customerModal.noMatches")}</p>
+        <p className="text-sm text-muted">{t("customerModal.noMatches")}</p>
       )}
 
       <ul className="flex flex-col gap-tight">
@@ -196,17 +196,17 @@ function PickerBody({
             <button
               type="button"
               onClick={() => attach(c)}
-              className="flex min-h-12 w-full items-center justify-between gap-tight rounded-go border border-line p-comfortable text-left transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10"
+              className="flex min-h-12 w-full items-center justify-between gap-tight rounded-card border border-line p-comfortable text-left transition-colors duration-quick hover:bg-muted-wash active:bg-muted-wash"
             >
               <span className="min-w-0">
                 <span className="flex items-center gap-inline">
-                  <span className="min-w-0 break-words text-sm font-medium">{c.name}</span>
+                  <span className="min-w-0 break-words text-base font-medium">{c.name}</span>
                 </span>
                 {c.phone && (
-                  <span className="block font-mono text-[0.8125rem] text-muted">{c.phone}</span>
+                  <span className="block text-sm tabular-nums text-muted">{c.phone}</span>
                 )}
               </span>
-              <span className="shrink-0 whitespace-nowrap font-mono text-[0.8125rem] text-muted">
+              <span className="shrink-0 whitespace-nowrap text-sm tabular-nums text-muted">
                 {t("customerModal.spend", {
                   orders: c.stats.orders,
                   spent: formatMoney(c.stats.spent),
@@ -217,7 +217,7 @@ function PickerBody({
         ))}
       </ul>
 
-      <Button shape="pill"
+      <Button
         variant="secondary"
         size="lg"
         icon={<UserPlus size={18} strokeWidth={1.5} />}

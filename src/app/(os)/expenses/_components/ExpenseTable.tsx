@@ -1,11 +1,11 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Copy, Paperclip, Pencil, Plus, Receipt, RotateCcw, SearchX, Trash2 } from "lucide-react";
+import { Copy, Paperclip, Pencil, Plus, Receipt, RotateCcw, SearchX, Trash2, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { ActionMenu, Button, DataTable, EmptyState, Select, type ActionMenuItem, type Column } from "@/components/ui";
+import { ActionMenu, Button, DataTable, EmptyState, Pagination, type ActionMenuItem, type Column } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
-import { MD, XL, useMediaQuery } from "@/lib/useMedia";
+import { XL, useMediaQuery } from "@/lib/useMedia";
 import type { Expense, ExpenseSortKey } from "@/lib/api";
 import { CategoryTag, PaidTag, shortDate, useExpenseLabels } from "./parts";
 
@@ -61,13 +61,13 @@ function useColumns(actions: RowActions): Column<Expense>[] {
       key: "ref",
       header: t("table.ref"),
       sortable,
-      render: (e) => <span className="whitespace-nowrap font-mono text-[13px]">{e.ref}</span>,
+      render: (e) => <span className="whitespace-nowrap font-mono text-sm">{e.ref}</span>,
     },
     {
       key: "date",
       header: t("table.date"),
       sortable,
-      render: (e) => <span className="whitespace-nowrap text-[0.8125rem]">{shortDate(e.date)}</span>,
+      render: (e) => <span className="whitespace-nowrap text-sm">{shortDate(e.date)}</span>,
     },
     {
       key: "title",
@@ -82,7 +82,7 @@ function useColumns(actions: RowActions): Column<Expense>[] {
           {/* Who was paid, and how many items the bill had: one quiet line.
               "Items" was a column of dashes for the bills that are one amount. */}
           {(e.payee || e.lineCount > 0) && (
-            <span className="block truncate text-[12px] text-muted">
+            <span className="block truncate text-xs text-muted">
               {[e.payee, e.lineCount > 0 ? t("table.itemsCount", { count: e.lineCount }) : null].filter(Boolean).join(" · ")}
             </span>
           )}
@@ -93,13 +93,13 @@ function useColumns(actions: RowActions): Column<Expense>[] {
       key: "category",
       header: t("table.category"),
       sortable,
-      render: (e) => <CategoryTag category={e.category} className="text-[0.8125rem]" />,
+      render: (e) => <CategoryTag category={e.category} className="text-sm" />,
     },
     {
       key: "paidFrom",
       header: t("table.paidFrom"),
       sortable,
-      render: (e) => <PaidTag paidFrom={e.paidFrom} counter={e.counterName} className="max-w-[7rem] text-[0.8125rem] xl:max-w-[10rem]" />,
+      render: (e) => <PaidTag paidFrom={e.paidFrom} counter={e.counterName} className="max-w-[7rem] text-sm xl:max-w-[10rem]" />,
     },
     {
       key: "total",
@@ -126,7 +126,7 @@ function useColumns(actions: RowActions): Column<Expense>[] {
       key: "recordedBy",
       header: t("table.by"),
       sortable,
-      render: (e) => <span className="block max-w-[9rem] truncate text-[0.8125rem]" title={e.recordedByName}>{e.recordedByName}</span>,
+      render: (e) => <span className="block max-w-[9rem] truncate text-sm" title={e.recordedByName}>{e.recordedByName}</span>,
     },
   );
   return cols;
@@ -141,12 +141,12 @@ function ExpenseCard({ e, actions }: { e: Expense; actions: RowActions }) {
       <div className="flex min-w-0 flex-1 flex-col gap-inline">
         <div className="flex items-baseline justify-between gap-tight">
           <span className="flex min-w-0 flex-1 items-center gap-inline">
-            <span className="min-w-0 truncate text-sm font-medium">{e.title}</span>
+            <span className="min-w-0 truncate text-base font-medium">{e.title}</span>
             {e.receiptUrl && <ReceiptMark />}
           </span>
-          <span className="shrink-0 text-[13px] font-medium tabular-nums">{formatMoney(e.total)}</span>
+          <span className="shrink-0 text-sm font-medium tabular-nums">{formatMoney(e.total)}</span>
         </div>
-        <span className="truncate text-[12px] text-muted">
+        <span className="truncate text-xs text-muted">
           <span className="font-mono">{e.ref}</span> · {labels.category(e.category)} · {labels.paidFrom(e.paidFrom)} · {shortDate(e.date)}
         </span>
       </div>
@@ -157,52 +157,20 @@ function ExpenseCard({ e, actions }: { e: Expense; actions: RowActions }) {
   );
 }
 
-/** Showing 1–20 of 64 · Show 20 · Previous · Page 1 of 4 · Next — the same pager Orders draws. */
+/** The range on screen · rows per page · Previous · Page 1 of 4 · Next — the kit's one pager,
+ *  except when everything fits on one page: then the count is all there is to say. */
 function Pager({ page, totalPages, pageSize, total, onPage, onPageSize }: { page: number; totalPages: number; pageSize: number; total: number; onPage: (p: number) => void; onPageSize: (n: number) => void }) {
   const t = useTranslations("expenses");
-  const wide = useMediaQuery(MD);
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
-  const btn =
-    "inline-flex h-11 items-center gap-inline rounded-sm border border-line px-comfortable text-[0.8125rem] font-medium text-fg transition-colors duration-quick hover:enabled:border-inverse disabled:cursor-not-allowed disabled:text-muted disabled:opacity-60 md:h-9";
-  /* One page of everything: previous, next, "page 1 of 1" and a page-size
-     choice are controls with nothing to do. The count is all that is left to say. */
   if (totalPages <= 1 && total <= Math.min(...PAGE_SIZES)) {
     return (
-      <p className="text-[0.8125rem] tabular-nums text-muted" aria-live="polite">
+      <p className="text-sm tabular-nums text-muted" aria-live="polite">
         {t("page.showing", { from, to, total })}
       </p>
     );
   }
-  return (
-    <nav aria-label={t("page.label")} className="flex flex-wrap items-center justify-between gap-x-section gap-y-tight">
-      <p className="text-[0.8125rem] tabular-nums text-muted" aria-live="polite">
-        {t("page.showing", { from, to, total })}
-      </p>
-      <div className="flex flex-wrap items-center gap-tight">
-        <div className="flex items-center gap-tight">
-          <span id="expenses-size-label" className="text-[0.8125rem] text-muted">{t("page.show")}</span>
-          <Select
-            aria-labelledby="expenses-size-label"
-            size={wide ? "sm" : "md"}
-            value={String(pageSize)}
-            onChange={(v) => onPageSize(Number(v))}
-            options={PAGE_SIZES.map((n) => ({ value: String(n), label: String(n) }))}
-            className="w-20"
-          />
-        </div>
-        <button type="button" className={btn} disabled={page <= 1} onClick={() => onPage(page - 1)}>
-          <ChevronLeft size={15} strokeWidth={1.5} aria-hidden />
-          {t("page.previous")}
-        </button>
-        <span className="min-w-[5.5rem] text-center text-[0.8125rem] tabular-nums text-muted">{t("page.of", { page, total: totalPages })}</span>
-        <button type="button" className={btn} disabled={page >= totalPages} onClick={() => onPage(page + 1)}>
-          {t("page.next")}
-          <ChevronRight size={15} strokeWidth={1.5} aria-hidden />
-        </button>
-      </div>
-    </nav>
-  );
+  return <Pagination page={page} pageSize={pageSize} total={total} onPageChange={onPage} pageSizeOptions={PAGE_SIZES} onPageSizeChange={onPageSize} />;
 }
 
 export function ExpenseTable({
@@ -251,12 +219,17 @@ export function ExpenseTable({
 
   if (failed && !rows) {
     return (
-      <div className="card-surface flex flex-col items-center gap-tight p-card py-major text-center">
-        <p className="text-[15px] font-semibold">{t("error.title")}</p>
-        <p className="text-[13px] text-muted">{t("error.text")}</p>
-        <Button variant="secondary" icon={<RotateCcw size={15} strokeWidth={1.5} aria-hidden />} onClick={onRetry} className="mt-tight">
-          {t("error.retry")}
-        </Button>
+      <div className="card-surface">
+        <EmptyState
+          icon={<TriangleAlert size={24} strokeWidth={1.5} aria-hidden />}
+          title={t("error.title")}
+          message={t("error.text")}
+          action={
+            <Button variant="secondary" icon={<RotateCcw size={15} strokeWidth={1.5} aria-hidden />} onClick={onRetry}>
+              {t("error.retry")}
+            </Button>
+          }
+        />
       </div>
     );
   }

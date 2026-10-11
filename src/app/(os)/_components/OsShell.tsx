@@ -236,7 +236,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             ) : (
               <PageIcon size={20} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted peer-[:not(:empty)]:hidden" />
             )}
-            <p className="min-w-0 flex-1 truncate text-[17px] font-semibold text-fg">{pageName}</p>
+            <p className="min-w-0 flex-1 truncate text-md font-semibold text-fg">{pageName}</p>
             <div id="os-page-actions-mobile" className="flex shrink-0 items-center gap-0.5 empty:hidden" />
           </div>
 
@@ -272,7 +272,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
               the page, edge to edge, and the window scrolls as it always did.
               The fade is a sibling of the scroller, not a child, so it stays put
               while the content moves. */}
-          <div className="os-frame relative min-w-0 flex-1 bg-surface md:mb-2 md:mr-2 md:min-h-0 md:overflow-hidden md:rounded-[16px]">
+          <div className="os-frame relative min-w-0 flex-1 bg-surface md:mb-2 md:mr-2 md:min-h-0 md:overflow-hidden md:rounded-lg">
             <div
               ref={frameRef}
               data-os-scroll

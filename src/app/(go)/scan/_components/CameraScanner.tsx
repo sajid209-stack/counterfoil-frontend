@@ -142,14 +142,14 @@ export function CameraScanner({ onCode, onClose, labels }: { onCode: (code: stri
       {denied ? (
         <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-comfortable px-section text-center">
           <p className="text-xl font-semibold">{labels.denied}</p>
-          <p className="max-w-sm text-sm text-paper/80">{labels.deniedHint}</p>
+          <p className="max-w-sm text-base text-paper/80">{labels.deniedHint}</p>
           <button
             type="button"
             onClick={() => {
               setDenied(false);
               setAttempt((n) => n + 1);
             }}
-            className="mt-tight h-12 rounded-full bg-paper px-major text-base font-semibold text-ink"
+            className="mt-tight h-12 rounded-full bg-paper px-major text-md font-semibold text-ink"
           >
             {labels.retry}
           </button>
@@ -159,11 +159,12 @@ export function CameraScanner({ onCode, onClose, labels }: { onCode: (code: stri
            outside the reticle is dimmed, so the aiming area is the one part of
            the frame at full brightness. */
         <div aria-hidden className="relative z-10 flex flex-1 items-center justify-center">
-          <div className="h-[min(70vw,300px)] w-[min(70vw,300px)] rounded-go-lg shadow-[0_0_0_9999px_rgba(20,20,19,0.62)]">
-            <span className="absolute left-0 top-0 h-10 w-10 rounded-tl-go-lg border-l-4 border-t-4 border-paper" />
-            <span className="absolute right-0 top-0 h-10 w-10 rounded-tr-go-lg border-r-4 border-t-4 border-paper" />
-            <span className="absolute bottom-0 left-0 h-10 w-10 rounded-bl-go-lg border-b-4 border-l-4 border-paper" />
-            <span className="absolute bottom-0 right-0 h-10 w-10 rounded-br-go-lg border-b-4 border-r-4 border-paper" />
+          {/* ds-exception: viewfinder cut-out needs a spread shadow */}
+          <div className="h-[min(70vw,300px)] w-[min(70vw,300px)] rounded-sheet shadow-[0_0_0_9999px_rgba(20,20,19,0.62)]">
+            <span className="absolute left-0 top-0 h-10 w-10 rounded-tl-sheet border-l-4 border-t-4 border-paper" />
+            <span className="absolute right-0 top-0 h-10 w-10 rounded-tr-sheet border-r-4 border-t-4 border-paper" />
+            <span className="absolute bottom-0 left-0 h-10 w-10 rounded-bl-sheet border-b-4 border-l-4 border-paper" />
+            <span className="absolute bottom-0 right-0 h-10 w-10 rounded-br-sheet border-b-4 border-r-4 border-paper" />
           </div>
         </div>
       )}
@@ -172,7 +173,7 @@ export function CameraScanner({ onCode, onClose, labels }: { onCode: (code: stri
         <button type="button" onClick={onClose} aria-label={labels.close} className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-paper/60">
           <X size={24} strokeWidth={2} />
         </button>
-        {!denied && <p className="min-w-0 flex-1 truncate text-center text-sm text-paper/90">{labels.aim}</p>}
+        {!denied && <p className="min-w-0 flex-1 truncate text-center text-base text-paper/90">{labels.aim}</p>}
         {canTorch ? (
           <button
             type="button"

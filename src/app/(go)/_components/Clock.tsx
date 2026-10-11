@@ -21,7 +21,7 @@ export function ClockCell({
   hhmm,
   short = true,
   className,
-  ampmClassName = "text-[0.8125rem] font-medium",
+  ampmClassName = "text-sm font-medium",
 }: {
   hhmm: string;
   short?: boolean;

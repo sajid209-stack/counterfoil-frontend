@@ -3,9 +3,8 @@
 import { useId, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Check, CreditCard, Landmark, Smartphone, type LucideIcon } from "lucide-react";
-import { Button, Modal, useToast } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { CreditCard, Landmark, Smartphone, type LucideIcon } from "lucide-react";
+import { AffixInput, Button, ChoiceCard, Field, Modal, useToast } from "@/components/ui";
 import { formatMoney } from "@/lib/format";
 import { deposit, withdraw, type DepositMethod, type FinanceSummary, type ID } from "@/lib/api";
 
@@ -21,28 +20,22 @@ const toText = (minor: number) => (minor / 100).toFixed(2);
 function AmountField({ label, value, onChange, error }: { label: string; value: string; onChange: (v: string) => void; error?: string }) {
   const id = useId();
   return (
-    <div className="flex flex-col gap-tight">
-      <label htmlFor={id} className="type-label text-[0.75rem] text-muted">{label}</label>
-      <div className={cn("flex h-12 items-center rounded-sm border bg-card px-comfortable focus-within:ring-2", error ? "border-danger focus-within:ring-danger/20" : "border-line focus-within:border-ember focus-within:ring-ember/20")}>
-        <span aria-hidden className="mr-tight text-[18px] font-semibold text-muted">৳</span>
-        <input
-          id={id}
-          data-autofocus
-          inputMode="decimal"
-          autoComplete="off"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? `${id}-msg` : undefined}
-          className="h-full min-w-0 flex-1 bg-transparent text-[20px] font-semibold outline-none"
-        />
-      </div>
-      {error && <p id={`${id}-msg`} role="alert" className="text-[0.75rem] text-danger">{error}</p>}
-    </div>
+    <Field label={label} error={error} htmlFor={id}>
+      <AffixInput
+        id={id}
+        data-autofocus
+        inputMode="decimal"
+        autoComplete="off"
+        prefix="৳"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        invalid={!!error}
+        aria-describedby={error ? `${id}-msg` : undefined}
+        inputClassName="text-xl! font-semibold tabular-nums"
+      />
+    </Field>
   );
 }
-
-const chip = "inline-flex h-11 items-center rounded-full border border-line bg-card px-section text-[13px] font-medium transition-colors duration-quick hover:border-inverse md:h-9";
 
 export function WithdrawDialog({ locationId, summary, onClose, onDone }: { locationId: ID; summary: FinanceSummary; onClose: () => void; onDone: () => void }) {
   const t = useTranslations("finances");
@@ -84,28 +77,28 @@ export function WithdrawDialog({ locationId, summary, onClose, onDone }: { locat
     >
       <form onSubmit={(e) => { e.preventDefault(); void submit(); }} className="flex flex-col gap-section">
         <AmountField label={t("withdraw.amount")} value={text} onChange={(v) => { setText(v); setError(undefined); }} error={error} />
-        <p aria-live="polite" className="min-h-5 text-[13px] text-muted">
+        <p aria-live="polite" className="min-h-5 text-sm text-muted">
           {Number.isFinite(minor) && minor > 0 && minor <= summary.available ? t("withdraw.leaves", { amount: formatMoney(summary.available - minor) }) : ""}
         </p>
         <div className="flex flex-wrap gap-tight">
-          <button type="button" className={chip} onClick={() => { setText(toText(summary.available)); setError(undefined); }}>
+          <Button variant="secondary" size="sm" shape="pill" onClick={() => { setText(toText(summary.available)); setError(undefined); }}>
             {t("withdraw.all", { amount: formatMoney(summary.available) })}
-          </button>
-          <button type="button" className={chip} onClick={() => { setText(toText(Math.floor(summary.available / 2))); setError(undefined); }}>
+          </Button>
+          <Button variant="secondary" size="sm" shape="pill" onClick={() => { setText(toText(Math.floor(summary.available / 2))); setError(undefined); }}>
             {t("withdraw.half")}
-          </button>
+          </Button>
         </div>
-        <div className="rounded-sm border border-hairline bg-subtle p-comfortable">
-          <p className="text-[12px] text-muted">{t("withdraw.goesTo")}</p>
-          <p className="mt-inline flex items-center gap-tight text-[14px] font-medium">
+        <div className="rounded-control border border-hairline bg-subtle p-comfortable">
+          <p className="text-xs text-muted">{t("withdraw.goesTo")}</p>
+          <p className="mt-inline flex items-center gap-tight text-base font-medium">
             <Landmark size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
             {bank}
           </p>
-          <Link href="/settings/payments" className="mt-tight inline-flex min-h-11 items-center text-[13px] font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80 md:min-h-9">
+          <Link href="/settings/payments" className="mt-tight inline-flex min-h-11 items-center text-sm font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80 md:min-h-9">
             {t("withdraw.change")}
           </Link>
         </div>
-        <p className="text-[13px] text-muted">{t("withdraw.arrives")}</p>
+        <p className="text-sm text-muted">{t("withdraw.arrives")}</p>
       </form>
     </Modal>
   );
@@ -159,34 +152,28 @@ export function DepositDialog({ locationId, summary, onClose, onDone }: { locati
     >
       <form onSubmit={(e) => { e.preventDefault(); void submit(); }} className="flex flex-col gap-section">
         <AmountField label={t("deposit.amount")} value={text} onChange={(v) => { setText(v); setError(undefined); }} error={error} />
-        <p aria-live="polite" className="min-h-5 text-[13px] text-muted">
+        <p aria-live="polite" className="min-h-5 text-sm text-muted">
           {Number.isFinite(minor) && minor > 0 ? t("deposit.willBe", { amount: formatMoney(summary.available + minor) }) : ""}
         </p>
         <fieldset className="flex flex-col gap-tight">
-          <legend className="type-label mb-tight text-[0.75rem] text-muted">{t("deposit.method")}</legend>
+          <legend className="mb-tight text-sm font-medium text-muted">{t("deposit.method")}</legend>
           <div className="grid grid-cols-3 gap-tight">
             {METHODS.map(({ value, Icon, label }) => {
-              const chosen = method === value;
               return (
-                <button
+                <ChoiceCard
                   key={value}
-                  type="button"
-                  aria-pressed={chosen}
+                  selected={method === value}
                   onClick={() => setMethod(value)}
-                  className={cn(
-                    "relative flex min-h-[76px] flex-col items-center justify-center gap-tight rounded-sm border px-tight py-comfortable text-center text-[13px] font-medium leading-tight transition-colors duration-quick",
-                    chosen ? "border-ember-solid bg-ember-solid text-white" : "border-line bg-card text-fg hover:border-inverse",
-                  )}
+                  className="flex min-h-[76px] flex-col items-center justify-center gap-tight px-tight py-comfortable text-center text-sm font-medium leading-tight"
                 >
-                  {chosen && <Check size={14} strokeWidth={3} aria-hidden className="absolute right-tight top-tight" />}
                   <Icon size={20} strokeWidth={1.5} aria-hidden />
                   {label === "bkash" ? t("by.bkash") : label === "card" ? t("deposit.card") : t("detail.bankTransfer")}
-                </button>
+                </ChoiceCard>
               );
             })}
           </div>
         </fieldset>
-        <p className="text-[13px] text-muted">{t("deposit.note")}</p>
+        <p className="text-sm text-muted">{t("deposit.note")}</p>
       </form>
     </Modal>
   );

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Sheet } from "@/components/ui";
+import { Sheet, Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getStaff, listLocations, listRoles } from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
@@ -89,7 +89,7 @@ export function SettingsChrome({ open, onClose }: { open: boolean; onClose: () =
             href={backTo}
             data-settings-back
             aria-label={t("settingsExit")}
-            className="-ml-tight inline-flex h-9 items-center gap-inline rounded-sm pl-tight pr-comfortable text-[15px] font-semibold text-fg transition-colors duration-quick hover:bg-fg/[0.05] [@media(pointer:coarse)]:h-11"
+            className="-ml-tight inline-flex h-9 items-center gap-inline rounded-control pl-tight pr-comfortable text-md font-semibold text-fg transition-colors duration-quick hover:bg-fg/[0.05] [@media(pointer:coarse)]:h-11"
           >
             <ChevronLeft size={18} strokeWidth={1.75} aria-hidden className="text-muted" />
             {t("settings")}
@@ -100,25 +100,25 @@ export function SettingsChrome({ open, onClose }: { open: boolean; onClose: () =
             list is taller than a laptop, and a hard cut at the foot reads as the
             end of the list. The padding is the fade's room, so a list that fits
             is not dimmed at all. */}
-        <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-comfortable pb-6 [mask-image:linear-gradient(to_bottom,#000_calc(100%-24px),transparent)]">
+        <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-comfortable pb-6 [mask-image:linear-gradient(to_bottom,black_calc(100%-24px),transparent)]">
           {/* Whose business: a tile, the name, a quiet count. Not a control. */}
           <div className="flex items-center gap-comfortable px-comfortable pb-3 pt-1">
             <span
               aria-hidden
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-sm bg-fg text-[13px] font-semibold text-chrome"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-fg text-sm font-semibold text-chrome"
             >
               {initialsOf(business)}
             </span>
             <span className="min-w-0 flex-1">
               {business ? (
-                <span title={business} className="line-clamp-2 break-words text-sm font-semibold leading-tight text-fg">{business}</span>
+                <span title={business} className="line-clamp-2 break-words text-base font-semibold leading-tight text-fg">{business}</span>
               ) : (
-                <span aria-hidden className="block h-3.5 w-28 animate-pulse rounded-xs bg-subtle" />
+                <Skeleton className="h-3.5 w-28" />
               )}
               {venues !== undefined ? (
-                <span className="mt-0.5 block truncate text-[12px] leading-tight text-muted">{t("venueCount", { count: venues })}</span>
+                <span className="mt-0.5 block truncate text-xs leading-tight text-muted">{t("venueCount", { count: venues })}</span>
               ) : (
-                <span aria-hidden className="mt-1 block h-3 w-16 animate-pulse rounded-xs bg-subtle" />
+                <Skeleton className="mt-1 h-3 w-16" />
               )}
             </span>
           </div>
@@ -132,23 +132,23 @@ export function SettingsChrome({ open, onClose }: { open: boolean; onClose: () =
           aria-label={me ? t("signedInAs", { name: me.name }) : undefined}
           aria-current={profileCurrent ? "page" : undefined}
           className={cn(
-            "mx-comfortable mb-comfortable flex shrink-0 items-center gap-comfortable rounded-sm px-comfortable py-tight transition-colors duration-quick [@media(pointer:coarse)]:min-h-11",
+            "mx-comfortable mb-comfortable flex shrink-0 items-center gap-comfortable rounded-control px-comfortable py-tight transition-colors duration-quick [@media(pointer:coarse)]:min-h-11",
             profileCurrent ? "bg-fg/[0.07] dark:bg-fg/[0.09]" : "hover:bg-fg/[0.04]",
           )}
         >
-          <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-subtle text-[12px] font-semibold text-fg ring-1 ring-line">
+          <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-subtle text-xs font-semibold text-fg ring-1 ring-line">
             {initialsOf(me?.name)}
           </span>
           <span className="min-w-0 flex-1">
             {me ? (
               <>
-                <span className="block truncate text-[13px] font-medium leading-tight text-fg">{me.name}</span>
-                <span className="mt-0.5 block truncate text-[12px] leading-tight text-muted">{role ?? me.email ?? ""}</span>
+                <span className="block truncate text-sm font-medium leading-tight text-fg">{me.name}</span>
+                <span className="mt-0.5 block truncate text-xs leading-tight text-muted">{role ?? me.email ?? ""}</span>
               </>
             ) : (
               <>
-                <span aria-hidden className="block h-3.5 w-24 animate-pulse rounded-xs bg-subtle" />
-                <span aria-hidden className="mt-1 block h-3 w-16 animate-pulse rounded-xs bg-subtle" />
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="mt-1 h-3 w-16" />
               </>
             )}
           </span>

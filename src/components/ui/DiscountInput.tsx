@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 
@@ -16,7 +17,8 @@ export function parseDiscount(raw: string): number | null {
 }
 
 /**
- * A discount that can be a percentage OR money off.
+ * A discount that can be a percentage OR money off. Use it wherever a cashier
+ * or manager takes something off a sale.
  *
  * "Ten percent" and "take two hundred off" are both things a manager says,
  * and only one of them was expressible. The mode is a visible switch rather
@@ -54,6 +56,7 @@ export function DiscountInput({
   className?: string;
 }) {
   const id = useId();
+  const t = useTranslations("common");
   const [draft, setDraft] = useState<{ of: number; text: string } | null>(null);
   const shown = mode === "percent" ? String(value) : String(value / 100);
   const text = draft && draft.of === value ? draft.text : shown;
@@ -62,7 +65,7 @@ export function DiscountInput({
   const commit = (raw: string) => {
     const n = parseDiscount(raw);
     if (n == null) {
-      setError(`Couldn't read "${raw}" — type a number.`);
+      setError(t("ui.numberParseError", { raw }));
       return;
     }
     setError(null);
@@ -80,17 +83,17 @@ export function DiscountInput({
     <div className={cn("flex flex-col", compact ? "gap-inline" : "gap-tight", className)}>
       {/* Compact opens under a button that already names it, so a label here
           would say the same thing twice in a cart line that cannot spare it. */}
-      {label && !compact && <span className="text-[0.8125rem] font-medium text-muted">{label}</span>}
+      {label && !compact && <span className="text-sm font-medium text-muted">{label}</span>}
 
       <div className="flex items-center gap-tight">
-        <div className={cn("flex shrink-0 overflow-hidden border border-line", shape === "go" ? "rounded-full" : "rounded-sm")}>
+        <div className={cn("flex shrink-0 overflow-hidden border border-line", shape === "go" ? "rounded-full" : "rounded-control")}>
           {(["percent", "amount"] as const).map((m) => (
             <button
               key={m}
               type="button"
               aria-pressed={mode === m}
               onClick={() => { onMode(m); setDraft(null); setError(null); }}
-              className={cn(h, "w-12 text-sm font-medium", mode === m ? "bg-ember-solid text-white" : "bg-card")}
+              className={cn(h, "w-12 text-base font-medium", mode === m ? "bg-ember-solid text-on-solid" : "bg-card")}
             >
               {m === "percent" ? "%" : "৳"}
             </button>
@@ -104,13 +107,13 @@ export function DiscountInput({
           onBlur={() => commit(text)}
           onKeyDown={(e) => { if (e.key === "Enter") { commit(text); (e.target as HTMLInputElement).blur(); } }}
           aria-label={label}
-          className={cn(h, "min-w-0 flex-1 border bg-card px-comfortable text-right font-mono text-sm outline-none", shape === "go" ? "rounded-full" : "rounded-sm", error ? "border-danger" : "border-line focus:border-ember")}
+          className={cn(h, "min-w-0 flex-1 border bg-card px-comfortable text-right text-base tabular-nums", shape === "go" ? "rounded-full" : "rounded-control", error ? "border-danger" : "border-line focus:border-ember")}
         />
         {/* The same discount said the other way round. On a cart line it rides
             here, where the row had room, rather than taking a line of its own
             under the chips. */}
         {compact && off > 0 && !error && (
-          <span className="shrink-0 whitespace-nowrap text-[0.8125rem] text-muted">
+          <span className="shrink-0 whitespace-nowrap text-sm text-muted">
             {mode === "percent" ? formatMoney(off, currency) : `${asPct.toFixed(asPct % 1 === 0 ? 0 : 1)}%`}
           </span>
         )}
@@ -125,24 +128,25 @@ export function DiscountInput({
               onClick={() => { setDraft(null); setError(null); onChange(c); }}
               className={cn(
                 compact ? "h-8" : "h-11",
-                "min-w-12 flex-1 border px-tight text-[0.8125rem] font-medium",
-                shape === "go" ? "rounded-full" : "rounded-sm",
+                "min-w-12 flex-1 border px-tight text-sm font-medium",
+                shape === "go" ? "rounded-full" : "rounded-control",
+                "transition-colors duration-quick",
                 value === c ? "border-ember bg-ember/10 text-brand-foreground" : "border-line bg-card active:bg-ember/10",
               )}
             >
-              {c === 0 ? "None" : `${c}%`}
+              {c === 0 ? t("ui.none") : `${c}%`}
             </button>
           ))}
         </div>
       )}
 
       {error ? (
-        <p className="text-[0.75rem] text-danger">{error}</p>
+        <p className="text-xs text-danger">{error}</p>
       ) : off > 0 && !compact ? (
-        <p className="text-[0.75rem] text-muted">
+        <p className="text-xs text-muted">
           {mode === "percent"
-            ? `= ${formatMoney(off, currency)} off`
-            : `= ${asPct.toFixed(asPct % 1 === 0 ? 0 : 1)}% off`}
+            ? t("ui.amountOff", { amount: formatMoney(off, currency) })
+            : t("ui.percentOff", { pct: asPct.toFixed(asPct % 1 === 0 ? 0 : 1) })}
         </p>
       ) : null}
     </div>

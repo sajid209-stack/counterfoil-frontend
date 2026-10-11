@@ -129,7 +129,7 @@ export function StrengthMeter({ password }: { password: string }) {
           <span key={i} className={cn("h-1.5 flex-1 rounded-full", i <= level ? LEVEL_FILL[level] : "bg-line")} />
         ))}
       </div>
-      <p aria-live="polite" className="mt-inline text-[13px] text-muted">
+      <p aria-live="polite" className="mt-inline text-sm text-muted">
         {key === "empty" ? (
           t("team.pwStrengthEmpty")
         ) : (

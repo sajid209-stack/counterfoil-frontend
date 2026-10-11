@@ -52,7 +52,7 @@ function Headline({ value, label, change, was }: { value: React.ReactNode; label
         {value}
         {change}
       </p>
-      <p className="text-[0.75rem] text-muted">
+      <p className="text-xs text-muted">
         {label}
         {was && ` · ${was}`}
       </p>
@@ -64,7 +64,7 @@ function Headline({ value, label, change, was }: { value: React.ReactNode; label
 function Stat({ label, value, change }: { label: string; value: string; change?: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[0.75rem] text-muted">{label}</dt>
+      <dt className="text-xs text-muted">{label}</dt>
       <dd className="type-figure text-xl font-semibold">
         {value}
         {change}
@@ -76,10 +76,10 @@ function Stat({ label, value, change }: { label: string; value: string; change?:
 /** What each colour means, where colour is the only way to tell two series apart. */
 function SwatchLegend({ items }: { items: { label: string; color: string }[] }) {
   return (
-    <p data-chart-legend className="mb-comfortable flex flex-wrap items-center gap-x-section gap-y-inline text-[0.75rem] text-muted">
+    <p data-chart-legend className="mb-comfortable flex flex-wrap items-center gap-x-section gap-y-inline text-xs text-muted">
       {items.map((i) => (
         <span key={i.label} className="flex items-center gap-tight">
-          <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: i.color }} />
+          <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-xs" style={{ background: i.color }} />
           <span className="text-fg">{i.label}</span>
         </span>
       ))}
@@ -273,7 +273,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
     const up = d > 0;
     const sentence = t(up ? "change.upPts" : "change.downPts", { pts: Math.abs(d), range: rangeText });
     return (
-      <span data-change={up ? "up" : "down"} title={sentence} className={cn("ml-tight text-[0.75rem] font-medium", up ? "text-success" : "text-danger")}>
+      <span data-change={up ? "up" : "down"} title={sentence} className={cn("ml-tight text-xs font-medium", up ? "text-success" : "text-danger")}>
         <span aria-hidden>
           {up ? "▲" : "▼"} {t("kpi.pts", { value: Math.abs(d) })}
         </span>
@@ -706,7 +706,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
                   tick: showCompare ? c.previousFilled : undefined,
                   change:
                     showCompare && c.previousFilled !== undefined ? (
-                      <span className="ml-tight text-[0.75rem] text-muted">{t("full.was", { pct: percent(c.previousFilled) })}</span>
+                      <span className="ml-tight text-xs text-muted">{t("full.was", { pct: percent(c.previousFilled) })}</span>
                     ) : undefined,
                 }))}
               />
@@ -715,7 +715,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
                   type="button"
                   onClick={() => setShowAllCap(!showAllCap)}
                   aria-expanded={showAllCap}
-                  className="mt-comfortable flex min-h-11 items-center text-[0.8125rem] font-medium text-brand-foreground hover:underline sm:min-h-0"
+                  className="mt-comfortable flex min-h-11 items-center text-sm font-medium text-brand-foreground hover:underline sm:min-h-0"
                 >
                   {showAllCap ? t("full.showFewer") : t("full.showAll", { n: cap.length })}
                 </button>
@@ -744,9 +744,9 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
           <Empty>{t("vat.empty")}</Empty>
         ) : (
           <div className="scroll-x-hint -mx-card overflow-x-auto px-card">
-            <table className="w-full min-w-[34rem] border-collapse text-[0.8125rem]">
+            <table className="w-full min-w-[34rem] border-collapse text-base">
               <thead>
-                <tr className="border-b border-hairline text-[0.75rem] font-medium text-muted">
+                <tr className="border-b border-hairline text-sm font-medium text-muted">
                   <th scope="col" className="py-tight pr-comfortable text-left font-medium">{t("vat.class")}</th>
                   <th scope="col" className="py-tight pr-comfortable text-right font-medium">{t("vat.rate")}</th>
                   <th scope="col" className="py-tight pr-comfortable text-right font-medium">{t("vat.net")}</th>
@@ -759,11 +759,11 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
                 {o.tax.rows.map((r) => (
                   <tr key={`${r.taxClass}-${r.rate}`} data-vat-row className="border-b border-hairline">
                     <th scope="row" className="py-comfortable pr-comfortable text-left font-normal">{enumL.tax(r.taxClass)}</th>
-                    <td className="py-comfortable pr-comfortable text-right">{rate_(r.rate)}</td>
-                    <td className="py-comfortable pr-comfortable text-right" data-net={r.net}>{formatMoney(r.net)}</td>
-                    <td className="py-comfortable pr-comfortable text-right" data-vat={r.tax}>{formatMoney(r.tax)}</td>
-                    <td className="py-comfortable pr-comfortable text-right" data-gross={r.gross}>{formatMoney(r.gross)}</td>
-                    <td className="py-comfortable text-right">{num(r.lineCount)}</td>
+                    <td className="py-comfortable pr-comfortable text-right tabular-nums">{rate_(r.rate)}</td>
+                    <td className="py-comfortable pr-comfortable text-right tabular-nums" data-net={r.net}>{formatMoney(r.net)}</td>
+                    <td className="py-comfortable pr-comfortable text-right tabular-nums" data-vat={r.tax}>{formatMoney(r.tax)}</td>
+                    <td className="py-comfortable pr-comfortable text-right tabular-nums" data-gross={r.gross}>{formatMoney(r.gross)}</td>
+                    <td className="py-comfortable text-right tabular-nums">{num(r.lineCount)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -771,10 +771,10 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
                 <tr data-vat-total className="font-semibold">
                   <th scope="row" className="py-comfortable pr-comfortable text-left font-semibold">{t("vat.total")}</th>
                   <td className="py-comfortable pr-comfortable" />
-                  <td className="py-comfortable pr-comfortable text-right" data-net={o.tax.net}>{formatMoney(o.tax.net)}</td>
-                  <td className="py-comfortable pr-comfortable text-right" data-vat={o.tax.tax}>{formatMoney(o.tax.tax)}</td>
-                  <td className="py-comfortable pr-comfortable text-right" data-gross={o.tax.gross}>{formatMoney(o.tax.gross)}</td>
-                  <td className="py-comfortable text-right">{num(lines)}</td>
+                  <td className="py-comfortable pr-comfortable text-right tabular-nums" data-net={o.tax.net}>{formatMoney(o.tax.net)}</td>
+                  <td className="py-comfortable pr-comfortable text-right tabular-nums" data-vat={o.tax.tax}>{formatMoney(o.tax.tax)}</td>
+                  <td className="py-comfortable pr-comfortable text-right tabular-nums" data-gross={o.tax.gross}>{formatMoney(o.tax.gross)}</td>
+                  <td className="py-comfortable text-right tabular-nums">{num(lines)}</td>
                 </tr>
               </tfoot>
             </table>

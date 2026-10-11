@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -22,7 +22,6 @@ import {
   Power,
   PowerOff,
   RotateCcw,
-  Search,
   Ship,
   Trash2,
   Trophy,
@@ -31,11 +30,15 @@ import {
 import {
   ActionMenu,
   Button,
+  Card,
+  Checkbox,
+  Chip,
   ConfirmDialog,
   DataTable,
   EmptyState,
   ProductThumb,
   FilterBar,
+  FilterSearch,
   Select,
   StatusPill,
   Tabs,
@@ -480,7 +483,7 @@ function Catalog() {
       return (
         <span
           aria-hidden
-          className="block h-10 w-10 shrink-0 rounded-xs border border-line bg-cover bg-center"
+          className="block h-10 w-10 shrink-0 rounded-inner border border-line bg-cover bg-center"
           style={{ backgroundImage: `url("${cover}")` }}
         />
       );
@@ -495,7 +498,7 @@ function Catalog() {
     return (
       <span
         aria-hidden
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xs border"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-inner border"
         style={{
           background: `color-mix(in srgb, ${accent} 16%, transparent)`,
           borderColor: `color-mix(in srgb, ${accent} 40%, transparent)`,
@@ -510,7 +513,7 @@ function Catalog() {
     if (i.blockers.length) {
       const text = i.blockers.map(blockerLabel).join(" · ");
       return (
-        <span className="flex min-w-0 items-center gap-inline text-[12px] text-warning" title={text}>
+        <span className="flex min-w-0 items-center gap-inline text-xs text-warning" title={text}>
           <AlertTriangle size={12} strokeWidth={2} className="shrink-0" aria-hidden />
           <span className="truncate">{text}</span>
         </span>
@@ -520,7 +523,7 @@ function Catalog() {
       const text = i.warnings.map(warningLabel).join(" · ");
       const Icon = i.warnings[0].kind === "datesRunOut" ? CalendarOff : Clock;
       return (
-        <span className="flex min-w-0 items-center gap-inline text-[12px] text-warning" title={text}>
+        <span className="flex min-w-0 items-center gap-inline text-xs text-warning" title={text}>
           <Icon size={12} strokeWidth={2} className="shrink-0" aria-hidden />
           <span className="truncate">{text}</span>
         </span>
@@ -528,7 +531,7 @@ function Catalog() {
     }
     const own = i.product ? subtitle(i.product, { resources, team }) : i.event!.venueName;
     return (
-      <span className="block truncate text-[12px] text-muted">
+      <span className="block truncate text-xs text-muted">
         {xl ? own : [typeShort(i), own].filter(Boolean).join(" · ")}
       </span>
     );
@@ -538,14 +541,14 @@ function Catalog() {
    *  booking's next seven days against what it could have held. */
   const Fill = ({ top, pct, bottom }: { top: string; pct: number; bottom: string }) => (
     <span className="flex w-full min-w-0 flex-col gap-inline">
-      <span className="flex items-baseline justify-between gap-tight whitespace-nowrap text-[12px]">
+      <span className="flex items-baseline justify-between gap-tight whitespace-nowrap text-xs">
         <span className="truncate tabular-nums">{top}</span>
         <span className="text-muted tabular-nums">{pct}%</span>
       </span>
       <span className="h-1.5 w-full overflow-hidden rounded-full bg-line">
-        <span className={cn("block h-full rounded-full", pct >= 90 ? "bg-ember-solid" : "bg-success")} style={{ width: `${pct}%` }} />
+        <span className={cn("block h-full rounded-full", pct >= 90 ? "bg-ember-solid" : "bg-success-solid")} style={{ width: `${pct}%` }} />
       </span>
-      <span className="truncate whitespace-nowrap text-[12px] text-muted tabular-nums">{bottom}</span>
+      <span className="truncate whitespace-nowrap text-xs text-muted tabular-nums">{bottom}</span>
     </span>
   );
 
@@ -566,12 +569,12 @@ function Catalog() {
     }
     const n = recent.get(i.id) ?? 0;
     return n === 0 ? (
-      <span className="text-[12px] text-muted">
+      <span className="text-xs text-muted">
         <span aria-hidden>—</span>
         <span className="sr-only">{t("noneRecent")}</span>
       </span>
     ) : (
-      <span className="text-[12px] tabular-nums">{t("recent", { count: n })}</span>
+      <span className="text-xs tabular-nums">{t("recent", { count: n })}</span>
     );
   };
 
@@ -584,22 +587,22 @@ function Catalog() {
   const priceText = (i: CatalogItem) =>
     i.fromPrice === null ? t(i.kind === "event" ? "soldOut" : "noPrice") : i.fromPrice === 0 ? t("free") : formatPriceShort(i.fromPrice);
 
-  const checkboxCls = "h-4 w-4 accent-[var(--color-ember)]";
   const somePicked = pageRows.some((r) => selected.has(r.key)) && !allOnPage;
   const allColumns: Column<CatalogItem>[] = [
     {
       key: "select",
-      header: <PageCheckbox checked={allOnPage} mixed={somePicked} onChange={togglePage} label={t("selectPage")} className={checkboxCls} />,
-      width: "2.75rem",
+      /* The kit's checkbox is a 36px target on a desktop with its 20px mark
+         inset; the negative margin puts the mark on the card's own inset, so it
+         lines up with the heading above. */
+      header: (
+        <span className="-ml-tight flex">
+          <Checkbox checked={allOnPage} indeterminate={somePicked} onCheckedChange={togglePage} aria-label={t("selectPage")} />
+        </span>
+      ),
+      width: "3.5rem",
       render: (i) => (
-        <span onClick={(e) => e.stopPropagation()} className="flex">
-          <input
-            type="checkbox"
-            checked={selected.has(i.key)}
-            onChange={() => toggleOne(i.key)}
-            aria-label={t("selectOne", { name: i.name })}
-            className={checkboxCls}
-          />
+        <span onClick={(e) => e.stopPropagation()} className="-ml-tight flex">
+          <Checkbox checked={selected.has(i.key)} onCheckedChange={() => toggleOne(i.key)} aria-label={t("selectOne", { name: i.name })} />
         </span>
       ),
     },
@@ -625,7 +628,7 @@ function Catalog() {
          accent — decoration on every other row of a list that is read for names
          and states. */
       render: (i) => (
-        <span className="block truncate text-[0.8125rem] text-muted" title={typeLabel(i)}>
+        <span className="block truncate text-sm text-muted" title={typeLabel(i)}>
           {typeShort(i)}
         </span>
       ),
@@ -639,16 +642,16 @@ function Catalog() {
           /* A multi-day event states how long it runs rather than the clock on
              its first day — the time under a two-day tournament said nothing
              about the second. */
-          <span className="flex flex-col whitespace-nowrap text-[13px]">
+          <span className="flex flex-col whitespace-nowrap text-sm">
             <span>{dateOf(i.event.startsAt)}</span>
-            <span className="text-[12px] text-muted">
+            <span className="text-xs text-muted">
               {runsOverDays(i.event) ? t("col.runsDays", { count: dayCountOf(i.event) }) : timeOf(i.event.startsAt)}
             </span>
           </span>
         ) : (
-          <span className="flex min-w-0 flex-col text-[13px]">
+          <span className="flex min-w-0 flex-col text-sm">
             <span className="line-clamp-2 break-words">{whenOf(i.product!)[0]}</span>
-            {whenOf(i.product!)[1] && <span className="text-[12px] text-muted tabular-nums">{whenOf(i.product!)[1]}</span>}
+            {whenOf(i.product!)[1] && <span className="text-xs text-muted tabular-nums">{whenOf(i.product!)[1]}</span>}
           </span>
         ),
     },
@@ -660,7 +663,7 @@ function Catalog() {
       sortable: true,
       width: "6rem",
       render: (i) => (
-        <span className={cn("whitespace-nowrap text-[0.8125rem] tabular-nums", i.fromPrice === null && "text-muted")}>{priceText(i)}</span>
+        <span className={cn("whitespace-nowrap text-sm tabular-nums", i.fromPrice === null && "text-muted")}>{priceText(i)}</span>
       ),
     },
     { key: "selling", header: t("col.selling"), width: "10.5rem", render: (i) => <Selling i={i} /> },
@@ -695,15 +698,6 @@ function Catalog() {
   const facetChips = FACETS.filter((f) =>
     kind === "bookings" ? !["soldOut", "ended"].includes(f) : kind === "events" ? f !== "attention" : true,
   ).filter((f) => f === "archived" || states.includes(f) || facetCounts[f] > 0);
-  /* The state chips inside the Filters panel. Quiet fills, no outline: the
-     chosen ones are the one solid thing. `muted-wash`, not `subtle` — in dark
-     `subtle` is the card colour and an unchosen chip would vanish. */
-  const chip = (on: boolean) =>
-    cn(
-      "flex h-11 shrink-0 items-center gap-tight whitespace-nowrap rounded-full px-comfortable text-[0.8125rem] transition-colors duration-quick md:h-8",
-      on ? "bg-inverse font-medium text-inverse-fg" : "bg-muted-wash text-fg hover:bg-line",
-    );
-
   const primary: PagePrimary = { label: t("add"), href: kind === "all" ? "/catalog/new" : `/catalog/new?kind=${kind}` };
 
   return (
@@ -712,21 +706,21 @@ function Catalog() {
           first thing. An empty table with a lonely button teaches nothing; the
           chooser says what a catalog holds while it asks what to add. */}
       {empty ? (
-        <section className="card-surface p-card sm:p-major">
+        <Card as="section">
           <div className="mb-major max-w-2xl">
-            <h2 className="text-[1.375rem] font-semibold">{t("firstRun.title")}</h2>
-            <p className="mt-tight text-[14px] text-muted">{t("firstRun.body")}</p>
+            <h2 className="text-lg font-semibold tracking-title">{t("firstRun.title")}</h2>
+            <p className="mt-tight text-base text-muted">{t("firstRun.body")}</p>
             <ol className="mt-section grid gap-tight sm:grid-cols-3">
               {(["pick", "shape", "sell"] as const).map((k, n) => (
-                <li key={k} className="flex items-start gap-tight rounded-sm bg-muted-wash px-comfortable py-tight text-[0.8125rem]">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-card text-[0.75rem] font-semibold">{n + 1}</span>
+                <li key={k} className="flex items-start gap-tight rounded-inner bg-muted-wash px-comfortable py-tight text-sm">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-card text-xs font-semibold">{n + 1}</span>
                   <span>{t(`firstRun.step.${k}`)}</span>
                 </li>
               ))}
             </ol>
           </div>
           <CatalogChooser />
-        </section>
+        </Card>
       ) : (
         <div className={cn("flex flex-col gap-section", templateFontVars, selected.size > 0 && "pb-24")}>
           {/* The page's first toolbar: the views on the left, and what the page
@@ -778,23 +772,17 @@ function Catalog() {
                  row somebody has to act on. */
               <span className="flex items-center gap-comfortable">
                 {selecting && (
-                  <label onClick={(e) => e.stopPropagation()} className="-my-inline -ml-tight flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center">
-                    <input
-                      type="checkbox"
-                      checked={selected.has(i.key)}
-                      onChange={() => toggleOne(i.key)}
-                      aria-label={t("selectOne", { name: i.name })}
-                      className={checkboxCls}
-                    />
-                  </label>
+                  <span onClick={(e) => e.stopPropagation()} className="-my-inline -ml-tight flex shrink-0">
+                    <Checkbox checked={selected.has(i.key)} onCheckedChange={() => toggleOne(i.key)} aria-label={t("selectOne", { name: i.name })} />
+                  </span>
                 )}
                 <Thumb i={i} />
                 <span className="flex min-w-0 flex-1 flex-col gap-inline">
                   <span className="flex items-baseline gap-tight">
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{i.name}</span>
-                    <span className={cn("shrink-0 text-[0.8125rem] tabular-nums", i.fromPrice === null && "text-muted")}>{priceText(i)}</span>
+                    <span className="min-w-0 flex-1 truncate text-base font-medium">{i.name}</span>
+                    <span className={cn("shrink-0 text-sm tabular-nums", i.fromPrice === null && "text-muted")}>{priceText(i)}</span>
                   </span>
-                  <span className="flex min-w-0 items-center gap-tight text-[0.8125rem] text-muted">
+                  <span className="flex min-w-0 items-center gap-tight text-sm text-muted">
                     {/* Only the exception: nine rows in ten are on sale, and a
                         pill on every one is what makes a calm list noisy. */}
                     {i.state !== "onSale" && <StatePill i={i} />}
@@ -820,31 +808,23 @@ function Catalog() {
                  until it is chosen. */
               <FilterBar
                 search={
-                  <div className="relative min-w-0 flex-1 md:flex-none">
-                    <Search size={16} strokeWidth={1.5} aria-hidden className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-                    <input
-                      value={search}
-                      onChange={(e) => {
-                        setSearch(e.target.value);
-                        setPage(1);
-                      }}
-                      placeholder={t("searchPlaceholder")}
-                      aria-label={t("searchPlaceholder")}
-                      className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse md:h-9 md:w-72"
-                    />
-                  </div>
+                  <FilterSearch
+                    value={search}
+                    onChange={(v) => {
+                      setSearch(v);
+                      setPage(1);
+                    }}
+                    placeholder={t("searchPlaceholder")}
+                    aria-label={t("searchPlaceholder")}
+                    className="flex-1 md:flex-none"
+                  />
                 }
                 actions={
                   /* Ticking rows is a mode on a phone, where a checkbox on every
                      row would take the room the name needs. */
-                  <button
-                    type="button"
-                    onClick={() => setSelecting((v) => !v)}
-                    aria-pressed={selecting}
-                    className="flex h-11 shrink-0 items-center rounded-sm border border-line bg-card px-comfortable text-[0.8125rem] font-medium text-fg md:hidden"
-                  >
+                  <Button variant="secondary" size="sm" selected={selecting} onClick={() => setSelecting((v) => !v)} className="shrink-0 md:hidden">
                     {selecting ? t("selectDone") : t("select")}
-                  </button>
+                  </Button>
                 }
                 filters={[
                   {
@@ -857,16 +837,18 @@ function Catalog() {
                     },
                     control: (
                       <div role="group" aria-label={t("stateFilter")} className="flex flex-wrap items-center gap-tight">
-                        {facetChips.map((s) => {
-                          const on = states.includes(s);
-                          return (
-                            <button key={s} type="button" aria-pressed={on} onClick={() => toggleFacet(s)} className={chip(on)}>
-                              {s === "attention" && <AlertTriangle size={13} strokeWidth={2} aria-hidden className={on ? "" : "text-warning"} />}
-                              {t(s === "attention" ? "facet.attention" : `state.${s}`)}
-                              {s !== "archived" && <span className={cn("text-[0.75rem] tabular-nums", on ? "text-inverse-fg/80" : "text-muted")}>{facetCounts[s]}</span>}
-                            </button>
-                          );
-                        })}
+                        {/* The state chips inside the Filters panel: the kit's toggle chip. */}
+                        {facetChips.map((s) => (
+                          <Chip
+                            key={s}
+                            selected={states.includes(s)}
+                            onClick={() => toggleFacet(s)}
+                            icon={s === "attention" ? <AlertTriangle size={13} strokeWidth={2} aria-hidden className="text-warning" /> : undefined}
+                            count={s !== "archived" ? facetCounts[s] : undefined}
+                          >
+                            {t(s === "attention" ? "facet.attention" : `state.${s}`)}
+                          </Chip>
+                        ))}
                       </div>
                     ),
                   },
@@ -880,7 +862,7 @@ function Catalog() {
                         aria-label={t("sortBy")}
                         value={sort.key}
                         onChange={(v) => setSort({ key: v, order: "asc" })}
-                        triggerClassName="text-sm md:h-9"
+                        triggerClassName="text-base md:h-9"
                         options={[
                           { value: "smart", label: t("sort.smart") },
                           { value: "name", label: t("sort.name") },
@@ -919,18 +901,14 @@ function Catalog() {
           tab bar there; bottom-centre from md. */}
       {selected.size > 0 && (
         <div className="pointer-events-none fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom)+0.75rem)] z-40 flex justify-center px-gutter md:bottom-section">
-                <div role="region" aria-label={t("bulk.region")} className="pointer-events-auto flex w-full max-w-3xl flex-wrap items-center gap-tight rounded-md border border-line bg-card px-comfortable py-tight shadow-lg">
-                  <span className="text-[13px] font-medium">{t("selectedCount", { count: selected.size })}</span>
+                <Card role="region" aria-label={t("bulk.region")} padding="none" className="pointer-events-auto flex w-full max-w-3xl flex-wrap items-center gap-tight px-comfortable py-tight shadow-float">
+                  <span className="text-sm font-medium">{t("selectedCount", { count: selected.size })}</span>
                   {/* The whole filtered list, not only this page — "everything
                       that is off sale" is the set people mean. */}
                   {allOnPage && rows.length > selected.size && (
-                    <button
-                      type="button"
-                      onClick={() => setSelected(new Set(rows.map((r) => r.key)))}
-                      className="min-h-11 rounded-sm px-tight text-[13px] font-medium text-brand-foreground hover:underline md:min-h-8"
-                    >
+                    <Button variant="tertiary" size="sm" onClick={() => setSelected(new Set(rows.map((r) => r.key)))}>
                       {t("selectAllMatching", { count: rows.length })}
-                    </button>
+                    </Button>
                   )}
                   <span className="flex-1" />
                   <Button
@@ -966,7 +944,7 @@ function Catalog() {
                   {/* An unavailable action says why, in words, where the
                       buttons are — not only as a greyed-out shape. */}
                   {(canPutOn.length === 0 || canTakeOff.length === 0) && (
-                    <p className="basis-full text-[12px] text-muted">
+                    <p className="basis-full text-xs text-muted">
                       {canPutOn.length === 0 && canTakeOff.length === 0
                         ? t("bulk.noneToChange")
                         : canPutOn.length === 0
@@ -974,7 +952,7 @@ function Catalog() {
                           : t("bulk.noneToTakeOff")}
                     </p>
                   )}
-                </div>
+                </Card>
         </div>
       )}
 
@@ -999,13 +977,3 @@ function Catalog() {
   );
 }
 
-/** The page's select-all box, which can also say "some of these". A native
- *  checkbox shows the partial state only through its `indeterminate`
- *  property, which has no attribute, so it is set here. */
-function PageCheckbox({ checked, mixed, onChange, label, className }: { checked: boolean; mixed: boolean; onChange: () => void; label: string; className?: string }) {
-  const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (ref.current) ref.current.indeterminate = mixed;
-  }, [mixed]);
-  return <input ref={ref} type="checkbox" checked={checked} onChange={onChange} aria-label={label} aria-checked={mixed ? "mixed" : checked} className={className} />;
-}

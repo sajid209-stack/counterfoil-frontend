@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUpRight, Calculator, Languages, Palette, Type } from "lucide-react";
 import { AppearancePicker } from "@/components/ThemeProvider";
 import { LanguagePicker } from "@/components/LocaleProvider";
+import { Switch } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { setPrefs, usePrefs, type TillText } from "@/lib/prefs";
 
@@ -35,8 +36,8 @@ export default function TillSettingsPage() {
       style={{ paddingBottom: "calc(96px + env(safe-area-inset-bottom))" }}
     >
       <header>
-        <h1 className="text-xl font-semibold tracking-[-0.4px]">{t("tillSettings.title")}</h1>
-        <p className="mt-inline text-[0.8125rem] text-muted">{t("tillSettings.thisDevice")}</p>
+        <h1 className="text-xl font-semibold tracking-title">{t("tillSettings.title")}</h1>
+        <p className="mt-inline text-sm text-muted">{t("tillSettings.thisDevice")}</p>
       </header>
 
       {/* The number pad. First, because it is the one the owner asked for and
@@ -44,29 +45,11 @@ export default function TillSettingsPage() {
       {/* The line under the switch says what the CURRENT setting does, so a
           cashier reads the consequence rather than both branches of it. */}
       <Row icon={<Calculator size={18} strokeWidth={1.75} />} title={t("tillSettings.keypad")} body={t(prefs.posKeypad ? "tillSettings.keypadOn" : "tillSettings.keypadOff")}>
-        <button
-          type="button"
-          role="switch"
+        <Switch
           aria-label={t("tillSettings.keypad")}
-          aria-checked={prefs.posKeypad}
-          onClick={() => setPrefs({ posKeypad: !prefs.posKeypad })}
-          className={cn(
-            "relative h-12 w-[4.5rem] shrink-0 rounded-full border transition-colors duration-quick",
-            prefs.posKeypad ? "border-ember bg-ember-solid" : "border-line bg-subtle",
-          )}
-        >
-          {/* `left-0` is load-bearing: a button centres its content, so an
-              absolute span without it starts from the middle and the translate
-              pushes it off the edge. The settings Switch carries the same note
-              for the same reason. */}
-          <span
-            aria-hidden
-            className={cn(
-              "absolute left-0 top-1 h-10 w-10 rounded-full bg-white shadow-sm transition-transform duration-quick",
-              prefs.posKeypad ? "translate-x-7" : "translate-x-1",
-            )}
-          />
-        </button>
+          checked={prefs.posKeypad}
+          onChange={(next) => setPrefs({ posKeypad: next })}
+        />
       </Row>
 
       <Row icon={<Type size={18} strokeWidth={1.75} />} title={t("textSize")} body={t("tillSettings.textBody")} stack>
@@ -80,7 +63,7 @@ export default function TillSettingsPage() {
               onClick={() => setPrefs({ tillText: v })}
               className={cn(
                 "flex h-12 flex-1 items-center justify-center rounded-full border transition-colors duration-quick",
-                prefs.tillText === v ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line text-muted active:bg-ember/10",
+                prefs.tillText === v ? "border-ember-solid bg-ember-solid font-medium text-on-solid" : "border-line text-muted active:bg-muted-wash",
               )}
             >
               {/* Each option set at the size it selects: three identical labels
@@ -105,11 +88,23 @@ export default function TillSettingsPage() {
           device rather than on each one. */}
       <Link
         href="/settings/business"
-        className="go-surface flex min-h-[3.5rem] items-center justify-between gap-tight p-card text-left"
+        className="card-surface flex min-h-[3.5rem] items-center justify-between gap-tight p-card text-left"
       >
         <span className="min-w-0">
-          <span className="block text-[0.9375rem] font-medium">{t("tillSettings.business")}</span>
-          <span className="mt-inline block text-[0.8125rem] text-muted">{t("tillSettings.businessBody")}</span>
+          <span className="block text-md font-medium">{t("tillSettings.business")}</span>
+          <span className="mt-inline block text-sm text-muted">{t("tillSettings.businessBody")}</span>
+        </span>
+        <ArrowUpRight size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
+      </Link>
+
+      {/* The rules this screen is drawn by, opened on the POS previews. */}
+      <Link
+        href="/design-system?product=go"
+        className="card-surface flex min-h-[3.5rem] items-center justify-between gap-tight p-card text-left"
+      >
+        <span className="min-w-0">
+          <span className="block text-md font-medium">{t("tillSettings.designSystem")}</span>
+          <span className="mt-inline block text-sm text-muted">{t("tillSettings.designSystemBody")}</span>
         </span>
         <ArrowUpRight size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
       </Link>
@@ -133,14 +128,14 @@ function Row({
   stack?: boolean;
 }) {
   return (
-    <section className={cn("go-surface p-card", stack ? "flex flex-col gap-comfortable" : "flex items-center gap-comfortable")}>
+    <section className={cn("card-surface p-card", stack ? "flex flex-col gap-comfortable" : "flex items-center gap-comfortable")}>
       <div className="flex min-w-0 flex-1 items-start gap-comfortable">
-        <span aria-hidden className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-subtle text-brand-foreground dark:bg-line">
+        <span aria-hidden className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-subtle text-brand-foreground">
           {icon}
         </span>
         <span className="min-w-0">
-          <span className="block text-[0.9375rem] font-medium">{title}</span>
-          <span className="mt-inline block text-[0.8125rem] text-muted">{body}</span>
+          <span className="block text-md font-medium">{title}</span>
+          <span className="mt-inline block text-sm text-muted">{body}</span>
         </span>
       </div>
       {children}

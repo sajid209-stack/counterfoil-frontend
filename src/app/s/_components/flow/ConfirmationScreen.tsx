@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { CalendarPlus, CheckCircle2, Download } from "lucide-react";
-import { TicketCard } from "@/components/ui";
+import { Notice, TicketCard } from "@/components/ui";
 import { ticketCards, useTicketLabels } from "@/app/print/_lib/ticketCards";
 import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
 import type { Order, Ticket } from "@/lib/api/types";
@@ -50,23 +50,23 @@ export function ConfirmationScreen({ order, tickets, isPreview }: { order: Order
         <span aria-hidden className="flex h-20 w-20 items-center justify-center rounded-full bg-success-wash text-success">
           <CheckCircle2 size={44} strokeWidth={1.5} />
         </span>
-        <h1 className="mt-section text-[32px] font-semibold tracking-[-0.03em] sm:text-[40px]">{t("confirm.title")}</h1>
-        <p className="tnum mt-tight text-[16px] text-muted">{t("confirm.reference", { reference: order.reference })}</p>
-        <p className="mt-inline text-[16px] text-muted">{t("confirm.smsNote")}</p>
+        <h1 className="mt-section text-4xl font-semibold tracking-figure sm:text-display">{t("confirm.title")}</h1>
+        <p className="tnum mt-tight text-md text-muted">{t("confirm.reference", { reference: order.reference })}</p>
+        <p className="mt-inline text-md text-muted">{t("confirm.smsNote")}</p>
         {isPreview && (
-          <p className="mt-section rounded-full bg-warning-wash px-section py-inline text-[14px] font-medium text-warning">
+          <Notice tone="warning" className="mt-section">
             {t("confirm.previewNote")}
-          </p>
+          </Notice>
         )}
       </div>
 
       {datedLines.length > 0 && (
-        <ul className="mx-auto mb-major flex max-w-[720px] flex-col divide-y divide-hairline rounded-[16px] border border-hairline">
+        <ul className="mx-auto mb-major flex max-w-[720px] flex-col divide-y divide-hairline rounded-lg border border-hairline">
           {datedLines.map((l) => (
             <li key={l.id} className="flex flex-col gap-comfortable p-section sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <p className="text-[16px] font-semibold">{l.productName}</p>
-                <p className="text-[14px] text-muted">
+                <p className="text-md font-semibold">{l.productName}</p>
+                <p className="text-base text-muted">
                   {[formatDay(l.booking!.date, { weekday: true }), l.booking!.startTime ? formatClock(l.booking!.startTime) : null, l.booking!.resourceName]
                     .filter(Boolean)
                     .join(" · ")}

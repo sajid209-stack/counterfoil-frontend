@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Select } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { Chip, Select } from "@/components/ui";
 import { createInventoryItem, updateInventoryItem, type InventoryItem, type Location } from "@/lib/api";
 import {
   CreateBar,
@@ -183,17 +182,9 @@ export function ItemForm({
               {text(id, unit, setUnit, !!errors.unit, describedBy, { placeholder: t("form.unitPlaceholder") })}
               <div className="flex flex-wrap gap-inline">
                 {UNITS.map((u) => (
-                  <button
-                    key={u}
-                    type="button"
-                    onClick={() => setUnit(u)}
-                    className={cn(
-                      "min-h-11 rounded-full px-comfortable text-[0.8125rem] transition-colors duration-quick md:min-h-8",
-                      unit === u ? "bg-inverse font-medium text-inverse-fg" : "bg-muted-wash text-fg hover:bg-line",
-                    )}
-                  >
+                  <Chip key={u} selected={unit === u} onClick={() => setUnit(u)}>
                     {u}
-                  </button>
+                  </Chip>
                 ))}
               </div>
             </div>
@@ -249,7 +240,7 @@ export function ItemForm({
             )}
           </SettingRow>
         ))}
-        {errors.locationIds && <p className="px-card pb-section text-[0.8125rem] text-danger">{errors.locationIds}</p>}
+        {errors.locationIds && <p className="px-card pb-section text-sm text-danger">{errors.locationIds}</p>}
       </SettingsSection>
 
       {item ? (

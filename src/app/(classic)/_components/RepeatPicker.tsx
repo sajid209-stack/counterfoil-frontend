@@ -46,7 +46,7 @@ export function RepeatPicker({
 
   return (
     <div className="mb-section flex flex-col gap-tight">
-      <span className="type-label text-[0.75rem] text-muted">{t("repeat.title")}</span>
+      <span className="type-label text-xs text-muted">{t("repeat.title")}</span>
 
       <div className="flex flex-wrap items-center gap-tight">
         <div className="flex items-center gap-tight">
@@ -59,7 +59,7 @@ export function RepeatPicker({
           >
             −
           </button>
-          <span className="min-w-16 text-center font-mono text-sm">
+          <span className="min-w-16 text-center font-mono text-base">
             {count === 1 ? t("repeat.once") : t("repeat.weeks", { count })}
           </span>
           <button
@@ -78,7 +78,7 @@ export function RepeatPicker({
             type="button"
             onClick={() => onCount(n)}
             className={cn(
-              "h-12 shrink-0 rounded-sm border px-comfortable text-sm transition-colors duration-quick",
+              "h-12 shrink-0 rounded-sm border px-comfortable text-base transition-colors duration-quick",
               count === n ? "border-ember bg-ember/10 text-brand-foreground" : "border-line bg-card active:bg-ember/10",
             )}
           >
@@ -101,12 +101,12 @@ export function RepeatPicker({
                 <span className={cn("shrink-0", o.ok ? "text-success" : "text-muted")}>
                   {o.ok ? <Check size={14} strokeWidth={2} /> : <X size={14} strokeWidth={2} />}
                 </span>
-                <span className={cn("min-w-0 flex-1 truncate font-mono text-[0.8125rem]", !o.ok && "text-muted line-through")}>
+                <span className={cn("min-w-0 flex-1 truncate font-mono text-sm", !o.ok && "text-muted line-through")}>
                   {dayLabel(o.date)}
                   {time ? ` · ${formatClock(time)}` : ""}
                 </span>
                 {!o.ok && (
-                  <span className="shrink-0 whitespace-nowrap text-[0.75rem] text-muted">
+                  <span className="shrink-0 whitespace-nowrap text-xs text-muted">
                     {t(`repeat.reason_${o.reason ?? "taken"}`)}
                   </span>
                 )}
@@ -114,7 +114,7 @@ export function RepeatPicker({
             ))}
           </ul>
 
-          <p className="text-[0.75rem] text-muted">
+          <p className="text-xs text-muted">
             {blocked > 0
               ? t("repeat.summarySkipping", {
                   count: bookable,

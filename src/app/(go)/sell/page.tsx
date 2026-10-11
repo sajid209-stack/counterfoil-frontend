@@ -415,7 +415,6 @@ export default function SellPage() {
 
   /* On a phone the PAGE scrolls, which is the whole idea — one scroll from
      the wall to the money.
-     
      On a wide screen the two columns have to scroll independently, or reading
      the sale means scrolling past the catalogue. The Go shell hands its
      children no height to resolve against, so the height is stated here:
@@ -436,7 +435,7 @@ export default function SellPage() {
 
       {/* The sale — one scroll, ending in the money. */}
       <div className="flex min-h-0 min-w-0 flex-col">
-        <div className="flex flex-col gap-comfortable pb-[176px] lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-0">
+        <div className="flex flex-col gap-comfortable pb-44 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-0">
           {/* Phone: the wall lives here, above the sale. */}
           {!wide && (
           <div>
@@ -449,7 +448,7 @@ export default function SellPage() {
               <button
                 type="button"
                 onClick={() => setBrowsing(true)}
-                className="flex h-14 w-full items-center justify-center gap-tight rounded-go border border-dashed border-strong text-[0.875rem] font-medium text-muted active:bg-ember/10"
+                className="flex h-14 w-full items-center justify-center gap-tight rounded-card border border-dashed border-strong text-base font-medium text-muted active:bg-muted-wash"
               >
                 <Plus size={18} strokeWidth={1.75} />
                 {t("block.addAnother")}
@@ -469,7 +468,7 @@ export default function SellPage() {
               <div
                 key={block.id}
                 ref={open ? openRef : undefined}
-                className={`rounded-go border bg-card transition-shadow duration-quick ${open ? "border-ember shadow-go" : "border-line"}`}
+                className={`card-surface ${open ? "border-ember" : ""}`}
               >
                 <div className="flex items-start gap-tight p-comfortable">
                   <button
@@ -485,21 +484,21 @@ export default function SellPage() {
                       {lines.length ? <Check size={13} strokeWidth={2.5} /> : <ChevronDown size={13} strokeWidth={2.5} className={open ? "rotate-180" : ""} />}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block break-words text-[0.9375rem] font-semibold leading-snug">{product.name}</span>
-                      <span className="mt-inline block text-[0.8125rem] text-muted">
+                      <span className="block break-words text-md font-semibold leading-snug">{product.name}</span>
+                      <span className="mt-inline block text-sm text-muted">
                         {lines.length ? summaryOf(lines) : missing ? t(`missing.${missing}` as never) : ""}
                       </span>
                     </span>
                   </button>
                   <span className="flex shrink-0 items-center gap-tight">
-                    <span className="whitespace-nowrap text-[0.9375rem] font-semibold tabular-nums">
+                    <span className="whitespace-nowrap text-md font-semibold tabular-nums">
                       {formatMoney(amount, currency)}
                     </span>
                     <button
                       type="button"
                       aria-label={t("block.remove")}
                       onClick={() => removeBlock(block.id)}
-                      className="flex h-11 w-11 items-center justify-center rounded-full text-danger active:bg-ember/10"
+                      className="flex h-11 w-11 items-center justify-center rounded-full text-danger active:bg-muted-wash"
                     >
                       <Trash2 size={16} strokeWidth={1.5} />
                     </button>
@@ -520,7 +519,6 @@ export default function SellPage() {
                     {patternOf(product) !== "unsupported" && (
                       <Button
                         variant="secondary"
-                        shape="pill"
                         fullWidth
                         className="mt-section h-12"
                         disabled={lines.length === 0}
@@ -536,22 +534,22 @@ export default function SellPage() {
           })}
 
           {customItems.map((c) => (
-            <div key={c.id} className="flex items-center gap-tight rounded-go border border-line bg-card p-comfortable">
+            <div key={c.id} className="flex items-center gap-tight card-surface p-comfortable">
               <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success" aria-hidden>
                 <Check size={13} strokeWidth={2.5} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block break-words text-[0.9375rem] font-semibold leading-snug">{c.productName}</span>
-                <span className="mt-inline block text-[0.8125rem] text-muted">{t("custom.lineLabel")}</span>
+                <span className="block break-words text-md font-semibold leading-snug">{c.productName}</span>
+                <span className="mt-inline block text-sm text-muted">{t("custom.lineLabel")}</span>
               </span>
-              <span className="whitespace-nowrap text-[0.9375rem] font-semibold tabular-nums">
+              <span className="whitespace-nowrap text-md font-semibold tabular-nums">
                 {formatMoney(itemTotal(c), currency)}
               </span>
               <button
                 type="button"
                 aria-label={t("block.remove")}
                 onClick={() => setCustomItems((x) => x.filter((y) => y.id !== c.id))}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-danger active:bg-ember/10"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-danger active:bg-muted-wash"
               >
                 <Trash2 size={16} strokeWidth={1.5} />
               </button>
@@ -564,7 +562,7 @@ export default function SellPage() {
             <button
               type="button"
               onClick={() => setBrowsing(true)}
-              className={`h-12 w-full items-center justify-center gap-tight rounded-go border border-dashed border-strong text-[0.875rem] font-medium text-muted active:bg-ember/10 ${wide ? "flex" : "hidden"}`}
+              className={`h-12 w-full items-center justify-center gap-tight rounded-card border border-dashed border-strong text-base font-medium text-muted active:bg-muted-wash ${wide ? "flex" : "hidden"}`}
             >
               <Plus size={18} strokeWidth={1.75} />
               {t("block.addAnother")}
@@ -602,8 +600,8 @@ export default function SellPage() {
 
           {/* ── Pay ──────────────────────────────────────────────────────── */}
           {payable && (
-            <div className="rounded-go border border-line bg-card p-comfortable">
-              <p className="mb-tight text-[0.875rem] font-semibold">{t("pay.label")}</p>
+            <div className="card-surface p-comfortable">
+              <p className="mb-tight text-base font-semibold">{t("pay.label")}</p>
 
               <div
                 className="relative grid h-14 rounded-full bg-line/60 p-inline"
@@ -632,14 +630,14 @@ export default function SellPage() {
                     type="button"
                     aria-pressed={method === m}
                     onClick={() => setMethod(m)}
-                    className={`relative z-10 min-w-0 truncate px-inline text-[0.8125rem] transition-colors duration-quick ${method === m ? "font-medium text-white" : "text-fg"}`}
+                    className={`relative z-10 min-w-0 truncate px-inline text-sm transition-colors duration-quick ${method === m ? "font-medium text-on-solid" : "text-fg"}`}
                   >
                     {enumL.method(m)}
                   </button>
                 ))}
               </div>
 
-              <div className="mt-section flex flex-col gap-inline text-[0.8125rem]">
+              <div className="mt-section flex flex-col gap-inline text-sm">
                 <div className="flex justify-between text-muted">
                   <span>{t("pay.subtotal")}</span>
                   <span className="tabular-nums">{formatMoney(totals.subtotal, currency)}</span>
@@ -679,8 +677,8 @@ export default function SellPage() {
               </div>
 
               {/* The one figure the cashier reads out and takes. */}
-              <div className="mt-tight flex items-baseline justify-between gap-comfortable rounded-go bg-ember/10 px-comfortable py-tight">
-                <span className="min-w-0 text-[0.875rem] font-semibold text-brand-foreground">
+              <div className="mt-tight flex items-baseline justify-between gap-comfortable rounded-card bg-ember-wash px-comfortable py-tight">
+                <span className="min-w-0 text-base font-semibold text-brand-foreground">
                   {balance > 0 ? t("pay.collectNow") : t("pay.collect")}
                 </span>
                 <span className="shrink-0 whitespace-nowrap text-2xl font-semibold tabular-nums text-brand-foreground">
@@ -696,20 +694,20 @@ export default function SellPage() {
                     type="button"
                     onClick={() => setPadOpen(true)}
                     aria-label={`${t("pay.received")} ${formatMoney(tenderedMinor, currency)} — ${tp("cash.tapToChange")}`}
-                    className="flex min-h-11 w-full items-baseline justify-between gap-tight rounded-go-sm text-left active:bg-ember/10"
+                    className="flex min-h-11 w-full items-baseline justify-between gap-tight rounded-inner text-left active:bg-muted-wash"
                   >
-                    <span className="flex items-center gap-inline text-[0.8125rem] text-muted">
+                    <span className="flex items-center gap-inline text-sm text-muted">
                       {t("pay.received")}
                       <Pencil size={12} strokeWidth={2} aria-hidden />
                     </span>
-                    <span className="text-[1.0625rem] font-semibold tabular-nums">{formatMoney(tenderedMinor, currency)}</span>
+                    <span className="text-md font-semibold tabular-nums">{formatMoney(tenderedMinor, currency)}</span>
                   </button>
                   {/* Loud only when there is money to count back. */}
                   {exactTender ? (
-                    <p className="mt-tight text-[0.875rem] font-medium text-success">{tp("cash.noChange")}</p>
+                    <p className="mt-tight text-base font-medium text-success">{tp("cash.noChange")}</p>
                   ) : (
                     <div className={`mt-tight flex items-baseline justify-between ${cashReady ? "text-success" : "text-muted"}`}>
-                      <span className="text-[0.875rem] font-medium">{t("pay.change")}</span>
+                      <span className="text-base font-medium">{t("pay.change")}</span>
                       <span className="text-3xl font-semibold tabular-nums">
                         {cashReady ? formatMoney(Math.max(0, changeMinor), currency) : "—"}
                       </span>
@@ -720,7 +718,7 @@ export default function SellPage() {
                       type="button"
                       aria-pressed={exactTender}
                       onClick={() => setTenderTaka("")}
-                      className={`h-12 flex-1 rounded-full border text-sm active:bg-ember/10 ${exactTender ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-inverse bg-card"}`}
+                      className={`h-12 flex-1 rounded-full border text-base active:bg-muted-wash ${exactTender ? "border-ember-solid bg-ember-solid font-medium text-on-solid" : "border-inverse bg-card"}`}
                     >
                       {tp("cash.exact")}
                     </button>
@@ -729,7 +727,7 @@ export default function SellPage() {
                         key={amt}
                         type="button"
                         onClick={() => setTenderTaka(String(amt))}
-                        className="h-12 flex-1 rounded-full border border-line bg-card text-sm active:bg-ember/10"
+                        className="h-12 flex-1 rounded-full border border-line bg-card text-base active:bg-muted-wash"
                       >
                         ৳{amt}
                       </button>
@@ -754,12 +752,12 @@ export default function SellPage() {
                     value={walletRef}
                     onChange={(e) => setWalletRef(e.target.value)}
                   />
-                  <p className="mt-tight text-[0.8125rem] text-muted">{t("pay.txnHint")}</p>
+                  <p className="mt-tight text-sm text-muted">{t("pay.txnHint")}</p>
                 </div>
               )}
 
               {method === "bangla_qr" && (
-                <p className="mt-section rounded-go border border-line bg-subtle/40 p-comfortable text-[0.8125rem] text-muted">
+                <p className="mt-section rounded-card border border-line bg-subtle/40 p-comfortable text-sm text-muted">
                   {t("pay.qrHint")}
                 </p>
               )}
@@ -778,7 +776,7 @@ export default function SellPage() {
              comparison needs. */
           className="fixed inset-x-comfortable bottom-[calc(82px+env(safe-area-inset-bottom))] z-30 lg:static lg:mt-comfortable"
         >
-          <div className="flex items-center gap-comfortable rounded-full bg-inverse px-section py-tight shadow-go-pop lg:rounded-go lg:px-comfortable">
+          <div className="flex items-center gap-comfortable rounded-full bg-inverse px-section py-tight shadow-float lg:rounded-card lg:px-comfortable">
             {/* The bar states the figure ONCE.
                 It used to read "Total ৳575.00" beside a button reading "Take
                 ৳575.00" — the same number twice, eight pixels apart, which is
@@ -789,19 +787,18 @@ export default function SellPage() {
                 count, which the button cannot say — exactly as the v1 till's
                 collapsed bar does. */}
             <span className="min-w-0 flex-1">
-              <span className="block text-[0.8125rem] text-inverse-fg/70">
+              <span className="block text-sm text-inverse-fg/70">
                 {balance > 0 ? t("footer.total") : t("footer.items", { count: items.length })}
               </span>
               {balance > 0 && (
-                <span className="block truncate text-[1.0625rem] font-semibold tabular-nums text-inverse-fg">
+                <span className="block truncate text-md font-semibold tabular-nums text-inverse-fg">
                   {formatMoney(totals.total, currency)}
                 </span>
               )}
             </span>
             <Button
-              shape="pill"
               size="lg"
-              className="h-12 shrink-0"
+              className="h-13 shrink-0 text-md font-semibold"
               disabled={!canComplete}
               loading={saving}
               onClick={complete}
@@ -825,10 +822,10 @@ export default function SellPage() {
         title={t("custom.title")}
         footer={
           <>
-            <Button shape="pill" variant="secondary" onClick={() => setCustomOpen(false)}>
+            <Button variant="secondary" onClick={() => setCustomOpen(false)}>
               {tp("custom.cancel")}
             </Button>
-            <Button shape="pill" onClick={addCustom} disabled={!customAmount}>
+            <Button onClick={addCustom} disabled={!customAmount}>
               {tp("custom.add")}
             </Button>
           </>

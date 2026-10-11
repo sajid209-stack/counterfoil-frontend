@@ -103,6 +103,7 @@ export function StatusPill({
   tone,
   status,
   shape,
+  size = "sm",
   className,
 }: {
   children?: React.ReactNode;
@@ -111,6 +112,9 @@ export function StatusPill({
   status?: string;
   /** Override the lifecycle the status belongs to; derived from it otherwise. */
   shape?: PillShape;
+  /** `sm` (default) is 12px; `md` is 13px for the Go surface, which reads at
+   *  arm's length. The shape is a pill either way. */
+  size?: "sm" | "md";
   className?: string;
 }) {
   const { status: statusLabel } = useEnumLabels();
@@ -121,7 +125,8 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-sans text-[0.75rem] font-medium leading-5",
+        "inline-flex items-center gap-inline rounded-full py-0.5 font-sans font-medium leading-5",
+        size === "md" ? "px-3 text-sm" : "px-2.5 text-xs",
         record ? cn(RECORD_BG, RECORD_TEXT[resolvedTone]) : TONES[resolvedTone],
         className,
       )}

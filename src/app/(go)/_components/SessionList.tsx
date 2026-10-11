@@ -72,7 +72,7 @@ export function SessionList({
     <div className="mb-section flex flex-col gap-tight">
       {/* The departures as rows on ONE card, divided by hairlines — the
           Schedule's drawing. */}
-      <div className="go-surface divide-y divide-line overflow-hidden rounded-go">
+      <div className="card-surface divide-y divide-line overflow-hidden">
       {sessions.map((s) => {
         const full = s.left <= 0 || !!s.blockedReason;
         /* A stated reason wins over the count. `&& s.left > 0` meant a session
@@ -97,13 +97,13 @@ export function SessionList({
             className={cn(
               "relative flex min-h-16 w-full items-center px-comfortable py-comfortable text-left transition-colors duration-quick",
               isSelected
-                ? "bg-ember-solid text-white"
+                ? "bg-ember-solid text-on-solid"
                 : full
                   // Flat and *below* the card: an unavailable departure is not
                   // something you can pick up. The page's own colour, which is
                   // a step down from the card in both themes.
                   ? "bg-surface"
-                  : "bg-card hover:bg-muted-wash/60 active:bg-ember/10",
+                  : "bg-card hover:bg-muted-wash/60 active:bg-muted-wash",
             )}
           >
             <span className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -111,23 +111,23 @@ export function SessionList({
                 {/* Time leads — it is what a cashier is scanning for. */}
                 <span
                   className={cn(
-                    "shrink-0 text-base font-semibold",
-                    isSelected ? "text-white" : full ? "text-muted" : "text-fg",
+                    "shrink-0 text-md font-semibold",
+                    isSelected ? "text-on-solid" : full ? "text-muted" : "text-fg",
                   )}
                 >
                   {formatClock(s.time)}
                 </span>
                 {s.meta && (
-                  <span className={cn("min-w-0 flex-1 truncate text-[0.8125rem]", isSelected ? "text-white" : "text-muted")}>{s.meta}</span>
+                  <span className={cn("min-w-0 flex-1 truncate text-sm", isSelected ? "text-on-solid" : "text-muted")}>{s.meta}</span>
                 )}
                 {/* The state of the session, in the corner the eye lands on:
                     places left is the number being decided on. The price sits
                     on the row below, beside the fill. */}
                 <span
                   className={cn(
-                    "ml-auto shrink-0 whitespace-nowrap text-[0.9375rem] font-semibold",
+                    "ml-auto shrink-0 whitespace-nowrap text-md font-semibold",
                     isSelected
-                      ? "text-white"
+                      ? "text-on-solid"
                       : closed
                       ? "text-muted"
                       : pressure === "gone"
@@ -155,15 +155,15 @@ export function SessionList({
                   two screens now say it the same way. */}
               <span
                 className={cn(
-                  "whitespace-nowrap text-[0.875rem] tabular-nums",
-                  isSelected ? "text-white" : s.price === basePrice ? "text-muted" : "font-semibold text-fg",
+                  "whitespace-nowrap text-base tabular-nums",
+                  isSelected ? "text-on-solid" : s.price === basePrice ? "text-muted" : "font-semibold text-fg",
                 )}
               >
                 {formatMoney(s.price, currency)}
               </span>
 
               {full && !closed && s.waitlist && (
-                <span className="text-[0.8125rem] font-medium text-brand-foreground">{t("sheet.joinWaitlist")} →</span>
+                <span className="text-sm font-medium text-brand-foreground">{t("sheet.joinWaitlist")} →</span>
               )}
             </span>
           </button>
@@ -173,7 +173,7 @@ export function SessionList({
 
       {/* What the figure on each row is the price OF. */}
       {basePrice > 0 && (
-        <p className="text-[0.8125rem] text-muted">
+        <p className="text-sm text-muted">
           {t("sheet.pricePerTicket", { amount: formatMoney(basePrice, currency) })}
         </p>
       )}

@@ -330,7 +330,7 @@ export function Initials({ name, className }: { name: string | null; className?:
         .toUpperCase()
     : "CF";
   return (
-    <span aria-hidden className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-full bg-subtle text-[0.75rem] font-semibold text-muted dark:bg-fg/10", className)}>
+    <span aria-hidden className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-full bg-subtle text-xs font-semibold text-muted dark:bg-fg/10", className)}>
       {text}
     </span>
   );

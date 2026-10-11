@@ -1,8 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Plus } from "lucide-react";
-import { Button, FormField } from "@/components/ui";
+import { Plus } from "lucide-react";
+import { Button, Checkbox, FormField, Notice } from "@/components/ui";
 import type { Location } from "@/lib/api";
 
 /**
@@ -52,24 +52,21 @@ export function WhereSold({
   return (
     <div className="grid gap-section sm:grid-cols-2">
       <div className="flex flex-col gap-tight">
-        <span className={hideHeading ? "sr-only" : "text-base font-semibold text-fg"}>{t("soldWhere")}</span>
+        <span className={hideHeading ? "sr-only" : "text-md font-semibold text-fg"}>{t("soldWhere")}</span>
         <FormField label={t("atCounter")} variant="toggle" help={counterHelp ?? t("atCounterHelp")} checked={counter} onChange={(e) => onCounter((e.target as HTMLInputElement).checked)} />
         <FormField label={t("online")} variant="toggle" help={onlineHelp} checked={online} onChange={(e) => onOnline((e.target as HTMLInputElement).checked)} />
         {!counter && !online ? (
-          <p className="text-[13px] font-medium text-danger">{t("nowhere")}</p>
+          <p className="text-sm font-medium text-danger">{t("nowhere")}</p>
         ) : !online ? (
-          <p className="flex items-start gap-tight rounded-sm bg-warning-wash px-comfortable py-tight text-[13px] text-fg">
-            <AlertTriangle size={14} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0 text-warning" />
-            {t("notOnline")}
-          </p>
+          <Notice tone="warning" size="sm">{t("notOnline")}</Notice>
         ) : null}
       </div>
       {showLocations && (
       <fieldset className="flex min-w-0 flex-col gap-tight" aria-invalid={error ? true : undefined} aria-describedby={error ? "where-loc-error" : undefined}>
-        <legend className="mb-tight text-base font-semibold text-fg">{t("locations")}</legend>
+        <legend className="mb-tight text-md font-semibold text-fg">{t("locations")}</legend>
         {locations.length === 0 ? (
-          <div className="rounded-sm bg-muted-wash px-comfortable py-section text-center">
-            <p className="text-[13px] text-muted">{t("noLocation")}</p>
+          <div className="rounded-inner bg-muted-wash px-comfortable py-section text-center">
+            <p className="text-sm text-muted">{t("noLocation")}</p>
             {onAddLocation && (
               <Button size="sm" className="mt-tight" icon={<Plus size={14} strokeWidth={1.5} />} onClick={onAddLocation}>{t("addLocationNow")}</Button>
             )}
@@ -77,19 +74,16 @@ export function WhereSold({
         ) : (
           <>
             {locations.map((l) => (
-              <label key={l.id} className="flex min-h-11 cursor-pointer items-center gap-tight text-sm md:min-h-9">
-                <input type="checkbox" checked={locationIds.includes(l.id)} onChange={() => onToggleLocation(l.id)} className="h-4 w-4 accent-ember" />
-                {l.name}
-              </label>
+              <Checkbox key={l.id} label={l.name} checked={locationIds.includes(l.id)} onCheckedChange={() => onToggleLocation(l.id)} />
             ))}
             {onAddLocation && (
-              <button type="button" onClick={onAddLocation} className="mt-inline flex min-h-11 items-center gap-inline self-start text-[13px] text-brand-foreground hover:underline md:min-h-0">
-                <Plus size={14} strokeWidth={1.5} /> {t("addLocation")}
-              </button>
+              <Button variant="tertiary" size="sm" className="mt-inline self-start" icon={<Plus size={14} strokeWidth={1.5} />} onClick={onAddLocation}>
+                {t("addLocation")}
+              </Button>
             )}
           </>
         )}
-        {error && <p id="where-loc-error" role="alert" className="text-[13px] font-medium text-danger">{error}</p>}
+        {error && <p id="where-loc-error" role="alert" className="text-sm font-medium text-danger">{error}</p>}
       </fieldset>
       )}
     </div>

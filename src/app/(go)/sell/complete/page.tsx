@@ -18,7 +18,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { CircleCheck, MessageSquare, Printer, Ticket as TicketIcon } from "lucide-react";
-import { Button, Modal, useToast } from "@/components/ui";
+import { Button, Modal, Notice, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
 import { formatDay, formatMoney } from "@/lib/format";
@@ -96,8 +96,8 @@ export default function SellCompletePage() {
       {info && (
         <>
           <div className="relative w-full">
-            <div className="rounded-go bg-ink px-section pb-major pt-major text-paper">
-              <p className="type-label text-[0.8125rem] text-muted">{t("complete.bookingReference")}</p>
+            <div className="rounded-card bg-ink px-section pb-major pt-major text-paper">
+              <p className="text-sm font-medium text-muted">{t("complete.bookingReference")}</p>
               <p className="mt-tight break-all font-mono text-2xl tracking-tight sm:text-3xl">{info.code}</p>
             </div>
             <div className="relative flex items-center">
@@ -105,8 +105,8 @@ export default function SellCompletePage() {
               <span className="absolute -right-2 h-4 w-4 rounded-full bg-surface" aria-hidden />
               <span className="mx-major flex-1 border-t-2 border-dashed border-paper/40" aria-hidden />
             </div>
-            <div className="rounded-go bg-ink px-section pb-major pt-tight text-paper">
-              <p className="font-mono text-[0.8125rem] text-muted">{t("complete.presentAtGate")}</p>
+            <div className="rounded-card bg-ink px-section pb-major pt-tight text-paper">
+              <p className="text-sm text-muted">{t("complete.presentAtGate")}</p>
             </div>
           </div>
 
@@ -122,21 +122,21 @@ export default function SellCompletePage() {
               balance is in the ledger, and the person who owes it never saw
               it. */}
           {(info.balance ?? 0) > 0 && (
-            <p className="type-body w-full rounded-go border border-ember/30 bg-ember/10 px-comfortable py-tight text-brand-foreground">
+            <Notice tone="warning" className="w-full">
               {t("complete.balanceDueAtArrival")}{" "}
-              <span className="font-semibold">{formatMoney(info.balance!, currency)}</span>
-            </p>
+              <span className="font-semibold tabular-nums">{formatMoney(info.balance!, currency)}</span>
+            </Notice>
           )}
 
           {/* The sale itself. The page it was built on is gone, so this is the
               only place it can still be read without going to Orders. */}
           {info.receipt && (
-            <div className="w-full rounded-go border border-line bg-card p-comfortable text-left">
-              <p className="mb-tight text-[0.875rem] font-semibold">{ts("complete.whatWasSold")}</p>
+            <div className="w-full card-surface p-comfortable text-left">
+              <p className="mb-tight text-base font-semibold">{ts("complete.whatWasSold")}</p>
               {info.receipt.lines.map((l, i) => (
                 <div
                   key={i}
-                  className={`flex items-baseline justify-between gap-comfortable py-inline text-[0.8125rem] ${l.child ? "pl-comfortable text-muted" : ""}`}
+                  className={`flex items-baseline justify-between gap-comfortable py-inline text-sm ${l.child ? "pl-comfortable text-muted" : ""}`}
                 >
                   <span className="min-w-0 break-words">
                     {l.qty > 1 ? `${l.qty} × ` : ""}
@@ -147,16 +147,16 @@ export default function SellCompletePage() {
               ))}
               <div className="mt-tight border-t border-line pt-tight">
                 {info.receipt.orderDiscount > 0 && (
-                  <div className="flex justify-between text-[0.8125rem] text-muted">
+                  <div className="flex justify-between text-sm text-muted">
                     <span>{t("summary.discountFlat")}</span>
                     <span className="text-danger tabular-nums">−{formatMoney(info.receipt.orderDiscount, currency)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-[0.8125rem] text-muted">
+                <div className="flex justify-between text-sm text-muted">
                   <span>{t("summary.vat")}</span>
                   <span className="tabular-nums">{formatMoney(info.receipt.tax, currency)}</span>
                 </div>
-                <div className="mt-inline flex items-baseline justify-between text-[0.9375rem] font-semibold">
+                <div className="mt-inline flex items-baseline justify-between text-md font-semibold">
                   <span>{t("summary.total")}</span>
                   <span className="tabular-nums">{formatMoney(info.receipt.total, currency)}</span>
                 </div>
@@ -164,7 +164,7 @@ export default function SellCompletePage() {
             </div>
           )}
 
-          <Button shape="pill" size="lg" fullWidth onClick={() => router.push("/sell")}>
+          <Button size="lg" fullWidth className="h-13 text-md font-semibold" onClick={() => router.push("/sell")}>
             {t("complete.newSale")}
           </Button>
 
@@ -173,7 +173,7 @@ export default function SellCompletePage() {
               type="button"
               disabled={!info.orderId}
               onClick={() => router.push(`/print/tickets/${info.orderId}`)}
-              className="flex h-12 flex-1 items-center justify-center gap-inline rounded-full border border-line bg-card text-sm text-muted active:bg-ember/10 disabled:opacity-40"
+              className="flex h-12 flex-1 items-center justify-center gap-inline rounded-full border border-line bg-card text-base text-muted active:bg-muted-wash disabled:opacity-40"
             >
               <TicketIcon size={16} strokeWidth={1.5} /> {tk("printTickets")}
             </button>
@@ -181,14 +181,14 @@ export default function SellCompletePage() {
               type="button"
               disabled={!info.orderId}
               onClick={() => router.push(`/print/receipt/${info.orderId}`)}
-              className="flex h-12 flex-1 items-center justify-center gap-inline rounded-full border border-line bg-card text-sm text-muted active:bg-ember/10 disabled:opacity-40"
+              className="flex h-12 flex-1 items-center justify-center gap-inline rounded-full border border-line bg-card text-base text-muted active:bg-muted-wash disabled:opacity-40"
             >
               <Printer size={16} strokeWidth={1.5} /> {tk("printReceipt")}
             </button>
             <button
               type="button"
               onClick={() => setSmsOpen(true)}
-              className="flex h-12 flex-1 items-center justify-center gap-inline rounded-full border border-line bg-card text-sm text-muted active:bg-ember/10"
+              className="flex h-12 flex-1 items-center justify-center gap-inline rounded-full border border-line bg-card text-base text-muted active:bg-muted-wash"
             >
               <MessageSquare size={16} strokeWidth={1.5} /> {t("complete.sendSms")}
             </button>
@@ -202,11 +202,10 @@ export default function SellCompletePage() {
         title={t("complete.smsTitle")}
         footer={
           <>
-            <Button shape="pill" variant="secondary" onClick={() => setSmsOpen(false)}>
+            <Button variant="secondary" onClick={() => setSmsOpen(false)}>
               {t("complete.cancel")}
             </Button>
             <Button
-              shape="pill"
               onClick={() => {
                 setSmsOpen(false);
                 toast.success(t("complete.smsSent"));
@@ -217,8 +216,8 @@ export default function SellCompletePage() {
           </>
         }
       >
-        <div className="rounded-go rounded-bl-xs border border-line bg-subtle p-comfortable text-left text-sm">{smsText}</div>
-        <p className="mt-tight text-left text-[0.8125rem] text-muted">{t("complete.smsMeta", { count: smsText.length })}</p>
+        <div className="rounded-card rounded-bl-xs border border-line bg-subtle p-comfortable text-left text-base">{smsText}</div>
+        <p className="mt-tight text-left text-sm text-muted">{t("complete.smsMeta", { count: smsText.length })}</p>
       </Modal>
     </main>
   );

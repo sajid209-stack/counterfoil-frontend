@@ -87,8 +87,8 @@ export function SlotMatrix({
     <div className="mb-section flex flex-col gap-tight">
       {rows.length > 1 && (
         <>
-          <span className="text-[0.875rem] font-semibold text-fg">{resourceNoun}</span>
-          <div className="go-surface overflow-hidden rounded-go">
+          <span className="text-base font-semibold text-fg">{resourceNoun}</span>
+          <div className="card-surface overflow-hidden">
             <div className="-mb-px -mr-px grid" style={{ gridTemplateColumns: `repeat(${Math.min(rows.length, 4)}, minmax(0, 1fr))` }}>
               {rows.map((row) => {
                 const on = row.id === active.id;
@@ -111,14 +111,14 @@ export function SlotMatrix({
                       row.outOfService
                         ? "bg-surface text-muted line-through"
                         : on
-                          ? "bg-ember-solid text-white"
-                          : "bg-card text-fg active:bg-ember/10",
+                          ? "bg-ember-solid text-on-solid"
+                          : "bg-card text-fg active:bg-muted-wash",
                     )}
                   >
                     {on && <Check size={13} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
-                    <span className="w-full truncate text-[0.875rem] font-semibold">{row.name}</span>
+                    <span className="w-full truncate text-base font-semibold">{row.name}</span>
                     {!row.outOfService && (
-                      <span className={cn("w-full truncate text-[0.8125rem]", on ? "text-white" : "text-muted")}>
+                      <span className={cn("w-full truncate text-sm", on ? "text-on-solid" : "text-muted")}>
                         {free > 0 ? t("sheet.slotsFree", { count: free }) : t("sheet.fullyBooked")}
                       </span>
                     )}
@@ -130,8 +130,8 @@ export function SlotMatrix({
         </>
       )}
 
-      <span className="mt-tight text-[0.875rem] font-semibold text-fg">{t("sheet.time")}{rows.length === 1 ? ` · ${active.name}` : ""}</span>
-      <div className="go-surface overflow-hidden rounded-go">
+      <span className="mt-tight text-base font-semibold text-fg">{t("sheet.time")}{rows.length === 1 ? ` · ${active.name}` : ""}</span>
+      <div className="card-surface overflow-hidden">
         <div className="-mb-px -mr-px grid grid-cols-4">
           {active.cells.map((cell) => {
             const selected = active.id === selectedResourceId && selectedTime === cell.time;
@@ -148,7 +148,7 @@ export function SlotMatrix({
                         : t("sheet.slotTaken", { time: formatClock(cell.time), name: active.name }),
                     )
                   }
-                  className="flex min-h-14 items-center justify-center border-b border-r border-line bg-surface px-1 py-1 text-[0.875rem] text-muted line-through"
+                  className="flex min-h-14 items-center justify-center border-b border-r border-line bg-surface px-1 py-1 text-base text-muted line-through"
                 >
                   <ClockCell hhmm={cell.time} className="line-through" />
                 </button>
@@ -163,14 +163,14 @@ export function SlotMatrix({
                 onClick={() => onSelect(active.id, cell.time)}
                 className={cn(
                   "relative flex min-h-14 flex-col items-center justify-center gap-0.5 border-b border-r border-line px-1 py-1 transition-colors duration-quick",
-                  selected ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10",
+                  selected ? "bg-ember-solid text-on-solid" : "bg-card text-fg active:bg-muted-wash",
                 )}
               >
                 {selected && <Check size={12} strokeWidth={3} className="absolute right-1 top-1" aria-hidden />}
-                <ClockCell hhmm={cell.time} className="text-[0.9375rem] font-semibold tabular-nums" />
+                <ClockCell hhmm={cell.time} className="text-md font-semibold tabular-nums" />
                 <span
                   className={cn(
-                    "whitespace-nowrap text-[0.8125rem] tabular-nums",
+                    "whitespace-nowrap text-sm tabular-nums",
                     selected ? "font-medium" : cell.price === base ? "text-muted" : "font-semibold text-fg",
                   )}
                 >
@@ -183,7 +183,7 @@ export function SlotMatrix({
       </div>
 
       {/* What the figure on each cell is the price OF. */}
-      <p className="text-[0.8125rem] text-muted">
+      <p className="text-sm text-muted">
         {t("sheet.ratePer", { noun: resourceNoun.toLowerCase() })}
       </p>
     </div>

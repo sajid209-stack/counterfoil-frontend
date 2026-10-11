@@ -11,7 +11,7 @@ import { TimeField } from "../../_components/TimeField";
 import { DAY_KEY, WEEK, dayProblem } from "../_lib/hours";
 
 const iconButton =
-  "inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg";
+  "inline-flex h-11 w-11 items-center justify-center rounded-control text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg";
 
 /**
  * A week of opening hours.
@@ -64,7 +64,7 @@ export function HoursEditor({ hours, onChange }: { hours: OpeningHours[]; onChan
                 onChange={(on) => setDay(d, on ? template().map((i) => ({ ...i })) : [])}
                 labelledBy={labelId}
               />
-              <span id={labelId} className="text-sm font-medium text-fg">
+              <span id={labelId} className="text-base font-medium text-fg">
                 {name}
               </span>
             </div>
@@ -102,7 +102,7 @@ export function HoursEditor({ hours, onChange }: { hours: OpeningHours[]; onChan
                   </div>
                 ))}
                 {problem && (
-                  <p className="text-[12px] text-danger">
+                  <p className="text-xs text-danger">
                     {problem === "backwards" ? t("locations.hoursBackwards") : t("locations.hoursOverlap")}
                   </p>
                 )}
@@ -110,7 +110,7 @@ export function HoursEditor({ hours, onChange }: { hours: OpeningHours[]; onChan
             ) : (
               /* A closed day is one line: on a phone the word sits where the
                  buttons would, at the row's right edge. */
-              <p className="text-right text-sm text-muted [grid-area:actions] sm:text-left sm:[grid-area:times]">{t("locations.closed")}</p>
+              <p className="text-right text-base text-muted [grid-area:actions] sm:text-left sm:[grid-area:times]">{t("locations.closed")}</p>
             )}
 
             {open && (

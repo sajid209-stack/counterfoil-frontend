@@ -146,7 +146,7 @@ export default function RegisterDevicePage() {
   if (created) {
     return (
       <PageShell title={t("devices.pairTitle", { name: created.name })} description={t("devices.pairDesc")}>
-        <div className="flex max-w-3xl flex-col gap-section pb-hero">
+        <div className="flex flex-col gap-section pb-hero">
           <PairingPanel
             device={created}
             staff={staff}
@@ -161,7 +161,7 @@ export default function RegisterDevicePage() {
 
   return (
     <PageShell title={t("devices.newTitle")} description={t("devices.registerDesc")}>
-      <div className="flex max-w-3xl flex-col gap-section pb-hero">
+      <div className="flex flex-col gap-section pb-hero">
         <StepSection n={1} title={t("devices.step1Title")} description={t("devices.step1Desc")}>
           <SettingRow label={t("devices.deviceName")} error={nameErr}>
             {({ id, describedBy }) => (
@@ -221,7 +221,7 @@ export default function RegisterDevicePage() {
               {t("save.cancel")}
             </Button>
             {apiErrors.form && (
-              <p role="alert" className="w-full text-[13px] text-danger">
+              <p role="alert" className="w-full text-sm text-danger">
                 {apiErrors.form}
               </p>
             )}

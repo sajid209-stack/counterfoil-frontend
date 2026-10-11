@@ -28,9 +28,9 @@ export default function InviteAcceptPage() {
 
   return (
     <div className="card-surface p-card">
-      <p className="type-label text-[13px] text-brand-foreground">Counterfoil</p>
+      <p className="text-sm font-medium text-brand-foreground">Counterfoil</p>
       <h1 className="type-h1 mt-inline text-2xl">{t("title")}</h1>
-      <p className="type-body mt-tight text-[13px] text-muted">{t("lead")}</p>
+      <p className="type-body mt-tight text-sm text-muted">{t("lead")}</p>
 
       <div className="mt-major flex flex-col gap-section">
         <FormField label={t("password")} variant="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} error={shortErr} />

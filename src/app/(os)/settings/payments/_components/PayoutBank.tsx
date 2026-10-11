@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button, Modal, StatusPill, useToast } from "@/components/ui";
+import { Button, Modal, SegmentedControl, Skeleton, StatusPill, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { describeDestination, getPayoutDestination, setPayoutDestination, type PayoutDestinationInput } from "@/lib/api";
@@ -42,7 +42,7 @@ export function PayoutBank() {
 
   const field = (key: keyof PayoutDestinationInput, label: string, opts: { mono?: boolean; inputMode?: "numeric" | "text" } = {}) => (
     <div>
-      <label htmlFor={`bank-${key}`} className="text-[13px] font-medium text-fg">{label}</label>
+      <label htmlFor={`bank-${key}`} className="text-sm font-medium text-fg">{label}</label>
       <input
         id={`bank-${key}`}
         value={(form?.[key] as string) ?? ""}
@@ -52,7 +52,7 @@ export function PayoutBank() {
         aria-invalid={!!errors[key] || undefined}
         className={cn(controlCls(!!errors[key]), "mt-inline", opts.mono && "font-mono")}
       />
-      {errors[key] && <p className="mt-inline text-[13px] text-danger">{errors[key]}</p>}
+      {errors[key] && <p className="mt-inline text-sm text-danger">{errors[key]}</p>}
     </div>
   );
 
@@ -69,14 +69,14 @@ export function PayoutBank() {
       >
         <div className="px-card pb-card">
           {d === undefined ? (
-            <div className="h-10 animate-pulse rounded-sm bg-line/50" />
+            <Skeleton className="h-10" />
           ) : d === null ? (
-            <p className="text-[13px] font-medium text-warning">{t("settings.bankNone")}</p>
+            <p className="text-sm font-medium text-warning">{t("settings.bankNone")}</p>
           ) : (
             <div className="flex flex-wrap items-center gap-comfortable">
               <div className="min-w-0">
-                <p className="font-mono text-sm text-fg">{describeDestination(d)}</p>
-                <p className="mt-inline text-[13px] text-muted">
+                <p className="font-mono text-base text-fg">{describeDestination(d)}</p>
+                <p className="mt-inline text-sm text-muted">
                   {d.accountName}
                   {d.branch ? ` · ${d.branch}` : ""}
                   {d.routingNumber ? ` · ${d.routingNumber}` : ""}
@@ -87,7 +87,7 @@ export function PayoutBank() {
               </StatusPill>
             </div>
           )}
-          <p className="mt-comfortable text-[12px] text-muted">{t("settings.adminOnly")}</p>
+          <p className="mt-comfortable text-xs text-muted">{t("settings.adminOnly")}</p>
         </div>
       </SettingsSection>
 
@@ -105,23 +105,21 @@ export function PayoutBank() {
       >
         {form && (
           <form className="flex flex-col gap-comfortable" onSubmit={(e) => { e.preventDefault(); void save(); }}>
-            <div role="radiogroup" aria-label={t("settings.bankKind")} className="inline-flex self-start rounded-sm border border-line bg-card p-[3px]">
-              {(["bank", "bkash"] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  role="radio"
-                  aria-checked={form.kind === k}
-                  onClick={() => { setErrors({}); setForm({ ...form, kind: k }); }}
-                  className={cn(
-                    "inline-flex min-h-11 items-center rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick md:min-h-9",
-                    form.kind === k ? "bg-ember-solid text-white" : "text-muted hover:text-fg",
-                  )}
-                >
-                  {k === "bank" ? t("settings.bankKindBank") : t("settings.bankKindBkash")}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              size="sm"
+              className="self-start"
+              aria-label={t("settings.bankKind")}
+              value={form.kind}
+              options={[
+                { value: "bank", label: t("settings.bankKindBank") },
+                { value: "bkash", label: t("settings.bankKindBkash") },
+              ]}
+              onChange={(k) => {
+                if (k === form.kind) return;
+                setErrors({});
+                setForm({ ...form, kind: k as PayoutDestinationInput["kind"] });
+              }}
+            />
             {form.kind === "bank" && (
               <div className="grid gap-comfortable sm:grid-cols-2">
                 {field("bankName", t("settings.bankName"))}

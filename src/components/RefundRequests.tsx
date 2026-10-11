@@ -3,8 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useFormatter, useTranslations } from "next-intl";
 import { RotateCcw } from "lucide-react";
-import { Button, Modal, useToast } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { Button, Modal, controlClass, useToast } from "@/components/ui";
 import { formatClockRange, formatDay, formatMoney, formatClock } from "@/lib/format";
 import {
   approveRefundRequest,
@@ -84,32 +83,32 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
   };
 
   return (
-    <section aria-labelledby="refund-requests-title" className="card-surface overflow-hidden rounded-lg border border-warning/40">
+    <section aria-labelledby="refund-requests-title" className="card-surface overflow-hidden border border-warning/40">
       <header className="flex items-start gap-comfortable border-b border-line bg-warning-wash px-card py-comfortable">
-        <span aria-hidden className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-card text-warning">
+        <span aria-hidden className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-control bg-card text-warning">
           <RotateCcw size={18} strokeWidth={2} />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 id="refund-requests-title" className="text-[1rem] font-semibold text-fg">
+          <h2 id="refund-requests-title" className="text-md font-semibold text-fg">
             {t("title", { count: list.length })}
           </h2>
-          <p className="text-[0.875rem] text-fg/80">{t("lead")}</p>
+          <p className="text-base text-fg/80">{t("lead")}</p>
         </div>
       </header>
       <ul className="divide-y divide-line">
         {list.map((r) => (
           <li key={r.id} className="flex flex-col gap-comfortable px-card py-comfortable md:flex-row md:items-center">
             <div className="min-w-0 flex-1">
-              <p className="text-[0.9375rem] font-semibold text-fg">
+              <p className="text-md font-semibold text-fg">
                 {r.customerName || t("walkIn")}
                 <span className="font-normal text-muted"> · {what(r)}</span>
               </p>
-              <p className="text-[0.875rem] text-fg">{when(r)}</p>
-              <p className="mt-inline text-[0.875rem] text-fg">
+              <p className="text-base text-fg">{when(r)}</p>
+              <p className="mt-inline text-base text-fg">
                 <span className="font-medium">{t(`reasons.${r.reason}`)}</span>
                 {r.note ? <span className="text-muted"> — “{r.note}”</span> : null}
               </p>
-              <p className="mt-inline text-[0.8125rem] text-muted">
+              <p className="mt-inline text-sm text-muted">
                 {t("askedBy", { name: r.requestedBy, ago: format.relativeTime(new Date(r.requestedAt), new Date()) })}
                 {!orderId && (
                   <>
@@ -122,7 +121,7 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-tight md:flex-col md:items-end">
-              <p className="mr-auto text-[1.125rem] font-semibold tabular-nums text-fg md:mr-0">{formatMoney(r.amount)}</p>
+              <p className="mr-auto text-lg font-semibold tabular-nums text-fg md:mr-0">{formatMoney(r.amount)}</p>
               <div className="flex gap-tight">
                 <Button variant="secondary" onClick={() => { setDeclining(r); setNote(""); setNoteErr(null); }}>
                   {t("decline")}
@@ -150,7 +149,7 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
         }
       >
         {approving && (
-          <p className="text-[0.9375rem] text-fg">
+          <p className="text-md text-fg">
             {t("approveBody", { what: what(approving), when: when(approving) })}
           </p>
         )}
@@ -172,7 +171,7 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
         }
       >
         <label data-focus-host className="flex flex-col gap-tight">
-          <span className="text-[0.9375rem] font-medium text-fg">{t("declineNote")}</span>
+          <span className="text-md font-medium text-fg">{t("declineNote")}</span>
           <textarea
             id="refund-decline-note"
             value={note}
@@ -181,12 +180,12 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
             placeholder={t("declinePlaceholder")}
             aria-invalid={!!noteErr}
             aria-describedby={noteErr ? "refund-decline-err" : "refund-decline-help"}
-            className={cn("rounded-md border bg-card px-comfortable py-tight text-[0.9375rem] text-fg outline-none focus:ring-2 focus:ring-ember/25", noteErr ? "border-danger" : "border-line focus:border-ember")}
+            className={controlClass(!!noteErr, true)}
           />
           {noteErr ? (
-            <span id="refund-decline-err" className="text-[0.875rem] font-medium text-danger">{noteErr}</span>
+            <span id="refund-decline-err" className="text-base font-medium text-danger">{noteErr}</span>
           ) : (
-            <span id="refund-decline-help" className="text-[0.8125rem] text-muted">{t("declineHelp")}</span>
+            <span id="refund-decline-help" className="text-sm text-muted">{t("declineHelp")}</span>
           )}
         </label>
       </Modal>

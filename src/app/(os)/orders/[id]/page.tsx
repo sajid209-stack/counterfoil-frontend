@@ -7,11 +7,14 @@ import { CalendarClock, Printer, RotateCcw, Send, Wallet } from "lucide-react";
 import {
   ActionMenu,
   Button,
+  Checkbox,
+  ChoiceCard,
   EmptyState,
   FormField,
   MarketBadge,
   Modal,
   PageShell,
+  Skeleton,
   StatusPill,
   useToast,
   type ActionMenuItem,
@@ -308,7 +311,7 @@ export default function OrderDetailPage() {
           <span className="flex flex-wrap items-center gap-tight">
             <StatusPill status={o.status} />
             {o.source && (
-              <span className="inline-flex items-center gap-inline text-[13px] text-muted">
+              <span className="inline-flex items-center gap-inline text-sm text-muted">
                 <MarketBadge id={o.source.marketplaceId} />
                 {o.source.marketplaceName}
               </span>
@@ -347,7 +350,7 @@ export default function OrderDetailPage() {
       )}
 
       {!o ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
+        <div aria-busy="true" className="flex flex-col gap-tight"><Skeleton className="h-4 w-1/3" /><Skeleton className="h-4 w-2/3" /><Skeleton className="h-4 w-1/2" /></div>
       ) : phone ? (
         /* On a phone: how much, what state, who, when — then the lines — and
            everything else under "Show more". The Money card comes first only
@@ -415,15 +418,22 @@ export default function OrderDetailPage() {
       >
         <div className="flex flex-col gap-tight">
           {(o?.lines ?? []).filter((l) => l.unitPrice > 0 && (l.refundedQuantity ?? 0) < l.quantity).map((l) => (
-            <label key={l.id} className="flex min-h-11 cursor-pointer items-center gap-tight rounded-sm border border-line p-comfortable text-sm">
-              <input type="checkbox" checked={!!refundLines[l.id]} onChange={(e) => setRefundLines((r) => ({ ...r, [l.id]: e.target.checked }))} className="h-4 w-4 accent-[var(--color-ember)]" />
-              <span className="min-w-0 flex-1 truncate">{l.parentLineId ? "↳ " : ""}{l.productName} · {l.tierName} ×{l.quantity}</span>
-              <span className="tabular-nums text-[13px]">{formatMoney(l.total ?? l.unitPrice * l.quantity)}</span>
-            </label>
+            <div key={l.id} className="rounded-control border border-line px-comfortable">
+              <Checkbox
+                checked={!!refundLines[l.id]}
+                onCheckedChange={(on) => setRefundLines((r) => ({ ...r, [l.id]: on }))}
+                label={
+                  <span className="flex items-baseline gap-tight">
+                    <span className="min-w-0 flex-1 truncate">{l.parentLineId ? "↳ " : ""}{l.productName} · {l.tierName} ×{l.quantity}</span>
+                    <span className="shrink-0 text-sm tabular-nums">{formatMoney(l.total ?? l.unitPrice * l.quantity)}</span>
+                  </span>
+                }
+              />
+            </div>
           ))}
         </div>
         <FormField className="mt-section" label={t("reasonLabel")} placeholder={t("reasonPlaceholder")} value={refundReason} onChange={(e) => setRefundReason(e.target.value)} />
-        <p className="mt-tight text-[12px] text-muted">{t("refundNote")}</p>
+        <p className="mt-tight text-xs text-muted">{t("refundNote")}</p>
       </Modal>
 
       {/* Write off a balance — not a refund; clears what's owed with a reason.
@@ -460,7 +470,7 @@ export default function OrderDetailPage() {
 
       {/* Resend the ticket. */}
       <Modal open={resendOpen} onClose={() => setResendOpen(false)} title={t("resendModalTitle")}>
-        <p className="mb-section text-[13px] text-muted">{o?.customerName ? t("resendToCustomer", { name: o.customerName }) : t("resendModalBody")}</p>
+        <p className="mb-section text-sm text-muted">{o?.customerName ? t("resendToCustomer", { name: o.customerName }) : t("resendModalBody")}</p>
         <div className="grid grid-cols-2 gap-tight">
           <Button variant="secondary" className="h-12" onClick={() => resend("email")}>{t("byEmail")}</Button>
           <Button variant="secondary" className="h-12" onClick={() => resend("sms")}>{t("bySms")}</Button>
@@ -546,28 +556,29 @@ export default function OrderDetailPage() {
           <FormField label={t("newDate")} variant="date" value={moveDate} onChange={(e) => { setMoveDate(e.target.value); setMoveTime(""); }} />
           {moveDate && (
             moveSlots.length === 0 ? (
-              <p className="text-[13px] text-muted">{t("noSessionsOnDay")}</p>
+              <p className="text-sm text-muted">{t("noSessionsOnDay")}</p>
             ) : (
               <div className="grid grid-cols-4 gap-tight">
                 {moveSlots.map((s) => {
                   const fits = s.remaining >= (moveFor?.partySize ?? 1) || s.time === moveFor?.slotStart.slice(11, 16);
                   return (
-                    <button
+                    <ChoiceCard
                       key={s.time}
-                      type="button"
+                      hideCheck
+                      selected={moveTime === s.time}
                       disabled={!fits}
                       onClick={() => setMoveTime(s.time)}
-                      className={`flex h-12 flex-col items-center justify-center rounded-sm border text-[13px] tabular-nums ${moveTime === s.time ? "border-inverse bg-inverse text-inverse-fg" : fits ? "border-line bg-card" : "border-line bg-subtle text-muted line-through"}`}
+                      className={`flex h-12 flex-col items-center justify-center text-sm tabular-nums ${fits ? "" : "line-through"}`}
                     >
                       <span className="whitespace-nowrap">{formatClock(s.time)}</span>
-                      <span className="text-[12px]">{fits ? t("slotLeft", { count: s.remaining }) : t("slotFull")}</span>
-                    </button>
+                      <span className="text-xs">{fits ? t("slotLeft", { count: s.remaining }) : t("slotFull")}</span>
+                    </ChoiceCard>
                   );
                 })}
               </div>
             )
           )}
-          <p className="text-[12px] text-muted">{t("moveNote", { size: moveFor?.partySize ?? 1 })}</p>
+          <p className="text-xs text-muted">{t("moveNote", { size: moveFor?.partySize ?? 1 })}</p>
         </div>
       </Modal>
     </PageShell>

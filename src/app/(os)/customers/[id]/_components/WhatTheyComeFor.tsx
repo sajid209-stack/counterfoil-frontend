@@ -44,11 +44,11 @@ export function WhatTheyComeFor({ profile }: { profile: CustomerProfile }) {
         <ol className="flex flex-col">
           {profile.favourites.map((f, i) => (
             <li key={f.productId} className="flex items-baseline gap-comfortable border-b border-hairline py-comfortable first:pt-0 last:border-0">
-              <span aria-hidden className="w-4 shrink-0 text-sm font-semibold text-muted">
+              <span aria-hidden className="w-4 shrink-0 text-base font-semibold text-muted">
                 {i + 1}
               </span>
-              <span className="min-w-0 flex-1 break-words text-sm font-medium text-fg">{f.name}</span>
-              <span className="shrink-0 whitespace-nowrap text-right text-[0.8125rem] text-muted">
+              <span className="min-w-0 flex-1 break-words text-base font-medium text-fg">{f.name}</span>
+              <span className="shrink-0 whitespace-nowrap text-right text-sm text-muted">
                 {t("timesBought", { count: f.times })} · {t("lastBought", { date: formatDay(f.lastAt.slice(0, 10)) })}
               </span>
             </li>
@@ -59,7 +59,7 @@ export function WhatTheyComeFor({ profile }: { profile: CustomerProfile }) {
       {facts.length > 0 && (
         <ul className="mt-comfortable flex flex-col gap-tight border-t border-hairline pt-comfortable">
           {facts.map((f) => (
-            <li key={f.key} className="flex items-center gap-comfortable text-sm text-fg">
+            <li key={f.key} className="flex items-center gap-comfortable text-base text-fg">
               <span className="text-muted">{f.icon}</span>
               {f.text}
             </li>
@@ -68,7 +68,7 @@ export function WhatTheyComeFor({ profile }: { profile: CustomerProfile }) {
       )}
 
       {!profile.enoughForPattern && (
-        <p className={profile.favourites.length > 0 || facts.length > 0 ? "mt-comfortable text-sm text-muted" : "text-sm text-muted"}>
+        <p className={profile.favourites.length > 0 || facts.length > 0 ? "mt-comfortable text-base text-muted" : "text-base text-muted"}>
           {t("needMore")}
         </p>
       )}

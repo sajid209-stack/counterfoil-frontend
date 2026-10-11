@@ -14,7 +14,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
-import { Button, EmptyState, Modal, PlanView, useToast, seatToElement } from "@/components/ui";
+import { Button, EmptyState, Modal, PlanView, Skeleton, useToast, seatToElement } from "@/components/ui";
 import { PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -60,7 +60,7 @@ export default function SeatLayoutsPage() {
     <PageShell title={t("list.title")} description={t("list.description")} primary={primary}>
       {q.loading ? (
         <div aria-busy="true" className="grid gap-section sm:grid-cols-2 lg:grid-cols-3">
-          {[0, 1, 2].map((i) => <div key={i} className="h-52 animate-pulse rounded-md bg-muted-wash" />)}
+          {[0, 1, 2].map((i) => <div key={i} className="overflow-hidden rounded-card"><Skeleton h={208} /></div>)}
         </div>
       ) : layouts.length === 0 ? (
         <EmptyState title={t("list.empty")} action={<Button onClick={() => setChoosing(true)}>{t("list.new")}</Button>} />
@@ -73,7 +73,7 @@ export default function SeatLayoutsPage() {
             <button
               type="button"
               onClick={primary.onClick}
-              className="flex min-h-40 items-center justify-center gap-tight rounded-md bg-muted-wash p-card text-sm font-medium text-fg transition-colors duration-quick hover:bg-line/40"
+              className="flex min-h-40 items-center justify-center gap-tight rounded-card border border-dashed border-strong p-card text-base font-medium text-fg transition-colors duration-quick hover:bg-muted-wash"
             >
               <Plus size={16} strokeWidth={1.75} aria-hidden />
               {primary.label}
@@ -93,10 +93,10 @@ export default function SeatLayoutsPage() {
               type="button"
               disabled={!!creating}
               onClick={() => create(x)}
-              className="flex min-h-11 flex-col items-start gap-[2px] rounded-sm bg-muted-wash p-comfortable text-left transition-colors duration-quick hover:bg-line/40 disabled:opacity-50"
+              className="flex min-h-11 flex-col items-start gap-inline rounded-control border border-line bg-card p-comfortable text-left transition-colors duration-quick hover:bg-muted-wash disabled:opacity-50"
             >
               <span className="font-medium">{t(`experience.${x}`)}</span>
-              <span className="text-[12px] text-muted">{t(`experienceHint.${x}`)}</span>
+              <span className="text-xs text-muted">{t(`experienceHint.${x}`)}</span>
             </button>
           ))}
         </div>
@@ -114,13 +114,13 @@ function LayoutCard({ layout: l, onOpen }: { layout: SeatLayout; onOpen: () => v
     <button
       type="button"
       onClick={onOpen}
-      className="flex flex-col gap-tight card-surface p-card text-left transition-shadow duration-quick hover:shadow-md"
+      className="card-surface card-interactive flex flex-col gap-tight p-card text-left"
     >
       <div className="flex items-baseline gap-tight">
         <span className="min-w-0 flex-1 truncate font-medium">{l.name}</span>
-        <span className="shrink-0 text-[12px] text-muted">{t(`experience.${l.experience ?? "general"}`)}</span>
+        <span className="shrink-0 text-xs text-muted">{t(`experience.${l.experience ?? "general"}`)}</span>
       </div>
-      <div aria-hidden className="pointer-events-none overflow-hidden rounded-xs bg-surface">
+      <div aria-hidden className="pointer-events-none overflow-hidden rounded-inner bg-surface">
         <PlanView
           elements={l.seats.map((s) => seatToElement(s, colorOf(s.seatCategoryId)))}
           fixtures={l.fixtures ?? []}
@@ -128,13 +128,13 @@ function LayoutCard({ layout: l, onOpen }: { layout: SeatLayout; onOpen: () => v
           maxScale={14}
         />
       </div>
-      <span className="text-[12px] text-muted">{t("list.capacity", { count: planCapacity(l.seats) })}</span>
+      <span className="text-xs text-muted">{t("list.capacity", { count: planCapacity(l.seats) })}</span>
       <div className="flex flex-wrap gap-inline">
         {l.categories.map((c) => (
           /* Tinted ground, theme ink. The colour is the operator's own, so it
              cannot be guaranteed readable as a letterform — blue measured
              2.79:1 on a dark card. */
-          <span key={c.uid} className="inline-flex items-center rounded-xs px-inline py-[2px] text-[12px]" style={{ background: `${c.color}22` }}>
+          <span key={c.uid} className="inline-flex items-center rounded-control px-inline py-inline text-xs" style={{ background: `${c.color}22` }}>
             {c.name}
           </span>
         ))}

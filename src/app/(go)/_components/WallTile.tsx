@@ -29,7 +29,7 @@ import { cn } from "@/lib/cn";
  */
 
 /** The card's own drawing, shared with the tiles that are not products. */
-export const WALL_CARD = "go-surface relative flex min-w-0 flex-col rounded-go text-left transition-colors duration-quick";
+export const WALL_CARD = "card-surface relative flex min-w-0 flex-col text-left transition-colors duration-quick";
 
 export function WallTile({
   onClick,
@@ -74,33 +74,33 @@ export function WallTile({
         soldOut
           ? "bg-surface shadow-none dark:bg-surface"
           : count > 0
-            ? "bg-ember/[0.06] ring-2 ring-inset ring-ember active:bg-ember/15"
-            : "active:bg-ember/10 hover:bg-muted-wash/60",
+            ? "bg-ember-wash ring-2 ring-inset ring-ember active:bg-muted-wash"
+            : "active:bg-muted-wash hover:bg-muted-wash/60",
         soldOut && "border border-line",
       )}
     >
       <span className="flex w-full items-start justify-between gap-tight">
         {thumb}
         {count > 0 ? (
-          <span aria-hidden className="flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-ember-solid px-1.5 text-[0.875rem] font-semibold tabular-nums text-white">
+          <span aria-hidden className="flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-ember-solid px-inline text-base font-semibold tabular-nums text-on-solid">
             {count}
           </span>
         ) : soldOut ? (
-          <span className="shrink-0 whitespace-nowrap rounded-full bg-danger/10 px-tight py-inline text-[0.8125rem] font-medium text-danger">{soldOutLabel}</span>
+          <span className="shrink-0 whitespace-nowrap rounded-full bg-danger-wash px-tight py-inline text-sm font-medium text-fg">{soldOutLabel}</span>
         ) : flag ? (
-          <span className="shrink-0 whitespace-nowrap rounded-full bg-warning-wash px-tight py-inline text-[0.8125rem] font-medium text-warning">{flag}</span>
+          <span className="shrink-0 whitespace-nowrap rounded-full bg-warning-wash px-tight py-inline text-sm font-medium text-fg">{flag}</span>
         ) : null}
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-inline">
-        <span className={cn("line-clamp-2 text-[1rem] font-semibold leading-snug", soldOut && "text-muted")}>{name}</span>
-        {price != null && <span className={cn("text-[1.375rem] font-bold leading-tight tabular-nums", soldOut ? "text-muted" : "text-fg")}>{price}</span>}
+        <span className={cn("line-clamp-2 text-md font-semibold leading-snug", soldOut && "text-muted")}>{name}</span>
+        {price != null && <span className={cn("text-2xl font-bold leading-tight tabular-nums", soldOut ? "text-muted" : "text-fg")}>{price}</span>}
         {/* What it is: on a phone the sheet behind the card says it, and the
             wall needs the rows. */}
-        {meta && <span className="hidden text-[0.8125rem] leading-tight text-muted sm:line-clamp-2">{meta}</span>}
+        {meta && <span className="hidden text-sm leading-tight text-muted sm:line-clamp-2">{meta}</span>}
         {live && (
           <span
             className={cn(
-              "mt-auto flex items-center gap-inline pt-inline text-[0.8125rem] leading-tight",
+              "mt-auto flex items-center gap-inline pt-inline text-sm leading-tight",
               live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-warning" : "text-success",
             )}
           >
@@ -118,7 +118,7 @@ export function WallTile({
 /** A section heading across the whole wall — Event tickets, Shop. */
 export function WallHeading({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <p className="col-span-full flex min-h-11 items-center gap-tight px-inline pt-tight text-[0.875rem] font-semibold text-muted">
+    <p className="col-span-full flex min-h-11 items-center gap-tight px-inline pt-tight text-base font-semibold text-muted">
       {icon}
       {children}
     </p>

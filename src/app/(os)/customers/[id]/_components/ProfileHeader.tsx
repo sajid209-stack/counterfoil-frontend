@@ -3,8 +3,7 @@
 import { useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Mail, MessageSquare, Phone, Plus } from "lucide-react";
-import { Button, StatusPill, useToast, type PillTone } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { AffixInput, Button, ButtonLink, StatusPill, useToast, type PillTone } from "@/components/ui";
 import { updateCustomer, type Customer } from "@/lib/api";
 import { formatDay } from "@/lib/format";
 import type { CustomerProfile, Relationship } from "@/lib/customerProfile";
@@ -21,12 +20,10 @@ function initialsOf(name: string): string {
 
 const REL_TONE: Record<Relationship, PillTone> = { new: "info", regular: "success", lapsed: "warning" };
 
-/** A contact action drawn as a button. A link, because that is what it is:
- *  tel:, sms: and mailto: hand the number to the phone's own apps. 44px on a
- *  phone, the density the rest of OS uses from `md`. Copying the number is on
- *  the Contact card, which is where somebody looks for it. */
-const ACTION =
-  "inline-flex h-11 items-center justify-center gap-tight rounded-sm border border-line bg-card px-comfortable text-[0.8125rem] font-medium text-fg transition-colors duration-quick hover:border-strong md:h-9";
+/** Hand a tel:, sms: or mailto: address to the device's own apps. The kit's
+ *  Button draws the control (it is the one button), and the address opens the
+ *  same way a link to it would. Copying the number is on the Contact card,
+ *  which is where somebody looks for it. */
 
 /**
  * Who this is, before anything they have bought.
@@ -91,7 +88,7 @@ export function ProfileHeader({
               {customer.status === "archived" && <StatusPill tone="neutral">{t("archivedLabel")}</StatusPill>}
             </div>
           )}
-          <p className="text-sm text-muted">{line}</p>
+          <p className="text-base text-muted">{line}</p>
         </div>
       </div>
 
@@ -101,26 +98,23 @@ export function ProfileHeader({
       {hasActions ? (
         <div className="grid grid-cols-3 gap-tight sm:flex sm:flex-wrap lg:shrink-0 lg:justify-end">
           {phone && (
-            <a href={`tel:${phone}`} className={ACTION}>
-              <Phone size={16} strokeWidth={1.6} aria-hidden />
+            <ButtonLink variant="secondary" size="sm" icon={<Phone size={16} strokeWidth={1.6} aria-hidden />} href={`tel:${phone}`} className="max-sm:w-full">
               {t("actCall")}
-            </a>
+            </ButtonLink>
           )}
           {phone && (
-            <a href={`sms:${phone}`} className={ACTION}>
-              <MessageSquare size={16} strokeWidth={1.6} aria-hidden />
+            <ButtonLink variant="secondary" size="sm" icon={<MessageSquare size={16} strokeWidth={1.6} aria-hidden />} href={`sms:${phone}`} className="max-sm:w-full">
               {t("actSms")}
-            </a>
+            </ButtonLink>
           )}
           {customer.email && (
-            <a href={`mailto:${customer.email}`} className={ACTION}>
-              <Mail size={16} strokeWidth={1.6} aria-hidden />
+            <ButtonLink variant="secondary" size="sm" icon={<Mail size={16} strokeWidth={1.6} aria-hidden />} href={`mailto:${customer.email}`} className="max-sm:w-full">
               {t("actEmail")}
-            </a>
+            </ButtonLink>
           )}
         </div>
       ) : (
-        <p className="text-sm text-muted">{t("noContact")}</p>
+        <p className="text-base text-muted">{t("noContact")}</p>
       )}
     </section>
   );
@@ -177,7 +171,7 @@ function Tags({ customer, onChanged }: { customer: Customer; onChanged: () => vo
             ref={opener}
             type="button"
             onClick={() => setOpen(true)}
-            className="inline-flex h-11 items-center gap-inline rounded-full px-comfortable text-[0.8125rem] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:h-9"
+            className="inline-flex h-11 items-center gap-inline rounded-full px-comfortable text-sm font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:h-9"
           >
             <Plus size={14} strokeWidth={1.8} aria-hidden />
             {t("addTag")}
@@ -193,7 +187,7 @@ function Tags({ customer, onChanged }: { customer: Customer; onChanged: () => vo
           }}
         >
           <div className="min-w-0 flex-1 sm:max-w-xs">
-            <input
+            <AffixInput
               autoFocus
               value={value}
               onChange={(e) => {
@@ -207,17 +201,13 @@ function Tags({ customer, onChanged }: { customer: Customer; onChanged: () => vo
                 }
               }}
               aria-label={t("tagLabel")}
-              aria-invalid={error ? true : undefined}
+              invalid={!!error}
               aria-describedby={error ? "tag-error" : undefined}
               placeholder={t("tagPlaceholder")}
               maxLength={MAX_TAG + 8}
-              className={cn(
-                "h-11 w-full rounded-sm border bg-card px-comfortable text-sm outline-none transition-colors duration-quick placeholder:text-muted md:h-9",
-                error ? "border-danger" : "border-line focus:border-inverse",
-              )}
             />
             {error && (
-              <p id="tag-error" role="alert" className="mt-inline text-[0.8125rem] text-danger">
+              <p id="tag-error" role="alert" className="mt-inline text-sm text-danger">
                 {error}
               </p>
             )}

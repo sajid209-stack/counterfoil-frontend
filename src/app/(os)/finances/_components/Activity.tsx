@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { ChevronRight, SearchX } from "lucide-react";
-import { Button, StatusPill, Tabs } from "@/components/ui";
+import { Button, EmptyState, Skeleton, StatusPill, Tabs } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClockOf, formatDay, formatMoney } from "@/lib/format";
 import type { FinanceDay, FinanceFilter } from "@/lib/api";
@@ -78,7 +78,7 @@ function DateCell({ day, open, tag }: { day: FinanceDay; open: boolean; tag: str
       <span className="min-w-0">
         <span className="hidden font-semibold text-fg xl:inline">{longDay(day.date)}</span>
         <span className="font-semibold text-fg xl:hidden">{formatDay(day.date, { weekday: true })}</span>
-        {tag && <span className="ml-tight inline-block whitespace-nowrap rounded-full bg-muted-wash px-tight py-inline text-[12px] font-medium text-muted">{tag}</span>}
+        {tag && <span className="ml-tight inline-block whitespace-nowrap rounded-full bg-muted-wash px-tight py-inline text-xs font-medium text-muted">{tag}</span>}
       </span>
     </span>
   );
@@ -99,10 +99,10 @@ function RowTable({ days, isOpen, onToggle, onPick, totals }: ListProps) {
   const t = useTranslations("finances");
   const info = useDayInfo();
   const rowText = useRowText();
-  const th = "sticky top-0 z-10 border-b border-hairline bg-card py-comfortable text-[12px] font-medium text-muted";
+  const th = "sticky top-0 z-10 border-b border-hairline bg-card py-comfortable text-sm font-medium text-muted";
   const num = "whitespace-nowrap text-right tabular-nums";
   return (
-    <table className="table-inset w-full table-fixed border-collapse text-[14px]">
+    <table className="table-inset w-full table-fixed border-collapse text-base">
       <colgroup>
         <col className="w-[24%]" />
         <col className="w-[20%]" />
@@ -140,14 +140,14 @@ function RowTable({ days, isOpen, onToggle, onPick, totals }: ListProps) {
                 const rt = rowText(r);
                 return (
                   <tr key={r.id} onClick={() => onPick(r)} className={cn("cursor-pointer border-t border-hairline transition-colors duration-quick", RECESSED)}>
-                    <td className="py-comfortable pl-[calc(var(--spacing-card)+36px)] pr-tight text-[13px] text-muted">
-                      <button type="button" className="min-h-8 text-left outline-none focus-visible:underline" aria-label={`${rt.text}${rt.ref ? " " + rt.ref : ""}`}>
+                    <td className="py-comfortable pl-[calc(var(--spacing-card)+36px)] pr-tight text-sm text-muted">
+                      <button type="button" className="min-h-8 text-left focus-visible:underline" aria-label={`${rt.text}${rt.ref ? " " + rt.ref : ""}`}>
                         {formatClockOf(r.line.at)}
                       </button>
                     </td>
                     <td className="px-tight py-comfortable text-fg">
                       <span className="break-words">{rt.text}</span>
-                      {rt.ref && <span className="font-mono text-[13px]"> · {rt.ref}</span>}
+                      {rt.ref && <span className="font-mono text-sm"> · {rt.ref}</span>}
                     </td>
                     <td className="px-tight py-comfortable"><StatusChip status={rowStatus(r)} /></td>
                     <td className={cn(num, "px-tight py-comfortable")}>{cellMoney(a.credit)}</td>
@@ -199,15 +199,15 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
                 <ChevronRight size={16} strokeWidth={1.75} aria-hidden className={cn("transition-transform duration-quick", open && "rotate-90")} />
               </button>
               <span className="min-w-0 flex-1">
-                <span className="block text-[14px] font-medium text-fg">
+                <span className="block text-base font-medium text-fg">
                   {formatDay(d.date, { weekday: true })}
-                  {x.tag && <span className="ml-tight inline-block rounded-full bg-muted-wash px-tight py-inline text-[12px] font-medium text-muted">{x.tag}</span>}
+                  {x.tag && <span className="ml-tight inline-block rounded-full bg-muted-wash px-tight py-inline text-xs font-medium text-muted">{x.tag}</span>}
                 </span>
-                <span className="block text-[12px] text-muted">
+                <span className="block text-xs text-muted">
                   {t("day.transactions", { count: x.rows.length })} · {t(x.clearing ? "day.clearing" : "day.settled")}
                 </span>
               </span>
-              <span className={cn("shrink-0 text-[14px] font-semibold tabular-nums", amountTone(d.net))}>{signed(d.net)}</span>
+              <span className={cn("shrink-0 text-base font-semibold tabular-nums", amountTone(d.net))}>{signed(d.net)}</span>
             </div>
             {open && (
               <ul className="bg-muted-wash/35">
@@ -222,15 +222,15 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
                         className="flex min-h-14 w-full items-center gap-tight py-comfortable pl-[calc(var(--spacing-card)+44px)] pr-card text-left transition-colors duration-quick active:bg-muted-wash"
                       >
                         <span className="min-w-0 flex-1">
-                          <span className="block break-words text-[14px] text-fg">
+                          <span className="block break-words text-base text-fg">
                             {rt.text}
-                            {rt.ref && <span className="whitespace-nowrap font-mono text-[12px]"> · {rt.ref}</span>}
+                            {rt.ref && <span className="whitespace-nowrap font-mono text-xs"> · {rt.ref}</span>}
                           </span>
-                          <span className="block text-[12px] text-muted">
+                          <span className="block text-xs text-muted">
                             {formatClockOf(r.line.at)} · {t(`status.${st.key}`)}
                           </span>
                         </span>
-                        <span className={cn("shrink-0 text-[14px] font-medium tabular-nums", amountTone(r.amount))}>{signed(r.amount)}</span>
+                        <span className={cn("shrink-0 text-base font-medium tabular-nums", amountTone(r.amount))}>{signed(r.amount)}</span>
                       </button>
                     </li>
                   );
@@ -241,11 +241,11 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
         );
       })}
       <div className="border-t border-hairline bg-subtle/60 px-card py-comfortable">
-        <p className="flex items-baseline justify-between gap-tight text-[14px] font-semibold">
+        <p className="flex items-baseline justify-between gap-tight text-base font-semibold">
           <span>{t("table.total", { count: days.length })}</span>
           <span className={cn("tabular-nums", amountTone(totals.net))}>{signed(totals.net)}</span>
         </p>
-        <p className="text-[12px] tabular-nums text-muted">
+        <p className="text-xs tabular-nums text-muted">
           {t("table.credit")} {formatMoney(totals.credit)} · {t("table.debit")} {formatMoney(totals.debit)}
         </p>
       </div>
@@ -254,25 +254,25 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
 }
 
 /** Loading, drawn in the shape of what is coming. */
-function Skeleton({ wide }: { wide: boolean }) {
+function ActivitySkeleton({ wide }: { wide: boolean }) {
   const t = useTranslations("finances");
-  const bar = "animate-pulse rounded-sm bg-line/60";
+  const bar = "";
   return (
     <div role="status" aria-label={t("activity.loading")} className="px-card py-section">
       {[0, 1, 2, 3, 4].map((i) =>
         wide ? (
           <div key={i} className="flex items-center gap-section border-b border-hairline py-comfortable last:border-b-0">
-            <div className={cn(bar, "h-4 w-[24%]")} />
-            <div className={cn(bar, "h-4 w-[20%]")} />
-            <div className={cn(bar, "h-5 w-[9%] rounded-full")} />
-            <div className={cn(bar, "ml-auto h-4 w-[9%]")} />
-            <div className={cn(bar, "h-4 w-[9%]")} />
-            <div className={cn(bar, "h-4 w-[11%]")} />
+            <Skeleton className={cn(bar, "h-4 w-[24%]")} />
+            <Skeleton className={cn(bar, "h-4 w-[20%]")} />
+            <Skeleton className={cn(bar, "h-5 w-[9%]")} />
+            <Skeleton className={cn(bar, "ml-auto h-4 w-[9%]")} />
+            <Skeleton className={cn(bar, "h-4 w-[9%]")} />
+            <Skeleton className={cn(bar, "h-4 w-[11%]")} />
           </div>
         ) : (
           <div key={i} className="border-b border-hairline py-comfortable last:border-b-0">
-            <div className={cn(bar, "h-4 w-3/5")} />
-            <div className={cn(bar, "mt-tight h-8 w-full")} />
+            <Skeleton className={cn(bar, "h-4 w-3/5")} />
+            <Skeleton className={cn(bar, "mt-tight h-8 w-full")} />
           </div>
         ),
       )}
@@ -306,21 +306,21 @@ export function ActivityTable({
   onClear: () => void;
 }) {
   const t = useTranslations("finances");
-  if (loading && days.length === 0) return <Skeleton wide={wide} />;
+  if (loading && days.length === 0) return <ActivitySkeleton wide={wide} />;
   if (days.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-tight px-card py-major text-center">
-        <SearchX size={28} strokeWidth={1.25} aria-hidden className="text-muted" />
-        <p className="text-[15px] font-semibold">{filtered ? t("empty.title") : t("empty.none")}</p>
-        {filtered && (
-          <>
-            <p className="text-[13px] text-muted">{t("empty.text")}</p>
-            <Button variant="secondary" onClick={onClear} className="mt-tight">
+      <EmptyState
+        icon={<SearchX size={24} strokeWidth={1.5} aria-hidden />}
+        title={filtered ? t("empty.title") : t("empty.none")}
+        message={filtered ? t("empty.text") : undefined}
+        action={
+          filtered ? (
+            <Button variant="secondary" onClick={onClear}>
               {t("empty.clear")}
             </Button>
-          </>
-        )}
-      </div>
+          ) : undefined
+        }
+      />
     );
   }
   const totals = days.reduce((s, d) => ({ credit: s.credit + d.moneyIn, debit: s.debit + d.moneyOut, net: s.net + d.net }), { credit: 0, debit: 0, net: 0 });
@@ -333,7 +333,7 @@ export function ActivityTable({
           <Button variant="secondary" loading={loadingMore} onClick={onMore}>
             {t("activity.showMore")}
           </Button>
-          <p className="text-[12px] text-muted">{t("activity.showing", { shown: days.length, total })}</p>
+          <p className="text-xs text-muted">{t("activity.showing", { shown: days.length, total })}</p>
         </div>
       )}
     </div>

@@ -36,7 +36,7 @@ export function FilterSearch({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={ariaLabel ?? placeholder}
-        className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none transition-colors duration-quick placeholder:text-muted focus:border-strong md:h-9 md:w-64"
+        className="h-11 w-full min-w-0 rounded-control border border-line bg-card pl-8 pr-comfortable text-base transition-colors duration-quick placeholder:text-muted hover:border-strong focus:border-ember md:h-9 md:w-64"
       />
     </div>
   );
@@ -239,14 +239,14 @@ export function FilterBar({
       aria-label={count ? t("filtersApplied", { count }) : t("filters")}
       onClick={() => (open ? close(false) : setOpenFor(wide))}
       className={cn(
-        "flex h-11 shrink-0 items-center gap-tight rounded-sm border px-comfortable text-[0.8125rem] font-medium text-fg transition-colors duration-quick md:h-9",
+        "flex h-11 shrink-0 items-center gap-tight rounded-sm border px-comfortable text-sm font-medium text-fg transition-colors duration-quick md:h-9",
         open || count > 0 ? "border-strong bg-subtle dark:bg-fg/5" : "border-line bg-card hover:border-strong",
       )}
     >
       <ListFilter size={16} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
       {t("filters")}
       {count > 0 && (
-        <span data-filter-count className="grid h-5 min-w-5 place-items-center rounded-full bg-inverse px-inline text-[0.75rem] font-semibold text-inverse-fg">
+        <span data-filter-count className="grid h-5 min-w-5 place-items-center rounded-full bg-inverse px-inline text-xs font-semibold text-inverse-fg">
           {count}
         </span>
       )}
@@ -261,7 +261,7 @@ export function FilterBar({
         /* Not a <label>: these controls are buttons, and a label wrapping a
            button fires it on every press of the words above it. */
         <div key={f.key} className="flex flex-col gap-inline border-b border-hairline p-card last:border-0 md:px-comfortable md:py-comfortable">
-          <span className="text-[0.75rem] font-medium text-muted">{f.label}</span>
+          <span className="text-xs font-medium text-muted">{f.label}</span>
           {f.control}
         </div>
       ))}
@@ -293,7 +293,7 @@ export function FilterBar({
               <span
                 key={f.key}
                 data-applied={f.key}
-                className="flex items-center gap-inline rounded-full bg-subtle py-inline pl-comfortable pr-inline text-[0.75rem] font-medium text-fg dark:bg-fg/10"
+                className="flex items-center gap-inline rounded-full bg-subtle py-inline pl-comfortable pr-inline text-xs font-medium text-fg dark:bg-fg/10"
               >
                 {chipText(f)}
                 <button
@@ -309,7 +309,7 @@ export function FilterBar({
             <button
               type="button"
               onClick={clearAll}
-              className="flex h-11 items-center rounded-sm px-tight md:h-8 text-[0.8125rem] font-medium text-brand-foreground underline-offset-2 hover:underline"
+              className="flex h-11 items-center rounded-control px-tight md:h-8 text-sm font-medium text-brand-foreground underline-offset-2 hover:underline"
             >
               {t("clearFilters")}
             </button>
@@ -335,7 +335,7 @@ export function FilterBar({
                 <button
                   type="button"
                   onClick={clearAll}
-                  className="h-9 rounded-sm px-comfortable text-[0.8125rem] font-medium text-brand-foreground hover:bg-muted-wash"
+                  className="h-9 rounded-sm px-comfortable text-sm font-medium text-brand-foreground hover:bg-muted-wash"
                 >
                   {t("clearFilters")}
                 </button>
@@ -343,7 +343,7 @@ export function FilterBar({
               <button
                 type="button"
                 onClick={() => close()}
-                className="ml-auto h-9 rounded-sm px-comfortable text-[0.8125rem] font-medium text-fg hover:bg-muted-wash"
+                className="ml-auto h-9 rounded-sm px-comfortable text-sm font-medium text-fg hover:bg-muted-wash"
               >
                 {t("done")}
               </button>

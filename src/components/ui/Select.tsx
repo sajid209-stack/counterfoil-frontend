@@ -84,7 +84,8 @@ export function Select({
   "aria-describedby"?: string;
   /**
    * The trigger's height, and the ONLY place it is set: `sm` is a dense
-   * toolbar control, `md` the form control, `lg` the till's 48px touch floor.
+   * toolbar control (44px on touch, 36 from md), `md` the form control (44px),
+   * `lg` the till's 48px touch floor.
    * Never layer a height through `triggerClassName` — `cn` does not merge
    * conflicting utilities, so `h-11 h-12` is decided by stylesheet order.
    */
@@ -307,14 +308,14 @@ export function Select({
           }
         }}
         className={cn(
-          "flex min-w-0 items-center text-left outline-none transition-colors duration-quick",
+          "flex min-w-0 items-center text-left transition-colors duration-quick",
           bare
-            ? "max-w-[14rem] gap-tight bg-transparent pl-inline pr-0 text-[0.8125rem] font-medium"
+            ? "max-w-[14rem] gap-tight bg-transparent pl-inline pr-0 text-sm font-medium"
             : /* The chevron sits in a reserved gutter rather than floating at
                  the end of the text: every trigger's arrow then lines up down a
                  column of controls, whatever each one says. */
               cn(
-                "w-full justify-between gap-tight rounded-sm border bg-card pl-comfortable pr-tight text-sm",
+                "w-full justify-between gap-tight rounded-control border bg-card pl-comfortable pr-tight text-base",
                 "disabled:cursor-not-allowed disabled:bg-subtle disabled:text-faint",
                 ariaInvalid ? "border-danger" : open ? "border-strong" : "border-line hover:border-strong",
               ),
@@ -323,7 +324,7 @@ export function Select({
               The touch floor still applies on a phone, where the control is
               the whole target; from `sm` it collapses to its own text, which
               is what the native control it replaced did. */
-          bare ? "min-h-11 sm:min-h-0" : size === "sm" ? "h-9" : size === "lg" ? "h-12" : "h-11",
+          bare ? "min-h-11 sm:min-h-0" : size === "sm" ? "h-11 md:h-9" : size === "lg" ? "h-12" : "h-11",
           triggerClassName,
         )}
       >
@@ -350,7 +351,7 @@ export function Select({
           ref={panel}
           data-select-panel=""
           className={cn(
-            "fixed z-50 flex max-h-[18rem] min-w-[12rem] flex-col overflow-hidden rounded-md border border-hairline bg-card shadow-lg dark:border-line",
+            "fixed z-50 flex max-h-[18rem] min-w-[12rem] flex-col overflow-hidden rounded-card border border-hairline bg-card shadow-lg dark:border-line",
             bare && "w-max max-w-[18rem]",
           )}
         >
@@ -378,7 +379,7 @@ export function Select({
                 aria-controls={listId}
                 aria-autocomplete="list"
                 aria-activedescendant={shown[active] ? `${listId}-${active}` : undefined}
-                className="h-11 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
+                className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted"
               />
             </div>
           )}
@@ -397,12 +398,12 @@ export function Select({
                  under a search field reads as a rendering fault, and this
                  layer has no translator of its own — every primitive here
                  takes its strings as props. */
-              <p className="px-comfortable py-tight text-[0.8125rem] text-muted">{emptyLabel}</p>
+              <p className="px-comfortable py-tight text-sm text-muted">{emptyLabel}</p>
             )}
             {groups.map((g, gi) => (
               <div key={g.name ?? gi} role="group" aria-label={g.name}>
                 {g.name && (
-                  <p className="px-comfortable pb-inline pt-tight text-[0.75rem] font-medium text-muted">{g.name}</p>
+                  <p className="px-comfortable pb-inline pt-tight text-xs font-medium text-muted">{g.name}</p>
                 )}
                 {g.items.map(({ o, i }) => {
                   const on = o.value === value;
@@ -417,7 +418,7 @@ export function Select({
                       onMouseEnter={() => !o.disabled && setActive(i)}
                       onClick={() => choose(o)}
                       className={cn(
-                        "flex min-h-11 cursor-pointer items-center gap-tight px-comfortable text-sm sm:min-h-9",
+                        "flex min-h-11 cursor-pointer items-center gap-tight px-comfortable text-base sm:min-h-9",
                         o.disabled && "cursor-not-allowed text-faint",
                         !o.disabled && i === active && "bg-muted-wash",
                         on && "font-medium",
@@ -425,7 +426,7 @@ export function Select({
                     >
                       <span className="min-w-0 flex-1">
                         <span className="block truncate">{o.label}</span>
-                        {o.note && <span className="block truncate text-[0.75rem] text-muted">{o.note}</span>}
+                        {o.note && <span className="block truncate text-xs text-muted">{o.note}</span>}
                       </span>
                       {on && <Check size={15} strokeWidth={2} aria-hidden className="shrink-0 text-brand-foreground" />}
                     </div>

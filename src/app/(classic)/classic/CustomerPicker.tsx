@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Search, UserPlus } from "lucide-react";
 import { Button, FormField, Modal, useToast } from "../_ui";
+import { Skeleton } from "@/components/ui";
 import {
   listCustomerRows,
   matchOrCreateCustomer,
@@ -180,14 +181,14 @@ function PickerBody({
           // the keyboard is already where they need it.
           autoFocus
           placeholder={t("customerModal.searchPlaceholder")}
-          className="h-12 w-full rounded-sm border border-line bg-card pl-9 pr-comfortable text-sm outline-none focus:border-ember"
+          className="h-12 w-full rounded-sm border border-line bg-card pl-9 pr-comfortable text-base focus:border-ember"
         />
       </div>
 
-      {searching && <div className="h-12 animate-pulse rounded-sm bg-subtle" />}
+      {searching && <Skeleton h={48} className="rounded-sm" />}
 
       {!searching && query.trim().length >= 2 && results.length === 0 && (
-        <p className="text-[0.8125rem] text-muted">{t("customerModal.noMatches")}</p>
+        <p className="text-sm text-muted">{t("customerModal.noMatches")}</p>
       )}
 
       <ul className="flex flex-col gap-tight">
@@ -200,13 +201,13 @@ function PickerBody({
             >
               <span className="min-w-0">
                 <span className="flex items-center gap-inline">
-                  <span className="min-w-0 break-words text-sm font-medium">{c.name}</span>
+                  <span className="min-w-0 break-words text-base font-medium">{c.name}</span>
                 </span>
                 {c.phone && (
-                  <span className="block font-mono text-[0.75rem] text-muted">{c.phone}</span>
+                  <span className="block font-mono text-xs text-muted">{c.phone}</span>
                 )}
               </span>
-              <span className="shrink-0 whitespace-nowrap font-mono text-[0.75rem] text-muted">
+              <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted">
                 {t("customerModal.spend", {
                   orders: c.stats.orders,
                   spent: formatMoney(c.stats.spent),

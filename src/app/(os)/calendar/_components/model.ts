@@ -446,8 +446,8 @@ export const TONE_CLASS: Record<EventTone, string> = {
   booked: "bg-ember-wash border-transparent border-l-[3px] border-l-ember-solid text-fg",
   arrived: "bg-success-wash border-transparent border-l-[3px] border-l-success text-fg",
   noshow: "bg-muted-wash border-transparent border-l-[3px] border-l-strong text-muted line-through",
-  held: "border-warning/35 border-l-[3px] border-l-warning text-fg bg-warning-wash bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.05),rgb(0_0_0/0.05)_3px,transparent_3px,transparent_7px)]",
-  locked: "border-danger/35 border-l-[3px] border-l-danger-solid text-fg bg-danger-wash bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.05),rgb(0_0_0/0.05)_3px,transparent_3px,transparent_7px)]",
+  held: "border-warning/35 border-l-[3px] border-l-warning text-fg bg-warning-wash bg-[repeating-linear-gradient(45deg,color-mix(in_srgb,var(--color-fg)_5%,transparent),color-mix(in_srgb,var(--color-fg)_5%,transparent)_3px,transparent_3px,transparent_7px)]",
+  locked: "border-danger/35 border-l-[3px] border-l-danger-solid text-fg bg-danger-wash bg-[repeating-linear-gradient(45deg,color-mix(in_srgb,var(--color-fg)_5%,transparent),color-mix(in_srgb,var(--color-fg)_5%,transparent)_3px,transparent_3px,transparent_7px)]",
 };
 
 

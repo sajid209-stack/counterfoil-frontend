@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowDown, ArrowUp, CreditCard, QrCode, Smartphone, Wallet, type LucideIcon } from "lucide-react";
-import { PageShell, Select, useToast } from "@/components/ui";
+import { PageShell, Radio, SegmentedControl, Select, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -237,7 +237,7 @@ export default function PaymentsPage() {
 
   return (
     <PageShell title={t("title")} description={t("description")}>
-      <div className="flex max-w-3xl flex-col gap-section pb-hero">
+      <div className="flex flex-col gap-section pb-hero">
         <SettingsSection title={t("methods.title")} description={t("methods.description")}>
           <ul className="divide-y divide-hairline">
             {list.map((m, i) => {
@@ -264,15 +264,15 @@ export default function PaymentsPage() {
                     <IconTile icon={METHOD_ICON[m.method]} />
                   </span>
                   <div className="min-w-0 flex-1 pl-tight">
-                    <p className="text-sm font-medium text-fg">{name}</p>
-                    <p className={cn("mt-inline text-[13px] leading-relaxed", hidden ? "text-warning" : "text-muted")}>
+                    <p className="text-base font-medium text-fg">{name}</p>
+                    <p className={cn("mt-inline text-sm leading-relaxed", hidden ? "text-warning" : "text-muted")}>
                       {isCash ? t("methods.cashLocked") : hidden ? t("methods.needsAccount") : t(`methods.${m.method}.desc`)}
                     </p>
                   </div>
                   {/* Cash says so in words: a greyed-out switch that can never be
                       moved reads as broken, not as a rule. */}
                   {isCash ? (
-                    <span className="inline-flex h-11 shrink-0 items-center whitespace-nowrap text-[13px] font-medium text-muted">
+                    <span className="inline-flex h-11 shrink-0 items-center whitespace-nowrap text-sm font-medium text-muted">
                       {t("methods.alwaysOn")}
                     </span>
                   ) : (
@@ -285,17 +285,18 @@ export default function PaymentsPage() {
           {/* The payment step as the till draws it, in the order above. A list
               of switches says what is allowed; this says what a cashier sees. */}
           <div className="px-card py-section">
-            <p className="text-sm font-medium text-fg">{t("methods.previewLabel")}</p>
-            <p className="mt-inline text-[13px] text-muted">{t("methods.previewNote")}</p>
+            <p className="text-base font-medium text-fg">{t("methods.previewLabel")}</p>
+            <p className="mt-inline text-sm text-muted">{t("methods.previewNote")}</p>
             <p className="sr-only">{offered.map((m) => t(`methods.${m.method}.name`)).join(", ")}</p>
-            <div aria-hidden className="mt-comfortable inline-flex max-w-full flex-wrap gap-inline rounded-sm bg-muted-wash p-inline">
+            <div aria-hidden className="mt-comfortable inline-flex max-w-full flex-wrap gap-inline rounded-control bg-muted-wash p-inline">
               {offered.map((m, i) => {
                 const Icon = METHOD_ICON[m.method];
                 return (
                   <span
                     key={m.method}
                     className={cn(
-                      "inline-flex min-h-9 items-center gap-tight rounded-xs px-comfortable text-[13px] font-medium",
+                      // A frame inside the 6px track takes the next step down.
+                      "inline-flex min-h-9 items-center gap-tight rounded-inner px-comfortable text-sm font-medium",
                       i === 0 ? "bg-card text-fg shadow-sm" : "text-muted",
                     )}
                   >
@@ -338,30 +339,23 @@ export default function PaymentsPage() {
                   >
                     {({ id, describedBy }) => (
                       <div className="flex gap-tight">
-                        <div role="radiogroup" aria-label={t("advance.minKind")} className="inline-flex shrink-0 rounded-sm border border-line bg-card p-[3px]">
-                          {(["percent", "amount"] as const).map((k) => (
-                            <label
-                              key={k}
-                              className={cn(
-                                "inline-flex min-h-[2.375rem] min-w-10 cursor-pointer items-center justify-center rounded-xs px-comfortable text-sm font-medium transition-colors duration-quick has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember",
-                                r.kind === k ? "bg-ember-solid text-white" : "text-muted hover:text-fg",
-                              )}
-                            >
-                              <input
-                                type="radio"
-                                name={`advance-kind-${ch}`}
-                                value={k}
-                                checked={r.kind === k}
-                                aria-label={k === "percent" ? t("advance.percentOfTotal") : t("advance.fixedAmount")}
-                                // Switching kind offers a sensible starting figure
-                                // rather than an empty field already in error.
-                                onChange={() => setRule(ch, { kind: k, value: k === "percent" ? "25" : "500" })}
-                                className="sr-only"
-                              />
-                              {k === "percent" ? "%" : symbol}
-                            </label>
-                          ))}
-                        </div>
+                        <SegmentedControl
+                          size="sm"
+                          className="shrink-0 self-start"
+                          aria-label={t("advance.minKind")}
+                          value={r.kind}
+                          options={[
+                            { value: "percent", label: "%", ariaLabel: t("advance.percentOfTotal") },
+                            { value: "amount", label: symbol, ariaLabel: t("advance.fixedAmount") },
+                          ]}
+                          // Switching kind offers a sensible starting figure
+                          // rather than an empty field already in error.
+                          onChange={(v) => {
+                            const k = v as AdvanceRule["minKind"];
+                            if (k === r.kind) return;
+                            setRule(ch, { kind: k, value: k === "percent" ? "25" : "500" });
+                          }}
+                        />
                         <div className="min-w-0 flex-1">
                           <SuffixInput
                             id={id}
@@ -381,10 +375,10 @@ export default function PaymentsPage() {
             );
           })}
           <div className="flex flex-col gap-tight px-card py-section sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[13px] leading-relaxed text-muted">{t("advance.policiesNote")}</p>
+            <p className="text-sm leading-relaxed text-muted">{t("advance.policiesNote")}</p>
             <Link
               href="/catalog?kind=bookings"
-              className="inline-flex min-h-11 shrink-0 items-center self-start rounded-sm text-[13px] font-medium text-fg underline-offset-2 hover:underline sm:self-center md:min-h-9"
+              className="inline-flex min-h-11 shrink-0 items-center self-start rounded-sm text-sm font-medium text-fg underline-offset-2 hover:underline sm:self-center md:min-h-9"
             >
               {t("advance.policiesLink")}
             </Link>
@@ -396,28 +390,30 @@ export default function PaymentsPage() {
             {SCHEDULES.map((s) => {
               const checked = form.schedule === s;
               return (
-                <label
+                // The tile is the target; the kit Radio inside is the control, so
+                // a click on the padding picks it too.
+                <div
                   key={s}
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest("label,input")) return;
+                    set({ schedule: s, day: s === "monthly" ? 1 : 0 });
+                  }}
                   className={cn(
                     // One step down from the card: a frame set inside another
                     // frame takes the next radius on the scale.
-                    "flex cursor-pointer items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember",
+                    "cursor-pointer rounded-control px-tight transition-colors duration-quick",
                     checked ? "bg-ember/5 ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:bg-line/40",
                   )}
                 >
-                  <input
-                    type="radio"
+                  <Radio
                     name="payout-schedule"
                     value={s}
                     checked={checked}
                     onChange={() => set({ schedule: s, day: s === "monthly" ? 1 : 0 })}
-                    className="mt-[3px] h-4 w-4 shrink-0 accent-ember"
+                    label={<span className="font-medium">{t(`payouts.${s}`)}</span>}
+                    description={t(`payouts.${s}Desc`)}
                   />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium text-fg">{t(`payouts.${s}`)}</span>
-                    <span className="mt-inline block text-[13px] leading-relaxed text-muted">{t(`payouts.${s}Desc`)}</span>
-                  </span>
-                </label>
+                </div>
               );
             })}
           </div>
@@ -440,7 +436,7 @@ export default function PaymentsPage() {
               )}
             </SettingRow>
           )}
-          <p className="px-card py-section text-[13px] leading-relaxed text-muted">
+          <p className="px-card py-section text-sm leading-relaxed text-muted">
             <span className="font-medium text-fg">{t("payouts.next", { date: formatDay(nextPayout(form.schedule, form.day), { weekday: true }) })}</span>{" "}
             {t("payouts.note")}
           </p>

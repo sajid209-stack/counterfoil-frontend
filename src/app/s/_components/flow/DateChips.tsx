@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useLocale } from "next-intl";
 import { CalendarDays } from "lucide-react";
-import { DatePicker } from "@/components/ui";
+import { ChoiceCard, DatePicker } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
 /**
@@ -51,19 +51,16 @@ export function DateChips({
         {shown.map((d) => {
           const on = value === d;
           return (
-            <button
+            <ChoiceCard
               key={d}
-              type="button"
-              aria-pressed={on}
+              selected={on}
+              hideCheck
               onClick={() => onChange(d)}
-              className={cn(
-                "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-[12px] border px-inline py-tight text-center transition-colors duration-quick",
-                on ? "border-[var(--sf-fill)] bg-[var(--sf-soft)] ring-1 ring-inset ring-[var(--sf-fill)]" : "border-line bg-white hover:border-strong",
-              )}
+              className="flex min-h-14 flex-col items-center justify-center gap-0.5 px-inline py-tight text-center"
             >
-              <span className="w-full truncate text-[14px] font-medium">{label(d)}</span>
-              <span className="w-full truncate text-[12px] text-muted">{sub(d)}</span>
-            </button>
+              <span className="w-full truncate text-base font-medium">{label(d)}</span>
+              <span className="w-full truncate text-xs text-muted">{sub(d)}</span>
+            </ChoiceCard>
           );
         })}
         <button
@@ -71,8 +68,8 @@ export function DateChips({
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
           className={cn(
-            "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-[12px] border px-inline text-center text-[12px] font-medium transition-colors duration-quick",
-            open ? "border-fg bg-subtle text-fg" : "border-dashed border-strong bg-white text-fg hover:border-fg",
+            "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-md border px-inline text-center text-xs font-medium transition-colors duration-quick",
+            open ? "border-fg bg-subtle text-fg" : "border-dashed border-strong bg-card text-fg hover:border-fg",
           )}
         >
           <CalendarDays size={16} strokeWidth={1.75} aria-hidden />
@@ -80,7 +77,7 @@ export function DateChips({
         </button>
       </div>
       {open && (
-        <div className="rounded-[12px] border border-line bg-white">
+        <div className="rounded-md border border-line bg-card">
           <DatePicker
             value={value}
             today={todayIso}

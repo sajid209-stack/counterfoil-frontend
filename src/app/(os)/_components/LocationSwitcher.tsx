@@ -54,7 +54,7 @@ export function LocationSwitcher({ compact = false, full = false }: { compact?: 
          a fault. The cap is what makes it truncate, and it is a share of the
          window so a narrow one gives up the name before it gives up the title. */
       className={full ? "w-full" : compact ? undefined : "w-max max-w-[min(24rem,34vw)]"}
-      triggerClassName={cn("min-w-0", full ? "w-full" : compact && "max-w-[9rem] text-[0.8125rem]")}
+      triggerClassName={cn("min-w-0", full ? "w-full" : compact && "max-w-[9rem] text-sm")}
       options={locations.map((l) => ({
         value: l.id,
         label: l.name,
@@ -69,7 +69,7 @@ export function LocationSwitcher({ compact = false, full = false }: { compact?: 
      because there is no bar around it to say what the control is. */
   return full ? (
     <div>
-      <p className="pb-1 text-[12px] font-medium text-muted">{t("venue")}</p>
+      <p className="pb-1 text-xs font-medium text-muted">{t("venue")}</p>
       {select}
     </div>
   ) : (

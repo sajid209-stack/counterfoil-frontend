@@ -132,7 +132,7 @@ export function QuickAddSheet({
   };
 
   const detailsCls =
-    "inline-flex min-h-11 items-center gap-inline text-[14px] font-semibold text-[var(--sf-ink)] underline-offset-4 hover:underline";
+    "inline-flex min-h-11 items-center gap-inline text-base font-semibold text-brand-foreground underline-offset-4 hover:underline";
   const detailsInner = (
     <>
       {t("sheet.seeDetails")}
@@ -141,7 +141,7 @@ export function QuickAddSheet({
   );
 
   return (
-    <div className="fixed inset-0 z-[70]" data-sf-quickadd>
+    <div className="fixed inset-0 z-50" data-sf-quickadd>
       <div aria-hidden className="sf-fade absolute inset-0 bg-black/45" onClick={onClose} />
       <div
         ref={panelRef}
@@ -150,8 +150,8 @@ export function QuickAddSheet({
         aria-label={t("sheet.label", { name: product.name })}
         tabIndex={-1}
         className={cn(
-          "sf-sheet absolute inset-x-0 bottom-0 flex max-h-[92dvh] flex-col overflow-hidden rounded-t-[20px] bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.18)] outline-none",
-          "md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-[440px] md:rounded-none md:rounded-l-[20px] md:shadow-[-12px_0_40px_rgba(0,0,0,0.18)]",
+          "sf-sheet absolute inset-x-0 bottom-0 flex max-h-[92dvh] flex-col overflow-hidden rounded-t-lg bg-card shadow-float outline-none",
+          "md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-[440px] md:rounded-none md:rounded-l-lg",
         )}
       >
         {/* Handle + header: the grab area on a phone. */}
@@ -171,11 +171,11 @@ export function QuickAddSheet({
               bookingType={product.bookingType}
               seed={product.id}
               iconSize={14}
-              className="h-16 w-16 shrink-0 rounded-[12px]"
+              className="h-16 w-16 shrink-0 rounded-md"
             />
             <div className="min-w-0 flex-1">
-              <h2 className="break-words text-[18px] font-semibold leading-snug tracking-[-0.01em]">{product.name}</h2>
-              <p className="mt-inline flex flex-wrap items-center gap-x-comfortable text-[14px] text-muted">
+              <h2 className="break-words text-lg font-semibold leading-snug">{product.name}</h2>
+              <p className="mt-inline flex flex-wrap items-center gap-x-comfortable text-base text-muted">
                 <span>{t(`filter.${typeGroup(product.bookingType)}`)}</span>
                 {minutes !== null && (
                   <span className="inline-flex items-center gap-inline">
@@ -189,7 +189,7 @@ export function QuickAddSheet({
               type="button"
               onClick={onClose}
               aria-label={t("sheet.close")}
-              className="-mr-tight -mt-tight flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-subtle"
+              className="-mr-tight -mt-tight flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-muted-wash"
             >
               <X size={20} strokeWidth={1.75} aria-hidden />
             </button>

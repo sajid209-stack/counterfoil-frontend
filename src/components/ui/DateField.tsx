@@ -103,12 +103,12 @@ export function DateField({
           setOpen((v) => !v);
         }}
         className={cn(
-          "flex items-center gap-tight border border-line bg-card text-left text-sm outline-none transition-colors duration-quick focus:border-strong",
+          "flex items-center gap-tight border border-line bg-card text-left text-base outline-none transition-colors duration-quick focus:border-strong",
           compact ? "h-11 w-11 shrink-0 justify-center" : "w-full",
           shape === "go"
             ? "min-h-12 rounded-go px-comfortable"
             : shape === "inline"
-              ? "min-h-11 w-auto rounded-sm border-transparent bg-transparent px-tight text-[0.875rem] font-medium hover:bg-muted-wash focus-visible:bg-muted-wash sm:h-9 sm:min-h-0"
+              ? "min-h-11 w-auto rounded-sm border-transparent bg-transparent px-tight text-base font-medium hover:bg-muted-wash focus-visible:bg-muted-wash sm:h-9 sm:min-h-0"
               : cn("rounded-sm", compact ? "" : size === "form" ? "h-11 px-comfortable" : "h-11 px-comfortable md:h-9"),
         )}
       >

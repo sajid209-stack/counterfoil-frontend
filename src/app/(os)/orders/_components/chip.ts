@@ -16,6 +16,7 @@ export interface ChipOption {
  */
 export const chipBox = (active: boolean, open: boolean) =>
   cn(
-    "flex h-[46px] min-w-0 max-w-full items-stretch rounded-sm border bg-card text-[0.8125rem] transition-colors duration-quick md:h-9",
+    /* ds-exception: 46px outside is the 44px touch target inside the 1px border */
+    "flex h-[46px] min-w-0 max-w-full items-stretch rounded-control border bg-card text-sm transition-colors duration-quick md:h-9",
     active ? "border-line bg-muted-wash" : open ? "border-strong" : "border-line hover:border-strong",
   );

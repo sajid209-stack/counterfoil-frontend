@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useToast } from "@/components/ui";
-import { Switch } from "@/app/(os)/settings/_components/SettingsKit";
+import { Switch, useToast } from "@/components/ui";
 import { hasConsent, setCustomerConsent, type ConsentChannel, type Customer } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { Panel } from "./Panel";
@@ -44,7 +43,7 @@ export function ConsentCard({ customer, onChanged }: { customer: Customer; onCha
 
   return (
     <Panel title={t("consentTitle")}>
-      <p className="mb-comfortable text-[0.8125rem] text-muted">{t("consentExplain")}</p>
+      <p className="mb-comfortable text-sm text-muted">{t("consentExplain")}</p>
       <ul className="flex flex-col">
         {CHANNELS.map((channel) => {
           const on = hasConsent(customer, channel);
@@ -55,10 +54,10 @@ export function ConsentCard({ customer, onChanged }: { customer: Customer; onCha
           return (
             <li key={channel} className="flex items-center justify-between gap-comfortable border-b border-hairline py-tight first:pt-0 last:border-0 last:pb-0">
               <div className="min-w-0">
-                <p id={nameId} className="text-sm font-medium text-fg">
+                <p id={nameId} className="text-base font-medium text-fg">
                   {label}
                 </p>
-                <p id={stateId} className="text-[0.8125rem] text-muted">
+                <p id={stateId} className="text-sm text-muted">
                   {last
                     ? t(last.granted ? "consentAgreedOn" : "consentSaidNoOn", {
                         date: formatDate(last.capturedAt),

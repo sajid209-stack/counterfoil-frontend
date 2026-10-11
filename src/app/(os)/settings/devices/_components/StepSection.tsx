@@ -21,15 +21,15 @@ export function StepSection({
       <header className="flex items-start gap-comfortable px-card pb-section pt-card">
         <span
           aria-hidden
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-subtle text-[13px] font-semibold text-fg ring-1 ring-inset ring-hairline"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-subtle text-sm font-semibold text-fg ring-1 ring-inset ring-hairline"
         >
           {n}
         </span>
         <div className="min-w-0">
-          <h2 id={id} className="pt-[3px] text-base font-semibold text-fg">
+          <h2 id={id} className="pt-0.5 text-md font-semibold text-fg">
             {title}
           </h2>
-          {description && <p className="mt-inline max-w-prose text-[13px] leading-relaxed text-muted">{description}</p>}
+          {description && <p className="mt-inline max-w-prose text-sm leading-relaxed text-muted">{description}</p>}
         </div>
       </header>
       <div className="divide-y divide-hairline border-t border-hairline">{children}</div>

@@ -4,9 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CircleAlert } from "lucide-react";
-import { Button, ConfirmDialog, Select, useToast } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { Button, Checkbox, ConfirmDialog, Notice, Select, useToast } from "@/components/ui";
 import {
   createCounter,
   updateCounter,
@@ -38,9 +36,9 @@ const fromCounter = (c: Counter): Draft => ({
 });
 
 const chip =
-  "inline-flex min-h-11 items-center rounded-full bg-muted-wash/70 px-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9";
+  "inline-flex min-h-11 items-center rounded-full bg-muted-wash/70 px-comfortable text-sm text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9";
 const quiet =
-  "inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9";
+  "inline-flex min-h-11 items-center rounded-sm px-tight text-sm font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9";
 
 /**
  * A counter: where it is, how customers can pay at it, what it sells.
@@ -153,7 +151,7 @@ export function CounterEditor({
   };
 
   return (
-    <div className="flex max-w-3xl flex-col gap-section pb-hero">
+    <div className="flex flex-col gap-section pb-hero">
       <SettingsSection title={t("counters.detailsTitle")} description={t("counters.detailsDesc")}>
         <SettingRow label={t("common.name")} error={nameErr}>
           {({ id, describedBy }) => (
@@ -189,31 +187,21 @@ export function CounterEditor({
         <ul className="divide-y divide-hairline">
           {METHODS.map((m) => (
             <li key={m} className="px-card py-tight">
-              <label className="flex min-h-12 cursor-pointer items-center gap-comfortable">
-                <input
-                  type="checkbox"
-                  checked={form.methods.includes(m)}
-                  onChange={(e) => toggleMethod(m, e.target.checked)}
-                  className="h-4 w-4 shrink-0 accent-ember"
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium text-fg">{t(`counters.method${METHOD_KEY[m]}`)}</span>
-                  <span className="block text-[13px] text-muted">{t(`counters.methodDesc.${m}`)}</span>
-                </span>
-              </label>
+              <Checkbox
+                checked={form.methods.includes(m)}
+                onChange={(e) => toggleMethod(m, e.target.checked)}
+                label={<span className="font-medium">{t(`counters.method${METHOD_KEY[m]}`)}</span>}
+                description={t(`counters.methodDesc.${m}`)}
+              />
             </li>
           ))}
         </ul>
-        {methodsErr && <p className="px-card py-tight text-[12px] text-danger">{methodsErr}</p>}
+        {methodsErr && <p className="px-card py-tight text-xs text-danger">{methodsErr}</p>}
         {unbacked && (
-          <div className="flex flex-col gap-tight bg-warning-wash px-card py-tight sm:flex-row sm:items-center sm:justify-between">
-            <p className="flex items-start gap-tight text-[13px] text-fg">
-              <CircleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-warning" />
+          <div className="px-card pb-section">
+            <Notice tone="warning" size="sm" action={{ label: t("counters.connectAccount"), href: "/settings/payments" }}>
               {t("counters.needsAccount")}
-            </p>
-            <Link href="/settings/payments" className={cn(chip, "shrink-0 self-start sm:self-auto")}>
-              {t("counters.connectAccount")}
-            </Link>
+            </Notice>
           </div>
         )}
       </SettingsSection>
@@ -226,10 +214,10 @@ export function CounterEditor({
         </SettingRow>
         {!form.allowAll && (
           <div className="px-card py-section">
-            <p className="text-[13px] text-muted" aria-live="polite">
+            <p className="text-sm text-muted" aria-live="polite">
               {t("counters.pickedCount", { picked: form.productIds.length, total: sellable.length })}
             </p>
-            {productsErr && <p className="mt-inline text-[12px] text-danger">{productsErr}</p>}
+            {productsErr && <p className="mt-inline text-xs text-danger">{productsErr}</p>}
             <div className="mt-section flex flex-col gap-section">
               {groups.map((g) => {
                 const ids = g.items.map((p) => p.id);
@@ -238,7 +226,7 @@ export function CounterEditor({
                 return (
                   <div key={g.key} role="group" aria-labelledby={headingId}>
                     <div className="flex items-center justify-between gap-tight">
-                      <p id={headingId} className="text-[13px] font-medium text-fg">
+                      <p id={headingId} className="text-sm font-medium text-fg">
                         {g.name}
                       </p>
                       <button
@@ -249,27 +237,16 @@ export function CounterEditor({
                         {all ? t("counters.clearAll") : t("counters.selectAll")}
                       </button>
                     </div>
-                    <div className="mt-tight flex flex-wrap gap-tight">
-                      {g.items.map((p) => {
-                        const checked = form.productIds.includes(p.id);
-                        return (
-                          <label
-                            key={p.id}
-                            className={cn(
-                              "inline-flex min-h-11 max-w-full cursor-pointer items-center gap-tight rounded-full px-comfortable py-inline text-[13px] transition-colors duration-quick md:min-h-9",
-                              checked ? "bg-ember/10 text-fg" : "bg-muted-wash/70 text-muted hover:bg-muted-wash",
-                            )}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={(e) => setProducts(e.target.checked ? [...form.productIds, p.id] : form.productIds.filter((x) => x !== p.id))}
-                              className="h-4 w-4 shrink-0 accent-ember"
-                            />
-                            <span className="min-w-0 break-words">{p.name}</span>
-                          </label>
-                        );
-                      })}
+                    {/* A name that tells one booking from another wraps; it is never cut. */}
+                    <div className="mt-tight grid gap-x-section sm:grid-cols-2">
+                      {g.items.map((p) => (
+                        <Checkbox
+                          key={p.id}
+                          checked={form.productIds.includes(p.id)}
+                          onChange={(e) => setProducts(e.target.checked ? [...form.productIds, p.id] : form.productIds.filter((x) => x !== p.id))}
+                          label={p.name}
+                        />
+                      ))}
                     </div>
                   </div>
                 );

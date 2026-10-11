@@ -6,6 +6,13 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const nextConfig: NextConfig = {
   async redirects() {
     return [
+      // The two early reference pages are the Design System now: /tokens was
+      // the palette, type and spacing (Foundations), /kitchen-sink the
+      // primitives (Components). Anything linked or bookmarked still lands on
+      // the section that replaced it. Not permanent, like the rest: where a
+      // reference lives is a product decision.
+      { source: "/tokens", destination: "/design-system/colour", permanent: false },
+      { source: "/kitchen-sink", destination: "/design-system/buttons", permanent: false },
       // Holds are not a destination any more. A hold is capacity taken off
       // sale, so it belongs where capacity is SHOWN — on the calendar, where a
       // manager places and releases it, and at the till, where a cashier holds

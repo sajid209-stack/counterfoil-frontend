@@ -76,8 +76,8 @@ export default function TicketCodesPage() {
             {() => (
               /* A quiet tile behind a white one: a QR needs its white margin to
                  be read, and the tile gives it an edge without a stroke. */
-              <span aria-hidden data-ticket-code-sample className="inline-flex rounded-sm bg-muted-wash p-tight">
-                <span className="inline-flex rounded-xs bg-white p-tight">
+              <span aria-hidden data-ticket-code-sample className="inline-flex rounded-control bg-muted-wash p-tight">
+                <span className="inline-flex rounded-inner bg-white p-tight">
                   <Qr value={SAMPLE} size={72} />
                 </span>
               </span>

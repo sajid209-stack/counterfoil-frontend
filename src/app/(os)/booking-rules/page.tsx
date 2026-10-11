@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Search } from "lucide-react";
 import {
   DataTable,
   EmptyState,
+  FilterSearch,
   Select,
   StatusPill,
   type Column,
@@ -40,9 +40,9 @@ export default function BookingRulesPage() {
     { key: "name", header: t("colName"), sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
     { key: "product", header: t("colProduct"), render: (r) => productName(r.productId) },
     { key: "location", header: t("colLocation"), render: (r) => locationName(r.locationId) },
-    { key: "capacity", header: t("colCapacity"), sortable: true, align: "right", render: (r) => <span className="font-mono text-[13px]">{r.capacity}</span> },
-    { key: "slot", header: t("colSlot"), align: "right", render: (r) => <span className="font-mono text-[12px] text-muted">{t("slotMinutes", { minutes: r.slotMinutes })}</span> },
-    { key: "days", header: t("colDays"), align: "center", render: (r) => <span className="font-mono text-[12px] text-muted">{t("daysOfSeven", { count: r.daysOfWeek.length })}</span> },
+    { key: "capacity", header: t("colCapacity"), sortable: true, align: "right", render: (r) => <span className="text-sm tabular-nums">{r.capacity}</span> },
+    { key: "slot", header: t("colSlot"), align: "right", render: (r) => <span className="text-xs tabular-nums text-muted">{t("slotMinutes", { minutes: r.slotMinutes })}</span> },
+    { key: "days", header: t("colDays"), align: "center", render: (r) => <span className="text-xs tabular-nums text-muted">{t("daysOfSeven", { count: r.daysOfWeek.length })}</span> },
     { key: "status", header: t("colStatus"), render: (r) => <StatusPill status={r.status} /> },
   ];
 
@@ -61,20 +61,17 @@ export default function BookingRulesPage() {
         toolbar={
           <PageToolbar primary={primary}>
           <div className="flex flex-wrap items-center gap-tight">
-            <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder={t("searchPlaceholder")}
-                className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
-              />
-            </div>
+            <FilterSearch
+              value={search}
+              onChange={(v) => { setSearch(v); setPage(1); }}
+              placeholder={t("searchPlaceholder")}
+              aria-label={t("searchPlaceholder")}
+            />
             <Select
               aria-label={tc("filterByStatus")}
               value={status}
               onChange={(v) => { setStatus(v); setPage(1); }}
-              triggerClassName="text-sm md:h-9"
+              triggerClassName="text-base md:h-9"
               options={[
                 { value: "all", label: t("allStatuses") },
                 { value: "active", label: t("statusActive") },

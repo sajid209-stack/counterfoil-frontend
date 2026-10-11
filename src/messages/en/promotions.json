@@ -39,7 +39,8 @@
     "notFound": "Promotion not found",
     "statusActive": "On",
     "statusInactive": "Off",
-    "statusArchived": "Put away"
+    "statusArchived": "Put away",
+    "title": "Edit promotion"
   },
   "policy": {
     "title": "Cashier discount limit",

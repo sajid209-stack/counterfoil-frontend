@@ -76,7 +76,7 @@ export default function RolesPage() {
       {!rolesQ.data || !staffQ.data ? (
         <SectionSkeleton />
       ) : (
-        <div className="flex max-w-4xl flex-col gap-section pb-hero">
+        <div className="flex flex-col gap-section pb-hero">
           {/* New role is the list's first row: no tabs or filters carry it, and
               a row of its own above the card would hold only this button. */}
           <RecordList label={t("roles.title")} header={<ListAddRow label={primary.label} onClick={() => router.push("/settings/roles/new")} />}>
@@ -98,7 +98,7 @@ export default function RolesPage() {
                       {summary(r)}
                     </span>
                   }
-                  columns={<span className="w-24 text-right text-[13px] text-muted">{t("roles.peopleCount", { count: held })}</span>}
+                  columns={<span className="w-24 text-right text-sm text-muted">{t("roles.peopleCount", { count: held })}</span>}
                   menu={
                     <ActionMenu
                       label={t("roles.actionsFor", { name: r.name })}

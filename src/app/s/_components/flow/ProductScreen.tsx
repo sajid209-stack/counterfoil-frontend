@@ -62,7 +62,7 @@ export function ProductScreen({ productId }: { productId: string }) {
   else if (pol?.cancellation === "none") know.push(t("know.noCancel"));
   if (pol?.reschedule === "until" && pol.rescheduleHours > 0) know.push(t("know.reschedule", { hours: pol.rescheduleHours }));
 
-  const fact = "inline-flex min-h-8 items-center gap-tight rounded-full border border-line px-comfortable text-[14px]";
+  const fact = "inline-flex min-h-8 items-center gap-tight rounded-full border border-line px-comfortable text-base";
 
   return (
     <StorefrontChrome storefront={flow.storefront} location={flow.location} poweredBy={t("poweredBy")}>
@@ -82,7 +82,7 @@ export function ProductScreen({ productId }: { productId: string }) {
             bookingType={product.bookingType}
             seed={product.id}
             iconSize={40}
-            className="aspect-[16/10] w-full rounded-[20px] lg:aspect-[16/9]"
+            className="aspect-[16/10] w-full rounded-lg lg:aspect-[16/9]"
           />
           {images.length > 1 && (
             <ul className="mt-tight flex gap-tight overflow-x-auto">
@@ -93,7 +93,7 @@ export function ProductScreen({ productId }: { productId: string }) {
                     aria-label={img.alt ?? product.name}
                     aria-pressed={i === picked}
                     onClick={() => setPicked(i)}
-                    className={cn("block h-14 w-20 overflow-hidden rounded-[10px] border-2", i === picked ? "border-[var(--sf-fill)]" : "border-transparent")}
+                    className={cn("block h-14 w-20 overflow-hidden rounded-md border-2", i === picked ? "border-ember-solid" : "border-transparent")}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets */}
                     <img src={img.url} alt="" className="h-full w-full object-cover" />
@@ -103,7 +103,7 @@ export function ProductScreen({ productId }: { productId: string }) {
             </ul>
           )}
 
-          <h1 className="mt-major break-words text-balance text-[32px] font-semibold leading-[1.1] tracking-[-0.03em] sm:text-[40px]">
+          <h1 className="mt-major break-words text-balance text-4xl font-semibold leading-tight tracking-figure sm:text-display">
             {product.name}
           </h1>
           <ul className="mt-section flex flex-wrap gap-tight">
@@ -122,13 +122,13 @@ export function ProductScreen({ productId }: { productId: string }) {
               {hoursLine}
             </li>
           </ul>
-          <p className="mt-section text-[16px] text-muted">{subtitle(product, { resources: flow.resources, team: flow.team })}</p>
+          <p className="mt-section text-md text-muted">{subtitle(product, { resources: flow.resources, team: flow.team })}</p>
         </div>
 
         {/* The booking panel */}
         <aside
           aria-label={t("booking.panelLabel")}
-          className="min-w-0 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex lg:max-h-[calc(100vh-7rem)] lg:flex-col lg:self-start lg:rounded-[20px] lg:border lg:border-line lg:bg-white lg:p-major lg:shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
+          className="min-w-0 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex lg:max-h-[calc(100vh-7rem)] lg:flex-col lg:self-start lg:rounded-lg lg:border lg:border-line lg:bg-card lg:p-major lg:shadow-card"
         >
           <BookingPicker product={product} />
         </aside>
@@ -137,17 +137,17 @@ export function ProductScreen({ productId }: { productId: string }) {
         <div className="flex min-w-0 flex-col gap-major lg:col-start-1 lg:row-start-2">
           {product.description && (
             <section>
-              <h2 className="text-[20px] font-semibold tracking-[-0.01em]">{t("about")}</h2>
-              <p className="mt-tight max-w-[62ch] text-[16px] leading-relaxed">{product.description}</p>
+              <h2 className="text-xl font-semibold">{t("about")}</h2>
+              <p className="mt-tight max-w-[62ch] text-md leading-relaxed">{product.description}</p>
             </section>
           )}
 
           <section>
-            <h2 className="text-[20px] font-semibold tracking-[-0.01em]">{t("know.title")}</h2>
+            <h2 className="text-xl font-semibold">{t("know.title")}</h2>
             <ul className="mt-tight flex flex-col gap-tight">
               {know.map((k) => (
-                <li key={k} className="flex items-start gap-comfortable text-[16px]">
-                  <span aria-hidden className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--sf-soft)] text-[var(--sf-ink)]">
+                <li key={k} className="flex items-start gap-comfortable text-md">
+                  <span aria-hidden className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ember-wash text-brand-foreground">
                     <Check size={14} strokeWidth={2.5} />
                   </span>
                   {k}
@@ -157,14 +157,14 @@ export function ProductScreen({ productId }: { productId: string }) {
           </section>
 
           <section>
-            <h2 className="text-[20px] font-semibold tracking-[-0.01em]">{t("where")}</h2>
-            <div className="mt-tight flex flex-col gap-comfortable rounded-[16px] border border-hairline p-section sm:flex-row sm:items-center sm:justify-between">
-              <p className="flex items-start gap-comfortable text-[16px]">
+            <h2 className="text-xl font-semibold">{t("where")}</h2>
+            <div className="mt-tight flex flex-col gap-comfortable rounded-lg border border-hairline p-section sm:flex-row sm:items-center sm:justify-between">
+              <p className="flex items-start gap-comfortable text-md">
                 <MapPin size={18} strokeWidth={1.75} className="mt-0.5 shrink-0 text-muted" aria-hidden />
                 <span>
                   {flow.location.name}
                   <br />
-                  <span className="text-[14px] text-muted">
+                  <span className="text-base text-muted">
                     {[flow.location.addressLine1, flow.location.addressLine2, flow.location.city].filter(Boolean).join(", ")}
                   </span>
                 </span>

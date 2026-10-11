@@ -46,8 +46,8 @@ export function FactsCard({ o, dir, labels, due, className }: { o: Order; dir: D
 
   const fact = (label: string, value: React.ReactNode, key: string, className?: string) => (
     <div key={key} data-fact={key} className={cn("min-w-0", className)}>
-      <dt className="text-[13px] font-medium text-muted">{label}</dt>
-      <dd className="mt-inline break-words text-sm">{value}</dd>
+      <dt className="text-sm font-medium text-muted">{label}</dt>
+      <dd className="mt-inline break-words text-base">{value}</dd>
     </div>
   );
   const none = <span className="text-muted">{t("none")}</span>;
@@ -58,12 +58,12 @@ export function FactsCard({ o, dir, labels, due, className }: { o: Order; dir: D
         {fact(
           t("reference"),
           <span className="inline-flex max-w-full items-center gap-inline">
-            <span className="min-w-0 whitespace-nowrap font-mono text-[13px]">{o.reference}</span>
+            <span className="min-w-0 whitespace-nowrap font-mono text-sm">{o.reference}</span>
             <button
               type="button"
               onClick={() => void copy(o.reference)}
               aria-label={copied ? t("copied") : t("copy")}
-              className="-my-2 grid h-11 w-11 shrink-0 place-items-center rounded-sm text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash sm:h-8 sm:w-8"
+              className="-my-2 grid h-11 w-11 shrink-0 place-items-center rounded-control text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash sm:h-8 sm:w-8"
             >
               {copied ? <Check size={14} strokeWidth={2} aria-hidden /> : <Copy size={14} strokeWidth={1.5} aria-hidden />}
             </button>
@@ -93,13 +93,13 @@ export function FactsCard({ o, dir, labels, due, className }: { o: Order; dir: D
           and keeps a cut, and without this the commission is invisible on the
           one record that should carry it. */}
       {o.source && (
-        <div data-marketplace className="mt-section flex flex-wrap items-center gap-x-comfortable gap-y-inline rounded-sm bg-market-wash px-comfortable py-tight text-[13px]">
+        <div data-marketplace className="mt-section flex flex-wrap items-center gap-x-comfortable gap-y-inline rounded-control bg-market-wash px-comfortable py-tight text-sm">
           <MarketBadge id={o.source.marketplaceId} />
           <span className="font-medium">{t("via", { name: o.source.marketplaceName })}</span>
           <span className="text-muted">
             {t("cut", { commission: formatMoney(o.source.commissionAmount), net: formatMoney(o.total - o.source.commissionAmount) })}
           </span>
-          {o.source.reference && <span className="font-mono text-[12px] text-muted">{o.source.reference}</span>}
+          {o.source.reference && <span className="font-mono text-xs text-muted">{o.source.reference}</span>}
         </div>
       )}
     </Section>

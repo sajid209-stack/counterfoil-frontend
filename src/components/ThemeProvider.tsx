@@ -4,6 +4,7 @@ import { useEffect, useId, useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ThemeProvider as NextThemes, useTheme } from "next-themes";
+import { SegmentedControl } from "@/components/ui";
 
 /** Class-strategy theming (light · dark · system), persisted, no flash. */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -58,7 +59,7 @@ export function ModeButton({ className, shape = "square" }: { className?: string
       onClick={() => setTheme(dark ? "light" : "dark")}
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-      className={`flex h-11 w-11 items-center justify-center text-muted transition-colors duration-quick hover:text-fg active:bg-ember/10 ${shape === "round" ? "rounded-full bg-subtle dark:bg-line" : "rounded-sm border border-line bg-card hover:border-ember/40"} ${className ?? ""}`}
+      className={`flex h-11 w-11 items-center justify-center text-muted transition-colors duration-quick hover:text-fg active:bg-ember/10 ${shape === "round" ? "rounded-full bg-subtle dark:bg-line" : "rounded-control border border-line bg-card hover:border-ember/40"} ${className ?? ""}`}
     >
       {dark ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
     </button>
@@ -97,22 +98,18 @@ export function AppearancePicker({
   return (
     <div className={className}>
       {showLabel && (
-        <span id={ownLabelId} className="type-label mb-tight block text-[12px] text-muted">
+        <span id={ownLabelId} className="mb-tight block text-sm font-medium text-muted">
           {t("appearance")}
         </span>
       )}
-      <div role="group" aria-labelledby={showLabel ? ownLabelId : labelledBy} aria-describedby={describedBy} className="flex gap-tight">
-        {(["light", "dark", "system"] as const).map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            onClick={() => setTheme(mode)}
-            aria-pressed={current === mode}
-            className={`h-11 flex-1 rounded-sm border text-sm transition-colors duration-quick ${current === mode ? "border-ember bg-ember/5 font-medium" : "border-line bg-card"}`}
-          >
-            {t(mode)}
-          </button>
-        ))}
+      <div role={describedBy ? "group" : undefined} aria-describedby={describedBy}>
+        <SegmentedControl
+          fullWidth
+          value={current ?? ""}
+          onChange={setTheme}
+          aria-labelledby={showLabel ? ownLabelId : labelledBy}
+          options={(["light", "dark", "system"] as const).map((mode) => ({ value: mode, label: t(mode) }))}
+        />
       </div>
     </div>
   );

@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button, FormField, Modal, Select } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { Button, FormField, Modal, SegmentedControl, Select } from "@/components/ui";
 import { levelOf, recordMovement, recordReturn, stocktakeTo, type InventoryItemView, type Location } from "@/lib/api";
 
 export type StockAction = "receive" | "count" | "remove" | "back";
@@ -125,12 +124,12 @@ export function StockDialog({
       <div className="flex flex-col gap-comfortable">
         {kept.length > 1 && (
           <label className="flex flex-col gap-inline">
-            <span className="text-[0.8125rem] font-medium text-muted">{t("dialog.venue")}</span>
+            <span className="text-sm font-medium text-muted">{t("dialog.venue")}</span>
             <Select
               value={locationId}
               onChange={setLocationId}
               aria-label={t("dialog.venue")}
-              triggerClassName="text-[13px] md:h-9"
+              size="sm"
               options={kept.map((l) => ({ value: l.id, label: l.name }))}
             />
           </label>
@@ -138,23 +137,14 @@ export function StockDialog({
 
         {action === "remove" && (
           <div className="flex flex-col gap-inline">
-            <span className="text-[0.8125rem] font-medium text-muted">{t("dialog.whatHappened")}</span>
-            <div className="flex gap-tight">
-              {(["damaged", "lost"] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  aria-pressed={loss === k}
-                  onClick={() => setLoss(k)}
-                  className={cn(
-                    "min-h-11 flex-1 rounded-sm px-comfortable text-[0.8125rem] font-medium transition-colors duration-quick md:min-h-9",
-                    loss === k ? "bg-inverse text-inverse-fg" : "bg-muted-wash text-fg hover:bg-line",
-                  )}
-                >
-                  {t(`move.${k}`)}
-                </button>
-              ))}
-            </div>
+            <span className="text-sm font-medium text-muted">{t("dialog.whatHappened")}</span>
+            <SegmentedControl
+              fullWidth
+              aria-label={t("dialog.whatHappened")}
+              value={loss}
+              onChange={(v) => setLoss(v as typeof loss)}
+              options={(["damaged", "lost"] as const).map((k) => ({ value: k, label: t(`move.${k}`) }))}
+            />
           </div>
         )}
 
@@ -182,7 +172,7 @@ export function StockDialog({
             one number an operator can check against the real world, so the
             screen states it rather than making them work it out. */}
         {after !== null && (
-          <p className="rounded-sm bg-muted-wash px-comfortable py-tight text-[0.8125rem]">
+          <p className="rounded-inner bg-muted-wash px-comfortable py-tight text-sm">
             {t("dialog.after", { count: after, unit: item.unit })}
           </p>
         )}

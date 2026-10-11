@@ -60,7 +60,7 @@ export function AccessSection({
     <SettingsSection title={t("team.accessTitle")} description={t("team.accessDesc")}>
       <SettingRow label={t("team.statusLabel")} description={statusDesc} labelFor={false}>
         {() => (
-          <div className="flex sm:justify-end sm:pt-[11px]">
+          <div className="flex sm:justify-end sm:pt-3">
             <StatusPill status={member.status} />
           </div>
         )}

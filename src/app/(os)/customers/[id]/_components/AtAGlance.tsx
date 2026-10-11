@@ -43,15 +43,15 @@ export function AtAGlance({
       <dl className="flex flex-col">
         {rows.map((r) => (
           <div key={r.key} className="flex items-baseline justify-between gap-comfortable border-b border-hairline py-tight first:pt-0">
-            <dt className="text-sm text-muted">{r.label}</dt>
-            <dd data-glance={r.key} className="text-sm font-medium text-fg">
+            <dt className="text-base text-muted">{r.label}</dt>
+            <dd data-glance={r.key} className="text-base font-medium tabular-nums text-fg">
               {r.value}
             </dd>
           </div>
         ))}
         <div className="flex items-baseline justify-between gap-comfortable py-tight last:pb-0">
-          <dt className="text-sm text-muted">{t("statOutstanding")}</dt>
-          <dd data-glance="owes" className="text-sm font-medium">
+          <dt className="text-base text-muted">{t("statOutstanding")}</dt>
+          <dd data-glance="owes" className="text-base font-medium tabular-nums">
             {stats.outstanding > 0 ? (
               <Link
                 href={owesHref}

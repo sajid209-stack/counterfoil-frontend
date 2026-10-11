@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
-  ArrowRight,
   ChevronRight,
   Clock,
   Compass,
@@ -19,6 +18,7 @@ import {
   UserRound,
   type LucideIcon,
 } from "lucide-react";
+import { AffixInput, Notice } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useMediaQuery } from "@/lib/useMedia";
 import { useApiQuery } from "@/lib/useApi";
@@ -108,7 +108,7 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
     <section key="bookings" aria-labelledby="chooser-bookings">
       <FamilyHead id="chooser-bookings" title={t("chooser.bookingsTitle")} rule={t("chooser.bookingsRule")} />
       {wide ? (
-        <ul className="grid gap-comfortable sm:grid-cols-2 xl:grid-cols-4">
+        <ul className="grid gap-section sm:grid-cols-2 xl:grid-cols-4">
           {bookingCards.map((k) => {
             const Icon = ICON[k];
             const n = bookingCount.get(k) ?? 0;
@@ -119,14 +119,14 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
                   className="card-surface card-interactive group flex h-full flex-col gap-tight p-card"
                 >
                   <span className="flex items-start justify-between gap-tight">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-sm bg-muted-wash text-fg">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-inner bg-muted-wash text-fg">
                       <Icon size={20} strokeWidth={1.5} aria-hidden />
                     </span>
-                    {n > 0 && <span className="text-[0.75rem] text-muted">{t("chooser.have", { count: n })}</span>}
+                    {n > 0 && <span className="text-xs text-muted">{t("chooser.have", { count: n })}</span>}
                   </span>
-                  <span className="mt-tight text-[0.9375rem] font-semibold leading-snug text-fg">{t(`chooser.booking.${k}.title`)}</span>
-                  <span className="text-[0.8125rem] leading-snug text-muted">{t(`chooser.booking.${k}.body`)}</span>
-                  <span className="mt-auto pt-tight text-[0.75rem] leading-snug text-muted">
+                  <span className="mt-tight text-md font-semibold leading-snug text-fg">{t(`chooser.booking.${k}.title`)}</span>
+                  <span className="text-sm leading-snug text-muted">{t(`chooser.booking.${k}.body`)}</span>
+                  <span className="mt-auto pt-tight text-xs leading-snug text-muted">
                     <span className="font-medium text-fg">{t("chooser.eg")}</span> {t(`chooser.booking.${k}.examples`)}
                   </span>
                 </Link>
@@ -148,15 +148,15 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
                   data-focus-inset=""
                   className="flex min-h-14 items-center gap-comfortable px-card py-comfortable transition-colors duration-quick active:bg-muted-wash"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-muted-wash text-fg">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-inner bg-muted-wash text-fg">
                     <Icon size={20} strokeWidth={1.5} aria-hidden />
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="flex items-baseline justify-between gap-tight">
-                      <span className="min-w-0 truncate text-[0.9375rem] font-semibold leading-snug text-fg">{t(`chooser.booking.${k}.title`)}</span>
-                      {n > 0 && <span className="shrink-0 text-[0.75rem] text-muted">{t("chooser.haveShort", { count: n })}</span>}
+                      <span className="min-w-0 truncate text-md font-semibold leading-snug text-fg">{t(`chooser.booking.${k}.title`)}</span>
+                      {n > 0 && <span className="shrink-0 text-xs text-muted">{t("chooser.haveShort", { count: n })}</span>}
                     </span>
-                    <span className="line-clamp-2 text-[0.8125rem] leading-snug text-muted">{t(`chooser.booking.${k}.body`)}</span>
+                    <span className="line-clamp-2 text-sm leading-snug text-muted">{t(`chooser.booking.${k}.body`)}</span>
                   </span>
                   <ChevronRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
                 </Link>
@@ -171,7 +171,7 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
   const eventsSection = eventCards.length > 0 && (
     <section key="events" aria-labelledby="chooser-events">
       <FamilyHead id="chooser-events" title={t("chooser.eventsTitle")} rule={t("chooser.eventsRule")} />
-      <ul className={cn("grid grid-cols-2 gap-tight sm:gap-comfortable md:grid-cols-2 xl:grid-cols-3", templateFontVars)}>
+      <ul className={cn("grid grid-cols-2 gap-section md:grid-cols-2 xl:grid-cols-3", templateFontVars)}>
         {eventCards.map((c) => {
           const n = eventCount.get(c.id) ?? 0;
           return (
@@ -186,7 +186,7 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
                 <span className="flex min-h-14 items-end px-comfortable py-comfortable sm:h-20 sm:px-card" style={{ background: c.theme.bg, borderBottom: `1px solid ${c.theme.line}` }}>
                   <span className="min-w-0">
                     <span
-                      className="text-[1rem] sm:text-[1.375rem]"
+                      className="text-md sm:text-2xl"
                       style={{
                         display: "block",
                         fontFamily: `${c.theme.display}, var(--font-hind-siliguri), sans-serif`,
@@ -203,11 +203,11 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
                   </span>
                 </span>
                 <span className="flex flex-1 flex-col gap-inline px-comfortable py-comfortable sm:px-card sm:py-section">
-                  <span className="line-clamp-2 text-[0.8125rem] leading-snug text-muted sm:line-clamp-none">{t(`chooser.event.${c.key}.body`)}</span>
-                  <span className="mt-auto hidden pt-inline text-[0.75rem] leading-snug text-muted sm:block">
+                  <span className="line-clamp-2 text-sm leading-snug text-muted sm:line-clamp-none">{t(`chooser.event.${c.key}.body`)}</span>
+                  <span className="mt-auto hidden pt-inline text-xs leading-snug text-muted sm:block">
                     <span className="font-medium text-fg">{t("chooser.eg")}</span> {t(`chooser.event.${c.key}.examples`)}
                   </span>
-                  {n > 0 && <span className="pt-inline text-[0.75rem] text-muted">{t(wide ? "chooser.have" : "chooser.haveShort", { count: n })}</span>}
+                  {n > 0 && <span className="pt-inline text-xs text-muted">{t(wide ? "chooser.have" : "chooser.haveShort", { count: n })}</span>}
                 </span>
               </Link>
             </li>
@@ -251,28 +251,24 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
 
   return (
     <div className="flex flex-col gap-major">
-      <div className="relative order-1 max-w-xl">
-        <Search size={18} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t("chooser.searchPlaceholder")}
-          aria-label={t("chooser.searchLabel")}
-          className="h-11 w-full rounded-sm border border-line bg-card pl-10 pr-comfortable text-[0.9375rem] outline-none placeholder:text-muted focus:border-inverse"
-        />
-      </div>
+      <AffixInput
+        type="search"
+        prefix={<Search size={18} strokeWidth={1.5} aria-hidden />}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={t("chooser.searchPlaceholder")}
+        aria-label={t("chooser.searchLabel")}
+        className="order-1 max-w-xl"
+      />
 
       <div className="order-3 flex flex-col gap-major">
         {both && (
-          <p role="status" className="flex items-start gap-tight rounded-sm bg-muted-wash px-comfortable py-tight text-[0.8125rem]">
-            <ArrowRight size={14} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-muted" />
-            <span>{t("chooser.tieBreak")}</span>
-          </p>
+          <Notice tone="neutral" size="sm">{t("chooser.tieBreak")}</Notice>
         )}
         {nothing ? (
-          <div className="rounded-md bg-muted-wash px-card py-major text-center">
-            <p className="text-[0.875rem] font-medium">{t("chooser.noMatch", { query: query.trim() })}</p>
-            <p className="mt-inline text-[0.8125rem] text-muted">{t("chooser.noMatchHint")}</p>
+          <div className="rounded-card bg-muted-wash px-card py-major text-center">
+            <p className="text-base font-medium">{t("chooser.noMatch", { query: query.trim() })}</p>
+            <p className="mt-inline text-sm text-muted">{t("chooser.noMatchHint")}</p>
           </div>
         ) : lead === "events" ? (
           [eventsSection, bookingsSection]
@@ -293,8 +289,8 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
             className="flex min-h-14 items-center gap-comfortable px-card py-comfortable transition-colors duration-quick hover:bg-muted-wash"
           >
             <span className="min-w-0 flex-1">
-              <span className="block text-[0.875rem] font-medium text-fg">{t("chooser.guidedTitle")}</span>
-              <span className="block text-[0.8125rem] leading-snug text-muted">{t("chooser.guidedBody")}</span>
+              <span className="block text-base font-medium text-fg">{t("chooser.guidedTitle")}</span>
+              <span className="block text-sm leading-snug text-muted">{t("chooser.guidedBody")}</span>
             </span>
             <ChevronRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
           </Link>
@@ -306,21 +302,22 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
             className="flex min-h-14 w-full items-center gap-comfortable px-card py-comfortable text-left transition-colors duration-quick hover:bg-muted-wash"
           >
             <span className="min-w-0 flex-1">
-              <span className="block text-[0.875rem] font-medium text-fg">{t("chooser.copyTitle")}</span>
-              <span className="block text-[0.8125rem] leading-snug text-muted">{t("chooser.copyBody")}</span>
+              <span className="block text-base font-medium text-fg">{t("chooser.copyTitle")}</span>
+              <span className="block text-sm leading-snug text-muted">{t("chooser.copyBody")}</span>
             </span>
             <Copy size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
           </button>
         </div>
         {copyOpen && (
           <div className="flex flex-col gap-tight border-t border-hairline p-card">
-            <input
+            <AffixInput
+              type="search"
+              prefix={<Search size={16} strokeWidth={1.5} aria-hidden />}
               value={copyQuery}
               onChange={(e) => setCopyQuery(e.target.value)}
               placeholder={t("chooser.copySearch")}
               aria-label={t("chooser.copySearch")}
               autoFocus
-              className="h-11 w-full rounded-sm border border-line bg-card px-comfortable text-[0.8125rem] outline-none placeholder:text-muted focus:border-inverse md:h-10"
             />
             <ul className="divide-y divide-hairline">
               {copyable.map((x) => (
@@ -332,10 +329,10 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
                     className="flex min-h-11 w-full items-center gap-comfortable px-inline py-tight text-left transition-colors duration-quick hover:bg-muted-wash disabled:opacity-60"
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[0.8125rem] font-medium">{x.name}</span>
-                      <span className="block truncate text-[0.75rem] text-muted">{x.sub}</span>
+                      <span className="block truncate text-sm font-medium">{x.name}</span>
+                      <span className="block truncate text-xs text-muted">{x.sub}</span>
                     </span>
-                    <span className="shrink-0 text-[0.75rem] font-medium text-brand-foreground">
+                    <span className="shrink-0 text-xs font-medium text-brand-foreground">
                       {copying === x.key ? t("chooser.copying") : t("chooser.copyAction")}
                     </span>
                   </button>
@@ -355,8 +352,8 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
 function FamilyHead({ id, title, rule }: { id: string; title: string; rule: string }) {
   return (
     <div className="mb-comfortable">
-      <h2 id={id} className="text-base font-semibold text-fg">{title}</h2>
-      <p className="mt-0.5 text-[0.8125rem] text-muted">{rule}</p>
+      <h2 id={id} className="text-lg font-semibold tracking-title text-fg">{title}</h2>
+      <p className="mt-0.5 text-sm text-muted">{rule}</p>
     </div>
   );
 }

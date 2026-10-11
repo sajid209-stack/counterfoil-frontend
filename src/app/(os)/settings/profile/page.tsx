@@ -95,8 +95,8 @@ export default function MyProfilePage() {
         <div className="card-surface flex items-center gap-section p-card">
           <Avatar name={me.name} size={56} />
           <div className="min-w-0">
-            <p className="truncate text-lg font-medium">{me.name}</p>
-            <p className="text-[13px] text-muted">{role?.name ?? t("profile.noRole")}</p>
+            <p className="break-words text-lg font-semibold">{me.name}</p>
+            <p className="text-sm text-muted">{role?.name ?? t("profile.noRole")}</p>
           </div>
         </div>
 
@@ -153,7 +153,7 @@ export default function MyProfilePage() {
             {() => (
               <Link
                 href="/settings/security"
-                className="inline-flex min-h-11 items-center gap-tight rounded-sm border border-line px-comfortable text-[13px] font-medium transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
+                className="inline-flex min-h-11 items-center gap-tight rounded-control border border-line px-comfortable text-sm font-medium transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
               >
                 <ShieldCheck size={14} strokeWidth={1.5} aria-hidden />
                 {t("profile.openSecurity")}

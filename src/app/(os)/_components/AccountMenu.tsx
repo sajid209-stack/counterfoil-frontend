@@ -61,7 +61,7 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
         aria-expanded={open}
         aria-label={t("account")}
         className={cn(
-          "flex h-11 items-center gap-tight rounded-sm text-muted transition-colors duration-quick hover:text-fg active:bg-ember/10",
+          "flex h-11 items-center gap-tight rounded-control text-muted transition-colors duration-quick hover:text-fg active:bg-ember/10",
           compact ? "w-11 justify-center" : "border border-line bg-card pl-inline pr-tight hover:border-ember/40",
           open && "text-fg",
         )}
@@ -77,7 +77,7 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
           aria-hidden
           className={cn(
             "grid shrink-0 place-items-center rounded-xs bg-subtle font-bold text-fg ring-1 ring-line",
-            compact ? "h-9 w-9 text-[13px]" : "h-8 w-8 text-[12px]",
+            compact ? "h-9 w-9 text-sm" : "h-8 w-8 text-xs",
           )}
         >
           {initials}
@@ -92,10 +92,10 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
         <div
           role="menu"
           aria-label={t("account")}
-          className="absolute right-0 top-[calc(100%+6px)] z-50 w-[280px] rounded-md border border-line bg-card p-section shadow-lg"
+          className="absolute right-0 top-[calc(100%+6px)] z-50 w-[280px] rounded-card border border-line bg-card p-section shadow-float"
         >
-          <p className="truncate text-sm font-semibold text-fg">{name ?? "Counterfoil"}</p>
-          <p className="mt-inline truncate font-mono text-[12px] text-muted">{t("workspace")}</p>
+          <p className="truncate text-base font-semibold text-fg">{name ?? "Counterfoil"}</p>
+          <p className="mt-inline truncate text-xs text-muted">{t("workspace")}</p>
 
           <div className="mt-section flex flex-col gap-section border-t border-hairline pt-section">
             <AppearancePicker />
@@ -107,7 +107,7 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
           <Link
             href="/settings/profile"
             onClick={() => setOpen(false)}
-            className="mt-section flex h-11 items-center gap-comfortable rounded-sm border border-line px-comfortable text-sm font-medium text-fg transition-colors duration-quick hover:border-ember/40 hover:bg-muted-wash"
+            className="mt-section flex h-11 items-center gap-comfortable rounded-control border border-line px-comfortable text-base font-medium text-fg transition-colors duration-quick hover:border-ember/40 hover:bg-muted-wash"
           >
             <UserRound size={16} strokeWidth={1.5} className="text-muted" aria-hidden />
             {t("myProfile")}
@@ -115,7 +115,7 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
           <Link
             href="/settings/business"
             onClick={() => setOpen(false)}
-            className="mt-tight flex h-11 items-center gap-comfortable rounded-sm border border-line px-comfortable text-sm font-medium text-fg transition-colors duration-quick hover:border-ember/40 hover:bg-muted-wash"
+            className="mt-tight flex h-11 items-center gap-comfortable rounded-control border border-line px-comfortable text-base font-medium text-fg transition-colors duration-quick hover:border-ember/40 hover:bg-muted-wash"
           >
             <SettingsIcon size={16} strokeWidth={1.5} className="text-muted" aria-hidden />
             {t("settings")}

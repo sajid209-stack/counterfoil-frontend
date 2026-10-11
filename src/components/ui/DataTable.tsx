@@ -1,9 +1,11 @@
 "use client";
 
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
+import { ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
+import { Pagination } from "./Pagination";
+import { Skeleton } from "./Skeleton";
 
 export interface Column<T> {
   key: string;
@@ -142,15 +144,15 @@ export function DataTable<T>({
             <div
               key={`csk-${i}`}
               className={cn(
-                "flex animate-pulse flex-col gap-tight",
+                "flex flex-col gap-tight",
                 list ? "border-b border-hairline px-card py-comfortable last:border-0" : "card-surface p-card",
               )}
             >
-              <div className="h-4 w-2/3 rounded-xs bg-line" />
-              <div className="h-3 w-1/2 rounded-xs bg-line" />
+              <Skeleton h={16} w="66%" />
+              <Skeleton h={12} w="50%" />
             </div>
           ))}
-        {showEmpty && (emptyState ?? <p className="py-section text-center text-[0.8125rem] text-muted">{tc("noResults")}</p>)}
+        {showEmpty && (emptyState ?? <p className="py-section text-center text-sm text-muted">{tc("noResults")}</p>)}
         {!loading &&
           rows.map((row) => (
             <div
@@ -174,7 +176,7 @@ export function DataTable<T>({
                 renderCard(row)
               ) : (
                 <>
-              <div className="break-words text-sm font-medium">
+              <div className="break-words text-base font-medium">
                 {columns[0].render ? columns[0].render(row) : String((row as Record<string, unknown>)[columns[0].key] ?? "")}
               </div>
               <dl className="mt-inline flex flex-wrap gap-x-section gap-y-inline">
@@ -186,8 +188,8 @@ export function DataTable<T>({
                   // it silently: the value is on screen but unreadable, and
                   // nothing says so.
                   <div key={col.key} className="flex min-w-0 max-w-full items-baseline gap-inline">
-                    <dt className="shrink-0 text-[0.75rem] text-muted">{col.header}</dt>
-                    <dd className={cn("min-w-0 break-words text-[0.8125rem]", col.mono === true && "font-mono", col.align === "right" && "tabular-nums")}>
+                    <dt className="shrink-0 text-xs text-muted">{col.header}</dt>
+                    <dd className={cn("min-w-0 break-words text-sm", col.mono === true && "font-mono", col.align === "right" && "tabular-nums")}>
                       {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? "")}
                     </dd>
                   </div>
@@ -221,17 +223,17 @@ export function DataTable<T>({
           !inCard && cn("overflow-auto scroll-x-hint", height === "box" && "max-h-[70vh]"),
         )}
       >
-        {inCard && <div className="rounded-t-md border-b border-hairline p-comfortable">{toolbar}</div>}
-        <div className={cn(inCard && "overflow-auto rounded-b-md scroll-x-hint", inCard && height === "box" && "max-h-[70vh]")}>
+        {inCard && <div className="rounded-t-card border-b border-hairline p-comfortable">{toolbar}</div>}
+        <div className={cn(inCard && "overflow-auto rounded-b-card scroll-x-hint", inCard && height === "box" && "max-h-[70vh]")}>
         <table
-          className={cn("table-inset w-full border-collapse text-sm", layout === "fixed" && "table-fixed")}
+          className={cn("table-inset w-full border-separate border-spacing-0 text-base", layout === "fixed" && "table-fixed")}
           style={minWidth ? { minWidth } : undefined}
         >
           {/* A whisper of tint on the header row, and a hairline under it. It is
               opaque — the rows scroll under it — so the tint is mixed into the
               card rather than laid over it. In dark `subtle` IS the card, so
               there the header is simply the card. */}
-          <thead className="sticky top-0 z-10 bg-[color-mix(in_srgb,var(--color-subtle)_40%,var(--color-card))] shadow-[0_1px_0_0_var(--color-hairline)]">
+          <thead className="sticky top-0 z-10 bg-card">
             <tr>
               {columns.map((col) => {
                 const activeSort = sort?.key === col.key;
@@ -243,7 +245,7 @@ export function DataTable<T>({
                     style={col.width ? { width: col.width } : undefined}
                     aria-sort={sortable ? (activeSort ? (sort?.order === "asc" ? "ascending" : "descending") : "none") : undefined}
                     className={cn(
-                      "whitespace-nowrap px-comfortable py-2.5 text-[0.8125rem] font-medium text-muted",
+                      "whitespace-nowrap border-b border-hairline px-comfortable py-2.5 text-sm font-medium text-muted",
                       alignClass(col.align),
                     )}
                   >
@@ -257,7 +259,8 @@ export function DataTable<T>({
                         type="button"
                         onClick={() => onSortChange?.(col.key)}
                         className={cn(
-                          "group -mx-1.5 inline-flex items-center gap-1 rounded-xs px-1.5 py-0.5 transition-colors duration-quick hover:text-fg",
+                          /* 44px tall on a touch device, dense with a pointer. */
+                          "group -mx-1.5 inline-flex items-center gap-1 rounded-inner px-1.5 py-0.5 transition-colors duration-quick hover:text-fg pointer-coarse:min-h-11",
                           activeSort && "text-fg",
                         )}
                       >
@@ -289,7 +292,7 @@ export function DataTable<T>({
           <tbody>
             {loading &&
               Array.from({ length: skeletonRows }).map((_, i) => (
-                <tr key={`sk-${i}`} className="border-b border-hairline last:border-0">
+                <tr key={`sk-${i}`} className="[&>td]:border-b [&>td]:border-hairline last:[&>td]:border-b-0">
                   {columns.map((col, c) => (
                     <td key={col.key} className={cn("px-comfortable py-comfortable", alignClass(col.align))}>
                       {/* Every column used to get the same 8rem block, so the
@@ -302,12 +305,10 @@ export function DataTable<T>({
                           so the block reads as content rather than as a
                           progress bar, and deterministically so it does not
                           reshuffle on every render. */}
-                      <div
-                        className={cn(
-                          "h-4 animate-pulse rounded-xs bg-line",
-                          col.align === "right" ? "ml-auto" : "",
-                        )}
-                        style={{ width: skeletonWidth(col, c, i) }}
+                      <Skeleton
+                        h={16}
+                        w={skeletonWidth(col, c, i)}
+                        className={col.align === "right" ? "ml-auto" : undefined}
                       />
                     </td>
                   ))}
@@ -318,7 +319,7 @@ export function DataTable<T>({
               <tr>
                 <td colSpan={columns.length} className="px-comfortable py-section">
                   {emptyState ?? (
-                    <p className="text-center text-[0.8125rem] text-muted">{tc("noResults")}</p>
+                    <p className="text-center text-sm text-muted">{tc("noResults")}</p>
                   )}
                 </td>
               </tr>
@@ -356,7 +357,7 @@ export function DataTable<T>({
                   }
                   aria-selected={isSelected ? isSelected(row) : undefined}
                   className={cn(
-                    "h-12 border-b border-hairline last:border-0",
+                    "h-12 [&>td]:border-b [&>td]:border-hairline last:[&>td]:border-b-0",
                     isSelected?.(row) && "bg-ember/5",
                     onRowClick &&
                       // The ring itself comes from the app's one unlayered :focus-visible
@@ -369,7 +370,7 @@ export function DataTable<T>({
                          deepened, not swapped for the plain hover grey. */
                       (isSelected?.(row)
                         ? "cursor-pointer transition-colors duration-quick hover:bg-ember/10 focus-visible:bg-ember/10"
-                        : "cursor-pointer transition-colors duration-quick hover:bg-fg/[0.035] focus-visible:bg-fg/[0.035]"),
+                        : "cursor-pointer transition-colors duration-quick hover:bg-muted-wash/60 focus-visible:bg-muted-wash/60"),
                   )}
                 >
                   {columns.map((col) => (
@@ -396,56 +397,6 @@ export function DataTable<T>({
       </div>
 
       {pagination && <Pagination {...pagination} loading={loading} />}
-    </div>
-  );
-}
-
-function Pagination({
-  page,
-  pageSize,
-  total,
-  onPageChange,
-  loading,
-}: {
-  page: number;
-  pageSize: number;
-  total: number;
-  onPageChange: (page: number) => void;
-  loading?: boolean;
-}) {
-  const tc = useTranslations("common");
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
-  const to = Math.min(page * pageSize, total);
-
-  return (
-    <div className="flex items-center justify-between">
-      <p className="text-[0.75rem] tabular-nums text-muted">
-        {loading ? "…" : `${from}–${to} of ${total}`}
-      </p>
-      <div className="flex items-center gap-tight">
-        <button
-          type="button"
-          onClick={() => onPageChange(page - 1)}
-          disabled={page <= 1 || loading}
-          aria-label={tc("previousPage")}
-          className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-fg disabled:text-faint disabled:cursor-not-allowed hover:enabled:border-strong"
-        >
-          <ChevronLeft size={16} strokeWidth={1.5} />
-        </button>
-        <span className="text-[0.75rem] tabular-nums text-muted">
-          {page} / {totalPages}
-        </span>
-        <button
-          type="button"
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= totalPages || loading}
-          aria-label={tc("nextPage")}
-          className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-fg disabled:text-faint disabled:cursor-not-allowed hover:enabled:border-strong"
-        >
-          <ChevronRight size={16} strokeWidth={1.5} />
-        </button>
-      </div>
     </div>
   );
 }

@@ -80,12 +80,7 @@
     "delete": "Delete"
   },
   "page": {
-    "showing": "Showing {from}–{to} of {total}",
-    "previous": "Previous",
-    "next": "Next",
-    "of": "Page {page} of {total}",
-    "show": "Show",
-    "label": "Pages"
+    "showing": "Showing {from}–{to} of {total}"
   },
   "empty": {
     "title": "No expenses yet",

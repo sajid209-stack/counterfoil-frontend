@@ -93,7 +93,7 @@ export function DateChip({
             if (performance.now() - closedAt.current < 400) return;
             setOpen(true);
           }}
-          className="flex min-w-0 flex-1 items-center gap-tight rounded-sm px-comfortable text-left outline-none"
+          className="flex min-w-0 flex-1 items-center gap-tight rounded-control px-comfortable text-left"
         >
           <CalendarDays size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
           <span className="min-w-0 truncate">
@@ -112,7 +112,7 @@ export function DateChip({
             type="button"
             onClick={() => (defaultRange ? onChange(defaultRange[0], defaultRange[1]) : onChange("", ""))}
             aria-label={tc("clearFilter", { name: t("label") })}
-            className="grid w-11 shrink-0 place-items-center rounded-r-sm text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash md:w-9"
+            className="grid w-11 shrink-0 place-items-center rounded-r-control text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash md:w-9"
           >
             <X size={14} strokeWidth={2} aria-hidden />
           </button>

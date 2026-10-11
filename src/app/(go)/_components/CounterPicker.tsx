@@ -104,7 +104,7 @@ export function CounterPicker({ saleCount }: { saleCount: number }) {
         data-counter-chip
         className="flex h-11 max-w-full items-center gap-1 rounded-full px-3 text-left transition-colors duration-quick hover:bg-muted-wash active:bg-muted-wash"
       >
-        <span className="truncate text-[1rem] font-semibold leading-tight text-fg">{name}</span>
+        <span className="truncate text-md font-semibold leading-tight text-fg">{name}</span>
         <ChevronDown size={14} strokeWidth={2.25} aria-hidden className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-180")} />
       </button>
 
@@ -115,12 +115,12 @@ export function CounterPicker({ saleCount }: { saleCount: number }) {
             ref={panel}
             role="dialog"
             aria-label={t("counterTitle")}
-            className="go-raised fixed inset-x-tight top-[60px] z-50 max-h-[calc(100dvh-76px)] overflow-y-auto rounded-md p-1.5 sm:absolute sm:inset-x-auto sm:left-0 sm:top-[calc(100%+4px)] sm:w-[20rem]"
+            className="go-raised fixed inset-x-tight top-15 z-50 max-h-[calc(100dvh-76px)] overflow-y-auto p-1.5 sm:absolute sm:inset-x-auto sm:left-0 sm:top-[calc(100%+4px)] sm:w-[20rem]"
           >
-            {groups.length === 0 && <p className="px-3 py-3 text-[0.9375rem] text-muted">{t("counterNone")}</p>}
+            {groups.length === 0 && <p className="px-3 py-3 text-md text-muted">{t("counterNone")}</p>}
             {groups.map((g) => (
               <div key={g.id} role="radiogroup" aria-label={g.name} className="pb-1 last:pb-0">
-                <p className="truncate px-3 pb-1 pt-2 text-[0.8125rem] font-medium text-muted">{g.name}</p>
+                <p className="truncate px-3 pb-1 pt-2 text-sm font-medium text-muted">{g.name}</p>
                 {g.list.map((c) => {
                   const isOpen = counterIsOpen(c);
                   const chosen = c.id === active?.id;
@@ -139,9 +139,9 @@ export function CounterPicker({ saleCount }: { saleCount: number }) {
                       )}
                     >
                       <span className="flex min-w-0 flex-1 flex-col leading-snug">
-                        <span className={cn("truncate text-[0.9375rem]", isOpen ? "font-medium text-fg" : "text-muted", chosen && "font-semibold")}>{c.name}</span>
+                        <span className={cn("truncate text-md", isOpen ? "font-medium text-fg" : "text-muted", chosen && "font-semibold")}>{c.name}</span>
                         {!isOpen && (
-                          <span className="text-[0.8125rem] text-muted">
+                          <span className="text-sm text-muted">
                             <span className="font-semibold text-danger">{t("counterClosed")}</span> · {t("counterClosedHelp")}
                           </span>
                         )}
@@ -162,16 +162,16 @@ export function CounterPicker({ saleCount }: { saleCount: number }) {
         title={t("counterBusyTitle")}
         footer={
           <>
-            <button type="button" onClick={() => setBlocked(null)} className="flex h-12 items-center rounded-full border-2 border-line bg-card px-comfortable text-[1rem] font-semibold text-fg">
+            <button type="button" onClick={() => setBlocked(null)} className="flex h-12 items-center rounded-full border-2 border-line bg-card px-comfortable text-md font-semibold text-fg">
               {t("close")}
             </button>
-            <button type="button" onClick={() => { setBlocked(null); router.push("/pos/cart"); }} className="flex h-12 items-center rounded-full bg-ember-solid px-comfortable text-[1rem] font-semibold text-white">
+            <button type="button" onClick={() => { setBlocked(null); router.push("/pos/cart"); }} className="flex h-12 items-center rounded-full bg-ember-solid px-comfortable text-md font-semibold text-on-solid">
               {t("counterBusyBack")}
             </button>
           </>
         }
       >
-        <p className="text-[0.9375rem]">{t("counterBusyBody", { name: active?.name ?? "", other: blocked?.name ?? "" })}</p>
+        <p className="text-md">{t("counterBusyBody", { name: active?.name ?? "", other: blocked?.name ?? "" })}</p>
       </Modal>
     </div>
   );

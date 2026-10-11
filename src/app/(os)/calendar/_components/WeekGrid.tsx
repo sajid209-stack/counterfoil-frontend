@@ -433,7 +433,7 @@ export function WeekGrid({
     <div
       ref={scroller}
       onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}
-      className="max-h-[70vh] overflow-auto"
+      className="max-h-[max(24rem,calc(100dvh-11rem))] overflow-auto"
     >
       {/* No min-width. Seven columns share whatever the card has, and below
             `lg` the compact week takes over rather than the grid scrolling
@@ -447,7 +447,7 @@ export function WeekGrid({
         <div
           className={cn(
             "sticky top-0 z-40 bg-card transition-shadow duration-quick",
-            scrolled && "border-b border-hairline shadow-[0_1px_2px_rgb(0_0_0/0.06)]",
+            scrolled && "border-b border-hairline shadow-sm",
           )}
         >
         {/* ── day headers ─────────────────────────────────────────────────── */}
@@ -467,13 +467,13 @@ export function WeekGrid({
                 onClick={onPickDay ? () => onPickDay(d) : undefined}
                 className={cn(
                   "flex flex-1 flex-col items-center gap-0.5 py-tight",
-                  today && "bg-ember/5",
+                  today && "bg-ember-wash/50",
                   onPickDay && "transition-colors duration-quick hover:bg-muted-wash",
                 )}
               >
                 <span
                   className={cn(
-                    "text-[0.75rem] font-medium",
+                    "text-xs font-medium",
                     today ? "text-brand-foreground" : "text-muted",
                   )}
                 >
@@ -481,11 +481,11 @@ export function WeekGrid({
                 </span>
                 <span
                   className={cn(
-                    "flex h-7 min-w-[2rem] items-center justify-center rounded-sm px-1.5 font-mono text-[13px]",
+                    "flex h-7 min-w-8 items-center justify-center rounded-control px-1.5 text-sm tabular-nums",
                     // White on ember measures 3.50:1. It is the house rule for
                     // anything sitting inside a solid ember frame, and the same
                     // declared exception the till already carries.
-                    today ? "bg-ember-solid font-semibold text-white" : "text-fg",
+                    today ? "bg-ember-solid font-semibold text-on-solid" : "text-fg",
                   )}
                 >
                   {label.day}
@@ -504,7 +504,7 @@ export function WeekGrid({
             <div
               className={cn(
                 gutter,
-                "shrink-0 border-r border-hairline py-tight text-center text-[12px] text-muted",
+                "shrink-0 border-r border-hairline py-tight text-center text-xs text-muted",
               )}
             >
               {compact ? allDayLabel.slice(0, 3) : allDayLabel}
@@ -520,7 +520,7 @@ export function WeekGrid({
                       onClick={onSelect ? () => onSelect(e) : undefined}
                       {...peekHandlers(e, onPeek)}
                       className={cn(
-                        "mb-0.5 block w-full truncate rounded-sm border px-tight py-0.5 text-left text-[12px]",
+                        "mb-0.5 block w-full truncate rounded-control border px-tight py-0.5 text-left text-xs",
                         blockClass(e),
                       )}
                     >
@@ -532,7 +532,7 @@ export function WeekGrid({
                 {ghostAllDay?.date === isoDate(d) && (
                   <span
                     data-ghost
-                    className="mb-0.5 block w-full truncate rounded-sm bg-ember-solid px-tight py-0.5 text-[12px] font-semibold text-white shadow-pop"
+                    className="mb-0.5 block w-full truncate rounded-control bg-ember-solid px-tight py-0.5 text-xs font-semibold text-on-solid shadow-md"
                   >
                     {ghostAllDay.title ?? ghostLabel}
                   </span>
@@ -562,7 +562,7 @@ export function WeekGrid({
               <span
                 key={h}
                 className={cn(
-                  "absolute right-tight whitespace-nowrap font-mono text-[12px] text-muted",
+                  "absolute right-tight whitespace-nowrap text-xs tabular-nums text-muted",
                   // The first label centred on its own rule sits half above the
                   // track, where the sticky header cuts it in half.
                   i === 0 ? "translate-y-0" : "-translate-y-1/2",
@@ -734,14 +734,15 @@ export function WeekGrid({
                           <span
                             aria-hidden
                             className={cn(
-                              "absolute inset-x-[3px] inset-y-[1px] hidden rounded-sm border border-dashed px-1 py-0.5 text-left group-hover/cell:block",
-                              s === "open" ? "border-ember/70 bg-ember/[0.06]" : "border-strong bg-card/60",
+                              // ds-exception: the hover outline sits 3px / 1px inside its cell, the same inset as a block, so the preview lines up with the draft it makes
+                              "absolute inset-x-[3px] inset-y-[1px] hidden rounded-control border border-dashed px-1 py-0.5 text-left group-hover/cell:block",
+                              s === "open" ? "border-ember/70 bg-ember-wash/50" : "border-strong bg-card/60",
                             )}
                           >
                             {!covered.has(h) && (
-                              <span className="flex flex-wrap items-baseline gap-x-1 text-[12px] leading-tight">
+                              <span className="flex flex-wrap items-baseline gap-x-1 text-xs leading-tight">
                                 {s === "open" && <Plus size={10} strokeWidth={2.5} className="self-center text-brand-foreground" />}
-                                <span className={cn("font-mono font-medium", s === "open" ? "text-brand-foreground" : "text-muted")}>{time}</span>
+                                <span className={cn("font-medium tabular-nums", s === "open" ? "text-brand-foreground" : "text-muted")}>{time}</span>
                                 <span className="text-muted">{s === "open" ? label?.short : noneLabel}</span>
                               </span>
                             )}
@@ -752,7 +753,8 @@ export function WeekGrid({
                         {!drag && covered.has(h) && s === "open" && (
                           <span
                             aria-hidden
-                            className="absolute right-[2px] top-0.5 z-20 hidden items-center gap-0.5 rounded-xs bg-ember-solid px-1 text-[12px] font-medium leading-tight text-white shadow-sm group-hover/cell:flex"
+                            // ds-exception: 2px gutter between the offer and the cell edge (grid geometry)
+                            className="absolute right-[2px] top-0.5 z-20 hidden items-center gap-0.5 rounded-inner bg-ember-solid px-1 text-xs font-medium leading-tight text-on-solid shadow-sm group-hover/cell:flex"
                           >
                             <Plus size={10} strokeWidth={2.5} />
                             {label?.short}
@@ -786,6 +788,7 @@ export function WeekGrid({
                   >
                     {/* A line alone reads as another hour rule. The knob on the
                         leading edge is what says "this one is the clock". */}
+                    {/* ds-exception: an 8px clock knob centred on a 2px rule — grid geometry, not spacing */}
                     <span className="absolute -left-[3px] -top-[3px] h-[8px] w-[8px] rounded-full bg-danger-solid" />
                   </span>
                 )}
@@ -797,16 +800,17 @@ export function WeekGrid({
                 {moving && moving.date === key && (
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute inset-x-[3px] z-40 overflow-hidden rounded-sm border-2 border-ember-solid bg-card px-1 py-0.5 text-left shadow-pop"
+                    // ds-exception: the 3px column inset every block uses (grid geometry)
+                    className="pointer-events-none absolute inset-x-[3px] z-40 overflow-hidden rounded-control border-2 border-ember-solid bg-card px-1 py-0.5 text-left shadow-md"
                     style={{
                       top: `${((moving.start - openMin) / span) * 100}%`,
                       height: `calc(${((moving.end - moving.start) / span) * 100}% - 2px)`,
                     }}
                   >
-                    <span className="block truncate font-mono text-[12px] font-semibold leading-tight text-brand-foreground">
+                    <span className="block truncate text-xs font-semibold leading-tight tabular-nums text-brand-foreground">
                       {shortClockRange(moving.start, moving.end)}
                     </span>
-                    <span className="block truncate text-[12px] leading-tight text-fg">{moving.title}</span>
+                    <span className="block truncate text-xs leading-tight text-fg">{moving.title}</span>
                   </span>
                 )}
 
@@ -814,7 +818,8 @@ export function WeekGrid({
                 {dragHere && (
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute inset-x-[3px] z-30 rounded-sm border-2 border-ember-solid bg-ember/15 px-1 py-0.5 font-mono text-[12px] font-semibold leading-tight text-brand-foreground"
+                    // ds-exception: the 3px column inset every block uses (grid geometry)
+                    className="pointer-events-none absolute inset-x-[3px] z-30 rounded-control border-2 border-ember-solid bg-ember-wash px-1 py-0.5 text-xs font-semibold leading-tight tabular-nums text-brand-foreground"
                     style={{
                       top: `${((Math.min(dragHere.from, dragHere.to) - openMin) / span) * 100}%`,
                       height: `calc(${((Math.abs(dragHere.to - dragHere.from) + SNAP_MIN) / span) * 100}% - 2px)`,
@@ -864,11 +869,11 @@ export function WeekGrid({
                         data-ghost
                         aria-hidden
                         className={cn(
-                        "pointer-events-none absolute z-30 overflow-hidden rounded-sm px-1 py-0.5 shadow-pop ring-2 ring-card",
+                        "pointer-events-none absolute z-30 overflow-hidden rounded-control px-1 py-0.5 shadow-md ring-2 ring-card",
                         /* A held draft is hatched warning, the same as every hold
                            already on this grid: an ember block would say the slot
                            is being sold. */
-                        draft.hold ? TONE_CLASS.held : "bg-ember-solid text-white",
+                        draft.hold ? TONE_CLASS.held : "bg-ember-solid text-on-solid",
                       )}
                         style={place}
                       >
@@ -877,16 +882,16 @@ export function WeekGrid({
                             panel already names it in 20px. */}
                         {across > 1 ? (
                           <>
-                            <span className="block truncate font-mono text-[12px] font-semibold leading-tight">{range}</span>
-                            {tall >= 30 && <span className="block truncate text-[12px] font-medium leading-tight text-white/90">{draft.title ?? ghostLabel}</span>}
+                            <span className="block truncate text-xs font-semibold leading-tight tabular-nums">{range}</span>
+                            {tall >= 30 && <span className="block truncate text-xs font-medium leading-tight text-on-solid/90">{draft.title ?? ghostLabel}</span>}
                           </>
                         ) : (
                           <>
-                            <span className={cn("block text-[12px] font-semibold leading-tight", tall >= TWO_LINE_PX + 12 ? "line-clamp-2" : "truncate")}>
+                            <span className={cn("block text-xs font-semibold leading-tight", tall >= TWO_LINE_PX + 12 ? "line-clamp-2" : "truncate")}>
                               {draft.title ?? ghostLabel}
                             </span>
                             {tall >= 30 && (
-                              <span className="block truncate font-mono text-[12px] leading-tight text-white/90">
+                              <span className="block truncate text-xs leading-tight tabular-nums text-on-solid/90">
                                 {shortClockRange(draft.start, draft.end)}
                               </span>
                             )}
@@ -905,18 +910,19 @@ export function WeekGrid({
                         title={`${event.title} · ${clockRangeOf(event.start, event.end)} · ${event.subtitle ?? ""}`}
                         aria-label={`${event.title}, ${clockRangeOf(event.start, event.end)}, ${event.subtitle ?? ""}${event.sourceLabel ? `, ${event.sourceLabel}` : ""}`}
                         className={cn(
-                          "absolute overflow-hidden rounded-sm border px-1 py-0.5 text-left shadow-[2px_2px_0_-1px_var(--color-card),2px_2px_0_0_var(--color-line)]",
+                          // ds-exception: the offset edge is the "pile of bookings" drawing, not an elevation
+                          "absolute overflow-hidden rounded-control border px-1 py-0.5 text-left shadow-[2px_2px_0_-1px_var(--color-card),2px_2px_0_0_var(--color-line)]",
                           blockClass(event),
                         )}
                         style={place}
                       >
-                        <span className="flex items-start gap-0.5 text-[12px] font-medium leading-tight">
+                        <span className="flex items-start gap-0.5 text-xs font-medium leading-tight">
                           {roomForIcon && event.source && <MarketBadge id={event.source.id} />}
-                          <span className="shrink-0 rounded-xs bg-fg/10 px-0.5 font-mono">{stack.length}</span>
+                          <span className="shrink-0 rounded-inner bg-fg/10 px-0.5 tabular-nums">{stack.length}</span>
                           <span className={cn("min-w-0", canWrap ? "line-clamp-2" : "truncate")}>{event.title}</span>
                         </span>
                         {tall >= TWO_LINE_PX && across === 1 && (
-                          <span className="block truncate text-[12px] leading-tight opacity-70">{event.subtitle}</span>
+                          <span className="block truncate text-xs leading-tight opacity-70">{event.subtitle}</span>
                         )}
                       </button>
                     );
@@ -953,7 +959,7 @@ export function WeekGrid({
                         event.subtitle ? `, ${event.subtitle}` : ""
                       }${event.sourceLabel ? `, ${event.sourceLabel}` : ""}`}
                       className={cn(
-                        "absolute overflow-hidden rounded-sm border px-1 py-0.5 text-left",
+                        "absolute overflow-hidden rounded-control border px-1 py-0.5 text-left",
                         movable && "cursor-grab active:cursor-grabbing",
                         // Where it was, while where it is going is drawn solid.
                         carrying && "opacity-40",
@@ -961,7 +967,7 @@ export function WeekGrid({
                       )}
                       style={place}
                     >
-                      <span className="flex items-start gap-0.5 text-[12px] font-medium leading-tight">
+                      <span className="flex items-start gap-0.5 text-xs font-medium leading-tight">
                         {/* The channel, in a shape and letters as well as in
                             violet. Dropped where the block has no room for an
                             icon — the accessible name still says it. */}
@@ -984,7 +990,7 @@ export function WeekGrid({
                         </span>
                       </span>
                       {roomForTwo && (
-                        <span className="block truncate text-[12px] leading-tight opacity-70">
+                        <span className="block truncate text-xs leading-tight opacity-70">
                           {event.subtitle ?? clockOf(event.start)}
                         </span>
                       )}
@@ -1077,15 +1083,15 @@ function CompactWeek({
               aria-label={label.long}
               onClick={() => setPicked(key)}
               className={cn(
-                "flex min-h-[3.5rem] flex-col items-center gap-1 border-r border-hairline py-tight last:border-r-0",
-                on && "bg-ember/10",
+                "flex min-h-14 flex-col items-center gap-1 border-r border-hairline py-tight last:border-r-0",
+                on && "bg-ember-wash",
               )}
             >
-              <span className="text-[0.75rem] font-medium text-muted">{label.weekday.slice(0, 1)}</span>
+              <span className="text-xs font-medium text-muted">{label.weekday.slice(0, 1)}</span>
               <span
                 className={cn(
-                  "flex h-7 min-w-[2rem] items-center justify-center rounded-sm px-1.5 font-mono text-[13px]",
-                  today && "bg-ember-solid font-semibold text-white",
+                  "flex h-7 min-w-8 items-center justify-center rounded-control px-1.5 text-sm tabular-nums",
+                  today && "bg-ember-solid font-semibold text-on-solid",
                   !today && on && "border border-ember text-brand-foreground",
                   !today && !on && "text-fg",
                 )}
@@ -1104,7 +1110,7 @@ function CompactWeek({
 
       {agenda.length === 0 ? (
         // With open hours below, an empty day is not the end of the page.
-        <p className={cn("px-card text-center text-[13px] text-muted", openToday.length ? "py-section" : "py-hero")}>{emptyLabel}</p>
+        <p className={cn("px-card text-center text-sm text-muted", openToday.length ? "py-section" : "py-hero")}>{emptyLabel}</p>
       ) : (
         <ul className="flex flex-col gap-tight p-card">
           {agenda.map((e) => (
@@ -1113,15 +1119,15 @@ function CompactWeek({
                 type="button"
                 onClick={onSelect ? () => onSelect(e) : undefined}
                 className={cn(
-                  "flex w-full items-start gap-comfortable rounded-sm border px-comfortable py-tight text-left",
+                  "flex w-full items-start gap-comfortable rounded-control border px-comfortable py-tight text-left",
                   blockClass(e),
                 )}
               >
-                <span className="w-16 shrink-0 whitespace-nowrap font-mono text-[12px] opacity-70">
+                <span className="w-16 shrink-0 whitespace-nowrap text-xs tabular-nums opacity-70">
                   {e.allDay ? allDayLabel.slice(0, 3) : clockOf(e.start, true)}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-0.5 text-[13px] font-medium leading-tight">
+                  <span className="flex items-center gap-0.5 text-sm font-medium leading-tight">
                     {e.source && <MarketBadge id={e.source.id} />}
                     {e.locked && <Lock size={11} strokeWidth={2.5} className="shrink-0" />}
                     {e.tone === "arrived" && (
@@ -1133,7 +1139,7 @@ function CompactWeek({
                     {e.sourceLabel && <span className="sr-only">, {e.sourceLabel}</span>}
                   </span>
                   {e.subtitle && (
-                    <span className="mt-0.5 block break-words text-[12px] leading-tight opacity-70">
+                    <span className="mt-0.5 block break-words text-xs leading-tight opacity-70">
                       {e.subtitle}
                     </span>
                   )}

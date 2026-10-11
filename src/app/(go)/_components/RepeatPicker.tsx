@@ -46,7 +46,7 @@ export function RepeatPicker({
 
   return (
     <div className="mb-section flex flex-col gap-tight">
-      <span className="text-[0.875rem] font-semibold text-fg">{t("repeat.title")}</span>
+      <span className="text-base font-semibold text-fg">{t("repeat.title")}</span>
 
       {/* One row at rest, one control per row when engaged.
        *
@@ -62,8 +62,8 @@ export function RepeatPicker({
           type="button"
           onClick={() => onCount(1)}
           className={cn(
-            "flex min-h-12 shrink-0 items-center whitespace-nowrap rounded-full border px-comfortable text-sm transition-colors duration-quick",
-            count === 1 ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card active:bg-ember/10",
+            "flex min-h-12 shrink-0 items-center whitespace-nowrap rounded-full border px-comfortable text-base transition-colors duration-quick",
+            count === 1 ? "border-ember-solid bg-ember-solid font-medium text-on-solid" : "border-line bg-card active:bg-muted-wash",
           )}
         >
           {t("repeat.offChip")}
@@ -74,8 +74,8 @@ export function RepeatPicker({
             type="button"
             onClick={() => onCount(n)}
             className={cn(
-              "flex min-h-12 shrink-0 items-center whitespace-nowrap rounded-full border px-comfortable text-sm transition-colors duration-quick",
-              count === n ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card active:bg-ember/10",
+              "flex min-h-12 shrink-0 items-center whitespace-nowrap rounded-full border px-comfortable text-base transition-colors duration-quick",
+              count === n ? "border-ember-solid bg-ember-solid font-medium text-on-solid" : "border-line bg-card active:bg-muted-wash",
             )}
           >
             {t("repeat.weeks", { count: n })}
@@ -87,23 +87,23 @@ export function RepeatPicker({
        *  rule the duration and percent controls already follow. */}
       {count > 1 && (
         <div className="flex items-center gap-tight">
-          <span className="flex-1 text-[0.875rem] font-semibold text-fg">{t("repeat.fine")}</span>
+          <span className="flex-1 text-base font-semibold text-fg">{t("repeat.fine")}</span>
           <button
             type="button"
             aria-label={t("repeat.fewer")}
             onClick={() => onCount(Math.max(1, count - 1))}
             disabled={count <= 1}
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-lg disabled:text-muted disabled:opacity-40 active:bg-ember/10"
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-lg disabled:text-muted disabled:opacity-40 active:bg-muted-wash"
           >
             −
           </button>
-          <span className="min-w-12 text-center text-sm font-medium tabular-nums">{count}</span>
+          <span className="min-w-12 text-center text-base font-medium tabular-nums">{count}</span>
           <button
             type="button"
             aria-label={t("repeat.more")}
             onClick={() => onCount(Math.min(max, count + 1))}
             disabled={count >= max}
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-lg disabled:text-muted disabled:opacity-40 active:bg-ember/10"
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-lg disabled:text-muted disabled:opacity-40 active:bg-muted-wash"
           >
             +
           </button>
@@ -112,7 +112,7 @@ export function RepeatPicker({
 
       {count > 1 && (
         <>
-          <ul className="flex flex-col overflow-hidden rounded-go border border-line">
+          <ul className="flex flex-col overflow-hidden rounded-card border border-line">
             {plan.map((o) => (
               <li
                 key={o.date}
@@ -124,12 +124,12 @@ export function RepeatPicker({
                 <span className={cn("shrink-0", o.ok ? "text-success" : "text-muted")}>
                   {o.ok ? <Check size={14} strokeWidth={2} /> : <X size={14} strokeWidth={2} />}
                 </span>
-                <span className={cn("min-w-0 flex-1 truncate text-[0.8125rem] tabular-nums", !o.ok && "text-muted line-through")}>
+                <span className={cn("min-w-0 flex-1 truncate text-sm tabular-nums", !o.ok && "text-muted line-through")}>
                   {dayLabel(o.date)}
                   {time ? ` · ${formatClock(time)}` : ""}
                 </span>
                 {!o.ok && (
-                  <span className="shrink-0 whitespace-nowrap text-[0.8125rem] text-muted">
+                  <span className="shrink-0 whitespace-nowrap text-sm text-muted">
                     {t(`repeat.reason_${o.reason ?? "taken"}`)}
                   </span>
                 )}
@@ -137,7 +137,7 @@ export function RepeatPicker({
             ))}
           </ul>
 
-          <p className="text-[0.8125rem] text-muted">
+          <p className="text-sm text-muted">
             {blocked > 0
               ? t("repeat.summarySkipping", {
                   count: bookable,

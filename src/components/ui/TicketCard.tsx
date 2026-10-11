@@ -32,6 +32,7 @@ const NOTCH = 12;
  *  shows through in any theme and the card's drop shadow follows the shape. */
 const bite = (edge: "top" | "bottom"): CSSProperties => {
   const y = edge === "top" ? "0" : "100%";
+  // ds-exception: a mask is alpha, not colour — black means keep, transparent means cut
   const hole = (x: string) => `radial-gradient(circle ${NOTCH}px at ${x} ${y}, #0000 ${NOTCH - 0.5}px, #000 ${NOTCH}px)`;
   const mask = `${hole("0")}, ${hole("100%")}`;
   return { maskImage: mask, WebkitMaskImage: mask, maskComposite: "intersect", WebkitMaskComposite: "source-in" };
@@ -59,23 +60,24 @@ export function TicketCard({ data, className }: { data: TicketCardData; classNam
       className={`w-full max-w-sm break-inside-avoid text-neutral-950 [filter:drop-shadow(0_1px_1px_rgba(20,20,19,0.06))_drop-shadow(0_16px_32px_rgba(20,20,19,0.10))] print:[filter:none] ${className ?? ""}`}
     >
       {/* What it is for */}
+      {/* ds-exception: the printed ticket is a physical object with its own 24px corner (docs §12, print) */}
       <div style={bite("bottom")} className={`@container rounded-t-[24px] bg-white px-6 pb-6 pt-6 ${PRINT_EDGE} print:border-b-0`}>
         {(data.tierName || data.indexLabel) && (
           <div className="mb-4 flex items-center justify-between gap-3">
-            {data.tierName ? <span className="rounded-full bg-neutral-100 px-3 py-1 text-[0.75rem] font-medium">{data.tierName}</span> : <span />}
-            {data.indexLabel && <span className="shrink-0 text-[0.75rem] font-medium text-neutral-600">{data.indexLabel}</span>}
+            {data.tierName ? <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium">{data.tierName}</span> : <span />}
+            {data.indexLabel && <span className="shrink-0 text-xs font-medium text-neutral-600">{data.indexLabel}</span>}
           </div>
         )}
-        <h2 className="break-words text-[1.375rem] font-semibold leading-tight tracking-[-0.015em] [text-wrap:balance]">{data.productName}</h2>
-        <p className="mt-1 break-words text-[0.875rem] text-neutral-600">{data.business}</p>
+        <h2 className="break-words text-2xl font-semibold leading-tight tracking-title [text-wrap:balance]">{data.productName}</h2>
+        <p className="mt-1 break-words text-base text-neutral-600">{data.business}</p>
         {data.fields.length > 0 && (
           // Two columns once the card has room for a date beside a time; one on the narrowest
           // phones, so a place like "Championship Court 1" wraps at its spaces instead of mid-word.
           <dl className="mt-5 grid grid-cols-1 gap-x-6 gap-y-4 border-t border-neutral-200 pt-5 @min-[17.5rem]:grid-cols-2">
             {data.fields.map((field) => (
               <div key={field.label} className="min-w-0">
-                <dt className="text-[0.8125rem] text-neutral-600">{field.label}</dt>
-                <dd className="mt-0.5 break-words text-[0.9375rem] font-semibold leading-snug">{field.value}</dd>
+                <dt className="text-sm text-neutral-600">{field.label}</dt>
+                <dd className="mt-0.5 break-words text-md font-semibold leading-snug">{field.value}</dd>
               </div>
             ))}
           </dl>
@@ -83,6 +85,7 @@ export function TicketCard({ data, className }: { data: TicketCardData; classNam
       </div>
 
       {/* The stub: what the gate scans */}
+      {/* ds-exception: the printed ticket is a physical object with its own 24px corner (docs §12, print) */}
       <div style={bite("top")} className={`@container relative rounded-b-[24px] bg-white px-6 pb-6 pt-6 ${PRINT_EDGE} print:border-t-0`}>
         <span aria-hidden className="absolute top-0 border-t-[1.5px] border-dashed border-neutral-300" style={{ left: NOTCH + 8, right: NOTCH + 8 }} />
         <div className="flex flex-col items-center gap-4 text-center @min-[19rem]:flex-row @min-[19rem]:text-left">
@@ -90,9 +93,9 @@ export function TicketCard({ data, className }: { data: TicketCardData; classNam
             <Qr value={data.code} size={112} />
           </span>
           <div className="min-w-0">
-            <p className="text-[0.8125rem] text-neutral-600">{data.referenceLabel}</p>
-            {data.showCode !== false && <p className="mt-0.5 break-all font-mono text-[0.9375rem] font-medium">{data.code}</p>}
-            <p className="mt-2 text-[0.8125rem] leading-snug text-neutral-600">{data.gateHint}</p>
+            <p className="text-sm text-neutral-600">{data.referenceLabel}</p>
+            {data.showCode !== false && <p className="mt-0.5 break-all font-mono text-md font-medium">{data.code}</p>}
+            <p className="mt-2 text-sm leading-snug text-neutral-600">{data.gateHint}</p>
           </div>
         </div>
       </div>

@@ -15,13 +15,13 @@ export default async function SignInPage() {
       <Logo size={28} />
 
       <h1 className="type-h1 mt-major text-2xl">{t("title")}</h1>
-      <p className="type-body mt-inline text-[13px] text-muted">{t("lead")}</p>
+      <p className="type-body mt-inline text-sm text-muted">{t("lead")}</p>
 
       <div className="mt-major flex flex-col gap-section">
         <FormField label={t("email")} variant="email" autoComplete="email" placeholder={t("emailPlaceholder")} />
         <div className="flex flex-col gap-inline">
           <FormField label={t("password")} variant="password" autoComplete="current-password" />
-          <Link href="/forgot-password" className="inline-flex min-h-11 items-center self-start text-[13px] text-brand-foreground underline-offset-4 hover:underline md:min-h-0">
+          <Link href="/forgot-password" className="inline-flex min-h-11 items-center self-start text-sm text-brand-foreground underline-offset-4 hover:underline md:min-h-0">
             {t("forgot")}
           </Link>
         </div>
@@ -31,13 +31,13 @@ export default async function SignInPage() {
         {t("submit")}
       </Button>
 
-      <p className="type-body mt-section text-center text-[13px] text-muted">
+      <p className="type-body mt-section text-center text-sm text-muted">
         {t("noAccount")}{" "}
         <Link href="/sign-up" className="text-brand-foreground underline-offset-4 hover:underline">
           {t("createAccount")}
         </Link>
       </p>
-      <p className="type-body mt-tight text-center text-[13px]">
+      <p className="type-body mt-tight text-center text-sm">
         <Link href="/" className="inline-flex min-h-11 items-center text-muted hover:text-fg md:min-h-0">
           {t("back")}
         </Link>

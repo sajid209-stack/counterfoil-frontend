@@ -388,7 +388,7 @@ export function PageShell({
           section ("Catalog") while this names the page ("Add to your
           catalog"), and that one has to stay. It stays in the document either
           way, because a page needs its heading. */}
-      <h1 className={cn("type-h1 break-words text-[1.375rem] sm:text-[1.75rem]", echoesBar && "max-sm:sr-only")}>{title}</h1>
+      <h1 className={cn("type-h1 break-words text-2xl sm:text-3xl", echoesBar && "max-sm:sr-only")}>{title}</h1>
       {description && <p className="sr-only">{description}</p>}
     </div>
   );
@@ -432,7 +432,7 @@ export function PageShell({
           {((back && !backInBar) || status) && (
             <div className="flex min-w-0 flex-wrap items-center gap-x-major gap-y-tight">
               {back && !backInBar && (
-                <Link href={back.href} className="-ml-tight inline-flex min-h-11 items-center gap-inline rounded-sm px-tight text-[13px] text-muted hover:text-fg md:min-h-9">
+                <Link href={back.href} className="-ml-tight inline-flex min-h-11 items-center gap-inline rounded-sm px-tight text-sm text-muted hover:text-fg md:min-h-9">
                   <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> {back.label}
                 </Link>
               )}

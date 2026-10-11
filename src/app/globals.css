@@ -32,11 +32,14 @@
   /* ── Primitive: Neutral / Warm Gray — hue 40°, 3% sat ────────────────── */
   --color-neutral-50:  #f5f2eb;
   --color-neutral-100: #efece5;
+  --color-neutral-150: #eae8e3;
   --color-neutral-200: #e2ded5;
   --color-neutral-300: #d1cdc3;
   --color-neutral-400: #b8b3a8;
+  --color-neutral-450: #a09b92;
   --color-neutral-500: #969188;
   --color-neutral-600: #706c65;
+  --color-neutral-650: #6b675f;
   --color-neutral-700: #514e48;
   --color-neutral-800: #383632;
   --color-neutral-900: #22211f;
@@ -92,13 +95,32 @@
   --color-blue-900: #1e3a8a;
   --color-blue-950: #172554;
 
-  /* ── Brand primaries (semantic aliases onto the scales) ────────────────
-     ink = deepest structural neutral · paper = lightest · ember = primary.
-     ember + status colours are mode-adaptive (overridden in .dark below). */
-  --color-ink: #141413;    /* neutral-950 */
-  --color-paper: #f5f2eb;  /* neutral-50  */
-  --color-ember: #f94a00;  /* brand-500 (light) → brand-400 in dark */
-  --color-bt-violet: #7c3aed;
+  /* ── Primitive: Violet — the marketplace axis only ───────────────────── */
+  --color-violet-400: #a78bfa;
+  --color-violet-600: #7c3aed;
+
+  /* ── Primitive: Neutral in-between steps ───────────────────────────────
+     Dark mode needs one fill a step ABOVE the card (#22211f) for a quiet
+     sunken/hover surface; neutral-800 is a border, too heavy for a fill. */
+  --color-neutral-850: #2e2c29;
+  --color-neutral-875: #2b2a27;
+
+  /* ══════════════════════════════════════════════════════════════════════
+     SEMANTIC LAYER — every token below names a ROLE and points at a
+     primitive above with var(). Change a primitive and every role that uses
+     it follows. The DS page (/design-system) lists each role with its
+     primitive, light and dark values; scripts/check-design-tokens.mjs keeps
+     the `.light` re-assertion (further down) in step with these defaults.
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /* ── Brand primaries ───────────────────────────────────────────────────
+     ink = deepest structural neutral · paper = lightest · ember = the brand
+     accent. ember is mode-adaptive (it lifts to brand-400 in .dark so it stays
+     legible as a MARK on ink). Text on a solid accent uses --color-ember-solid,
+     the primary FILL, defined with the surfaces below. */
+  --color-ink: var(--color-neutral-950);
+  --color-paper: var(--color-neutral-50);
+  --color-ember: var(--color-brand-500);
 
   /* ── Category colours ──────────────────────────────────────────────────
      What an operator may paint a booking category, so the calendar can colour
@@ -133,35 +155,75 @@
   /* ── Functional / semantic status colours ──────────────────────────────
      WCAG-validated foreground values (readable as text AND as fills on the
      mode's surfaces). Mode-adaptive: light steps here, brighter in .dark. */
-  --color-success: #166534; /* green-800  */
-  --color-warning: #92400e; /* amber-800  */
-  --color-danger:  #b91c1c; /* red-700    */
-  --color-info:    #1d4ed8; /* blue-700   */
+  --color-success: var(--color-green-800);
+  --color-warning: var(--color-amber-800);
+  --color-danger:  var(--color-red-700);
+  --color-info:    var(--color-blue-700);
   /* Where a sale came from. A second axis beside status: the five status colours
      say what is happening to a booking, this says it was sold through a
-     marketplace (Viator, Klook…) and not at our own counter or website. It is
-     the brand's own violet, so no new hue enters the product. Text-weight step
-     here; the fill and the stripe use the pinned -solid token below. */
-  --color-market:  #7c3aed; /* violet-600 (= --color-bt-violet) */
+     marketplace (Viator, Klook…) and not at our own counter or website. Text-
+     weight step here; the fill and the stripe use the pinned -solid token. */
+  --color-market:  var(--color-violet-600);
 
-  /* ── shadcn-style semantic aliases (additive, for new design work) ─────
-     Existing components keep using surface/card/fg/muted/line etc. below;
-     these give future work the canonical role names from the color system. */
-  --color-primary: var(--color-ember);
-  --color-primary-foreground: #ffffff;
+  /* The focus ring: one colour for every focus-visible outline in both
+     products. It is the brand accent, which is a 3:1+ non-text mark on every
+     surface in both modes (WCAG 2.2 1.4.11 / 2.4.13). */
   --color-ring: var(--color-ember);
-  --color-brand-foreground: #aa3000;   /* brand-700 — brand-coloured TEXT   */
-  --color-success-foreground: var(--color-success);
-  --color-warning-foreground: var(--color-warning);
-  --color-destructive: #dc2626;        /* red-600 — destructive buttons     */
-  --color-destructive-foreground: #ffffff;
-  --color-info-foreground: var(--color-info);
+  /* Brand-coloured TEXT and links: brand-700, 6.7:1 on white. */
+  --color-brand-foreground: var(--color-brand-700);
+  /* Text on any -solid fill (primary, success, danger, market). */
+  --color-on-solid: #ffffff;
 
   /* ── Type ──────────────────────────────────────────────────────────────
-     DM Mono is not decorative: it carries booking refs, status codes, dates,
-     IDs and BT codes (e.g. CF-2026-008479, CONFIRMED) everywhere. */
+     Inter for everything; DM Mono ONLY for identifiers (booking refs, ticket
+     codes, SKUs, pairing codes) — never for money, counts, times or dates.
+     Hind Siliguri sits behind both so Bangla never falls to a system face. */
   --font-sans: var(--font-inter), var(--font-hind-siliguri), system-ui, sans-serif;
-  --font-mono: var(--font-dm-mono), ui-monospace, monospace;
+  --font-mono: var(--font-dm-mono), var(--font-hind-siliguri), ui-monospace, monospace;
+
+  /* The type scale. ONE size per step, in rem so the till's text-size setting
+     (which scales the root font on Go routes) scales every screen, and so OS
+     honours the browser's own font size. Each step carries its line height.
+       2xs 11  Go tab-bar labels only (five tabs across 390px — declared exception)
+       xs  12  captions, metadata, badges, table meta, axis labels
+       sm  13  supporting text, dense table cells, Go reading floor
+       base 14 default interface text, table cells, buttons, inputs
+       md  16  emphasised body, card titles, Go tile names
+       lg  18  section headings
+       xl  20  major section headings, dialog titles
+       2xl 24  phone page titles, large figures
+       3xl 28  page titles, headline metrics
+       4xl 32  hero metrics
+       display 40  Go amount-due / change figures
+     5xl/6xl keep Tailwind's 48/60 for the scan verdict and the landing only.
+     Weights: 400 body · 500 labels, buttons · 600 titles, figures · 700 Go
+     display figures only. Never 800 (Bangla has no 800). */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.25rem;
+  --text-md: 1rem;
+  --text-md--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.75rem;
+  --text-3xl--line-height: 2.125rem;
+  --text-4xl: 2rem;
+  --text-4xl--line-height: 2.5rem;
+  --text-display: 2.5rem;
+  --text-display--line-height: 2.75rem;
+
+  /* Tracking: body is -0.01em (set on <body>); titles -0.02em; figures -0.025em. */
+  --tracking-title: -0.02em;
+  --tracking-figure: -0.025em;
 
   /* ── Spacing — base 8 ──────────────────────────────────────────────── */
   --spacing-inline: 4px;
@@ -193,14 +255,16 @@
   --spacing-card: 20px;
   --spacing-gutter: 20px;
 
-  /* ── Radii — ONLY these four exist in the entire system ────────────────
-     sm/md/lg read straight off the Aura reference's own scale (measured from
-     counterfoilos.lovable.app: --radius-sm 6px, --radius-md 12px,
-     --radius-lg 20px). md was already right; sm was 8 and lg was 24. */
+  /* ── Radii — the primitive scale ───────────────────────────────────────
+     xs 3 small media and a frame inside a frame · sm 6 controls (buttons,
+     fields, selects) and a frame inside a card · md 12 every container (card,
+     menu, popover, dialog, sheet) · lg 16 the OS page frame · full for pills.
+     The rule: an inner corner = outer corner − the gap between them, so a
+     corner set inside another is always one step smaller. */
   --radius-xs: 3px;
   --radius-sm: 6px;
   --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-lg: 16px;
 
   /* ── Go radii — the till is a phone app, not an admin console ───────────
      OS keeps the four Aura radii above; Go is softer because it is held in
@@ -212,39 +276,54 @@
   --radius-go-sm: 14px;
   --radius-go-lg: 28px;
 
-  /* ── Motion ──────────────────────────────────────────────────────────── */
-  --duration-instant: 0ms;
+  /* ── Product shape tokens (component layer) ────────────────────────────
+     What a card, a control, an inner frame and a sheet edge are in THIS
+     product. OS values here; [data-product="go"] overrides them below. A
+     shared component asks for `rounded-card` / `rounded-control` and gets the
+     right shape on either surface without knowing which one it is in. */
+  --radius-card: var(--radius-md);
+  --radius-control: var(--radius-sm);
+  --radius-inner: var(--radius-xs);
+  --radius-sheet: var(--radius-md);
+
+  /* ── Motion ────────────────────────────────────────────────────────────
+     quick 120ms hovers and presses · standard 200ms panels, fades ·
+     considered 320ms sheets entering. One easing. The `duration-*` utilities
+     for these are declared with @utility below: Tailwind v4 has no
+     `--duration-*` theme namespace, so before 2026-10-11 the 348 classes that
+     used them emitted no CSS at all and everything ran at the 150ms default. */
   --duration-quick: 120ms;
   --duration-standard: 200ms;
   --duration-considered: 320ms;
   --ease-counterfoil: cubic-bezier(0.32, 0.72, 0, 1);
 
-  /* ── Elevation — Aura "minimal, diffused, soft" shadows ─────────────────
-     card = resting surface depth · pop = floating overlays (menus, modals).
-     Light-mode only: dark mode gets elevation from surface steps + 1px
-     lines (neutralised in .dark below), per the color system. */
-  --shadow-card: 0 1px 2px rgb(20 20 19 / 0.03), 0 10px 28px -10px rgb(20 20 19 / 0.10);
-  --shadow-pop: 0 12px 36px -10px rgb(20 20 19 / 0.18), 0 3px 8px -2px rgb(20 20 19 / 0.08);
-  /* Named steps so nothing hand-rolls a shadow: cards none · dropdowns sm/md ·
-     dialogs md/lg · floating navigation sm. */
-  /* Go elevation. A till card is a solid object on a warm ground: depth
-     comes from a wide, soft, low-opacity shadow, not from a hairline. Two
-     steps only — resting and floating (nav, cart bar, sheets). */
-  --shadow-go: 0 1px 2px rgb(20 20 19 / 0.04), 0 6px 16px -8px rgb(20 20 19 / 0.10);
-  --shadow-go-pop: 0 2px 6px rgb(20 20 19 / 0.06), 0 16px 40px -12px rgb(20 20 19 / 0.22);
-  --shadow-sm: 0 2px 8px rgb(0 0 0 / 0.04);
-  --shadow-md: 0 6px 20px rgb(0 0 0 / 0.06);
-  --shadow-lg: 0 12px 40px rgb(0 0 0 / 0.08);
+  /* ── Elevation — four levels, no others ────────────────────────────────
+     0  flat: layout containers, tables, settings rows (no shadow).
+     1  sm  a resting card in light — a 1px ring and a 2px lift (Shopify).
+     2  md  menus, popovers, dropdowns, the date panel, toasts.
+     3  lg  dialogs, sheets, the command palette.
+     Dark has its own values (below): a shadow on near-black reads as nothing,
+     so a dark card is a surface step plus a 1px line and floating layers get
+     a deeper, blacker shadow. */
+  /* The values live in plain CSS variables (--elevation-*, set in :root,
+     .light and .dark below), and the theme only POINTS at them: Tailwind
+     inlines a shadow token's value into its utility, so a literal here would
+     ignore the dark override and the product override. */
+  --shadow-sm: var(--elevation-1);
+  --shadow-md: var(--elevation-2);
+  --shadow-lg: var(--elevation-3);
+  /* Go's two levels: a till card is a solid object on a warm ground lifted by
+     a wide soft shadow, and floating chrome (nav pill, cart bar) a step more. */
+  --shadow-go: var(--elevation-go);
+  --shadow-go-pop: var(--elevation-go-pop);
+  /* Product elevation (component layer): what a resting card and a floating
+     layer are in THIS product — OS by default, Go under [data-product="go"]. */
+  --shadow-card: var(--elev-card);
+  --shadow-float: var(--elev-float);
 
-  /* ── Glass — one blur, three opacities, so "glassy" is a token not a
-     judgement call. Applied ONLY to navigation, floating controls and
-     overlays; content surfaces stay flat (backdrop-filter on dozens of
-     elements is expensive and reads as glassmorphism). ─────────────────── */
+  /* ── Glass — used only by `.glass` (overlays over a page you keep seeing) */
   --glass-blur: 18px;
   --glass-saturate: 120%;
-  --glass-nav: 68%;          /* navigation at rest       */
-  --glass-nav-scrolled: 78%; /* once content passes under */
-  --glass-overlay: 82%;      /* menus, sheets, dialogs    */
 }
 
 /* Phones: the card padding and the page edge both drop to 16px. Unlayered on
@@ -256,6 +335,31 @@
     --spacing-card: 16px;
     --spacing-gutter: 16px;
   }
+}
+
+/* The motion steps as utilities. Tailwind v4 has no `--duration-*` theme
+   namespace, so `duration-quick` only exists because it is declared here. */
+@utility duration-quick { transition-duration: var(--duration-quick); }
+@utility duration-standard { transition-duration: var(--duration-standard); }
+@utility duration-considered { transition-duration: var(--duration-considered); }
+
+/* ── Product themes ─────────────────────────────────────────────────────────
+   Two products, one foundation. Colour, type, spacing and motion are shared;
+   what differs is SHAPE, ELEVATION and DENSITY. The OS values are the :root
+   defaults above; Go (the till, held in a hand and worked by touch) is softer,
+   lifted by shadow and never smaller than a thumb. GoShell sets
+   data-product="go" on its root; the Design System page sets it on its
+   previews. Light and dark are the orthogonal axis (.light / .dark), so the
+   four configurations are any combination of the two. */
+:root {
+  /* Elevation values (see the theme's shadow tokens). */
+  --elevation-1: 0 1px 2px rgb(20 20 19 / 0.06), 0 0 0 1px rgb(20 20 19 / 0.04);
+  --elevation-2: 0 4px 16px -2px rgb(20 20 19 / 0.10), 0 0 0 1px rgb(20 20 19 / 0.05);
+  --elevation-3: 0 16px 48px -12px rgb(20 20 19 / 0.22), 0 0 0 1px rgb(20 20 19 / 0.05);
+  --elevation-go: 0 1px 2px rgb(20 20 19 / 0.04), 0 6px 16px -8px rgb(20 20 19 / 0.10);
+  --elevation-go-pop: 0 2px 6px rgb(20 20 19 / 0.06), 0 16px 40px -12px rgb(20 20 19 / 0.22);
+  --elev-card: var(--elevation-1);
+  --elev-float: var(--elevation-2);
 }
 
 /* A table inside a card: its first and last cells are inset by the card's
@@ -283,15 +387,19 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  :where(input, output, td.text-right, th.text-right, [data-figure]) {
+    font-variant-numeric: tabular-nums;
+  }
+
   body {
     background-color: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    /* Tabular figures everywhere. Inter's default figures are proportional, so
-       a column of money re-flows as its digits change and "1" leaves a gap the
-       eye reads as a misalignment. Every screen here is money and counts in
-       columns, so lining tabular figures are the default, not an opt-in. */
-    font-variant-numeric: tabular-nums;
+    /* Proportional by default. Inter's tabular feature also widens the hyphen
+       (8.9px against 6.3px at 14px), so a global tabular-nums printed
+       "Walk - in" and "Sign - in" across the app. Figures that must line up
+       opt in: the `tabular-nums` utility (on every money and count column),
+       and the rule below for fields and right-aligned table cells. */
     /* The reference tracks everything slightly tight (-0.16px at 16px, and
        -0.6px on its 24px figures). It is most of why that UI reads as
        compact and current rather than merely clean. */
@@ -304,6 +412,7 @@
   /* Display figures tighten further, as the reference's do. */
   .type-figure {
     letter-spacing: -0.025em;
+    font-variant-numeric: tabular-nums;
   }
 
   /* Chrome is not selectable; content (booking refs etc.) stays selectable. */
@@ -317,7 +426,8 @@
    Reusable across both surfaces so headings never re-invent weight/tracking. */
 @layer components {
   .type-display {
-    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
     letter-spacing: -0.03em;
     line-height: 1.05;
   }
@@ -362,22 +472,25 @@
        only outline), the way Shopify admin draws its cards. The border stays
        as a transparent 1px so a card is exactly the box it always was — no
        child, no table inset and no sticky offset moves. Dark keeps a real 1px
-       line instead (below): a shadow on near-black reads as nothing, so dark
-       elevation is a surface step plus a line. */
+       line instead: a shadow on near-black reads as nothing, so dark
+       elevation is a surface step plus a line. That line comes from the
+       token, not a `.dark .card-surface` rule — in dark, --elevation-1 IS a
+       1px ring of --color-line — so a card follows the NEAREST mode class
+       (a light Design System preview inside a dark page stays light). */
     background-color: var(--color-card);
     border: 1px solid transparent;
-    border-radius: 12px;
-    box-shadow: 0 1px 2px rgb(20 20 19 / 0.06), 0 0 0 1px rgb(20 20 19 / 0.04);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
     transition: box-shadow var(--duration-quick) var(--ease-counterfoil),
       border-color var(--duration-quick) var(--ease-counterfoil),
       transform var(--duration-quick) var(--ease-counterfoil);
   }
 
   /* ── Go surface language ──────────────────────────────────────────────
-     OS cards are translucent glass on a hairline (`.card-surface`, measured
-     off the Aura reference). The till is a different object: a solid white
-     card lifted off the warm ground by a soft shadow, with no visible edge.
-     Go-only, so OS cannot regress when this moves. */
+     The same card in the till's product scope: a solid card lifted off the
+     warm ground by a soft shadow, at the Go radius. Kept as its own class
+     name because 34 call sites use it, but it is now the card recipe with
+     the Go tokens pinned, so the two cannot drift. */
   .go-surface {
     background-color: var(--color-card);
     border-radius: var(--radius-go);
@@ -395,23 +508,13 @@
     box-shadow: var(--shadow-go-pop);
   }
 
-  /* Dark elevation is a surface step plus a 1px line — a shadow on near-black
-     reads as nothing at all. This is the project's standing dark rule
-     (Delta D); it is restated here so the Go classes obey it too. */
-  .dark .go-surface,
-  .dark .go-raised {
-    box-shadow: none;
-    border: 1px solid var(--color-line);
-  }
-
   .card-interactive {
     cursor: pointer;
   }
   .card-interactive:hover {
     /* A deeper lift, not a border: the card has no edge at rest, so one
-       appearing on hover reads as a different object. Dark draws its own
-       (below). */
-    box-shadow: 0 3px 10px rgb(20 20 19 / 0.08), 0 0 0 1px rgb(20 20 19 / 0.07);
+       appearing on hover reads as a different object. */
+    box-shadow: var(--shadow-float);
   }
   .card-interactive:active {
     transform: scale(0.995);
@@ -419,35 +522,16 @@
 
   .glass {
     background-color: color-mix(in srgb, var(--color-card) 78%, transparent);
-    @apply backdrop-blur-[18px] backdrop-saturate-[1.2];
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     border: 1px solid var(--color-line);
-    box-shadow: var(--shadow-pop);
+    box-shadow: var(--shadow-lg);
   }
 }
 
-/* Dark: elevation is carried by surface steps + 1px lines, not shadows —
-   so the hairline must be full-strength here (no shadow to lean on). */
-.dark .card-surface {
-  box-shadow: none;
-  /* Opaque in dark on purpose. The light card is translucent so the warm page
-     shows through and lifts it; doing that here would blend the card DOWN
-     towards the darker surface behind it and flatten the very step that
-     carries elevation in dark mode. Full-strength hairline, no shadow. */
-  background-color: var(--color-card);
-  border-color: var(--color-line);
-}
-.dark .card-interactive:hover {
-  border-color: var(--color-strong);
-  box-shadow: none;
-  background-color: color-mix(in srgb, var(--color-card) 100%, var(--color-fg) 3%);
-}
-.dark .glass {
-  box-shadow: 0 12px 40px -16px rgb(0 0 0 / 0.6);
-}
-
-/* P8 — a visible focus ring on every keyboard-focused control (2px ember). */
+/* One focus ring for both products: 2px of the ring colour, 2px outside the
+   control. Unlayered so it beats utilities; components never draw their own. */
 :focus-visible {
-  outline: 2px solid var(--color-ember);
+  outline: 2px solid var(--color-ring);
   outline-offset: 2px;
 }
 
@@ -473,244 +557,254 @@
   outline-offset: -2px;
 }
 @theme {
-  /* ── Light mode surfaces & content (color-system §Semantic Tokens) ────── */
-  --color-surface: #f5f2eb;    /* background   ← neutral-50  */
-  --color-card: #ffffff;       /* card         ← white       */
-  /* The chrome — the side rail, the top bar and the settings column — is one quiet
-     surface, white like the cards. The page itself is the warm paper ground in
-     a rounded frame beside it (`.os-frame`, drawn in --color-surface), so there
-     is no frame token of its own: the frame IS the page colour. In dark the
-     chrome takes the card colour (a step above the page), because a shadow
-     does not read on near-black and a surface step does. */
-  --color-chrome: #ffffff;     /* rail + top bar ← white in light, card in dark */
-  --color-sheet: #ffffff;      /* popover      ← white       */
-  --color-fg: #22211f;         /* foreground   ← neutral-900 */
-  --color-muted: #6b675f;      /* muted-fg   ← neutral-600, nudged darker: at #706c65 it fell to 4.43:1 on --color-subtle (AA needs 4.5) */
-  --color-faint: #b8b3a8;      /* disabled-fg  ← neutral-400 */
-  --color-line: #e2ded5;       /* border       ← neutral-200 */
-  --color-strong: #d1cdc3;     /* stronger border ← neutral-300 */
-  --color-subtle: #efece5;     /* secondary/muted surface ← neutral-100 */
-  --color-inverse: #141413;    /* inverse surface ← neutral-950 */
-  --color-inverse-fg: #f5f2eb; /* text on inverse ← neutral-50  */
+  /* ── Surfaces & content — the semantic colour roles ──────────────────────
+     Role (the Design System's name)        token            light → dark
+     background (the page ground)           surface          neutral-50 → 950
+     surface (cards, panels)                card             white → neutral-900
+     surface-raised (menus, sheets, chrome) sheet / chrome   = card in both modes
+     surface-sunken (a fill inside a card)  subtle           neutral-100 → 850
+     hover / pressed fill                   muted-wash       neutral-150 → 850
+     unavailable time                       offtime          = surface
+     foreground                             fg               neutral-900 → 100
+     muted-foreground                       muted            neutral-650 → 450
+     disabled / placeholder                 faint            neutral-400 → 600
+     border, input edge                     line             neutral-200 → 800
+     border-strong                          strong           neutral-300 → 700
+     divider between rows                   hairline         neutral-100 → 875
+     inverse surface / its text             inverse / inverse-fg                 */
+  --color-surface: var(--color-neutral-50);
+  --color-card: #ffffff;
+  /* The chrome (rail, top bar, settings column) and the sheet (popovers, menus)
+     are the card in both modes: a step above the page in dark, white in light. */
+  --color-chrome: var(--color-card);
+  --color-sheet: var(--color-card);
+  --color-fg: var(--color-neutral-900);
+  /* neutral-650: neutral-600 nudged darker; at #706c65 it fell to 4.43:1 on
+     the sunken fill, and AA needs 4.5. */
+  --color-muted: var(--color-neutral-650);
+  --color-faint: var(--color-neutral-400);
+  --color-line: var(--color-neutral-200);
+  --color-strong: var(--color-neutral-300);
+  --color-subtle: var(--color-neutral-100);
+  --color-muted-wash: var(--color-neutral-150);
+  --color-hairline: var(--color-neutral-100);
+  --color-inverse: var(--color-neutral-950);
+  --color-inverse-fg: var(--color-neutral-50);
+  /* Calendar time that cannot be sold. It is the PAGE showing through the
+     card — a hole in the bookable time — in both modes. */
+  --color-offtime: var(--color-surface);
 
-  /* Washes: the faintest tint of a status colour, for hatching a blocked
-     region without shouting. Hatching is the app's "you cannot have this"
-     signal (out-of-service lanes, sold-out slots, held capacity) and it has to
-     stay readable behind text in both modes. */
+  /* ── Solid fills that carry white text (--color-on-solid) ───────────────
+     Pinned: they do NOT lift in dark, because a lift under white text loses
+     contrast. Each is ≥4.5:1 with white, so a 13–14px label on it passes AA.
+       ember-solid  brand-600  4.64:1  primary buttons, selected chips/days
+       danger-solid red-700    6.47:1  destructive buttons
+       success-solid green-700 5.02:1  a confirmed/positive fill
+       market-solid violet-600 5.70:1  marketplace badge and stripe
+     (The brand-500 #F94A00 is 3.50:1 under white, below AA for body-size
+     text; it stays the ACCENT — marks, dots, stripes, the focus ring, charts.) */
+  --color-ember-solid: var(--color-brand-600);
+  --color-danger-solid: var(--color-red-700);
+  --color-success-solid: var(--color-green-700);
+  --color-market-solid: var(--color-violet-600);
+
+  /* ── Tints: a status colour dropped into the card ──────────────────────
+     Written out rather than taken as an alpha of the base colour: the status
+     colours are 700/800-level, and 10% of a dark green over paper is a grey-
+     green rather than a pastel. Text in --color-fg reads on every one of them
+     in both modes (checked by scripts/check-design-tokens.mjs). */
+  --color-ember-wash: var(--color-brand-100);
+  --color-success-wash: #d8efdf;
   --color-warning-wash: #f3e3c4;
   --color-danger-wash: #f3d4d0;
-
-  /* Calendar blocks are filled in their status colour rather than flagged with
-     a bar on one edge, so every tone needs a tint pale enough to read body text
-     on. Written out rather than taken as an alpha of the base colour: the
-     status colours are 700/800-level, and 10% of a dark green over paper is a
-     grey-green rather than a pastel. */
-  /* ── Categorical chart slots ──────────────────────────────────────────
-     Assigned in this fixed order and never cycled. Validated rather than
-     chosen: brand / blue-600 / amber-700 / green-600 clears the lightness
-     band, the chroma floor, the normal-vision floor (ΔE 25.3) and 3:1 contrast
-     on the card. Its one warning is the deuteranopia pair at ΔE 7.3, in the
-     6–8 floor band, which is legal only alongside secondary encoding — every
-     chart using these ships direct labels and a 2px gap between fills.
-
-     The donut used to take `fg / strong / faint / line / muted`: five UI
-     neutrals, cycled. Measured, that failed the lightness band, failed the
-     chroma floor on five of six slots (they "read gray"), and failed the
-     normal-vision floor at ΔE 8.1 — and in dark `strong` and `faint` are the
-     same hex, so two segments were literally one colour. */
-  --chart-1: #f94a00;
-  --chart-2: #2563eb;
-  --chart-3: #b45309;
-  --chart-4: #16a34a;
-
-  /* ── Spending breakdown (Expenses) ────────────────────────────────────
-     The categories a venue spends on, biggest first: orange, blue, green,
-     rose, in that fixed order and never cycled, and "other categories" in a
-     neutral that reads as "the rest" rather than as a fifth hue.
-
-     Validated with the dataviz script, --pairs all, on white:
-       #f94a00 #2563eb #16a34a #be185d — lightness band, chroma floor and
-       normal-vision floor (worst ΔE 17.7) pass, every mark clears 3:1 on the
-       card. One WARN, green↔orange ΔE 7.7 under deuteranopia, in the 6–8 band
-       that is legal only with secondary encoding: every segment has a legend
-       row with its name, amount and share, and the bar names them all. Text is
-       never set in these colours. (Amber was tried and fails: #b45309 is ΔE 5.3
-       from orange under protanopia, #f59e0b is 2.15:1 on white.)
-     The neutral is neutral-500, 3.13:1 on white. */
-  --chart-cat-1: #f94a00;
-  --chart-cat-2: #2563eb;
-  --chart-cat-3: #16a34a;
-  --chart-cat-4: #be185d;
-  --chart-cat-other: #969188;
-
-  /* The analytics heatmap: one hue, six steps by quantile of the non-zero
-     cells. Light is the brand ramp (50 to 500). */
-  --heat-1: #fff5ee;
-  --heat-2: #ffe6d5;
-  --heat-3: #ffc9a8;
-  --heat-4: #ffa572;
-  --heat-5: #ff7a3d;
-  --heat-6: #f94a00;
-  --heat-edge: rgb(0 0 0 / 0.06);
-
-  --color-ember-wash: #ffe4d6;
-  --color-success-wash: #d8efdf;
-  --color-muted-wash: #eae8e3;
-
-  /* The calendar's internal ruling. `line` is the right weight for a border
-     that separates two components; drawn 7 days across and 17 hours down it
-     becomes a cage. This is the same idea one step quieter, for strokes whose
-     job is to guide the eye rather than to divide anything. */
-  --color-hairline: #edeae4;
-
-  /* Calendar time that cannot be sold: gone, full, or not trading. The grid
-     used to write "6 open" into every hour it could sell, which put a label in
-     70 cells of a week to say what was true of nearly all of them. It is the
-     exception that deserves the mark, so bookable time is the plain card and
-     this is the one quiet step below it — the same idea as the non-working
-     hours every staff calendar greys out. Not `subtle`: in dark that IS the
-     card, and the shade vanished. */
-  --color-offtime: #f2f0ea;
-
-  /* Solid ember that does NOT brighten in dark.
-     `ember` lifts to #ff7a3d on ink so that ember-as-TEXT stays legible, but
-     the same lift applied to ember-as-FILL drops white on it to 2.59:1. This
-     is the brand orange held at #f94a00 in both themes, for the badges and
-     frames that carry white text: 3.50:1 either way, and the same colour the
-     owner named. */
-  --color-ember-solid: #f94a00;
-
-  /* Marketplace bookings. The wash is pale enough for body text and the solid
-     is pinned (same reasoning as ember-solid): violet-600 does not lighten in
-     dark, so the stripe and the badge that carry white text keep their
-     contrast on both themes, while `--color-market` itself lifts to violet-400
-     for use as text or a mark on ink. */
   --color-market-wash: #ede5fd;
-  --color-market-solid: #7c3aed;
 
-  /* Same reasoning for the destructive fill. `danger` brightens to red-400 on
-     ink so danger-as-TEXT reads there; under white as a FILL that measured
-     2.77:1. Held at red-700 in both themes it is ~7:1 either way, and still
-     unmistakably red against a near-black card. */
-  --color-danger-solid: #b91c1c;
+  /* ── Data visualisation ─────────────────────────────────────────────────
+     Categorical slots, assigned in this fixed order and never cycled.
+     Validated with the dataviz palette checker (--pairs all) against the
+     card in both modes: lightness band, chroma floor, normal-vision floor
+     (ΔE 25.3 light / 23.7 dark) and 3:1 against the card. One accepted WARN
+     (a deuteranopia pair in the 6–8 band) — every chart ships direct labels.
+     Charts are the one place hues outside the semantic set are allowed. */
+  --chart-1: var(--color-brand-500);
+  --chart-2: var(--color-blue-600);
+  --chart-3: var(--color-amber-700);
+  --chart-4: var(--color-green-600);
+  /* The spending breakdown (Expenses): orange, blue, green, rose, then a
+     neutral that reads as "the rest". */
+  --chart-cat-1: var(--chart-1);
+  --chart-cat-2: var(--chart-2);
+  --chart-cat-3: var(--chart-4);
+  --chart-cat-4: #be185d;
+  --chart-cat-other: var(--color-neutral-500);
+  /* The heatmap: one hue, six steps by quantile. Light is the brand ramp. */
+  --heat-1: var(--color-brand-50);
+  --heat-2: var(--color-brand-100);
+  --heat-3: var(--color-brand-200);
+  --heat-4: var(--color-brand-300);
+  --heat-5: var(--color-brand-400);
+  --heat-6: var(--color-brand-500);
+  --heat-edge: rgb(0 0 0 / 0.06);
 }
 
-/* A printed document is paper: dark type on white whatever the app's theme.
-   The ticket receipt reuses the receipt header and line detail, which are drawn
-   in theme tokens, so it pins the light values of those tokens for its own
-   subtree — a custom property declared here outranks the one `.dark` sets on
-   <html>, however the blocks are ordered. */
-.paper {
+/* ── The light set, re-asserted for a subtree ────────────────────────────────
+   Everything .dark changes, set back to its light value. Applied to:
+     .light  — a light island inside a dark page (the Design System previews)
+     .paper  — a printed document is paper: dark type on white whatever the
+               app's theme (the ticket receipt, the print pages)
+     .sf     — the public storefront, which is light by decision
+   A custom property set on an element outranks the one .dark sets on <html>,
+   however the blocks are ordered. scripts/check-design-tokens.mjs fails if a
+   token .dark overrides is missing here. */
+.light,
+.paper,
+.sf {
   color-scheme: light;
-  --color-surface: #f5f2eb;
-  --color-chrome: #ffffff;
+  --color-surface: var(--color-neutral-50);
   --color-card: #ffffff;
-  --color-fg: #22211f;
-  --color-muted: #6b675f;
-  --color-faint: #b8b3a8;
-  --color-line: #e2ded5;
-  --color-strong: #d1cdc3;
-  --color-subtle: #efece5;
-  --color-success: #166534;
-  --color-warning: #92400e;
-  --color-danger: #b91c1c;
+  --color-chrome: var(--color-card);
+  --color-sheet: var(--color-card);
+  --color-fg: var(--color-neutral-900);
+  --color-muted: var(--color-neutral-650);
+  --color-faint: var(--color-neutral-400);
+  --color-line: var(--color-neutral-200);
+  --color-strong: var(--color-neutral-300);
+  --color-subtle: var(--color-neutral-100);
+  --color-muted-wash: var(--color-neutral-150);
+  --color-hairline: var(--color-neutral-100);
+  --color-inverse: var(--color-neutral-950);
+  --color-inverse-fg: var(--color-neutral-50);
+  --color-offtime: var(--color-surface);
+  --color-ember: var(--color-brand-500);
+  --color-ring: var(--color-ember);
+  --color-brand-foreground: var(--color-brand-700);
+  --color-success: var(--color-green-800);
+  --color-warning: var(--color-amber-800);
+  --color-danger: var(--color-red-700);
+  --color-info: var(--color-blue-700);
+  --color-market: var(--color-violet-600);
+  --color-ember-wash: var(--color-brand-100);
+  --color-success-wash: #d8efdf;
+  --color-warning-wash: #f3e3c4;
+  --color-danger-wash: #f3d4d0;
+  --color-market-wash: #ede5fd;
+  --chart-2: var(--color-blue-600);
+  --chart-3: var(--color-amber-700);
+  --chart-cat-2: var(--chart-2);
+  --chart-cat-4: #be185d;
+  --chart-cat-other: var(--color-neutral-500);
+  --heat-1: var(--color-brand-50);
+  --heat-2: var(--color-brand-100);
+  --heat-3: var(--color-brand-200);
+  --heat-4: var(--color-brand-300);
+  --heat-5: var(--color-brand-400);
+  --heat-6: var(--color-brand-500);
+  --heat-edge: rgb(0 0 0 / 0.06);
+  --elevation-1: 0 1px 2px rgb(20 20 19 / 0.06), 0 0 0 1px rgb(20 20 19 / 0.04);
+  --elevation-2: 0 4px 16px -2px rgb(20 20 19 / 0.10), 0 0 0 1px rgb(20 20 19 / 0.05);
+  --elevation-3: 0 16px 48px -12px rgb(20 20 19 / 0.22), 0 0 0 1px rgb(20 20 19 / 0.05);
+  --elevation-go: 0 1px 2px rgb(20 20 19 / 0.04), 0 6px 16px -8px rgb(20 20 19 / 0.10);
+  --elevation-go-pop: 0 2px 6px rgb(20 20 19 / 0.06), 0 16px 40px -12px rgb(20 20 19 / 0.22);
+  --elev-card: var(--elevation-1);
+  --elev-float: var(--elevation-2);
 }
 
 /* Dark: tonal direction reverses — content lightens, surfaces deepen.
-   Elevation comes from surface steps + 1px lines, not shadows.
-   ember + status colours brighten one region so they stay legible on ink. */
+   Elevation comes from surface steps + 1px lines, not shadows; floating layers
+   keep a deeper shadow. The accent and the status colours lift one region so
+   they stay legible on ink. Every token that is a var() of another is
+   re-declared here as well: a custom property is resolved where it is
+   declared, so a .dark subtree inside a light page (a Design System preview)
+   would otherwise inherit the light value already resolved on <html>. */
 .dark {
-  --color-surface: #141413;    /* background   ← neutral-950 */
-  --color-card: #22211f;       /* card         ← neutral-900 */
-  --color-chrome: #22211f;     /* the card colour: rail + bar sit a step above the page */
-  --color-sheet: #22211f;      /* popover      ← neutral-900 */
-  --color-fg: #efece5;         /* foreground   ← neutral-100 */
-  --color-muted: #969188;      /* muted-fg     ← neutral-500 */
-  --color-faint: #514e48;      /* disabled-fg  ← neutral-700 */
-  --color-line: #383632;       /* border       ← neutral-800 */
-  --color-strong: #514e48;     /* stronger border ← neutral-700 */
-  --color-subtle: #22211f;     /* secondary surface ← neutral-900 */
-  --color-inverse: #efece5;    /* inverse surface ← neutral-100 */
-  --color-inverse-fg: #141413; /* text on inverse ← neutral-950 */
-
-  --color-ember: #ff7a3d;               /* brand-400 */
-  --color-primary: #ff7a3d;
-  --color-primary-foreground: #141413;  /* neutral-950 */
-  --color-ring: #ff7a3d;
-  --color-brand-foreground: #ffa572;    /* brand-300 */
-
-  --color-success: #4ade80;             /* green-400 */
-  --color-warning: #fbbf24;             /* amber-400 */
-  --color-danger:  #f87171;             /* red-400   */
-  --color-info:    #60a5fa;             /* blue-400  */
-  --color-market:  #a78bfa;             /* violet-400 */
-  --color-success-foreground: #4ade80;
-  --color-warning-foreground: #fbbf24;
-  --color-info-foreground: #60a5fa;
-  --color-destructive: #ef4444;         /* red-500   */
-  --color-destructive-foreground: #141413;
-
+  color-scheme: dark;
+  --color-surface: var(--color-neutral-950);
+  --color-card: var(--color-neutral-900);
+  --color-chrome: var(--color-card);
+  --color-sheet: var(--color-card);
+  --color-fg: var(--color-neutral-100);
+  /* neutral-450, not 500: muted text sits on the sunken fill and on tints as
+     well as on the card, and 500 measured 4.44:1 on the sunken step. 450 clears
+     4.5 on every dark surface (card 5.8, sunken 5.0, ember wash 4.65). */
+  --color-muted: var(--color-neutral-450);
+  /* Not neutral-700: that is strong, and a disabled label must not be the
+     same colour as a border. */
+  --color-faint: var(--color-neutral-600);
+  --color-line: var(--color-neutral-800);
+  --color-strong: var(--color-neutral-700);
+  /* A real step above the card. It used to BE the card, so every bg-subtle
+     fill vanished in dark. */
+  --color-subtle: var(--color-neutral-850);
+  --color-muted-wash: var(--color-neutral-850);
+  /* Lighter here means LESS contrast, not a lighter colour: on ink a stroke
+     softens by moving toward the card it sits on, not toward white. */
+  --color-hairline: var(--color-neutral-875);
+  --color-inverse: var(--color-neutral-100);
+  --color-inverse-fg: var(--color-neutral-950);
+  --color-offtime: var(--color-surface);
+  --color-ember: var(--color-brand-400);
+  --color-ring: var(--color-ember);
+  --color-brand-foreground: var(--color-brand-300);
+  --color-success: var(--color-green-400);
+  --color-warning: var(--color-amber-400);
+  --color-danger: var(--color-red-400);
+  --color-info: var(--color-blue-400);
+  --color-market: var(--color-violet-400);
+  /* A tint of the status colour dropped into the card, not a pastel lifted
+     onto it (a pastel here would glow). */
+  --color-ember-wash: #4a2a17;
+  --color-success-wash: #17362a;
   --color-warning-wash: #4a3a1a;
   --color-danger-wash: #4a2724;
-
-  /* Only rose moves: rose-700 measures 2.66:1 against the dark card, which is
-     under the 3:1 floor for a mark. Pink-500 clears it and keeps its distance
-     from orange under normal vision (ΔE 15.7). The other four hold their
-     light steps — see the @theme block for why amber does not drop a step. */
-  --color-cat-rose: #ec4899;
-
-  /* Dark keeps the same idea the other way up: a tint of the status colour
-     dropped into the card, not a pastel lifted onto it. A pastel here would
-     glow. */
-  /* Dark takes its own steps from the same ramps rather than flipping the
-     light ones: every 400-level step measured L 0.71–0.84, outside the dark
-     band of 0.48–0.67. These four sit inside it and clear 3:1 on the dark
-     card, normal-vision ΔE 23.7. */
-  --chart-1: #f94a00;
-  --chart-2: #3b82f6;
-  --chart-3: #d97706;
-  --chart-4: #16a34a;
-
-  /* The spending breakdown in dark: rose steps to pink-500 (rose-700 is 2.66:1
-     on the dark card, under the 3:1 floor) and blue to blue-500, the step the
-     app's other dark charts use. Checked against #22211f with --pairs all: all
-     pass, with the same deuteranopia WARN (green↔orange ΔE 7.7) and the same
-     answer — direct labels and a legend. The neutral is neutral-600, 3.08:1. */
-  --chart-cat-1: #f94a00;
-  --chart-cat-2: #3b82f6;
-  --chart-cat-3: #16a34a;
+  --color-market-wash: #2e2447;
+  /* Dark takes its own chart steps rather than flipping the light ones: every
+     400-level step measured L 0.71–0.84, outside the dark band of 0.48–0.67.
+     Rose steps to pink-500 (rose-700 is 2.66:1 on the dark card). */
+  --chart-2: var(--color-blue-500);
+  --chart-3: var(--color-amber-600);
+  --chart-cat-2: var(--chart-2);
   --chart-cat-4: #ec4899;
-  --chart-cat-other: #706c65;
-
-  /* The analytics heatmap in dark takes its own steps, not the light ones
-     flipped: the light 50 to 200 would glow on the card, so these start as a
-     warm tint dropped into it and climb to the lifted ember. Each step is a
-     clear jump from its neighbour and from an empty cell, which is only a
-     hairline. */
+  --chart-cat-other: var(--color-neutral-600);
   --heat-1: #3a2a22;
   --heat-2: #523223;
   --heat-3: #733a21;
   --heat-4: #9c451f;
   --heat-5: #d0531f;
-  --heat-6: #ff7a3d;
+  --heat-6: var(--color-brand-400);
   --heat-edge: rgb(255 255 255 / 0.06);
-
-  --color-ember-wash: #4a2a17;
-  --color-success-wash: #17362a;
-  --color-muted-wash: #2b2a27;
-
-  /* Lighter here means LESS contrast, not a lighter colour: on ink, a stroke
-     softens by moving toward the card it sits on, not toward white. */
-  --color-hairline: #2e2c29;
-  /* Recessed rather than lifted: on ink, time you cannot use sits a step
-     towards the page, not towards white. */
-  --color-offtime: #1b1a18;
-  --color-ember-solid: #f94a00;
-  --color-danger-solid: #b91c1c;
-  --color-market-wash: #2e2447;
-  --color-market-solid: #7c3aed;
+  /* The resting card draws a line instead of a shadow; floating layers keep a
+     deep black shadow plus a faint light edge. */
+  --elevation-1: 0 0 0 1px var(--color-line);
+  --elevation-2: 0 8px 24px -4px rgb(0 0 0 / 0.55), 0 0 0 1px rgb(255 255 255 / 0.06);
+  --elevation-3: 0 20px 56px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.07);
+  --elevation-go: 0 0 0 1px var(--color-line);
+  --elevation-go-pop: 0 12px 32px -8px rgb(0 0 0 / 0.6), 0 0 0 1px var(--color-line);
+  --elev-card: var(--elevation-1);
+  --elev-float: var(--elevation-2);
 }
 .dark body { background: var(--color-surface); color: var(--color-fg); }
+
+/* ── Product themes, after the mode blocks ─────────────────────────────────
+   Listed after .light/.dark so that on an element carrying both (a Design
+   System preview: class="dark" data-product="go"), the product's shape and
+   elevation win, resolved against that element's own mode values.
+   [data-product="os"] resets a subtree to the OS defaults inside a Go page. */
+[data-product="os"] {
+  --radius-card: var(--radius-md);
+  --radius-control: var(--radius-sm);
+  --radius-inner: var(--radius-xs);
+  --radius-sheet: var(--radius-md);
+  --elev-card: var(--elevation-1);
+  --elev-float: var(--elevation-2);
+}
+[data-product="go"] {
+  --radius-card: var(--radius-go);
+  --radius-control: 9999px;
+  --radius-inner: var(--radius-go-sm);
+  --radius-sheet: var(--radius-go-lg);
+  --elev-card: var(--elevation-go);
+  --elev-float: var(--elevation-go-pop);
+}
 
 /* ── Go sheet entrance ──────────────────────────────────────────────────
    A bottom sheet that simply appears has come from nowhere. Rising from the
@@ -953,34 +1047,27 @@ html.dark[data-contrast="more"] {
      --sf-ink      accent as a letter   --sf-soft     10% tint (chips, today)
      --sf-tint-a/b art plate gradient   --sf-deep     dark art stop            */
 .sf {
-  color-scheme: light;
+  /* The light set comes from the `.light, .paper, .sf` block above; this adds
+     the storefront's own neutral greys and maps the venue's accent onto the
+     app's accent tokens, so shared components inside follow the venue. */
   --color-surface: #ffffff;
-  --color-chrome: #ffffff;
-  --color-card: #ffffff;
-  --color-sheet: #ffffff;
   --color-fg: #161616;
   --color-muted: #595959;
   --color-faint: #a3a3a3;
   --color-line: #dcdcd8;
   --color-strong: #bdbdb8;
   --color-subtle: #f6f6f3;
+  --color-muted-wash: #efefec;
   --color-inverse: #161616;
   --color-inverse-fg: #ffffff;
   --color-hairline: #ececec;
-  --color-success: #166534;
-  --color-warning: #92400e;
-  --color-danger: #b91c1c;
-  --color-info: #1d4ed8;
-  --color-success-foreground: #166534;
-  --color-warning-foreground: #92400e;
   --color-success-wash: #dcf1e3;
   --color-warning-wash: #fdf0d5;
   --color-danger-wash: #fde4e4;
   --color-ember: var(--sf-accent, #161616);
   --color-ember-solid: var(--sf-fill, #161616);
   --color-ember-wash: var(--sf-soft, #f0f0ee);
-  --color-primary: var(--sf-fill, #161616);
-  --color-primary-foreground: var(--sf-on-fill, #ffffff);
+  --color-on-solid: var(--sf-on-fill, #ffffff);
   --color-ring: var(--sf-accent, #161616);
   --color-brand-foreground: var(--sf-ink, #161616);
   background: var(--color-surface);

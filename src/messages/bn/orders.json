@@ -187,14 +187,6 @@
     "paid": "পরিশোধ",
     "owed": "এখনো বাকি"
   },
-  "pager": {
-    "label": "পেজ",
-    "range": "{total}টির মধ্যে {from}–{to}",
-    "show": "দেখান",
-    "previous": "আগের",
-    "next": "পরের",
-    "page": "পেজ {page} / {pages}"
-  },
   "summary": {
     "title": "বিক্রির সারসংক্ষেপ",
     "download": "সারসংক্ষেপ ডাউনলোড (CSV)",

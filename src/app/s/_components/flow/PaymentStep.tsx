@@ -10,6 +10,8 @@ import { formatMoney } from "@/lib/format";
 import type { Minor, PaymentMethod } from "@/lib/api/types";
 
 const PHONE_RE = /^01\d{9}$/;
+// ds-exception: bKash's pink is the payment provider's own brand colour, not the venue's
+const BKASH_PINK = "#E2136E";
 const ref = (prefix: string) => `${prefix}${Math.floor(100000 + Math.random() * 900000)}`;
 
 /**
@@ -35,13 +37,13 @@ export function PaymentStep({
   const t = useTranslations("storefront");
   return (
     <div className="mx-auto flex max-w-sm flex-col gap-section py-section">
-      <button type="button" onClick={onCancel} className="flex min-h-11 w-fit items-center gap-inline text-[14px] text-muted hover:text-fg">
+      <button type="button" onClick={onCancel} className="flex min-h-11 w-fit items-center gap-inline text-base text-muted hover:text-fg">
         <ArrowLeft size={15} strokeWidth={1.75} aria-hidden />
         {t("pay.changeMethod")}
       </button>
-      <div className="rounded-[16px] border border-hairline bg-subtle flex flex-col items-center gap-tight p-major text-center">
-        <p className="text-[14px] text-muted">{t("pay.amountDue")}</p>
-        <p className="tnum text-[32px] font-semibold">{formatMoney(amount)}</p>
+      <div className="rounded-lg border border-hairline bg-subtle flex flex-col items-center gap-tight p-major text-center">
+        <p className="text-base text-muted">{t("pay.amountDue")}</p>
+        <p className="tnum text-4xl font-semibold">{formatMoney(amount)}</p>
       </div>
       {method === "bkash" && <BkashPay phone={phone} busy={busy} onSuccess={onSuccess} />}
       {method === "card_terminal" && <CardPay busy={busy} onSuccess={onSuccess} />}
@@ -59,19 +61,19 @@ function BkashPay({ phone, busy, onSuccess }: { phone: string; busy: boolean; on
 
   if (step === "number") {
     return (
-      <div className="rounded-[16px] border border-line bg-white p-major shadow-[0_8px_30px_rgba(0,0,0,0.06)] flex flex-col gap-section" style={{ borderTop: "4px solid #E2136E" }}>
-        <p className="flex items-center gap-tight text-[15px] font-semibold" style={{ color: "#E2136E" }}>
+      <div className="rounded-lg border border-line bg-card p-major shadow-card flex flex-col gap-section" style={{ borderTop: `4px solid ${BKASH_PINK}` }}>
+        <p className="flex items-center gap-tight text-md font-semibold" style={{ color: BKASH_PINK }}>
           <Smartphone size={18} strokeWidth={1.75} aria-hidden /> bKash
         </p>
         <label className="flex flex-col gap-inline">
-          <span className="text-[14px] font-semibold">{t("pay.bkashNumber")}</span>
+          <span className="text-base font-semibold">{t("pay.bkashNumber")}</span>
           <input
             value={num}
             onChange={(e) => setNum(e.target.value.replace(/\D/g, ""))}
             inputMode="numeric"
-            className="h-12 w-full rounded-[12px] border border-strong bg-white px-section text-[16px] tabular-nums outline-none focus:border-[var(--sf-fill)] focus:ring-2 focus:ring-[var(--sf-fill)]/25"
+            className="h-12 w-full rounded-md border border-strong bg-card px-section text-md tabular-nums transition-colors duration-quick focus:border-ember"
           />
-          {error && <span className="text-[14px] font-medium text-danger">{error}</span>}
+          {error && <span className="text-base font-medium text-danger">{error}</span>}
         </label>
         <button
           type="button"
@@ -92,20 +94,20 @@ function BkashPay({ phone, busy, onSuccess }: { phone: string; busy: boolean; on
   }
 
   return (
-    <div className="rounded-[16px] border border-line bg-white p-major shadow-[0_8px_30px_rgba(0,0,0,0.06)] flex flex-col gap-section" style={{ borderTop: "4px solid #E2136E" }}>
-      <p className="text-[16px]">{t("pay.otpSentTo", { number: num })}</p>
+    <div className="rounded-lg border border-line bg-card p-major shadow-card flex flex-col gap-section" style={{ borderTop: `4px solid ${BKASH_PINK}` }}>
+      <p className="text-md">{t("pay.otpSentTo", { number: num })}</p>
       <label className="flex flex-col gap-inline">
-        <span className="text-[14px] font-semibold">{t("pay.otpLabel")}</span>
+        <span className="text-base font-semibold">{t("pay.otpLabel")}</span>
         <input
           value={otp}
           onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
           inputMode="numeric"
           autoFocus
-          className="h-12 w-full rounded-[12px] border border-strong bg-white px-section text-center text-[22px] font-semibold tracking-[0.3em] tabular-nums outline-none focus:border-[var(--sf-fill)] focus:ring-2 focus:ring-[var(--sf-fill)]/25"
+          className="h-12 w-full rounded-md border border-strong bg-card px-section text-center text-2xl font-semibold tracking-[0.3em] tabular-nums transition-colors duration-quick focus:border-ember"
         />
-        {error && <span className="text-[14px] font-medium text-danger">{error}</span>}
+        {error && <span className="text-base font-medium text-danger">{error}</span>}
       </label>
-      <p className="text-[14px] text-muted">{t("pay.demoOtpHint")}</p>
+      <p className="text-base text-muted">{t("pay.demoOtpHint")}</p>
       <button
         type="button"
         disabled={busy}
@@ -149,44 +151,44 @@ function CardPay({ busy, onSuccess }: { busy: boolean; onSuccess: (r: string) =>
   };
 
   return (
-    <div className="rounded-[16px] border border-line bg-white p-major shadow-[0_8px_30px_rgba(0,0,0,0.06)] flex flex-col gap-section">
-      <p className="text-[15px] font-semibold">{t("pay.cardTitle")}</p>
+    <div className="rounded-lg border border-line bg-card p-major shadow-card flex flex-col gap-section">
+      <p className="text-md font-semibold">{t("pay.cardTitle")}</p>
       <label className="flex flex-col gap-inline">
-        <span className="text-[14px] font-semibold">{t("pay.cardNumber")}</span>
+        <span className="text-base font-semibold">{t("pay.cardNumber")}</span>
         <input
           value={number}
           onChange={(e) => setNumber(groupNumber(e.target.value))}
           inputMode="numeric"
           placeholder="4111 1111 1111 1111"
-          className="h-12 w-full rounded-[12px] border border-strong bg-white px-section text-[15px] tabular-nums outline-none focus:border-[var(--sf-fill)] focus:ring-2 focus:ring-[var(--sf-fill)]/25"
+          className="h-12 w-full rounded-md border border-strong bg-card px-section text-md tabular-nums transition-colors duration-quick focus:border-ember"
         />
-        {errors.number && <span className="text-[14px] font-medium text-danger">{errors.number}</span>}
+        {errors.number && <span className="text-base font-medium text-danger">{errors.number}</span>}
       </label>
       <div className="grid grid-cols-2 gap-tight">
         <label className="flex flex-col gap-inline">
-          <span className="text-[14px] font-semibold">{t("pay.cardExpiry")}</span>
+          <span className="text-base font-semibold">{t("pay.cardExpiry")}</span>
           <input
             value={expiry}
             onChange={(e) => setExpiry(groupExpiry(e.target.value))}
             inputMode="numeric"
             placeholder="MM/YY"
-            className="h-12 w-full rounded-[12px] border border-strong bg-white px-section text-[15px] tabular-nums outline-none focus:border-[var(--sf-fill)] focus:ring-2 focus:ring-[var(--sf-fill)]/25"
+            className="h-12 w-full rounded-md border border-strong bg-card px-section text-md tabular-nums transition-colors duration-quick focus:border-ember"
           />
-          {errors.expiry && <span className="text-[14px] font-medium text-danger">{errors.expiry}</span>}
+          {errors.expiry && <span className="text-base font-medium text-danger">{errors.expiry}</span>}
         </label>
         <label className="flex flex-col gap-inline">
-          <span className="text-[14px] font-semibold">{t("pay.cardCvc")}</span>
+          <span className="text-base font-semibold">{t("pay.cardCvc")}</span>
           <input
             value={cvc}
             onChange={(e) => setCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
             inputMode="numeric"
             placeholder="123"
-            className="h-12 w-full rounded-[12px] border border-strong bg-white px-section text-[15px] tabular-nums outline-none focus:border-[var(--sf-fill)] focus:ring-2 focus:ring-[var(--sf-fill)]/25"
+            className="h-12 w-full rounded-md border border-strong bg-card px-section text-md tabular-nums transition-colors duration-quick focus:border-ember"
           />
-          {errors.cvc && <span className="text-[14px] font-medium text-danger">{errors.cvc}</span>}
+          {errors.cvc && <span className="text-base font-medium text-danger">{errors.cvc}</span>}
         </label>
       </div>
-      <p className="text-[14px] text-muted">{t("pay.demoCardHint")}</p>
+      <p className="text-base text-muted">{t("pay.demoCardHint")}</p>
       <button type="button" disabled={busy} className={cn(sfBtn.primary, "w-full")} onClick={submit}>
         {t("pay.payNow")}
       </button>
@@ -198,10 +200,10 @@ function QrPay({ amount, busy, onSuccess }: { amount: Minor; busy: boolean; onSu
   const t = useTranslations("storefront");
   const payload = `counterfoil-pay://amount=${amount}&ref=${ref("QR")}`;
   return (
-    <div className="rounded-[16px] border border-line bg-white p-major shadow-[0_8px_30px_rgba(0,0,0,0.06)] flex flex-col items-center gap-section text-center">
-      <p className="text-[15px] font-semibold">{t("pay.qrTitle")}</p>
+    <div className="rounded-lg border border-line bg-card p-major shadow-card flex flex-col items-center gap-section text-center">
+      <p className="text-md font-semibold">{t("pay.qrTitle")}</p>
       <Qr value={payload} size={176} className="rounded-sm border border-hairline" />
-      <p className="text-[14px] text-muted">{t("pay.qrHint")}</p>
+      <p className="text-base text-muted">{t("pay.qrHint")}</p>
       <button type="button" disabled={busy} className={cn(sfBtn.primary, "w-full")} onClick={() => onSuccess(ref("QR"))}>
         {t("pay.ivePaid")}
       </button>

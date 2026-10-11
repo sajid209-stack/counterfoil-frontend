@@ -14,6 +14,10 @@ import { formatMoney } from "@/lib/format";
  * what is still owed, how many, how much was sold, what was paid), and are over
  * everything the filters match, not the twenty rows on screen.
  *
+ * The figure is the band's role (`type-figure` semibold, 24px from xl, where the
+ * five cells have room; 18px below, where five money figures in one row would
+ * otherwise be clipped).
+ *
  * Calm, in the Shopify admin way: a small sentence-case label over a figure,
  * no rules between them — the gap does that work — and the one figure that
  * needs somebody to act, what is still owed, is the only one in colour. On a
@@ -40,12 +44,12 @@ export function SalesFigures({ summary: s, loading }: { summary: SalesSummary; l
     >
       {items.map((i) => (
         <div key={i.key} title={i.hint} className="w-[36%] min-w-[7.5rem] shrink-0 snap-start md:w-auto md:min-w-0 md:flex-1 md:shrink">
-          <dt className="whitespace-nowrap text-[0.8125rem] text-muted">{i.label}</dt>
+          <dt className="whitespace-nowrap text-sm text-muted">{i.label}</dt>
           <dd
             data-figure={i.key}
             data-amount={i.raw}
             className={cn(
-              "mt-inline whitespace-nowrap text-lg font-semibold leading-tight tabular-nums",
+              "type-figure mt-inline whitespace-nowrap text-lg font-semibold leading-tight xl:text-2xl",
               i.tone === "warning" && "text-warning",
               loading && "opacity-50",
             )}

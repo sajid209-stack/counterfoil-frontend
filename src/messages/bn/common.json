@@ -31,5 +31,30 @@
   "nextPage": "পরের পেজ",
   "done": "সম্পন্ন",
   "clearFilters": "ফিল্টার মুছুন",
-  "filtersApplied": "ফিল্টার, {count}টি চালু"
+  "filtersApplied": "ফিল্টার, {count}টি চালু",
+  "ui": {
+    "close": "বন্ধ করুন",
+    "cancel": "বাতিল",
+    "confirm": "নিশ্চিত করুন",
+    "dismiss": "সরিয়ে দিন",
+    "undo": "পূর্বাবস্থায় ফেরান",
+    "pageOf": "পৃষ্ঠা {page} / {total}",
+    "range": "{total}-এর মধ্যে {from}–{to}",
+    "rowsPerPage": "প্রতি পৃষ্ঠায় সারি",
+    "pagination": "পৃষ্ঠা নির্বাচন",
+    "loading": "লোড হচ্ছে",
+    "durationParseError": "\"{raw}\" পড়া গেল না — \"90\", \"1:30\" বা \"1h30\" লিখে দেখুন।",
+    "timeParseError": "\"{raw}\" পড়া গেল না — \"9:30 AM\", \"6:30 PM\" বা \"6:30p\" লিখে দেখুন।",
+    "percentParseError": "\"{raw}\" পড়া গেল না — 12 এর মতো একটি সংখ্যা লিখুন।",
+    "numberParseError": "\"{raw}\" পড়া গেল না — একটি সংখ্যা লিখুন।",
+    "less": "কমান",
+    "more": "বাড়ান",
+    "later": "পরে",
+    "earlier": "আগে",
+    "chooseTime": "সময় বেছে নিন",
+    "times": "সময়",
+    "none": "নেই",
+    "amountOff": "= {amount} ছাড়",
+    "percentOff": "= {pct}% ছাড়"
+  }
 }

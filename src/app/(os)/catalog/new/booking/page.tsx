@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { PageShell } from "@/components/ui";
+import { PageShell, Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, listLocations, listProducts, listResources, listStaff } from "@/lib/api";
 import { BOOKING_KINDS, type BookingKind } from "@/lib/catalog";
@@ -31,7 +31,7 @@ function NewBooking() {
   return (
     <PageShell title={t("pageTitle")} description={t("pageDescription")}>
       {loading ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
+        <div aria-busy="true" className="flex flex-col gap-tight"><Skeleton h={16} w="33%" /><Skeleton h={16} w="66%" /><Skeleton h={16} w="50%" /></div>
       ) : (
         <ProductWizard
           locations={locs.data?.data ?? []}

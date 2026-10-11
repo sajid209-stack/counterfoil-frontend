@@ -43,12 +43,12 @@ export function SellDateBar({
   return (
     <>
       {away ? (
-        <div className="flex w-full items-center gap-tight rounded-go bg-ember-solid p-1 pl-comfortable text-white" data-sell-date="away">
+        <div className="flex w-full items-center gap-tight rounded-card bg-ember-solid p-1 pl-comfortable text-on-solid" data-sell-date="away">
           <button
             type="button"
             onClick={() => setOpen(true)}
             aria-haspopup="dialog"
-            className="flex min-h-11 min-w-0 flex-1 items-center gap-tight text-left text-[0.9375rem] font-semibold"
+            className="flex min-h-11 min-w-0 flex-1 items-center gap-tight text-left text-md font-semibold"
           >
             <CalendarCheck size={18} strokeWidth={2} className="shrink-0" aria-hidden />
             <span className="min-w-0 truncate">{t("sellDate.sellingFor", { day })}</span>
@@ -56,7 +56,7 @@ export function SellDateBar({
           <button
             type="button"
             onClick={() => choose(today)}
-            className="flex h-11 shrink-0 items-center rounded-full bg-card px-comfortable text-[0.9375rem] font-semibold text-fg active:scale-[0.98]"
+            className="flex h-11 shrink-0 items-center rounded-full bg-card px-comfortable text-md font-semibold text-fg active:scale-[0.98]"
           >
             {t("sellDate.backToToday")}
           </button>
@@ -68,7 +68,7 @@ export function SellDateBar({
           aria-haspopup="dialog"
           data-sell-date="today"
           aria-label={t("sellDate.todayAria", { day })}
-          className="go-surface flex h-11 shrink-0 items-center gap-tight rounded-full px-comfortable text-[0.9375rem] font-semibold text-fg active:bg-muted-wash"
+          className="card-surface flex h-11 shrink-0 items-center gap-tight rounded-full px-comfortable text-md font-semibold text-fg active:bg-muted-wash"
         >
           <CalendarDays size={18} strokeWidth={1.75} className="shrink-0 text-muted" aria-hidden />
           {/* One word on a phone, so the search beside it keeps the row; the
@@ -84,7 +84,7 @@ export function SellDateBar({
             the till's floor of 13, and its Today link is as wide as its word —
             41px in Bangla. Both are fixed here rather than in the shared file,
             which the other tills use. */}
-        <div className="mx-auto w-max max-w-full pb-comfortable [&>div>button:last-child]:min-w-11 [&_.type-label]:text-[0.8125rem]">
+        <div className="mx-auto w-max max-w-full pb-comfortable [&>div>button:last-child]:min-w-11 [&_.type-label]:text-sm">
           <DatePicker
             value={value}
             today={today}

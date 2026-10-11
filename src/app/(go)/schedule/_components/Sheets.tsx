@@ -10,9 +10,7 @@ import {
   Clock,
   CreditCard,
   Lock,
-  Minus,
   Percent,
-  Plus,
   QrCode,
   RotateCcw,
   Send,
@@ -21,7 +19,7 @@ import {
   UserCheck,
   X,
 } from "lucide-react";
-import { DateStrip, MarketBadge, Sheet } from "@/components/ui";
+import { DateStrip, MarketBadge, Notice, Sheet } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClock, formatClockOf, formatClockRange, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
@@ -32,22 +30,23 @@ import { discountMinorFrom, withinDiscountLimit, type DiscountMode } from "../_l
 import { resourceMoveTimes, sessionMoveTimes, type MoveTime } from "../_lib/moveOptions";
 import { type Block, type Column } from "../_lib/board";
 import { ClockCell } from "../../_components/Clock";
+import { Stepper } from "../../_components/Stepper";
 
 /* The two big buttons every sheet here ends on, always in the same places:
    Hold on the LEFT, Add to sale on the RIGHT. A cashier who cannot read the
    words learns "orange on the right sells it" once and never has to look
    again — and it is the same pair, in the same order, as the bar under the
    board. */
-const BASE = "inline-flex min-w-0 items-center justify-center gap-tight rounded-full px-comfortable text-[1rem] font-semibold transition-transform duration-quick active:scale-[0.98] disabled:opacity-50";
+const BASE = "inline-flex min-w-0 items-center justify-center gap-tight rounded-full px-comfortable text-md font-semibold transition-transform duration-quick active:scale-[0.98] disabled:opacity-50";
 /** The two buttons, at a height. Built here rather than overridden at the
  *  call site: `cn` does not merge conflicting utilities, so "h-14 h-13" is
  *  decided by stylesheet order, not by intent. */
-export const primary = (h = "h-14", grow = "flex-1") => `${BASE} ${h} ${grow} bg-ember-solid text-white`;
-export const secondary = (h = "h-14", grow = "flex-1") => `${BASE} ${h} ${grow} border-2 border-line bg-card text-fg`;
+export const primary = (h = "h-13", grow = "flex-1") => `${BASE} ${h} ${grow} bg-ember-solid text-on-solid`;
+export const secondary = (h = "h-13", grow = "flex-1") => `${BASE} ${h} ${grow} border-2 border-line bg-card text-fg`;
 const PRIMARY = primary();
 const SECONDARY = secondary();
 /** Add to sale gets the larger share of the row: it is the common answer. */
-const PRIMARY_WIDE = primary("h-14", "flex-[1.4]");
+const PRIMARY_WIDE = primary("h-13", "flex-[1.4]");
 
 export type HoldLength = 15 | 30 | 60 | "day";
 const LENGTHS: HoldLength[] = [15, 30, 60, "day"];
@@ -83,7 +82,7 @@ function HoldForm({
       {/* The field draws its own ember border when focused; the app-wide ring
           on top of it read as two rings. The opt-out is on the host. */}
       <div data-focus-host className="flex flex-col gap-inline">
-        <label htmlFor="hold-name" className="text-[0.875rem] font-semibold text-fg">{t("sheet.holdName")}</label>
+        <label htmlFor="hold-name" className="text-base font-semibold text-fg">{t("sheet.holdName")}</label>
         <input
           id="hold-name"
           autoFocus
@@ -93,12 +92,12 @@ function HoldForm({
           placeholder={t("sheet.holdNamePh")}
           aria-invalid={missing || undefined}
           aria-describedby={missing ? "hold-name-err" : undefined}
-          className={cn("h-14 rounded-go-sm border-2 bg-card px-comfortable text-[1rem] outline-none focus:border-ember", missing ? "border-danger" : "border-line")}
+          className={cn("h-14 rounded-inner border-2 bg-card px-comfortable text-md focus:border-ember", missing ? "border-danger" : "border-line")}
         />
-        {missing && <p id="hold-name-err" className="text-[0.875rem] text-danger">{t("sheet.holdNameMissing")}</p>}
+        {missing && <p id="hold-name-err" className="text-base text-danger">{t("sheet.holdNameMissing")}</p>}
       </div>
       <div role="radiogroup" aria-label={t("sheet.holdLength")} className="flex flex-col gap-tight">
-        <p className="text-[0.875rem] font-semibold text-fg">{t("sheet.holdLength")}</p>
+        <p className="text-base font-semibold text-fg">{t("sheet.holdLength")}</p>
         <div className="grid grid-cols-2 gap-tight sm:grid-cols-4">
           {LENGTHS.map((l) => (
             <button
@@ -111,8 +110,8 @@ function HoldForm({
                  choice in the till reads — solid orange belongs to the one
                  button that does the thing. */
               className={cn(
-                "inline-flex h-12 items-center justify-center gap-1 rounded-full border-2 px-tight text-[0.9375rem] font-semibold",
-                length === l ? "border-ember-solid bg-ember-solid text-white" : "border-line bg-card text-fg",
+                "inline-flex h-12 items-center justify-center gap-1 rounded-full border-2 px-tight text-md font-semibold",
+                length === l ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg",
               )}
             >
               {length === l && <Check size={16} strokeWidth={3} className="shrink-0" aria-hidden />}
@@ -120,7 +119,7 @@ function HoldForm({
             </button>
           ))}
         </div>
-        <p className="text-[0.875rem] text-muted">{t("sheet.holdHelp")}</p>
+        <p className="text-base text-muted">{t("sheet.holdHelp")}</p>
       </div>
     </>
   );
@@ -178,7 +177,7 @@ export function HoldSheet({
       <div className="flex flex-col gap-section p-card">
         {/* What is being held, under its title — the title says what the
             sheet does, this says to what. */}
-        <p className="-mt-tight text-[0.875rem] text-muted">{when}</p>
+        <p className="-mt-tight text-base text-muted">{when}</p>
         <HoldForm name={f.name} setName={f.setName} missing={f.missing} setMissing={f.setMissing} length={f.length} setLength={f.setLength} onEnter={f.submit} />
       </div>
     </Sheet>
@@ -245,9 +244,9 @@ export function SessionSheet({
     if (over || guideMissing) return;
     onAdd(qty);
   };
-  const bump = (id: string, d: number) => {
+  const setTo = (id: string, v: number) => {
     setNothing(false);
-    setQty((q) => ({ ...q, [id]: Math.max(0, (q[id] ?? 0) + d) }));
+    setQty((q) => ({ ...q, [id]: Math.max(0, v) }));
   };
 
   return (
@@ -282,41 +281,38 @@ export function SessionSheet({
       }
     >
       <div className="flex flex-col gap-section p-card">
-        <p className="-mt-tight text-[0.875rem] text-muted">{when}</p>
+        <p className="-mt-tight text-base text-muted">{when}</p>
         {mode === "tickets" ? (
           <>
-            <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-go-sm border border-line">
+            <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-inner border border-line">
               {tiers.map((x) => {
                 const n = qty[x.id] ?? 0;
                 return (
                   <li key={x.id} className="flex min-h-16 items-center gap-comfortable bg-card px-comfortable py-tight">
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[1rem] font-semibold text-fg">{x.name}</span>
-                      <span className="block text-[0.875rem] tabular-nums text-muted">
+                      <span className="block text-md font-semibold text-fg">{x.name}</span>
+                      <span className="block text-base tabular-nums text-muted">
                         {formatPriceShort(x.price)}
                         {(x.admits ?? 1) > 1 && ` · ${t("sheet.admitsCount", { count: x.admits ?? 1 })}`}
                       </span>
                     </span>
-                    <span className="flex shrink-0 items-center gap-tight">
-                      <button type="button" aria-label={t("sheet.lessOf", { name: x.name })} disabled={n === 0} onClick={() => bump(x.id, -1)} className="inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-line bg-card disabled:opacity-40">
-                        <Minus size={18} strokeWidth={2.25} aria-hidden />
-                      </button>
-                      <span className="w-7 text-center text-[1.25rem] font-semibold tabular-nums">{n}</span>
-                      <button type="button" aria-label={t("sheet.moreOf", { name: x.name })} onClick={() => bump(x.id, 1)} className="inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-line bg-card">
-                        <Plus size={18} strokeWidth={2.25} aria-hidden />
-                      </button>
-                    </span>
+                    <Stepper
+                      value={n}
+                      onChange={(v) => setTo(x.id, v)}
+                      lessLabel={t("sheet.lessOf", { name: x.name })}
+                      moreLabel={t("sheet.moreOf", { name: x.name })}
+                    />
                   </li>
                 );
               })}
             </ul>
             <div className="flex items-baseline justify-between gap-comfortable">
-              <span className="text-[0.875rem] text-muted">{t("sheet.seatsLeftNow", { count: block.remaining })}</span>
-              <span className="text-[1.25rem] font-semibold tabular-nums text-fg">{formatMoney(total)}</span>
+              <span className="text-base text-muted">{t("sheet.seatsLeftNow", { count: block.remaining })}</span>
+              <span className="text-xl font-semibold tabular-nums text-fg">{formatMoney(total)}</span>
             </div>
-            {nothing && <p role="alert" className="text-[0.875rem] text-danger">{t("sheet.pickTickets")}</p>}
-            {over && <p role="alert" className="text-[0.875rem] text-danger">{t("sheet.tooMany", { count: block.remaining })}</p>}
-            {guideMissing && <p role="alert" className="text-[0.875rem] text-danger">{t("sheet.noGuide")}</p>}
+            {nothing && <Notice tone="danger" size="sm">{t("sheet.pickTickets")}</Notice>}
+            {over && <Notice tone="danger" size="sm">{t("sheet.tooMany", { count: block.remaining })}</Notice>}
+            {guideMissing && <Notice tone="danger" size="sm">{t("sheet.noGuide")}</Notice>}
           </>
         ) : (
           <HoldForm name={f.name} setName={f.setName} missing={f.missing} setMissing={f.setMissing} length={f.length} setLength={f.setLength} onEnter={f.submit} />
@@ -391,7 +387,7 @@ export function BlockSheet({
         onClose={onClose}
         title={h.heldFor}
         closeLabel={tc("close")}
-        lead={<p className="flex items-center gap-1 text-[0.875rem] font-medium text-muted"><Lock size={14} aria-hidden />{t("board.onHold")}</p>}
+        lead={<p className="flex items-center gap-1 text-base font-medium text-muted"><Lock size={14} aria-hidden />{t("board.onHold")}</p>}
         footer={
           <div className="flex w-full gap-tight">
             <button type="button" className={SECONDARY} onClick={onRelease} disabled={busy}>
@@ -405,7 +401,7 @@ export function BlockSheet({
           </div>
         }
       >
-        <dl className="flex flex-col gap-tight p-card text-[1rem]">
+        <dl className="flex flex-col gap-tight p-card text-md">
           <Fact label={t("sheet.where")} value={when} />
           <Fact label={t("sheet.what")} value={h.productName} />
           <Fact
@@ -429,11 +425,11 @@ export function BlockSheet({
       closeLabel={tc("close")}
       lead={
         <>
-          <p className="text-[0.875rem] font-medium text-muted">{block.product?.name ?? ""}</p>
+          <p className="text-base font-medium text-muted">{block.product?.name ?? ""}</p>
           {/* Sold through a marketplace: say which, with the reference a
               guest will quote and a voucher can be checked against. */}
           {block.source && (
-            <p className="mt-1 flex items-center gap-1.5 text-[0.875rem] font-semibold text-fg">
+            <p className="mt-1 flex items-center gap-1.5 text-base font-semibold text-fg">
               <MarketBadge id={block.source.marketplaceId} size="go" />
               <span className="min-w-0 break-words">
                 {block.source.reference
@@ -463,19 +459,19 @@ export function BlockSheet({
         return (
           <div className="flex w-full gap-tight">
             {secondaries.map((s) => (
-              <button key={s.key} type="button" className={secondary("h-14", "flex-1")} onClick={s.onClick} disabled={busy}>
+              <button key={s.key} type="button" className={secondary("h-13", "flex-1")} onClick={s.onClick} disabled={busy}>
                 {s.icon}
                 <span className="truncate">{s.label}</span>
               </button>
             ))}
             {take && (
-              <button type="button" className={secondaries.length ? primary("h-14", "flex-[1.3]") : PRIMARY} onClick={onTake} disabled={busy}>
+              <button type="button" className={secondaries.length ? primary("h-13", "flex-[1.3]") : PRIMARY} onClick={onTake} disabled={busy}>
                 <Banknote size={20} strokeWidth={2} aria-hidden />
                 <span className="truncate">{t("sheet.takeAmount", { amount: formatMoney(owed ?? 0) })}</span>
               </button>
             )}
             {!take && canCheckIn && (
-              <button type="button" className={secondaries.length ? primary("h-14", "flex-[1.3]") : PRIMARY} onClick={onCheckIn} disabled={busy}>
+              <button type="button" className={secondaries.length ? primary("h-13", "flex-[1.3]") : PRIMARY} onClick={onCheckIn} disabled={busy}>
                 <UserCheck size={20} strokeWidth={2} aria-hidden />
                 <span className="truncate">{t("sheet.checkIn", { count: b.partySize })}</span>
               </button>
@@ -485,25 +481,22 @@ export function BlockSheet({
       })()}
     >
       {refund?.pending && (
-        <div className="mx-card mt-card flex items-start gap-tight rounded-go-sm border border-warning/40 bg-warning-wash p-comfortable">
-          <Clock size={18} strokeWidth={2} className="mt-0.5 shrink-0 text-warning" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <p className="text-[0.9375rem] font-semibold text-fg">{t("refund.pending", { amount: formatMoney(refund.pending.amount) })}</p>
-            <p className="text-[0.8125rem] text-fg/80">{t(`refund.reasons.${refund.pending.reason}`)}{refund.pending.note ? ` · ${refund.pending.note}` : ""}</p>
-            {onWithdrawRefund && (
-              <button type="button" onClick={onWithdrawRefund} disabled={busy} className="mt-tight min-h-11 text-[0.875rem] font-semibold text-fg underline underline-offset-4">
-                {t("refund.withdraw")}
-              </button>
-            )}
-          </div>
-        </div>
+        <Notice
+          tone="warning"
+          icon={<Clock size={18} strokeWidth={1.75} />}
+          title={t("refund.pending", { amount: formatMoney(refund.pending.amount) })}
+          action={onWithdrawRefund ? { label: t("refund.withdraw"), onClick: () => { if (!busy) onWithdrawRefund(); }, busy } : undefined}
+          className="mx-card mt-card"
+        >
+          {t(`refund.reasons.${refund.pending.reason}`)}{refund.pending.note ? ` · ${refund.pending.note}` : ""}
+        </Notice>
       )}
       {!refund?.pending && refund?.last?.status === "declined" && refund.last.decisionNote && (
-        <p className="mx-card mt-card rounded-go-sm border border-line bg-surface p-comfortable text-[0.875rem] text-fg">
+        <Notice tone="neutral" className="mx-card mt-card">
           {t("refund.declined", { note: refund.last.decisionNote })}
-        </p>
+        </Notice>
       )}
-      <dl className="flex flex-col gap-tight p-card text-[1rem]">
+      <dl className="flex flex-col gap-tight p-card text-md">
         <Fact label={t("sheet.where")} value={when} />
         <Fact label={t("sheet.people")} value={t("sheet.peopleCount", { count: b.partySize })} />
         <Fact
@@ -512,7 +505,7 @@ export function BlockSheet({
         />
       </dl>
       {refund && !refund.refundable && !refund.pending && (
-        <p className="px-card pb-card text-[0.8125rem] text-muted">{t("refund.nothingToRefund")}</p>
+        <p className="px-card pb-card text-sm text-muted">{t("refund.nothingToRefund")}</p>
       )}
     </Sheet>
   );
@@ -567,7 +560,7 @@ export function RefundSheet({
       onClose={onClose}
       title={t("refund.title")}
       closeLabel={tc("close")}
-      lead={<p className="text-[0.875rem] font-medium text-muted">{title} · {when}</p>}
+      lead={<p className="text-base font-medium text-muted">{title} · {when}</p>}
       footer={
         <div className="flex w-full gap-tight">
           <button type="button" className={SECONDARY} onClick={onClose} disabled={busy}>
@@ -582,14 +575,14 @@ export function RefundSheet({
       }
     >
       <div className="flex flex-col gap-section p-card">
-        <div className="rounded-go-sm border border-line bg-surface p-comfortable">
-          <p className="text-[0.875rem] text-muted">{t("refund.amountLabel")}</p>
-          <p className="text-[1.75rem] font-bold tabular-nums leading-tight text-fg">{formatMoney(amount)}</p>
-          <p className="text-[0.8125rem] text-muted">{t("refund.amountNote")}</p>
+        <div className="rounded-inner border border-line bg-surface p-comfortable">
+          <p className="text-base text-muted">{t("refund.amountLabel")}</p>
+          <p className="text-3xl font-bold tabular-nums leading-tight text-fg">{formatMoney(amount)}</p>
+          <p className="text-sm text-muted">{t("refund.amountNote")}</p>
         </div>
         <fieldset>
-          <legend className="mb-tight text-[0.9375rem] font-semibold text-fg">{t("refund.reasonLabel")}</legend>
-          <div role="radiogroup" aria-label={t("refund.reasonLabel")} className="grid grid-cols-2 overflow-hidden rounded-go-sm border border-line">
+          <legend className="mb-tight text-md font-semibold text-fg">{t("refund.reasonLabel")}</legend>
+          <div role="radiogroup" aria-label={t("refund.reasonLabel")} className="grid grid-cols-2 overflow-hidden rounded-inner border border-line">
             {REFUND_REASONS.map((r, i) => {
               const on = reason === r;
               return (
@@ -600,11 +593,11 @@ export function RefundSheet({
                   aria-checked={on}
                   onClick={() => { setReason(r); setErr(null); }}
                   className={cn(
-                    "relative flex min-h-14 items-center justify-center px-tight text-center text-[0.9375rem] font-semibold",
+                    "relative flex min-h-14 items-center justify-center px-tight text-center text-md font-semibold",
                     i % 2 === 1 && "border-l border-line",
                     i >= 2 && "border-t border-line",
                     i === REFUND_REASONS.length - 1 && REFUND_REASONS.length % 2 === 1 && "col-span-2",
-                    on ? "bg-ember-solid text-white" : "bg-card text-fg",
+                    on ? "bg-ember-solid text-on-solid" : "bg-card text-fg",
                   )}
                 >
                   {on && <Check size={16} strokeWidth={3} className="absolute right-2 top-2" aria-hidden />}
@@ -615,7 +608,7 @@ export function RefundSheet({
           </div>
         </fieldset>
         <label data-focus-host className="flex flex-col gap-tight">
-          <span className="text-[0.9375rem] font-semibold text-fg">{reason === "other" ? t("refund.noteLabelRequired") : t("refund.noteLabel")}</span>
+          <span className="text-md font-semibold text-fg">{reason === "other" ? t("refund.noteLabelRequired") : t("refund.noteLabel")}</span>
           <textarea
             id="refund-note"
             value={note}
@@ -624,11 +617,11 @@ export function RefundSheet({
             placeholder={t("refund.notePlaceholder")}
             aria-invalid={!!err}
             aria-describedby={err ? "refund-note-err" : undefined}
-            className="min-h-[5.5rem] rounded-go-sm border border-line bg-card px-comfortable py-tight text-[1rem] text-fg outline-none focus:border-ember focus:ring-2 focus:ring-ember/25"
+            className="min-h-[5.5rem] rounded-inner border border-line bg-card px-comfortable py-tight text-md text-fg focus:border-ember focus:ring-2 focus:ring-ember/25"
           />
-          {err && <span id="refund-note-err" className="text-[0.875rem] font-medium text-danger">{err}</span>}
+          {err && <span id="refund-note-err" className="text-base font-medium text-danger">{err}</span>}
         </label>
-        <p className="text-[0.8125rem] text-muted">{direct ? t("refund.leadDirect") : t("refund.lead")}</p>
+        <p className="text-sm text-muted">{direct ? t("refund.leadDirect") : t("refund.lead")}</p>
       </div>
     </Sheet>
   );
@@ -714,7 +707,7 @@ export function MoveSheet({
       onClose={onClose}
       title={t("sheet.moveTitle")}
       closeLabel={tc("close")}
-      lead={<p className="text-[0.875rem] font-medium text-muted">{title} · {placeName} · {formatClockRange(time, toTime(toMinutes(time) + durationMinutes))}</p>}
+      lead={<p className="text-base font-medium text-muted">{title} · {placeName} · {formatClockRange(time, toTime(toMinutes(time) + durationMinutes))}</p>}
       footer={
         <div className="flex w-full gap-tight">
           <button type="button" className={SECONDARY} onClick={onClose} disabled={busy}>
@@ -741,22 +734,22 @@ export function MoveSheet({
         />
 
         {times.length === 0 ? (
-          <p className="text-[0.875rem] text-muted">{t("sheet.moveClosed")}</p>
+          <p className="text-base text-muted">{t("sheet.moveClosed")}</p>
         ) : (
-          <div className="go-surface overflow-hidden rounded-go">
+          <div className="card-surface overflow-hidden">
             <div className="-mb-px -mr-px grid grid-cols-4">
               {times.map((cell) => {
                 if (cell.isNow) {
                   return (
                     <div key={cell.time} className="flex min-h-14 flex-col items-center justify-center gap-0.5 border-b border-r border-line bg-surface px-1 py-1 text-muted">
-                      <ClockCell hhmm={cell.time} className="text-[0.9375rem] font-semibold tabular-nums" />
-                      <span className="text-[0.8125rem] font-medium">{t("sheet.moveNow")}</span>
+                      <ClockCell hhmm={cell.time} className="text-md font-semibold tabular-nums" />
+                      <span className="text-sm font-medium">{t("sheet.moveNow")}</span>
                     </div>
                   );
                 }
                 if (!cell.free) {
                   return (
-                    <span key={cell.time} className="flex min-h-14 items-center justify-center border-b border-r border-line bg-surface px-1 py-1 text-[0.875rem] text-muted line-through">
+                    <span key={cell.time} className="flex min-h-14 items-center justify-center border-b border-r border-line bg-surface px-1 py-1 text-base text-muted line-through">
                       <ClockCell hhmm={cell.time} className="line-through" />
                     </span>
                   );
@@ -770,8 +763,8 @@ export function MoveSheet({
                     data-focus-inset
                     onClick={() => setSelTime(cell.time)}
                     className={cn(
-                      "relative flex min-h-14 items-center justify-center border-b border-r border-line px-1 py-1 text-[0.9375rem] font-semibold transition-colors duration-quick",
-                      chosen ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10",
+                      "relative flex min-h-14 items-center justify-center border-b border-r border-line px-1 py-1 text-md font-semibold transition-colors duration-quick",
+                      chosen ? "bg-ember-solid text-on-solid" : "bg-card text-fg active:bg-muted-wash",
                     )}
                   >
                     {chosen && <Check size={12} strokeWidth={3} className="absolute right-1 top-1" aria-hidden />}
@@ -783,7 +776,7 @@ export function MoveSheet({
           </div>
         )}
 
-        <p className="text-[0.8125rem] text-muted">{t("sheet.movePriceNote")}</p>
+        <p className="text-sm text-muted">{t("sheet.movePriceNote")}</p>
       </div>
     </Sheet>
   );
@@ -865,7 +858,7 @@ export function DiscountFields({
       <button
         type="button"
         onClick={() => setState({ ...state, open: true })}
-        className="flex min-h-11 w-full items-center justify-center gap-tight rounded-go border-2 border-dashed border-line text-[0.9375rem] font-semibold text-fg active:bg-ember/10"
+        className="flex min-h-11 w-full items-center justify-center gap-tight rounded-card border-2 border-dashed border-line text-md font-semibold text-fg active:bg-muted-wash"
       >
         <Percent size={18} strokeWidth={2} aria-hidden />
         {t("discount.give")}
@@ -876,16 +869,16 @@ export function DiscountFields({
   const take = Math.max(0, owed - calc.minor);
 
   return (
-    <div className="flex flex-col gap-tight rounded-go border border-line bg-surface p-comfortable">
+    <div className="flex flex-col gap-tight rounded-card border border-line bg-surface p-comfortable">
       <div className="flex items-center justify-between gap-tight">
-        <span className="text-[0.9375rem] font-semibold text-fg">{t("discount.give")}</span>
-        <button type="button" aria-label={t("discount.remove")} onClick={() => setState(emptyDiscount())} className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-muted-wash">
+        <span className="text-md font-semibold text-fg">{t("discount.give")}</span>
+        <button type="button" aria-label={t("discount.remove")} onClick={() => setState(emptyDiscount())} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-muted hover:bg-muted-wash">
           <X size={16} strokeWidth={2} aria-hidden />
         </button>
       </div>
 
       <div className="flex items-stretch gap-tight">
-        <div role="radiogroup" aria-label={t("discount.amountLabel")} className="flex shrink-0 overflow-hidden rounded-go-sm border border-line">
+        <div role="radiogroup" aria-label={t("discount.amountLabel")} className="flex shrink-0 overflow-hidden rounded-inner border border-line">
           {(["amount", "percent"] as DiscountMode[]).map((m) => (
             <button
               key={m}
@@ -893,7 +886,7 @@ export function DiscountFields({
               role="radio"
               aria-checked={state.mode === m}
               onClick={() => setState({ ...state, mode: m })}
-              className={cn("flex h-11 w-11 items-center justify-center text-[1rem] font-semibold", state.mode === m ? "bg-ember-solid text-white" : "bg-card text-fg")}
+              className={cn("flex h-11 w-11 items-center justify-center text-md font-semibold", state.mode === m ? "bg-ember-solid text-on-solid" : "bg-card text-fg")}
             >
               {m === "amount" ? "৳" : "%"}
             </button>
@@ -905,7 +898,7 @@ export function DiscountFields({
           value={state.raw}
           onChange={(e) => setState({ ...state, raw: e.target.value })}
           placeholder="0"
-          className="h-11 min-w-0 flex-1 rounded-go-sm border border-line bg-card px-comfortable text-[1rem] outline-none focus:border-ember"
+          className="h-11 min-w-0 flex-1 rounded-inner border border-line bg-card px-comfortable text-md"
         />
       </div>
 
@@ -920,8 +913,8 @@ export function DiscountFields({
               aria-checked={on}
               onClick={() => setState({ ...state, reasonKey: r })}
               className={cn(
-                "flex min-h-11 items-center justify-center rounded-go-sm border-2 px-tight text-center text-[0.875rem] font-semibold",
-                on ? "border-ember-solid bg-ember-solid text-white" : "border-line bg-card text-fg",
+                "flex min-h-11 items-center justify-center rounded-inner border-2 px-tight text-center text-base font-semibold",
+                on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg",
               )}
             >
               {on && <Check size={14} strokeWidth={3} className="mr-1 shrink-0" aria-hidden />}
@@ -937,16 +930,16 @@ export function DiscountFields({
           value={state.note}
           onChange={(e) => setState({ ...state, note: e.target.value })}
           placeholder={t("discount.notePlaceholder")}
-          className="h-11 rounded-go-sm border border-line bg-card px-comfortable text-[0.9375rem] outline-none focus:border-ember"
+          className="h-11 rounded-inner border border-line bg-card px-comfortable text-md"
         />
       )}
 
-      {calc.overOwed && <p role="alert" className="text-[0.8125rem] font-medium text-danger">{t("discount.overOwed")}</p>}
-      {calc.overLimit && <p role="alert" className="text-[0.8125rem] font-medium text-danger">{t("discount.overLimit", { pct: limitPct ?? 0 })}</p>}
-      {calc.needsNote && <p role="alert" className="text-[0.8125rem] font-medium text-danger">{t("discount.noteRequired")}</p>}
+      {calc.overOwed && <Notice tone="danger" size="sm">{t("discount.overOwed")}</Notice>}
+      {calc.overLimit && <Notice tone="danger" size="sm">{t("discount.overLimit", { pct: limitPct ?? 0 })}</Notice>}
+      {calc.needsNote && <Notice tone="danger" size="sm">{t("discount.noteRequired")}</Notice>}
 
       {calc.valid && calc.hasAmount && (
-        <p className="text-[0.9375rem] font-semibold tabular-nums text-fg">
+        <p className="text-md font-semibold tabular-nums text-fg">
           {t("discount.mathsLine", { owed: formatMoney(owed), discount: formatMoney(calc.minor), take: formatMoney(take) })}
         </p>
       )}
@@ -1018,7 +1011,7 @@ export function TakeBalanceSheet({
       onClose={onClose}
       title={t("sheet.takeTitle")}
       closeLabel={tc("close")}
-      lead={<p className="text-[0.875rem] font-medium text-muted">{title} · {when}</p>}
+      lead={<p className="text-base font-medium text-muted">{title} · {when}</p>}
       footer={
         <div className="flex w-full gap-tight">
           <button type="button" className={SECONDARY} onClick={onClose} disabled={busy}>
@@ -1034,15 +1027,15 @@ export function TakeBalanceSheet({
     >
       <div className="flex flex-col gap-section p-card">
         <div className="flex items-baseline justify-between gap-comfortable">
-          <span className="text-[0.875rem] text-muted">{t("sheet.owed")}</span>
-          <span className="text-[1.25rem] font-bold tabular-nums text-fg">{formatMoney(owed)}</span>
+          <span className="text-base text-muted">{t("sheet.owed")}</span>
+          <span className="text-xl font-bold tabular-nums text-fg">{formatMoney(owed)}</span>
         </div>
 
         <DiscountFields state={discount} setState={setDiscount} orderTotal={orderTotal} owed={owed} limitPct={limitPct} />
 
         {take > 0 && (
           <div className="flex flex-col gap-tight">
-            <span className="text-[0.875rem] font-semibold text-fg">{t("sheet.payBy")}</span>
+            <span className="text-base font-semibold text-fg">{t("sheet.payBy")}</span>
             <div className="grid grid-cols-2 gap-tight">
               {methods.map((m) => {
                 const Icon = METHOD_ICON[m] ?? Banknote;
@@ -1054,8 +1047,8 @@ export function TakeBalanceSheet({
                     aria-pressed={on}
                     onClick={() => setMethod(m)}
                     className={cn(
-                      "flex min-h-14 items-center justify-center gap-tight rounded-go border-2 px-comfortable text-[0.9375rem] font-semibold",
-                      on ? "border-ember-solid bg-ember-solid text-white" : "border-line bg-card text-fg",
+                      "flex min-h-14 items-center justify-center gap-tight rounded-card border-2 px-comfortable text-md font-semibold",
+                      on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg",
                     )}
                   >
                     <Icon size={18} strokeWidth={2} aria-hidden />
@@ -1074,7 +1067,7 @@ export function TakeBalanceSheet({
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-comfortable border-b border-line py-tight last:border-b-0">
-      <dt className="text-[0.875rem] text-muted">{label}</dt>
+      <dt className="text-base text-muted">{label}</dt>
       <dd className="text-right font-semibold text-fg">{value}</dd>
     </div>
   );

@@ -40,7 +40,7 @@ export default function DeckPage() {
           <div className="flex min-w-0 items-center gap-4">
             <Image src={logoOnPaper} alt="Counterfoil" className="h-6 w-auto sm:h-7" priority sizes="160px" />
             <span aria-hidden className="hidden h-5 w-px bg-[#cfc9bd] sm:block" />
-            <h1 className="sr-only truncate text-sm font-semibold tracking-tight text-[#22211f] sm:not-sr-only">Counterfoil Deck</h1>
+            <h1 className="sr-only truncate text-base font-semibold tracking-tight text-[#22211f] sm:not-sr-only">Counterfoil Deck</h1>
           </div>
           <div className="flex shrink-0 items-center gap-1 sm:gap-3">
             <Link

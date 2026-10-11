@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import { useTranslations } from "next-intl";
+import { Radio } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/api";
 import { useRoleSummary } from "../../_lib/roles";
@@ -35,29 +36,32 @@ export function RolePicker({
       {roles.map((r) => {
         const checked = r.id === value;
         return (
-          <label
+          // The tile is the target; the kit Radio inside is the control.
+          <div
             key={r.id}
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest("label,input")) return;
+              onChange(r.id);
+            }}
             className={cn(
-              "flex cursor-pointer items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick",
+              "cursor-pointer rounded-control px-tight transition-colors duration-quick",
               checked ? "bg-card ring-2 ring-inset ring-ember-solid" : "bg-muted-wash/70 hover:bg-muted-wash",
             )}
           >
-            <input
-              type="radio"
+            <Radio
               name={name}
               value={r.id}
               checked={checked}
               onChange={() => onChange(r.id)}
-              className="mt-[3px] h-4 w-4 shrink-0 accent-ember"
+              label={
+                <span className="flex flex-wrap items-baseline justify-between gap-x-section gap-y-inline">
+                  <span className="font-medium">{r.name}</span>
+                  <span className="text-sm text-muted">{t("roles.peopleCount", { count: staffCounts[r.id] ?? 0 })}</span>
+                </span>
+              }
+              description={summary(r)}
             />
-            <span className="min-w-0 flex-1">
-              <span className="flex flex-wrap items-baseline justify-between gap-x-section gap-y-inline">
-                <span className="text-sm font-medium text-fg">{r.name}</span>
-                <span className="text-[13px] text-muted">{t("roles.peopleCount", { count: staffCounts[r.id] ?? 0 })}</span>
-              </span>
-              <span className="mt-inline block text-[13px] leading-relaxed text-muted">{summary(r)}</span>
-            </span>
-          </label>
+          </div>
         );
       })}
     </div>

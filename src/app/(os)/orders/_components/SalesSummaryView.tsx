@@ -29,7 +29,7 @@ const isVoidedStatus = (status: string) => status === "cancelled" || status === 
 export function SalesSummaryView({ summary: s, L, variant = "sheet", compact = false }: { summary: SalesSummary; L: SalesLabels; variant?: "sheet" | "print"; /** Headline, totals and payment methods only — the top of a printed list. */ compact?: boolean }) {
   const t = useTranslations("orders.summary");
   const print = variant === "print";
-  const h = "mb-tight text-base font-semibold text-fg";
+  const h = "mb-tight text-md font-semibold text-fg";
 
   const ledger: { key: string; label: string; amount: number; strong?: boolean; tone?: "danger" | "warning"; rule?: boolean; hide?: boolean }[] = [
     { key: "gross", label: t("gross"), amount: s.gross },
@@ -61,19 +61,19 @@ export function SalesSummaryView({ summary: s, L, variant = "sheet", compact = f
     );
 
   return (
-    <div className={cn("flex flex-col", print ? "gap-major text-[13px]" : "gap-major text-sm")}>
+    <div className={cn("flex flex-col", print ? "gap-major text-sm" : "gap-major text-base")}>
       {/* The headline: what the sales came to, and how many it took. */}
       <div className="grid grid-cols-3 gap-section">
         <div className="col-span-3 sm:col-span-1">
-          <p className="text-[13px] font-medium text-muted">{t("sales")}</p>
-          <p data-figure="sales" data-amount={s.sales} className={cn("mt-inline font-semibold tabular-nums", print ? "text-2xl" : "text-[1.625rem] leading-tight")}>{formatMoney(s.sales)}</p>
+          <p className="text-sm font-medium text-muted">{t("sales")}</p>
+          <p data-figure="sales" data-amount={s.sales} className={cn("type-figure mt-inline font-semibold", print ? "text-2xl" : "text-2xl leading-tight")}>{formatMoney(s.sales)}</p>
         </div>
         <div>
-          <p className="text-[13px] font-medium text-muted">{t("orders")}</p>
+          <p className="text-sm font-medium text-muted">{t("orders")}</p>
           <p data-figure="orders" data-amount={s.orders} className="mt-inline text-lg font-semibold tabular-nums">{s.orders}</p>
         </div>
         <div>
-          <p className="text-[13px] font-medium text-muted">{t("items")}</p>
+          <p className="text-sm font-medium text-muted">{t("items")}</p>
           <p data-figure="items" data-amount={s.items} className="mt-inline text-lg font-semibold tabular-nums">{s.items}</p>
         </div>
       </div>
@@ -89,7 +89,7 @@ export function SalesSummaryView({ summary: s, L, variant = "sheet", compact = f
         <dl className="mt-tight">
           {money.map((r, i) => row({ ...r, rule: i === 0 }))}
         </dl>
-        {s.orders > s.counted && <p className="mt-tight text-[12px] text-muted">{t("voidedNote", { count: s.orders - s.counted })}</p>}
+        {s.orders > s.counted && <p className="mt-tight text-xs text-muted">{t("voidedNote", { count: s.orders - s.counted })}</p>}
       </section>
 
       {/* Money in, by how it was paid. Still owed and written off make up the
@@ -195,7 +195,7 @@ function Breakdown({
   const t = useTranslations("orders.summary");
   return (
     <section aria-label={title} data-section={id}>
-      <h3 className="mb-tight text-base font-semibold text-fg">{title}</h3>
+      <h3 className="mb-tight text-md font-semibold text-fg">{title}</h3>
       <table className="w-full border-collapse">
         <thead>
           <tr><th scope="col" className="sr-only">{title}</th><th scope="col" className="sr-only">{t("colOrders")}</th><th scope="col" className="sr-only">{t("colAmount")}</th></tr>

@@ -80,12 +80,7 @@
     "delete": "মুছুন"
   },
   "page": {
-    "showing": "{total}টির মধ্যে {from}–{to} দেখানো হচ্ছে",
-    "previous": "আগের",
-    "next": "পরের",
-    "of": "পাতা {page}, মোট {total}",
-    "show": "দেখান",
-    "label": "পেজ"
+    "showing": "{total}টির মধ্যে {from}–{to} দেখানো হচ্ছে"
   },
   "empty": {
     "title": "এখনো কোনো খরচ নেই",

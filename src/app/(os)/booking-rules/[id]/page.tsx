@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, EmptyState, FormField, PageShell, useToast } from "@/components/ui";
+import { Button, Card, Chip, EmptyState, FormField, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   archiveBookingRule,
@@ -43,7 +43,11 @@ export default function BookingRuleEditorPage() {
   }, [isNew, ruleQ.data]);
 
   if (!isNew && !ruleQ.loading && !ruleQ.data) {
-    return <PageShell title={t("back")}><EmptyState title={t("notFound")} action={<Button onClick={() => router.push("/booking-rules")}>{t("back")}</Button>} /></PageShell>;
+    return (
+      <PageShell title={t("editRule")} back={{ href: "/booking-rules", label: t("back") }}>
+        <EmptyState title={t("notFound")} action={<Button onClick={() => router.push("/booking-rules")}>{t("back")}</Button>} />
+      </PageShell>
+    );
   }
 
   const set = <K extends keyof BookingRuleInput>(k: K, v: BookingRuleInput[K]) => setForm((f) => ({ ...f, [k]: v }));
@@ -65,24 +69,24 @@ export default function BookingRuleEditorPage() {
     <PageShell
       title={isNew ? t("newRule") : (form.name || t("editRule"))}
       back={{ href: "/booking-rules", label: t("back") }}
-      actions={<Button loading={saving} onClick={save}>{t("save")}</Button>}
+      actions={<Button variant="primary" size="md" loading={saving} onClick={save}>{t("save")}</Button>}
     >
-      <div className="grid max-w-2xl gap-section card-surface p-card sm:grid-cols-2">
+      <Card className="grid max-w-2xl gap-section sm:grid-cols-2">
         <FormField label={t("fieldName")} value={form.name} onChange={(e) => set("name", e.target.value)} className="sm:col-span-2" />
         <FormField label={t("fieldProduct")} variant="select" value={form.productId ?? ""} onChange={(e) => set("productId", e.target.value || null)} options={[{ value: "", label: t("allProducts") }, ...products.map((p) => ({ value: p.id, label: p.name }))]} />
         <FormField label={t("fieldLocation")} variant="select" value={form.locationId ?? ""} onChange={(e) => set("locationId", e.target.value || null)} options={[{ value: "", label: t("allLocations") }, ...locations.map((l) => ({ value: l.id, label: l.name }))]} />
         <FormField label={t("fieldCapacity")} variant="number" value={String(form.capacity)} onChange={(e) => set("capacity", Math.max(0, parseInt(e.target.value) || 0))} />
         <FormField label={t("fieldSlot")} variant="number" value={String(form.slotMinutes)} onChange={(e) => set("slotMinutes", Math.max(1, parseInt(e.target.value) || 1))} />
         <FormField label={t("fieldStatus")} variant="select" value={form.status} onChange={(e) => set("status", e.target.value as BookingRuleInput["status"])} options={[{ value: "active", label: t("statusActive") }, { value: "inactive", label: t("statusInactive") }]} />
-        <div className="sm:col-span-2">
-          <span className="type-label mb-tight block text-[12px] text-muted">{t("fieldDays")}</span>
+        <div role="group" aria-labelledby="rule-days" className="sm:col-span-2">
+          <span id="rule-days" className="mb-tight block text-sm font-medium text-muted">{t("fieldDays")}</span>
           <div className="flex flex-wrap gap-inline">
             {[0, 1, 2, 3, 4, 5, 6].map((d) => (
-              <button key={d} type="button" aria-pressed={form.daysOfWeek.includes(d)} onClick={() => toggleDay(d)} className={`h-11 min-w-12 rounded-sm border px-comfortable text-[13px] md:h-10 ${form.daysOfWeek.includes(d) ? "border-ember bg-ember/5 font-medium" : "border-line"}`}>{t(`day.${d}` as never)}</button>
+              <Chip key={d} selected={form.daysOfWeek.includes(d)} onClick={() => toggleDay(d)}>{t(`day.${d}` as never)}</Chip>
             ))}
           </div>
         </div>
-      </div>
+      </Card>
 
       {!isNew && (
         <Button variant="secondary" className="mt-section" onClick={archive}>{t("archive")}</Button>

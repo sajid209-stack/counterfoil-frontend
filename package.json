@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "lint:tokens": "node scripts/check-design-tokens.mjs",
     "deck:pdf": "node scripts/deck-pdf.mjs"
   },
   "dependencies": {

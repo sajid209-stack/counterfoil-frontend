@@ -1,11 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
-  ArrowRight,
-  CircleAlert,
   Copy,
   LogOut,
   Monitor,
@@ -14,7 +11,7 @@ import {
   Tablet,
   type LucideIcon,
 } from "lucide-react";
-import { Button, ConfirmDialog, Modal, PageShell, Select, StatusPill, useToast } from "@/components/ui";
+import { Button, ConfirmDialog, Modal, Notice, PageShell, Select, StatusPill, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { getAccessPolicy, listRoles, listStaff } from "@/lib/api";
@@ -108,7 +105,7 @@ export default function SecurityPage() {
 
   return (
     <PageShell title={t("security.title")} description={t("security.description")}>
-      <div className="flex max-w-3xl flex-col gap-section pb-hero">
+      <div className="flex flex-col gap-section pb-hero">
         <SettingsSection title={t("security.password")} description={t("security.passwordDesc")}>
           <SettingRow label={t("security.current")}>
             {({ id }) => (
@@ -166,24 +163,14 @@ export default function SecurityPage() {
         <SettingsSection title={t("security.twoStep")} description={t("security.twoStepHelp")}>
           {required && (
             <div className="px-card py-section">
-              <div className="flex flex-col gap-tight rounded-sm bg-muted-wash p-comfortable text-[13px] leading-relaxed sm:flex-row sm:items-center sm:justify-between sm:gap-section">
-                <span className="flex min-w-0 items-start gap-tight">
-                  <ShieldCheck size={16} strokeWidth={1.5} aria-hidden className="mt-[2px] shrink-0 text-muted" />
-                  <span>
-                    <span className="block font-medium text-fg">{t("security.requiredBy")}</span>
-                    <span className={cn("block", twoStep ? "text-muted" : "text-warning")}>
-                      {twoStep ? t("security.requiredOn") : t("security.requiredOff")}
-                    </span>
-                  </span>
-                </span>
-                <Link
-                  href="/settings/sign-in"
-                  className="inline-flex min-h-11 shrink-0 items-center gap-inline self-start rounded-sm font-medium text-fg underline-offset-2 hover:underline sm:self-center md:min-h-9"
-                >
-                  {t("security.requiredLink")}
-                  <ArrowRight size={14} strokeWidth={1.5} aria-hidden />
-                </Link>
-              </div>
+              <Notice
+                tone={twoStep ? "info" : "warning"}
+                icon={<ShieldCheck size={18} strokeWidth={1.75} />}
+                title={t("security.requiredBy")}
+                action={{ label: t("security.requiredLink"), href: "/settings/sign-in" }}
+              >
+                {twoStep ? t("security.requiredOn") : t("security.requiredOff")}
+              </Notice>
             </div>
           )}
           <SettingRow label={t("security.twoStepLabel")} labelFor={false} trailing>
@@ -226,13 +213,10 @@ export default function SecurityPage() {
 
         <SettingsSection title={t("security.email")} description={t("security.emailDesc")}>
           {pendingEmail ? (
-            <div className="px-card py-section" role="status">
-              <div className="flex flex-col gap-section rounded-sm bg-warning-wash p-comfortable text-[13px] text-fg sm:flex-row sm:items-center sm:justify-between">
-                <span className="flex items-start gap-tight">
-                  <CircleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-warning" />
-                  {t("security.emailPending", { email: pendingEmail, current: email })}
-                </span>
-                <span className="flex shrink-0 gap-tight">
+            <div className="px-card py-section">
+              <Notice tone="warning">
+                <p className="text-sm">{t("security.emailPending", { email: pendingEmail, current: email })}</p>
+                <div className="mt-tight flex gap-tight">
                   <Button variant="secondary" size="sm" onClick={() => setPendingEmail(null)}>
                     {t("common.cancel")}
                   </Button>
@@ -246,8 +230,8 @@ export default function SecurityPage() {
                   >
                     {t("security.demoConfirm")}
                   </Button>
-                </span>
-              </div>
+                </div>
+              </Notice>
             </div>
           ) : (
             <SettingRow label={t("security.newEmail")} description={t("security.emailChangeHelp", { email })}>
@@ -315,10 +299,10 @@ export default function SecurityPage() {
                 <IconTile icon={KIND_ICON[s.kind]} />
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-x-tight gap-y-inline">
-                    <span className="text-sm font-medium text-fg">{s.device}</span>
+                    <span className="text-base font-medium text-fg">{s.device}</span>
                     {s.current && <StatusPill tone="neutral">{t("security.thisBrowser")}</StatusPill>}
                   </span>
-                  <span className="mt-inline block text-[13px] text-muted">
+                  <span className="mt-inline block text-sm text-muted">
                     {t("security.sessionMeta", { place: s.place, since: s.current ? t("security.activeNow") : since(s.lastActiveAt) })}
                   </span>
                 </span>
@@ -347,10 +331,10 @@ export default function SecurityPage() {
             {MOCK_SIGNINS.map((s) => (
               <li key={s.at} className="flex items-center gap-section px-card py-comfortable">
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm text-fg">{s.where}</span>
-                  <span className="mt-inline block text-[13px] text-muted">{formatDateTime(s.at)}</span>
+                  <span className="block text-base text-fg">{s.where}</span>
+                  <span className="mt-inline block text-sm text-muted">{formatDateTime(s.at)}</span>
                 </span>
-                <span className={cn("shrink-0 text-[13px] font-medium", s.ok ? "text-muted" : "text-danger")}>
+                <span className={cn("shrink-0 text-sm font-medium", s.ok ? "text-muted" : "text-danger")}>
                   {s.ok ? t("security.ok") : t("security.failed")}
                 </span>
               </li>
@@ -366,8 +350,8 @@ export default function SecurityPage() {
         title={t("security.codesTitle")}
         footer={<Button onClick={() => setCodesOpen(false)}>{t("security.codesSaved")}</Button>}
       >
-        <p className="mb-section text-[13px] text-muted">{t("security.codesNote")}</p>
-        <div className="grid grid-cols-2 gap-tight rounded-sm bg-muted-wash p-comfortable font-mono text-[13px]">
+        <p className="mb-section text-sm text-muted">{t("security.codesNote")}</p>
+        <div className="grid grid-cols-2 gap-tight rounded-control bg-muted-wash p-comfortable font-mono text-sm">
           {(codes ?? []).map((c) => (
             <span key={c}>{c}</span>
           ))}

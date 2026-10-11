@@ -28,9 +28,9 @@ const VARIANTS: Record<ButtonVariant, string> = {
 };
 
 const SIZES: Record<ButtonSize, string> = {
-  sm: "h-11 md:h-9 px-comfortable text-[0.8125rem]", // 44px on touch, 36 from md
-  md: "h-11 px-section text-sm", // 44px
-  lg: "h-12 px-major text-base", // 48px — Go touch floor
+  sm: "h-11 md:h-9 px-comfortable text-sm", // 44px on touch, 36 from md
+  md: "h-11 px-section text-base", // 44px
+  lg: "h-12 px-major text-md", // 48px — Go touch floor
 };
 
 export interface ButtonProps
@@ -73,7 +73,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         // even applied instantly.
         "transition-[colors,transform] duration-quick ease-counterfoil",
         "active:scale-[0.98] disabled:active:scale-100",
-        "outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed",
         variant === "link" ? "" : SIZES[size],
         VARIANTS[variant],

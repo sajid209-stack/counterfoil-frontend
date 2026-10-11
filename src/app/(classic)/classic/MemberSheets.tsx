@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button, Modal } from "../_ui";
+import { Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { listMembershipTiers, type LoyaltyAccount, type LoyaltyProgram, type MembershipTier } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
@@ -38,12 +39,12 @@ export function MembershipSheet({
     >
       {!hasCustomer ? (
         <div className="rounded-sm border-l-2 border-ember bg-ember/5 p-comfortable">
-          <p className="text-sm font-medium">{t("membership.needCustomerTitle")}</p>
-          <p className="mt-inline text-[0.8125rem] text-muted">{t("membership.needCustomerBody")}</p>
+          <p className="text-base font-medium">{t("membership.needCustomerTitle")}</p>
+          <p className="mt-inline text-sm text-muted">{t("membership.needCustomerBody")}</p>
         </div>
       ) : (
         <>
-          {tiersQ.loading && <div className="h-24 animate-pulse rounded-sm bg-subtle" />}
+          {tiersQ.loading && <Skeleton h={96} className="rounded-sm" />}
           <ul className="flex flex-col gap-tight">
             {tiers.map((tier) => (
               <li key={tier.id}>
@@ -53,12 +54,12 @@ export function MembershipSheet({
                   className="flex min-h-12 w-full items-center justify-between gap-tight rounded-sm border border-line p-comfortable text-left transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10"
                 >
                   <span className="min-w-0">
-                    <span className="block break-words text-sm font-medium">{tier.name}</span>
-                    <span className="block break-words text-[0.75rem] text-muted">
+                    <span className="block break-words text-base font-medium">{tier.name}</span>
+                    <span className="block break-words text-xs text-muted">
                       {tier.description}
                     </span>
                   </span>
-                  <span className="shrink-0 whitespace-nowrap font-mono text-sm">
+                  <span className="shrink-0 whitespace-nowrap text-base tabular-nums">
                     {formatMoney(tier.price)}
                   </span>
                 </button>
@@ -170,7 +171,7 @@ function PointsSheetBody({
     >
       <div className="flex flex-col gap-section">
         {maxPoints === 0 ? (
-          <p className="text-[0.8125rem] text-muted">
+          <p className="text-sm text-muted">
             {account.balance < program.minRedeemPoints
               ? t("points.belowMinimum", { min: program.minRedeemPoints })
               : t("points.nothingToSpendOn")}
@@ -183,7 +184,7 @@ function PointsSheetBody({
                   key={n}
                   type="button"
                   onClick={() => setDraft(n)}
-                  className={`h-12 rounded-sm border px-section text-sm transition-colors duration-quick ${
+                  className={`h-12 rounded-sm border px-section text-base transition-colors duration-quick ${
                     draft === n
                       ? "border-ember bg-ember/10 text-brand-foreground"
                       : "border-line text-muted"
@@ -204,19 +205,19 @@ function PointsSheetBody({
               aria-label={t("points.slider")}
             />
             <div className="rounded-sm border-l-2 border-ember bg-ember/5 p-comfortable">
-              <p className="font-mono text-sm">
+              <p className="text-base tabular-nums">
                 {t("points.line", {
                   points: draft.toLocaleString(),
                   value: formatMoney(value),
                 })}
               </p>
               {belowMin && (
-                <p className="mt-inline text-[0.75rem] text-warning">
+                <p className="mt-inline text-xs text-warning">
                   {t("points.belowMinimum", { min: program.minRedeemPoints })}
                 </p>
               )}
               {account.expiringSoon > 0 && (
-                <p className="mt-inline text-[0.75rem] text-muted">
+                <p className="mt-inline text-xs text-muted">
                   {t("points.expiringSoon", { count: account.expiringSoon })}
                 </p>
               )}

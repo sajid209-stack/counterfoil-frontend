@@ -16,11 +16,11 @@ export default function ForgotPasswordPage() {
     return (
       <div className="card-surface flex flex-col gap-section p-card text-center">
         <h1 className="type-h1 text-2xl">{t("sentTitle")}</h1>
-        <p className="type-body text-[13px] text-muted">{t("sentLead", { contact: contact.trim() })}</p>
-        <p className="text-[13px] text-muted">{t("sentHelp")}</p>
-        <Link href="/sign-in" className="inline-flex min-h-11 items-center justify-center text-[13px] text-brand-foreground underline-offset-4 hover:underline">{t("back")}</Link>
+        <p className="type-body text-sm text-muted">{t("sentLead", { contact: contact.trim() })}</p>
+        <p className="text-sm text-muted">{t("sentHelp")}</p>
+        <Link href="/sign-in" className="inline-flex min-h-11 items-center justify-center text-sm text-brand-foreground underline-offset-4 hover:underline">{t("back")}</Link>
         {/* demo shortcut to the reset screen */}
-        <Link href="/reset/demo-token" className="font-mono text-[12px] text-muted hover:text-fg">{t("demo")}</Link>
+        <Link href="/reset/demo-token" className="text-xs text-muted hover:text-fg">{t("demo")}</Link>
       </div>
     );
   }
@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
     <div className="card-surface flex flex-col gap-section p-card">
       <div>
         <h1 className="type-h1 text-2xl">{t("title")}</h1>
-        <p className="type-body mt-tight text-[13px] text-muted">{t("lead")}</p>
+        <p className="type-body mt-tight text-sm text-muted">{t("lead")}</p>
       </div>
       <FormField
         label={t("contact")}
@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
         error={missing ? t("contactMissing") : undefined}
       />
       <Button size="lg" fullWidth onClick={send}>{t("submit")}</Button>
-      <Link href="/sign-in" className="inline-flex min-h-11 items-center justify-center text-[13px] text-muted hover:text-fg">{t("back")}</Link>
+      <Link href="/sign-in" className="inline-flex min-h-11 items-center justify-center text-sm text-muted hover:text-fg">{t("back")}</Link>
     </div>
   );
 }

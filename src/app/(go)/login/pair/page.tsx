@@ -94,12 +94,12 @@ function PairScreen() {
           />
         ) : (
           <>
-            <h1 className="text-center text-[1.5rem] font-semibold leading-tight">{t("pair.title")}</h1>
-            <p className="mt-tight text-center text-[0.9375rem] text-muted">{t("pair.intro")}</p>
+            <h1 className="text-center text-2xl font-semibold leading-tight">{t("pair.title")}</h1>
+            <p className="mt-tight text-center text-md text-muted">{t("pair.intro")}</p>
 
             {already && (
               <p
-                className="mt-section rounded-go border border-line bg-card px-section py-tight text-center text-[0.8125rem] text-muted"
+                className="mt-section card-surface px-section py-tight text-center text-sm text-muted"
                 data-testid="pair-already"
               >
                 {t("pair.alreadyAs", { name: already.name })}
@@ -108,7 +108,7 @@ function PairScreen() {
 
             <form onSubmit={submit} className="mt-major flex flex-col gap-section" noValidate>
               <div>
-                <label htmlFor="pair-code" className="block text-[0.9375rem] font-medium text-fg">
+                <label htmlFor="pair-code" className="block text-md font-medium text-fg">
                   {t("pair.codeLabel")}
                 </label>
                 <input
@@ -128,19 +128,20 @@ function PairScreen() {
                   placeholder={t("pair.codePlaceholder")}
                   aria-invalid={!!error || undefined}
                   aria-describedby={error ? "pair-error" : "pair-hint"}
-                  className={`mt-tight h-16 w-full rounded-go border bg-card px-section text-center font-mono text-[2rem] font-medium tracking-[0.18em] text-fg placeholder:text-muted ${error ? "border-danger" : "border-line"}`}
+                  // ds-exception: a spaced-out pairing code is read character by character; 0.18em has no scale token
+                  className={`mt-tight h-16 w-full rounded-card border bg-card px-section text-center font-mono text-4xl font-medium tracking-[0.18em] text-fg placeholder:text-muted ${error ? "border-danger" : "border-line"}`}
                 />
                 {error ? (
-                  <p id="pair-error" role="alert" data-testid="pair-error" className="mt-tight text-[0.875rem] font-medium text-danger">
+                  <p id="pair-error" role="alert" data-testid="pair-error" className="mt-tight text-base font-medium text-danger">
                     {error}
                   </p>
                 ) : (
-                  <p id="pair-hint" className="mt-tight text-[0.8125rem] text-muted">
+                  <p id="pair-hint" className="mt-tight text-sm text-muted">
                     {t("pair.hint")}
                   </p>
                 )}
               </div>
-              <Button type="submit" size="lg" shape="pill" fullWidth loading={busy} data-testid="pair-submit">
+              <Button type="submit" size="lg" fullWidth className="h-13 text-md font-semibold" loading={busy} data-testid="pair-submit">
                 {busy ? t("pair.pairing") : t("pair.button")}
               </Button>
             </form>
@@ -148,7 +149,7 @@ function PairScreen() {
             <p className="mt-major text-center">
               <Link
                 href="/login"
-                className="inline-flex min-h-11 items-center px-section text-[0.875rem] font-medium text-muted underline underline-offset-4 active:text-fg"
+                className="inline-flex min-h-11 items-center px-section text-base font-medium text-muted underline underline-offset-4 active:text-fg"
               >
                 {t("pair.backToSignIn")}
               </Link>
@@ -183,27 +184,27 @@ function Done({
   const names = people.slice(0, MAX_NAMES).map((s) => s.name);
   return (
     <div data-testid="pair-done" className="flex flex-col items-center text-center">
-      <span aria-hidden className="flex h-14 w-14 items-center justify-center rounded-full bg-success/10 text-success">
+      <span aria-hidden className="flex h-14 w-14 items-center justify-center rounded-full bg-success-wash text-success">
         <Check size={28} strokeWidth={2.25} />
       </span>
-      <h1 className="mt-section text-[1.5rem] font-semibold leading-tight">{t("pair.successTitle")}</h1>
-      <p className="mt-tight text-[1rem] text-muted">{t("pair.successLine", { name: device.name })}</p>
+      <h1 className="mt-section text-2xl font-semibold leading-tight">{t("pair.successTitle")}</h1>
+      <p className="mt-tight text-md text-muted">{t("pair.successLine", { name: device.name })}</p>
 
-      <dl className="go-surface mt-major w-full overflow-hidden rounded-go text-left">
+      <dl className="card-surface mt-major w-full overflow-hidden text-left">
         {[
           { k: "counter", label: t("pair.counter"), value: counter?.name ?? "—" },
           { k: "venue", label: t("pair.venue"), value: venue?.name ?? "—" },
         ].map((row) => (
           <div key={row.k} className="flex items-baseline justify-between gap-section border-b border-line px-section py-comfortable">
-            <dt className="text-[0.8125rem] text-muted">{row.label}</dt>
-            <dd data-testid={`pair-${row.k}`} className="min-w-0 text-right text-[0.9375rem] font-medium text-fg">
+            <dt className="text-sm text-muted">{row.label}</dt>
+            <dd data-testid={`pair-${row.k}`} className="min-w-0 text-right text-md font-medium text-fg">
               {row.value}
             </dd>
           </div>
         ))}
         <div className="px-section py-comfortable">
-          <dt className="text-[0.8125rem] text-muted">{t("pair.who")}</dt>
-          <dd data-testid="pair-who" className="mt-inline text-[0.9375rem] font-medium text-fg">
+          <dt className="text-sm text-muted">{t("pair.who")}</dt>
+          <dd data-testid="pair-who" className="mt-inline text-md font-medium text-fg">
             {loading ? (
               "…"
             ) : names.length === 0 ? (
@@ -218,12 +219,12 @@ function Done({
             )}
           </dd>
           {!loading && noPin > 0 && names.length > 0 && (
-            <p className="mt-inline text-[0.8125rem] text-warning">{t("pair.noPin", { count: noPin })}</p>
+            <p className="mt-inline text-sm text-warning">{t("pair.noPin", { count: noPin })}</p>
           )}
         </div>
       </dl>
 
-      <Button size="lg" shape="pill" fullWidth className="mt-major" onClick={onGo} data-testid="pair-go">
+      <Button size="lg" fullWidth className="mt-major h-13 text-md font-semibold" onClick={onGo} data-testid="pair-go">
         {t("pair.goSignIn")}
       </Button>
     </div>

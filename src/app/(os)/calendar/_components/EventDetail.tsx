@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Lock, LockOpen, UserCheck } from "lucide-react";
-import { Button, MarketBadge, Modal, StatusPill, type PillTone } from "@/components/ui";
+import { Button, MarketBadge, Modal, StatusPill, controlClass, type PillTone } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { clockRangeOf, type CalEvent, type EventTone } from "./model";
 import { commissionLine } from "./sourceText";
 
@@ -125,7 +126,7 @@ export function EventDetail({
         <div className="flex flex-wrap items-center gap-tight">
           <StatusPill tone={TONE_PILL[event.tone]}>{t(TONE_KEY[event.tone])}</StatusPill>
           {event.locked && !event.hold && (
-            <span className="flex items-center gap-inline text-[12px] text-muted">
+            <span className="flex items-center gap-inline text-xs text-muted">
               <Lock size={12} strokeWidth={2} aria-hidden />
               {t("lockedNote")}
             </span>
@@ -134,9 +135,9 @@ export function EventDetail({
 
         <dl className="flex flex-col gap-tight">
           <div className="flex flex-wrap items-baseline gap-tight">
-            <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailWhen")}</dt>
-            <dd className="min-w-0 text-[13px]">
-              <span className="font-mono">{when}</span>
+            <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailWhen")}</dt>
+            <dd className="min-w-0 text-sm">
+              <span className="tabular-nums">{when}</span>
               <span className="text-muted"> · {dayLabel(event.start)}</span>
             </dd>
           </div>
@@ -147,36 +148,36 @@ export function EventDetail({
           {event.source && (
             <>
               <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailSource")}</dt>
-                <dd className="flex min-w-0 items-start gap-tight text-[13px]">
+                <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailSource")}</dt>
+                <dd className="flex min-w-0 items-start gap-tight text-sm">
                   <MarketBadge id={event.source.id} className="mt-0.5" />
                   {/* The row is already labelled "Sold on", so the line is just who and their reference. */}
                   <span className="min-w-0 break-words">{event.source.reference ? `${event.source.name} · ${event.source.reference}` : event.source.name}</span>
                 </dd>
               </div>
               <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailCommission")}</dt>
-                <dd className="min-w-0 break-words text-[13px]">{commissionLine(t, event.source)}</dd>
+                <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailCommission")}</dt>
+                <dd className="min-w-0 break-words text-sm">{commissionLine(t, event.source)}</dd>
               </div>
             </>
           )}
           {event.hold && (
             <>
               <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailHolds")}</dt>
-                <dd className="min-w-0 text-[13px]">{event.hold.what}</dd>
+                <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailHolds")}</dt>
+                <dd className="min-w-0 text-sm">{event.hold.what}</dd>
               </div>
               <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailReleases")}</dt>
-                <dd className="min-w-0 text-[13px]">{event.hold.releases ?? t("detailUntilReleased")}</dd>
+                <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailReleases")}</dt>
+                <dd className="min-w-0 text-sm">{event.hold.releases ?? t("detailUntilReleased")}</dd>
               </div>
               <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailPlacedBy")}</dt>
-                <dd className="min-w-0 text-[13px]">{event.hold.placedBy}</dd>
+                <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailPlacedBy")}</dt>
+                <dd className="min-w-0 text-sm">{event.hold.placedBy}</dd>
               </div>
               <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailWhat")}</dt>
-                <dd className="min-w-0 break-words text-[13px]">{event.hold.product}</dd>
+                <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailWhat")}</dt>
+                <dd className="min-w-0 break-words text-sm">{event.hold.product}</dd>
               </div>
             </>
           )}
@@ -184,10 +185,10 @@ export function EventDetail({
               have rows of their own — printing it again said Lane 3 twice. */}
           {event.subtitle && !event.hold && (
             <div className="flex flex-wrap items-baseline gap-tight">
-              <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailWhat")}</dt>
+              <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailWhat")}</dt>
               {/* break-words, not truncate: this panel is the one place the
                   name is allowed all the room it needs. */}
-              <dd className="min-w-0 break-words text-[13px]">{event.subtitle}</dd>
+              <dd className="min-w-0 break-words text-sm">{event.subtitle}</dd>
             </div>
           )}
         </dl>
@@ -197,7 +198,7 @@ export function EventDetail({
             this one". */}
         {!isBooking && onRelease && asking === "release" && (
           <div className="flex flex-col gap-tight border-t border-hairline pt-comfortable">
-            <p className="text-[13px]">{t("releaseAsk")}</p>
+            <p className="text-sm">{t("releaseAsk")}</p>
             <div className="flex flex-wrap gap-tight">
               <Button size="sm" loading={busy} onClick={() => { onRelease(event); setAsking(null); }}>
                 {t("releaseConfirm")}
@@ -212,7 +213,7 @@ export function EventDetail({
         {isBooking && (onLock || onComplete) && (
           <div className="flex flex-col gap-tight border-t border-hairline pt-comfortable">
             {blockedReason && !event.locked && (
-              <p role="status" className="text-[13px] text-muted">{blockedReason}</p>
+              <p role="status" className="text-sm text-muted">{blockedReason}</p>
             )}
             {asking === null ? (
               <div className="flex flex-wrap gap-tight">
@@ -236,7 +237,7 @@ export function EventDetail({
               </div>
             ) : (
               <div className="flex flex-col gap-tight">
-                <label className="text-[0.75rem] font-medium text-muted" htmlFor="cal-lock-reason">
+                <label className="text-xs font-medium text-muted" htmlFor="cal-lock-reason">
                   {t(asking === "lock" ? "lockReason" : "unlockReason")}
                 </label>
                 <input
@@ -245,7 +246,7 @@ export function EventDetail({
                   placeholder={t(asking === "lock" ? "lockReasonPlaceholder" : "unlockReasonPlaceholder")}
                   autoFocus
                   onChange={(e) => setReason(e.target.value)}
-                  className="h-11 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none placeholder:text-muted focus:border-inverse md:h-9"
+                  className={cn(controlClass(), "md:h-9")}
                 />
                 <div className="flex flex-wrap gap-tight">
                   <Button

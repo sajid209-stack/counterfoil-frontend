@@ -3,12 +3,13 @@
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Download, Mail, Search, Smartphone } from "lucide-react";
+import { Download, Mail, Smartphone } from "lucide-react";
 import {
   Button,
   DataTable,
   EmptyState,
   FilterBar,
+  FilterSearch,
   FormField,
   Modal,
   Select,
@@ -121,8 +122,8 @@ export default function CustomersPage() {
       key: "contact",
       header: t("colContact"),
       render: (c) => (
-        <div className="min-w-0 text-[12px] text-muted">
-          {c.phone && <div className="font-mono whitespace-nowrap">{c.phone}</div>}
+        <div className="min-w-0 text-xs text-muted">
+          {c.phone && <div className="whitespace-nowrap tabular-nums">{c.phone}</div>}
           {c.email && <div className="truncate">{c.email}</div>}
           {!c.phone && !c.email && <span className="text-muted">{t("noContact")}</span>}
         </div>
@@ -139,24 +140,24 @@ export default function CustomersPage() {
       render: (c) => {
         const email = hasConsent(c, "email");
         const sms = hasConsent(c, "sms");
-        if (!email && !sms) return <span className="text-[12px] text-muted">{t("consentNone")}</span>;
+        if (!email && !sms) return <span className="text-xs text-muted">{t("consentNone")}</span>;
         return (
           <div className="flex items-center gap-inline">
             {email && (
               <span
                 title={t("consentEmailYes")}
-                className="flex items-center gap-0.5 rounded-xs bg-success/10 px-1 py-0.5 text-[12px] font-medium text-success"
+                className="flex items-center gap-0.5 rounded-inner bg-success-wash px-1 py-0.5 text-xs font-medium text-fg"
               >
-                <Mail size={11} strokeWidth={2} aria-hidden />
+                <Mail size={11} strokeWidth={2} aria-hidden className="text-success" />
                 {t("consentEmailShort")}
               </span>
             )}
             {sms && (
               <span
                 title={t("consentSmsYes")}
-                className="flex items-center gap-0.5 rounded-xs bg-success/10 px-1 py-0.5 text-[12px] font-medium text-success"
+                className="flex items-center gap-0.5 rounded-inner bg-success-wash px-1 py-0.5 text-xs font-medium text-fg"
               >
-                <Smartphone size={11} strokeWidth={2} aria-hidden />
+                <Smartphone size={11} strokeWidth={2} aria-hidden className="text-success" />
                 {t("consentSmsShort")}
               </span>
             )}
@@ -190,7 +191,7 @@ export default function CustomersPage() {
       header: t("colLastVisit"),
       align: "right",
       render: (c) => (
-        <span className="whitespace-nowrap text-[12px] tabular-nums text-muted">
+        <span className="whitespace-nowrap text-xs tabular-nums text-muted">
           {c.stats.lastSeen ? formatDate(c.stats.lastSeen) : "—"}
         </span>
       ),
@@ -238,17 +239,11 @@ export default function CustomersPage() {
         toolbar={
           <FilterBar
             search={
-              <div className="relative min-w-0 md:w-60 xl:w-72">
-                <Search size={16} strokeWidth={1.5} aria-hidden className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                  placeholder={t("searchPlaceholder")}
-                  aria-label={t("searchPlaceholder")}
-                  className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none placeholder:text-muted focus:border-inverse md:h-9"
-                />
-              </div>
+              <FilterSearch
+                value={search}
+                onChange={(v) => { setSearch(v); setPage(1); }}
+                placeholder={t("searchPlaceholder")}
+              />
             }
             /* The same row as Orders: search, then a Filters button holding the
                cut (who agreed to messages). There is no key filter inline — a
@@ -301,17 +296,17 @@ export default function CustomersPage() {
              and consent is what the segments above filter on. */
           <div className="flex flex-col gap-inline">
             <div className="flex items-baseline justify-between gap-tight">
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">{c.name}</span>
-              <span className={cn("shrink-0 text-[13px] font-medium tabular-nums", c.stats.spent === 0 && "text-muted")}>
+              <span className="min-w-0 flex-1 truncate text-base font-medium">{c.name}</span>
+              <span className={cn("shrink-0 text-sm font-medium tabular-nums", c.stats.spent === 0 && "text-muted")}>
                 {formatMoney(c.stats.spent)}
               </span>
             </div>
-            <div className="flex items-baseline justify-between gap-tight text-[12px] text-muted">
+            <div className="flex items-baseline justify-between gap-tight text-xs text-muted">
               <span className="min-w-0 flex-1 truncate">
                 {/* The phone, not the e-mail: two customers share a name far
                     more often than a number, so it is the line that confirms
                     the right person. */}
-                {c.phone ? <span className="font-mono">{c.phone}</span> : t("noContact")}
+                {c.phone ? <span className="tabular-nums">{c.phone}</span> : t("noContact")}
                 {" · "}
                 {t("ordersCount", { count: c.stats.orders })}
               </span>

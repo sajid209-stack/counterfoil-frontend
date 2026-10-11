@@ -27,7 +27,7 @@ export function OpenHourChips({
   if (hours.length === 0) return null;
   return (
     <section aria-label={heading} className="border-t border-hairline px-card py-comfortable">
-      <h3 className="mb-tight text-[0.75rem] font-medium text-muted">{heading}</h3>
+      <h3 className="mb-tight text-xs font-medium text-muted">{heading}</h3>
       <div className="grid grid-cols-3 gap-tight">
         {hours.map(({ hour, count }) => (
           <button
@@ -36,12 +36,12 @@ export function OpenHourChips({
             aria-label={chipName(hour, count)}
             onClick={(e) => onPick(hour, e.currentTarget.getBoundingClientRect())}
             className={cn(
-              "flex min-h-11 flex-col items-start justify-center rounded-sm border border-dashed border-strong/60 px-comfortable py-inline text-left",
-              "transition-colors duration-quick active:border-ember active:bg-ember/10",
+              "flex min-h-11 flex-col items-start justify-center rounded-control border border-dashed border-strong/60 px-comfortable py-inline text-left",
+              "transition-colors duration-quick active:border-ember active:bg-ember-wash",
             )}
           >
-            <span className="font-mono text-[13px] font-medium leading-tight">{formatClockMin(hour * 60, { short: true })}</span>
-            <span className="text-[12px] leading-tight text-muted">{chipLabel(count)}</span>
+            <span className="text-sm font-medium leading-tight tabular-nums">{formatClockMin(hour * 60, { short: true })}</span>
+            <span className="text-xs leading-tight text-muted">{chipLabel(count)}</span>
           </button>
         ))}
       </div>

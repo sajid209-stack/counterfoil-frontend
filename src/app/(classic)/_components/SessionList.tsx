@@ -105,21 +105,21 @@ export function SessionList({
                 {/* Time leads — it is what a cashier is scanning for. */}
                 <span
                   className={cn(
-                    "shrink-0 text-base font-semibold",
+                    "shrink-0 text-md font-semibold",
                     full && !isSelected ? "text-muted" : "text-fg",
                   )}
                 >
                   {formatClock(s.time)}
                 </span>
                 {s.meta && (
-                  <span className="min-w-0 flex-1 truncate text-[0.75rem] text-muted">{s.meta}</span>
+                  <span className="min-w-0 flex-1 truncate text-xs text-muted">{s.meta}</span>
                 )}
                 {/* The state of the session, in the corner the eye lands on:
                     places left is the number being decided on. The price sits
                     on the row below, beside the fill. */}
                 <span
                   className={cn(
-                    "ml-auto shrink-0 whitespace-nowrap text-[0.8125rem] font-medium",
+                    "ml-auto shrink-0 whitespace-nowrap text-sm font-medium",
                     closed
                       ? "text-muted"
                       : pressure === "gone"
@@ -158,12 +158,12 @@ export function SessionList({
                     style={{ width: `${Math.min(100, pctSold)}%` }}
                   />
                 </span>
-                <span className="shrink-0 whitespace-nowrap text-[0.75rem] text-muted">
+                <span className="shrink-0 whitespace-nowrap text-xs text-muted">
                   {sold}/{s.capacity}
                 </span>
                 <span
                   className={cn(
-                    "ml-auto shrink-0 whitespace-nowrap text-[0.75rem]",
+                    "ml-auto shrink-0 whitespace-nowrap text-xs",
                     s.price === basePrice ? "text-muted" : "text-brand-foreground",
                   )}
                 >
@@ -172,7 +172,7 @@ export function SessionList({
               </span>
 
               {full && !closed && s.waitlist && (
-                <span className="text-[0.75rem] font-medium text-brand-foreground">{t("sheet.joinWaitlist")} →</span>
+                <span className="text-xs font-medium text-brand-foreground">{t("sheet.joinWaitlist")} →</span>
               )}
             </span>
           </button>
@@ -181,7 +181,7 @@ export function SessionList({
 
       {/* What the figure on each row is the price OF. */}
       {basePrice > 0 && (
-        <p className="text-[0.75rem] text-muted">
+        <p className="text-xs text-muted">
           {t("sheet.pricePerTicket", { amount: formatMoney(basePrice, currency) })}
         </p>
       )}

@@ -1,0 +1,8 @@
+/* The Design System's preview islands.
+
+   Every example is drawn inside an element carrying a mode class and
+   data-product (see _components/Preview). Cards, POS surfaces and their
+   hover lift take their edge from the mode tokens (in dark, --elevation-1 is
+   a 1px ring of --color-line), so an island follows its own mode with no
+   override here. Tailwind's `dark:` utilities still follow the page-level
+   class; the Themes page says so. */

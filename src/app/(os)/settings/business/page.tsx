@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { PageShell, Select, useToast } from "@/components/ui";
+import { PageShell, Select, controlClass, useToast } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { ReceiptFooter, ReceiptHeader } from "@/components/ReceiptParts";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getTaxConfig, listLocations, updateOperator, type Operator } from "@/lib/api";
@@ -156,7 +157,7 @@ export default function BusinessProfilePage() {
       {!form ? (
         <SectionSkeleton />
       ) : (
-        <div className="flex max-w-3xl flex-col gap-section pb-hero">
+        <div className="flex flex-col gap-section pb-hero">
           <SettingsSection title={t("business.profileTitle")} description={t("business.profileDesc")}>
             <SettingRow label={t("business.businessName")} error={nameErr}>
               {({ id, describedBy }) => (
@@ -194,9 +195,9 @@ export default function BusinessProfilePage() {
                     value={form.footer}
                     onChange={(e) => set("footer", e.target.value)}
                     aria-describedby={describedBy}
-                    className="w-full min-w-0 resize-y rounded-sm border border-line bg-card px-comfortable py-tight text-sm leading-relaxed text-fg outline-none transition-colors duration-quick focus:border-ember focus:ring-2 focus:ring-ember/20"
+                    className={cn(controlClass(false, true), "resize-y leading-relaxed")}
                   />
-                  <p aria-hidden className="mt-inline text-right text-[12px] tabular-nums text-muted">
+                  <p aria-hidden className="mt-inline text-right text-xs tabular-nums text-muted">
                     {form.footer.length}/{FOOTER_MAX}
                   </p>
                 </>
@@ -204,17 +205,17 @@ export default function BusinessProfilePage() {
             </SettingRow>
             <SettingRow label={t("business.receiptPreview")} description={t("business.receiptPreviewDesc")} layout="stack" labelFor={false}>
               {() => (
-                <div className="max-w-xs rounded-sm bg-muted-wash px-section py-major">
+                <div className="max-w-xs rounded-control bg-muted-wash px-section py-major">
                   <ReceiptHeader
                     operator={{ name: form.name.trim() || "—", contactPhone: form.phone.trim(), website: form.website.trim() }}
                     place={place}
                     tax={taxQ.data}
                   >
-                    <p className="mt-inline text-[12px] text-muted">
+                    <p className="mt-inline text-xs text-muted">
                       <span className="font-mono">CF-2026-000123</span> · {formatDay(DEMO_TODAY)}
                     </p>
                   </ReceiptHeader>
-                  <p className="border-y border-dashed border-line py-section text-center text-[12px] text-muted">{t("business.receiptItems")}</p>
+                  <p className="border-y border-dashed border-line py-section text-center text-xs text-muted">{t("business.receiptItems")}</p>
                   <ReceiptFooter message={form.footer} />
                 </div>
               )}

@@ -187,14 +187,6 @@
     "paid": "Paid",
     "owed": "Still owed"
   },
-  "pager": {
-    "label": "Pages",
-    "range": "{from}–{to} of {total}",
-    "show": "Show",
-    "previous": "Previous",
-    "next": "Next",
-    "page": "Page {page} of {pages}"
-  },
   "summary": {
     "title": "Sales summary",
     "download": "Download summary (CSV)",

@@ -136,7 +136,7 @@ export function CommandPalette({
           lightens the ground the hint text was tuned against. It also matches
           the account menu and the row menus, which are the popovers this one
           sits beside. */}
-      <div className="relative z-10 flex max-h-[70vh] w-full max-w-lg flex-col overflow-hidden rounded-md border border-line bg-card shadow-lg">
+      <div className="relative z-10 flex max-h-[70vh] w-full max-w-lg flex-col overflow-hidden rounded-card border border-line bg-card shadow-lg">
         {/* The field is the dialog's title — no second heading above it. 16px
             on the input itself, because anything smaller makes mobile Safari
             zoom the page the moment it takes focus. */}
@@ -180,19 +180,19 @@ export function CommandPalette({
                 e.preventDefault();
               }
             }}
-            className="min-w-0 flex-1 bg-transparent py-comfortable text-[16px] text-fg outline-none placeholder:text-faint"
+            className="min-w-0 flex-1 bg-transparent py-comfortable text-md text-fg placeholder:text-faint"
           />
-          <kbd className="hidden shrink-0 rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-[12px] text-muted sm:block">{shortcutKey}</kbd>
+          <kbd className="hidden shrink-0 rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-xs text-muted sm:block">{shortcutKey}</kbd>
         </div>
 
         <ul ref={list} id={listId} role="listbox" aria-label={tn("search")} className="min-h-0 flex-1 overflow-y-auto py-inline">
           {!searching && (
-            <li role="presentation" className="px-comfortable pb-inline pt-tight font-mono text-[12px] uppercase tracking-wider text-muted">
+            <li role="presentation" className="px-comfortable pb-inline pt-tight text-xs font-medium text-muted">
               {tn("searchGoTo")}
             </li>
           )}
           {results.length === 0 ? (
-            <li role="presentation" className="px-comfortable py-comfortable text-[13px] text-muted">
+            <li role="presentation" className="px-comfortable py-comfortable text-sm text-muted">
               {tn("searchEmpty", { query: query.trim() })}
             </li>
           ) : (
@@ -208,12 +208,12 @@ export function CommandPalette({
                 onMouseEnter={() => setActive(i)}
                 onClick={() => go(r)}
                 className={cn(
-                  "mx-inline flex min-h-11 cursor-pointer items-center justify-between gap-section rounded-sm px-comfortable py-tight text-sm text-fg",
-                  i === current && "bg-subtle",
+                  "mx-inline flex min-h-11 cursor-pointer items-center justify-between gap-section rounded-control px-comfortable py-tight text-base text-fg",
+                  i === current && "bg-muted-wash",
                 )}
               >
                 <span className="min-w-0 truncate font-medium">{r.title}</span>
-                <span className="flex shrink-0 items-center gap-tight text-[12px] text-muted">
+                <span className="flex shrink-0 items-center gap-tight text-xs text-muted">
                   {r.hint}
                   {i === current && <CornerDownLeft size={14} strokeWidth={1.5} aria-hidden />}
                 </span>

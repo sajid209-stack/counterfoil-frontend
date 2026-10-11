@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { EmptyState } from "@/components/ui";
+import { EmptyState, Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getOrder, getTaxConfig, listLocations, listTickets } from "@/lib/api";
 import { PrintToolbar } from "@/app/print/_components/PrintToolbar";
@@ -46,7 +46,7 @@ export default function PrintOrderPage() {
       <h1 className="sr-only">{t("printAllTitle")}</h1>
       <PrintToolbar />
       {!ready ? (
-        <div aria-busy="true" className="mx-auto h-[640px] w-full max-w-[380px] animate-pulse rounded-[18px] bg-card" />
+        <div aria-busy="true" className="mx-auto w-full max-w-[380px]"><Skeleton h={640} className="rounded-card" /></div>
       ) : !order ? (
         <EmptyState title={t("orderNotFound")} />
       ) : (

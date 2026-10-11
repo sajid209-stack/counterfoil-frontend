@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Info, Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
+import { Checkbox, ChoiceCard, Notice } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { applyResourceRate } from "@/lib/api/slots";
 import { durationOptions, formatDuration, productDurationPrice } from "@/lib/duration";
@@ -87,17 +88,16 @@ export interface SheetHooks {
 function Step({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <section>
-      <h3 className="mb-tight text-[15px] font-semibold">{label}</h3>
+      <h3 className="mb-tight text-md font-semibold">{label}</h3>
       {children}
     </section>
   );
 }
 
-const choiceCls = (on: boolean) =>
-  cn(
-    "flex min-h-11 items-center justify-center rounded-[12px] border px-section text-[14px] font-medium transition-colors duration-quick",
-    on ? "border-[var(--sf-fill)] bg-[var(--sf-soft)] text-fg ring-1 ring-inset ring-[var(--sf-fill)]" : "border-line bg-white hover:border-strong",
-  );
+/* The shape of every pick-one cell on the page. The kit ChoiceCard draws the
+   selected state (an inset ring, no check: the cells are too small to give a
+   corner away). */
+const CHOICE = "flex min-h-11 items-center justify-center px-section text-base font-medium";
 
 function DateSection({
   dates,
@@ -142,34 +142,25 @@ function ExtrasSection({
   if (!(product.addOns ?? []).length) return null;
   return (
     <Step label={t("booking.extrasLabel")}>
-      <ul className="divide-y divide-hairline rounded-[12px] border border-line">
+      <ul className="divide-y divide-hairline rounded-md border border-line">
         {(product.addOns ?? []).map((a) => {
           const on = !!extras[a.id];
           return (
             <li key={a.id}>
-              <button
-                type="button"
-                aria-pressed={on}
-                onClick={() => setExtras((e) => ({ ...e, [a.id]: !e[a.id] }))}
-                className="flex min-h-14 w-full items-center gap-comfortable p-comfortable text-left"
-              >
-                <span
-                  aria-hidden
-                  className={cn(
-                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border",
-                    on ? "border-[var(--sf-fill)] bg-[var(--sf-fill)] text-[var(--sf-on-fill)]" : "border-strong bg-white",
-                  )}
-                >
-                  {on && <Check size={14} strokeWidth={3} />}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-medium">{a.name}</span>
-                  <span className="tnum block text-[14px] text-muted">
-                    {formatPriceShort(a.price)}
-                    {a.perPerson ? ` ${t("booking.perPerson")}` : ""}
-                  </span>
-                </span>
-              </button>
+              <Checkbox
+                checked={on}
+                onCheckedChange={(v) => setExtras((e) => ({ ...e, [a.id]: v }))}
+                className="px-tight"
+                label={
+                  <>
+                    <span className="block text-md font-medium">{a.name}</span>
+                    <span className="tnum block text-base text-muted">
+                      {formatPriceShort(a.price)}
+                      {a.perPerson ? ` ${t("booking.perPerson")}` : ""}
+                    </span>
+                  </>
+                }
+              />
             </li>
           );
         })}
@@ -203,19 +194,18 @@ function Footer({
       data-sf-bookbar
       className={
         inSheet
-          ? "shrink-0 border-t border-hairline bg-white px-section pb-section pt-comfortable"
-          : "fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-white/95 px-gutter pb-comfortable pt-comfortable shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur lg:static lg:mt-section lg:border-line lg:bg-transparent lg:p-0 lg:pt-section lg:shadow-none lg:backdrop-blur-none"
+          ? "shrink-0 border-t border-hairline bg-card px-section pb-section pt-comfortable"
+          : "fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-card/95 px-gutter pb-comfortable pt-comfortable shadow-float backdrop-blur lg:static lg:mt-section lg:border-line lg:bg-transparent lg:p-0 lg:pt-section lg:shadow-none lg:backdrop-blur-none"
       }
     >
       {missing && (
-        <p className="mb-tight flex items-center gap-tight text-[14px] font-medium text-warning">
-          <Info size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />
+        <Notice tone="warning" size="sm" className="mb-tight">
           {missing}
-        </p>
+        </Notice>
       )}
       <div className="flex items-baseline gap-tight">
-        <p className="text-[14px] text-muted">{chosen ? t("booking.total") : t("from")}</p>
-        <p className="tnum text-[24px] font-semibold leading-none tracking-[-0.01em]">
+        <p className="text-base text-muted">{chosen ? t("booking.total") : t("from")}</p>
+        <p className="tnum text-2xl font-semibold leading-none">
           {chosen ? formatMoney(total) : from === null ? "—" : from === 0 ? t("free") : formatPriceShort(from)}
         </p>
       </div>
@@ -254,7 +244,7 @@ function Body({ title, children, inSheet }: { title: string; children: React.Rea
   }
   return (
     <div className="flex flex-col gap-major lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-1 lg:pt-1 lg:pb-6 lg:[mask-image:linear-gradient(to_bottom,black_calc(100%-28px),transparent)]">
-      <h2 className="text-[20px] font-semibold tracking-[-0.01em]">{title}</h2>
+      <h2 className="text-xl font-semibold">{title}</h2>
       {children}
     </div>
   );
@@ -376,28 +366,28 @@ function ResourceBooking({
         {resourceObjs.length > 1 && (
           <Step label={nounPlural}>
             <div className="flex flex-wrap gap-tight">
-              <button
-                type="button"
-                aria-pressed={resourceChoice === null}
+              <ChoiceCard
+                selected={resourceChoice === null}
+                hideCheck
                 onClick={() => { setResourceChoice(null); setTime(firstStart(date, duration, null)); }}
-                className={choiceCls(resourceChoice === null)}
+                className={CHOICE}
               >
                 {/* The resource's own name stays capitalised on its chip
                     ("Outdoor Field"); mid-sentence here it reads as a common
                     noun, so it is lowercased the way "field" already was in
                     the no-resource fallback. */}
                 {t("booking.anyResource", { noun: nounSingular.toLowerCase() })}
-              </button>
+              </ChoiceCard>
               {resourceObjs.map((r) => (
-                <button
+                <ChoiceCard
                   key={r.id}
-                  type="button"
-                  aria-pressed={resourceChoice === r.id}
+                  selected={resourceChoice === r.id}
+                  hideCheck
                   onClick={() => { setResourceChoice(r.id); setTime(firstStart(date, duration, r.id)); }}
-                  className={choiceCls(resourceChoice === r.id)}
+                  className={CHOICE}
                 >
                   {r.name}
-                </button>
+                </ChoiceCard>
               ))}
             </div>
           </Step>
@@ -410,16 +400,16 @@ function ResourceBooking({
                 const on = duration === mins;
                 const price = date ? priceAt(scheduleHoursOn(product.schedule!, date).startTime) : 0;
                 return (
-                  <button
+                  <ChoiceCard
                     key={mins}
-                    type="button"
-                    aria-pressed={on}
+                    selected={on}
+                    hideCheck
                     onClick={() => { setDuration(mins); setTime(firstStart(date, mins, resourceChoice)); }}
-                    className={cn(choiceCls(on), "min-h-14 flex-col gap-0.5 py-inline")}
+                    className={cn(CHOICE, "min-h-14 flex-col gap-0.5 py-inline")}
                   >
                     <span>{formatDuration(mins)}</span>
-                    <span className="tnum text-[12px] font-normal text-muted">{formatPriceShort(price)}</span>
-                  </button>
+                    <span className="tnum text-xs font-normal text-muted">{formatPriceShort(price)}</span>
+                  </ChoiceCard>
                 );
               })}
             </div>
@@ -429,7 +419,7 @@ function ResourceBooking({
         {date && (
           <Step label={t("booking.timeLabel")}>
             {timeOptions.length === 0 ? (
-              <p className="text-[14px] text-muted">{t("booking.noTimes")}</p>
+              <p className="text-base text-muted">{t("booking.noTimes")}</p>
             ) : (
               <div className="grid grid-cols-3 gap-tight">
                 {timeOptions.map((opt) => {
@@ -438,17 +428,17 @@ function ResourceBooking({
                   const price = cellPrice(opt.time);
                   const showPrice = price !== referencePrice;
                   return (
-                    <button
+                    <ChoiceCard
                       key={opt.time}
-                      type="button"
                       disabled={sold}
-                      aria-pressed={on}
+                      selected={on}
+                      hideCheck
                       onClick={() => setTime(opt.time)}
-                      className={cn(choiceCls(on), "min-h-12 flex-col px-tight py-tight", sold && "border-line bg-subtle text-muted line-through hover:border-line")}
+                      className={cn(CHOICE, "min-h-12 flex-col px-tight py-tight", sold && "line-through")}
                     >
                       <span>{formatClock(opt.time)}</span>
-                      {!sold && showPrice && <span className="tnum text-[12px] font-normal text-muted">{formatPriceShort(price)}</span>}
-                    </button>
+                      {!sold && showPrice && <span className="tnum text-xs font-normal text-muted">{formatPriceShort(price)}</span>}
+                    </ChoiceCard>
                   );
                 })}
               </div>
@@ -579,24 +569,24 @@ function TicketBooking({
         {needsTime && date && (
           <Step label={t("booking.timeLabel")}>
             {timeOptions.length === 0 ? (
-              <p className="text-[14px] text-muted">{t("booking.noTimes")}</p>
+              <p className="text-base text-muted">{t("booking.noTimes")}</p>
             ) : (
               <div className="grid grid-cols-3 gap-tight">
                 {timeOptions.map((opt) => {
                   const sold = opt.remaining <= 0;
                   const on = time === opt.time;
                   return (
-                    <button
+                    <ChoiceCard
                       key={opt.time}
-                      type="button"
                       disabled={sold}
-                      aria-pressed={on}
+                      selected={on}
+                      hideCheck
                       onClick={() => setTime(opt.time)}
-                      className={cn(choiceCls(on), "min-h-12 flex-col px-tight py-tight", sold && "border-line bg-subtle text-muted line-through hover:border-line")}
+                      className={cn(CHOICE, "min-h-12 flex-col px-tight py-tight", sold && "line-through")}
                     >
                       <span>{formatClock(opt.time)}</span>
-                      {!sold && <span className="text-[12px] font-normal text-muted">{t("booking.left", { count: opt.remaining })}</span>}
-                    </button>
+                      {!sold && <span className="text-xs font-normal text-muted">{t("booking.left", { count: opt.remaining })}</span>}
+                    </ChoiceCard>
                   );
                 })}
               </div>
@@ -605,30 +595,30 @@ function TicketBooking({
         )}
 
         {pattern === "daily" && date && Number.isFinite(dailyRemaining) && (
-          <p className="-mt-tight text-[14px] text-muted">{t("booking.dailyLeft", { count: dailyRemaining })}</p>
+          <p className="-mt-tight text-base text-muted">{t("booking.dailyLeft", { count: dailyRemaining })}</p>
         )}
 
         <Step label={t("booking.ticketsLabel")}>
           {tiers.length === 0 ? (
-            <p className="text-[14px] text-muted">{t("askAtTheDoor")}</p>
+            <p className="text-base text-muted">{t("askAtTheDoor")}</p>
           ) : (
-            <ul className="divide-y divide-hairline rounded-[12px] border border-line">
+            <ul className="divide-y divide-hairline rounded-md border border-line">
               {tiers.map((tr) => {
                 const n = qty[tr.id] ?? 0;
                 const disabledAdd = needsDate && (!date || (needsTime && !time));
                 return (
                   <li key={tr.id} className="flex items-center gap-comfortable p-comfortable">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[15px] font-semibold">{tr.name}</p>
-                      <p className="tnum text-[15px] font-semibold text-[var(--sf-ink)]">
+                      <p className="text-md font-semibold">{tr.name}</p>
+                      <p className="tnum text-md font-semibold text-brand-foreground">
                         {tr.donation ? t("donationFrom", { price: formatMoney(tr.price) }) : tr.price === 0 ? t("free") : formatPriceShort(tr.price)}
                       </p>
                       {(tr.ageNote || (tr.admits ?? 1) > 1) && (
-                        <p className="text-[14px] text-muted">
+                        <p className="text-base text-muted">
                           {[tr.ageNote, (tr.admits ?? 1) > 1 ? t("admits", { count: tr.admits ?? 1 }) : null].filter(Boolean).join(" · ")}
                         </p>
                       )}
-                      {tr.note && <p className="mt-inline text-[14px] leading-snug text-muted">{tr.note}</p>}
+                      {tr.note && <p className="mt-inline text-base leading-snug text-muted">{tr.note}</p>}
                     </div>
                     <div className="flex shrink-0 items-center gap-tight">
                       <button
@@ -636,17 +626,17 @@ function TicketBooking({
                         aria-label={t("booking.decreaseQty", { name: tr.name })}
                         disabled={n <= 0}
                         onClick={() => setTierQty(tr, n - 1)}
-                        className="flex h-11 w-11 items-center justify-center rounded-full border border-strong bg-white text-fg transition-colors hover:border-fg disabled:border-line disabled:text-faint"
+                        className="flex h-11 w-11 items-center justify-center rounded-full border border-strong bg-card text-fg transition-colors hover:border-fg disabled:border-line disabled:text-faint"
                       >
                         <Minus size={16} strokeWidth={2} aria-hidden />
                       </button>
-                      <span className="tnum w-6 text-center text-[16px] font-semibold">{n}</span>
+                      <span className="tnum w-6 text-center text-md font-semibold">{n}</span>
                       <button
                         type="button"
                         aria-label={t("booking.increaseQty", { name: tr.name })}
                         disabled={disabledAdd || n >= (tr.maxPerOrder ?? cap)}
                         onClick={() => setTierQty(tr, n + 1)}
-                        className="flex h-11 w-11 items-center justify-center rounded-full border border-strong bg-white text-fg transition-colors hover:border-fg disabled:border-line disabled:text-faint"
+                        className="flex h-11 w-11 items-center justify-center rounded-full border border-strong bg-card text-fg transition-colors hover:border-fg disabled:border-line disabled:text-faint"
                       >
                         <Plus size={16} strokeWidth={2} aria-hidden />
                       </button>

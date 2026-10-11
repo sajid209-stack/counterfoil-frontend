@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Check } from "lucide-react";
-import { Button, useToast } from "@/components/ui";
+import { Button, Notice, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
   deviceReadiness,
@@ -105,34 +104,34 @@ export function PairingPanel({
 
   return (
     <section aria-label={t("devices.codeLabel")} className="card-surface p-card" data-testid="pairing-panel">
-      <p className="text-[13px] font-medium text-muted">{t("devices.codeLabel")}</p>
+      <p className="text-sm font-medium text-muted">{t("devices.codeLabel")}</p>
       <p
         data-testid="pairing-code"
         data-code={device.pairingCode}
         className={cn(
-          "mt-tight select-all font-mono text-[40px] font-medium leading-none tracking-[0.12em] text-fg sm:text-[56px]",
+          "mt-tight select-all font-mono text-display font-medium leading-none tracking-[0.12em] text-fg sm:text-[56px]", // ds-exception: the pairing code is read here and typed on another screen, so it is set large
           (paired || expired) && "text-muted line-through decoration-1",
         )}
       >
         {code}
       </p>
       {fresh && !paired && (
-        <p role="status" data-testid="pairing-fresh" className="mt-inline text-[13px] font-medium text-success">
+        <p role="status" data-testid="pairing-fresh" className="mt-inline text-sm font-medium text-success">
           {t("devices.newCodeToast")}
         </p>
       )}
       {!paired && (
-        <p className={cn("mt-tight text-[13px]", expired ? "font-medium text-warning" : "text-muted")} data-testid="pairing-expiry">
+        <p className={cn("mt-tight text-sm", expired ? "font-medium text-warning" : "text-muted")} data-testid="pairing-expiry">
           {expired ? t("devices.codeExpired") : minutes <= 1 ? t("devices.codeExpiresSoon") : t("devices.codeExpires", { min: minutes })}
         </p>
       )}
 
       <ol className="mt-major flex flex-col gap-tight">
         {(["step1", "step2", "step3"] as const).map((step, i) => (
-          <li key={step} className="flex items-start gap-comfortable text-sm text-fg">
+          <li key={step} className="flex items-start gap-comfortable text-base text-fg">
             <span
               aria-hidden
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-subtle text-[12px] font-semibold text-muted ring-1 ring-inset ring-hairline"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-subtle text-xs font-semibold text-muted ring-1 ring-inset ring-hairline"
             >
               {i + 1}
             </span>
@@ -141,39 +140,30 @@ export function PairingPanel({
         ))}
       </ol>
 
-      <div
-        role="status"
-        aria-live="polite"
-        data-testid="pair-status"
-        data-state={state}
-        className={cn(
-          "mt-major flex items-start gap-tight rounded-sm px-comfortable py-tight text-sm font-medium",
-          state === "paired" && "bg-success/10 text-success",
-          state === "stuck" && "bg-warning/15 text-warning",
-          state === "expired" && "bg-warning/15 text-warning",
-          state === "waiting" && "bg-muted-wash text-fg",
-        )}
-      >
-        {state === "paired" || state === "stuck" ? (
-          <Check aria-hidden size={18} strokeWidth={2.25} className="mt-[1px] shrink-0" />
-        ) : (
-          <span
-            aria-hidden
-            className={cn("mt-[7px] h-2.5 w-2.5 shrink-0 rounded-full", state === "waiting" ? "animate-pulse bg-ember-solid" : "bg-warning")}
-          />
-        )}
-        <span>
-          {state === "paired"
-            ? t("devices.statusPaired", { name: device.name, counter: counter?.name ?? "" })
-            : state === "stuck"
-              ? t("devices.statusPairedStuck")
-              : state === "expired"
-                ? t("devices.codeExpired")
-                : t("devices.statusWaiting")}
-        </span>
+      <div aria-live="polite" data-testid="pair-status" data-state={state} className="mt-major">
+        <Notice
+          tone={state === "paired" ? "success" : state === "waiting" ? "neutral" : "warning"}
+          icon={
+            state === "waiting" ? (
+              <span className="flex h-4.5 w-4.5 items-center justify-center">
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-ember-solid" />
+              </span>
+            ) : undefined
+          }
+        >
+          <span className="font-medium">
+            {state === "paired"
+              ? t("devices.statusPaired", { name: device.name, counter: counter?.name ?? "" })
+              : state === "stuck"
+                ? t("devices.statusPairedStuck")
+                : state === "expired"
+                  ? t("devices.codeExpired")
+                  : t("devices.statusWaiting")}
+          </span>
+        </Notice>
       </div>
       {state === "paired" && venue && (
-        <p className="mt-inline text-[13px] text-muted">{t("devices.readyCount", { count: r.canSignIn.length })}</p>
+        <p className="mt-inline text-sm text-muted">{t("devices.readyCount", { count: r.canSignIn.length })}</p>
       )}
 
       <div className="mt-major flex flex-wrap items-center gap-tight">
@@ -193,7 +183,7 @@ export function PairingPanel({
           </Button>
         )}
       </div>
-      {!paired && !expired && <p className="mt-tight text-[13px] text-muted">{t("devices.pairHereNote")}</p>}
+      {!paired && !expired && <p className="mt-tight text-sm text-muted">{t("devices.pairHereNote")}</p>}
     </section>
   );
 }

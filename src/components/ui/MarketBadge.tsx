@@ -32,7 +32,7 @@ export function MarketBadge({
       aria-hidden
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-xs bg-market-solid px-1 font-bold leading-none text-white",
-        size === "go" ? "h-[1.125rem] min-w-[1.125rem] text-[0.8125rem]" : "h-4 min-w-4 text-[12px]",
+        size === "go" ? "h-[1.125rem] min-w-[1.125rem] text-sm" : "h-4 min-w-4 text-xs",
         className,
       )}
     >

@@ -3,13 +3,18 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-/** The selectable-card pattern — used everywhere a choice is made from cards
- *  (resources, providers, wizard options, demo businesses, date strips).
- *  Selected reads in grayscale, never by tint alone. Two ways of saying it:
- *  the default draws a check glyph in the corner; `hideCheck` swaps that for a
- *  doubled ember edge, for cards too small to give a corner away — a date pill
- *  is about 96px wide and the check lands on its own label. The ring is drawn
- *  inset rather than as a second border pixel so nothing shifts on selection. */
+/** The selectable-card pattern — use it wherever ONE (or a few) of several
+ *  rich options is chosen from cards: resources, providers, wizard options,
+ *  demo businesses. For a plain mutually exclusive mode switch use
+ *  SegmentedControl; for a form answer, Radio.
+ *
+ *  Selected is a 2px ember ring plus a check glyph, so it reads without colour.
+ *  `hideCheck` drops the glyph for cards too small to give a corner away — a
+ *  date pill is about 96px wide and the check lands on its own label — and the
+ *  ring alone carries it. The radius is `rounded-card`, so the same card is
+ *  12px in OS and the soft 18px in Go with no per-call prop. The ring is drawn
+ *  INSET (a 1px border + a 1px inset ring = 2px) so a clipping scroller never
+ *  eats it and nothing shifts on selection. */
 export function ChoiceCard({
   selected = false,
   disabled = false,
@@ -38,21 +43,19 @@ export function ChoiceCard({
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        "relative rounded-go border text-left transition-all duration-quick",
+        "relative rounded-card border text-left transition-[colors,box-shadow] duration-quick ease-counterfoil",
         disabled
           ? "border-line bg-subtle text-muted"
           : selected
-            ? hideCheck
-              ? "border-ember bg-ember/10 ring-1 ring-inset ring-ember"
-              : "border-ember bg-ember/5"
+            ? "border-ember bg-ember-wash/60 ring-1 ring-inset ring-ember"
             : raised
-              ? "border-transparent bg-card shadow-go hover:border-ember/40 active:bg-ember/5 dark:border-line"
-              : "border-line bg-card hover:border-ember/40 hover:shadow-sm active:bg-ember/5",
+              ? "border-transparent bg-card shadow-card hover:border-ember/40 active:bg-ember-wash dark:border-line"
+              : "border-line bg-card hover:border-ember/40 hover:shadow-sm active:bg-ember-wash",
         className,
       )}
     >
       {selected && !hideCheck && (
-        <span className="absolute right-tight top-tight flex h-4 w-4 items-center justify-center rounded-full bg-ember-solid text-white" aria-hidden>
+        <span className="absolute right-tight top-tight flex h-4 w-4 items-center justify-center rounded-full bg-ember-solid text-on-solid" aria-hidden>
           <Check size={11} strokeWidth={3} />
         </span>
       )}

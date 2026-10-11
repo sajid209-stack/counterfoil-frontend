@@ -24,7 +24,7 @@ export function Section({
   return (
     <section id={id} aria-label={title} className={cn("card-surface min-w-0 scroll-mt-24 p-card", className)}>
       <div className="mb-section flex items-center justify-between gap-tight">
-        <h2 className="text-base font-semibold text-fg">{title}</h2>
+        <h2 className="text-md font-semibold text-fg">{title}</h2>
         {action}
       </div>
       {children}
@@ -34,5 +34,5 @@ export function Section({
 
 /** Shown where a card has nothing yet — said in a sentence, not left blank. */
 export function Quiet({ children }: { children: React.ReactNode }) {
-  return <p className="text-[13px] text-muted">{children}</p>;
+  return <p className="text-sm text-muted">{children}</p>;
 }

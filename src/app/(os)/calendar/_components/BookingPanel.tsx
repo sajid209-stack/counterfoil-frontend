@@ -4,7 +4,7 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "re
 import { Check, Clock3, Minus, Plus, Search, Ticket, TriangleAlert, UserRound, Wallet, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import { DateField, Select } from "@/components/ui";
+import { Button, Checkbox, DateField, Notice, SegmentedControl, Select, controlClass, controlShellClass } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { useEnumLabels } from "@/lib/labels";
 import { formatClock, formatClockMin, formatClockRange, formatMoney, formatPriceShort } from "@/lib/format";
@@ -846,8 +846,9 @@ function Panel({
           }
         }}
         className={cn(
-          "fixed z-50 flex flex-col border border-line bg-sheet shadow-[0_24px_60px_-16px_rgb(0_0_0/0.30),0_4px_12px_-4px_rgb(0_0_0/0.10)]",
-          compact ? "go-sheet-panel inset-x-0 bottom-0 max-h-[90dvh] rounded-t-md" : "max-h-[calc(100dvh-32px)] rounded-md",
+          "fixed z-50 flex flex-col border border-line bg-sheet",
+          // A bottom sheet is level 3, the popover beside the grid level 2.
+          compact ? "go-sheet-panel inset-x-0 bottom-0 max-h-[90dvh] rounded-t-sheet shadow-lg" : "max-h-[calc(100dvh-32px)] rounded-sheet shadow-float",
         )}
         style={compact ? undefined : { width: PANEL_W, left: pos?.left ?? -9999, top: pos?.top ?? 0 }}
       >
@@ -855,14 +856,14 @@ function Panel({
 
         {/* ── the title is the booking ────────────────────────────────── */}
         <div className="flex items-start gap-tight px-card pt-section">
-          <div className="min-w-0 flex-1 min-[480px]:pl-[32px]">
-            <p className="text-[0.75rem] font-medium text-muted">{mode === "hold" ? th("eyebrow") : t("book.title")}</p>
+          <div className="min-w-0 flex-1 min-[480px]:pl-8">
+            <p className="text-xs font-medium text-muted">{mode === "hold" ? th("eyebrow") : t("book.title")}</p>
             <h2
               id={titleId}
               ref={heading}
               tabIndex={-1}
               className={cn(
-                "mt-0.5 break-words text-[20px] font-semibold leading-tight tracking-tight outline-none",
+                "mt-0.5 break-words text-xl font-semibold leading-tight tracking-title outline-none",
                 !chosen && "text-muted",
               )}
             >
@@ -884,23 +885,17 @@ function Panel({
             leaving the day you were looking at to describe it again from a
             form. */}
         <div className="px-card pt-comfortable">
-          <div role="tablist" aria-label={t("book.modeLabel")} className="flex gap-inline rounded-sm bg-muted-wash p-inline">
-            {(["book", "hold"] as const).map((m) => (
-              <button
-                key={m}
-                role="tab"
-                type="button"
-                aria-selected={mode === m}
-                onClick={() => { setMode(m); setTried(false); setError(null); }}
-                className={cn(
-                  "flex min-h-11 flex-1 items-center justify-center rounded-xs text-[13px] font-medium transition-colors duration-quick md:min-h-9",
-                  mode === m ? "bg-card text-fg shadow-sm ring-1 ring-strong" : "text-muted hover:text-fg",
-                )}
-              >
-                {t(m === "book" ? "book.modeBook" : "book.modeHold")}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            aria-label={t("book.modeLabel")}
+            size="sm"
+            fullWidth
+            value={mode}
+            onChange={(m) => { setMode(m as "book" | "hold"); setTried(false); setError(null); }}
+            options={[
+              { value: "book", label: t("book.modeBook") },
+              { value: "hold", label: t("book.modeHold") },
+            ]}
+          />
         </div>
         <div className="px-card pt-comfortable">
         {/* ── when: outside the scroll, so it stays in view and its date
@@ -935,7 +930,7 @@ function Panel({
                   setChosenKey(null);
                   setListOpen(true);
                 }}
-                triggerClassName="rounded-sm px-tight text-[14px] font-medium tabular-nums text-fg hover:bg-muted-wash"
+                triggerClassName="rounded-control px-tight text-base font-medium tabular-nums text-fg hover:bg-muted-wash"
                 options={[
                   { value: "", label: t("book.anyTime") },
                   ...hours.map((h) => ({
@@ -946,7 +941,7 @@ function Panel({
               />
             </div>
             {(where || (chosen && len != null) || ghost?.allDay) && (
-              <p className="mt-0.5 text-[12px] text-muted">
+              <p className="mt-0.5 text-xs text-muted">
                 {[ghost?.allDay ? t("book.allDayShort") : null, chosen && len != null ? lengthText(len) : null, where]
                   .filter(Boolean)
                   .join(" · ")}
@@ -987,14 +982,14 @@ function Panel({
                   <button
                     type="button"
                     onClick={() => setListOpen(true)}
-                    className="h-11 shrink-0 rounded-sm px-tight text-[13px] font-medium text-brand-foreground transition-colors duration-quick hover:bg-muted-wash md:h-9"
+                    className="h-11 shrink-0 rounded-control px-tight text-sm font-medium text-brand-foreground transition-colors duration-quick hover:bg-muted-wash md:h-9"
                   >
                     {t("book.change")}
                   </button>
                 </div>
               ) : (
                 <div ref={listRef}>
-                  <h3 id={`${titleId}-what`} className="mb-tight text-[0.75rem] font-medium text-muted">
+                  <h3 id={`${titleId}-what`} className="mb-tight text-xs font-medium text-muted">
                     {hour == null
                       ? dayRows.length > 0
                         ? t("book.whatDay")
@@ -1010,8 +1005,8 @@ function Panel({
                        nearest hours that do have something, the way a good
                        booking page offers the next available time rather than
                        a refusal. */
-                    <div className="rounded-sm border border-dashed border-line px-comfortable py-comfortable">
-                      <p className="text-[13px] text-fg">{t("book.nothingAt", { time: formatClockMin(hour * 60) })}</p>
+                    <div className="rounded-control border border-dashed border-line px-comfortable py-comfortable">
+                      <p className="text-sm text-fg">{t("book.nothingAt", { time: formatClockMin(hour * 60) })}</p>
                       {nearest(hours, hour).length > 0 && (
                         <div className="mt-tight flex flex-wrap gap-tight">
                           {nearest(hours, hour).map((h) => (
@@ -1019,10 +1014,10 @@ function Panel({
                               key={h.hour}
                               type="button"
                               onClick={() => setHour(h.hour)}
-                              className="flex h-11 items-center rounded-sm border border-line px-comfortable font-mono text-[13px] font-medium transition-colors duration-quick hover:border-ember hover:text-brand-foreground md:h-9"
+                              className="flex h-11 items-center rounded-control border border-line px-comfortable text-sm font-medium tabular-nums transition-colors duration-quick hover:border-ember hover:text-brand-foreground md:h-9"
                             >
                               {formatClockMin(h.hour * 60, { short: true })}
-                              <span className="ml-inline font-sans font-normal text-muted">· {t("book.openCount", { count: h.count })}</span>
+                              <span className="ml-inline font-normal text-muted">· {t("book.openCount", { count: h.count })}</span>
                             </button>
                           ))}
                         </div>
@@ -1036,10 +1031,10 @@ function Panel({
                         const open = allStarts.includes(r.product.id);
                         const shown = open ? r.starts : r.starts.slice(0, 4);
                         return (
-                          <li key={r.product.id} className="rounded-sm border border-line px-comfortable py-tight">
+                          <li key={r.product.id} className="rounded-control border border-line px-comfortable py-tight">
                             <div className="flex items-baseline gap-comfortable">
-                              <span className="min-w-0 flex-1 break-words text-[13px] font-medium leading-snug">{r.product.name}</span>
-                              <span className="shrink-0 text-[13px] font-medium tabular-nums">
+                              <span className="min-w-0 flex-1 break-words text-sm font-medium leading-snug">{r.product.name}</span>
+                              <span className="shrink-0 text-sm font-medium tabular-nums">
                                 {t("book.fromPrice", { amount: formatPriceShort(r.from, cur) })}
                               </span>
                             </div>
@@ -1053,7 +1048,7 @@ function Panel({
                                     setHour(st.hour);
                                     choose(st.option);
                                   }}
-                                  className="flex h-11 items-center rounded-sm border border-line px-tight font-mono text-[12px] font-medium tabular-nums transition-colors duration-quick hover:border-ember hover:bg-ember/5 hover:text-brand-foreground md:h-8"
+                                  className="flex h-11 items-center rounded-control border border-line px-tight text-xs font-medium tabular-nums transition-colors duration-quick hover:border-ember hover:bg-ember-wash hover:text-brand-foreground md:h-9"
                                 >
                                   {formatClock(st.option.time, { short: true })}
                                 </button>
@@ -1062,7 +1057,7 @@ function Panel({
                                 <button
                                   type="button"
                                   onClick={() => setAllStarts((x) => [...x, r.product.id])}
-                                  className="flex h-11 items-center rounded-sm px-tight text-[12px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:h-8"
+                                  className="flex h-11 items-center rounded-control px-tight text-xs font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:h-9"
                                 >
                                   {t("book.moreTimes", { count: r.starts.length - 4 })}
                                 </button>
@@ -1080,7 +1075,7 @@ function Panel({
                   {elsewhere.length > 0 &&
                     (elsewhereOpen || elsewhere.some((o) => o.key === chosenKey) ? (
                       <div className="mt-section">
-                        <h4 className="mb-tight text-[0.75rem] font-medium text-muted">
+                        <h4 className="mb-tight text-xs font-medium text-muted">
                           {t("book.elsewhere", { time: formatClockMin((hour ?? 0) * 60) })}
                         </h4>
                         <OptionList options={elsewhere} chosenKey={chosenKey} onChoose={choose} cur={cur} t={t} durationOf={durationOf} lengthLabel={lengthText} />
@@ -1101,7 +1096,7 @@ function Panel({
                       <MoreLine onClick={() => setAnytimeOpen(true)}>{t("book.alsoAllDay", { count: anytime.length })}</MoreLine>
                     ) : (
                       <div className={cn(timed.length > 0 || hour != null ? "mt-section" : "")}>
-                        <h4 className="mb-tight text-[0.75rem] font-medium text-muted">{t("book.allDay")}</h4>
+                        <h4 className="mb-tight text-xs font-medium text-muted">{t("book.allDay")}</h4>
                         <OptionList options={anytime} chosenKey={chosenKey} onChoose={choose} cur={cur} t={t} />
                       </div>
                     ))}
@@ -1172,12 +1167,12 @@ function Panel({
 
                   {mode === "book" && chosen.kind === "provider" && (
                     <label className="block">
-                      <span className="mb-tight block text-[0.75rem] font-medium text-muted">{t("book.with")}</span>
+                      <span className="mb-tight block text-xs font-medium text-muted">{t("book.with")}</span>
                       <Select
                         value={providerId}
                         onChange={setProviderId}
                         aria-label={t("book.with")}
-                        triggerClassName="text-[13px] md:h-9"
+                        triggerClassName="text-sm md:h-9"
                         options={[
                           { value: "", label: t("book.firstAvailable") },
                           ...freeProvidersAt(chosen.product, date, chosen.time!).map((id) => ({
@@ -1245,7 +1240,7 @@ function Panel({
             <>
               <Row icon={<UserRound size={18} strokeWidth={1.5} />}>
                 <label className="flex flex-col gap-inline">
-                  <span className="text-[0.75rem] font-medium text-muted">{th("fieldHeldFor")}</span>
+                  <span className="text-xs font-medium text-muted">{th("fieldHeldFor")}</span>
                   <input
                     ref={heldForRef}
                     value={heldFor}
@@ -1253,12 +1248,9 @@ function Panel({
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }}
                     placeholder={th("heldForPlaceholder")}
                     aria-invalid={tried && !heldFor.trim() ? true : undefined}
-                    className={cn(
-                      "h-11 w-full rounded-sm border bg-card px-comfortable text-[13px] outline-none focus:border-inverse md:h-9",
-                      tried && !heldFor.trim() ? "border-danger" : "border-line",
-                    )}
+                    className={cn(controlClass(tried && !heldFor.trim()), "md:h-9")}
                   />
-                  {tried && !heldFor.trim() ? <Hint>{th("needHeldFor")}</Hint> : <span className="text-[12px] text-muted">{th("heldForHelp")}</span>}
+                  {tried && !heldFor.trim() ? <Hint>{th("needHeldFor")}</Hint> : <span className="text-xs text-muted">{th("heldForHelp")}</span>}
                 </label>
               </Row>
 
@@ -1269,7 +1261,7 @@ function Panel({
                 <Row icon={<Ticket size={18} strokeWidth={1.5} />}>
                   <div className="flex flex-col gap-tight">
                     <div className="flex flex-wrap items-center gap-tight">
-                      <span className="text-[0.75rem] font-medium text-muted">{th("fieldQuantity")}</span>
+                      <span className="text-xs font-medium text-muted">{th("fieldQuantity")}</span>
                       <Stepper
                         value={holdAll ? holdMax : holdQtyNow}
                         min={1}
@@ -1279,19 +1271,11 @@ function Panel({
                         t={t}
                       />
                       {chosen?.remaining != null && (
-                        <span className="text-[12px] text-muted">{t("book.leftOf", { count: chosen.remaining })}</span>
+                        <span className="text-xs text-muted">{t("book.leftOf", { count: chosen.remaining })}</span>
                       )}
                     </div>
-                    <label className="flex items-center gap-tight text-[13px]">
-                      <input
-                        type="checkbox"
-                        checked={holdAll}
-                        onChange={(e) => setHoldAll(e.target.checked)}
-                        className="h-5 w-5 accent-[var(--color-ember-solid)]"
-                      />
-                      {th("wholeSession")}
-                    </label>
-                    <p className="text-[12px] text-muted">{th(holdAll ? "kindHelp_session" : "kindHelp_capacity")}</p>
+                    <Checkbox className="-ml-tight" checked={holdAll} onCheckedChange={setHoldAll} label={th("wholeSession")} />
+                    <p className="text-xs text-muted">{th(holdAll ? "kindHelp_session" : "kindHelp_capacity")}</p>
                   </div>
                 </Row>
               )}
@@ -1300,21 +1284,23 @@ function Panel({
                   most holds end when somebody decides they have. */}
               <Row icon={<Wallet size={18} strokeWidth={1.5} />}>
                 <label className="flex flex-col gap-inline">
-                  <span className="text-[0.75rem] font-medium text-muted">{th("fieldExpiry")}</span>
+                  <span className="text-xs font-medium text-muted">{th("fieldExpiry")}</span>
                   <span className="flex items-center gap-tight">
-                    <input
-                      value={holdDays}
-                      inputMode="numeric"
-                      onChange={(e) => setHoldDays(e.target.value.replace(/[^0-9]/g, ""))}
-                      placeholder="—"
-                      className="h-11 w-20 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse md:h-9"
-                    />
-                    <span className="text-[13px] text-muted">{th("days")}</span>
+                    <span className="w-20">
+                      <input
+                        value={holdDays}
+                        inputMode="numeric"
+                        onChange={(e) => setHoldDays(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="—"
+                        className={cn(controlClass(), "md:h-9")}
+                      />
+                    </span>
+                    <span className="text-sm text-muted">{th("days")}</span>
                   </span>
                   {/* The resolved date, live: "14" is arithmetic somebody has
                       to do, and an empty field reading "—" looks like a value
                       rather than the default it is. */}
-                  <span className="text-[12px] text-muted">
+                  <span className="text-xs text-muted">
                     {(() => {
                       const n = parseInt(holdDays, 10);
                       return Number.isFinite(n) && n > 0
@@ -1334,25 +1320,17 @@ function Panel({
               <h3 id={`${titleId}-pay`} className="sr-only">
                 {t("book.payment")}
               </h3>
-              <div role="radiogroup" aria-labelledby={`${titleId}-pay`} className="grid grid-flow-col gap-inline rounded-sm bg-muted-wash p-inline">
-                {payOptions.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    role="radio"
-                    aria-checked={pay === p}
-                    onClick={() => setPay(p)}
-                    className={cn(
-                      "min-h-11 rounded-xs px-tight text-[13px] font-medium transition-colors duration-quick md:min-h-9",
-                      // A ring as well as the fill: in dark the card and the
-                      // track are the same colour, and a fill alone vanished.
-                      pay === p ? "bg-card text-fg shadow-sm ring-1 ring-strong" : "text-muted hover:text-fg",
-                    )}
-                  >
-                    {t(p === "later" ? "book.payLater" : p === "deposit" ? "book.payDeposit" : "book.payFull")}
-                  </button>
-                ))}
-              </div>
+              <SegmentedControl
+                aria-labelledby={`${titleId}-pay`}
+                size="sm"
+                fullWidth
+                value={pay}
+                onChange={(p) => setPay(p as Pay)}
+                options={payOptions.map((p) => ({
+                  value: p,
+                  label: t(p === "later" ? "book.payLater" : p === "deposit" ? "book.payDeposit" : "book.payFull"),
+                }))}
+              />
               {pay !== "later" && methods.length > 1 && (
                 <label className="mt-tight block">
                   <span className="sr-only">{t("book.method")}</span>
@@ -1360,12 +1338,12 @@ function Panel({
                     value={method}
                     onChange={(v) => setMethod(v as TillMethod)}
                     aria-label={t("book.method")}
-                    triggerClassName="text-[13px] md:h-9"
+                    triggerClassName="text-sm md:h-9"
                     options={methods.map((m) => ({ value: m, label: enumL.method(m) }))}
                   />
                 </label>
               )}
-              <p className="mt-tight text-[12px] text-muted">
+              <p className="mt-tight text-xs text-muted">
                 {pay === "later"
                   ? t("book.payLaterNote")
                   : pay === "deposit"
@@ -1377,9 +1355,9 @@ function Panel({
           )}
 
           {error && (
-            <p role="alert" className="rounded-sm bg-danger-wash px-comfortable py-tight text-[13px] text-danger">
+            <Notice tone="danger" size="sm">
               {error}
-            </p>
+            </Notice>
           )}
         </div>
 
@@ -1391,7 +1369,7 @@ function Panel({
                 the old register said it in plain words before you pressed —
                 which is the one thing from that page worth keeping. */}
             {mode === "hold" ? (
-              <p className="text-[12px] leading-snug text-muted">
+              <p className="text-xs leading-snug text-muted">
                 {chosen
                   ? th(holdKind === "session" ? "preview_session" : holdKind === "resource" ? "preview_resource" : "preview_capacity", {
                       what: holdKind === "resource" ? (ghost?.sub ?? th("somethingChosen")) : String(holdQtyNow),
@@ -1403,11 +1381,11 @@ function Panel({
               </p>
             ) : chosen && items.length > 0 ? (
               <>
-                <p className="text-[18px] font-semibold leading-tight tabular-nums">{formatMoney(totals.total, cur)}</p>
+                <p className="text-lg font-semibold leading-tight tabular-nums">{formatMoney(totals.total, cur)}</p>
                 {/* "৳600 + ৳90 VAT", not "incl. ৳90 VAT": the rows above quote
                     prices before tax, and a total that does not visibly add
                     up from them reads as an overcharge. */}
-                <p className="text-[12px] leading-snug text-muted tabular-nums">
+                <p className="text-xs leading-snug text-muted tabular-nums">
                   {[
                     totals.tax > 0
                       ? t("book.plusTax", { net: formatMoney(totals.total - totals.tax, cur), tax: formatMoney(totals.tax, cur) })
@@ -1419,24 +1397,18 @@ function Panel({
                 </p>
               </>
             ) : compact ? null : (
-              <p className="text-[12px] text-muted">{t("book.shortcutHint", { key: modKey })}</p>
+              <p className="text-xs text-muted">{t("book.shortcutHint", { key: modKey })}</p>
             )}
           </div>
-          <button
-            type="button"
+          {/* Quiet (secondary) until there is something to book. Still
+              pressable — it then says what is missing and goes there — but an
+              ember "Reserve" over an empty form promised an action it could not
+              take. */}
+          <Button
+            variant={chosen ? "primary" : "secondary"}
             onClick={submit}
             aria-busy={busy}
-            className={cn(
-              "flex min-h-11 shrink-0 items-center justify-center rounded-sm px-section text-[14px] font-semibold transition-colors duration-quick",
-              /* Quiet until there is something to book. Still pressable — it
-                 then says what is missing and goes there — but an ember
-                 "Reserve" over an empty form promised an action it could not
-                 take. */
-              chosen
-                ? "bg-ember-solid text-white hover:bg-ember-solid/90"
-                : "border border-line bg-card text-muted hover:border-strong hover:text-fg",
-              busy && "cursor-progress opacity-80",
-            )}
+            className={cn("shrink-0", busy && "cursor-progress opacity-80")}
           >
             {busy
               ? t("book.booking")
@@ -1445,7 +1417,7 @@ function Panel({
                 : pay === "later"
                   ? t("book.reserve")
                   : t("book.bookAndPay", { amount: formatMoney(payNow, cur) })}
-          </button>
+          </Button>
         </div>
       </div>
     </>
@@ -1459,7 +1431,7 @@ function Row({ icon, children }: { icon: React.ReactNode; children: React.ReactN
       <span aria-hidden className="hidden h-9 w-5 shrink-0 items-center justify-center text-muted min-[480px]:flex">
         {icon}
       </span>
-      <div className="min-w-0 flex-1 pt-[1px]">{children}</div>
+      <div className="min-w-0 flex-1 pt-px">{children}</div>
     </div>
   );
 }
@@ -1467,8 +1439,8 @@ function Row({ icon, children }: { icon: React.ReactNode; children: React.ReactN
 /** What is missing, beside where it goes. */
 function Hint({ children, tone = "danger" }: { children: React.ReactNode; tone?: "danger" | "warning" }) {
   return (
-    <p role="alert" className={cn("mb-tight flex items-start gap-inline text-[13px] font-medium", tone === "danger" ? "text-danger" : "text-warning")}>
-      {tone === "warning" && <TriangleAlert size={14} strokeWidth={1.5} aria-hidden className="mt-[3px] shrink-0" />}
+    <p role="alert" className={cn("mb-tight flex items-start gap-inline text-sm font-medium", tone === "danger" ? "text-danger" : "text-warning")}>
+      {tone === "warning" && <TriangleAlert size={14} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0" />}
       <span className="min-w-0">{children}</span>
     </p>
   );
@@ -1479,7 +1451,7 @@ function MoreLine({ onClick, children }: { onClick: () => void; children: React.
     <button
       type="button"
       onClick={onClick}
-      className="mt-inline flex min-h-11 w-full items-center justify-between rounded-sm px-tight text-left text-[13px] text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
+      className="mt-inline flex min-h-11 w-full items-center justify-between rounded-control px-tight text-left text-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
     >
       <span>{children}</span>
       <Plus size={14} strokeWidth={1.5} aria-hidden />
@@ -1490,7 +1462,7 @@ function MoreLine({ onClick, children }: { onClick: () => void; children: React.
 function ChipGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="mb-tight text-[0.75rem] font-medium text-muted">{label}</p>
+      <p className="mb-tight text-xs font-medium text-muted">{label}</p>
       <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-tight">
         {children}
       </div>
@@ -1521,16 +1493,16 @@ function Chip({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "flex min-h-11 flex-col items-start justify-center rounded-sm border px-comfortable py-inline text-left transition-colors duration-quick md:min-h-9",
+        "flex min-h-11 flex-col items-start justify-center rounded-control border px-comfortable py-inline text-left transition-colors duration-quick md:min-h-9",
         disabled
           ? "cursor-not-allowed border-dashed border-line bg-[repeating-linear-gradient(45deg,var(--color-muted-wash),var(--color-muted-wash)_3px,transparent_3px,transparent_7px)] text-muted"
           : on
-            ? "border-ember bg-ember/10"
+            ? "border-ember bg-ember-wash/60 ring-1 ring-inset ring-ember"
             : "border-line hover:border-strong",
       )}
     >
-      <span className={cn("text-[13px] font-medium leading-tight", on && !disabled && "text-brand-foreground")}>{children}</span>
-      {sub && <span className="text-[12px] leading-tight text-muted">{sub}</span>}
+      <span className={cn("text-sm font-medium leading-tight", on && !disabled && "text-brand-foreground")}>{children}</span>
+      {sub && <span className="text-xs leading-tight text-muted">{sub}</span>}
     </button>
   );
 }
@@ -1629,22 +1601,22 @@ function OptionRow({
       aria-checked={on}
       onClick={onChoose}
       className={cn(
-        "flex min-h-11 w-full items-center gap-comfortable rounded-sm border px-comfortable py-tight text-left transition-colors duration-quick",
-        on ? "border-ember bg-ember/5" : "border-line hover:border-strong hover:bg-muted-wash",
+        "flex min-h-11 w-full items-center gap-comfortable rounded-control border px-comfortable py-tight text-left transition-colors duration-quick",
+        on ? "border-ember bg-ember-wash/60 ring-1 ring-inset ring-ember" : "border-line hover:border-strong hover:bg-muted-wash",
       )}
     >
       <span
         aria-hidden
         className={cn(
           "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
-          on ? "border-ember-solid bg-ember-solid text-white" : "border-strong",
+          on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-strong",
         )}
       >
         {on && <Check size={10} strokeWidth={3} />}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block break-words text-[13px] font-medium leading-snug">{o.product.name}</span>
-        <span className="block text-[12px] leading-snug text-muted">
+        <span className="block break-words text-sm font-medium leading-snug">{o.product.name}</span>
+        <span className="block text-xs leading-snug text-muted">
           {/* A show at a quarter past, under an hour that was clicked on the
               hour, says so in colour as well as in digits. */}
           {o.time && <span className={cn("tabular-nums", offHour && "font-medium text-brand-foreground")}>{formatClock(o.time)}</span>}
@@ -1654,7 +1626,7 @@ function OptionRow({
             .join("")}
         </span>
       </span>
-      <span className="shrink-0 whitespace-nowrap text-[13px] font-medium tabular-nums">
+      <span className="shrink-0 whitespace-nowrap text-sm font-medium tabular-nums">
         {!lanePick && priceNow == null && o.lanes && new Set(o.lanes.map((l) => l.price)).size > 1
           ? t("book.fromPrice", { amount: formatPriceShort(o.price, cur) })
           : formatPriceShort(price, cur)}
@@ -1683,8 +1655,8 @@ function Stepper({
   return (
     <div className="flex items-center gap-comfortable">
       <span className="min-w-0 flex-1">
-        <span className="block break-words text-[13px] font-medium leading-snug">{label}</span>
-        {hint && <span className="block text-[12px] text-muted">{hint}</span>}
+        <span className="block break-words text-sm font-medium leading-snug">{label}</span>
+        {hint && <span className="block text-xs text-muted">{hint}</span>}
       </span>
       <div className="flex shrink-0 items-center gap-inline">
         <button
@@ -1692,11 +1664,11 @@ function Stepper({
           aria-label={t("book.less", { what: label })}
           disabled={value <= min}
           onClick={() => onChange(Math.max(min, value - 1))}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-fg transition-colors duration-quick hover:bg-muted-wash disabled:cursor-not-allowed disabled:opacity-35 md:h-8 md:w-8"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-fg transition-colors duration-quick hover:bg-muted-wash disabled:cursor-not-allowed disabled:opacity-35 md:h-9 md:w-9"
         >
           <Minus size={14} strokeWidth={2} />
         </button>
-        <span aria-live="polite" className="w-7 text-center text-[14px] font-semibold tabular-nums">
+        <span aria-live="polite" className="w-7 text-center text-base font-semibold tabular-nums">
           {value}
         </span>
         <button
@@ -1704,7 +1676,7 @@ function Stepper({
           aria-label={t("book.more", { what: label })}
           disabled={value >= max}
           onClick={() => onChange(Math.min(max, value + 1))}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-fg transition-colors duration-quick hover:bg-muted-wash disabled:cursor-not-allowed disabled:opacity-35 md:h-8 md:w-8"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-fg transition-colors duration-quick hover:bg-muted-wash disabled:cursor-not-allowed disabled:opacity-35 md:h-9 md:w-9"
         >
           <Plus size={14} strokeWidth={2} />
         </button>
@@ -1783,18 +1755,18 @@ function GuestField({
           {t("book.guest")}
         </h3>
         <div className="flex min-h-9 items-center gap-comfortable">
-          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ember-wash text-[12px] font-semibold text-brand-foreground">
+          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ember-wash text-xs font-semibold text-brand-foreground">
             {initials(guest.name)}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block break-words text-[14px] font-medium leading-tight">{guest.name}</span>
-            {guest.phone && <span className="block text-[12px] text-muted normal-nums">{guest.phone}</span>}
+            <span className="block break-words text-base font-medium leading-tight">{guest.name}</span>
+            {guest.phone && <span className="block text-xs text-muted normal-nums">{guest.phone}</span>}
           </span>
           <button
             type="button"
             onClick={onClear}
             aria-label={t("book.changeGuest")}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:h-8 md:w-8"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:h-9 md:w-9"
           >
             <X size={16} strokeWidth={1.5} />
           </button>
@@ -1808,8 +1780,8 @@ function GuestField({
       <h3 id={`${id}-h`} className="sr-only">
         {t(required ? "book.guestRequired" : "book.guest")}
       </h3>
-      <div className="relative">
-        <Search size={15} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
+      <div data-focus-host="" className={cn(controlShellClass(invalid), "items-center md:h-9")}>
+        <Search size={15} strokeWidth={1.5} aria-hidden className="ml-comfortable shrink-0 text-muted" />
         <input
           ref={inputRef}
           value={query}
@@ -1836,15 +1808,12 @@ function GuestField({
           placeholder={t(required ? "book.guestPlaceholderRequired" : "book.guestPlaceholder")}
           aria-labelledby={`${id}-h`}
           aria-invalid={invalid || undefined}
-          className={cn(
-            "h-11 w-full rounded-sm border bg-card pl-[36px] pr-comfortable text-[13px] outline-none placeholder:text-muted focus:border-inverse md:h-9",
-            invalid ? "border-danger" : "border-line",
-          )}
+          className="h-full min-w-0 flex-1 bg-transparent pl-tight pr-comfortable text-base text-fg placeholder:text-muted"
         />
       </div>
-      {invalid && <p role="alert" className="mt-inline text-[13px] font-medium text-danger">{t("book.needName")}</p>}
+      {invalid && <p role="alert" className="mt-inline text-sm font-medium text-danger">{t("book.needName")}</p>}
       {listOpen && (
-        <ul id={listId} role="listbox" aria-label={t("book.matches")} className="mt-inline flex flex-col gap-0.5 rounded-sm border border-line p-inline">
+        <ul id={listId} role="listbox" aria-label={t("book.matches")} className="mt-inline flex flex-col gap-0.5 rounded-control border border-line p-inline">
           {matches.map((c, i) => (
             <li
               key={c.id}
@@ -1854,16 +1823,16 @@ function GuestField({
               onMouseEnter={() => setActiveFor({ q, i })}
               onClick={() => onPick({ id: c.id, name: c.name, phone: c.phone })}
               className={cn(
-                "flex min-h-11 cursor-pointer items-center gap-comfortable rounded-xs px-tight py-inline",
+                "flex min-h-11 cursor-pointer items-center gap-comfortable rounded-inner px-tight py-inline",
                 active === i && "bg-muted-wash",
               )}
             >
-              <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ember-wash text-[12px] font-semibold text-brand-foreground">
+              <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ember-wash text-xs font-semibold text-brand-foreground">
                 {initials(c.name)}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block break-words text-[13px] font-medium">{c.name}</span>
-                <span className="block text-[12px] text-muted normal-nums">
+                <span className="block break-words text-sm font-medium">{c.name}</span>
+                <span className="block text-xs text-muted normal-nums">
                   {[c.phone, t("book.orders", { count: c.stats.orders })].filter(Boolean).join(" · ")}
                 </span>
               </span>
@@ -1876,7 +1845,7 @@ function GuestField({
             onMouseEnter={() => setActiveFor({ q, i: matches.length })}
             onClick={addNew}
             className={cn(
-              "flex min-h-11 cursor-pointer items-center gap-comfortable rounded-xs px-tight py-inline text-[13px] font-medium text-brand-foreground",
+              "flex min-h-11 cursor-pointer items-center gap-comfortable rounded-inner px-tight py-inline text-sm font-medium text-brand-foreground",
               active === matches.length && "bg-muted-wash",
             )}
           >
@@ -1889,7 +1858,7 @@ function GuestField({
       )}
       {adding && (
         <div className="mt-tight">
-          <p className="mb-inline text-[12px] text-muted">{t("book.newGuest", { name: q })}</p>
+          <p className="mb-inline text-xs text-muted">{t("book.newGuest", { name: q })}</p>
           <input
             ref={phoneRef}
             value={phone}
@@ -1904,7 +1873,7 @@ function GuestField({
             inputMode="tel"
             placeholder={t("book.phonePlaceholder")}
             aria-label={t("book.phone")}
-            className="h-11 w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none placeholder:text-muted focus:border-inverse md:h-9"
+            className={cn(controlClass(), "md:h-9")}
           />
         </div>
       )}

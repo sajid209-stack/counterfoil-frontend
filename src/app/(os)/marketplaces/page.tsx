@@ -29,7 +29,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ActionMenu, Button, EmptyState, StatusPill, useToast } from "@/components/ui";
+import { ActionMenu, Button, EmptyState, Skeleton, StatusPill, useToast } from "@/components/ui";
 import { PageShell, PageToolbar } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -99,7 +99,7 @@ export default function MarketplacesPage() {
     <PageShell title={t("title")} description={t("description")} primary={connectPrimary}>
       <PageToolbar primary={connectPrimary} className="mb-section">
         {connections.length > 0 && (
-          <p data-mk-summary className="text-[13px] text-muted md:leading-9">
+          <p data-mk-summary className="text-sm text-muted md:leading-9">
             {t("summary", {
               live: totals.live,
               orders: totals.orders,
@@ -112,7 +112,7 @@ export default function MarketplacesPage() {
 
       {q.loading ? (
         <div aria-busy="true" className="grid gap-section sm:grid-cols-2">
-          {[0, 1].map((i) => <div key={i} className="h-40 animate-pulse rounded-md bg-subtle" />)}
+          {[0, 1].map((i) => <Skeleton key={i} h={160} />)}
         </div>
       ) : (
         <div className="flex flex-col gap-section">
@@ -122,8 +122,8 @@ export default function MarketplacesPage() {
             <EmptyState title={t("empty.title")} message={t("empty.body")} />
           ) : (
             <section aria-labelledby="mk-connected">
-              <h2 id="mk-connected" className="mb-tight text-base font-semibold tracking-[-0.4px]">{t("connectedTitle")}</h2>
-              <ul className="card-surface overflow-hidden">
+              <h2 id="mk-connected" className="mb-tight text-md font-semibold">{t("connectedTitle")}</h2>
+              <ul className="card-surface [&>li:first-child]:rounded-t-card [&>li:last-child]:rounded-b-card">
                 {connections.map((c) => {
                   const meta = marketplaceById(c.marketplaceId);
                   const counts = listingCounts(c.id);
@@ -134,23 +134,23 @@ export default function MarketplacesPage() {
                     <li key={c.id} className="relative flex items-center border-b border-hairline last:border-0 hover:bg-muted-wash">
                       <Link href={`/marketplaces/${c.id}`} className="flex min-h-14 min-w-0 flex-1 flex-col gap-inline py-comfortable pl-card pr-tight">
                         <span className="flex items-center gap-tight">
-                          <span className="min-w-0 truncate font-medium">{meta.name}</span>
+                          <span className="min-w-0 truncate text-base font-medium">{meta.name}</span>
                           <StatusPill tone={c.status === "connected" ? "success" : c.status === "attention" ? "warning" : "info"}>
                             {t(`status.${c.status}`)}
                           </StatusPill>
                         </span>
                         {/* The money, the way it is decided. Wider screens only:
                             a phone row keeps to the two facts that change. */}
-                        <span className="hidden text-[13px] text-muted sm:block">
+                        <span className="hidden text-sm text-muted sm:block">
                           {t("keepOf", { pct: bpsToPct(c.commissionBps), net: formatMoney(s.net), price: formatMoney(s.price) })}
                         </span>
-                        <span className="text-[13px] text-muted">
+                        <span className="text-sm text-muted">
                           {t("listingLine", { live: counts.live, total: Object.values(counts).reduce((a, b) => a + b, 0) })}
                           {/* What it earned is a second line on a phone's row only
                               when it fits; from sm it follows on the same line. */}
                           {perf.orders > 0 && <span className="hidden sm:inline"> · {t("broughtIn", { orders: perf.orders, net: formatMoney(perf.net) })}</span>}
                         </span>
-                        {issue && <span className="text-[13px] text-warning">{issue}</span>}
+                        {issue && <span className="text-sm text-warning">{issue}</span>}
                       </Link>
                       <span className="shrink-0 pr-card">
                         <ActionMenu
@@ -171,13 +171,13 @@ export default function MarketplacesPage() {
           {/* Not connected — what else is out there */}
           {available.length > 0 && (
             <section aria-labelledby="mk-available">
-              <h2 id="mk-available" className="mb-tight text-base font-semibold tracking-[-0.4px]">{t("availableTitle")}</h2>
-              <ul className="card-surface overflow-hidden">
+              <h2 id="mk-available" className="mb-tight text-md font-semibold">{t("availableTitle")}</h2>
+              <ul className="card-surface [&>li:first-child]:rounded-t-card [&>li:last-child]:rounded-b-card">
                 {available.map((m) => (
                   <li key={m.id} className="flex items-center gap-tight border-b border-hairline px-card py-comfortable last:border-0">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{m.name}</p>
-                      <p className="text-[13px] text-muted">
+                      <p className="truncate text-base font-medium">{m.name}</p>
+                      <p className="text-sm text-muted">
                         {t(`sells.${m.sells}`)} · {t("typically", { pct: bpsToPct(m.typicalBps) })}
                       </p>
                     </div>

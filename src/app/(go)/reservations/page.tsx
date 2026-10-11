@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
-import { EmptyState, StatusPill } from "@/components/ui";
+import { EmptyState, Skeleton, StatusPill } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { listBookings, listProducts } from "@/lib/api";
 import { formatClockOf, formatDate } from "@/lib/format";
@@ -29,7 +29,7 @@ export default function GoBookingsPage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-section px-section py-section">
       <div>
-        <p className="type-label text-[0.8125rem] text-brand-foreground">{t("arrivalsGateLabel")}</p>
+        <p className="text-sm font-medium text-brand-foreground">{t("arrivalsGateLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("arrivalsTitle")}</h1>
       </div>
       <div className="relative">
@@ -39,25 +39,25 @@ export default function GoBookingsPage() {
           onChange={(e) => setSearch(e.target.value)}
           aria-label={t("arrivalsSearchPlaceholder")}
           placeholder={t("arrivalsSearchPlaceholder")}
-          className="h-12 w-full rounded-full border border-line bg-card pl-10 pr-section text-sm outline-none focus:border-inverse"
+          className="h-12 w-full rounded-full border border-line bg-card pl-10 pr-section text-base"
         />
       </div>
 
       {bookingsQ.loading ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-full bg-line" /><div className="h-4 w-2/3 rounded-full bg-line" /><div className="h-4 w-1/2 rounded-full bg-line" /></div>
+        <div aria-busy="true" className="flex flex-col gap-tight"><Skeleton h={16} w="33%" className="rounded-full" /><Skeleton h={16} w="67%" className="rounded-full" /><Skeleton h={16} w="50%" className="rounded-full" /></div>
       ) : arrivals.length === 0 ? (
         <EmptyState title={t("noArrivals")} />
       ) : (
         <div className="flex flex-col gap-tight">
           {arrivals.slice(0, 40).map((b) => (
-            <div key={b.id} className="flex items-center gap-section rounded-go border border-line bg-card p-comfortable">
+            <div key={b.id} className="flex items-center gap-section card-surface p-comfortable">
               <div className="text-center">
                 <div className="whitespace-nowrap text-lg font-medium tabular-nums">{formatClockOf(b.slotStart)}</div>
-                <div className="font-mono text-[0.8125rem] text-muted">{formatDate(b.slotStart)}</div>
+                <div className="text-sm tabular-nums text-muted">{formatDate(b.slotStart)}</div>
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">{productName(b.productId)}</div>
-                <div className="font-mono text-[0.8125rem] text-muted">{t("partyOf", { size: b.partySize })}</div>
+                <div className="truncate text-base font-medium">{productName(b.productId)}</div>
+                <div className="text-sm tabular-nums text-muted">{t("partyOf", { size: b.partySize })}</div>
               </div>
               <StatusPill status="confirmed" />
             </div>

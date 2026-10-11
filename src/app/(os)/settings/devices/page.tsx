@@ -104,15 +104,13 @@ export default function DevicesPage() {
       {loading ? (
         <SectionSkeleton />
       ) : devices.length === 0 ? (
-        <div className="max-w-3xl">
-          <EmptyState
-            title={t("devices.emptyTitle")}
-            message={t("devices.emptyMessage")}
-            action={<Button onClick={() => router.push("/settings/devices/new")}>{t("devices.register")}</Button>}
-          />
-        </div>
+        <EmptyState
+          title={t("devices.emptyTitle")}
+          message={t("devices.emptyMessage")}
+          action={<Button onClick={() => router.push("/settings/devices/new")}>{t("devices.register")}</Button>}
+        />
       ) : (
-        <div className="flex max-w-4xl flex-col gap-section pb-hero">
+        <div className="flex flex-col gap-section pb-hero">
           {/* The first toolbar: the views, with the create button at the right of the
               same rule. A list has no header row above it for the button. */}
           <PageToolbar underline primary={primary}>
@@ -123,7 +121,7 @@ export default function DevicesPage() {
             />
           </PageToolbar>
           {visible.length === 0 ? (
-            <p className="py-section text-sm text-muted">{t("devices.emptyTab")}</p>
+            <p className="py-section text-base text-muted">{t("devices.emptyTab")}</p>
           ) : (
             <RecordList label={t("devices.title")}>
               {visible.map((d) => {

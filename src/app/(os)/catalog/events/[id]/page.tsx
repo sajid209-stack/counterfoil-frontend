@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Archive, Check, ChevronDown, Circle, Copy, Download, Eye, EyeOff, Monitor, Pencil, Smartphone } from "lucide-react";
-import { ActionMenu, Button, ConfirmDialog, EmptyState, PageShell, StatusPill, useToast, type ActionMenuItem, type PillTone } from "@/components/ui";
+import { ActionMenu, Button, ConfirmDialog, EmptyState, PageShell, SegmentedControl, Skeleton, StatusPill, useToast, type ActionMenuItem, type PillTone } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -208,7 +208,7 @@ export default function EventDetailPage() {
       actions={e ? <ActionMenu label={tc("rowActions", { name: e.title })} items={menuItems} /> : undefined}
     >
       <div className={cn("flex flex-col gap-section pb-hero", templateFontVars)}>
-        {!e && <div aria-busy="true" className="h-40 animate-pulse rounded-md bg-muted-wash" />}
+        {!e && <div aria-busy="true"><Skeleton h={160} className="w-full rounded-card" /></div>}
 
         {/* The facts, first and quiet: when, where, how much of it has gone,
             and what that took. Four pairs in one card, no figures competing. */}
@@ -217,7 +217,7 @@ export default function EventDetailPage() {
             <FactItem label={tr("when")} className="col-span-2 lg:col-span-1">{when}</FactItem>
             <FactItem label={tr("venue")} className="col-span-2 lg:col-span-1">
               <span className="block">{e.venueName}</span>
-              {e.venueAddress && <span className="block text-[0.75rem] text-muted">{e.venueAddress}</span>}
+              {e.venueAddress && <span className="block text-xs text-muted">{e.venueAddress}</span>}
             </FactItem>
             <FactItem label={tr("settle.sold")}>
               <span className="tabular-nums">{tr("days.soldOf", { sold: settlement.totals.sold.toLocaleString(), cap: settlement.totals.capacity.toLocaleString() })}</span>
@@ -225,7 +225,7 @@ export default function EventDetailPage() {
             </FactItem>
             <FactItem label={tr("settle.taken")}>
               <span className="tabular-nums">{formatPriceShort(settlement.totals.net)}</span>
-              {settlement.totals.refundedAmount > 0 && <span className="block text-[0.75rem] text-muted">{tr("settle.refunded", { amount: formatPriceShort(settlement.totals.refundedAmount) })}</span>}
+              {settlement.totals.refundedAmount > 0 && <span className="block text-xs text-muted">{tr("settle.refunded", { amount: formatPriceShort(settlement.totals.refundedAmount) })}</span>}
             </FactItem>
           </dl>
         )}
@@ -240,10 +240,10 @@ export default function EventDetailPage() {
               {/* Which tickets are selling — the breakdown the list's one bar
                   cannot show, and the first thing a box office is asked. */}
               <section className="card-surface overflow-hidden max-lg:order-1" aria-labelledby="ev-tiers">
-                <h2 id="ev-tiers" className="px-card pb-tight pt-card text-base font-semibold text-fg">{tc("editEvent.tabTickets")}</h2>
+                <h2 id="ev-tiers" className="px-card pb-tight pt-card text-md font-semibold text-fg">{tc("editEvent.tabTickets")}</h2>
                 {wide ? (
-                  <table className="w-full text-[0.8125rem]">
-                    <thead className="text-left text-[0.75rem] text-muted">
+                  <table className="w-full text-sm">
+                    <thead className="text-left text-xs text-muted">
                       <tr className="border-b border-hairline">
                         <th scope="col" className="px-card py-tight font-medium">{tr("colTicket")}</th>
                         <th scope="col" className="py-tight pr-section text-right font-medium">{tr("colPrice")}</th>
@@ -262,7 +262,7 @@ export default function EventDetailPage() {
                             </td>
                             <td className="py-comfortable pr-section text-right tabular-nums">{x.price === 0 ? t("free") : formatPriceShort(x.price)}</td>
                             <td className="w-48 py-comfortable pr-section">
-                              <span className="flex items-baseline justify-between gap-tight text-[0.75rem] tabular-nums">
+                              <span className="flex items-baseline justify-between gap-tight text-xs tabular-nums">
                                 <span>{tc("soldOf", { sold: x.sold.toLocaleString(), cap: x.quantity.toLocaleString() })}</span>
                                 <span className="text-muted">{p}%</span>
                               </span>
@@ -283,9 +283,9 @@ export default function EventDetailPage() {
                       <li key={x.id} className="px-card py-comfortable">
                         <div className="flex items-baseline justify-between gap-tight">
                           <span className="min-w-0 break-words font-medium">{x.name}</span>
-                          <span className="shrink-0 text-[0.8125rem] tabular-nums">{x.price === 0 ? t("free") : formatPriceShort(x.price)}</span>
+                          <span className="shrink-0 text-sm tabular-nums">{x.price === 0 ? t("free") : formatPriceShort(x.price)}</span>
                         </div>
-                        <div className="mt-inline flex items-baseline justify-between gap-tight text-[0.75rem] text-muted tabular-nums">
+                        <div className="mt-inline flex items-baseline justify-between gap-tight text-xs text-muted tabular-nums">
                           <span>{tc("soldOf", { sold: x.sold.toLocaleString(), cap: x.quantity.toLocaleString() })}</span>
                           <span>{formatPriceShort(x.sold * x.price)}</span>
                         </div>
@@ -311,18 +311,18 @@ export default function EventDetailPage() {
                          this day" agree until the day one of them is changed. */
                       const admits = e.tiers.filter((x) => tierDays(e, x).some((y) => y.id === d.id));
                       return (
-                        <li key={d.id} className="flex flex-col gap-inline rounded-sm bg-muted-wash p-comfortable">
+                        <li key={d.id} className="flex flex-col gap-inline rounded-control bg-muted-wash p-comfortable">
                           <span className="flex flex-wrap items-baseline justify-between gap-tight">
-                            <span className="text-[0.8125rem] font-medium">{dayName(d, i, (n) => tr("days.nth", { n }))}</span>
-                            <span className="text-[0.75rem] text-muted tabular-nums">{formatDay(d.date, { weekday: true })}</span>
+                            <span className="text-sm font-medium">{dayName(d, i, (n) => tr("days.nth", { n }))}</span>
+                            <span className="text-xs text-muted tabular-nums">{formatDay(d.date, { weekday: true })}</span>
                           </span>
-                          <span className="text-[0.8125rem] tabular-nums">{tr("days.soldOf", { sold: f.sold.toLocaleString(), cap: f.cap.toLocaleString() })}</span>
+                          <span className="text-sm tabular-nums">{tr("days.soldOf", { sold: f.sold.toLocaleString(), cap: f.cap.toLocaleString() })}</span>
                           <Bar pct={f.pct} track="card" />
                           {/* Named, not counted. "3 ticket types admit this day"
                               left the one question this panel exists to answer —
                               does the weekend pass get them in on Sunday? —
                               needing a trip to the table. */}
-                          <span className="text-[0.75rem] text-muted">{tr("days.admits", { names: admits.map((x) => x.name).join(", ") })}</span>
+                          <span className="text-xs text-muted">{tr("days.admits", { names: admits.map((x) => x.name).join(", ") })}</span>
                         </li>
                       );
                     })}
@@ -337,7 +337,7 @@ export default function EventDetailPage() {
                   where it was bought, which is secondary on a phone. */}
               {settlement && (
                 <section className="card-surface overflow-hidden max-lg:order-2" aria-labelledby="ev-settle">
-                  <h2 id="ev-settle" className="px-card pb-tight pt-card text-base font-semibold text-fg">{tr("settle.title")}</h2>
+                  <h2 id="ev-settle" className="px-card pb-tight pt-card text-md font-semibold text-fg">{tr("settle.title")}</h2>
                   <dl className="divide-y divide-hairline">
                     <SummaryRow label={tr("settle.capacity")} value={settlement.totals.capacity.toLocaleString()} />
                     <SummaryRow label={tr("settle.sold")} value={settlement.totals.sold.toLocaleString()} sub={tr("settle.unsold", { count: settlement.totals.unsold })} />
@@ -350,7 +350,7 @@ export default function EventDetailPage() {
                   </dl>
                   {wide && settlement.byChannel.length > 0 && (
                     <div className="border-t border-hairline">
-                      <h3 className="px-card pb-inline pt-comfortable text-[0.75rem] font-medium text-muted">{tr("settle.byChannel")}</h3>
+                      <h3 className="px-card pb-inline pt-comfortable text-xs font-medium text-muted">{tr("settle.byChannel")}</h3>
                       <ChannelRows settlement={settlement} tr={tr} />
                     </div>
                   )}
@@ -363,7 +363,7 @@ export default function EventDetailPage() {
               )}
 
               <Panel id="ev-where" title={tr("where")} wide={wide} className="max-lg:order-5">
-                <div className="flex flex-col gap-comfortable text-[0.8125rem]">
+                <div className="flex flex-col gap-comfortable text-sm">
                   <ul className="flex flex-col gap-tight">
                     {(["online", "counter"] as const).map((c) => {
                       const name = c === "online" ? tc("eventWizard.onlinePage") : tc("wizard.atCounter");
@@ -374,11 +374,11 @@ export default function EventDetailPage() {
                         </li>
                       );
                     })}
-                    {locs.length > 0 && <li className="pl-[1.375rem] text-muted">{locs.map((l) => l.name).join(" · ")}</li>}
+                    {locs.length > 0 && <li className="pl-6 text-muted">{locs.map((l) => l.name).join(" · ")}</li>}
                   </ul>
                   <div>
-                    <p className="text-[0.75rem] font-medium text-muted">{tr("page")}</p>
-                    <p className="mt-inline text-[0.75rem] text-muted">
+                    <p className="text-xs font-medium text-muted">{tr("page")}</p>
+                    <p className="mt-inline text-xs text-muted">
                       {/* The address is a real page now. It is only reachable
                           while the event is published and sold online, so the
                           link is offered exactly when it would work. */}
@@ -401,7 +401,7 @@ export default function EventDetailPage() {
 
         {e && (
           <section className="card-surface overflow-hidden" aria-labelledby="ev-preview">
-            <h2 id="ev-preview" className="text-base font-semibold text-fg">
+            <h2 id="ev-preview" className="text-md font-semibold text-fg">
               <button
                 type="button"
                 onClick={() => setPreviewOpen((v) => !v)}
@@ -414,25 +414,22 @@ export default function EventDetailPage() {
             </h2>
             {previewOpen && (
               <>
-                <div className="flex justify-end gap-inline px-card pb-tight">
-                  {([["desktop", Monitor], ["mobile", Smartphone]] as const).map(([d, Icon]) => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setDeviceChoice(d)}
-                      aria-label={t(`device.${d}`)}
-                      aria-pressed={device === d}
-                      className={cn(
-                        "flex h-11 w-11 items-center justify-center rounded-sm transition-colors duration-quick sm:h-9 sm:w-9",
-                        device === d ? "bg-inverse text-inverse-fg" : "text-muted hover:bg-muted-wash hover:text-fg",
-                      )}
-                    >
-                      <Icon size={16} strokeWidth={1.5} />
-                    </button>
-                  ))}
+                <div className="flex justify-end px-card pb-tight">
+                  <SegmentedControl
+                    size="sm"
+                    aria-label={t("customise.preview")}
+                    options={([["desktop", Monitor], ["mobile", Smartphone]] as const).map(([d, Icon]) => ({
+                      value: d,
+                      label: "",
+                      icon: <Icon size={16} strokeWidth={1.5} aria-hidden />,
+                      ariaLabel: t(`device.${d}`),
+                    }))}
+                    value={device}
+                    onChange={(d) => setDeviceChoice(d as "desktop" | "mobile")}
+                  />
                 </div>
                 <div className="bg-muted-wash p-card">
-                  <div className="mx-auto overflow-hidden rounded-sm shadow-md" style={{ maxWidth: width }}>
+                  <div className="mx-auto overflow-hidden rounded-control shadow-md" style={{ maxWidth: width }}>
                     <PreviewFrame width={width}>
                       <EventTemplate event={e} device={device} labels={labels} now={now} />
                     </PreviewFrame>
@@ -465,8 +462,8 @@ export default function EventDetailPage() {
 function FactItem({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
     <div className={cn("min-w-0", className)}>
-      <dt className="text-[0.75rem] font-medium text-muted">{label}</dt>
-      <dd className="mt-inline break-words text-sm text-fg">{children}</dd>
+      <dt className="text-xs font-medium text-muted">{label}</dt>
+      <dd className="mt-inline break-words text-base text-fg">{children}</dd>
     </div>
   );
 }
@@ -485,10 +482,10 @@ function Bar({ pct, className, track = "line" }: { pct: number; className?: stri
 function SummaryRow({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-tight px-card py-comfortable">
-      <dt className="text-[0.8125rem] text-muted">{label}</dt>
+      <dt className="text-sm text-muted">{label}</dt>
       <dd className="text-right">
-        <span className="text-sm font-semibold tabular-nums">{value}</span>
-        {sub && <span className="block text-[0.75rem] text-muted tabular-nums">{sub}</span>}
+        <span className="text-base font-semibold tabular-nums">{value}</span>
+        {sub && <span className="block text-xs text-muted tabular-nums">{sub}</span>}
       </dd>
     </div>
   );
@@ -499,7 +496,7 @@ function SummaryRow({ label, value, sub }: { label: string; value: string; sub?:
 function ChannelRows({ settlement, tr }: { settlement: EventSettlement; tr: ReturnType<typeof useTranslations> }) {
   return (
     <div>
-      <ul className="divide-y divide-hairline text-[0.8125rem]">
+      <ul className="divide-y divide-hairline text-sm">
         {settlement.byChannel.map((c) => (
           <li key={c.channel} className="flex items-baseline justify-between gap-tight px-card py-comfortable">
             <span>{tr(`settle.channel.${c.channel}`)}</span>
@@ -511,7 +508,7 @@ function ChannelRows({ settlement, tr }: { settlement: EventSettlement; tr: Retu
         ))}
       </ul>
       {settlement.byChannel.some((c) => c.channel === "opening") && (
-        <p className="px-card pb-comfortable text-[0.75rem] text-muted">{tr("settle.openingNote")}</p>
+        <p className="px-card pb-comfortable text-xs text-muted">{tr("settle.openingNote")}</p>
       )}
     </div>
   );
@@ -538,7 +535,7 @@ function TierMeta({
           their own day, but an operator may name one "GA", and a box office
           reading this should not have to guess. */}
       {multi && (
-        <span className="mt-inline block text-[0.75rem] text-muted">
+        <span className="mt-inline block text-xs text-muted">
           {(() => {
             const mine = tierDays(e, x);
             return mine.length === evDays.length
@@ -547,7 +544,7 @@ function TierMeta({
           })()}
         </span>
       )}
-      {x.salesEnd && <span className="block text-[0.75rem] text-muted">{tr("salesEnd", { date: formatDay(x.salesEnd.slice(0, 10)) })}</span>}
+      {x.salesEnd && <span className="block text-xs text-muted">{tr("salesEnd", { date: formatDay(x.salesEnd.slice(0, 10)) })}</span>}
     </>
   );
 }
@@ -564,14 +561,14 @@ function Panel({ id, title, wide, flush = false, className, children }: { id: st
   if (wide) {
     return (
       <section className={cn("card-surface p-card", className)} aria-labelledby={id}>
-        <h2 id={id} className="text-base font-semibold text-fg">{title}</h2>
+        <h2 id={id} className="text-md font-semibold text-fg">{title}</h2>
         <div className="mt-comfortable">{children}</div>
       </section>
     );
   }
   return (
     <section className={cn("card-surface overflow-hidden", className)} aria-labelledby={id}>
-      <h2 className="text-base font-semibold text-fg">
+      <h2 className="text-md font-semibold text-fg">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}

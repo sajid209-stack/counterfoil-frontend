@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Info } from "lucide-react";
-import { PageShell, Select, StatusPill, useToast } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { Notice, PageShell, RadioGroup, SegmentedControl, Select, StatusPill, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getAccessPolicy, listRoles, listStaff, updateAccessPolicy, type AccessPolicy, type TwoStepRequirement } from "@/lib/api";
 import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, Switch } from "../_components/SettingsKit";
@@ -81,52 +79,45 @@ export default function SignInRulesPage() {
 
   return (
     <PageShell title={t("signIn.title")} description={t("signIn.description")}>
-      <div className="flex max-w-3xl flex-col gap-section pb-hero">
+      <div className="flex flex-col gap-section pb-hero">
         <SettingsSection title={t("signIn.twoStepTitle")} description={t("signIn.twoStepDesc")}>
-          <div role="radiogroup" aria-label={t("signIn.twoStepTitle")} className="flex flex-col gap-tight px-card py-section">
-            {TWO_STEP.map((level) => {
-              const checked = form.twoStep === level;
-              return (
-                <label
-                  key={level}
-                  className={cn(
-                    "flex cursor-pointer items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember",
-                    checked ? "bg-ember/5 ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:bg-line/40",
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="two-step"
-                    value={level}
-                    checked={checked}
-                    onChange={() => set({ twoStep: level })}
-                    className="mt-[3px] h-4 w-4 shrink-0 accent-ember"
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-baseline justify-between gap-x-section gap-y-inline">
+          <div className="flex flex-col gap-tight px-card py-section">
+            {/* Radios from the kit, one per level. The label carries the whole
+                option — name, the recommended mark, how many people it reaches,
+                and what it does — so the sentence stays at supporting-text size
+                and the whole block is the click target. */}
+            <RadioGroup
+              name="two-step"
+              aria-label={t("signIn.twoStepTitle")}
+              value={form.twoStep}
+              onChange={(level) => set({ twoStep: level as TwoStepRequirement })}
+              options={TWO_STEP.map((level) => ({
+                value: level,
+                label: (
+                  <>
+                    <span className="flex flex-wrap items-baseline gap-x-section gap-y-inline">
                       <span className="flex flex-wrap items-center gap-tight">
-                        <span className="text-sm font-medium text-fg">{t(`signIn.twoStep.${level}.title`)}</span>
+                        <span className="text-base font-medium text-fg">{t(`signIn.twoStep.${level}.title`)}</span>
                         {level === "managers" && <StatusPill tone="neutral">{t("signIn.recommended")}</StatusPill>}
                       </span>
                       {level !== "off" && staffQ.data && (
-                        <span className="text-[13px] text-muted">{t("signIn.applies", { count: reach[level] })}</span>
+                        <span className="text-sm font-normal tabular-nums text-muted">{t("signIn.applies", { count: reach[level] })}</span>
                       )}
                     </span>
-                    <span className="mt-inline block text-[13px] leading-relaxed text-muted">
+                    <span className="mt-inline block text-sm font-normal leading-relaxed text-muted">
                       {t(`signIn.twoStep.${level}.desc`)}
                       {level === "managers" && elevated.length > 0 && (
                         <> {t("signIn.twoStep.managersRoles", { roles: elevated.map((r) => r.name).join(", ") })}</>
                       )}
                     </span>
-                  </span>
-                </label>
-              );
-            })}
+                  </>
+                ),
+              }))}
+            />
             {stricter && (
-              <p role="status" className="mt-tight flex items-start gap-tight text-[13px] leading-relaxed text-muted">
-                <Info size={16} strokeWidth={1.5} aria-hidden className="mt-[2px] shrink-0" />
+              <Notice tone="info" size="sm" className="mt-tight">
                 {t("signIn.stricter")}
-              </p>
+              </Notice>
             )}
           </div>
         </SettingsSection>
@@ -182,36 +173,16 @@ export default function SignInRulesPage() {
             trailing
           >
             {({ labelId, describedBy }) => (
-              /* Real radios under the labels, so arrow keys move between the
-                 two lengths the way a keyboard user expects of a choice. */
-              <div
-                role="radiogroup"
-                aria-labelledby={labelId}
-                aria-describedby={describedBy}
-                className="inline-flex rounded-sm border border-line bg-card p-[3px]"
-              >
-                {PIN_LENGTHS.map((n) => {
-                  const on = form.pinLength === n;
-                  return (
-                    <label
-                      key={n}
-                      className={cn(
-                        "inline-flex min-h-11 cursor-pointer items-center rounded-xs px-section text-sm font-medium transition-colors duration-quick has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember md:min-h-9",
-                        on ? "bg-ember-solid text-white" : "text-muted hover:text-fg",
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="pin-length"
-                        value={n}
-                        checked={on}
-                        onChange={() => set({ pinLength: n })}
-                        className="sr-only"
-                      />
-                      {t("signIn.digits", { count: n })}
-                    </label>
-                  );
-                })}
+              /* Two lengths: the kit's segmented control, which is a radio
+                 group underneath (arrow keys move and choose). */
+              <div aria-describedby={describedBy}>
+                <SegmentedControl
+                  size="sm"
+                  aria-labelledby={labelId}
+                  value={String(form.pinLength)}
+                  onChange={(v) => set({ pinLength: Number(v) })}
+                  options={PIN_LENGTHS.map((n) => ({ value: String(n), label: t("signIn.digits", { count: n }) }))}
+                />
               </div>
             )}
           </SettingRow>

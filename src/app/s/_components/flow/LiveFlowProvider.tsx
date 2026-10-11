@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Skeleton } from "@/components/ui";
 import { StorefrontFlowProvider, type StorefrontFlowData, type StorefrontFlowNav } from "@/lib/storefront/FlowProvider";
 import { useLiveBasket } from "@/lib/storefront/basket";
 import { useStorefrontData } from "@/lib/storefront/useStorefrontData";
@@ -25,13 +26,13 @@ export function LiveStorefrontShell({ slug, children }: { slug: string; children
   if (loading) {
     return (
       <SfRoot accent={null} className="px-gutter py-hero">
-        <div aria-busy="true" className="mx-auto grid max-w-[1200px] animate-pulse grid-cols-1 gap-wide lg:grid-cols-2">
+        <div aria-busy="true" className="mx-auto grid max-w-[1200px] grid-cols-1 gap-wide lg:grid-cols-2">
           <div className="space-y-section">
-            <div className="h-6 w-1/3 rounded-full bg-subtle" />
-            <div className="h-14 w-5/6 rounded-[12px] bg-subtle" />
-            <div className="h-24 w-full rounded-[12px] bg-subtle" />
+            <Skeleton h={24} w="33%" />
+            <Skeleton h={56} w="83%" />
+            <Skeleton h={96} />
           </div>
-          <div className="aspect-[4/3] rounded-[20px] bg-subtle" />
+          <Skeleton className="aspect-[4/3] w-full" />
         </div>
       </SfRoot>
     );

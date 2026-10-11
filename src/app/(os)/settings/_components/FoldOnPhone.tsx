@@ -44,8 +44,8 @@ export function FoldOnPhone({
         className="card-surface flex min-h-14 w-full items-center justify-between gap-comfortable p-card text-left transition-colors duration-quick"
       >
         <span className="min-w-0">
-          <span className="block text-base font-semibold text-fg">{title}</span>
-          {summary ? <span className="mt-inline block text-[13px] text-muted">{summary}</span> : null}
+          <span className="block text-md font-semibold text-fg">{title}</span>
+          {summary ? <span className="mt-inline block text-sm text-muted">{summary}</span> : null}
         </span>
         <ChevronDown
           size={18}

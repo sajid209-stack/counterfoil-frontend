@@ -69,14 +69,14 @@ export function OrdersPrint({ kind }: { kind: "summary" | "list" }) {
         <article className="paper rounded-md border border-line bg-card p-major text-fg print:rounded-none print:border-0 print:p-0">
           <header className="mb-major flex flex-wrap items-start justify-between gap-x-major gap-y-tight border-b border-line pb-section">
             <div className="min-w-0">
-              <p className="type-h2 break-words text-base">{opQ.data?.name ?? "Counterfoil"}</p>
-              {venue && <p className="mt-inline break-words text-[12px] text-muted">{[venue.name, address].filter(Boolean).join(" · ")}</p>}
-              {opQ.data?.contactPhone && <p className="break-words text-[12px] text-muted">{opQ.data.contactPhone}</p>}
+              <p className="type-h2 break-words text-md">{opQ.data?.name ?? "Counterfoil"}</p>
+              {venue && <p className="mt-inline break-words text-xs text-muted">{[venue.name, address].filter(Boolean).join(" · ")}</p>}
+              {opQ.data?.contactPhone && <p className="break-words text-xs text-muted">{opQ.data.contactPhone}</p>}
             </div>
             <div className="min-w-0 text-right max-sm:text-left">
               <h1 className="type-h1 text-xl">{title}</h1>
-              <p data-print-scope className="mt-inline break-words text-[13px]">{filterText}</p>
-              <p className="text-[12px] text-muted">{tp("generated", { at: generated })}</p>
+              <p data-print-scope className="mt-inline break-words text-sm">{filterText}</p>
+              <p className="text-xs text-muted">{tp("generated", { at: generated })}</p>
             </div>
           </header>
 
@@ -101,9 +101,9 @@ export function OrdersPrint({ kind }: { kind: "summary" | "list" }) {
 /** Every matching order: all thirteen columns, tabular figures, no row split across pages. */
 function OrdersTable({ rows, L, dir }: { rows: Order[]; L: ReturnType<typeof useSalesLabels>; dir: ReturnType<typeof useSalesReport>["dir"] }) {
   const t = useTranslations("orders");
-  const th = "px-1.5 py-1.5 text-left text-[12px] font-medium text-muted";
+  const th = "px-1.5 py-1.5 text-left text-xs font-medium text-muted";
   const thr = `${th} text-right`;
-  const td = "px-1.5 py-1 align-top text-[12px]";
+  const td = "px-1.5 py-1 align-top text-xs";
   const tdr = `${td} whitespace-nowrap text-right tabular-nums`;
   return (
     <table data-print-orders className="w-full border-collapse">

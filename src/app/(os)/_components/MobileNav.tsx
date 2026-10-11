@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, LogOut, Menu } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Sheet } from "@/components/ui";
+import { Sheet, Skeleton } from "@/components/ui";
 import { AppearancePicker } from "@/components/ThemeProvider";
 import { LanguagePicker } from "@/components/LocaleProvider";
 import { useApiQuery } from "@/lib/useApi";
@@ -47,7 +47,7 @@ export function MenuButton({ open, onOpen }: { open: boolean; onOpen: () => void
       data-menu-button
       className={cn(
         "fixed bottom-[calc(12px+env(safe-area-inset-bottom))] left-[calc(12px+env(safe-area-inset-left))] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-chrome text-fg transition-transform duration-quick active:scale-95 md:hidden",
-        "shadow-[0_2px_10px_rgb(20_20_19/0.14),0_0_0_1px_rgb(20_20_19/0.06)] dark:shadow-none dark:ring-1 dark:ring-line",
+        "shadow-float",
       )}
     >
       <Menu size={24} strokeWidth={1.5} aria-hidden />
@@ -76,7 +76,7 @@ export function MobileNav({ open, onClose, business }: { open: boolean; onClose:
       onClose={onClose}
       title={t("menu")}
       closeLabel={tCommon("close")}
-      lead={business ? <p className="truncate text-[12px] text-muted">{business}</p> : undefined}
+      lead={business ? <p className="truncate text-xs text-muted">{business}</p> : undefined}
       /* Full height: the menu is a place you go, not a note over the page. The
          `!` is deliberate — `cn` does not merge conflicting utilities, so a
          plain max-h-none would be decided by stylesheet order against the
@@ -118,7 +118,7 @@ function MenuBody({ onClose }: { onClose: () => void }) {
           data-autofocus={active ? "" : undefined}
           onClick={onClose}
           className={cn(
-            "flex h-12 items-center gap-section rounded-sm px-comfortable text-[15px] font-medium transition-colors duration-quick",
+            "flex h-12 items-center gap-section rounded-control px-comfortable text-md font-medium transition-colors duration-quick",
             active ? "bg-fg/[0.07] text-fg dark:bg-fg/[0.09]" : "text-fg hover:bg-fg/[0.04] active:bg-fg/[0.06]",
           )}
         >
@@ -158,40 +158,40 @@ function MenuBody({ onClose }: { onClose: () => void }) {
           Preferences renders, so the places agree by construction. */}
       <section aria-label={t("account")} className="flex flex-col gap-section px-comfortable pt-2">
         <div className="flex items-center gap-comfortable">
-          <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-subtle text-[13px] font-semibold text-fg ring-1 ring-line">
+          <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-subtle text-sm font-semibold text-fg ring-1 ring-line">
             {initialsOf(me?.name)}
           </span>
           <span className="min-w-0 flex-1">
             {me ? (
               <>
-                <span className="block truncate text-sm font-semibold leading-tight text-fg">{me.name}</span>
-                <span className="mt-0.5 block truncate text-[12px] leading-tight text-muted">{role ?? me.email ?? ""}</span>
+                <span className="block truncate text-base font-semibold leading-tight text-fg">{me.name}</span>
+                <span className="mt-0.5 block truncate text-xs leading-tight text-muted">{role ?? me.email ?? ""}</span>
               </>
             ) : (
               <>
-                <span aria-hidden className="block h-3.5 w-28 animate-pulse rounded-xs bg-subtle" />
-                <span aria-hidden className="mt-1 block h-3 w-16 animate-pulse rounded-xs bg-subtle" />
+                <Skeleton className="h-3.5 w-28" />
+                <Skeleton className="mt-1 h-3 w-16" />
               </>
             )}
           </span>
           <Link
             href="/settings/profile"
             onClick={onClose}
-            className="flex h-11 shrink-0 items-center rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-fg/[0.04] hover:text-fg"
+            className="flex h-11 shrink-0 items-center rounded-control px-comfortable text-sm font-medium text-muted transition-colors duration-quick hover:bg-fg/[0.04] hover:text-fg"
           >
             {t("myProfile")}
           </Link>
         </div>
 
         <div>
-          <p id={appearanceId} className="pb-1 text-[12px] font-medium text-muted">
+          <p id={appearanceId} className="pb-1 text-xs font-medium text-muted">
             {tCommon("appearance")}
           </p>
           <AppearancePicker showLabel={false} labelledBy={appearanceId} />
         </div>
 
         <div>
-          <p id={languageId} className="pb-1 text-[12px] font-medium text-muted">
+          <p id={languageId} className="pb-1 text-xs font-medium text-muted">
             {tCommon("language")}
           </p>
           <LanguagePicker showLabel={false} labelledBy={languageId} />
@@ -200,7 +200,7 @@ function MenuBody({ onClose }: { onClose: () => void }) {
         <Link
           href="/sign-in"
           data-menu-item="signOut"
-          className="flex h-12 items-center gap-section rounded-sm px-comfortable text-[15px] font-medium text-fg transition-colors duration-quick hover:bg-fg/[0.04] active:bg-fg/[0.06]"
+          className="flex h-12 items-center gap-section rounded-control px-comfortable text-md font-medium text-fg transition-colors duration-quick hover:bg-fg/[0.04] active:bg-fg/[0.06]"
         >
           <LogOut size={20} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
           {t("signOut")}

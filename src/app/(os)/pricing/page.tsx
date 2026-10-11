@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Search } from "lucide-react";
 import {
   DataTable,
   EmptyState,
+  FilterSearch,
   Select,
   StatusPill,
   type Column,
@@ -43,8 +43,8 @@ export default function PricingPage() {
 
   const columns: Column<PriceRule>[] = [
     { key: "name", header: t("colName"), sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
-    { key: "scope", header: t("colAppliesTo"), render: (r) => <span className="text-[13px] text-muted">{scope(r)}</span> },
-    { key: "channel", header: t("colChannel"), render: (r) => <span className="text-[13px] text-muted">{t(r.channel === "counter" ? "channelCounter" : r.channel === "online" ? "channelOnline" : "channelAll")}</span> },
+    { key: "scope", header: t("colAppliesTo"), render: (r) => <span className="text-sm text-muted">{scope(r)}</span> },
+    { key: "channel", header: t("colChannel"), render: (r) => <span className="text-sm text-muted">{t(r.channel === "counter" ? "channelCounter" : r.channel === "online" ? "channelOnline" : "channelAll")}</span> },
     { key: "kind", header: t("colKind"), render: (r) => kindLabel[r.kind] },
     {
       key: "adjustmentPct",
@@ -52,7 +52,7 @@ export default function PricingPage() {
       sortable: true,
       align: "right",
       render: (r) => (
-        <span className={`font-mono text-[13px] ${r.adjustmentPct > 0 ? "text-danger" : r.adjustmentPct < 0 ? "text-success" : "text-muted"}`}>
+        <span className={`text-sm tabular-nums ${r.adjustmentPct > 0 ? "text-danger" : r.adjustmentPct < 0 ? "text-success" : "text-muted"}`}>
           {r.adjustmentPct > 0 ? "+" : ""}{r.adjustmentPct}%
         </span>
       ),
@@ -75,20 +75,17 @@ export default function PricingPage() {
         toolbar={
           <PageToolbar primary={primary}>
           <div className="flex flex-wrap items-center gap-tight">
-            <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder={t("searchPlaceholder")}
-                className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
-              />
-            </div>
+            <FilterSearch
+              value={search}
+              onChange={(v) => { setSearch(v); setPage(1); }}
+              placeholder={t("searchPlaceholder")}
+              aria-label={t("searchPlaceholder")}
+            />
             <Select
               aria-label={t("allKinds")}
               value={kind}
               onChange={(v) => { setKind(v); setPage(1); }}
-              triggerClassName="text-sm md:h-9"
+              triggerClassName="text-base md:h-9"
               options={[
                 { value: "", label: t("allKinds") },
                 { value: "standard", label: t("kindStandard") },

@@ -37,7 +37,7 @@ export function CustomerCard({
   const t = useTranslations("orders.cust");
   const linked = !!o.customerId;
   const name = customer?.name ?? o.customerName;
-  const contact = "-my-2 flex min-h-11 items-center gap-tight py-2 text-sm text-fg underline-offset-2 hover:underline sm:my-0 sm:min-h-0 sm:py-0";
+  const contact = "-my-2 flex min-h-11 items-center gap-tight py-2 text-base text-fg underline-offset-2 hover:underline sm:my-0 sm:min-h-0 sm:py-0";
 
   return (
     <Section title={t("title")} className={className} id="order-customer">
@@ -47,13 +47,13 @@ export function CustomerCard({
             {linked ? (
               <Link
                 href={`/customers/${o.customerId}`}
-                className="-my-2 inline-flex min-h-11 min-w-0 items-center gap-inline py-2 text-base font-semibold text-brand-foreground underline underline-offset-2 sm:my-0 sm:min-h-0 sm:py-0"
+                className="-my-2 inline-flex min-h-11 min-w-0 items-center gap-inline py-2 text-md font-semibold text-brand-foreground underline underline-offset-2 sm:my-0 sm:min-h-0 sm:py-0"
               >
                 <span className="min-w-0 break-words">{name}</span>
                 <ChevronRight size={15} strokeWidth={1.75} aria-hidden className="shrink-0" />
               </Link>
             ) : (
-              <p className="min-w-0 break-words text-base font-semibold">{name}</p>
+              <p className="min-w-0 break-words text-md font-semibold">{name}</p>
             )}
           </div>
           {customer?.phone && (
@@ -69,7 +69,7 @@ export function CustomerCard({
             </a>
           )}
           {linked && stats && (
-            <p className="text-[13px] text-muted">
+            <p className="text-sm text-muted">
               {t("history", { count: stats.orders, spent: formatMoney(stats.spent) })}
               {customer?.createdAt ? ` · ${t("since", { date: formatDate(customer.createdAt) })}` : ""}
             </p>
@@ -77,13 +77,13 @@ export function CustomerCard({
           {linked ? (
             <Link
               href={`/orders?customerId=${o.customerId}&customer=${encodeURIComponent(name)}`}
-              className="-my-2 inline-flex min-h-11 items-center self-start py-2 text-[13px] text-brand-foreground underline underline-offset-2 sm:my-0 sm:min-h-0 sm:py-0"
+              className="-my-2 inline-flex min-h-11 items-center self-start py-2 text-sm text-brand-foreground underline underline-offset-2 sm:my-0 sm:min-h-0 sm:py-0"
             >
               {t("allOrders")}
             </Link>
           ) : (
             <>
-              <p className="text-[13px] text-muted">{t("notOnList")}</p>
+              <p className="text-sm text-muted">{t("notOnList")}</p>
               <Button variant="secondary" size="sm" icon={<UserPlus size={14} strokeWidth={1.5} />} onClick={onAdd} className="self-start">
                 {t("add")}
               </Button>
@@ -92,8 +92,8 @@ export function CustomerCard({
         </div>
       ) : (
         <div className="flex flex-col gap-tight">
-          <p className="text-base font-semibold text-muted">{t("walkIn")}</p>
-          <p className="text-[13px] text-muted">{t("walkInNote")}</p>
+          <p className="text-md font-semibold text-muted">{t("walkIn")}</p>
+          <p className="text-sm text-muted">{t("walkInNote")}</p>
           <Button variant="secondary" size="sm" icon={<UserPlus size={14} strokeWidth={1.5} />} onClick={onAdd} className="self-start">
             {t("add")}
           </Button>

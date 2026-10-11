@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, EmptyState, FormField, PageShell, useToast } from "@/components/ui";
+import { Button, Card, EmptyState, FormField, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   archivePriceRule,
@@ -42,7 +42,11 @@ export default function PriceRuleEditorPage() {
   }, [isNew, ruleQ.data]);
 
   if (!isNew && !ruleQ.loading && !ruleQ.data) {
-    return <PageShell title={t("back")}><EmptyState title={t("notFound")} action={<Button onClick={() => router.push("/pricing")}>{t("back")}</Button>} /></PageShell>;
+    return (
+      <PageShell title={t("editRule")} back={{ href: "/pricing", label: t("back") }}>
+        <EmptyState title={t("notFound")} action={<Button onClick={() => router.push("/pricing")}>{t("back")}</Button>} />
+      </PageShell>
+    );
   }
 
   const set = <K extends keyof PriceRuleInput>(k: K, v: PriceRuleInput[K]) => setForm((f) => ({ ...f, [k]: v }));
@@ -63,9 +67,9 @@ export default function PriceRuleEditorPage() {
     <PageShell
       title={isNew ? t("newRule") : (form.name || t("editRule"))}
       back={{ href: "/pricing", label: t("back") }}
-      actions={<Button loading={saving} onClick={save}>{t("save")}</Button>}
+      actions={<Button variant="primary" size="md" loading={saving} onClick={save}>{t("save")}</Button>}
     >
-      <div className="grid max-w-2xl gap-section card-surface p-card sm:grid-cols-2">
+      <Card className="grid max-w-2xl gap-section sm:grid-cols-2">
         <FormField label={t("fieldName")} value={form.name} onChange={(e) => set("name", e.target.value)} className="sm:col-span-2" />
         <FormField label={t("fieldProduct")} variant="select" value={form.productId ?? ""} onChange={(e) => set("productId", e.target.value || null)} options={[{ value: "", label: t("allProducts") }, ...products.map((p) => ({ value: p.id, label: p.name }))]} />
         <FormField label={t("fieldLocation")} variant="select" value={form.locationId ?? ""} onChange={(e) => set("locationId", e.target.value || null)} options={[{ value: "", label: t("allLocations") }, ...locations.map((l) => ({ value: l.id, label: l.name }))]} />
@@ -73,7 +77,7 @@ export default function PriceRuleEditorPage() {
         <FormField label={t("fieldKind")} variant="select" value={form.kind} onChange={(e) => set("kind", e.target.value as PriceRule["kind"])} options={[{ value: "standard", label: t("kindStandard") }, { value: "peak", label: t("kindPeak") }, { value: "off_peak", label: t("kindOffPeak") }]} />
         <FormField label={t("fieldAdjustment")} variant="number" value={String(form.adjustmentPct)} onChange={(e) => set("adjustmentPct", parseFloat(e.target.value) || 0)} help={form.adjustmentPct > 0 ? t("adjustUp", { pct: form.adjustmentPct }) : form.adjustmentPct < 0 ? t("adjustDown", { pct: Math.abs(form.adjustmentPct) }) : t("adjustmentHint")} />
         <FormField label={t("fieldStatus")} variant="select" value={form.status} onChange={(e) => set("status", e.target.value as PriceRuleInput["status"])} options={[{ value: "active", label: t("statusActive") }, { value: "inactive", label: t("statusInactive") }]} />
-      </div>
+      </Card>
 
       {!isNew && (
         <Button variant="secondary" className="mt-section" onClick={archive}>{t("archive")}</Button>

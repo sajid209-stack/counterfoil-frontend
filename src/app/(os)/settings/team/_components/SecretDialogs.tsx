@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button, Modal, useToast } from "@/components/ui";
+import { Button, Checkbox, Modal, useToast } from "@/components/ui";
 import {
   generatePin,
   passwordIssue,
@@ -93,7 +93,7 @@ export function SetPasswordDialog({
     >
       <div className="flex flex-col gap-section">
         <div>
-          <label htmlFor={ids.pw} className="text-sm font-medium text-fg">
+          <label htmlFor={ids.pw} className="text-base font-medium text-fg">
             {t("team.pwLabel")}
           </label>
           <div className="mt-tight">
@@ -109,18 +109,18 @@ export function SetPasswordDialog({
               hideLabel={t("team.pwHide")}
             />
           </div>
-          <p id={ids.hint} className="mt-inline text-[13px] text-muted">
+          <p id={ids.hint} className="mt-inline text-sm text-muted">
             {t("team.pwHint")}
           </p>
           {err && (
-            <p id={ids.err} className="mt-tight text-[12px] text-danger">
+            <p id={ids.err} className="mt-tight text-xs text-danger">
               {err}
             </p>
           )}
           <StrengthMeter password={pw} />
         </div>
         <div>
-          <label htmlFor={ids.pw2} className="text-sm font-medium text-fg">
+          <label htmlFor={ids.pw2} className="text-base font-medium text-fg">
             {t("team.pwConfirmLabel")}
           </label>
           <input
@@ -135,21 +135,12 @@ export function SetPasswordDialog({
             className={`${controlCls(!!mismatch)} mt-tight`}
           />
           {mismatch && (
-            <p id={ids.err2} className="mt-tight text-[12px] text-danger">
+            <p id={ids.err2} className="mt-tight text-xs text-danger">
               {mismatch}
             </p>
           )}
         </div>
-        <label htmlFor={ids.must} className="flex min-h-11 cursor-pointer items-start gap-comfortable text-sm text-fg">
-          <input
-            id={ids.must}
-            type="checkbox"
-            checked={must}
-            onChange={(e) => setMust(e.target.checked)}
-            className="mt-[3px] h-4 w-4 shrink-0 accent-ember"
-          />
-          <span>{t("team.pwMustChange")}</span>
-        </label>
+        <Checkbox id={ids.must} checked={must} onChange={(e) => setMust(e.target.checked)} label={t("team.pwMustChange")} />
       </div>
     </Modal>
   );
@@ -218,7 +209,7 @@ export function SetPinDialog({
         </>
       }
     >
-      <label htmlFor={ids.pin} className="text-sm font-medium text-fg">
+      <label htmlFor={ids.pin} className="text-base font-medium text-fg">
         {t("team.pinLabel")}
       </label>
       <div className="mt-tight flex flex-col gap-tight sm:flex-row">
@@ -249,11 +240,11 @@ export function SetPinDialog({
           {t("team.pinGenerate")}
         </Button>
       </div>
-      <p id={ids.hint} className="mt-inline text-[13px] text-muted">
+      <p id={ids.hint} className="mt-inline text-sm text-muted">
         {t("team.pinHintSet")}
       </p>
       {err && (
-        <p id={ids.err} className="mt-tight text-[12px] text-danger">
+        <p id={ids.err} className="mt-tight text-xs text-danger">
           {err}
         </p>
       )}

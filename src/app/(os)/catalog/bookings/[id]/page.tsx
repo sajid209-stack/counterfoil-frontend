@@ -10,6 +10,7 @@ import {
   ConfirmDialog,
   EmptyState,
   PageShell,
+  Skeleton,
   StatusPill,
   useToast,
 } from "@/components/ui";
@@ -122,7 +123,7 @@ export default function ProductDetailPage() {
       }
     >
       {loading || !product ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
+        <div aria-busy="true" className="flex flex-col gap-tight"><Skeleton h={16} w="33%" /><Skeleton h={16} w="66%" /><Skeleton h={16} w="50%" /></div>
       ) : (
         <ProductForm
           product={product}

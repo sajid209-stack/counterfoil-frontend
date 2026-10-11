@@ -3,19 +3,18 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, DataTable, EmptyState, PageShell, useToast } from "@/components/ui";
+import { Button, DataTable, EmptyState, Notice, PageShell, Pagination, useToast } from "@/components/ui";
 import { NO_ONE, orderMethodOf } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { demoNow } from "@/lib/schedule";
 import { RefundRequests } from "@/components/RefundRequests";
 import { OrderCard, firstDirection, useOrderColumns } from "./_components/columns";
-import { OrdersPager } from "./_components/OrdersPager";
 import { OrdersToolbar, type FacetOptions } from "./_components/OrdersToolbar";
 import { SalesFigures } from "./_components/SalesFigures";
 import { SummarySheet } from "./_components/SummarySheet";
 import type { ChipOption } from "./_components/chip";
 import { downloadCsv, reportFileName, salesCsv, summaryCsv, type Tr } from "./_lib/csv";
-import { CHANNELS, METHODS, STATUSES, activeCount, cleared, parseFilters, toSearch, type SalesFilters } from "./_lib/filters";
+import { CHANNELS, METHODS, PAGE_SIZES, STATUSES, activeCount, cleared, parseFilters, toSearch, type SalesFilters } from "./_lib/filters";
 import { TOGGLEABLE, useHiddenColumns } from "./_lib/columns";
 import { useSalesLabels } from "./_lib/labels";
 import { useSalesReport } from "./_lib/useReport";
@@ -207,12 +206,13 @@ function OrdersPageInner() {
         <RefundRequests onDecided={() => report.reload()} />
 
         {f.customerId && (
-          <div role="status" className="flex flex-wrap items-center justify-between gap-x-section gap-y-tight rounded-md border border-line bg-card px-section py-tight">
-            <p className="min-w-0 break-words text-sm text-fg">{f.customer ? t("forCustomer", { name: f.customer }) : t("forCustomerAnon")}</p>
-            <Button variant="tertiary" size="sm" onClick={() => go({ ...latest.current, customerId: "", customer: "", page: 1 })}>
-              {t("forCustomerClear")}
-            </Button>
-          </div>
+          <Notice
+            tone="info"
+            size="sm"
+            action={{ label: t("forCustomerClear"), onClick: () => go({ ...latest.current, customerId: "", customer: "", page: 1 }), variant: "button" }}
+          >
+            {f.customer ? t("forCustomer", { name: f.customer }) : t("forCustomerAnon")}
+          </Notice>
         )}
 
         <section aria-label={t("figures.label")} className="card-surface p-card">
@@ -242,13 +242,14 @@ function OrdersPageInner() {
           }
         />
 
-        <OrdersPager
+        <Pagination
           page={page}
-          size={f.size}
+          pageSize={f.size}
           total={rows.length}
           loading={firstLoad}
-          onPage={(p) => go({ ...latest.current, page: p })}
-          onSize={(size) => set({ size })}
+          onPageChange={(p) => go({ ...latest.current, page: p })}
+          pageSizeOptions={[...PAGE_SIZES]}
+          onPageSizeChange={(size) => set({ size })}
         />
       </div>
 

@@ -22,15 +22,15 @@
  *     day it covers — which is the whole reason `dayFill` exists.
  */
 import { useState } from "react";
-import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui";
+import { Button, Sheet } from "@/components/ui";
 import { formatDay, formatMoney } from "@/lib/format";
 import { dayFill, eventDays, isBundleTier, tierDays, type EventRecord, type EventTier } from "@/lib/api";
 import { eventLineId } from "@/lib/api";
 import { dayName } from "@/lib/events/days";
 import { cn } from "@/lib/cn";
 import type { CartEntry } from "./ProductSheet";
+import { Stepper } from "./Stepper";
 
 export function EventSheet({
   event,
@@ -100,28 +100,44 @@ export function EventSheet({
     );
   };
 
+  /* The shared Sheet owns the dialog role, the focus trap, Escape, the scrim and
+     the drag-down; this file only says what is in it. */
   return (
-    <div role="dialog" aria-modal="true" aria-label={event.title} className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button type="button" aria-label={t("sheet.close")} onClick={onClose} className="absolute inset-0 bg-ink/40" />
-      <div className="go-sheet-panel relative z-10 max-h-[90vh] overflow-y-auto rounded-t-go-lg bg-sheet p-section">
-        <div className="mx-auto mb-section h-1 w-10 rounded-full bg-line" aria-hidden />
-        <div className="mb-section flex items-start gap-tight">
-          <div className="min-w-0 flex-1">
-            <h2 className="type-h2 text-[1.0625rem]">{event.title}</h2>
-            <p className="text-[0.8125rem] text-muted">
-              {formatDay(event.startsAt.slice(0, 10), { weekday: true })}
-              {multi ? ` · ${t("event.runsDays", { count: days.length })}` : ""} · {event.venueName}
-            </p>
+    <Sheet
+      open
+      onClose={onClose}
+      title={event.title}
+      closeLabel={t("sheet.close")}
+      footer={
+        <div className="flex w-full flex-col gap-tight">
+          <div className="flex items-center justify-between text-base">
+            <span className="text-muted">
+              {count > 0 ? t("event.summary", { count }) : t("event.pickTickets")}
+              {multi && dayId ? ` · ${labelOfDay(dayId)}` : ""}
+            </span>
+            <span className="font-semibold tabular-nums">{formatMoney(total, currency)}</span>
           </div>
-          <button type="button" aria-label={t("sheet.close")} onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-subtle">
-            <X size={18} strokeWidth={1.5} />
-          </button>
+          <div className="flex gap-tight">
+            <Button size="lg" variant="secondary" className="h-13 flex-1 text-md font-semibold" disabled={!count} onClick={() => submit(true)}>
+              {count ? t("sheet.buyNow", { amount: formatMoney(total, currency) }) : t("sheet.buyNowShort")}
+            </Button>
+            <Button size="lg" className="h-13 flex-[1.4] text-md font-semibold" disabled={!count} onClick={() => submit(false)}>
+              {count ? t("event.add", { count }) : t("event.pickTickets")}
+            </Button>
+          </div>
         </div>
+      }
+    >
+      <div className="p-section">
+        <p className="mb-section text-sm text-muted">
+          {formatDay(event.startsAt.slice(0, 10), { weekday: true })}
+          {multi ? ` · ${t("event.runsDays", { count: days.length })}` : ""} · {event.venueName}
+        </p>
 
         {/* WHICH DAY — only where there is a choice to make. */}
         {multi && (
           <section className="mb-section">
-            <h3 className="mb-tight text-[0.875rem] font-semibold">{t("event.whichDay")}</h3>
+            <h3 className="mb-tight text-base font-semibold">{t("event.whichDay")}</h3>
             <div className="flex flex-wrap gap-tight">
               {days.map((d) => {
                 const f = dayFill(event, d.id);
@@ -134,12 +150,12 @@ export function EventSheet({
                     aria-pressed={on}
                     onClick={() => setDayId(d.id)}
                     className={cn(
-                      "min-h-12 rounded-go-sm border px-comfortable py-inline text-left",
-                      on ? "border-ember-solid bg-ember/10" : "border-line",
+                      "min-h-12 rounded-inner border px-comfortable py-inline text-left",
+                      on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line",
                     )}
                   >
-                    <span className="block text-[0.875rem] font-medium">{dayName(d, days.indexOf(d), (n) => t("event.dayN", { n }))}</span>
-                    <span className="block text-[0.8125rem] text-muted">
+                    <span className="block text-base font-medium">{dayName(d, days.indexOf(d), (n) => t("event.dayN", { n }))}</span>
+                    <span className={cn("block text-sm", on ? "text-on-solid" : "text-muted")}>
                       {formatDay(d.date)} · {t("event.left", { count: left })}
                     </span>
                   </button>
@@ -151,8 +167,8 @@ export function EventSheet({
 
         {/* WHICH TICKET */}
         <section className="mb-section">
-          <h3 className="mb-tight text-[0.875rem] font-semibold">{t("event.whichTicket")}</h3>
-          <div className="overflow-hidden rounded-go-sm border border-line">
+          <h3 className="mb-tight text-base font-semibold">{t("event.whichTicket")}</h3>
+          <div className="overflow-hidden rounded-inner border border-line">
             {offered.map((tier, i) => {
               const room = roomFor(tier);
               const n = qty[tier.id] ?? 0;
@@ -160,64 +176,27 @@ export function EventSheet({
               return (
                 <div key={tier.id} className={cn("flex items-center gap-tight p-comfortable", i > 0 && "border-t border-line")}>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[0.9375rem] font-medium">
+                    <p className="text-md font-medium">
                       {tier.name}
-                      {bundle && <span className="ml-inline text-[0.8125rem] font-normal text-muted">· {t("event.allDays")}</span>}
+                      {bundle && <span className="ml-inline text-sm font-normal text-muted">· {t("event.allDays")}</span>}
                     </p>
-                    <p className="text-[0.8125rem] text-brand-foreground">
+                    <p className="text-sm text-brand-foreground">
                       {tier.price === 0 ? t("event.free") : formatMoney(tier.price, currency)}
                     </p>
                     {room <= 0 ? (
-                      <p className="text-[0.8125rem] text-muted">{t("event.soldOut")}</p>
+                      <p className="text-sm text-muted">{t("event.soldOut")}</p>
                     ) : room <= 10 ? (
-                      <p className="text-[0.8125rem] text-warning">{t("event.left", { count: room })}</p>
+                      <p className="text-sm text-warning">{t("event.left", { count: room })}</p>
                     ) : null}
                   </div>
-                  <div className="flex shrink-0 items-center gap-tight">
-                    <button
-                      type="button"
-                      aria-label={t("sheet.less")}
-                      disabled={n === 0}
-                      onClick={() => setQty((q) => ({ ...q, [tier.id]: Math.max(0, n - 1) }))}
-                      className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-[1.125rem] disabled:opacity-40"
-                    >
-                      −
-                    </button>
-                    <span className="w-6 text-center text-[1rem] font-medium tabular-nums">{n}</span>
-                    <button
-                      type="button"
-                      aria-label={t("sheet.more")}
-                      disabled={n >= room}
-                      onClick={() => setQty((q) => ({ ...q, [tier.id]: n + 1 }))}
-                      className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-[1.125rem] disabled:opacity-40"
-                    >
-                      +
-                    </button>
-                  </div>
+                  <Stepper value={n} min={0} max={room} onChange={(v) => setQty((q) => ({ ...q, [tier.id]: v }))} lessLabel={t("sheet.less")} moreLabel={t("sheet.more")} />
                 </div>
               );
             })}
           </div>
         </section>
 
-        <div className="sticky bottom-0 -mx-section bg-sheet px-section pt-tight">
-          <div className="mb-tight flex items-center justify-between border-t border-line pt-tight text-[0.875rem]">
-            <span className="text-muted">
-              {count > 0 ? t("event.summary", { count }) : t("event.pickTickets")}
-              {multi && dayId ? ` · ${labelOfDay(dayId)}` : ""}
-            </span>
-            <span className="font-semibold tabular-nums">{formatMoney(total, currency)}</span>
-          </div>
-          <div className="flex gap-tight pb-inline">
-            <Button shape="pill" size="lg" className="flex-1" disabled={!count} onClick={() => submit(false)}>
-              {count ? t("event.add", { count }) : t("event.pickTickets")}
-            </Button>
-            <Button shape="pill" size="lg" variant="secondary" disabled={!count} onClick={() => submit(true)}>
-              {count ? t("sheet.buyNow", { amount: formatMoney(total, currency) }) : t("sheet.buyNowShort")}
-            </Button>
-          </div>
-        </div>
       </div>
-    </div>
+    </Sheet>
   );
 }

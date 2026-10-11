@@ -4,7 +4,7 @@ import { useEffect, useId } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ChevronRight, Plus, Search, type LucideIcon } from "lucide-react";
-import { Button } from "@/components/ui";
+import { AffixInput, Button, Skeleton, Switch as UiSwitch, controlClass } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 
@@ -27,18 +27,10 @@ import { MD, useMediaQuery } from "@/lib/useMedia";
  *                      that appears is a notice that says "you have not saved".
  */
 
-const controlBase =
-  "h-11 w-full min-w-0 rounded-sm border bg-card px-comfortable text-sm text-fg outline-none transition-colors duration-quick placeholder:text-faint disabled:cursor-not-allowed disabled:bg-subtle";
-
-/** The field chrome every settings control shares, invalid or not. */
-export function controlCls(invalid?: boolean): string {
-  return cn(
-    controlBase,
-    invalid
-      ? "border-danger focus:ring-2 focus:ring-danger/20"
-      : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20",
-  );
-}
+/** The field chrome every settings control shares, invalid or not. This IS the
+ *  design system's one control chrome (`controlClass` in `components/ui`);
+ *  the name stays so existing settings pages keep working. */
+export const controlCls: (invalid?: boolean) => string = controlClass;
 
 export function SettingsSection({
   title,
@@ -71,10 +63,10 @@ export function SettingsSection({
           under the header — the heading is the card's first line, not a bar. */}
       <header className="flex flex-col gap-section px-card pb-comfortable pt-card sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 id={id} className="text-base font-semibold text-fg">
+          <h2 id={id} className="text-md font-semibold text-fg">
             {title}
           </h2>
-          {description && <p className="mt-inline max-w-prose text-[13px] leading-relaxed text-muted">{description}</p>}
+          {description && <p className="mt-inline max-w-prose text-sm leading-relaxed text-muted">{description}</p>}
         </div>
         {aside && <div className="shrink-0">{aside}</div>}
       </header>
@@ -134,18 +126,18 @@ export function SettingRow({
     >
       {/* The label's first line sits level with the middle of a 44px control,
           so a row reads as one line rather than a caption beside a box. */}
-      <div className={cn("min-w-0", inline && !trailing && "sm:pt-[11px]")}>
+      <div className={cn("min-w-0", inline && !trailing && "sm:pt-3")}>
         {labelFor ? (
-          <label id={labelId} htmlFor={id} className="text-sm font-medium text-fg">
+          <label id={labelId} htmlFor={id} className="text-base font-medium text-fg">
             {label}
           </label>
         ) : (
-          <p id={labelId} className="text-sm font-medium text-fg">
+          <p id={labelId} className="text-base font-medium text-fg">
             {label}
           </p>
         )}
         {description && (
-          <p id={descId} className="mt-inline text-[13px] leading-relaxed text-muted">
+          <p id={descId} className="mt-inline text-sm leading-relaxed text-muted">
             {description}
           </p>
         )}
@@ -153,7 +145,7 @@ export function SettingRow({
       <div className="min-w-0">
         {children({ id, labelId, describedBy })}
         {error && (
-          <p id={errId} className="mt-tight text-[12px] text-danger">
+          <p id={errId} className="mt-tight text-xs text-danger">
             {error}
           </p>
         )}
@@ -162,7 +154,9 @@ export function SettingRow({
   );
 }
 
-/** A text field with a fixed unit at its end: "15 %", "30 days". */
+/** A text field with a fixed unit at its end: "15 %", "30 days". A thin
+ *  wrapper over the shared `AffixInput` that keeps the settings call shape
+ *  (a string `onChange`, `describedBy`). */
 export function SuffixInput({
   id,
   value,
@@ -183,24 +177,17 @@ export function SuffixInput({
   inputMode?: "decimal" | "numeric";
 }) {
   return (
-    <div className="relative">
-      <input
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        inputMode={inputMode}
-        placeholder={placeholder}
-        aria-invalid={invalid || undefined}
-        aria-describedby={describedBy}
-        className={cn(controlCls(invalid), "pr-16 tabular-nums")}
-      />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-comfortable flex items-center text-sm text-muted"
-      >
-        {suffix}
-      </span>
-    </div>
+    <AffixInput
+      id={id}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      inputMode={inputMode}
+      placeholder={placeholder}
+      invalid={invalid}
+      aria-describedby={describedBy}
+      suffix={suffix}
+      inputClassName="tabular-nums"
+    />
   );
 }
 
@@ -238,9 +225,9 @@ export function SaveBar({
       <div
         role="region"
         aria-label={t("save.unsaved")}
-        className="flex flex-wrap items-center justify-between gap-tight rounded-md border border-line bg-card px-section py-tight shadow-lg"
+        className="flex flex-wrap items-center justify-between gap-tight rounded-card border border-line bg-card px-section py-tight shadow-float"
       >
-        <p className="flex min-w-0 items-center gap-tight text-sm font-medium text-fg">
+        <p className="flex min-w-0 items-center gap-tight text-base font-medium text-fg">
           <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-warning" />
           {invalid ? t("save.invalid") : t("save.unsaved")}
         </p>
@@ -258,12 +245,10 @@ export function SaveBar({
 }
 
 /**
- * An on/off setting.
- *
- * A real `role="switch"` button, so it is announced as a switch with its state
- * rather than as a checkbox, and the target is the full 44px height rather than
- * the 24px track. On is the pinned solid ember with a white thumb — the house
- * rule for anything inside an ember frame.
+ * An on/off setting — the design system's Switch (`components/ui/Switch`),
+ * with the settings call shape kept: here `label` is the ACCESSIBLE NAME for a
+ * switch no visible label points at (one per list row), not visible text.
+ * Settings rows draw their own label and description beside it.
  */
 export function Switch({
   checked,
@@ -282,35 +267,14 @@ export function Switch({
   label?: string;
 }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      aria-labelledby={labelledBy}
-      aria-describedby={describedBy}
+    <UiSwitch
+      checked={checked}
+      onChange={onChange}
+      labelledBy={labelledBy}
+      describedBy={describedBy}
       disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className="inline-flex h-11 shrink-0 items-center rounded-full disabled:cursor-not-allowed disabled:opacity-50"
-    >
-      <span
-        aria-hidden
-        className={cn(
-          "relative h-6 w-11 rounded-full border transition-colors duration-quick",
-          checked ? "border-ember-solid bg-ember-solid" : "border-strong bg-line",
-        )}
-      >
-        {/* left-0 is load-bearing: a button centres its text, and an absolute
-            span with no left of its own starts from that centre — which put
-            the thumb on the right when off and outside the track when on. */}
-        <span
-          className={cn(
-            "absolute left-0 top-[1px] h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-quick",
-            checked ? "translate-x-[21px]" : "translate-x-[1px]",
-          )}
-        />
-      </span>
-    </button>
+      aria-label={label}
+    />
   );
 }
 
@@ -319,7 +283,7 @@ export function IconTile({ icon: Icon }: { icon: LucideIcon }) {
   return (
     // The ring is for dark, where subtle and card are the same value and a
     // fill alone leaves the glyph floating with no tile around it.
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-subtle text-muted ring-1 ring-inset ring-hairline">
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control bg-subtle text-muted ring-1 ring-inset ring-hairline">
       <Icon size={18} strokeWidth={1.5} aria-hidden />
     </span>
   );
@@ -346,10 +310,10 @@ export function RecordFacts({
     <dl aria-label={label} className="card-surface grid grid-cols-1 gap-x-major gap-y-section p-card sm:grid-cols-2">
       {facts.map((f) => (
         <div key={f.key} className="min-w-0">
-          <dt className="text-[0.75rem] font-medium text-muted">{f.label}</dt>
+          <dt className="text-xs font-medium text-muted">{f.label}</dt>
           {/* break-words: a counter name and a venue name run together here,
               and a fact clipped is a fact nobody has. */}
-          <dd className={cn("mt-inline break-words text-sm", f.tone === "warn" ? "text-warning" : "text-fg")}>{f.value}</dd>
+          <dd className={cn("mt-inline break-words text-base", f.tone === "warn" ? "text-warning" : "text-fg")}>{f.value}</dd>
         </div>
       ))}
     </dl>
@@ -376,7 +340,7 @@ export function RecordList({ label, header, children }: { label: string; header?
       {header}
       <ul
         aria-label={label}
-        className={cn("divide-y divide-hairline [&>li:last-child>a]:rounded-b-md", !header && "[&>li:first-child>a]:rounded-t-md")}
+        className={cn("divide-y divide-hairline [&>li:last-child>a]:rounded-b-card", !header && "[&>li:first-child>a]:rounded-t-card")}
       >
         {children}
       </ul>
@@ -430,14 +394,14 @@ export function RecordRow({
         {leading}
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-tight gap-y-inline">
-            <span className="text-sm font-medium text-fg">{title}</span>
+            <span className="text-base font-medium text-fg">{title}</span>
             {badges}
           </span>
-          {meta ? <span className="mt-inline block text-[13px] leading-relaxed text-muted">{meta}</span> : null}
-          {aside ? <span className="mt-inline block text-[13px] text-muted sm:hidden">{aside}</span> : null}
+          {meta ? <span className="mt-inline block text-sm leading-relaxed text-muted">{meta}</span> : null}
+          {aside ? <span className="mt-inline block text-sm text-muted sm:hidden">{aside}</span> : null}
         </span>
         {columns ? <span className="hidden shrink-0 items-center gap-section md:flex">{columns}</span> : null}
-        {aside ? <span className="hidden max-w-[40%] shrink-0 text-right text-[13px] text-muted sm:block">{aside}</span> : null}
+        {aside ? <span className="hidden max-w-[40%] shrink-0 text-right text-sm text-muted sm:block">{aside}</span> : null}
         {trailing > 0 ? null : <ChevronRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
       </Link>
       {/* Centred with inset-y-0 and flex, not top-1/2 and a translate. A
@@ -471,10 +435,10 @@ export function ListAddRow({ label, onClick, variant = "header" }: { label: stri
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-comfortable text-left text-sm font-medium text-brand-foreground transition-colors duration-quick hover:bg-muted-wash",
+        "flex w-full items-center gap-comfortable text-left text-base font-medium text-brand-foreground transition-colors duration-quick hover:bg-muted-wash",
         variant === "header"
           ? "border-b border-hairline px-card py-comfortable"
-          : "justify-center rounded-md border border-dashed border-strong px-card py-section",
+          : "justify-center rounded-card border border-dashed border-strong px-card py-section",
       )}
     >
       <Plus size={16} strokeWidth={1.75} aria-hidden />
@@ -483,7 +447,8 @@ export function ListAddRow({ label, onClick, variant = "header" }: { label: stri
   );
 }
 
-/** Search inside a settings collection — offered only where a list is long. */
+/** Search inside a settings collection — offered only where a list is long.
+ *  The shared `AffixInput` with a search glyph as its prefix. */
 export function SearchField({
   value,
   onChange,
@@ -496,17 +461,15 @@ export function SearchField({
   placeholder?: string;
 }) {
   return (
-    <div className="relative w-full sm:w-72">
-      <Search size={16} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-      <input
-        type="search"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={label}
-        placeholder={placeholder}
-        className={cn(controlCls(), "pl-10")}
-      />
-    </div>
+    <AffixInput
+      type="search"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      aria-label={label}
+      placeholder={placeholder}
+      prefix={<Search size={16} strokeWidth={1.5} aria-hidden />}
+      className="sm:w-72"
+    />
   );
 }
 
@@ -541,8 +504,8 @@ export function CreateBar({
   useUnsavedGuard(dirty);
   return (
     <div className="sticky bottom-section z-10 max-md:bottom-[calc(56px+env(safe-area-inset-bottom)+12px)]">
-      <div className="flex flex-wrap items-center justify-between gap-tight rounded-md border border-line bg-card px-section py-tight shadow-lg">
-        <p className="min-w-0 text-[13px] text-muted">{invalid ? invalidNote : note}</p>
+      <div className="flex flex-wrap items-center justify-between gap-tight rounded-card border border-line bg-card px-section py-tight shadow-float">
+        <p className="min-w-0 text-sm text-muted">{invalid ? invalidNote : note}</p>
         <div className="flex shrink-0 gap-tight">
           <Button variant="secondary" onClick={onCancel} disabled={saving}>
             {t("save.cancel")}
@@ -558,13 +521,13 @@ export function CreateBar({
 
 export function SectionSkeleton() {
   return (
-    <div aria-busy="true" className="flex max-w-3xl flex-col gap-section">
+    <div aria-busy="true" className="flex flex-col gap-section">
       {[0, 1].map((i) => (
-        <div key={i} className="card-surface animate-pulse p-card">
-          <div className="h-4 w-40 rounded-xs bg-line" />
-          <div className="mt-inline h-3 w-72 max-w-full rounded-xs bg-line/70" />
-          <div className="mt-major h-11 rounded-sm bg-line/50" />
-          <div className="mt-tight h-11 rounded-sm bg-line/50" />
+        <div key={i} className="card-surface p-card">
+          <Skeleton h={16} w={160} />
+          <Skeleton h={12} w={288} className="mt-inline max-w-full" />
+          <Skeleton h={44} className="mt-major" />
+          <Skeleton h={44} className="mt-tight" />
         </div>
       ))}
     </div>

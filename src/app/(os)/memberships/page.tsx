@@ -3,11 +3,12 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { PauseCircle, PlayCircle, RefreshCw, Search, Settings2, XCircle } from "lucide-react";
+import { PauseCircle, PlayCircle, RefreshCw, Settings2, XCircle } from "lucide-react";
 import {
   Button,
   DataTable,
   EmptyState,
+  FilterSearch,
   FormField,
   Modal,
   StatusPill,
@@ -89,8 +90,8 @@ export default function MembershipsPage() {
       header: t("colMember"),
       render: (m) => (
         <div className="min-w-0">
-          <div className="break-words font-medium">{m.customerName}</div>
-          <div className="font-mono text-[12px] text-muted">{m.code}</div>
+          <div className="break-words text-base font-medium">{m.customerName}</div>
+          <div className="font-mono text-xs text-muted">{m.code}</div>
         </div>
       ),
     },
@@ -99,9 +100,9 @@ export default function MembershipsPage() {
       header: t("colTier"),
       render: (m) => (
         <div className="min-w-0">
-          <div className="break-words text-[13px]">{m.tierName}</div>
+          <div className="break-words text-sm">{m.tierName}</div>
           {m.members.length > 1 && (
-            <div className="text-[12px] text-muted">
+            <div className="text-xs text-muted">
               {t("namedPeople", { count: m.members.length })}
             </div>
           )}
@@ -127,7 +128,7 @@ export default function MembershipsPage() {
       header: t("colVisits"),
       align: "right",
       render: (m) => (
-        <span className="font-mono whitespace-nowrap text-[12px]">
+        <span className="whitespace-nowrap text-sm tabular-nums">
           {m.visitsLeft == null ? t("unlimited") : t("visitsLeft", { count: m.visitsLeft })}
         </span>
       ),
@@ -137,7 +138,7 @@ export default function MembershipsPage() {
       header: t("colExpires"),
       align: "right",
       render: (m) => (
-        <span className="font-mono whitespace-nowrap text-[12px] text-muted">
+        <span className="whitespace-nowrap text-sm tabular-nums text-muted">
           {formatDate(m.expiresAt)}
         </span>
       ),
@@ -228,19 +229,13 @@ export default function MembershipsPage() {
           loading={listQ.loading}
           onRowClick={(m) => router.push(`/customers/${m.customerId}`)}
           toolbar={
-            <div className="relative">
-              <Search
-                size={16}
-                strokeWidth={1.5}
-                className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted"
-              />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("searchPlaceholder")}
-                className="h-11 md:h-9 w-72 max-w-full rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
-              />
-            </div>
+            <FilterSearch
+              value={search}
+              onChange={setSearch}
+              placeholder={t("searchPlaceholder")}
+              aria-label={t("searchPlaceholder")}
+              className="max-w-full"
+            />
           }
           emptyState={<EmptyState title={t(`empty_${tab}`)} message={t("emptyMessage")} />}
         />

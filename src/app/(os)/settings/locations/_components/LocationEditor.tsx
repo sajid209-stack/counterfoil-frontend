@@ -43,7 +43,7 @@ const BLANK: Draft = {
 };
 
 const chip =
-  "inline-flex min-h-11 items-center rounded-full bg-muted-wash/70 px-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9";
+  "inline-flex min-h-11 items-center rounded-full bg-muted-wash/70 px-comfortable text-sm text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9";
 
 /**
  * A location: where it is, when it is open, what hangs off it, and whether it
@@ -137,7 +137,7 @@ export function LocationEditor({
   };
 
   return (
-    <div className="flex max-w-3xl flex-col gap-section pb-hero">
+    <div className="flex flex-col gap-section pb-hero">
       <SettingsSection title={t("locations.detailsTitle")} description={t("locations.detailsDesc")}>
         <SettingRow label={t("common.name")} error={nameErr}>
           {({ id, describedBy }) => (
@@ -211,7 +211,7 @@ export function LocationEditor({
       <SettingsSection
         title={t("locations.openingHours")}
         description={t("locations.hoursDesc")}
-        aside={<p className="text-[13px] text-muted">{t("locations.hoursSummary", { days: openDays(form.hours) })}</p>}
+        aside={<p className="text-sm text-muted">{t("locations.hoursSummary", { days: openDays(form.hours) })}</p>}
       >
         <HoursEditor hours={form.hours} onChange={(hours) => set({ hours })} />
       </SettingsSection>
@@ -261,7 +261,7 @@ export function LocationEditor({
                       <button
                         type="button"
                         onClick={() => setAllResources(true)}
-                        className="inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-fg underline-offset-2 transition-colors duration-quick hover:underline md:min-h-9"
+                        className="inline-flex min-h-11 items-center rounded-sm px-tight text-sm font-medium text-fg underline-offset-2 transition-colors duration-quick hover:underline md:min-h-9"
                       >
                         {t("locations.showAll", { count: resources.length })}
                       </button>

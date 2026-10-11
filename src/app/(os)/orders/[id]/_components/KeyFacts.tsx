@@ -29,28 +29,28 @@ export function KeyFacts({ o, due, dir, labels, className }: { o: Order; due: nu
 
   return (
     <section aria-label={t("keyFacts")} data-keyfacts className={cn("card-surface min-w-0 p-card", className)}>
-      <p className={cn("text-[0.8125rem]", due > 0 ? "font-medium text-warning" : "text-muted")}>{state}</p>
+      <p className={cn("text-sm", due > 0 ? "font-medium text-warning" : "text-muted")}>{state}</p>
       <p
         data-figure={due > 0 ? "due" : "paid"}
         data-amount={lead}
-        className={cn("mt-inline text-[1.75rem] font-semibold leading-tight tabular-nums", due > 0 && "text-warning", voided && due === 0 && "text-muted")}
+        className={cn("type-figure mt-inline text-3xl font-semibold leading-tight", due > 0 && "text-warning", voided && due === 0 && "text-muted")}
       >
         {formatMoney(lead)}
       </p>
       <div className="mt-comfortable flex flex-col gap-inline">
         {name ? (
           o.customerId ? (
-            <Link href={`/customers/${o.customerId}`} className="-my-2 inline-flex min-h-11 min-w-0 items-center gap-inline self-start py-2 text-[0.9375rem] font-medium text-fg">
+            <Link href={`/customers/${o.customerId}`} className="-my-2 inline-flex min-h-11 min-w-0 items-center gap-inline self-start py-2 text-md font-medium text-fg">
               <span className="min-w-0 break-words">{name}</span>
               <ChevronRight size={15} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
             </Link>
           ) : (
-            <p className="min-w-0 break-words text-[0.9375rem] font-medium">{name}</p>
+            <p className="min-w-0 break-words text-md font-medium">{name}</p>
           )
         ) : (
-          <p className="text-[0.9375rem] text-muted">{t("walkIn")}</p>
+          <p className="text-md text-muted">{t("walkIn")}</p>
         )}
-        <p className="flex flex-wrap items-center gap-x-inline text-[0.8125rem] text-muted">
+        <p className="flex flex-wrap items-center gap-x-inline text-sm text-muted">
           <span>{formatDateTime(o.createdAt)}</span>
           {where && (
             <>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CalendarDays, Check, Clock, ImagePlus, MapPin, Plus, RefreshCw, Trash2, Type, X } from "lucide-react";
-import { DateField, TimeInput } from "@/components/ui";
+import { Button, Chip, DateField, StatusPill, TimeInput } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { ACCENT_CHOICES, CATEGORIES, categoryById, FONT_CHOICES, type CategoryId } from "@/lib/events/catalog";
 import { templateFontVars } from "@/lib/events/fonts";
@@ -125,7 +125,7 @@ export function EventCanvas({
           <button
             type="button"
             onClick={() => file.current?.click()}
-            className="flex min-h-11 items-center gap-inline rounded-sm bg-ink/70 px-comfortable text-[13px] font-medium text-white backdrop-blur transition-colors duration-quick hover:bg-ink/85 sm:min-h-9"
+            className="flex min-h-11 items-center gap-inline rounded-control bg-ink/70 px-comfortable text-sm font-medium text-white backdrop-blur transition-colors duration-quick hover:bg-ink/85 sm:min-h-9"
           >
             {content.coverUrl ? <RefreshCw size={14} strokeWidth={1.5} aria-hidden /> : <ImagePlus size={14} strokeWidth={1.5} aria-hidden />}
             {content.coverUrl ? t("replaceCover") : t("addCover")}
@@ -135,7 +135,7 @@ export function EventCanvas({
               type="button"
               onClick={() => onContent({ coverUrl: "" })}
               aria-label={t("removeCover")}
-              className="flex h-9 w-9 items-center justify-center rounded-sm bg-ink/70 text-white backdrop-blur transition-colors duration-quick hover:bg-ink/85"
+              className="flex h-11 w-11 items-center justify-center rounded-control bg-ink/70 text-white backdrop-blur transition-colors duration-quick hover:bg-ink/85 sm:h-9 sm:w-9"
             >
               <Trash2 size={14} strokeWidth={1.5} aria-hidden />
             </button>
@@ -164,29 +164,30 @@ export function EventCanvas({
             aria-invalid={errors.title ? true : undefined}
             style={{ fontFamily: displayFont }}
             className={cn(
-              "w-full resize-none overflow-hidden bg-transparent text-[30px] font-semibold leading-tight tracking-tight outline-none placeholder:text-muted/60 sm:text-[38px]",
+              "w-full resize-none overflow-hidden bg-transparent text-3xl font-semibold leading-tight tracking-title placeholder:text-muted/60 sm:text-display",
               errors.title && "placeholder:text-danger/70",
             )}
           />
           {/* Partiful's one great idea: the typeface is a property of the
               title, changed on the title, seen immediately — not a setting
               filed three panels away under "branding". */}
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="icon"
             onClick={() => setFonts((v) => !v)}
             aria-expanded={fonts}
             title={t("font")}
-            className="mt-tight flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-line text-muted transition-colors duration-quick hover:border-strong hover:text-fg sm:h-9 sm:w-9"
+            className="mt-tight shrink-0 text-muted"
           >
             <Type size={16} strokeWidth={1.5} aria-hidden />
             <span className="sr-only">{t("font")}</span>
-          </button>
+          </Button>
           </div>
           {fonts && (
             /* Each tile sets the operator's OWN title, with the family
                named beside it: eight tiles reading "Aa" is a guessing game
                about a decision that changes the whole page. */
-            <div className="absolute right-0 z-30 mt-inline flex w-[19rem] flex-col gap-inline rounded-md border border-line bg-card p-tight shadow-lg">
+            <div className="absolute right-0 z-30 mt-inline flex w-[19rem] flex-col gap-inline rounded-card border border-line bg-card p-tight shadow-float">
               {FONT_CHOICES.map((f) => (
                 <button
                   key={f.id}
@@ -194,25 +195,25 @@ export function EventCanvas({
                   onClick={() => { onFont(f.css); setFonts(false); }}
                   aria-pressed={displayFont === f.css}
                   className={cn(
-                    "flex min-h-11 items-baseline justify-between gap-section rounded-sm px-comfortable py-tight text-left transition-colors duration-quick",
-                    displayFont === f.css ? "bg-inverse text-inverse-fg" : "hover:bg-muted-wash",
+                    "flex min-h-11 items-baseline justify-between gap-section rounded-control px-comfortable py-tight text-left transition-colors duration-quick",
+                    displayFont === f.css ? "bg-ember-solid text-on-solid" : "hover:bg-muted-wash",
                   )}
                 >
-                  <span className="min-w-0 truncate text-[19px] leading-tight" style={{ fontFamily: f.css }}>
+                  <span className="min-w-0 truncate text-xl leading-tight" style={{ fontFamily: f.css }}>
                     {content.title.trim() || t("namePlaceholder")}
                   </span>
-                  <span className={cn("shrink-0 text-[12px]", displayFont === f.css ? "text-inverse-fg/70" : "text-muted")}>{t(`face.${f.key}`)}</span>
+                  <span className={cn("shrink-0 text-xs", displayFont === f.css ? "text-on-solid" : "text-muted")}>{t(`face.${f.key}`)}</span>
                 </button>
               ))}
             </div>
           )}
-          {errors.title && <p className="mt-inline text-[13px] text-danger">{errors.title}</p>}
+          {errors.title && <p className="mt-inline text-sm text-danger">{errors.title}</p>}
           <input
             value={content.subtitle}
             onChange={(e) => onContent({ subtitle: e.target.value })}
             placeholder={t("taglinePlaceholder")}
             aria-label={te("field.subtitle")}
-            className="mt-tight w-full bg-transparent text-[15px] text-muted outline-none placeholder:text-muted/60"
+            className="mt-tight w-full bg-transparent text-md text-muted placeholder:text-muted/60"
           />
         </div>
 
@@ -221,7 +222,7 @@ export function EventCanvas({
             date field that reads "12 Aug 2026" with no label beside it is a
             number somebody has to infer. */}
         <div className="flex flex-col gap-tight border-t border-hairline pt-section">
-          <p className="text-[12px] font-medium text-muted">{t("whenWhere")}</p>
+          <p className="text-xs font-medium text-muted">{t("whenWhere")}</p>
           <div className="flex flex-col gap-tight sm:flex-row sm:flex-wrap sm:items-start">
           <Fact icon={<CalendarDays size={15} strokeWidth={1.5} aria-hidden />} error={errors.date}>
             <DateField
@@ -242,9 +243,9 @@ export function EventCanvas({
                   <TimeInput picker value={content.endTime} onChange={(v) => onContent({ endTime: v })} className="w-28" />
                 </>
               ) : (
-                <button type="button" onClick={() => onContent({ endTime: "22:00" })} className="min-h-11 rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-muted-wash hover:text-fg sm:min-h-9">
+                <Button variant="tertiary" size="sm" onClick={() => onContent({ endTime: "22:00" })} className="text-muted">
                   {t("addEnd")}
-                </button>
+                </Button>
               )}
             </span>
           </Fact>
@@ -255,7 +256,7 @@ export function EventCanvas({
               placeholder={t("venuePlaceholder")}
               aria-label={te("field.venue")}
               aria-invalid={errors.venueName ? true : undefined}
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 bg-transparent text-base placeholder:text-muted"
             />
           </Fact>
           </div>
@@ -266,7 +267,7 @@ export function EventCanvas({
             which meant it vanished under any light photograph and did not fit
             a phone's cover strip at all. */}
         <div className="flex flex-wrap items-center gap-tight border-t border-hairline pt-section">
-          <span className="text-[12px] font-medium text-muted">{t("accent")}</span>
+          <span className="text-xs font-medium text-muted">{t("accent")}</span>
           {ACCENT_CHOICES[categoryId].map((hex) => {
             const on = accent.toLowerCase() === hex.toLowerCase();
             return (
@@ -285,7 +286,7 @@ export function EventCanvas({
                 {/* A ring alone is the only cue that separates two dark
                     swatches, and two dark swatches are exactly what a
                     colour-blind operator cannot tell apart. */}
-                {on && <Check size={15} strokeWidth={2.5} aria-hidden style={{ color: isLight(hex) ? "#141413" : "#fff" }} />}
+                {on && <Check size={15} strokeWidth={2.5} aria-hidden className={isLight(hex) ? "text-ink" : "text-paper"} />}
               </button>
             );
           })}
@@ -296,22 +297,18 @@ export function EventCanvas({
             box. Each adds a labelled row the page draws in its About block. */}
         <div className="flex flex-col gap-tight border-t border-hairline pt-section">
           <div className="flex flex-wrap items-center gap-tight">
-            <p className="text-[12px] font-medium text-muted">{t("details.title")}</p>
+            <p className="text-xs font-medium text-muted">{t("details.title")}</p>
             {detailsAreSample && details.length > 0 && (
               <>
-                <span className="rounded-full bg-warning-wash px-inline py-0.5 text-[12px] font-medium text-warning">{t("details.sample")}</span>
-                <button
-                  type="button"
-                  onClick={() => onDetails([])}
-                  className="ml-auto min-h-11 rounded-sm px-tight text-[13px] font-medium underline underline-offset-2 hover:bg-muted-wash sm:min-h-9"
-                >
+                <StatusPill tone="warning">{t("details.sample")}</StatusPill>
+                <Button variant="tertiary" size="sm" onClick={() => onDetails([])} className="ml-auto">
                   {t("details.clearSamples", { count: details.length })}
-                </button>
+                </Button>
               </>
             )}
           </div>
           {detailsAreSample && details.length > 0 && (
-            <p className="text-[12px] text-muted">{t("details.sampleHelp")}</p>
+            <p className="text-xs text-muted">{t("details.sampleHelp")}</p>
           )}
           {details.length > 0 && (
             <ul className="flex flex-col gap-tight">
@@ -323,11 +320,11 @@ export function EventCanvas({
                        110px label column out of 358px cut "8,000 standing. No s"
                        mid-word, and a promise nobody can read is a promise nobody
                        checks. */
-                    "grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center rounded-sm border px-comfortable py-tight sm:flex sm:gap-tight sm:py-0",
+                    "grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center rounded-control border px-comfortable py-tight sm:flex sm:gap-tight sm:py-0",
                     detailsAreSample ? "border-dashed border-line" : "border-line",
                   )}
                 >
-                  <span className="col-start-1 row-start-1 min-w-0 shrink-0 truncate text-[12px] font-medium text-muted sm:w-28 sm:py-tight sm:text-[13px]">{row.label}</span>
+                  <span className="col-start-1 row-start-1 min-w-0 shrink-0 truncate text-xs font-medium text-muted sm:w-28 sm:py-tight sm:text-sm">{row.label}</span>
                   <input
                     value={row.value}
                     data-detail={row.id}
@@ -335,18 +332,19 @@ export function EventCanvas({
                     placeholder={t("details.placeholder")}
                     aria-label={row.label}
                     className={cn(
-                      "col-span-2 row-start-2 min-h-11 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted sm:col-auto sm:row-auto md:min-h-9",
+                      "col-span-2 row-start-2 min-h-11 min-w-0 flex-1 bg-transparent text-base placeholder:text-muted sm:col-auto sm:row-auto md:min-h-9",
                       detailsAreSample && "text-muted",
                     )}
                   />
-                  <button
-                    type="button"
+                  <Button
+                    variant="tertiary"
+                    size="icon"
                     onClick={() => onDetails(details.filter((_, j) => j !== i))}
                     aria-label={t("details.remove", { label: row.label })}
-                    className="col-start-2 row-start-1 flex h-11 w-11 shrink-0 items-center justify-center justify-self-end rounded-sm text-muted hover:text-danger sm:h-9 sm:w-9"
+                    className="col-start-2 row-start-1 shrink-0 justify-self-end text-muted hover:text-danger"
                   >
                     <X size={14} strokeWidth={1.5} aria-hidden />
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
@@ -355,19 +353,17 @@ export function EventCanvas({
             {(["doors", "dress", "parking", "age", "accessibility", "food"] as const)
               .filter((k) => !details.some((r) => r.label === t(`details.${k}`)))
               .map((k) => (
-                <button
+                <Chip
                   key={k}
-                  type="button"
+                  icon={<Plus size={13} strokeWidth={1.5} aria-hidden />}
                   onClick={() => {
                     const id = `d${Date.now()}`;
                     onDetails([...details, { id, label: t(`details.${k}`), value: "" }]);
                     requestAnimationFrame(() => document.querySelector<HTMLInputElement>(`[data-detail="${id}"]`)?.focus());
                   }}
-                  className="flex min-h-11 items-center gap-inline rounded-full border border-dashed border-line px-comfortable text-[13px] text-muted transition-colors duration-quick hover:border-strong hover:text-fg sm:min-h-9"
                 >
-                  <Plus size={13} strokeWidth={1.5} aria-hidden />
                   {t(`details.${k}`)}
-                </button>
+                </Chip>
               ))}
           </div>
         </div>
@@ -379,25 +375,20 @@ export function EventCanvas({
               Entertainment & Social reads as two taxonomies, and an operator
               who cannot tell whether a control changes the page's sections
               leaves it alone. It changes all of it, so it says so. */}
-          <p className="text-[12px] font-medium text-muted">{t("look.title")}</p>
-          <p className="-mt-inline text-[12px] text-muted">{t("look.help")}</p>
+          <p className="text-xs font-medium text-muted">{t("look.title")}</p>
+          <p className="-mt-inline text-xs text-muted">{t("look.help")}</p>
           <div className="flex flex-wrap gap-tight">
             {CATEGORIES.map((c) => {
               const on = c.id === categoryId;
               return (
-                <button
+                <Chip
                   key={c.id}
-                  type="button"
+                  selected={on}
                   onClick={() => onCategory(c.id)}
-                  aria-pressed={on}
-                  className={cn(
-                    "flex min-h-11 items-center gap-tight rounded-full border px-comfortable text-[13px] transition-colors duration-quick sm:min-h-9",
-                    on ? "border-inverse bg-inverse text-inverse-fg" : "border-line hover:border-strong",
-                  )}
+                  icon={<span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: c.theme.accent }} />}
                 >
-                  <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: c.theme.accent }} />
                   <span style={{ fontFamily: c.theme.display }}>{t(`look.${c.key}`)}</span>
-                </button>
+                </Chip>
               );
             })}
           </div>
@@ -420,14 +411,14 @@ function Fact({ icon, children, error, grow = false }: { icon: React.ReactNode; 
     <span className={cn("flex min-w-0 flex-col", grow && "flex-1")}>
       <span
         className={cn(
-          "flex min-h-11 min-w-0 items-center gap-tight rounded-sm border px-comfortable text-sm md:min-h-9",
+          "flex min-h-11 min-w-0 items-center gap-tight rounded-control border px-comfortable text-base md:min-h-9",
           error ? "border-danger" : "border-line",
         )}
       >
         <span className="shrink-0 text-muted">{icon}</span>
         {children}
       </span>
-      {error && <span className="mt-inline text-[13px] text-danger">{error}</span>}
+      {error && <span className="mt-inline text-sm text-danger">{error}</span>}
     </span>
   );
 }

@@ -55,7 +55,7 @@ export function SummarySheet({
       }
     >
       <div className="p-card">
-        <p data-summary-scope className="mb-major break-words text-sm text-muted">{filterText}</p>
+        <p data-summary-scope className="mb-major break-words text-base text-muted">{filterText}</p>
         <SalesSummaryView summary={summary} L={labels} />
       </div>
     </Sheet>

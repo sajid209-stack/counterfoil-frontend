@@ -51,7 +51,7 @@ export function BufferField({
       <DurationInput label={t("bufferLabel")} value={value} min={0} step={5} onChange={onChange} chips={CHIPS} help={help} />
       {/* The tiny visual — decorative beside the help line above, which
           already says the same thing in words. */}
-      <p aria-hidden className="mt-tight text-[12px] tabular-nums text-muted">{preview}</p>
+      <p aria-hidden className="mt-tight text-xs tabular-nums text-muted">{preview}</p>
     </div>
   );
 }

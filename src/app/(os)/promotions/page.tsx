@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button, DataTable, EmptyState, FormField, StatusPill, useToast, type Column } from "@/components/ui";
+import { Button, Card, Checkbox, DataTable, EmptyState, FormField, StatusPill, useToast, type Column } from "@/components/ui";
 import { PageShell, PageToolbar } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import { createPromotion, getManualDiscountPolicy, listPromotions, updateManualDiscountPolicy } from "@/lib/api";
@@ -54,22 +54,18 @@ export default function PromotionsPage() {
     <PageShell title={t("list.title")} description={t("list.description")}>
       <div className="flex flex-col gap-section">
         {/* Cashier discount policy */}
-        <section className="card-surface p-card">
-          <h2 className="type-h2 text-base">{t("policy.title")}</h2>
-          <p className="mb-section text-[13px] text-muted">{t("policy.description")}</p>
+        <Card as="section" title={t("policy.title")}>
+          <p className="mb-section text-sm text-muted">{t("policy.description")}</p>
           {policy && (
             <div className="flex flex-wrap items-end gap-section">
               <div className="w-40">
                 <FormField label={t("policy.maxPercent")} variant="number" value={String(policy.maxPercentBps / 100)} onChange={(e) => setPolicy({ ...policy, maxPercentBps: Math.round((parseFloat(e.target.value) || 0) * 100) })} />
               </div>
-              <label className="flex h-11 items-center gap-inline text-[13px]">
-                <input type="checkbox" checked={policy.requireReason} onChange={(e) => setPolicy({ ...policy, requireReason: e.target.checked })} className="h-4 w-4 accent-ember" />
-                {t("policy.requireReason")}
-              </label>
+              <Checkbox label={t("policy.requireReason")} checked={policy.requireReason} onCheckedChange={(on) => setPolicy({ ...policy, requireReason: on })} />
               <Button size="sm" loading={savingPol} onClick={savePolicy}>{t("policy.save")}</Button>
             </div>
           )}
-        </section>
+        </Card>
 
         {/* Promotions list */}
         {q.loading || (q.data?.data.length ?? 0) > 0 ? (
@@ -89,7 +85,7 @@ export default function PromotionsPage() {
                   </Button>
                 }
               >
-                <h2 className="type-h2 pt-inline text-base">{t("list.title")}</h2>
+                <h2 className="pt-inline text-md font-semibold text-fg">{t("list.title")}</h2>
               </PageToolbar>
             }
           />

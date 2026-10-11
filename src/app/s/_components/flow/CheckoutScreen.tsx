@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Lock } from "lucide-react";
+import { Checkbox, Notice, Radio } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { checkout as apiCheckout, type Order, type PaymentMethod, type Ticket } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
@@ -38,7 +39,7 @@ export interface CheckoutContact {
 }
 
 const inputCls =
-  "h-12 w-full rounded-[12px] border border-strong bg-white px-section text-[16px] outline-none transition-shadow focus:border-[var(--sf-fill)] focus:ring-2 focus:ring-[var(--sf-fill)]/25";
+  "h-12 w-full rounded-md border border-strong bg-card px-section text-md transition-colors duration-quick focus:border-ember";
 
 /** The one-page checkout: contact, payment method and terms on the left, the
  *  order summary and the Pay button on the right (below, on a phone), and then,
@@ -62,8 +63,8 @@ export function CheckoutScreen() {
   if (flow.basket.length === 0) {
     return (
       <StorefrontChrome storefront={flow.storefront} location={flow.location} poweredBy={t("poweredBy")}>
-        <div className="mt-major flex flex-col items-center rounded-[20px] border border-hairline bg-subtle px-section py-hero text-center">
-          <p className="text-[18px] font-semibold">{t("basket.empty")}</p>
+        <div className="mt-major flex flex-col items-center rounded-lg border border-hairline bg-subtle px-section py-hero text-center">
+          <p className="text-lg font-semibold">{t("basket.empty")}</p>
           <button type="button" className={cn(sfBtn.primary, "mt-major")} onClick={flow.goVenue}>
             {t("basket.browse")}
           </button>
@@ -176,7 +177,7 @@ export function CheckoutScreen() {
     );
   }
 
-  const card = "rounded-[16px] border border-hairline p-major";
+  const card = "rounded-lg border border-hairline p-major";
 
   return (
     <StorefrontChrome storefront={flow.storefront} location={flow.location} poweredBy={t("poweredBy")}>
@@ -187,12 +188,12 @@ export function CheckoutScreen() {
           onClick={flow.goBasket}
         />
       </div>
-      <h1 className="mt-tight text-[32px] font-semibold tracking-[-0.03em] sm:text-[40px]">{t("checkout.title")}</h1>
+      <h1 className="mt-tight text-4xl font-semibold tracking-figure sm:text-display">{t("checkout.title")}</h1>
 
       <div className="mt-major grid grid-cols-1 items-start gap-major lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-wide">
         <div className="flex flex-col gap-section">
           <section className={cn(card, "flex flex-col gap-section")}>
-            <h2 className="text-[20px] font-semibold tracking-[-0.01em]">{t("checkout.contactTitle")}</h2>
+            <h2 className="text-xl font-semibold">{t("checkout.contactTitle")}</h2>
             <Labeled label={t("checkout.nameLabel")} error={errors.name}>
               <input
                 value={contact.name}
@@ -223,53 +224,46 @@ export function CheckoutScreen() {
           </section>
 
           <section className={cn(card, "flex flex-col gap-section")}>
-            <h2 className="text-[20px] font-semibold tracking-[-0.01em]">{t("checkout.paymentTitle")}</h2>
+            <h2 className="text-xl font-semibold">{t("checkout.paymentTitle")}</h2>
             <div className="flex flex-col gap-tight">
               {methods.map((m) => (
-                <label
+                <div
                   key={m}
+                  onClick={() => setMethod(m)}
                   className={cn(
-                    "flex min-h-14 cursor-pointer items-center gap-comfortable rounded-[12px] border px-section py-tight transition-colors duration-quick",
-                    method === m ? "border-[var(--sf-fill)] bg-[var(--sf-soft)] ring-1 ring-inset ring-[var(--sf-fill)]" : "border-line hover:border-strong",
+                    "flex min-h-14 cursor-pointer items-center rounded-md border px-comfortable transition-colors duration-quick",
+                    method === m ? "border-ember-solid bg-ember-wash" : "border-line hover:border-strong",
                   )}
                 >
-                  <input
-                    type="radio"
+                  <Radio
                     name="method"
                     checked={method === m}
                     onChange={() => setMethod(m)}
-                    className="h-5 w-5 shrink-0 accent-[var(--sf-fill)]"
+                    label={
+                      <>
+                        <span className="block text-md font-semibold">{t(`checkout.method.${m}`)}</span>
+                        <span className="block text-base text-muted">{t(`checkout.methodHint.${m}`)}</span>
+                      </>
+                    }
                   />
-                  <span className="min-w-0">
-                    <span className="block text-[16px] font-semibold">{t(`checkout.method.${m}`)}</span>
-                    <span className="block text-[14px] text-muted">{t(`checkout.methodHint.${m}`)}</span>
-                  </span>
-                </label>
+                </div>
               ))}
             </div>
-            {errors.method && <p className="text-[14px] font-medium text-danger">{errors.method}</p>}
+            {errors.method && <p className="text-base font-medium text-danger">{errors.method}</p>}
           </section>
 
           <section className={card}>
-            <label className="flex min-h-11 cursor-pointer items-start gap-comfortable">
-              <input
-                type="checkbox"
-                checked={agreed}
-                onChange={(e) => setAgreed(e.target.checked)}
-                className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--sf-fill)]"
-              />
-              <span className="text-[14px] leading-relaxed">{t("checkout.terms")}</span>
-            </label>
-            {errors.terms && <p className="mt-tight text-[14px] font-medium text-danger">{errors.terms}</p>}
+            <Checkbox checked={agreed} onCheckedChange={setAgreed} label={t("checkout.terms")} />
+            {errors.terms && <p className="mt-tight text-base font-medium text-danger">{errors.terms}</p>}
           </section>
         </div>
 
-        <aside className="rounded-[20px] border border-line bg-white p-major shadow-[0_12px_40px_rgba(0,0,0,0.06)] lg:sticky lg:top-24">
-          <h2 className="text-[20px] font-semibold tracking-[-0.01em]">{t("checkout.summaryTitle")}</h2>
+        <aside className="rounded-lg border border-line bg-card p-major shadow-card lg:sticky lg:top-24">
+          <h2 className="text-xl font-semibold">{t("checkout.summaryTitle")}</h2>
           <ul className="mt-section flex flex-col gap-comfortable border-t border-hairline pt-section">
             {flow.basket.map((line) => (
-              <li key={line.id} className="text-[14px]">
-                <p className="text-[15px] font-semibold">{line.productName}</p>
+              <li key={line.id} className="text-base">
+                <p className="text-md font-semibold">{line.productName}</p>
                 <p className="text-muted">
                   {[line.date ? formatDay(line.date, { weekday: true }) : null, line.startTime ? formatClock(line.startTime) : null]
                     .filter(Boolean)
@@ -286,7 +280,7 @@ export function CheckoutScreen() {
               </li>
             ))}
           </ul>
-          <div className="mt-section flex flex-col gap-tight border-t border-hairline pt-section text-[15px]">
+          <div className="mt-section flex flex-col gap-tight border-t border-hairline pt-section text-md">
             <p className="flex justify-between text-muted">
               <span>{t("basket.subtotal")}</span>
               <span className="tnum text-fg">{formatMoney(flow.totals.subtotal)}</span>
@@ -297,17 +291,21 @@ export function CheckoutScreen() {
                 <span className="tnum text-fg">{formatMoney(flow.totals.taxTotal)}</span>
               </p>
             )}
-            <p className="mt-tight flex justify-between border-t border-hairline pt-section text-[20px] font-semibold">
+            <p className="mt-tight flex justify-between border-t border-hairline pt-section text-xl font-semibold">
               <span>{t("basket.total")}</span>
               <span className="tnum">{formatMoney(flow.totals.total)}</span>
             </p>
           </div>
 
-          {errors.pay && <p className="mt-section text-[14px] font-medium text-danger">{errors.pay}</p>}
+          {errors.pay && (
+            <Notice tone="danger" className="mt-section">
+              {errors.pay}
+            </Notice>
+          )}
           <button type="button" className={cn(sfBtn.primary, "mt-major w-full")} onClick={startPayment}>
             {t("checkout.pay", { amount: formatMoney(flow.totals.total) })}
           </button>
-          <p className="mt-section flex items-center gap-tight text-[14px] text-muted">
+          <p className="mt-section flex items-center gap-tight text-base text-muted">
             <Lock size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />
             {t("checkout.secure")}
           </p>
@@ -320,9 +318,9 @@ export function CheckoutScreen() {
 function Labeled({ label, error, help, children }: { label: string; error?: string; help?: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-tight">
-      <span className="text-[14px] font-semibold">{label}</span>
+      <span className="text-base font-semibold">{label}</span>
       {children}
-      {error ? <span className="text-[14px] font-medium text-danger">{error}</span> : help ? <span className="text-[14px] text-muted">{help}</span> : null}
+      {error ? <span className="text-base font-medium text-danger">{error}</span> : help ? <span className="text-base text-muted">{help}</span> : null}
     </label>
   );
 }

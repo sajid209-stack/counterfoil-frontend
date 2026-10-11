@@ -16749,3 +16749,254 @@ take a 2px ember ring.
 - Turbopack's dev cache can fail with "Insufficient system resources
   (os error 1450)" when free RAM drops under 1 GB. It heals on its own. On this
   machine, keep to three browser agents at a time.
+
+## One design system for OS and GO, and a Design System page (2026-10-11)
+
+Owner, with a long brief and a screenshot of the rail with Point of Sale and
+Counterfoil Deck boxed: audit the codebase, lock the tokens and four theme
+configurations, standardise the shared components before touching pages,
+migrate OS and GO without changing any workflow, then add a **Design System**
+button in that spot and build the documentation for both products.
+
+Planned, designed and verified on Opus; built by Sonnet sub-agents with
+separate file ownership, never more than three driving a browser at once.
+
+### 1. Audit (five lanes, in the session scratchpad `ds/audit/`)
+
+Foundations, components, OS pages, GO, and a census of every value in use.
+In numbers:
+- 2,294 token violations once a checker existed. 89% were arbitrary text
+  sizes; `text-[13px]` alone appeared 1,000 times, written two ways.
+- 382 `Button` uses beside 572 raw `<button>`s.
+- `Card` had zero uses while `card-surface` was typed by hand 105 times.
+- Duplicates: six "selected" recipes, three switches, about 23 hand-built
+  banners, three pagers, nine search boxes and eight steppers.
+- Four hand-rolled bottom sheets, none with a focus trap.
+- In dark: `ring-ink` focus rings vanished, `bg-success text-white` was 1.74:1,
+  and `faint == strong` and `subtle == card` made every sunken fill disappear.
+
+### 2. Tokens and four themes (`src/app/globals.css`, `docs/design-system.md`)
+
+- **Three layers.**
+  - Primitives: neutral, brand and the status ramps, with `neutral-650/850/875`
+    added for contrast steps.
+  - Semantic roles: surface, card, chrome, sheet, subtle, muted-wash, fg,
+    muted, faint, line, strong, hairline, inverse, ember, ember-solid,
+    on-solid, ring, the status colours with their washes and solids, charts and
+    heat.
+  - Component tokens: `--radius-card/control/inner/sheet` and
+    `--elev-card/float`.
+- **The primary fill moved to brand-600.** `ember-solid` is #d63d00, 4.64:1
+  under white, so white on the primary button is no longer an exception.
+  #f94a00 stays the accent for marks, the focus ring and charts. It is one
+  token, so it can be reverted.
+- **Mode and product are independent and work on any element.**
+  - `.light/.paper/.sf` and `.dark` re-declare every mode token, including
+    every token that is a `var()` of another. Custom properties resolve where
+    they are declared, so a `.dark` island inside a light page would otherwise
+    inherit light values.
+  - `data-product="go"` switches the component tokens: card 12→18, control
+    6→pill, inner 3→14, sheet 12→28, and the Go lift. It is set before paint by
+    prefsBoot and by GoShell.
+  - `[data-product="os"]` resets a subtree to OS.
+  - Product blocks sit after mode blocks, so an element carrying both resolves
+    correctly.
+- **Dark edges come from tokens, not `.dark X` rules.** In dark,
+  `--elevation-1` is a 1px ring of `--color-line`. The `.dark .card-surface`
+  and `.dark .go-surface` rules are gone, so a light preview inside a dark
+  page stays light.
+- **Shadows are plain variables** (`--elevation-*`). Tailwind copies
+  `--shadow-*` theme values straight into its utilities, so overriding a
+  `--shadow-*` variable would never reach them.
+- **Type scale**: 2xs 11 · xs 12 · sm 13 · base 14 · md 16 · lg 18 · xl 20 ·
+  2xl 24 · 3xl 28 · 4xl 32 · display 40, each with its line height.
+  - Plus `tracking-title` and `tracking-figure`.
+  - A role table sets how each part of a page is set: page title, card title
+    `text-md font-semibold`, supporting text `text-sm text-muted`, figures
+    `type-figure`, and table headers and cells.
+- **Motion**: `duration-quick/standard/considered` are utilities, because
+  Tailwind has no `--duration-*` namespace.
+- **Tabular figures are opt-in now.** The global `tabular-nums` made Inter's
+  hyphen 42% wider (8.9px against 6.3px), so every "Walk-in" and "Sign-in" read
+  "Walk - in". It now applies to inputs, right-aligned table cells,
+  `type-figure`, `type-display`, and the ~300 money and count columns that
+  already set it.
+- **Repaired on the way.** An edit of mine had spliced about 380 lines out of
+  `globals.css`: the whole dark block, the Go sheet and gate animations, print,
+  and the contrast and motion preferences. They were restored from HEAD before
+  anything shipped.
+
+### 3. Enforcement
+
+`npm run lint:tokens` runs `scripts/check-design-tokens.mjs` (no
+dependencies). It checks:
+- arbitrary text, radius, shadow, duration, z-index and spacing values;
+- raw colour literals;
+- `text-faint` on content, and `font-mono` on money;
+- `.dark` ↔ `.light` token parity, and dead tokens;
+- `ds-exception` markers, which must carry a reason.
+
+Exemptions live in `scripts/design-tokens.allow.json`, each with a reason.
+**2,294 errors → 0.**
+
+The type-scale codemod (`scripts/codemods/type-scale.mjs`) moved 2,677 sizes
+across 263 files onto the scale. It ran once and must not run again: it is not
+idempotent.
+
+### 4. The component kit (`src/components/ui`)
+
+**New**
+- `Switch`, `Checkbox`/`Radio`/`RadioGroup`, `SegmentedControl` and `Chip`.
+- `Notice`, `Skeleton`/`SkeletonText` and `Pagination`/`Pager`.
+- `ButtonLink` and `buttonClass`.
+- `controlClass`/`controlShellClass`/`AffixInput`, `scrimClass`/
+  `useDialogBehaviour` and `tabPanelProps`.
+
+**Rebuilt**
+- **Button**: `size="icon"` and `selected`. It uses `rounded-control`, so it is
+  a pill in GO with no prop. One disabled treatment, loading keeps the width,
+  and `lg` is 52px in GO.
+- **Tabs**: the full tablist/tab/tabpanel model with roving tabindex.
+- **ActionMenu**: arrow keys, Home/End, and Escape back to the trigger. Escape
+  had never worked with focus inside the menu.
+- **Modal / ConfirmDialog**: `aria-labelledby`, scroll lock, and Cancel takes
+  focus.
+- **Sheet**: a focus trap, and focus restored on close.
+- **Toast**: pauses while hovered or focused.
+- **Card**: real `title`/`actions`.
+- **DataTable**: Skeleton, Pagination, `aria-sort` and 44px sort targets.
+- **FormField**: prefix/suffix and tel/url/search types. `date` now opens
+  Counterfoil's calendar and `toggle` is a Switch.
+- **DurationInput / TimeInput**: no more set-state-in-effect.
+
+**Across the kit**
+- One focus system: the global `:focus-visible` ring. Every per-component ring
+  is removed.
+- Every English string in the kit moved to `common.ui.*` in en and bn.
+
+**Deleted**, because nothing used them: `PercentInput`, `LineChart`,
+`BarChart`, `HBarChart` and `DonutChart`. The DonutChart lint error went with
+it.
+
+### 5. Migration (OS part 1, OS part 2, GO and public surfaces)
+
+Every page moved onto the kit and the type roles without changing a workflow.
+
+**Across OS and GO**
+- Hand-built banners became `Notice`, and pulse blocks became `Skeleton`.
+- Local pagers became `Pagination`.
+- Native checkboxes became `Checkbox`, and local switches `Switch`.
+- The six selected recipes became `Chip`, `SegmentedControl` or `ChoiceCard`.
+- The nine search boxes became `FilterSearch` or `AffixInput`.
+- One card-title style and one figure scale.
+- DM Mono is used only for identifiers.
+
+**GO**
+- One `Stepper` replaced seven copies.
+- Every bottom sheet is a real dialog, built on `Sheet` or on `SheetShell` over
+  `useDialogBehaviour`.
+- `go-surface` and the hand-rolled cards moved onto `card-surface`.
+- One 52px primary height.
+- The 13px reading floor is restored on `/sell`.
+- Fluid figures are rem-based, so the till's text-size setting reaches them.
+- `/quick-pass` is fixed in prefsBoot.
+- The classic till got token fixes only, because it is a deliberate
+  restoration of an older design.
+
+**Fixed while there**
+- Issued orders: the date filter's regex had lost its backslashes, so
+  `?from=&to=` links were ignored.
+- The customer page's Call / SMS / Email are real `tel:`/`sms:`/`mailto:`
+  links.
+- The calendar's week and day grids fill the frame; they stopped at 70vh.
+- The booking wizard no longer asks "How do people book it?" twice.
+- The command palette's highlighted row was invisible in dark.
+
+### 6. The Design System page (`/design-system`)
+
+The owner followed up the same day: "add a button for design system and
+properly add design system for both OS and POS — buttons, hover, radius, font,
+typography, colour system, spacing, strokes, cards, and other standard stuff."
+
+**Where it lives**
+- Outside the OS shell, like the deck.
+- **OS:** in the rail under Point of Sale and Counterfoil Deck (the spot the
+  owner boxed); Ctrl/⌘ K finds it.
+- **POS:** in the More sheet, and as a card on the till's Settings page; both
+  open it on the POS previews (`?product=go`).
+- `/tokens` and `/kitchen-sink` redirect to it, and both old pages are deleted.
+
+**What it holds: 22 sections**
+- Foundations: overview (with a quick-reference card for each of the owner's
+  words), colour, typography (with a Fonts part: Inter weights, DM Mono for
+  identifiers only, Hind Siliguri for Bangla, live specimens), spacing, radius,
+  borders and strokes, elevation, motion, iconography and themes.
+- Components: buttons, **interaction states** (every control frozen at rest,
+  hover, focus, pressed, selected, disabled, loading and invalid, plus a table
+  of what each state changes), inputs, selection controls, navigation,
+  **cards and surfaces** (anatomy, the page → card → sunken → sheet stack,
+  variants, nested corners, OS against POS, dark), data display, feedback and
+  overlays.
+- Patterns: OS, POS, and accessibility and standards.
+
+**How it works**
+- An OS|POS and Light|Dark switch drives every preview; the till is called
+  POS in the documentation (Counterfoil GO in code).
+- `ThemeQuad` draws all four configurations side by side.
+- Token tables read their values from the running stylesheet, show the
+  Tailwind class for every token, and copy either.
+- Contrast is computed live.
+- The page's own chrome is built from the kit.
+
+### 7. What the regression run caught
+
+Run against a production build, then re-run after each fix:
+- **Checkbox and Radio:** the drawn mark covered the hidden input, so a click
+  aimed at the input landed on the drawing. Each is now ONE label row (target,
+  mark and text) with the real input laid over the 44px target; the
+  description is inside the row but wired by `aria-describedby`, not part
+  of the name.
+- **Segmented control:** the track was 44px but each option 40. The option is
+  the target, so it is 44px on touch (and at least 44 wide).
+- **Prefixed inputs** were 42px tall on a phone (a border inside a 44px box);
+  the shell draws its edge as an inset ring now.
+- **Dark muted text** measured 4.44:1 on the new sunken step. Dark `muted`
+  is `neutral-450` (#a09b92): 5.8 on the card, 5.0 sunken, 4.65 on the
+  ember wash. The two dark greys added for the sunken step were renamed so the
+  scale runs light to dark (850 > 875).
+- **Order page:** the collect-payment method is a SegmentedControl, not chips,
+  so the money card keeps one orange primary.
+- **Storefront:** the ticket plate's venue name steps down on phones (it was
+  clipped by 4px at 320).
+- **FormField** takes an `id`, so a field keeps a stable hook.
+- About 20 harness scripts asserted the old markup (buttons that are now
+  radios, `aria-pressed` that is now `aria-checked`, the old pager's
+  wording, 14 destinations before Design System, the deleted /tokens page,
+  the POS card corner). They were updated to the new semantics, never by
+  loosening what they check.
+
+### Verified
+
+- `tsc` is clean, `npm run lint:tokens` reports 0 errors, and i18n is
+  0 missing / 0 extra.
+- `eslint src` reports 9 errors, all from before this work: PosScreen ×2,
+  OsShell, booking-rules/[id], pricing/[id], promotions ×2, ProductThumb and
+  useApi.
+- The production build compiled and generated all 102 pages.
+- **Regression, against that production build: 86 script runs, 8,853 checks,
+  0 failed.** The phone audit reports 0 controls under 44px, nothing clipped,
+  no hidden overflow and no console errors; the three route sweeps (390 en,
+  390 bn dark, 1440) are clean on all 59 routes.
+- Checked in the browser: the Design System pages, the dashboard, orders,
+  customers, catalog, calendar, settings and the till, in light and dark, at
+  1440 and 390.
+
+### Open
+
+- Bangla strings added in this pass are drafts and want a native review.
+- Tailwind's `dark:` variant follows the page-level class, so the handful of
+  `dark:` utilities still in the kit cannot follow a preview island's own mode;
+  the Themes page says so. Taking them to tokens would remove the caveat.
+- The classic till got token fixes only; it is a deliberate restoration.
+- The scripts in the session scratchpads were updated to the new markup; they
+  live outside the repo, as before.

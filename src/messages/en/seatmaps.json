@@ -65,7 +65,8 @@
     "newCategory": "New seat type",
     "noCategories": "No seat types yet. Add one, like Regular or VIP, to start selling seats.",
     "catCount": "{count} seats",
-    "gaName": "Standing"
+    "gaName": "Standing",
+    "title": "Edit seat layout"
   },
   "picker": {
     "title": "Choose seats",

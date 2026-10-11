@@ -37,12 +37,12 @@ export default function ShiftClosePage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
       <div>
-        <p className="text-[0.875rem] font-semibold text-brand-foreground">{t("endLabel")}</p>
+        <p className="text-base font-semibold text-brand-foreground">{t("endLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("closeTitle")}</h1>
         <p className="type-body mt-tight text-muted">{t("closeHint")}</p>
       </div>
 
-      <div className="rounded-go border border-line bg-card p-section">
+      <div className="card-surface p-section">
         <div className="flex justify-between text-muted"><span>{t("expected")}</span><span className="text-lg font-semibold tabular-nums">{formatMoney(EXPECTED)}</span></div>
         <div className="mt-tight flex justify-between"><span>{t("counted")}</span><span className="text-lg font-semibold tabular-nums">{entered ? formatMoney(countedMinor) : <span className="text-muted">—</span>}</span></div>
         <div className={`mt-tight flex justify-between text-xl font-medium ${tone}`}>
@@ -52,42 +52,42 @@ export default function ShiftClosePage() {
         {/* Says what the difference means right now, not only when it is a
             problem — "square" is worth hearing at the end of a shift. */}
         {tier === "off" && (
-          <p className="mt-tight text-[0.8125rem] text-warning">{t("varianceOff", { amount: formatMoney(TOLERANCE) })}</p>
+          <p className="mt-tight text-sm text-warning">{t("varianceOff", { amount: formatMoney(TOLERANCE) })}</p>
         )}
         {tier === "ok" && (
-          <p className="mt-tight text-[0.8125rem] text-success">{t("varianceOk", { amount: formatMoney(TOLERANCE) })}</p>
+          <p className="mt-tight text-sm text-success">{t("varianceOk", { amount: formatMoney(TOLERANCE) })}</p>
         )}
       </div>
 
       <div className="flex flex-col gap-tight">
-        <label htmlFor="counted-cash" className="text-[0.875rem] font-semibold text-fg">{t("countedCash")}</label>
+        <label htmlFor="counted-cash" className="text-base font-semibold text-fg">{t("countedCash")}</label>
         <input
           id="counted-cash"
           inputMode="decimal"
           value={counted}
           onChange={(e) => setCounted(e.target.value)}
           placeholder="0.00"
-          className="h-14 rounded-go-sm border border-line bg-card px-section text-2xl font-semibold tabular-nums outline-none focus:border-inverse"
+          className="h-14 rounded-inner border border-line bg-card px-section text-2xl font-semibold tabular-nums"
         />
       </div>
 
       {tier === "off" && (
         <div className="flex flex-col gap-tight">
-          <label className="text-[0.875rem] font-semibold text-fg" htmlFor="variance-reason">{t("varianceReason")}</label>
+          <label className="text-base font-semibold text-fg" htmlFor="variance-reason">{t("varianceReason")}</label>
           <textarea
             id="variance-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={2}
             placeholder={t("varianceReasonPlaceholder")}
-            className="min-h-[72px] rounded-go-sm border border-warning/50 bg-card p-section text-sm outline-none focus:border-inverse"
+            className="min-h-[72px] rounded-inner border border-warning/50 bg-card p-section text-base"
           />
         </div>
       )}
 
       <Button
-        shape="pill"
         size="lg"
+        className="h-13 text-md font-semibold"
         fullWidth
         disabled={!entered || (tier === "off" && !reason.trim())}
         onClick={() => router.push("/login")}

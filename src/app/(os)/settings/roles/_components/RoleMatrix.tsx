@@ -40,7 +40,7 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
   // card they sit on is 72% card over the page — a plain bg-card drew a whiter
   // stripe down the column. This is that composite, made solid.
   const pinned =
-    "max-md:sticky max-md:left-0 max-md:z-[1] max-md:bg-[color-mix(in_srgb,var(--color-card)_72%,var(--color-surface))]";
+    "max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-[color-mix(in_srgb,var(--color-card)_72%,var(--color-surface))]";
 
   const discount = (r: Role) =>
     !r.permissions.includes("pos.sell") ? (
@@ -62,14 +62,14 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
   return (
     <SettingsSection title={t("roles.compareTitle")} description={t("roles.compareDesc")}>
       <div className="relative overflow-x-auto">
-        <table aria-label={t("roles.compareTitle")} className="table-inset w-full min-w-[34rem] border-collapse text-sm">
+        <table aria-label={t("roles.compareTitle")} className="table-inset w-full min-w-[34rem] border-collapse text-base">
           <thead>
             <tr className="border-b border-hairline">
-              <th scope="col" className={`px-card py-tight text-left text-[13px] font-medium text-muted ${pinned}`}>
+              <th scope="col" className={`px-card py-tight text-left text-sm font-medium text-muted ${pinned}`}>
                 {t("roles.compareWhat")}
               </th>
               {roles.map((r) => (
-                <th key={r.id} scope="col" className="px-section py-tight text-center text-[13px] font-medium">
+                <th key={r.id} scope="col" className="px-section py-tight text-center text-sm font-medium">
                   <Link
                     href={`/settings/roles/${r.id}`}
                     className="inline-flex min-h-11 items-center text-fg hover:underline md:min-h-0"
@@ -86,7 +86,7 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
                 <th
                   scope="rowgroup"
                   colSpan={roles.length + 1}
-                  className="px-card pb-inline pt-section text-left text-[0.8125rem] font-medium text-muted"
+                  className="px-card pb-inline pt-section text-left text-sm font-medium text-muted"
                 >
                   <span className={pinned}>{t(`permGroup.${g.key}.title`)}</span>
                 </th>
@@ -116,7 +116,7 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
                     {t("roles.limitDiscount")}
                   </th>
                   {roles.map((r) => (
-                    <td key={r.id} className="px-section pb-section pt-tight text-center text-[13px] text-fg">
+                    <td key={r.id} className="px-section pb-section pt-tight text-center text-sm text-fg">
                       {discount(r)}
                     </td>
                   ))}
@@ -128,7 +128,7 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
                     {t("roles.limitRefund")}
                   </th>
                   {roles.map((r) => (
-                    <td key={r.id} className="px-section pb-section pt-tight text-center text-[13px] text-fg">
+                    <td key={r.id} className="px-section pb-section pt-tight text-center text-sm text-fg">
                       {refund(r)}
                     </td>
                   ))}

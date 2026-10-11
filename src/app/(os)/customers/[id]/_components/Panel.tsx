@@ -25,7 +25,7 @@ export function Panel({
   return (
     <section aria-labelledby={id} className={cn("card-surface p-card", className)}>
       <div className="mb-comfortable flex items-center justify-between gap-tight">
-        <h2 id={id} className="min-w-0 text-[1rem] font-semibold tracking-[-0.4px] text-fg">
+        <h2 id={id} className="min-w-0 text-md font-semibold text-fg">
           {title}
         </h2>
         {aside}

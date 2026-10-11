@@ -127,7 +127,7 @@ export default function TaxPage() {
       {!form ? (
         <SectionSkeleton />
       ) : (
-        <div className="flex max-w-3xl flex-col gap-section pb-hero">
+        <div className="flex flex-col gap-section pb-hero">
           <SettingsSection title={t("tax.ratesTitle")} description={t("tax.ratesDesc")}>
             <SettingRow label={t("tax.standard")} description={t("tax.standardDesc", { count: usage.standard })} error={standardErr}>
               {({ id, describedBy }) => (
@@ -140,7 +140,7 @@ export default function TaxPage() {
               )}
             </SettingRow>
             <SettingRow label={t("tax.exempt")} description={t("tax.exemptDesc", { count: usage.exempt })} labelFor={false} trailing>
-              {() => <p className="text-sm text-muted">{t("tax.noTax")}</p>}
+              {() => <p className="text-base text-muted">{t("tax.noTax")}</p>}
             </SettingRow>
           </SettingsSection>
 
@@ -150,9 +150,9 @@ export default function TaxPage() {
               saved rather than after the first receipt. */}
           <SettingsSection title={t("tax.exampleTitle", { amount: formatPriceShort(SAMPLE, currency) })} description={t("tax.exampleDesc")}>
             <div className="overflow-x-auto">
-              <table className="table-inset w-full text-sm">
+              <table className="table-inset w-full text-base">
                 <thead>
-                  <tr className="text-left text-[12px] text-muted">
+                  <tr className="text-left text-sm text-muted">
                     <th scope="col" className="px-card py-tight font-medium">{t("tax.colClass")}</th>
                     <th scope="col" className="px-tight py-tight text-right font-medium sm:px-section">{t("tax.colTax")}</th>
                     <th scope="col" className="px-card py-tight text-right font-medium">{t("tax.colTotal")}</th>
@@ -165,12 +165,12 @@ export default function TaxPage() {
                       <tr key={row.key}>
                         <th scope="row" className="px-card py-comfortable text-left font-medium text-fg">
                           {row.label}
-                          <span className="ml-tight font-normal text-muted">{row.rate === null ? "—" : `${row.rate}%`}</span>
+                          <span className="ml-tight font-normal tabular-nums text-muted">{row.rate === null ? "—" : `${row.rate}%`}</span>
                         </th>
-                        <td className="whitespace-nowrap px-tight py-comfortable text-right text-muted sm:px-section">
+                        <td className="whitespace-nowrap px-tight py-comfortable text-right tabular-nums text-muted sm:px-section">
                           {amount === null ? "—" : formatMoney(amount, currency)}
                         </td>
-                        <td className="whitespace-nowrap px-card py-comfortable text-right font-semibold text-fg">
+                        <td className="whitespace-nowrap px-card py-comfortable text-right font-semibold tabular-nums text-fg">
                           {amount === null ? "—" : formatMoney(SAMPLE + amount, currency)}
                         </td>
                       </tr>

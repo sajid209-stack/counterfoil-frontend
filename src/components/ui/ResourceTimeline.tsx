@@ -39,13 +39,13 @@ export function ResourceTimeline({
 
   return (
     <div>
-      <div className={`relative h-8 overflow-hidden rounded-xs border border-line ${hatched ? "bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_6px)]" : "bg-card"}`}>
+      <div className={`relative h-8 overflow-hidden rounded-xs border border-line ${hatched ? "bg-[repeating-linear-gradient(45deg,var(--color-strong),var(--color-strong)_2px,transparent_2px,transparent_6px)]" : "bg-card"}`}>
         {spans.map((s, i) => (
           <button
             key={i}
             type="button"
             onClick={onBlockTap ? () => onBlockTap(s) : undefined}
-            className="absolute inset-y-0 flex items-center justify-center overflow-hidden bg-line font-mono text-[0.75rem] text-muted"
+            className="absolute inset-y-0 flex items-center justify-center overflow-hidden bg-line font-mono text-xs text-muted"
             style={{ left: pct(s.start), width: pct(s.end - s.start + openMin) }}
             title={s.label}
             tabIndex={onBlockTap ? 0 : -1}
@@ -64,7 +64,7 @@ export function ResourceTimeline({
           const at = (m - openMin) / total;
           const shift = at < 0.04 ? "translate-x-0" : at > 0.96 ? "-translate-x-full" : "-translate-x-1/2";
           return (
-            <span key={m} className={`absolute ${shift} whitespace-nowrap font-mono text-[0.75rem] text-muted`} style={{ left: pct(m) }}>{formatClockMin(m, { short: true })}</span>
+            <span key={m} className={`absolute ${shift} whitespace-nowrap font-mono text-xs text-muted`} style={{ left: pct(m) }}>{formatClockMin(m, { short: true })}</span>
           );
         })}
       </div>

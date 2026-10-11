@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowUpRight } from "lucide-react";
-import { Button, FormField, Modal, useToast } from "@/components/ui";
+import { Button, FormField, Modal, Notice, useToast } from "@/components/ui";
 import { connectMarketplace } from "@/lib/api";
 import type { MarketplaceId } from "@/lib/api";
 import {
@@ -97,16 +97,16 @@ export function ConnectDialog({
         ) : (
           /* The site is known: say which, once, as a header rather than a
              control. Not a form field — nothing here can be changed. */
-          <div data-connect-site className="flex items-center gap-comfortable rounded-sm border border-line bg-subtle p-comfortable">
+          <div data-connect-site className="flex items-center gap-comfortable rounded-control bg-subtle p-comfortable dark:bg-fg/10">
             <span
               aria-hidden
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-market-solid text-[1.125rem] font-bold leading-none text-white"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-inner bg-market-solid text-lg font-bold leading-none text-on-solid"
             >
               {marketInitials(which)}
             </span>
             <div className="min-w-0">
-              <p className="truncate text-base font-semibold text-fg">{meta.name}</p>
-              <p className="text-[13px] text-muted">
+              <p className="truncate text-md font-semibold text-fg">{meta.name}</p>
+              <p className="text-sm text-muted">
                 {t(`sells.${meta.sells}`)} · {t("typically", { pct: bpsToPct(meta.typicalBps) })}
               </p>
             </div>
@@ -115,18 +115,17 @@ export function ConnectDialog({
 
         {/* What must already be true. Said before the fields, because finding
             out afterwards is what makes an onboarding feel like a trap. */}
-        <div className="rounded-sm border border-line bg-subtle p-comfortable text-[13px]">
-          <p className="font-medium">{t("dialog.firstTitle", { name: meta.name })}</p>
-          <p className="mt-inline text-muted">{t("dialog.firstBody", { name: meta.name })}</p>
+        <Notice tone="neutral" title={t("dialog.firstTitle", { name: meta.name })}>
+          <p className="text-sm text-muted">{t("dialog.firstBody", { name: meta.name })}</p>
           <a
             href={meta.helpUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-tight inline-flex min-h-11 items-center gap-inline text-brand-foreground underline underline-offset-2 sm:min-h-0"
+            className="mt-tight inline-flex min-h-11 items-center gap-inline text-sm text-brand-foreground underline underline-offset-2 sm:min-h-0"
           >
             {t("dialog.open", { name: meta.name })} <ArrowUpRight size={13} strokeWidth={1.5} />
           </a>
-        </div>
+        </Notice>
 
         <FormField
           label={t("dialog.commission")}
@@ -139,7 +138,7 @@ export function ConnectDialog({
         {/* The worked example. A commission is a percentage until it is stated
             as money, and then it is a decision. */}
         {valid && (
-          <p className="-mt-tight text-[13px] text-muted">
+          <p className="-mt-tight text-sm text-muted">
             {t("dialog.example", { price: formatMoney(s.price), commission: formatMoney(s.commission), net: formatMoney(s.net) })}
           </p>
         )}
@@ -150,7 +149,7 @@ export function ConnectDialog({
           <FormField label={t("dialog.account")} value={account} onChange={(e) => setAccount(e.target.value)} help={t("dialog.accountHelp")} />
         )}
 
-        {error && <p className="text-[13px] text-danger">{error}</p>}
+        {error && <Notice tone="danger" size="sm">{error}</Notice>}
 
         <div className="flex flex-wrap gap-tight">
           <Button loading={busy} onClick={go}>{t("dialog.connect")}</Button>

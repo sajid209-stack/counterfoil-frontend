@@ -107,7 +107,7 @@ export default function StorefrontsPage() {
 
   return (
     <PageShell title={t("storefront.title")} description={t("storefront.description")}>
-      <div className="flex max-w-3xl flex-col gap-section pb-hero">
+      <div className="flex flex-col gap-section pb-hero">
         {locations.length === 0 ? (
           <EmptyState title={t("storefront.emptyTitle")} message={t("storefront.emptyMessage")} />
         ) : (
@@ -122,11 +122,11 @@ export default function StorefrontsPage() {
                     <header className="flex flex-wrap items-center gap-x-section gap-y-tight px-card py-comfortable">
                       <IconTile icon={Globe} />
                       <div className="min-w-0 flex-1 basis-40">
-                        <h2 id={headingId} className="text-sm font-semibold text-fg">
+                        <h2 id={headingId} className="text-md font-semibold text-fg">
                           {l.name}
                         </h2>
                         {list.length > 0 && (
-                          <p className="mt-inline text-[13px] text-muted">
+                          <p className="mt-inline text-sm text-muted">
                             {t("storefront.venueCount", { count: list.length, live })}
                           </p>
                         )}
@@ -144,11 +144,11 @@ export default function StorefrontsPage() {
                     </header>
 
                     {list.length === 0 ? (
-                      <p className="border-t border-hairline px-card py-comfortable text-sm text-muted">
+                      <p className="border-t border-hairline px-card py-comfortable text-base text-muted">
                         {t("storefront.venueEmpty", { name: l.name })}
                       </p>
                     ) : (
-                      <ul aria-label={l.name} className="divide-y divide-hairline border-t border-hairline [&>li:last-child>a]:rounded-b-md">
+                      <ul aria-label={l.name} className="divide-y divide-hairline border-t border-hairline [&>li:last-child>a]:rounded-b-card">
                         {list.map((sf) => {
                           const name = storefrontName(sf, l);
                           const on = storefrontProducts(sf, products);

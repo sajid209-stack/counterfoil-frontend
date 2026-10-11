@@ -36,12 +36,12 @@ export function ImageUploadField({
 
   return (
     <div className="flex flex-col gap-tight">
-      <span className="text-[0.8125rem] font-medium text-muted">{t("images")}</span>
+      <span className="text-sm font-medium text-muted">{t("images")}</span>
       <div className="flex flex-wrap gap-tight">
         {images.map((img) => (
           <div
             key={img.id}
-            className="relative h-24 w-24 overflow-hidden rounded-sm bg-muted-wash"
+            className="relative h-24 w-24 overflow-hidden rounded-control bg-muted-wash"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={img.url} alt={img.alt ?? ""} className="h-full w-full object-cover" />
@@ -49,19 +49,21 @@ export function ImageUploadField({
               type="button"
               aria-label={t("removeImage")}
               onClick={() => remove(img.id)}
-              className="absolute right-1 top-1 flex h-9 w-9 items-center md:h-6 md:w-6 justify-center rounded-full bg-inverse/70 text-inverse-fg"
+              className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center md:h-9 md:w-9"
             >
-              <X size={14} strokeWidth={1.5} />
+              <span aria-hidden className="flex h-6 w-6 items-center justify-center rounded-full bg-inverse/70 text-inverse-fg">
+                <X size={14} strokeWidth={1.5} />
+              </span>
             </button>
           </div>
         ))}
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="flex h-24 w-24 flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-line text-muted hover:border-inverse hover:text-fg"
+          className="flex h-24 w-24 flex-col items-center justify-center gap-inline rounded-control border border-dashed border-line text-muted hover:border-strong hover:text-fg"
         >
           <ImagePlus size={20} strokeWidth={1.5} />
-          <span className="text-[12px]">{t("addImage")}</span>
+          <span className="text-xs">{t("addImage")}</span>
         </button>
         <input
           ref={inputRef}

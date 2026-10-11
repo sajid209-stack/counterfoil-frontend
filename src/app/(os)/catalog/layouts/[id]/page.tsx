@@ -48,7 +48,7 @@ import {
   Wine,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button, ConfirmDialog, EmptyState, FormField, PageShell, PlanView, useToast, seatToElement } from "@/components/ui";
+import { Button, Card, Checkbox, ConfirmDialog, EmptyState, FormField, PageShell, PlanView, Skeleton, useToast, seatToElement } from "@/components/ui";
 import type { PlanElement } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getSeatLayout, saveLayoutPlan, updateSeatLayout } from "@/lib/api";
@@ -74,7 +74,9 @@ import {
 } from "@/lib/layout";
 import { cn } from "@/lib/cn";
 
-const PALETTE_COLORS = ["#F94A00", "#2563EB", "#16A34A", "#7C3AED", "#D97706", "#BE185D"];
+/* The starting set of seat-category colours; an operator recolours each one, and
+   the choice is stored on the record rather than being a theme token. */
+const PALETTE_COLORS = ["#F94A00", "#2563EB", "#16A34A", "#7C3AED", "#D97706", "#BE185D"]; // ds-exception: operator-chosen seat-category colours
 
 export default function SeatLayoutEditorPage() {
   const t = useTranslations("seatmaps");
@@ -82,16 +84,19 @@ export default function SeatLayoutEditorPage() {
   const router = useRouter();
   const q = useApiQuery(() => getSeatLayout(params.id), [params.id]);
 
+  /* Loading and not-found keep the page's own h1 and a link back: the list's
+     name titles the link, not the page. */
+  const back = { href: "/catalog/layouts", label: t("editor.backToList") };
   if (q.loading) {
     return (
-      <PageShell title={t("editor.backToList")}>
-        <div className="h-96 animate-pulse rounded-md bg-muted-wash" />
+      <PageShell title={t("editor.title")} back={back}>
+        <div aria-busy="true" className="overflow-hidden rounded-card"><Skeleton h={384} /></div>
       </PageShell>
     );
   }
   if (q.error || !q.data) {
     return (
-      <PageShell title={t("editor.backToList")}>
+      <PageShell title={t("editor.title")} back={back}>
         <EmptyState title={t("editor.notFound")} action={<Button onClick={() => router.push("/catalog/layouts")}>{t("editor.backToList")}</Button>} />
       </PageShell>
     );
@@ -416,14 +421,14 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
 
   return (
     <PageShell
-      title={name || t("editor.backToList")}
+      title={name || t("editor.title")}
       description={t("editor.description")}
       back={{ href: "/catalog/layouts", label: t("editor.backToList") }}
-      actions={<Button loading={saving} onClick={save}>{t("editor.save")}</Button>}
+      actions={<Button variant="primary" size="md" loading={saving} onClick={save}>{t("editor.save")}</Button>}
     >
       <div className="flex flex-col gap-section">
         {/* What kind of room, and what it is called */}
-        <div className="grid gap-section card-surface p-card sm:grid-cols-3">
+        <Card className="grid gap-section sm:grid-cols-3">
           <FormField label={t("editor.name")} value={name} onChange={(e) => setName(e.target.value)} />
           <FormField
             label={t("editor.experience")}
@@ -434,7 +439,7 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
             help={t("editor.experienceHelp")}
           />
           <FormField label={t("editor.buffer")} variant="number" value={String(buffer)} onChange={(e) => setBuffer(Math.max(0, parseInt(e.target.value) || 0))} />
-        </div>
+        </Card>
 
         {/* `grid-cols-1` and `min-w-0` on every child, both deliberate: a single
             implicit track sizes to max-content, so the canvas — which is as
@@ -443,39 +448,37 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
             min-width:auto fault this project has now recorded five times. */}
         <div className="grid grid-cols-1 gap-section lg:grid-cols-[13rem_1fr_15rem]">
           {/* ── the palette ─────────────────────────────────────────────── */}
-          <div className="min-w-0 card-surface p-card max-lg:order-2">
-            <h2 className="mb-tight text-base font-semibold text-fg">{t("editor.paletteTitle")}</h2>
-            <p className="mb-comfortable text-[12px] text-muted">{tool ? t("editor.paletteArmed") : t("editor.paletteHelp")}</p>
+          <Card className="min-w-0 max-lg:order-2">
+            <h2 className="mb-tight text-md font-semibold text-fg">{t("editor.paletteTitle")}</h2>
+            <p className="mb-comfortable text-xs text-muted">{tool ? t("editor.paletteArmed") : t("editor.paletteHelp")}</p>
             <div className="flex flex-wrap gap-tight lg:flex-col">
               {PALETTES[experience].map((it) => {
                 const armed = tool?.id === it.id;
                 return (
-                  <button
+                  <Button
                     key={it.id}
-                    type="button"
-                    aria-pressed={armed}
+                    variant="secondary"
+                    size="sm"
+                    selected={armed}
+                    icon={<ToolIcon tool={it} />}
                     onClick={() => setTool(armed ? null : it)}
-                    className={cn(
-                      "flex min-h-11 flex-1 items-center gap-inline rounded-sm px-comfortable text-left text-[0.8125rem] transition-colors duration-quick lg:flex-none",
-                      armed ? "bg-card text-fg ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:bg-line/40",
-                    )}
+                    className="flex-1 lg:flex-none"
                   >
-                    <ToolIcon tool={it} />
                     <span className="truncate">{t(`tool.${it.id}`)}</span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
             <div className="mt-section border-t border-hairline pt-comfortable">
               <Button size="sm" variant="secondary" onClick={() => setConfirmTemplate(true)}>{t("editor.useTemplate")}</Button>
-              <p className="mt-inline text-[12px] text-muted">{t("editor.useTemplateHelp")}</p>
+              <p className="mt-inline text-xs text-muted">{t("editor.useTemplateHelp")}</p>
             </div>
-          </div>
+          </Card>
 
           {/* ── the canvas ──────────────────────────────────────────────── */}
-          <div className="min-w-0 card-surface p-card max-lg:order-1">
+          <Card className="min-w-0 max-lg:order-1">
             <div className="mb-comfortable flex flex-wrap items-center gap-tight">
-              <span className="mr-auto text-[13px] text-muted">
+              <span className="mr-auto text-sm text-muted">
                 {t("editor.capacity", { count: capacity })}
                 {uncategorised > 0 && <span className="text-warning"> · {t("editor.uncategorised", { count: uncategorised })}</span>}
               </span>
@@ -484,14 +487,9 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
               <IconBtn label={t("editor.zoomOut")} onClick={() => setScale((s) => Math.max(10, s - 4))}><Minus size={15} strokeWidth={1.5} /></IconBtn>
               <IconBtn label={t("editor.zoomIn")} onClick={() => setScale((s) => Math.min(48, s + 4))}><Plus size={15} strokeWidth={1.5} /></IconBtn>
               <IconBtn label={t("editor.fit")} onClick={() => setScale(26)}><Maximize2 size={15} strokeWidth={1.5} /></IconBtn>
-              <button
-                type="button"
-                aria-pressed={snapOn}
-                onClick={() => setSnapOn((v) => !v)}
-                className={cn("flex min-h-11 items-center gap-inline rounded-sm border px-comfortable text-[13px] md:min-h-9", snapOn ? "border-inverse bg-inverse text-inverse-fg" : "border-line")}
-              >
-                <Grid2x2 size={14} strokeWidth={1.5} /> {t("editor.snap")}
-              </button>
+              <Button variant="secondary" size="sm" selected={snapOn} icon={<Grid2x2 size={14} strokeWidth={1.5} />} onClick={() => setSnapOn((v) => !v)}>
+                {t("editor.snap")}
+              </Button>
             </div>
 
             <div
@@ -504,7 +502,7 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}
               className={cn(
-                "relative touch-none rounded-sm bg-surface",
+                "relative touch-none rounded-inner bg-surface",
                 tool ? "cursor-copy" : "cursor-default",
               )}
               data-focus-inset
@@ -559,17 +557,17 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
                 }
               />
             </div>
-            <p className="mt-tight text-[12px] text-muted">{t("editor.canvasHelp")}</p>
-          </div>
+            <p className="mt-tight text-xs text-muted">{t("editor.canvasHelp")}</p>
+          </Card>
 
           {/* ── the inspector ───────────────────────────────────────────── */}
-          <div className="min-w-0 card-surface p-card max-lg:order-3">
-            <h2 className="mb-tight text-base font-semibold text-fg">{t("editor.inspectorTitle")}</h2>
+          <Card className="min-w-0 max-lg:order-3">
+            <h2 className="mb-tight text-md font-semibold text-fg">{t("editor.inspectorTitle")}</h2>
             {!sel.length ? (
-              <p className="text-[13px] text-muted">{t("editor.nothingSelected")}</p>
+              <p className="text-sm text-muted">{t("editor.nothingSelected")}</p>
             ) : (
               <div className="flex flex-col gap-comfortable">
-                <p className="text-[13px] text-muted">{t("editor.selected", { count: sel.length })}</p>
+                <p className="text-sm text-muted">{t("editor.selected", { count: sel.length })}</p>
 
                 {oneFixture && (
                   <FormField label={t("editor.fixtureLabel")} value={oneFixture.label} onChange={(e) => patchSel({ label: e.target.value })} />
@@ -620,32 +618,29 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
                 <Button size="sm" variant="destructive" icon={<Trash2 size={14} strokeWidth={1.5} />} onClick={removeSel}>{t("editor.remove")}</Button>
               </div>
             )}
-          </div>
+          </Card>
         </div>
 
         {/* ── categories ────────────────────────────────────────────────── */}
-        <div className="card-surface p-card">
+        <Card>
           <div className="mb-section flex items-center justify-between gap-tight">
-            <h2 className="type-h2 text-base">{t("editor.categoriesTitle")}</h2>
+            <h2 className="text-md font-semibold text-fg">{t("editor.categoriesTitle")}</h2>
             <Button size="sm" icon={<Plus size={14} strokeWidth={1.5} />} onClick={addCategory}>{t("editor.addCategory")}</Button>
           </div>
-          {!plan.categories.length && <p className="text-[13px] text-muted">{t("editor.noCategories")}</p>}
+          {!plan.categories.length && <p className="text-sm text-muted">{t("editor.noCategories")}</p>}
           <div className="flex flex-col gap-tight">
             {plan.categories.map((c) => (
-              <div key={c.uid} className="flex flex-wrap items-end gap-tight rounded-sm bg-muted-wash p-comfortable">
-                <input type="color" aria-label={t("editor.catColor")} value={c.color} onChange={(e) => patchCategory(c.uid, { color: e.target.value })} className="h-11 w-11 shrink-0 rounded-sm border border-line bg-card" />
+              <div key={c.uid} className="flex flex-wrap items-end gap-tight rounded-inner bg-muted-wash p-comfortable">
+                <input type="color" aria-label={t("editor.catColor")} value={c.color} onChange={(e) => patchCategory(c.uid, { color: e.target.value })} className="h-11 w-11 shrink-0 rounded-control border border-line bg-card" />
                 <div className="min-w-32 flex-1"><FormField label={t("editor.catName")} value={c.name} onChange={(e) => patchCategory(c.uid, { name: e.target.value })} /></div>
                 <div className="w-28"><FormField label={t("editor.catPrice")} variant="number" value={String(c.price / 100)} onChange={(e) => patchCategory(c.uid, { price: Math.round((parseFloat(e.target.value) || 0) * 100) })} /></div>
-                <label className="flex min-h-11 items-center gap-inline whitespace-nowrap text-[13px]">
-                  <input type="checkbox" checked={c.isGeneralAdmission} onChange={(e) => patchCategory(c.uid, { isGeneralAdmission: e.target.checked })} className="h-4 w-4 accent-ember" />
-                  {t("editor.catGa")}
-                </label>
-                <span className="text-[12px] text-muted">{t("editor.catCount", { count: plan.seats.filter((s) => s.seatCategoryId === c.uid).reduce((n, s) => n + (s.capacity || 1), 0) })}</span>
-                <button type="button" aria-label={`${t("editor.removeCategory")} ${c.name}`} onClick={() => removeCategory(c.uid)} className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-danger hover:bg-muted-wash"><Trash2 size={15} strokeWidth={1.5} /></button>
+                <Checkbox label={t("editor.catGa")} checked={c.isGeneralAdmission} onCheckedChange={(on) => patchCategory(c.uid, { isGeneralAdmission: on })} />
+                <span className="text-xs text-muted">{t("editor.catCount", { count: plan.seats.filter((s) => s.seatCategoryId === c.uid).reduce((n, s) => n + (s.capacity || 1), 0) })}</span>
+                <Button variant="secondary" size="icon" aria-label={`${t("editor.removeCategory")} ${c.name}`} onClick={() => removeCategory(c.uid)}><Trash2 size={15} strokeWidth={1.5} className="text-danger" /></Button>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
 
       <ConfirmDialog
@@ -665,16 +660,9 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
 
 function IconBtn({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      disabled={disabled}
-      className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-muted hover:bg-muted-wash disabled:opacity-40 md:h-9 md:w-9"
-    >
+    <Button variant="secondary" size="icon" aria-label={label} title={label} onClick={onClick} disabled={disabled}>
       {children}
-    </button>
+    </Button>
   );
 }
 

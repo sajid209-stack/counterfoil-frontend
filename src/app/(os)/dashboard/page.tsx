@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Check, ListFilter } from "lucide-react";
-import { AreaChart, Button, DeltaPill, Select, StatStrip, StatusPill, type StatItem } from "@/components/ui";
+import { AreaChart, Button, DeltaPill, EmptyState, SegmentedControl, Select, Skeleton, StatStrip, StatusPill, type StatItem } from "@/components/ui";
 import { PageShell } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -34,7 +34,6 @@ import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { ACTIVITY_ICON, SEVERITY_ICON_CLASS, useActivityText } from "../activity/_components/parts";
 import { MetricStrip, type Metric } from "./_components/MetricStrip";
-import { Segmented } from "./_components/Segmented";
 
 // The demo clock is shared, never copied: DEMO_TODAY's own comment warns
 // that two components each holding their own date is the bug.
@@ -93,7 +92,7 @@ function Marker({ kind, severity }: { kind: ActivityEvent["kind"]; severity: Act
 function Importance({ severity, label }: { severity: ActivityEvent["severity"]; label: string }) {
   if (severity === "info") return null;
   return (
-    <span className={cn("inline-flex shrink-0 items-center rounded-full px-tight py-px text-[12px] font-medium", severity === "critical" ? "bg-danger/10 text-danger" : "bg-warning/15 text-warning")}>
+    <span className={cn("inline-flex shrink-0 items-center rounded-full px-tight py-px text-xs font-medium", severity === "critical" ? "bg-danger-wash text-fg" : "bg-warning-wash text-fg")}>
       {label}
     </span>
   );
@@ -429,10 +428,10 @@ export default function DashboardPage() {
   const allDone = complete === steps.length;
 
   const card = "card-surface";
-  const heading = "min-w-0 truncate text-base font-semibold tracking-[-0.4px]";
+  const heading = "min-w-0 truncate text-md font-semibold";
   /** A quiet link row that ends a card: text, an arrow, no box. */
   const linkRow =
-    "flex min-h-11 w-full items-center gap-tight px-card text-left text-[13px] font-medium text-muted transition-colors duration-quick hover:text-fg";
+    "flex min-h-11 w-full items-center gap-tight px-card text-left text-sm font-medium text-muted transition-colors duration-quick hover:text-fg";
 
   // ── The cards, each drawn once and placed by the layout below ────────────
   const trendCard = (
@@ -441,30 +440,32 @@ export default function DashboardPage() {
         <div className="min-w-0">
           <h2 className={heading}>{t("revenueTrend")}</h2>
           <div className="mt-tight flex flex-wrap items-baseline gap-tight">
-            <span className="whitespace-nowrap text-[28px] font-semibold">{formatMoney(trendTotal)}</span>
+            <span className="type-figure whitespace-nowrap text-3xl font-semibold">{formatMoney(trendTotal)}</span>
             <DeltaPill now={trendTotal} then={trendPrev} />
           </div>
           {/* What the delta is measured against - and nothing when there is no
               delta: "Last 30 days" restated the range control beside it. */}
-          {comparable && <p className="mt-inline text-[12px] text-muted">{t("vsPreviousDays", { count: trendDays })}</p>}
+          {comparable && <p className="mt-inline text-xs text-muted">{t("vsPreviousDays", { count: trendDays })}</p>}
         </div>
         {/* Ranges the seed can actually fill — see the trend memo. */}
         {wide && (
-          <Segmented
+          <SegmentedControl
+            size="sm"
             value={String(trendDays)}
             onChange={(v) => setTrendDays(Number(v) as 7 | 14 | 30)}
-            label={t("revenueTrend")}
+            aria-label={t("revenueTrend")}
             options={([7, 14, 30] as const).map((d) => ({ value: String(d), label: t("lastDays", { count: d }) }))}
           />
         )}
       </div>
       {!wide && (
-        <Segmented
-          fill
+        <SegmentedControl
+          size="sm"
+          fullWidth
           className="mt-comfortable"
           value={String(trendDays)}
           onChange={(v) => setTrendDays(Number(v) as 7 | 14 | 30)}
-          label={t("revenueTrend")}
+          aria-label={t("revenueTrend")}
           options={([7, 14, 30] as const).map((d) => ({ value: String(d), label: t("lastDays", { count: d }) }))}
         />
       )}
@@ -492,12 +493,12 @@ export default function DashboardPage() {
           pushed to the bottom of their cell so the base of the card is
           straight however tall the figures run. Labels are sentence case: an
           uppercase tracked label is the one thing a calm admin does not do. */}
-      <div className="grid gap-major sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-section sm:grid-cols-2 lg:grid-cols-4">
         {ops.map((o) => {
           const body = (
             <>
-              <p className="text-[13px] font-medium text-muted">{o.label}</p>
-              <p className="mt-tight truncate text-[20px] font-semibold tracking-[-0.5px]">{o.value}</p>
+              <p className="text-sm font-medium text-muted">{o.label}</p>
+              <p className="type-figure mt-tight truncate text-xl font-semibold">{o.value}</p>
               <div className="mt-auto pt-tight">
                 {o.key === "mix" ? (
                   // The mix is a proportion, so it keeps a picture of one.
@@ -508,10 +509,10 @@ export default function DashboardPage() {
                       ))}
                     </span>
                   ) : (
-                    <span className="text-[12px] text-muted">{t("noPayments")}</span>
+                    <span className="text-xs text-muted">{t("noPayments")}</span>
                   )
                 ) : (
-                  <span className="block text-[12px] text-muted">{o.sub}</span>
+                  <span className="block text-xs text-muted">{o.sub}</span>
                 )}
               </div>
             </>
@@ -532,25 +533,25 @@ export default function DashboardPage() {
     <div className={`${card} p-card`}>
       <div className="mb-comfortable flex items-baseline justify-between gap-tight">
         <h2 className={heading}>{t("topProducts")}</h2>
-        <button type="button" onClick={() => router.push("/analytics")} className="-my-tight flex min-h-11 shrink-0 items-center whitespace-nowrap px-tight text-[12px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-0 sm:px-0">{t("viewAll")}</button>
+        <button type="button" onClick={() => router.push("/analytics")} className="-my-tight flex min-h-11 shrink-0 items-center whitespace-nowrap px-tight text-xs text-muted transition-colors duration-quick hover:text-fg sm:min-h-0 sm:px-0">{t("viewAll")}</button>
       </div>
       {/* Name and money on the first line, then a full-width bar. The bar is
           the point — a ranked list of numbers makes you compare digits; a bar
           makes the ranking visible without reading any of them. No icon per
           row: the same glyph on every line said nothing. */}
-      {top.length === 0 ? <p className="text-[13px] text-muted">{t("nothingSold")}</p> : (
+      {top.length === 0 ? <p className="text-sm text-muted">{t("nothingSold")}</p> : (
         <div className="flex flex-col gap-comfortable">
           {top.map(([name, row]) => (
             <div key={name} className="min-w-0">
-              <div className="flex items-baseline justify-between gap-tight text-[13px]">
+              <div className="flex items-baseline justify-between gap-tight text-sm">
                 <span className="min-w-0 truncate">{name}</span>
-                <span className="shrink-0 whitespace-nowrap text-[12px]">{formatMoney(row.rev)}</span>
+                <span className="shrink-0 whitespace-nowrap text-xs">{formatMoney(row.rev)}</span>
               </div>
               <div className="mt-inline flex items-center gap-tight">
                 <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
                   <span className="block h-full bg-ember" style={{ width: `${topMax > 0 ? Math.max(4, (row.rev / topMax) * 100) : 0}%` }} />
                 </span>
-                <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{t("qtyTimes", { qty: row.qty })}</span>
+                <span className="shrink-0 whitespace-nowrap text-xs text-muted">{t("qtyTimes", { qty: row.qty })}</span>
               </div>
             </div>
           ))}
@@ -574,7 +575,7 @@ export default function DashboardPage() {
             value={activityFilter}
             onChange={(v) => setActivityFilter(v as ActivityFilter)}
             align="end"
-            triggerClassName="text-[12px] font-normal text-current"
+            triggerClassName="text-xs font-normal text-current"
             options={[
               { value: "all", label: t("filterAll") },
               ...ACTIVITY_GROUPS.map((g) => ({ value: g, label: ax.groupLabel(g) })),
@@ -590,28 +591,28 @@ export default function DashboardPage() {
         <div aria-busy="true">
           {Array.from({ length: wide ? 5 : 3 }, (_, i) => (
             <div key={i} className="flex items-center gap-section px-card py-comfortable">
-              <div className="h-8 w-8 animate-pulse rounded-full bg-subtle" />
-              <div className="h-4 flex-1 animate-pulse rounded-sm bg-subtle" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-4 flex-1" />
             </div>
           ))}
         </div>
       ) : activity.length === 0 ? (
-        <p className="px-card pb-comfortable text-[13px] text-muted">{t("noActivity")}</p>
+        <p className="px-card pb-comfortable text-sm text-muted">{t("noActivity")}</p>
       ) : activity.map((a) => (
         <div key={a.id} className="flex items-start gap-section px-card py-comfortable">
           <Marker kind={a.kind} severity={a.severity} />
           <div className="min-w-0 flex-1">
-            <p className={cn("break-words text-[13px] leading-snug", !wide && "line-clamp-2")}>{ax.sentence(a)}</p>
+            <p className={cn("break-words text-sm leading-snug", !wide && "line-clamp-2")}>{ax.sentence(a)}</p>
             {/* Time beside the sentence on a desktop, under it on a phone,
                 where a right-hand column would take a third of the width. */}
             {(!wide || a.severity !== "info") && (
-              <p className="mt-0.5 flex flex-wrap items-center gap-x-tight gap-y-0.5 text-[12px] text-muted">
+              <p className="mt-0.5 flex flex-wrap items-center gap-x-tight gap-y-0.5 text-xs text-muted">
                 {!wide && <span className="whitespace-nowrap">{ax.ago(a.at)}</span>}
                 <Importance severity={a.severity} label={ax.severityLabel(a.severity)} />
               </p>
             )}
           </div>
-          {wide && <span className="shrink-0 whitespace-nowrap pt-0.5 text-[12px] text-muted">{ax.ago(a.at)}</span>}
+          {wide && <span className="shrink-0 whitespace-nowrap pt-0.5 text-xs text-muted">{ax.ago(a.at)}</span>}
         </div>
       ))}
       <button type="button" onClick={() => router.push("/activity")} className={linkRow}>
@@ -633,13 +634,11 @@ export default function DashboardPage() {
         <h2 className={heading}>{t("recentOrders")}</h2>
         {/* The count is the scope's, not the rows' — otherwise the header would
             describe the slice rather than the day. */}
-        <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{t("orderCount", { count: scopeOrders.length })}</span>
+        <span className="shrink-0 whitespace-nowrap text-xs text-muted">{t("orderCount", { count: scopeOrders.length })}</span>
       </div>
 
       {scopeOrders.length === 0 ? (
-        <p className="px-card pb-comfortable pt-tight text-[13px] text-muted">
-          {scope === "today" ? t("noOrdersToday") : t("noOrdersThisWeek")}
-        </p>
+        <EmptyState title={scope === "today" ? t("noOrdersToday") : t("noOrdersThisWeek")} />
       ) : wide ? (
         /* A real table element, so each header cell is announced with its
            column and the figures line up. It scrolls inside its own card rather
@@ -649,11 +648,11 @@ export default function DashboardPage() {
           <table className="table-inset w-full min-w-[640px]">
             <thead>
               <tr className="border-b border-hairline text-left">
-                <th scope="col" className="px-major py-tight text-[12px] font-medium text-muted">{to("colDate")}</th>
-                <th scope="col" className="px-major py-tight text-[12px] font-medium text-muted">{to("colReference")}</th>
-                <th scope="col" className="px-major py-tight text-center text-[12px] font-medium text-muted">{to("colItems")}</th>
-                <th scope="col" className="px-major py-tight text-right text-[12px] font-medium text-muted">{to("colTotal")}</th>
-                <th scope="col" className="px-major py-tight text-right text-[12px] font-medium text-muted">{to("colStatus")}</th>
+                <th scope="col" className="px-major py-tight text-sm font-medium text-muted">{to("colDate")}</th>
+                <th scope="col" className="px-major py-tight text-sm font-medium text-muted">{to("colReference")}</th>
+                <th scope="col" className="px-major py-tight text-center text-sm font-medium text-muted">{to("colItems")}</th>
+                <th scope="col" className="px-major py-tight text-right text-sm font-medium text-muted">{to("colTotal")}</th>
+                <th scope="col" className="px-major py-tight text-right text-sm font-medium text-muted">{to("colStatus")}</th>
               </tr>
             </thead>
             <tbody>
@@ -667,28 +666,28 @@ export default function DashboardPage() {
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push("/orders/" + o.id); } }}
                     className="cursor-pointer border-b border-hairline transition-colors duration-quick last:border-0 hover:bg-muted-wash focus-visible:bg-muted-wash"
                   >
-                    <td className="whitespace-nowrap px-major py-tight text-[13px] text-muted" title={formatDateTime(o.createdAt)}>
+                    <td className="whitespace-nowrap px-major py-tight text-sm text-muted" title={formatDateTime(o.createdAt)}>
                       {formatRelative(o.createdAt, now)}
                     </td>
                     {/* Reference and buyer are ONE column here. The index can
                         afford them apart; a cockpit table cannot, and they are
                         read together anyway. */}
                     <td className="px-major py-tight">
-                      <span className="block whitespace-nowrap font-mono text-[13px]">{o.reference}</span>
-                      <span className="block max-w-[16rem] truncate text-[12px] text-muted" title={o.customerName ?? undefined}>
+                      <span className="block whitespace-nowrap font-mono text-sm">{o.reference}</span>
+                      <span className="block max-w-[16rem] truncate text-xs text-muted" title={o.customerName ?? undefined}>
                         {o.customerName ?? to("walkIn")}
                       </span>
                     </td>
-                    <td className="px-major py-tight text-center text-[13px] tabular-nums">
+                    <td className="px-major py-tight text-center text-base tabular-nums">
                       {o.lines.reduce((n, l) => n + l.quantity, 0)}
                     </td>
                     <td className="px-major py-tight text-right">
-                      <span className="block whitespace-nowrap text-[13px] tabular-nums">{formatMoney(o.total)}</span>
+                      <span className="block whitespace-nowrap text-base tabular-nums">{formatMoney(o.total)}</span>
                       {/* Only when something is owed — a count of nothing goes
                           quiet, and this is the one number on the row a manager
                           can act on. */}
                       {due > 0 && (
-                        <span className="block whitespace-nowrap text-[12px] tabular-nums text-warning">
+                        <span className="block whitespace-nowrap text-xs tabular-nums text-warning">
                           {t("orderDue", { amount: formatMoney(due) })}
                         </span>
                       )}
@@ -712,11 +711,11 @@ export default function DashboardPage() {
               className="flex min-h-[64px] w-full flex-col justify-center gap-0.5 border-b border-hairline px-card py-comfortable text-left last:border-0 active:bg-muted-wash"
             >
               <span className="flex items-baseline justify-between gap-tight">
-                <span className="min-w-0 truncate text-[14px] font-medium">{o.customerName ?? to("walkIn")}</span>
-                <span className="shrink-0 whitespace-nowrap text-[14px] font-medium tabular-nums">{formatMoney(o.total)}</span>
+                <span className="min-w-0 truncate text-base font-medium">{o.customerName ?? to("walkIn")}</span>
+                <span className="shrink-0 whitespace-nowrap text-base font-medium tabular-nums">{formatMoney(o.total)}</span>
               </span>
               <span className="flex items-center justify-between gap-tight">
-                <span className="min-w-0 truncate text-[12px] text-muted">
+                <span className="min-w-0 truncate text-xs text-muted">
                   <span className="font-mono">{o.reference}</span> · {formatRelative(o.createdAt, now)}
                 </span>
                 <StatusPill status={o.status} />
@@ -743,8 +742,8 @@ export default function DashboardPage() {
   const setupCard = (
     <div className={`${card} p-card`}>
       <div className="mb-section flex items-center justify-between">
-        <h2 className="type-h2 text-base">{t("finishSetup")}</h2>
-        <span className="text-[12px] text-muted">{t("stepProgress", { complete, total: steps.length })}</span>
+        <h2 className="type-h2 text-md">{t("finishSetup")}</h2>
+        <span className="text-xs text-muted">{t("stepProgress", { complete, total: steps.length })}</span>
       </div>
       <div className="mb-comfortable h-1.5 w-full overflow-hidden rounded-full bg-line">
         <div className="h-full bg-ember transition-all" style={{ width: `${(complete / steps.length) * 100}%` }} />
@@ -756,15 +755,15 @@ export default function DashboardPage() {
           const done = s.done || skipped[s.key];
           return (
             <div key={s.key} className="flex items-center gap-section border-b border-hairline py-comfortable last:border-0">
-              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] ${done ? "bg-success text-white" : "bg-muted-wash text-muted"}`}>
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm ${done ? "bg-success-solid text-on-solid" : "bg-muted-wash text-muted"}`}>
                 {done ? <Check size={16} strokeWidth={2} /> : i + 1}
               </span>
-              <span className="min-w-0 flex-1 text-sm font-medium">{s.label}</span>
+              <span className="min-w-0 flex-1 text-base font-medium">{s.label}</span>
               {done ? (
-                <span className="text-[12px] text-muted">{s.done ? t("stepDone") : t("stepSkipped")}</span>
+                <span className="text-xs text-muted">{s.done ? t("stepDone") : t("stepSkipped")}</span>
               ) : (
                 <div className="flex items-center gap-tight">
-                  <button type="button" aria-label={t("skipStep", { step: s.label })} onClick={() => skip(s.key)} className="min-h-11 px-tight text-[12px] text-muted hover:text-fg sm:min-h-0">{t("skip")}</button>
+                  <button type="button" aria-label={t("skipStep", { step: s.label })} onClick={() => skip(s.key)} className="min-h-11 px-tight text-xs text-muted hover:text-fg sm:min-h-0">{t("skip")}</button>
                   <Button size="sm" icon={<ArrowRight size={14} strokeWidth={1.5} />} onClick={() => router.push(s.href)}>{t("start")}</Button>
                 </div>
               )}
@@ -784,19 +783,20 @@ export default function DashboardPage() {
           bar and governs the whole console. */}
       <div className="mb-section flex items-center justify-between gap-section">
         {wide && (
-          <p aria-live="polite" className="min-w-0 truncate text-[13px] text-muted">
+          <p aria-live="polite" className="min-w-0 truncate text-sm text-muted">
             {scope === "today"
               ? formatDay(TODAY, { weekday: true })
               : `${formatDay(dayShift(TODAY, -6), { weekday: true })} – ${formatDay(TODAY, { weekday: true })}`}
           </p>
         )}
         {/* Scope, not actions — a dashboard is a place to look. */}
-        <Segmented
-          fill={!wide}
-          className={wide ? "w-60 [&>button]:flex-1" : undefined}
+        <SegmentedControl
+          size="sm"
+          fullWidth={!wide}
+          className={wide ? "w-60" : undefined}
           value={scope}
-          onChange={setScope}
-          label={t("scopeLabel")}
+          onChange={(v) => setScope(v as "today" | "week")}
+          aria-label={t("scopeLabel")}
           options={[
             { value: "today", label: t("today") },
             { value: "week", label: t("thisWeek") },

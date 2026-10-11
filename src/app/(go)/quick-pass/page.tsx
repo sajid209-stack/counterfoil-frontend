@@ -67,8 +67,8 @@ export default function QuickPassPage() {
       <main className="mx-auto flex max-w-md flex-col items-center gap-major px-section py-hero text-center">
         <CircleCheck size={48} strokeWidth={1.5} className="text-success" />
         <h1 className="type-h1 text-2xl">{t("passIssuedTitle")}</h1>
-        <div className="w-full rounded-go bg-inverse px-section py-major"><span className="font-mono text-2xl text-inverse-fg">{code}</span></div>
-        <Button shape="pill" size="lg" fullWidth onClick={() => { setCode(null); setIdentifier(""); }}>{t("issueAnother")}</Button>
+        <div className="w-full rounded-card bg-inverse px-section py-major"><span className="font-mono text-2xl text-inverse-fg">{code}</span></div>
+        <Button size="lg" fullWidth className="h-13 text-md font-semibold" onClick={() => { setCode(null); setIdentifier(""); }}>{t("issueAnother")}</Button>
       </main>
     );
   }
@@ -76,13 +76,13 @@ export default function QuickPassPage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
       <div>
-        <p className="type-label text-[0.8125rem] text-brand-foreground">{t("gateLabel")}</p>
+        <p className="text-sm font-medium text-brand-foreground">{t("gateLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("title")}</h1>
         <p className="type-body mt-tight text-muted">{t("subtitle")}</p>
       </div>
 
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[0.8125rem] text-muted">{t("duration")}</span>
+        <span className="text-sm font-medium text-muted">{t("duration")}</span>
           {/* The till's stepper, not a row of chips — same control for the same
               decision, and it walks the increment the booking is configured
               with instead of a list this screen invented. */}
@@ -93,15 +93,15 @@ export default function QuickPassPage() {
             const pick = (d: number) => { setDuration(d); setPriceEdit(null); };
             return (
               <div className="flex items-center gap-tight">
-                <button type="button" aria-label={t("shorter")} disabled={prev == null} onClick={() => prev != null && pick(prev)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-xl disabled:opacity-40 active:bg-ember/10">−</button>
-                <div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-go border border-line bg-card py-tight">
-                  <span className="text-base font-medium">{formatDuration(duration)}</span>
-                  <span className="font-mono text-[0.8125rem] text-muted">
+                <button type="button" aria-label={t("shorter")} disabled={prev == null} onClick={() => prev != null && pick(prev)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-xl disabled:opacity-40 active:bg-muted-wash">−</button>
+                <div className="flex min-w-0 flex-1 flex-col items-center justify-center card-surface py-tight">
+                  <span className="text-md font-medium">{formatDuration(duration)}</span>
+                  <span className="text-sm tabular-nums text-muted">
                     {formatMoney(enginePrice, "BDT")}
                     {cfg && isDealDuration(cfg, duration) ? ` · ${t("deal")}` : ""}
                   </span>
                 </div>
-                <button type="button" aria-label={t("longer")} disabled={next == null} onClick={() => next != null && pick(next)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-xl disabled:opacity-40 active:bg-ember/10">+</button>
+                <button type="button" aria-label={t("longer")} disabled={next == null} onClick={() => next != null && pick(next)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-xl disabled:opacity-40 active:bg-muted-wash">+</button>
               </div>
             );
           })()}
@@ -110,7 +110,7 @@ export default function QuickPassPage() {
       <FormField label={t("priceLabel")} variant="number" value={price} onChange={(e) => setPriceEdit(e.target.value)} help={priceEdit == null ? t("priceHelp") : undefined} />
       <FormField label={idLabel} placeholder={idLabel} value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
 
-      <Button shape="pill" size="lg" fullWidth loading={issuing} onClick={issue}>{t("issuePass", { amount: formatMoney(Math.round((parseFloat(price) || 0) * 100)) })}</Button>
+      <Button size="lg" fullWidth className="h-13 text-md font-semibold" loading={issuing} onClick={issue}>{t("issuePass", { amount: formatMoney(Math.round((parseFloat(price) || 0) * 100)) })}</Button>
     </main>
   );
 }

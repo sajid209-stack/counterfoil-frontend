@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Download } from "lucide-react";
-import { Button, DateRangePicker, DeltaPill, PageShell, StatStrip, formatRange, type StatItem } from "@/components/ui";
+import { Button, DateRangePicker, DeltaPill, Notice, PageShell, StatStrip, formatRange, type StatItem } from "@/components/ui";
 import { analyticsCsv, comparisonRange, getAnalyticsOverview, listLocations, type AnalyticsOverview } from "@/lib/api";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { useApiQuery } from "@/lib/useApi";
@@ -193,7 +193,7 @@ function AnalyticsInner() {
   const notices = o && (
     <>
       {o.previous && (
-        <p data-legend className="flex flex-wrap items-center gap-x-section gap-y-inline text-[0.75rem] text-muted">
+        <p data-legend className="flex flex-wrap items-center gap-x-section gap-y-inline text-xs text-muted">
           <span className="flex items-center gap-tight">
             <svg width="20" height="4" aria-hidden className="shrink-0">
               <line x1="0" x2="20" y1="2" y2="2" stroke="var(--color-ember)" strokeWidth="2.5" strokeLinecap="round" />
@@ -211,14 +211,15 @@ function AnalyticsInner() {
         </p>
       )}
       {asked && o.previous === null && (
-        <p data-no-compare className="flex flex-wrap items-center gap-x-comfortable gap-y-tight text-[0.8125rem] text-muted">
-          <span>{o.ledgerStart ? t("noCompare", { date: formatDay(o.ledgerStart) }) : t("noCompareEmpty")}</span>
-          {previousFits && o.compare !== "previous" && (
-            <Button variant="secondary" size="sm" onClick={() => setCmp({ mode: "previous" })}>
-              {t("compareWithPrevious")}
-            </Button>
-          )}
-        </p>
+        <div data-no-compare>
+          <Notice
+            tone="neutral"
+            size="sm"
+            action={previousFits && o.compare !== "previous" ? { label: t("compareWithPrevious"), onClick: () => setCmp({ mode: "previous" }), variant: "button" } : undefined}
+          >
+            {o.ledgerStart ? t("noCompare", { date: formatDay(o.ledgerStart) }) : t("noCompareEmpty")}
+          </Notice>
+        </div>
       )}
     </>
   );
@@ -228,12 +229,9 @@ function AnalyticsInner() {
       <PageShell title={t("title")} description={t("description")}>
         <div className="flex flex-col gap-section">
           {toolbar}
-          <div className="card-surface p-card">
-            <p className="text-[0.8125rem]">{t("error")}</p>
-            <Button variant="secondary" size="sm" className="mt-comfortable" onClick={q.reload}>
-              {t("retry")}
-            </Button>
-          </div>
+          <Notice tone="danger" action={{ label: t("retry"), onClick: q.reload, variant: "button" }}>
+            {t("error")}
+          </Notice>
         </div>
       </PageShell>
     );
@@ -277,7 +275,7 @@ function kpiItems(o: AnalyticsOverview, t: ReturnType<typeof useTranslations>): 
     if (d === 0) return undefined;
     const up = d > 0;
     return (
-      <span title={since} className={cn("inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-[0.75rem]", up ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+      <span title={since} className={cn("inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-xs", up ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
         {up ? "↗" : "↘"} {t("kpi.pts", { value: `${up ? "+" : "−"}${Math.abs(d)}` })}
         {since && <span className="sr-only">{` ${since}`}</span>}
       </span>

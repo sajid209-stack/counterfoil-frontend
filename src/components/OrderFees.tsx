@@ -24,17 +24,17 @@ export function OrderFees({ orderId }: { orderId: string }) {
   if (!entries.length) return null;
   return (
     <div className="mt-comfortable border-t border-line pt-comfortable">
-      <p className="text-base font-semibold text-fg">{t("order.title")}</p>
+      <p className="text-md font-semibold text-fg">{t("order.title")}</p>
       <ul className="mt-tight flex flex-col gap-tight">
         {entries.map((e) => {
           const expanded = open === e.id;
           return (
-            <li key={e.id} className="rounded-sm border border-hairline">
+            <li key={e.id} className="rounded-control border border-hairline">
               <button
                 type="button"
                 aria-expanded={expanded}
                 onClick={() => setOpen(expanded ? null : e.id)}
-                className="flex min-h-11 w-full flex-wrap items-center gap-tight px-comfortable py-tight text-left text-[13px]"
+                className="flex min-h-11 w-full flex-wrap items-center gap-tight px-comfortable py-tight text-left text-sm"
               >
                 <CollectorBadge by={e.collectedBy} />
                 <span className="min-w-0 flex-1 truncate text-muted">{e.kind === "refund" ? `${t("kind.refund")} · ` : ""}{holding(e)}</span>
@@ -51,7 +51,7 @@ export function OrderFees({ orderId }: { orderId: string }) {
                 <div className="flex flex-col gap-comfortable border-t border-hairline p-comfortable">
                   <FeeBreakdown entry={e} rates={peekPlatformFeeRates()} />
                   {e.settlementId && (
-                    <Link href="/finances" className="inline-flex min-h-11 items-center gap-tight self-start text-[13px] md:min-h-0">
+                    <Link href="/finances" className="inline-flex min-h-11 items-center gap-tight self-start text-sm md:min-h-0">
                       <span className="text-muted">{t("breakdown.settledBy")}</span>
                       <SettlementBadge status={e.settlementStatus} />
                     </Link>

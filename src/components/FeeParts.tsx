@@ -68,19 +68,19 @@ export function FeeBreakdown({ entry: e, rates }: { entry: PlatformFeeEntry; rat
   const line = (label: React.ReactNode, value: React.ReactNode, opts: { strong?: boolean; muted?: boolean; note?: React.ReactNode } = {}) => (
     <div className={cn("flex items-baseline justify-between gap-comfortable px-comfortable py-tight", opts.strong && "bg-subtle")}>
       <div className="min-w-0">
-        <p className={cn("text-[14px]", opts.strong ? "font-semibold text-fg" : opts.muted ? "text-muted" : "text-fg")}>{label}</p>
-        {opts.note && <p className="mt-inline text-[12px] leading-relaxed text-muted">{opts.note}</p>}
+        <p className={cn("text-base", opts.strong ? "font-semibold text-fg" : opts.muted ? "text-muted" : "text-fg")}>{label}</p>
+        {opts.note && <p className="mt-inline text-xs leading-relaxed text-muted">{opts.note}</p>}
       </div>
-      <p className={cn("shrink-0 font-mono text-[14px] tabular-nums", opts.strong && "font-semibold")}>{value}</p>
+      <p className={cn("shrink-0 text-base tabular-nums", opts.strong && "font-semibold")}>{value}</p>
     </div>
   );
 
   return (
     <div className="flex flex-col gap-comfortable">
-      <p className="text-[13px] leading-relaxed text-fg">
+      <p className="text-sm leading-relaxed text-fg">
         {refund ? (platformHeld ? t("breakdown.refundPlatform") : t("breakdown.refundOperator")) : platformHeld ? t("breakdown.platformHeld") : t("breakdown.operatorHeld")}
       </p>
-      <div className="divide-y divide-hairline overflow-hidden rounded-sm border border-hairline">
+      <div className="divide-y divide-hairline overflow-hidden rounded-control border border-hairline">
         {line(refund ? t("breakdown.refund") : t("breakdown.amount"), money(Math.abs(e.amount)))}
         {!refund && (
           <>
@@ -100,7 +100,7 @@ export function FeeBreakdown({ entry: e, rates }: { entry: PlatformFeeEntry; rat
         })}
         {line(t("breakdown.oweUs"), money(e.owedByOperator), { strong: !platformHeld && !refund })}
       </div>
-      <p className="text-[12px] leading-relaxed text-muted">{t("breakdown.fixedNote")}</p>
+      <p className="text-xs leading-relaxed text-muted">{t("breakdown.fixedNote")}</p>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, EmptyState, PageShell, Tabs, useToast } from "@/components/ui";
+import { Button, EmptyState, PageShell, Skeleton, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -46,7 +46,7 @@ export default function EditEventPage() {
       </PageShell>
     );
   }
-  if (!q.data) return <PageShell title={t("title")}><div aria-busy="true" className="h-64 animate-pulse rounded-md bg-line/40" /></PageShell>;
+  if (!q.data) return <PageShell title={t("title")}><div aria-busy="true"><Skeleton h={256} className="w-full rounded-card" /></div></PageShell>;
   return <Editor event={q.data} />;
 }
 
@@ -228,7 +228,7 @@ function Editor({ event }: { event: EventRecord }) {
           onChange={(v) => setTab(v as "details" | "page" | "tickets")}
         />
         {errors.tiers && tab === "tickets" && (
-          <p role="alert" className="rounded-sm bg-danger-wash px-comfortable py-tight text-[13px] font-medium text-danger">{errors.tiers}</p>
+          <p role="alert" className="rounded-control bg-danger-wash px-comfortable py-tight text-sm font-medium text-danger">{errors.tiers}</p>
         )}
         {tab === "details" ? (
           <div className="card-surface p-card">
@@ -252,7 +252,7 @@ function Editor({ event }: { event: EventRecord }) {
         ) : (
           <div className="flex flex-col gap-tight">
             {event.tiers.some((x) => x.sold > 0) && (
-              <p className="text-[13px] text-muted">{tc("soldNote")}</p>
+              <p className="text-sm text-muted">{tc("soldNote")}</p>
             )}
             <TicketTiers rows={rows} onChange={setRows} errors={errors} sold={Object.fromEntries(event.tiers.map((x) => [x.id, x.sold]))} days={content.days} />
             {/* An event hands things over too — a programme, a glow band, a
@@ -279,7 +279,7 @@ function Editor({ event }: { event: EventRecord }) {
         )}
       </div>
       {!wide && (
-        <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-tight bg-chrome px-gutter pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-tight shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.18)]">
+        <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-tight border-t border-hairline bg-chrome px-gutter pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-tight">
           <Button variant="secondary" disabled={saving} onClick={() => router.push(`/catalog/events/${event.id}`)}>{tc("cancel")}</Button>
           <Button loading={saving} onClick={save} className="flex-1 justify-center">{tc("save")}</Button>
         </div>

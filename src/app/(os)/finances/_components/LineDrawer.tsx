@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Copy } from "lucide-react";
-import { Sheet, StatusPill, useToast, type PillTone } from "@/components/ui";
+import { Button, Sheet, StatusPill, useToast, type PillTone } from "@/components/ui";
 import { FeeBreakdown } from "@/components/FeeParts";
 import { formatClockOf, formatDay } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
@@ -53,8 +53,8 @@ export function LineDrawer({ row, locationId, onClose }: { row: DisplayRow | nul
 
   const item = (label: string, value: React.ReactNode) => (
     <div className="flex items-baseline justify-between gap-section py-comfortable">
-      <dt className="shrink-0 text-[13px] text-muted">{label}</dt>
-      <dd className="min-w-0 text-right text-[14px] text-fg">{value}</dd>
+      <dt className="shrink-0 text-sm text-muted">{label}</dt>
+      <dd className="min-w-0 text-right text-base text-fg">{value}</dd>
     </div>
   );
 
@@ -67,15 +67,15 @@ export function LineDrawer({ row, locationId, onClose }: { row: DisplayRow | nul
           <div className="flex items-center gap-comfortable">
             <KindDisc kind={bucket || row.type === "onlineFees" ? "platform_fee" : line.kind} size={44} />
             <div className="min-w-0">
-              <p className={`text-[28px] font-semibold leading-tight tracking-[-0.5px] ${amountTone(row.amount)}`}>{signed(row.amount)}</p>
+              <p className={`type-figure text-3xl font-semibold leading-tight ${amountTone(row.amount)}`}>{signed(row.amount)}</p>
             </div>
           </div>
-          <p className="mt-comfortable text-[14px] text-fg">
+          <p className="mt-comfortable text-base text-fg">
             {d.text}
             {d.ref && (
               <>
                 {" · "}
-                <span className="font-mono text-[13px]">{d.ref}</span>
+                <span className="font-mono text-sm">{d.ref}</span>
               </>
             )}
           </p>
@@ -85,13 +85,13 @@ export function LineDrawer({ row, locationId, onClose }: { row: DisplayRow | nul
               {row.lines.map((l) => (
                 <li key={l.id} className="flex items-center justify-between gap-section py-comfortable">
                   {l.orderId ? (
-                    <Link href={`/orders/${l.orderId}`} className="inline-flex min-h-11 items-center font-mono text-[13px] text-brand-foreground underline underline-offset-2 hover:opacity-80 md:min-h-0">
+                    <Link href={`/orders/${l.orderId}`} className="inline-flex min-h-11 items-center font-mono text-sm text-brand-foreground underline underline-offset-2 hover:opacity-80 md:min-h-0">
                       {l.orderReference}
                     </Link>
                   ) : (
                     <span />
                   )}
-                  <span className="text-[14px] font-semibold text-fg">{signed(l.amount)}</span>
+                  <span className="text-base font-semibold text-fg">{signed(l.amount)}</span>
                 </li>
               ))}
             </ul>
@@ -102,7 +102,7 @@ export function LineDrawer({ row, locationId, onClose }: { row: DisplayRow | nul
             {line.orderId && line.orderReference &&
               item(
                 t("detail.order"),
-                <Link href={`/orders/${line.orderId}`} className="inline-flex min-h-11 items-center font-mono text-[13px] text-brand-foreground underline underline-offset-2 hover:opacity-80 md:min-h-0">
+                <Link href={`/orders/${line.orderId}`} className="inline-flex min-h-11 items-center font-mono text-sm text-brand-foreground underline underline-offset-2 hover:opacity-80 md:min-h-0">
                   {line.orderReference}
                 </Link>,
               )}
@@ -113,15 +113,10 @@ export function LineDrawer({ row, locationId, onClose }: { row: DisplayRow | nul
               item(
                 t("detail.reference"),
                 <span className="inline-flex items-center gap-tight">
-                  <span className="font-mono text-[13px]">{line.reference}</span>
-                  <button
-                    type="button"
-                    onClick={() => copy(line.reference!)}
-                    className="inline-flex h-11 items-center gap-inline rounded-sm px-tight text-[13px] font-medium text-brand-foreground hover:opacity-80 md:h-9"
-                  >
-                    <Copy size={14} strokeWidth={1.5} aria-hidden />
+                  <span className="font-mono text-sm">{line.reference}</span>
+                  <Button variant="tertiary" size="sm" icon={<Copy size={14} strokeWidth={1.5} aria-hidden />} onClick={() => copy(line.reference!)}>
                     {t("detail.copy")}
-                  </button>
+                  </Button>
                 </span>,
               )}
           </dl>
@@ -129,7 +124,7 @@ export function LineDrawer({ row, locationId, onClose }: { row: DisplayRow | nul
 
           {entry && (
             <section className="mt-major">
-              <h3 className="mb-comfortable text-[14px] font-semibold">{tm("breakdown.title")}</h3>
+              <h3 className="mb-comfortable text-base font-semibold">{tm("breakdown.title")}</h3>
               <FeeBreakdown entry={entry} rates={peekPlatformFeeRates()} />
             </section>
           )}

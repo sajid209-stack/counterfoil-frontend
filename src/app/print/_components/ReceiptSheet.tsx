@@ -27,7 +27,7 @@ export function ReceiptSheet({
     // Its own width, so the receipt prints the same size alone or ahead of the tickets.
     <div className={cn("mx-auto w-full max-w-md card-surface p-major print:border-0", className)}>
       <ReceiptHeader operator={operator} place={place} tax={tax}>
-        <p className="mt-inline font-mono text-[12px] text-muted">
+        <p className="mt-inline font-mono text-xs text-muted">
           {order.reference} · {formatDate(order.createdAt)}
         </p>
       </ReceiptHeader>

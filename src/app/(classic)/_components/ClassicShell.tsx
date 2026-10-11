@@ -80,14 +80,14 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
         onClick={() => { if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
         className={cn(
           "relative flex min-w-12 flex-1 flex-col items-center justify-center gap-inline transition-colors duration-quick active:bg-ember/10",
-          rail ? "h-[72px] flex-none" : "h-14",
+          rail ? "h-18 flex-none" : "h-14",
           active ? "text-brand-foreground" : "text-muted",
         )}
       >
         {/* active marker: 2px along the tab's leading edge */}
-        {active && <span aria-hidden className={cn("absolute bg-ember", rail ? "left-0 top-2 bottom-2 w-[2px]" : "left-2 right-2 top-0 h-[2px]")} />}
+        {active && <span aria-hidden className={cn("absolute bg-ember", rail ? "left-0 top-2 bottom-2 w-0.5" : "left-2 right-2 top-0 h-0.5")} />}
         <Icon size={24} strokeWidth={1.5} />
-        <span className="max-w-full truncate px-inline text-[0.6875rem] font-medium">{t(tab.key)}</span>
+        <span className="max-w-full truncate px-inline text-2xs font-medium">{t(tab.key)}</span>
       </Link>
     );
   };
@@ -98,11 +98,11 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
       onClick={() => setMoreOpen(true)}
       className={cn(
         "flex min-w-12 flex-1 flex-col items-center justify-center gap-inline text-muted transition-colors duration-quick active:bg-ember/10",
-        rail ? "h-[72px] flex-none" : "h-14",
+        rail ? "h-18 flex-none" : "h-14",
       )}
     >
       <Ellipsis size={24} strokeWidth={1.5} />
-      <span className="max-w-full truncate px-inline text-[0.6875rem] font-medium">{t("more")}</span>
+      <span className="max-w-full truncate px-inline text-2xs font-medium">{t("more")}</span>
     </button>
   );
 
@@ -120,8 +120,8 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
           <Link href="/login" aria-label={tp("shell.signIn")} className="flex h-12 shrink-0 items-center">
             <Logo variant="go" size={30} />
           </Link>
-          <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-[0.75rem] text-muted sm:block">{tp("counter")}</span>
-          <span className="hidden shrink-0 font-mono text-[0.75rem] text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
+          <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-xs text-muted sm:block">{tp("counter")}</span>
+          <span className="hidden shrink-0 font-mono text-xs text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
         </div>
         {/* Review scaffolding, not part of the restored design — without it
             there is no way out of this variant except the browser's back
@@ -129,13 +129,13 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
         <TillSwitcher />
         <span className="flex shrink-0 items-center gap-tight">
           <ModeButton />
-          <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse font-mono text-[0.8125rem] text-inverse-fg" title={tp("shell.myProfile", { name: "Nadia Islam" })} aria-label={tp("shell.myProfile", { name: "Nadia Islam" })}>N</Link>
+          <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse font-mono text-sm text-inverse-fg" title={tp("shell.myProfile", { name: "Nadia Islam" })} aria-label={tp("shell.myProfile", { name: "Nadia Islam" })}>N</Link>
         </span>
       </header>
 
       <div className="flex min-h-0 flex-1">
         {/* Tablet-landscape left rail (88px, icon over label) */}
-        <nav aria-label={tp("shell.menu")} className="sticky top-0 hidden h-[calc(100vh-65px)] w-[88px] shrink-0 flex-col border-r border-line bg-card rail:flex">
+        <nav aria-label={tp("shell.menu")} className="sticky top-0 hidden h-[calc(100vh-65px)] w-22 shrink-0 flex-col border-r border-line bg-card rail:flex">
           {tabs.map((t) => tabButton(t, true))}
           {moreButton(true)}
         </nav>
@@ -161,8 +161,8 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
           <div className="absolute inset-x-0 bottom-0 rounded-t-md border-t border-line bg-sheet p-section" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
             <div className="mb-section flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
-                <p className="font-mono text-[0.75rem] text-muted">{tp("shell.shiftLine", { counter: tp("counter"), time: "3:24" })}</p>
+                <p className="text-base font-medium">Lalbagh Heritage Attractions</p>
+                <p className="font-mono text-xs text-muted">{tp("shell.shiftLine", { counter: tp("counter"), time: "3:24" })}</p>
               </div>
               <div className="flex items-center gap-tight">
                 <LocaleToggle />
@@ -177,7 +177,7 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
                 const inner = (
                   <>
                     <Icon size={24} strokeWidth={1.5} />
-                    <span className="text-[0.75rem] font-medium">{t(item.key)}</span>
+                    <span className="text-xs font-medium">{t(item.key)}</span>
                   </>
                 );
                 return "href" in item && item.href ? (
@@ -196,16 +196,16 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
       )}
 
       <Modal open={salesOpen} onClose={() => setSalesOpen(false)} title={tp("shell.salesTitle")}>
-        <div className="flex flex-col gap-tight font-mono text-sm tabular-nums">
-          <div className="flex justify-between border-b border-line pb-tight"><span className="font-sans text-muted">{tp("shell.takings")}</span><span>{formatMoney(1245000)}</span></div>
-          <div className="flex justify-between border-b border-line pb-tight"><span className="font-sans text-muted">{tp("shell.sales")}</span><span>9</span></div>
-          <div className="flex justify-between"><span className="font-sans text-muted">{tp("shell.cashInDrawer")}</span><span>{formatMoney(485000)}</span></div>
+        <div className="flex flex-col gap-tight text-base tabular-nums">
+          <div className="flex justify-between border-b border-line pb-tight"><span className="text-muted">{tp("shell.takings")}</span><span>{formatMoney(1245000)}</span></div>
+          <div className="flex justify-between border-b border-line pb-tight"><span className="text-muted">{tp("shell.sales")}</span><span>9</span></div>
+          <div className="flex justify-between"><span className="text-muted">{tp("shell.cashInDrawer")}</span><span>{formatMoney(485000)}</span></div>
         </div>
-        <p className="mt-section text-[0.75rem] text-muted">{tp("shell.salesNote")}</p>
+        <p className="mt-section text-xs text-muted">{tp("shell.salesNote")}</p>
       </Modal>
 
       <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title={tp("shell.helpTitle")}>
-        <p className="text-sm text-muted">{tp.rich("shell.helpBody", { phone: (c) => <span className="font-mono text-fg">{c}</span> })}</p>
+        <p className="text-base text-muted">{tp.rich("shell.helpBody", { phone: (c) => <span className="font-mono text-fg">{c}</span> })}</p>
       </Modal>
     </div>
   );

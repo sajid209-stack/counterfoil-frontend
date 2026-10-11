@@ -209,7 +209,7 @@ function ElementFace({ el, state, scale }: { el: PlanElement; state: PlanElement
     ...(idle || taken
       ? {}
       : color
-        ? { background: selected ? color : `${color}2e`, borderColor: color, color: selected ? "#fff" : undefined }
+        ? { background: selected ? color : `${color}2e`, borderColor: color, color: selected ? "var(--color-on-solid)" : undefined }
         : {}),
   };
 
@@ -225,7 +225,7 @@ function ElementFace({ el, state, scale }: { el: PlanElement; state: PlanElement
       style={style}
     >
       {showLabel && (
-        <span className="truncate px-[1px]" style={{ fontSize: Math.min(13, Math.max(8, scale * 0.42)) }}>
+        <span className="truncate px-px" style={{ fontSize: Math.min(13, Math.max(8, scale * 0.42)) }}>
           {kind === "seat" ? el.name.replace(/^[A-Z]+/, "") || el.name : el.name}
           {ga && el.capacity ? ` · ${el.capacity}` : ""}
         </span>
@@ -263,7 +263,7 @@ function FixtureView({ fixture: f, extent, scale }: { fixture: LayoutFixture; ex
   }
   if (f.kind === "door") {
     return (
-      <div data-fixture={f.kind} className={cn(common, "flex-col gap-[2px]")} style={style}>
+      <div data-fixture={f.kind} className={cn(common, "flex-col gap-0.5")} style={style}>
         <span className="h-[2px] w-full rounded-full bg-strong/60" />
         <span className="truncate text-muted" style={{ fontSize: Math.max(9, fontSize - 1) }}>{f.label}</span>
       </div>

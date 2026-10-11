@@ -80,14 +80,14 @@ export function StorefrontChrome({
     <>
       <span
         aria-hidden
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--sf-fill)] text-[14px] font-semibold tracking-[0.02em] text-[var(--sf-on-fill)]"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-ember-solid text-base font-semibold text-on-solid"
       >
         {mark}
       </span>
-      <span className="min-w-0 truncate text-[16px] font-semibold tracking-[-0.01em]">{location.name}</span>
+      <span className="min-w-0 truncate text-md font-semibold">{location.name}</span>
     </>
   );
-  const brandCls = "flex min-h-11 min-w-0 items-center gap-comfortable rounded-[10px]";
+  const brandCls = "flex min-h-11 min-w-0 items-center gap-comfortable rounded-md";
 
   const jump = (id: string) => (e: React.MouseEvent<HTMLElement>) => {
     const doc = e.currentTarget.ownerDocument;
@@ -102,7 +102,7 @@ export function StorefrontChrome({
     }
   };
   const navCls =
-    "flex min-h-11 items-center rounded-[10px] px-comfortable text-[14px] font-medium text-fg transition-colors duration-quick hover:bg-subtle";
+    "flex min-h-11 items-center rounded-md px-comfortable text-base font-medium text-fg transition-colors duration-quick hover:bg-muted-wash";
   const navItem = (id: string, label: string) =>
     preview ? (
       <button key={id} type="button" onClick={jump(id)} className={navCls}>
@@ -119,19 +119,19 @@ export function StorefrontChrome({
       <ShoppingBag size={20} strokeWidth={1.75} aria-hidden />
       <span className="hidden sm:inline">{t("basket.label")}</span>
       {flow.itemCount > 0 && (
-        <span className="tnum flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--sf-fill)] px-1 text-[12px] font-semibold leading-none text-[var(--sf-on-fill)]">
+        <span className="tnum flex h-5 min-w-5 items-center justify-center rounded-full bg-ember-solid px-1 text-xs font-semibold leading-none text-on-solid">
           {flow.itemCount}
         </span>
       )}
     </>
   );
   const basketCls =
-    "relative flex min-h-11 min-w-11 items-center justify-center gap-tight rounded-[10px] border border-line px-comfortable text-[14px] font-medium text-fg transition-colors duration-quick hover:border-strong";
+    "relative flex min-h-11 min-w-11 items-center justify-center gap-tight rounded-md border border-line px-comfortable text-base font-medium text-fg transition-colors duration-quick hover:border-strong";
   const basketLabel = t("basket.ariaLabel", { count: flow.itemCount });
 
   return (
     <SfRoot accent={storefront.accent} className="flex flex-col">
-      <header className="sticky top-0 z-50 border-b border-hairline bg-white/95 backdrop-blur" data-sf-header>
+      <header className="sticky top-0 z-50 border-b border-hairline bg-card/95 backdrop-blur" data-sf-header>
         <div className={cn(WRAP, "flex h-16 items-center gap-section")}>
           {preview ? (
             <button type="button" onClick={flow.goVenue} className={cn(brandCls, "text-left")}>
@@ -165,13 +165,13 @@ export function StorefrontChrome({
       <footer className="border-t border-hairline bg-subtle">
         <div className={cn(WRAP, "grid grid-cols-1 gap-major py-major sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]")}>
           <div className="min-w-0">
-            <p className="text-[16px] font-semibold">{location.name}</p>
-            <p className="mt-tight flex items-start gap-tight text-[14px] text-muted">
+            <p className="text-md font-semibold">{location.name}</p>
+            <p className="mt-tight flex items-start gap-tight text-base text-muted">
               <MapPin size={16} strokeWidth={1.5} className="mt-0.5 shrink-0" aria-hidden />
               <span>{[location.addressLine1, location.addressLine2, location.city].filter(Boolean).join(", ")}</span>
             </p>
           </div>
-          <div className="min-w-0 text-[14px]">
+          <div className="min-w-0 text-base">
             <p className="font-semibold">{t("footer.contact")}</p>
             <ul className="mt-tight flex flex-col gap-inline text-muted">
               {storefront.contactPhone && (
@@ -194,7 +194,7 @@ export function StorefrontChrome({
             </ul>
           </div>
           {storefront.links.length > 0 && (
-            <div className="min-w-0 text-[14px]">
+            <div className="min-w-0 text-base">
               <p className="font-semibold">{t("footer.links")}</p>
               <ul className="mt-tight flex flex-col gap-inline">
                 {storefront.links.map((l) => (
@@ -203,7 +203,7 @@ export function StorefrontChrome({
                       href={l.url}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="inline-flex min-h-11 items-center text-[var(--sf-ink)] underline-offset-4 hover:underline sm:min-h-0"
+                      className="inline-flex min-h-11 items-center text-brand-foreground underline-offset-4 hover:underline sm:min-h-0"
                     >
                       {l.label}
                     </a>
@@ -214,7 +214,7 @@ export function StorefrontChrome({
           )}
         </div>
         <div className="border-t border-hairline">
-          <div className={cn(WRAP, "flex items-center gap-tight py-section text-[12px] text-muted")}>
+          <div className={cn(WRAP, "flex items-center gap-tight py-section text-xs text-muted")}>
             <LogoMark size={16} />
             {poweredBy}
           </div>
@@ -229,7 +229,7 @@ export function StorefrontChrome({
 export function BackLink({ label, href, onClick }: { label: string; href?: string; onClick?: () => void }) {
   const flow = useStorefrontFlow();
   const cls =
-    "-ml-tight inline-flex min-h-11 items-center gap-tight rounded-[10px] px-tight text-[14px] font-medium text-muted transition-colors duration-quick hover:text-fg";
+    "-ml-tight inline-flex min-h-11 items-center gap-tight rounded-md px-tight text-base font-medium text-muted transition-colors duration-quick hover:text-fg";
   if (flow.mode === "preview" || !href) {
     return (
       <button type="button" onClick={onClick ?? flow.goVenue} className={cls}>
@@ -254,8 +254,8 @@ export function StorefrontMissing({ title, message }: { title: string; message: 
     <SfRoot accent={null} className="flex items-center justify-center px-section">
       <div className="max-w-sm text-center">
         <LogoMark size={28} className="mx-auto" />
-        <h1 className="mt-section text-[24px] font-semibold tracking-[-0.02em]">{title}</h1>
-        <p className="mt-tight text-[16px] text-muted">{message}</p>
+        <h1 className="mt-section text-2xl font-semibold tracking-title">{title}</h1>
+        <p className="mt-tight text-md text-muted">{message}</p>
       </div>
     </SfRoot>
   );

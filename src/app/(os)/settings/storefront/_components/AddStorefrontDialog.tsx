@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button, Field, Modal, useToast } from "@/components/ui";
+import { Button, Checkbox, Field, Modal, Radio, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { createStorefront, peekStorefronts, storefrontSlug, type Location, type Product, type Storefront } from "@/lib/api";
 import { controlCls } from "../../_components/SettingsKit";
@@ -126,7 +126,7 @@ export function AddStorefrontDialog({
 
         <Field label={t("storefront.addressLabel")} help={t("storefront.addressHelp")} error={errors.slug} htmlFor={`${uid}-slug`}>
           <div className="flex items-center gap-inline">
-            <span className="shrink-0 font-mono text-[13px] text-muted">/s/</span>
+            <span className="shrink-0 font-mono text-sm text-muted">/s/</span>
             <input
               id={`${uid}-slug`}
               value={slug}
@@ -141,68 +141,73 @@ export function AddStorefrontDialog({
               className={cn(controlCls(!!errors.slug), "font-mono")}
             />
           </div>
-          <p data-address-preview className="break-all text-[13px] text-muted">
+          <p data-address-preview className="break-all text-sm text-muted">
             {t("storefront.addressPreview", { url: `${host}/s/${slug || "…"}` })}
           </p>
         </Field>
 
         <fieldset className="flex flex-col gap-tight">
-          <legend className="mb-tight text-[0.75rem] font-medium text-muted">{t("storefront.whichLabel")}</legend>
+          <legend className="mb-tight text-xs font-medium text-muted">{t("storefront.whichLabel")}</legend>
           <div role="radiogroup" aria-label={t("storefront.whichLabel")} className="flex flex-col gap-tight">
             {modes.map((m) => {
               const on = mode === m.key;
               return (
-                <button
+                // The tile is the target; the kit Radio inside is the control.
+                <div
                   key={m.key}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  onClick={() => {
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest("label,input")) return;
                     setMode(m.key);
                     setErrors((x) => ({ ...x, which: undefined }));
                   }}
                   className={cn(
-                    "flex min-h-11 flex-col rounded-sm px-comfortable py-tight text-left transition-colors duration-quick",
+                    "cursor-pointer rounded-control px-tight transition-colors duration-quick",
                     on ? "bg-card ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:ring-1 hover:ring-inset hover:ring-line",
                   )}
                 >
-                  <span className="text-sm font-medium text-fg">{m.title}</span>
-                  <span className="text-[13px] text-muted">{m.desc}</span>
-                </button>
+                  <Radio
+                    name={`${uid}-which`}
+                    value={m.key}
+                    checked={on}
+                    onChange={() => {
+                      setMode(m.key);
+                      setErrors((x) => ({ ...x, which: undefined }));
+                    }}
+                    label={<span className="font-medium">{m.title}</span>}
+                    description={m.desc}
+                  />
+                </div>
               );
             })}
           </div>
           {mode === "some" && (
-            <ul aria-label={t("storefront.whichLabel")} className="mt-tight flex max-h-48 flex-col overflow-y-auto rounded-sm border border-line">
+            <ul aria-label={t("storefront.whichLabel")} className="mt-tight flex max-h-48 flex-col overflow-y-auto rounded-control border border-line">
               {sellable.length === 0 ? (
-                <li className="px-comfortable py-comfortable text-[13px] text-muted">{t("storefront.nothingSellable")}</li>
+                <li className="px-comfortable py-comfortable text-sm text-muted">{t("storefront.nothingSellable")}</li>
               ) : (
                 sellable.map((p) => {
                   const on = picked.includes(p.id);
                   return (
                     <li key={p.id} className="border-b border-hairline last:border-b-0">
-                      <label className="flex min-h-11 cursor-pointer items-center gap-tight px-comfortable py-tight text-sm">
-                        <input
-                          type="checkbox"
-                          checked={on}
-                          onChange={() => {
-                            setPicked((cur) => (on ? cur.filter((x) => x !== p.id) : [...cur, p.id]));
-                            setErrors((x) => ({ ...x, which: undefined }));
-                          }}
-                          className="h-4 w-4 shrink-0 accent-[var(--color-ember-solid)]"
-                        />
-                        <span className="min-w-0 flex-1 truncate">{p.name}</span>
-                      </label>
+                      <Checkbox
+                        className="px-tight"
+                        checked={on}
+                        onChange={() => {
+                          setPicked((cur) => (on ? cur.filter((x) => x !== p.id) : [...cur, p.id]));
+                          setErrors((x) => ({ ...x, which: undefined }));
+                        }}
+                        label={p.name}
+                      />
                     </li>
                   );
                 })
               )}
             </ul>
           )}
-          {errors.which && <p className="text-[0.75rem] text-danger">{errors.which}</p>}
+          {errors.which && <p className="text-xs text-danger">{errors.which}</p>}
         </fieldset>
 
-        {errors.general && <p className="text-[13px] text-danger">{errors.general}</p>}
+        {errors.general && <p className="text-sm text-danger">{errors.general}</p>}
       </form>
     </Modal>
   );

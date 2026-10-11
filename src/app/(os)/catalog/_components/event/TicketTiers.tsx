@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { CalendarRange, Plus, Sparkles } from "lucide-react";
-import { Button, DateField, FormField } from "@/components/ui";
+import { Button, Chip, DateField, FormField, StatusPill } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatDay, formatPriceShort } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
@@ -224,7 +224,7 @@ export function TicketTiers({
                what separates two rows that otherwise differ by a price. */
             scope: multi ? (
               <div className="flex flex-wrap items-center gap-tight">
-                <span className="flex items-center gap-inline text-[12px] font-medium text-muted">
+                <span className="flex items-center gap-inline text-xs font-medium text-muted">
                   <CalendarRange size={14} strokeWidth={1.5} aria-hidden />
                   {t("tickets.days.admits")}
                 </span>
@@ -232,28 +232,19 @@ export function TicketTiers({
                   {days.map((d, di) => {
                     const on = admits(r, d.id);
                     return (
-                      <button
-                        key={d.id}
-                        type="button"
-                        aria-pressed={on}
-                        onClick={() => toggleDay(r, d.id)}
-                        className={cn(
-                          "flex min-h-11 items-center rounded-full px-comfortable text-[0.75rem] font-medium transition-colors duration-quick sm:min-h-8",
-                          on ? "bg-card text-fg ring-2 ring-inset ring-ember-solid" : "bg-muted-wash text-muted hover:bg-line/40 hover:text-fg",
-                        )}
-                      >
+                      <Chip key={d.id} selected={on} onClick={() => toggleDay(r, d.id)}>
                         {label(d, di)}
-                      </button>
+                      </Chip>
                     );
                   })}
                 </span>
                 {(() => {
                   const save = savingOf(r);
                   return save === null ? null : (
-                    <span className="flex items-center gap-inline rounded-full bg-success/10 px-comfortable py-inline text-[12px] font-medium text-success">
+                    <StatusPill tone="success" className="gap-inline px-comfortable py-inline">
                       <Sparkles size={13} strokeWidth={1.5} aria-hidden />
                       {t("tickets.days.saves", { amount: formatPriceShort(save) })}
-                    </span>
+                    </StatusPill>
                   );
                 })()}
               </div>
@@ -267,7 +258,7 @@ export function TicketTiers({
             details: (
               <>
                 <div className="flex flex-col gap-inline">
-                  <span className="text-[0.8125rem] font-medium text-muted">{t("tickets.salesEnd")}</span>
+                  <span className="text-sm font-medium text-muted">{t("tickets.salesEnd")}</span>
                   <DateField
                     size="form"
                     value={r.salesEnd || null}
@@ -280,7 +271,7 @@ export function TicketTiers({
                       open: tc("openCalendar"),
                     }}
                   />
-                  <span className="text-[12px] text-muted">{t("tickets.salesEndHelp")}</span>
+                  <span className="text-xs text-muted">{t("tickets.salesEndHelp")}</span>
                 </div>
                 <FormField
                   label={t("tickets.description")}
@@ -308,38 +299,25 @@ export function TicketTiers({
         {/* The two tedious halves of a multi-day table, one tap each. Offered
             only while they would actually add something. */}
         {multi && !perDayDone && (
-          <button
-            type="button"
-            onClick={addPerDay}
-            className="min-h-11 rounded-sm bg-muted-wash px-comfortable text-[13px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-9"
-          >
-            + {t("tickets.days.addPerDay")}
-          </button>
+          <Button variant="tertiary" size="sm" onClick={addPerDay} icon={<Plus size={14} strokeWidth={1.5} aria-hidden />} className="text-muted">
+            {t("tickets.days.addPerDay")}
+          </Button>
         )}
         {multi && !hasBundle && (
-          <button
-            type="button"
-            onClick={addBundle}
-            className="min-h-11 rounded-sm bg-muted-wash px-comfortable text-[13px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-9"
-          >
-            + {t("tickets.days.addBundle", { count: days.length })}
-          </button>
+          <Button variant="tertiary" size="sm" onClick={addBundle} icon={<Plus size={14} strokeWidth={1.5} aria-hidden />} className="text-muted">
+            {t("tickets.days.addBundle", { count: days.length })}
+          </Button>
         )}
         {(["earlyBird", "vip", "free"] as const).map((k) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => add(t(`tickets.preset.${k}`))}
-            className="min-h-11 rounded-sm bg-muted-wash px-comfortable text-[13px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-9"
-          >
-            + {t(`tickets.preset.${k}`)}
-          </button>
+          <Button key={k} variant="tertiary" size="sm" onClick={() => add(t(`tickets.preset.${k}`))} icon={<Plus size={14} strokeWidth={1.5} aria-hidden />} className="text-muted">
+            {t(`tickets.preset.${k}`)}
+          </Button>
         ))}
       </div>
 
-      <div className="flex flex-wrap items-baseline justify-between gap-tight rounded-sm bg-muted-wash px-card py-comfortable">
-        <span className="text-[13px] text-muted">{t("tickets.capacity", { count: capacity })}</span>
-        <span className={cn("text-sm font-medium", !unpriced && "tabular-nums")}>
+      <div className="flex flex-wrap items-baseline justify-between gap-tight rounded-control bg-muted-wash px-card py-comfortable">
+        <span className="text-sm text-muted">{t("tickets.capacity", { count: capacity })}</span>
+        <span className={cn("text-base font-medium", !unpriced && "tabular-nums")}>
           {/* Three honest answers, and "Free" is only one of them. A table with
               prices in it and no quantities is not a free event — it is an
               unfinished one, and saying "Free" there states the thing an

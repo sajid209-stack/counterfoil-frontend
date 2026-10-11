@@ -2,6 +2,12 @@
 
 /* ── Choosing a day ────────────────────────────────────────────────────────
  *
+ * Use DateStrip when a cashier picks one day from the next few open ones, with
+ * the full calendar one tap away; use DateField for a plain date input in a
+ * form. Selected is the 2px ember ring plus a check (inline with the label in
+ * the default shape, top-right in the flat one), radius from `rounded-card`
+ * so it is right in OS and Go.
+ *
  * A wrapping grid, never a row that scrolls sideways.
  *
  * The scrolling row it replaces had two faults. A chip that has scrolled out
@@ -90,7 +96,7 @@ export function DateStrip({
   if (flat) {
     return (
       <div className={cn("flex flex-col gap-tight", className)}>
-        <div className="go-surface overflow-hidden rounded-go">
+        <div className="go-surface overflow-hidden rounded-card">
           <div className="-mb-px -mr-px grid grid-cols-3 sm:grid-cols-6">
             {shown.map((d) => {
               const on = value === d;
@@ -105,17 +111,17 @@ export function DateStrip({
                   onClick={() => onChange(d)}
                   className={cn(
                     "relative flex min-h-[3.75rem] flex-col items-center justify-center border-b border-r border-line px-inline py-tight text-center transition-colors duration-quick",
-                    on ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10",
+                    on ? "bg-ember-solid text-on-solid" : "bg-card text-fg active:bg-ember-wash",
                   )}
                 >
                   {isMarked && <span className={cn("absolute left-1.5 top-1.5 size-1.5 rounded-full", on ? "bg-white" : "bg-ember")} aria-hidden />}
                   {on && <Check size={13} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
-                  <span className="w-full truncate text-[0.875rem] font-semibold leading-tight">{label(d)}</span>
+                  <span className="w-full truncate text-base font-semibold leading-tight">{label(d)}</span>
                   {/* Ink on the chosen day: muted on the orange tint fell to 4.4:1 in
                       dark, under the reading floor. */}
-                  <span className={cn("w-full truncate text-[0.8125rem] leading-tight", on ? "text-white" : "text-muted")}>{sub(d)}</span>
+                  <span className={cn("w-full truncate text-sm leading-tight", on ? "text-on-solid" : "text-muted")}>{sub(d)}</span>
                   {cap && (
-                    <span className={cn("w-full truncate text-[0.8125rem] leading-tight", on ? "text-white" : cap.low ? "font-medium text-warning" : "text-muted")}>{cap.text}</span>
+                    <span className={cn("w-full truncate text-sm leading-tight", on ? "text-on-solid" : cap.low ? "font-medium text-warning" : "text-muted")}>{cap.text}</span>
                   )}
                 </button>
               );
@@ -126,8 +132,8 @@ export function DateStrip({
               data-focus-inset
               onClick={() => setPickerOpen((v) => !v)}
               className={cn(
-                "flex min-h-[3.75rem] flex-col items-center justify-center gap-0.5 border-b border-r border-line px-inline text-[0.8125rem] font-medium transition-colors duration-quick",
-                pickerOpen ? "bg-ember/10 text-fg" : "bg-card text-muted active:bg-ember/10",
+                "flex min-h-[3.75rem] flex-col items-center justify-center gap-0.5 border-b border-r border-line px-inline text-sm font-medium transition-colors duration-quick",
+                pickerOpen ? "bg-ember-wash text-fg" : "bg-card text-muted active:bg-ember-wash",
               )}
             >
               <CalendarDays size={18} strokeWidth={1.75} aria-hidden />
@@ -136,7 +142,7 @@ export function DateStrip({
           </div>
         </div>
         {pickerOpen && (
-          <div className="go-surface overflow-hidden rounded-go">
+          <div className="go-surface overflow-hidden rounded-card">
             <DatePicker
               value={value}
               today={today}
@@ -171,10 +177,10 @@ export function DateStrip({
               aria-pressed={on}
               onClick={() => onChange(d)}
               className={cn(
-                "relative flex min-h-[56px] flex-col items-center justify-center rounded-go border px-inline py-tight text-center transition-colors duration-quick",
+                "relative flex min-h-14 flex-col items-center justify-center rounded-inner border px-inline py-tight text-center transition-colors duration-quick",
                 on
-                  ? "border-ember bg-ember/10 ring-1 ring-inset ring-ember"
-                  : "border-line bg-card active:bg-ember/10",
+                  ? "border-ember bg-ember-wash/60 ring-1 ring-inset ring-ember"
+                  : "border-line bg-card active:bg-ember-wash",
               )}
             >
               {/* A day carrying part of the sale says so, so the selection is
@@ -188,17 +194,21 @@ export function DateStrip({
                   aria-hidden
                 />
               )}
+              {/* The check sits INSIDE the label's own line, not in a corner of
+                  the pill: a date pill is ~96px wide and a corner glyph lands
+                  on the weekday ("TODA✓"). */}
               <span
                 className={cn(
-                  "w-full truncate text-[0.8125rem] font-medium leading-tight",
+                  "flex w-full items-center justify-center gap-inline text-sm font-medium leading-tight",
                   on && "text-brand-foreground",
                 )}
               >
-                {label(d)}
+                {on && <Check size={12} strokeWidth={3} aria-hidden className="shrink-0" />}
+                <span className="min-w-0 truncate">{label(d)}</span>
               </span>
               <span
                 className={cn(
-                  "w-full truncate text-[0.75rem] leading-tight",
+                  "w-full truncate text-xs leading-tight",
                   on ? "text-brand-foreground/70" : "text-muted",
                 )}
               >
@@ -207,7 +217,7 @@ export function DateStrip({
               {cap && (
                 <span
                   className={cn(
-                    "w-full truncate text-[0.75rem] leading-tight",
+                    "w-full truncate text-xs leading-tight",
                     cap.low ? "font-medium text-brand-foreground" : on ? "text-brand-foreground/70" : "text-muted",
                   )}
                 >
@@ -225,7 +235,7 @@ export function DateStrip({
         /* Ours, not the browser's. The native control opened a blue system
            grid with its own corners and a US date format inside a till that
            is 18px corners and "29 Jul 2026" everywhere else. */
-        <div className="rounded-go border border-ember bg-card">
+        <div className="rounded-card border border-ember bg-card">
           <DatePicker
             value={value}
             today={today}
@@ -243,7 +253,7 @@ export function DateStrip({
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="flex min-h-12 w-full items-center justify-center gap-tight rounded-go border border-dashed border-strong text-[0.8125rem] text-muted active:bg-ember/10"
+          className="flex min-h-12 w-full items-center justify-center gap-tight rounded-card border border-dashed border-strong text-sm text-muted transition-colors duration-quick active:bg-ember-wash"
         >
           <CalendarDays size={15} strokeWidth={1.5} />
           {labels.pick}

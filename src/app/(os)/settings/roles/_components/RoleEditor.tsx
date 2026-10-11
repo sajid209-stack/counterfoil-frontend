@@ -4,8 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CircleAlert } from "lucide-react";
-import { Avatar, useToast } from "@/components/ui";
+import { Avatar, Notice, useToast } from "@/components/ui";
 import { createRole, updateRole, type Role, type RoleInput, type Staff } from "@/lib/api";
 import { ALL_PERMISSIONS, PERMISSION_GROUPS, permissionKey } from "@/lib/permissions";
 import { CreateBar, SaveBar, SettingRow, SettingsSection, SuffixInput, Switch, controlCls } from "../../_components/SettingsKit";
@@ -106,7 +105,7 @@ export function RoleEditor({
   };
 
   return (
-    <div className="flex max-w-3xl flex-col gap-section pb-hero">
+    <div className="flex flex-col gap-section pb-hero">
       <SettingsSection title={t("roles.sectionRole")} description={t("roles.sectionRoleDesc")}>
         <SettingRow label={t("common.name")} error={nameErr}>
           {({ id, describedBy }) => (
@@ -135,7 +134,7 @@ export function RoleEditor({
                     <li key={m.id}>
                       <Link
                         href={`/settings/team/${m.id}`}
-                        className="inline-flex min-h-11 items-center gap-tight rounded-full bg-muted-wash/70 py-inline pl-inline pr-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
+                        className="inline-flex min-h-11 items-center gap-tight rounded-full bg-muted-wash/70 py-inline pl-inline pr-comfortable text-sm text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
                       >
                         <Avatar name={m.name} size={24} soft />
                         {m.name}
@@ -143,7 +142,7 @@ export function RoleEditor({
                     </li>
                   ))}
                   {members.length > 6 && (
-                    <li className="inline-flex min-h-9 items-center text-[13px] text-muted">
+                    <li className="inline-flex min-h-9 items-center text-sm text-muted">
                       {t("roles.membersMore", { count: members.length - 6 })}
                     </li>
                   )}
@@ -168,10 +167,11 @@ export function RoleEditor({
                   )}
                 </SettingRow>
                 {losingOwn && (
-                  <p role="note" className="flex items-start gap-tight bg-warning-wash px-card py-tight text-[13px] text-fg">
-                    <CircleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-warning" />
-                    {t("roles.selfWarning")}
-                  </p>
+                  <div className="px-card pb-section">
+                    <Notice tone="warning" size="sm">
+                      {t("roles.selfWarning")}
+                    </Notice>
+                  </div>
                 )}
                 {p === "pos.sell" && has(p) && (
                   <SettingRow label={t("roles.discountMax")} description={t("roles.discountDesc")} error={discountErr}>

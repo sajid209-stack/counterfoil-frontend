@@ -17,7 +17,7 @@
 
 import { useTranslations } from "next-intl";
 import { ChevronRight, Percent, UserRound, Wallet, type LucideIcon } from "lucide-react";
-import { DiscountInput, type DiscountMode } from "@/components/ui";
+import { DiscountInput, Notice, type DiscountMode } from "@/components/ui";
 import { formatMoney } from "@/lib/format";
 import type { AttachedCustomer } from "../../pos/CustomerPicker";
 
@@ -47,8 +47,8 @@ function SaleRow({
         className="flex min-h-12 w-full items-center gap-tight py-tight text-left"
       >
         <Icon size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
-        <span className="min-w-0 flex-1 truncate text-[0.875rem]">{label}</span>
-        <span className="min-w-0 shrink-0 truncate text-[0.8125rem] text-muted">{value}</span>
+        <span className="min-w-0 flex-1 truncate text-base">{label}</span>
+        <span className="min-w-0 shrink-0 truncate text-sm text-muted">{value}</span>
         <ChevronRight
           size={15}
           strokeWidth={1.5}
@@ -115,7 +115,7 @@ export function SaleRows({
   const advanceValid = advance != null && advance >= advanceMin && advance < total;
 
   return (
-    <div className="rounded-go border border-line bg-card px-comfortable">
+    <div className="card-surface px-comfortable">
       {/* Who it is for. The phone sits under the name because two customers
           share a name far more often than they share a number. */}
       <SaleRow
@@ -153,9 +153,9 @@ export function SaleRows({
         {/* The cap is named, and so is the way past it. A control that simply
             refuses is not an answer. */}
         {overLimit && (
-          <p className="mb-tight rounded-go border border-line border-l-[3px] border-l-ember bg-card p-tight text-[0.8125rem]">
+          <Notice tone="warning" size="sm" className="mb-tight">
             {t("rows.overLimit", { limit: capPct })}
-          </p>
+          </Notice>
         )}
         {discountValue > 0 && reasonRequired !== undefined && (
           <input
@@ -163,8 +163,8 @@ export function SaleRows({
             onChange={(e) => onDiscountReason(e.target.value)}
             placeholder={t("rows.reasonPlaceholder")}
             aria-label={t("rows.reason")}
-            className={`h-12 w-full rounded-go-sm border bg-card px-comfortable text-sm outline-none placeholder:text-faint ${
-              reasonRequired && !discountReason.trim() ? "border-danger" : "border-line focus:border-ember"
+            className={`h-12 w-full rounded-inner border bg-card px-comfortable text-base placeholder:text-faint ${
+              reasonRequired && !discountReason.trim() ? "border-danger" : "border-line"
             }`}
           />
         )}
@@ -207,13 +207,13 @@ export function SaleRows({
                       const n = parseFloat(raw);
                       onAdvance(Number.isFinite(n) ? Math.max(0, Math.round(n * 100)) : null);
                     }}
-                    className="h-12 min-w-0 flex-1 rounded-go-sm border border-line bg-card px-comfortable text-right text-sm tabular-nums outline-none focus:border-ember"
+                    className="h-12 min-w-0 flex-1 rounded-inner border border-line bg-card px-comfortable text-right text-base tabular-nums"
                   />
                   <button
                     type="button"
                     onClick={() => onAdvance(null)}
-                    className={`h-12 shrink-0 rounded-full border px-comfortable text-[0.8125rem] ${
-                      advance == null ? "border-ember bg-ember/10 text-brand-foreground" : "border-line"
+                    className={`h-12 shrink-0 rounded-full border px-comfortable text-sm ${
+                      advance == null ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line"
                     }`}
                   >
                     {t("rows.inFull")}
@@ -225,7 +225,7 @@ export function SaleRows({
                       key={i}
                       type="button"
                       onClick={() => onAdvance(amt >= total ? null : amt)}
-                      className="h-12 flex-1 rounded-full border border-line bg-card px-tight text-[0.8125rem] active:bg-ember/10"
+                      className="h-12 flex-1 rounded-full border border-line bg-card px-tight text-sm active:bg-muted-wash"
                     >
                       {i === 0
                         ? t("rows.minimum", { amount: formatMoney(amt, currency) })
@@ -236,7 +236,7 @@ export function SaleRows({
                   ))}
                 </div>
                 {advance != null && advance < advanceMin && (
-                  <p className="text-[0.8125rem] text-danger">
+                  <p className="text-sm text-danger">
                     {t("rows.belowMin", { amount: formatMoney(advanceMin, currency) })}
                   </p>
                 )}
@@ -247,14 +247,14 @@ export function SaleRows({
               <button
                 type="button"
                 onClick={() => onPayInFull(!payInFull)}
-                className="flex min-h-12 w-full items-center justify-between gap-tight text-[0.8125rem]"
+                className="flex min-h-12 w-full items-center justify-between gap-tight text-sm"
               >
                 <span className="min-w-0 text-left text-muted">
                   {t("rows.depositExplain", { later: formatMoney(depositBalance, currency) })}
                 </span>
                 <span
                   className={`flex h-6 w-10 shrink-0 items-center rounded-full px-0.5 transition-colors duration-quick ${
-                    payInFull ? "bg-ember" : "bg-strong"
+                    payInFull ? "bg-ember-solid" : "bg-strong"
                   }`}
                 >
                   <span

@@ -11,7 +11,7 @@ export function PrintToolbar() {
   const router = useRouter();
   return (
     <div className="mb-major flex items-center justify-between print:hidden">
-      <button type="button" onClick={() => router.back()} className="flex min-h-[44px] items-center gap-inline text-[13px] text-muted hover:text-fg">
+      <button type="button" onClick={() => router.back()} className="flex min-h-[44px] items-center gap-inline text-sm text-muted hover:text-fg">
         <ArrowLeft size={14} strokeWidth={1.5} /> {t("back")}
       </button>
       <Button icon={<Printer size={16} strokeWidth={1.5} />} onClick={() => window.print()}>

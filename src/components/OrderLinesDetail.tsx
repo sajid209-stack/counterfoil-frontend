@@ -39,7 +39,7 @@ export function OrderLinesDetail({ order, compact = false, hidePayments = false 
     order.subtotal > 0 ? Math.round((order.orderDiscount / Math.max(1, order.subtotal - (order.lineDiscountTotal ?? 0))) * 100) : null;
 
   return (
-    <div className={compact ? "text-[13px]" : "text-sm"}>
+    <div className={compact ? "text-sm" : "text-base"}>
       {parents.map((l) => (
         <div key={l.id} className="border-b border-line py-tight last:border-0">
           <div className="flex items-baseline justify-between gap-tight">
@@ -54,17 +54,17 @@ export function OrderLinesDetail({ order, compact = false, hidePayments = false 
               when the reservation is — the substance of the sale, not a
               greyed-out hint. A refunded line still says "not this one"
               through the strike-through above it. */}
-          <p className="text-[12px] tabular-nums text-muted">{l.tierId ? `${l.quantity} ${l.tierName} × ${formatMoney(l.unitPrice)}` : lineMeta(l)}</p>
+          <p className="text-xs tabular-nums text-muted">{l.tierId ? `${l.quantity} ${l.tierName} × ${formatMoney(l.unitPrice)}` : lineMeta(l)}</p>
           {l.lineDiscount > 0 && (
-            <div className="flex justify-between text-[12px] tabular-nums text-danger">
+            <div className="flex justify-between text-xs tabular-nums text-danger">
               <span>{t("lineDiscount")}</span><span className={money}>−{formatMoney(l.lineDiscount)}</span>
             </div>
           )}
-          {refunded(l) && <p className="text-[12px] tabular-nums text-danger">{t("refundedLine", { count: l.refundedQuantity, amount: formatMoney(l.refundedAmount) })}</p>}
+          {refunded(l) && <p className="text-xs tabular-nums text-danger">{t("refundedLine", { count: l.refundedQuantity, amount: formatMoney(l.refundedAmount) })}</p>}
           {childrenOf(l.id).map((c) => (
             <div key={c.id} className="mt-inline flex items-baseline justify-between gap-tight pl-section">
-              <span className="min-w-0 break-words text-muted line-clamp-2">↳ {c.productName} · <span className="text-[12px] tabular-nums">{c.quantity} × {formatMoney(c.unitPrice)}</span></span>
-              <span className={`${money} text-[13px]`}>{formatMoney(c.subtotal)}</span>
+              <span className="min-w-0 break-words text-muted line-clamp-2">↳ {c.productName} · <span className="text-xs tabular-nums">{c.quantity} × {formatMoney(c.unitPrice)}</span></span>
+              <span className={`${money} text-sm`}>{formatMoney(c.subtotal)}</span>
             </div>
           ))}
         </div>
@@ -84,7 +84,7 @@ export function OrderLinesDetail({ order, compact = false, hidePayments = false 
       </div>
 
       {!hidePayments && order.payments.length > 0 && (
-        <p className="mt-tight border-t border-line pt-tight text-[12px] tabular-nums text-muted">
+        <p className="mt-tight border-t border-line pt-tight text-xs tabular-nums text-muted">
           {t("paid")}&nbsp;&nbsp;{order.payments.filter((p) => p.amount > 0).map((p) => `${enumL.method(p.method)} ${formatMoney(p.amount)}`).join(" · ")}
           {order.payments.some((p) => p.amount < 0) && (
             <span className="text-danger"> · {t("refunded", { amount: formatMoney(-order.payments.filter((p) => p.amount < 0).reduce((s, p) => s + p.amount, 0)) })}</span>

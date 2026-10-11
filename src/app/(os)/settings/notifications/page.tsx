@@ -2,8 +2,8 @@
 
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Plus, RotateCcw } from "lucide-react";
-import { PageShell, useToast } from "@/components/ui";
+import { Plus, RotateCcw } from "lucide-react";
+import { Button, Chip, PageShell, controlClass, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -144,10 +144,10 @@ function PlaceholderChips({
             type="button"
             onClick={() => onInsert(p.key)}
             aria-label={t("notifications.insertInto", { placeholder: p.key, field })}
-            className="inline-flex min-h-11 items-center gap-tight rounded-sm bg-muted-wash px-comfortable text-[0.8125rem] transition-colors duration-quick hover:bg-line/40 md:min-h-9"
+            className="inline-flex min-h-11 items-center gap-tight rounded-sm bg-muted-wash px-comfortable text-sm transition-colors duration-quick hover:bg-line/40 md:min-h-9"
           >
             <Plus size={14} strokeWidth={1.5} aria-hidden className="text-muted" />
-            <code className="font-mono text-[0.75rem] text-fg">{p.key}</code>
+            <code className="font-mono text-xs text-fg">{p.key}</code>
             <span className="text-muted">{t(`notifications.ph.${name}`)}</span>
           </button>
         );
@@ -316,7 +316,7 @@ export default function NotificationsPage() {
 
   return (
     <PageShell title={t("notifications.title")} description={t("notifications.description")}>
-      <div className="flex max-w-3xl flex-col gap-section pb-hero">
+      <div className="flex flex-col gap-section pb-hero">
         <SettingsSection title={t("notifications.customerTitle")} description={t("notifications.customerDesc")} divided>
           {CUSTOMER_EVENTS.map((ev) => {
             const row = form.customer[ev];
@@ -331,13 +331,13 @@ export default function NotificationsPage() {
                  with the controls at the right edge, the way a phone's own
                  settings draw it. From sm the switches sit beside both lines. */
               <div key={ev} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-section gap-y-inline px-card py-section sm:gap-x-major">
-                <p className="col-start-1 row-start-1 text-sm font-medium text-fg">{title}</p>
+                <p className="col-start-1 row-start-1 text-base font-medium text-fg">{title}</p>
                 <div className="col-start-2 row-start-1 flex items-center gap-section sm:row-span-2">
                   {CHANNELS.map((ch) => {
                     const channel = t(`notifications.channel.${ch}`);
                     return (
                       <span key={ch} className="flex items-center gap-tight">
-                        <span aria-hidden className="text-[0.8125rem] text-muted">
+                        <span aria-hidden className="text-sm text-muted">
                           {channel}
                         </span>
                         <Switch
@@ -350,8 +350,8 @@ export default function NotificationsPage() {
                   })}
                 </div>
                 <div className="col-span-2 row-start-2 min-w-0 sm:col-span-1">
-                  <p className="text-[0.8125rem] leading-relaxed text-muted">{t(`notifications.event.${ev}.desc`, { hours })}</p>
-                  {silent && <p className="mt-inline text-[0.8125rem] leading-relaxed text-warning">{t("notifications.noTicket")}</p>}
+                  <p className="text-sm leading-relaxed text-muted">{t(`notifications.event.${ev}.desc`, { hours })}</p>
+                  {silent && <p className="mt-inline text-sm leading-relaxed text-warning">{t("notifications.noTicket")}</p>}
                 </div>
               </div>
             );
@@ -419,7 +419,7 @@ export default function NotificationsPage() {
                 label={t("notifications.quietFrom")}
                 invalid={!!errors.quiet}
               />
-              <span aria-hidden className="text-[0.8125rem] text-muted">
+              <span aria-hidden className="text-sm text-muted">
                 {t("notifications.to")}
               </span>
               <TimeField
@@ -429,7 +429,7 @@ export default function NotificationsPage() {
                 invalid={!!errors.quiet}
               />
               {errors.quiet && (
-                <p role="alert" className="w-full text-[0.75rem] text-danger">
+                <p role="alert" className="w-full text-xs text-danger">
                   {errors.quiet}
                 </p>
               )}
@@ -455,7 +455,7 @@ export default function NotificationsPage() {
                 />
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute inset-y-0 right-comfortable flex items-center text-[13px] tabular-nums text-muted"
+                  className="pointer-events-none absolute inset-y-0 right-comfortable flex items-center text-sm tabular-nums text-muted"
                 >
                   {form.senderName.length}/11
                 </span>
@@ -484,14 +484,9 @@ export default function NotificationsPage() {
           description={t("notifications.smsDesc")}
           aside={
             form.template !== DEFAULT_SMS_TEMPLATE ? (
-              <button
-                type="button"
-                onClick={() => set({ template: DEFAULT_SMS_TEMPLATE })}
-                className="inline-flex min-h-11 items-center gap-inline rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
-              >
-                <RotateCcw size={14} strokeWidth={1.5} aria-hidden />
+              <Button variant="tertiary" size="sm" icon={<RotateCcw size={14} strokeWidth={1.5} aria-hidden />} onClick={() => set({ template: DEFAULT_SMS_TEMPLATE })}>
                 {t("notifications.reset")}
-              </button>
+              </Button>
             ) : undefined
           }
         >
@@ -506,10 +501,7 @@ export default function NotificationsPage() {
                   onChange={(e) => set({ template: e.target.value })}
                   aria-describedby={describedBy}
                   aria-invalid={!!errors.template || undefined}
-                  className={cn(
-                    "w-full min-w-0 resize-y rounded-sm border bg-card px-comfortable py-tight text-sm leading-relaxed text-fg outline-none transition-colors duration-quick",
-                    errors.template ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20",
-                  )}
+                  className={cn(controlClass(!!errors.template, true), "resize-y leading-relaxed")}
                 />
                 <PlaceholderChips items={SMS_PLACEHOLDERS} field={t("notifications.targetSms")} onInsert={insert} />
               </div>
@@ -521,16 +513,16 @@ export default function NotificationsPage() {
               <div className="flex flex-col gap-tight">
                 {/* The sender above the bubble, because that is the first thing
                     a phone shows and the reason the name field exists. */}
-                <p className="text-[0.75rem] font-medium text-muted">{t("notifications.from", { sender: form.senderName.trim() || "—" })}</p>
+                <p className="text-xs font-medium text-muted">{t("notifications.from", { sender: form.senderName.trim() || "—" })}</p>
                 {/* Drawn as the message bubble a phone shows, because that
                     is the only place a customer ever reads it. */}
-                <p className="max-w-sm whitespace-pre-wrap break-words rounded-sm rounded-bl-xs bg-muted-wash px-section py-comfortable text-sm leading-relaxed text-fg">
+                <p className="max-w-sm whitespace-pre-wrap break-words rounded-sm rounded-bl-xs bg-muted-wash px-section py-comfortable text-base leading-relaxed text-fg">
                   {preview}
                 </p>
-<p className="text-[0.75rem] text-muted">
+<p className="text-xs text-muted">
                   {t("notifications.length", { count: cost.chars })} · {t("notifications.segments", { count: cost.segments })}
                 </p>
-                {cost.unicode && <p className="max-w-prose text-[0.75rem] text-muted">{t("notifications.unicode")}</p>}
+                {cost.unicode && <p className="max-w-prose text-xs text-muted">{t("notifications.unicode")}</p>}
               </div>
             )}
           </SettingRow>
@@ -547,14 +539,14 @@ export default function NotificationsPage() {
           description={t("notifications.emailDesc")}
           aside={
             !emailDefault ? (
-              <button
-                type="button"
+              <Button
+                variant="tertiary"
+                size="sm"
+                icon={<RotateCcw size={14} strokeWidth={1.5} aria-hidden />}
                 onClick={() => set({ emailSubject: DEFAULT_EMAIL_SUBJECT, emailBody: DEFAULT_EMAIL_BODY })}
-                className="inline-flex min-h-11 items-center gap-inline rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
               >
-                <RotateCcw size={14} strokeWidth={1.5} aria-hidden />
                 {t("notifications.reset")}
-              </button>
+              </Button>
             ) : undefined
           }
         >
@@ -574,10 +566,7 @@ export default function NotificationsPage() {
                   onChange={(e) => set({ emailSubject: e.target.value })}
                   aria-describedby={describedBy}
                   aria-invalid={!!errors.emailSubject || undefined}
-                  className={cn(
-                    "h-11 w-full min-w-0 rounded-sm border bg-card px-comfortable text-sm text-fg outline-none transition-colors duration-quick md:h-9",
-                    errors.emailSubject ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20",
-                  )}
+                  className={controlClass(!!errors.emailSubject)}
                 />
                 <PlaceholderChips items={EMAIL_PLACEHOLDERS} field={t("notifications.targetSubject")} onInsert={(token) => insertInto(subjectField, "emailSubject", token)} />
               </div>
@@ -595,10 +584,7 @@ export default function NotificationsPage() {
                   onChange={(e) => set({ emailBody: e.target.value })}
                   aria-describedby={describedBy}
                   aria-invalid={!!errors.emailBody || undefined}
-                  className={cn(
-                    "w-full min-w-0 resize-y rounded-sm border bg-card px-comfortable py-tight text-sm leading-relaxed text-fg outline-none transition-colors duration-quick",
-                    errors.emailBody ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20",
-                  )}
+                  className={cn(controlClass(!!errors.emailBody, true), "resize-y leading-relaxed")}
                 />
                 <PlaceholderChips items={EMAIL_PLACEHOLDERS} field={t("notifications.targetBody")} onInsert={(token) => insertInto(bodyField, "emailBody", token)} />
               </div>
@@ -613,10 +599,10 @@ export default function NotificationsPage() {
                     somebody decides on before they open anything. */}
                 <div className="max-w-prose rounded-sm bg-muted-wash px-section py-comfortable">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-tight gap-y-inline">
-                    <span className="text-[0.8125rem] font-medium text-fg">{form.senderName.trim() || "—"}</span>
-                    <span className="text-[0.75rem] text-muted">{form.replyToEmail.trim() || t("notifications.noReplyTo")}</span>
+                    <span className="text-sm font-medium text-fg">{form.senderName.trim() || "—"}</span>
+                    <span className="text-xs text-muted">{form.replyToEmail.trim() || t("notifications.noReplyTo")}</span>
                   </div>
-                  <p className="mt-comfortable break-words text-sm font-semibold text-fg">
+                  <p className="mt-comfortable break-words text-base font-semibold text-fg">
                     {subjectPreview.slice(0, SUBJECT_VISIBLE)}
                     {subjectPreview.length > SUBJECT_VISIBLE && (
                       /* What a phone stops showing. Drawn rather than
@@ -625,9 +611,9 @@ export default function NotificationsPage() {
                       <span className="text-muted">{subjectPreview.slice(SUBJECT_VISIBLE)}</span>
                     )}
                   </p>
-                  <p className="mt-tight whitespace-pre-wrap break-words text-sm leading-relaxed text-fg">{bodyPreview}</p>
+                  <p className="mt-tight whitespace-pre-wrap break-words text-base leading-relaxed text-fg">{bodyPreview}</p>
                 </div>
-                <p className="text-[0.75rem] text-muted">
+                <p className="text-xs text-muted">
                   {t("notifications.subjectLength", { count: subjectPreview.length, visible: SUBJECT_VISIBLE })}
                 </p>
               </div>
@@ -659,30 +645,20 @@ export default function NotificationsPage() {
                     aria-label={t("notifications.sendToLabel", { alert: title })}
                     className="-mt-tight flex flex-wrap items-center gap-tight px-card pb-section"
                   >
-                    <span aria-hidden className="mr-inline text-[0.8125rem] text-muted">
+                    <span aria-hidden className="mr-inline text-sm text-muted">
                       {t("notifications.sendTo")}
                     </span>
                     {roles.map((r) => {
                       const on = alert.roleIds.includes(r.id);
                       return (
-                        <button
-                          key={r.id}
-                          type="button"
-                          aria-pressed={on}
-                          onClick={() => toggleRole(ev, r.id)}
-                          className={cn(
-                            "inline-flex min-h-11 items-center gap-inline rounded-sm px-comfortable text-[0.8125rem] font-medium transition-colors duration-quick md:min-h-9",
-                            on ? "bg-ember/5 text-fg ring-2 ring-inset ring-ember-solid" : "bg-muted-wash text-muted hover:bg-line/40 hover:text-fg",
-                          )}
-                        >
-                          {on && <Check size={14} strokeWidth={2} aria-hidden className="text-brand-foreground" />}
+                        <Chip key={r.id} selected={on} onClick={() => toggleRole(ev, r.id)}>
                           {r.name}
-                        </button>
+                        </Chip>
                       );
                     })}
                   </div>
                 )}
-                {unaddressed(ev) && <p className="px-card pb-section text-[0.75rem] text-danger">{t("notifications.pickRoles")}</p>}
+                {unaddressed(ev) && <p className="px-card pb-section text-xs text-danger">{t("notifications.pickRoles")}</p>}
               </div>
             );
           })}

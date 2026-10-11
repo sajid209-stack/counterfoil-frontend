@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button, useToast } from "@/components/ui";
+import { Button, controlClass, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { addCustomerNote, type Customer } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
@@ -69,18 +69,15 @@ export function NotesCard({ customer, onChanged }: { customer: Customer; onChang
           aria-invalid={error ? true : undefined}
           aria-describedby="note-help"
           placeholder={t("addNote")}
-          className={cn(
-            "w-full resize-y rounded-sm border bg-card px-comfortable py-tight text-sm outline-none transition-colors duration-quick placeholder:text-muted",
-            error ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20",
-          )}
+          className={cn(controlClass(!!error, true), "resize-y")}
         />
         {error && (
-          <p role="alert" className="text-[0.8125rem] text-danger">
+          <p role="alert" className="text-sm text-danger">
             {error}
           </p>
         )}
         <div className="flex flex-wrap items-center justify-between gap-x-section gap-y-tight">
-          <p id="note-help" className="min-w-0 flex-1 basis-48 text-[0.8125rem] text-muted">
+          <p id="note-help" className="min-w-0 flex-1 basis-48 text-sm text-muted">
             {t("noteHelp")}
           </p>
           {/* A secondary button: this page has no primary action, and a solid
@@ -99,8 +96,8 @@ export function NotesCard({ customer, onChanged }: { customer: Customer; onChang
           <ul className="mt-section flex flex-col border-t border-hairline">
             {shown.map((n, i) => (
               <li key={`${n.at}-${i}`} className="border-b border-hairline py-comfortable last:border-0">
-                <p className="whitespace-pre-line break-words text-sm text-fg">{n.text}</p>
-                <p className="mt-inline text-[0.8125rem] text-muted">
+                <p className="whitespace-pre-line break-words text-base text-fg">{n.text}</p>
+                <p className="mt-inline text-sm text-muted">
                   {n.who} · {Date.parse(n.at) > now ? t("justNow") : since(n.at)}
                   <span className="sr-only"> ({formatDateTime(n.at)})</span>
                 </p>

@@ -19,12 +19,12 @@ import { cn } from "@/lib/cn";
  */
 
 const BASE =
-  "inline-flex min-w-0 items-center justify-center gap-tight rounded-full px-comfortable text-[1rem] font-semibold transition-transform duration-quick active:scale-[0.98] disabled:opacity-50";
+  "inline-flex min-w-0 items-center justify-center gap-tight rounded-control px-comfortable text-md font-semibold transition-transform duration-quick active:scale-[0.98]";
 
 /** The orange button. `grow` is its share of the row. */
-export const primaryButton = (h = "h-13", grow = "flex-[1.4]") => `${BASE} ${h} ${grow} bg-ember-solid text-white`;
+export const primaryButton = (h = "h-13", grow = "flex-[1.4]") => `${BASE} ${h} ${grow} bg-ember-solid text-on-solid disabled:bg-line disabled:text-muted`;
 /** The white one beside it. */
-export const secondaryButton = (h = "h-13", grow = "flex-1") => `${BASE} ${h} ${grow} border-2 border-line bg-card text-fg`;
+export const secondaryButton = (h = "h-13", grow = "flex-1") => `${BASE} ${h} ${grow} border-2 border-line bg-card text-fg disabled:opacity-50`;
 
 export interface BarAction {
   label: React.ReactNode;
@@ -94,12 +94,13 @@ export function ActionBar({
           ? /* Bottom in classes, not an inline style: an inline style beats
                `rail:`, and on a landscape tablet (no tab bar) the bar floated
                85px up for a tab bar that is not there. */
-            "fixed inset-x-tight bottom-[calc(84px+env(safe-area-inset-bottom))] z-40 rounded-go bg-card p-comfortable go-raised sm:left-1/2 sm:right-auto sm:w-[30rem] sm:-translate-x-1/2 rail:bottom-comfortable"
+            "fixed inset-x-tight bottom-[calc(84px+env(safe-area-inset-bottom))] z-40 p-comfortable go-raised sm:left-1/2 sm:right-auto sm:w-[30rem] sm:-translate-x-1/2 rail:bottom-comfortable"
           : docked === "dock"
             ? /* z-30: under the tab bar (z-40), which sits in the dock's
                  bottom. The padding is the tab bar's clearance (12 + 62) plus
                  12 between it and the buttons. */
-              "fixed inset-x-0 bottom-0 z-30 rounded-t-go-lg border-t border-line bg-card px-section pt-comfortable pb-[calc(86px+env(safe-area-inset-bottom))] shadow-[0_-10px_30px_-14px_rgb(0_0_0/0.28)] rail:pb-[calc(12px+env(safe-area-inset-bottom))] [&>*]:mx-auto [&>*]:w-full [&>*]:max-w-[32rem]"
+              // ds-exception: the dock's shadow falls UPWARD onto the page; the elevation tokens only fall down
+              "fixed inset-x-0 bottom-0 z-30 rounded-t-sheet border-t border-line bg-card px-section pt-comfortable pb-[calc(86px+env(safe-area-inset-bottom))] shadow-[0_-10px_30px_-14px_rgb(0_0_0/0.28)] rail:pb-[calc(12px+env(safe-area-inset-bottom))] [&>*]:mx-auto [&>*]:w-full [&>*]:max-w-[32rem]"
             : "border-t border-line bg-sheet px-section pb-[calc(12px+env(safe-area-inset-bottom))] pt-comfortable",
         className,
       )}
@@ -116,13 +117,13 @@ export function BarSummary({ lead, sub, money, moneySub, trailing }: { lead: Rea
   return (
     <div className="flex items-start gap-tight">
       <div className="min-w-0 flex-1">
-        <p aria-live="polite" className="text-[1rem] font-semibold text-fg">{lead}</p>
-        {sub && <p className="line-clamp-2 text-[0.8125rem] text-muted">{sub}</p>}
+        <p aria-live="polite" className="text-md font-semibold text-fg">{lead}</p>
+        {sub && <p className="line-clamp-2 text-sm text-muted">{sub}</p>}
       </div>
       {money != null && (
         <div className="shrink-0 text-right">
-          <p className="text-[1.125rem] font-semibold tabular-nums text-fg">{money}</p>
-          {moneySub && <p className="text-[0.8125rem] text-muted">{moneySub}</p>}
+          <p className="text-lg font-semibold tabular-nums text-fg">{money}</p>
+          {moneySub && <p className="text-sm text-muted">{moneySub}</p>}
         </div>
       )}
       {trailing}

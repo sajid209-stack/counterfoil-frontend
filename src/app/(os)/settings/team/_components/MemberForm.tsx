@@ -4,7 +4,7 @@ import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, useToast } from "@/components/ui";
+import { Button, Checkbox, Radio, useToast } from "@/components/ui";
 import {
   createStaff,
   generatePin,
@@ -191,7 +191,7 @@ export function MemberForm({
   };
 
   return (
-    <div className="flex max-w-3xl flex-col gap-section pb-hero">
+    <div className="flex flex-col gap-section pb-hero">
       <SettingsSection title={t("team.profileTitle")} description={mode === "create" ? t("team.profileDescNew") : t("team.profileDesc")}>
         <SettingRow label={t("common.name")} error={nameErr}>
           {({ id, describedBy }) => (
@@ -249,28 +249,27 @@ export function MemberForm({
             {(["link", "password"] as const).map((v) => {
               const checked = form.signIn === v;
               return (
-                <label
+                // The tile is the target; the kit Radio inside is the control.
+                <div
                   key={v}
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest("label,input")) return;
+                    set({ signIn: v });
+                  }}
                   className={cn(
-                    "flex cursor-pointer items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick",
+                    "cursor-pointer rounded-control px-tight transition-colors duration-quick",
                     checked ? "bg-card ring-2 ring-inset ring-ember-solid" : "bg-muted-wash/70 hover:bg-muted-wash",
                   )}
                 >
-                  <input
-                    type="radio"
+                  <Radio
                     name={modeName}
                     value={v}
                     checked={checked}
                     onChange={() => set({ signIn: v })}
-                    className="mt-[3px] h-4 w-4 shrink-0 accent-ember"
+                    label={<span className="font-medium">{t(v === "link" ? "team.signInLink" : "team.signInPassword")}</span>}
+                    description={t(v === "link" ? "team.signInLinkNote" : "team.signInPasswordNote")}
                   />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium text-fg">{t(v === "link" ? "team.signInLink" : "team.signInPassword")}</span>
-                    <span className="mt-inline block text-[13px] leading-relaxed text-muted">
-                      {t(v === "link" ? "team.signInLinkNote" : "team.signInPasswordNote")}
-                    </span>
-                  </span>
-                </label>
+                </div>
               );
             })}
           </div>
@@ -313,17 +312,13 @@ export function MemberForm({
                 )}
               </SettingRow>
               <div className="px-card py-section">
-                <label htmlFor={mustId} className="flex min-h-11 cursor-pointer items-start gap-comfortable text-sm text-fg">
-                  <input
-                    id={mustId}
-                    type="checkbox"
-                    checked={form.mustChange}
-                    onChange={(e) => set({ mustChange: e.target.checked })}
-                    className="mt-[3px] h-4 w-4 shrink-0 accent-ember"
-                  />
-                  <span>{t("team.pwMustChange")}</span>
-                </label>
-                <p className="mt-tight text-[13px] leading-relaxed text-muted">{t("team.pwSafe")}</p>
+                <Checkbox
+                  id={mustId}
+                  checked={form.mustChange}
+                  onChange={(e) => set({ mustChange: e.target.checked })}
+                  label={t("team.pwMustChange")}
+                  description={t("team.pwSafe")}
+                />
               </div>
             </>
           )}
@@ -371,7 +366,7 @@ export function MemberForm({
         aside={
           <Link
             href="/settings/roles"
-            className="-ml-tight inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg sm:ml-0 md:min-h-9"
+            className="-ml-tight inline-flex min-h-11 items-center rounded-sm px-tight text-sm font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg sm:ml-0 md:min-h-9"
           >
             {t("team.manageRoles")}
           </Link>

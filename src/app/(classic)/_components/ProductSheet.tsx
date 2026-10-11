@@ -109,7 +109,7 @@ function SheetFooter({
   return (
     <div className="sticky bottom-0 z-10 -mx-section mt-section border-t border-line bg-sheet px-section pb-inline pt-comfortable">
       {note}
-      {summary && <div className="mb-tight text-[0.8125rem]">{summary}</div>}
+      {summary && <div className="mb-tight text-sm">{summary}</div>}
       {/* Two exits, because a till serves two sales. Add keeps building one:
           it closes the sheet and returns to the list, ready for the next
           thing. Buy now is for the sale that is already finished — it adds the
@@ -275,7 +275,7 @@ export function ProductSheet({
 
   const renderWaiver = () =>
     needsWaiver ? (
-      <label className="mt-tight flex cursor-pointer items-center gap-tight rounded-sm border border-line bg-card p-comfortable text-sm">
+      <label className="mt-tight flex cursor-pointer items-center gap-tight rounded-sm border border-line bg-card p-comfortable text-base">
         <input type="checkbox" checked={waived} onChange={(e) => setWaived(e.target.checked)} className="h-6 w-6 shrink-0 accent-ember" />
         {t("sheet.waiverSigned")}
       </label>
@@ -284,7 +284,7 @@ export function ProductSheet({
   const renderGroup = () =>
     flatBasis ? (
       <div className="flex items-center justify-between rounded-sm border border-line bg-card p-comfortable">
-        <span className="text-sm">{t("sheet.groupSize")}</span>
+        <span className="text-base">{t("sheet.groupSize")}</span>
         <div className="flex items-center gap-tight">
           <button type="button" aria-label={t("sheet.fewer")} onClick={() => setGroup((g) => Math.max(partyMin, g - 1))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">−</button>
           <span className="w-8 text-center">{group}</span>
@@ -308,7 +308,7 @@ export function ProductSheet({
   const renderAddOns = () =>
     (product.addOns?.length ?? 0) > 0 ? (
       <div className="mt-section flex flex-col gap-tight">
-        <span className="type-label text-[0.75rem] text-muted">{t("sheet.addOns")}</span>
+        <span className="type-label text-xs text-muted">{t("sheet.addOns")}</span>
         {(product.addOns ?? []).map((a) => {
           const n = addOnQty[a.id] ?? 0;
           /* The same shelf the v1 till reads. This variant is deliberately
@@ -320,8 +320,8 @@ export function ProductSheet({
           return (
             <div key={a.id} className="flex min-h-14 items-center gap-tight rounded-sm border border-line bg-card p-comfortable">
               <div className="min-w-0 flex-1">
-                <span className="block truncate text-sm">{a.name}</span>
-                <span className="text-[0.75rem] text-muted">
+                <span className="block truncate text-base">{a.name}</span>
+                <span className="text-xs text-muted">
                   {formatMoney(a.price, currency)}{a.perPerson ? t("sheet.perHead") : ""}{n > 0 ? ` × ${n} = ${formatMoney(a.price * n, currency)}` : ""}
                   {stock && (out ? ` · ${t("sheet.stockOut")}` : ` · ${t("sheet.stockLeft", { count: cap, unit: stock.unit })}`)}
                 </span>
@@ -527,10 +527,10 @@ export function ProductSheet({
     waiverOk;
 
   return (
-    <div className="fixed inset-y-0 left-0 right-0 z-50 flex flex-col justify-end lg:right-[24rem]" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div className="fixed inset-y-0 left-0 right-0 z-50 flex flex-col justify-end lg:right-96" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
       <div className="absolute inset-0 bg-inverse/40 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div className="relative z-10 max-h-[85vh] overflow-y-auto rounded-t-md bg-sheet p-section" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
-        <div className="mx-auto w-full max-w-[680px]">
+        <div className="mx-auto w-full max-w-170">
         <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-line" aria-hidden />
         {/* The reference leads with the product: a real thumbnail rather than a
             40px chip, the name at display size, and one line saying what this
@@ -541,7 +541,7 @@ export function ProductSheet({
           <ProductThumb images={product.images} name={product.name} bookingType={product.bookingType} size="thumb" />
           <div className="min-w-0 flex-1">
             <h2 id="sheet-title" className="type-h2 break-words text-2xl">{product.name}</h2>
-            <p className="mt-inline text-[0.8125rem] text-muted">{subtitle(product, { resources, team })}</p>
+            <p className="mt-inline text-sm text-muted">{subtitle(product, { resources, team })}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg active:bg-ember/10"><X size={20} strokeWidth={1.75} /></button>
         </div>
@@ -550,7 +550,7 @@ export function ProductSheet({
             deadline, so it changes register — the same threshold the rest of
             the app uses to switch a warning to a refusal. */}
         {heldUntil && holdLeft > 0 && (
-          <div className={`mb-section flex items-center gap-tight rounded-sm border px-comfortable py-tight text-[0.8125rem] ${holdLeft < 120 ? "border-danger/30 bg-danger/10 text-danger" : "border-warning/30 bg-warning/10 text-warning"}`}>
+          <div className={`mb-section flex items-center gap-tight rounded-sm border px-comfortable py-tight text-sm ${holdLeft < 120 ? "border-danger/30 bg-danger/10 text-danger" : "border-warning/30 bg-warning/10 text-warning"}`}>
             <Clock size={14} strokeWidth={1.75} className="shrink-0" />
             <span>
               {t(holdLeft < 120 ? "sheet.holdExpiring" : "sheet.holdRemaining", {
@@ -562,7 +562,7 @@ export function ProductSheet({
 
         {(needsSchedule(bt) || provider) && !course && (
           <div className="mb-section">
-            <p className="mb-tight text-[0.75rem] font-medium uppercase tracking-wide text-muted">{t("sheet.dateLabel")}</p>
+            <p className="mb-tight text-xs font-medium uppercase tracking-wide text-muted">{t("sheet.dateLabel")}</p>
             {/* A wrapping grid with the calendar beneath it — never a row
                 that scrolls sideways. A chip that has scrolled out of view is
                 a day nobody knows is on offer, and parking the calendar at the
@@ -601,7 +601,7 @@ export function ProductSheet({
             })()}
           </div>
         )}
-        {!openToday && needsSchedule(bt) && <p className="mb-section text-[0.8125rem] text-danger">{t("sheet.closedOnDate")}</p>}
+        {!openToday && needsSchedule(bt) && <p className="mb-section text-sm text-danger">{t("sheet.closedOnDate")}</p>}
 
         {/* A day-capped product is run by one number, so it gets a panel rather
             than a footnote under a date chip. The allowance is the whole
@@ -613,8 +613,8 @@ export function ProductSheet({
           return (
             <div className="mb-section rounded-sm border border-line bg-subtle p-comfortable">
               <div className="flex items-baseline justify-between gap-tight">
-                <span className="text-[0.8125rem] text-muted">{t("sheet.dailyCapacity")}</span>
-                <span className={`shrink-0 whitespace-nowrap text-[0.8125rem] font-medium ${left <= 0 ? "text-danger" : low ? "text-warning" : "text-success"}`}>
+                <span className="text-sm text-muted">{t("sheet.dailyCapacity")}</span>
+                <span className={`shrink-0 whitespace-nowrap text-sm font-medium ${left <= 0 ? "text-danger" : low ? "text-warning" : "text-success"}`}>
                   {t("sheet.remainingCount", { count: left })}
                 </span>
               </div>
@@ -627,7 +627,7 @@ export function ProductSheet({
                   style={{ width: `${Math.min(100, Math.max(0, (left / total) * 100))}%` }}
                 />
               </div>
-              <p className="mt-inline text-[0.75rem] text-muted">{t("sheet.totalCapacity", { count: total })}</p>
+              <p className="mt-inline text-xs text-muted">{t("sheet.totalCapacity", { count: total })}</p>
             </div>
           );
         })()}
@@ -769,7 +769,7 @@ export function ProductSheet({
           return (
             <div className="mb-section flex flex-col gap-tight">
               {date === TODAY && (
-                <button type="button" disabled={!nowLane || !waiverOk} onClick={() => nowLane && submitResource(nowLane.id, nowLane.name, nowTime, nowPrice, duration)} className={`flex h-12 items-center justify-between rounded-sm border px-comfortable text-sm ${nowLane && waiverOk ? "border-ember bg-ember/10 font-medium" : "border-line bg-subtle text-muted"}`}>
+                <button type="button" disabled={!nowLane || !waiverOk} onClick={() => nowLane && submitResource(nowLane.id, nowLane.name, nowTime, nowPrice, duration)} className={`flex h-12 items-center justify-between rounded-sm border px-comfortable text-base ${nowLane && waiverOk ? "border-ember bg-ember/10 font-medium" : "border-line bg-subtle text-muted"}`}>
                   <span>{t("sheet.startNow", { time: formatClock(nowTime), duration: formatDuration(duration), lane: nowLane ? ` · ${nowLane.name}` : "" })}</span>
                   <span>{!nowLane ? t("sheet.noLaneFree") : !waiverOk ? t("sheet.waiverFirst") : formatMoney(nowPrice, currency)}</span>
                 </button>
@@ -783,7 +783,7 @@ export function ProductSheet({
                   the operator's own rule expressed as a control — and the one
                   price that matters, the price of THIS duration, is on the
                   summary line above the button where the decision is made. */}
-              <span className="type-label text-[0.75rem] text-muted">{t("sheet.duration")}</span>
+              <span className="type-label text-xs text-muted">{t("sheet.duration")}</span>
               {(() => {
                 const i = flexOptions.indexOf(duration);
                 const prev = i > 0 ? flexOptions[i - 1] : null;
@@ -800,9 +800,9 @@ export function ProductSheet({
                       −
                     </button>
                     <div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-sm border border-line bg-card py-tight">
-                      <span className="text-base font-medium">{formatDuration(duration)}</span>
+                      <span className="text-md font-medium">{formatDuration(duration)}</span>
                       {slotTime && (
-                        <span className="font-mono text-[0.75rem] text-muted">
+                        <span className="text-xs tabular-nums text-muted">
                           {formatMoney(priceFor(slotTime, duration, laneOf(resourceId)), currency)}
                         </span>
                       )}
@@ -820,13 +820,13 @@ export function ProductSheet({
                 );
               })()}
 
-              <span className="type-label text-[0.75rem] text-muted">{lanes[0]?.nounSingular ?? t("sheet.resource")}</span>
+              <span className="type-label text-xs text-muted">{lanes[0]?.nounSingular ?? t("sheet.resource")}</span>
               <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <ChoiceCard selected={!resourceId} onClick={() => setResourceId(undefined)} className="flex h-14 items-center pl-comfortable pr-7 text-sm">{t("sheet.any")}</ChoiceCard>
+                <ChoiceCard selected={!resourceId} onClick={() => setResourceId(undefined)} className="flex h-14 items-center pl-comfortable pr-7 text-base">{t("sheet.any")}</ChoiceCard>
                 {lanes.map((r) => (
                   <ChoiceCard key={r.id} selected={resourceId === r.id} disabled={r.outOfService} onClick={() => setResourceId(r.id)} className="flex min-h-14 max-w-56 flex-col items-start justify-center py-inline pl-comfortable pr-7">
-                    <span className="block max-w-full truncate text-sm leading-tight">{r.name}{rateLabel(r) ? <span className="ml-inline whitespace-nowrap text-[0.75rem] text-muted">{rateLabel(r)}</span> : null}</span>
-                    <span className="block max-w-full truncate text-[0.75rem] leading-tight text-muted">{liveState(r)}</span>
+                    <span className="block max-w-full truncate text-base leading-tight">{r.name}{rateLabel(r) ? <span className="ml-inline whitespace-nowrap text-xs text-muted">{rateLabel(r)}</span> : null}</span>
+                    <span className="block max-w-full truncate text-xs leading-tight text-muted">{liveState(r)}</span>
                   </ChoiceCard>
                 ))}
               </div>
@@ -847,11 +847,11 @@ export function ProductSheet({
               {blocked && <BlockedNotice message={blocked} onDismiss={() => setBlocked(null)} />}
 
               <div className="flex items-center justify-between">
-                <span className="type-label text-[0.75rem] text-muted">{t("sheet.startTime")}</span>
+                <span className="type-label text-xs text-muted">{t("sheet.startTime")}</span>
                 {/* Chips for speed, the stepper for precision (walk-in rounding). */}
                 <div className="flex items-center gap-inline">
                   <button type="button" aria-label={t("sheet.earlier")} onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const next = Math.max(flexTimes.length ? toMinutes(flexTimes[0]) : 0, base - round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-lg active:bg-ember/10">−</button>
-                  <span className="min-w-16 whitespace-nowrap text-center text-[0.8125rem]">{slotTime ? formatClock(slotTime) : "—"}</span>
+                  <span className="min-w-16 whitespace-nowrap text-center text-sm">{slotTime ? formatClock(slotTime) : "—"}</span>
                   <button type="button" aria-label={t("sheet.later")} onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const cap = mustEnd ? closeMin - duration : 24 * 60 - round; const next = Math.min(cap, base + round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-lg active:bg-ember/10">+</button>
                 </div>
               </div>
@@ -859,9 +859,9 @@ export function ProductSheet({
                 {flexTimes.map((tt) => {
                   const st = startState(tt, duration, resourceId);
                   if (!st.ok) {
-                    return <button key={tt} type="button" onClick={() => setBlocked(t("sheet.unavailableStart", { time: formatClock(tt), reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }))} className="h-12 rounded-sm border border-line bg-subtle px-comfortable text-[0.8125rem] text-muted line-through" title={st.reason}>{formatClock(tt)}</button>;
+                    return <button key={tt} type="button" onClick={() => setBlocked(t("sheet.unavailableStart", { time: formatClock(tt), reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }))} className="h-12 rounded-sm border border-line bg-subtle px-comfortable text-sm text-muted line-through" title={st.reason}>{formatClock(tt)}</button>;
                   }
-                  return <button key={tt} type="button" onClick={() => { setSlotTime(tt); setBlocked(null); }} className={`h-12 rounded-sm border px-comfortable text-[0.8125rem] ${slotTime === tt ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatClock(tt)}</button>;
+                  return <button key={tt} type="button" onClick={() => { setSlotTime(tt); setBlocked(null); }} className={`h-12 rounded-sm border px-comfortable text-sm ${slotTime === tt ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatClock(tt)}</button>;
                 })}
               </div>
 
@@ -896,9 +896,9 @@ export function ProductSheet({
                 const premium = lane?.rateOverride?.kind === "premium" ? ` (incl. ${lane.name} +${formatMoney(lane.rateOverride.amount, currency)})` : "";
                 return (
                   <div className="flex flex-col gap-inline">
-                    {math && <p className="text-[0.75rem] text-muted">{math}{premium}</p>}
+                    {math && <p className="text-xs text-muted">{math}{premium}</p>}
                     {/* The live selection summary — the CTA never enables without it. */}
-                    <p className="text-[0.8125rem]">
+                    <p className="text-sm">
                       <span className="font-medium">{lane?.name ?? t("sheet.anyLane")}</span> · <span className="tabular-nums">{formatClockRange(slotTime, toMinutes(slotTime) + duration)}</span> · {formatDuration(duration)}
                       {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""} · <span className="tabular-nums">{formatMoney(total, currency)}</span>
                       {!resourceId && lane ? <span className="text-muted">{t("sheet.bestFit")}</span> : null}
@@ -943,31 +943,31 @@ export function ProductSheet({
                   <ChoiceCard key={p.id} selected={providerId === p.id} onClick={() => setProviderId(p.id)} className="flex w-full items-center gap-tight py-comfortable pl-comfortable pr-7">
                     <Avatar name={p.name} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">{p.name}</span>
-                      <span className="block text-[0.75rem] text-muted">{nextFree ? t("sheet.nextFree", { time: formatClock(nextFree) }) : t("sheet.fullyBooked")}</span>
+                      <span className="block truncate text-base font-medium">{p.name}</span>
+                      <span className="block text-xs text-muted">{nextFree ? t("sheet.nextFree", { time: formatClock(nextFree) }) : t("sheet.fullyBooked")}</span>
                     </span>
-                    <span className={`shrink-0 whitespace-nowrap text-[0.75rem] ${premiumOf(p.id) > 0 ? "font-medium text-brand-foreground" : "text-muted"}`}>
+                    <span className={`shrink-0 whitespace-nowrap text-xs ${premiumOf(p.id) > 0 ? "font-medium text-brand-foreground" : "text-muted"}`}>
                       {premiumOf(p.id) > 0 ? t("sheet.premiumAmount", { amount: formatMoney(premiumOf(p.id), currency) }) : t("sheet.standardRate")}
                     </span>
                   </ChoiceCard>
                 );
               })}
-              <ChoiceCard selected={!providerId} onClick={() => setProviderId(undefined)} className="flex w-full items-center justify-center px-7 py-comfortable text-sm">{t("sheet.firstAvailable")}</ChoiceCard>
+              <ChoiceCard selected={!providerId} onClick={() => setProviderId(undefined)} className="flex w-full items-center justify-center px-7 py-comfortable text-base">{t("sheet.firstAvailable")}</ChoiceCard>
             </div>
-            <span className="type-label mt-tight text-[0.75rem] text-muted">{t("sheet.startTimeDuration", { minutes: providerDuration })}</span>
+            <span className="type-label mt-tight text-xs text-muted">{t("sheet.startTimeDuration", { minutes: providerDuration })}</span>
             <div className="flex flex-wrap gap-inline">
               {providerTimes.map((t) => {
                 const free = providerTimeFree(t);
                 return (
-                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-sm border px-comfortable text-[0.8125rem] ${!free ? "border-line bg-subtle text-muted line-through" : slotTime === t ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatClock(t)}</button>
+                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-sm border px-comfortable text-sm ${!free ? "border-line bg-subtle text-muted line-through" : slotTime === t ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatClock(t)}</button>
                 );
               })}
             </div>
             {slotTime && assignedProvider && !providerId && (
-              <p className="text-[0.75rem] text-muted">{t("sheet.firstAvailableAt", { time: formatClock(slotTime), name: `${assignedProvider.name}${premiumOf(assignedProvider.id) > 0 ? ` (+${formatMoney(premiumOf(assignedProvider.id), currency)})` : ""}` })}</p>
+              <p className="text-xs text-muted">{t("sheet.firstAvailableAt", { time: formatClock(slotTime), name: `${assignedProvider.name}${premiumOf(assignedProvider.id) > 0 ? ` (+${formatMoney(premiumOf(assignedProvider.id), currency)})` : ""}` })}</p>
             )}
             {slotTime && !providerTimeFree(slotTime) && (
-              <p className="text-[0.75rem] text-danger">{t("sheet.busyAtTime", { name: providers.find((p) => p.id === providerId)?.name ?? t("sheet.everyone"), time: formatClock(slotTime) })}</p>
+              <p className="text-xs text-danger">{t("sheet.busyAtTime", { name: providers.find((p) => p.id === providerId)?.name ?? t("sheet.everyone"), time: formatClock(slotTime) })}</p>
             )}
           </div>
         )}
@@ -979,12 +979,12 @@ export function ProductSheet({
             the cashier still has to make. */}
         {course && (
           <div className="mb-section rounded-sm border border-success/30 bg-success/10 p-comfortable">
-            <p className="flex items-center gap-inline text-sm font-medium text-success">
+            <p className="flex items-center gap-inline text-base font-medium text-success">
               <Check size={14} strokeWidth={2.5} />
               {t("sheet.readyToAdd")}
             </p>
-            <p className="mt-inline text-[0.75rem] text-muted">{t("sheet.courseDates")}</p>
-            <p className="text-[0.75rem]">{(product.courseDates ?? []).join(" · ") || "—"}</p>
+            <p className="mt-inline text-xs text-muted">{t("sheet.courseDates")}</p>
+            <p className="text-xs">{(product.courseDates ?? []).join(" · ") || "—"}</p>
           </div>
         )}
 
@@ -1002,7 +1002,7 @@ export function ProductSheet({
             departure, and the operator's word for it is the one that should
             appear above the rows. */}
         {needsSchedule(bt) && !resourceMode && !flexible && openToday && (
-          <p className="mb-tight text-[0.75rem] font-medium uppercase tracking-wide text-muted">
+          <p className="mb-tight text-xs font-medium uppercase tracking-wide text-muted">
             {t(guided ? "sheet.departureLabel" : "sheet.sessionLabel")}
           </p>
         )}
@@ -1050,7 +1050,7 @@ export function ProductSheet({
         {/* Guided: pick who leads — busy guides (on ANY product) can't be chosen */}
         {guided && slotTime && guides.length > 0 && openToday && (
           <div className="mb-section flex flex-col gap-tight">
-            <span className="type-label text-[0.75rem] text-muted">{t("sheet.ledBy")}</span>
+            <span className="type-label text-xs text-muted">{t("sheet.ledBy")}</span>
             <div className="flex flex-col gap-tight">
               {guides.map((g) => {
                 const free = slotGuides.includes(g.id);
@@ -1058,8 +1058,8 @@ export function ProductSheet({
                   <ChoiceCard key={g.id} selected={guideId === g.id} disabled={!free} onClick={() => setGuideId(g.id)} className="flex w-full items-center gap-tight py-comfortable pl-comfortable pr-7">
                     <Avatar name={g.name} size={32} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">{g.name}</span>
-                      <span className={`block text-[0.75rem] ${free ? "text-success" : "text-muted"}`}>
+                      <span className="block truncate text-base font-medium">{g.name}</span>
+                      <span className={`block text-xs ${free ? "text-success" : "text-muted"}`}>
                         {free ? t("sheet.guideAvailable") : t("sheet.guideBusy")}
                       </span>
                     </span>
@@ -1070,7 +1070,7 @@ export function ProductSheet({
           </div>
         )}
 
-        {bt === "BT-06" && openToday && (product.schedule?.dailyCapacity ?? 0) <= 0 && <p className="mb-section text-[0.8125rem] text-muted">{t("sheet.leftToday", { count: dailyLeft, when: date === TODAY ? t("sheet.leftTodayWord") : t("sheet.leftThatDay") })}</p>}
+        {bt === "BT-06" && openToday && (product.schedule?.dailyCapacity ?? 0) <= 0 && <p className="mb-section text-sm text-muted">{t("sheet.leftToday", { count: dailyLeft, when: date === TODAY ? t("sheet.leftTodayWord") : t("sheet.leftThatDay") })}</p>}
 
         {/* Tier / section steppers (not for exclusive resource / flexible) */}
         {!resourceMode && (
@@ -1082,9 +1082,9 @@ export function ProductSheet({
                 const cats = [...new Map(availSeats.map((s) => [s.categoryUid, s])).values()];
                 return (
                   <div>
-                    <div className="mb-tight rounded-xs bg-subtle py-inline text-center text-[0.75rem] tracking-widest text-muted">{seatT("picker.screen")}</div>
+                    <div className="mb-tight rounded-xs bg-subtle py-inline text-center text-xs tracking-widest text-muted">{seatT("picker.screen")}</div>
                     <div className="overflow-x-auto">
-                      <div data-seat-grid className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${maxCol}, 1.6rem)` }}>
+                      <div data-seat-grid className="grid gap-[3px]" /* ds-exception: seat-map geometry, 3px between 1.6rem seats */ style={{ gridTemplateColumns: `repeat(${maxCol}, 1.6rem)` }}>
                         {availSeats.map((s) => {
                           const sel = selectedSeats.includes(s.label);
                           return (
@@ -1095,7 +1095,7 @@ export function ProductSheet({
                               onClick={() => setSelectedSeats((cur) => (cur.includes(s.label) ? cur.filter((x) => x !== s.label) : [...cur, s.label]))}
                               title={`${s.label} · ${s.categoryName} · ${formatMoney(s.price, currency)}`}
                               style={{ gridColumnStart: s.posX + 1, gridRowStart: s.posY + 1, ...(s.available && !sel ? { background: `${s.color}33`, color: s.color, borderColor: s.color } : {}) }}
-                              className={`h-7 rounded-[3px] border text-[0.5625rem] leading-none ${!s.available ? "cursor-not-allowed border-line bg-line text-muted line-through" : sel ? "border-ember bg-ember font-medium text-ink" : ""}`}
+                              className={`h-7 rounded-xs border text-[0.5625rem] leading-none ${!s.available ? "cursor-not-allowed border-line bg-line text-muted line-through" : sel ? "border-ember bg-ember font-medium text-ink" : ""}`}
                             >
                               {s.label.replace(/^[A-Za-z]+/, "")}
                             </button>
@@ -1103,7 +1103,7 @@ export function ProductSheet({
                         })}
                       </div>
                     </div>
-                    <div className="mt-tight flex flex-wrap items-center justify-between gap-tight text-[0.75rem]">
+                    <div className="mt-tight flex flex-wrap items-center justify-between gap-tight text-xs">
                       <div className="flex flex-wrap gap-major text-muted">
                         {cats.map((s) => (
                           // The swatch is drawn the way an AVAILABLE seat of
@@ -1111,10 +1111,10 @@ export function ProductSheet({
                           // border. A solid swatch collided with the solid
                           // ember "Selected" chip whenever a category happened
                           // to be orange, which Stalls is.
-                          <span key={s.categoryUid} className="flex items-center gap-inline"><span className="h-3 w-3 rounded-[2px] border" style={{ background: `${s.color}33`, borderColor: s.color }} />{s.categoryName} · <span>{formatMoney(s.price, currency)}</span></span>
+                          <span key={s.categoryUid} className="flex items-center gap-inline"><span className="h-3 w-3 rounded-xs border" style={{ background: `${s.color}33`, borderColor: s.color }} />{s.categoryName} · <span>{formatMoney(s.price, currency)}</span></span>
                         ))}
-                        <span className="flex items-center gap-inline"><span className="h-3 w-3 rounded-[2px] bg-ember" />{t("sheet.seatSelected")}</span>
-                        <span className="flex items-center gap-inline"><span className="h-3 w-3 rounded-[2px] bg-line" />{seatT("picker.sold")}</span>
+                        <span className="flex items-center gap-inline"><span className="h-3 w-3 rounded-xs bg-ember" />{t("sheet.seatSelected")}</span>
+                        <span className="flex items-center gap-inline"><span className="h-3 w-3 rounded-xs bg-line" />{seatT("picker.sold")}</span>
                       </div>
                       <span>{seatT("picker.selected", { count: selectedSeats.length })}</span>
                     </div>
@@ -1123,7 +1123,7 @@ export function ProductSheet({
               })()
             ) : (
             <div className="flex flex-col">
-              <span className="type-label mb-tight text-[0.75rem] text-muted">{t("sheet.pickTickets")}</span>
+              <span className="type-label mb-tight text-xs text-muted">{t("sheet.pickTickets")}</span>
               {/* One panel of hairline-separated rows, not four separate cards.
                   Each row says the three things in the order they are decided:
                   what it is, who it admits, what it costs — the price on its
@@ -1134,19 +1134,19 @@ export function ProductSheet({
               {(sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: `${s.name}`, price: s.price, cap: s.capacity, note: "", donation: false })) : activeTiers.map((tier) => ({ id: tier.id, name: tier.name, price: tier.price, cap: undefined as number | undefined, note: [(tier.admits ?? 1) > 1 ? t("sheet.admits", { count: tier.admits ?? 1 }) : "", tier.ageNote ?? ""].filter(Boolean).join(" · "), donation: !!tier.donation }))).map((row, rowIdx) => (
                 <div key={row.id} className={`flex items-center justify-between gap-comfortable p-comfortable ${rowIdx > 0 ? "border-t border-line" : ""}`}>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium">{row.name}</div>
+                    <div className="text-base font-medium">{row.name}</div>
                     {(row.cap != null || row.note) && (
-                      <div className="mt-0.5 text-[0.75rem] text-muted">
+                      <div className="mt-0.5 text-xs text-muted">
                         {[row.cap != null ? t("sheet.seatsCount", { count: row.cap }) : "", row.note].filter(Boolean).join(" · ")}
                       </div>
                     )}
-                    <div className="mt-0.5 text-[0.8125rem] font-medium tabular-nums text-brand-foreground">
+                    <div className="mt-0.5 text-sm font-medium tabular-nums text-brand-foreground">
                       {row.donation ? t("sheet.donationMin", { amount: formatMoney(row.price, currency) }) : formatMoney(row.price, currency)}
                     </div>
                   </div>
                   {row.donation ? (
                     <div className="flex items-center gap-tight">
-                      <span className="text-sm text-muted">{currency === "BDT" ? "৳" : ""}</span>
+                      <span className="text-base text-muted">{currency === "BDT" ? "৳" : ""}</span>
                       <input
                         type="number"
                         inputMode="numeric"
@@ -1157,7 +1157,7 @@ export function ProductSheet({
                           setDonationAmt((d) => ({ ...d, [row.id]: minor }));
                           setQty((q) => ({ ...q, [row.id]: minor >= row.price && minor > 0 ? 1 : 0 }));
                         }}
-                        className="h-12 w-28 rounded-sm border border-line bg-card px-comfortable text-right text-sm outline-none focus:border-inverse"
+                        className="h-12 w-28 rounded-sm border border-line bg-card px-comfortable text-right text-base focus:border-inverse"
                       />
                     </div>
                   ) : (
@@ -1203,7 +1203,7 @@ export function ProductSheet({
               const total = list.reduce((s, x) => s + (qty[x.id] ?? 0) * x.price, 0) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0) + prem;
               const when = slotTime ? `${formatClock(slotTime)} ${date === TODAY ? t("slotToday") : date}` : (needsSchedule(bt) || provider || course) ? (date === TODAY ? t("slotToday") : date) : null;
               return (
-                <div className="mt-tight flex items-baseline justify-between gap-comfortable border-t border-line pt-tight text-[0.8125rem]">
+                <div className="mt-tight flex items-baseline justify-between gap-comfortable border-t border-line pt-tight text-sm">
                   <span className="min-w-0 flex-1 text-muted">
                     {when && <><span className="tabular-nums">{when}</span> · </>}
                     {itemsLabel}
@@ -1214,7 +1214,7 @@ export function ProductSheet({
               );
             })()}
             {depositPct > 0 && (
-              <p className="mt-section rounded-sm border border-line bg-card p-comfortable text-[0.8125rem] text-muted">
+              <p className="mt-section rounded-sm border border-line bg-card p-comfortable text-sm text-muted">
                 {t.rich("sheet.depositNote", { pct: depositPct, b: (chunks) => <span className="font-medium text-fg">{chunks}</span> })}
               </p>
             )}
@@ -1264,7 +1264,7 @@ export function ProductSheet({
         {/* Waitlist mini-form */}
         {wl && (
           <div className="mt-section rounded-sm border border-warning bg-warning/5 p-section">
-            <p className="text-sm font-medium">{t("sheet.joinWaitlistFor", { time: formatClock(wl.time) })}</p>
+            <p className="text-base font-medium">{t("sheet.joinWaitlistFor", { time: formatClock(wl.time) })}</p>
             <div className="mt-tight grid grid-cols-1 gap-tight sm:grid-cols-2">
               <FormField label={t("sheet.name")} value={wlName} onChange={(e) => setWlName(e.target.value)} />
               <FormField label={t("sheet.phone")} value={wlPhone} onChange={(e) => setWlPhone(e.target.value)} />

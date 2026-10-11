@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { CalendarRange } from "lucide-react";
-import { ConfirmDialog } from "@/components/ui";
-import { DateField, TimeInput } from "@/components/ui";
+import { Button, ConfirmDialog, DateField, TimeInput, controlClass } from "@/components/ui";
 import { formatDay } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { daysForRange, nextDay } from "@/lib/events/days";
@@ -72,36 +71,28 @@ export function EventDays({
 
   if (!multi) {
     return (
-      <button
-        type="button"
-        onClick={() => setRange(nextDay(content.date || DEMO_TODAY, 1))}
-        className="min-h-11 self-start rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-muted-wash hover:text-fg sm:min-h-9"
-      >
+      <Button variant="tertiary" size="sm" onClick={() => setRange(nextDay(content.date || DEMO_TODAY, 1))} className="self-start text-muted">
         {t("days.add")}
-      </button>
+      </Button>
     );
   }
 
   return (
-    <div className="flex flex-col gap-tight rounded-sm bg-muted-wash p-comfortable">
+    <div className="flex flex-col gap-tight rounded-control bg-muted-wash p-comfortable">
       {/* The count and the way out on one line, the control that changes the
           count under it — at 390px all three on one row wrapped into three. */}
       <div className="flex items-center justify-between gap-tight">
-        <span className="flex items-center gap-inline text-[13px] font-medium">
+        <span className="flex items-center gap-inline text-sm font-medium">
           <CalendarRange size={15} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
           {t("days.runsFor", { count: days.length })}
         </span>
         {/* The one destructive control in this block, drawn as a control
             rather than as a caption sitting flush right of a count. */}
-        <button
-          type="button"
-          onClick={askDrop}
-          className="flex min-h-11 shrink-0 items-center rounded-full border border-line bg-card px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:border-strong hover:text-fg sm:min-h-9"
-        >
+        <Button variant="secondary" size="sm" onClick={askDrop} className="shrink-0 text-muted">
           {t("days.remove")}
-        </button>
+        </Button>
       </div>
-      <span className="flex flex-wrap items-center gap-inline text-[13px]">
+      <span className="flex flex-wrap items-center gap-inline text-sm">
         <span className="text-muted">{t("days.lastDay")}</span>
         <DateField
           value={content.endDate || days[days.length - 1].date}
@@ -112,7 +103,7 @@ export function EventDays({
           shape="inline"
         />
       </span>
-      {error && <span className="text-[12px] text-danger">{error}</span>}
+      {error && <span className="text-xs text-danger">{error}</span>}
       {/* Nothing here is required. A day with no name is "Day 2" wherever it
           appears, which is what most of them are called anyway. */}
       <ul className="flex flex-col gap-inline">
@@ -125,13 +116,13 @@ export function EventDays({
                 : "grid grid-cols-1 items-center gap-tight sm:grid-cols-[7rem_minmax(0,1fr)]"
             }
           >
-            <span className="text-[13px] font-medium tabular-nums">{formatDay(d.date, { weekday: true })}</span>
+            <span className="text-sm font-medium tabular-nums">{formatDay(d.date, { weekday: true })}</span>
             <input
               value={d.name ?? ""}
               onChange={(e) => patchDay(d.id, { name: e.target.value })}
               placeholder={t("days.namePlaceholder", { n: i + 1 })}
               aria-label={t("days.nameLabel", { n: i + 1 })}
-              className="h-11 min-w-0 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none placeholder:text-muted focus:border-inverse sm:h-9"
+              className={controlClass()}
             />
             {showTimes && (
               <span className="flex items-center gap-inline">
@@ -143,7 +134,7 @@ export function EventDays({
           </li>
         ))}
       </ul>
-      <p className="text-[12px] text-muted">{showTimes ? t("days.helpTimes") : t("days.help")}</p>
+      <p className="text-xs text-muted">{showTimes ? t("days.helpTimes") : t("days.help")}</p>
       <ConfirmDialog
         open={confirming}
         onClose={() => setConfirming(false)}

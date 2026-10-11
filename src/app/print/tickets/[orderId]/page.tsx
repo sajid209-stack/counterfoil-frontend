@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { EmptyState } from "@/components/ui";
+import { EmptyState, Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getOrder, listTickets } from "@/lib/api";
 import { PrintToolbar } from "@/app/print/_components/PrintToolbar";
@@ -36,7 +36,7 @@ export default function PrintTicketsPage() {
       <h1 className="sr-only">{t("ticketsTitle")}</h1>
       <PrintToolbar />
       {!ready ? (
-        <div aria-busy="true" className="mx-auto h-[420px] w-full max-w-sm animate-pulse rounded-[24px] bg-card" />
+        <div aria-busy="true" className="mx-auto w-full max-w-sm"><Skeleton h={420} className="rounded-card" /></div>
       ) : cards.length === 0 ? (
         <EmptyState title={t("noTickets")} />
       ) : (

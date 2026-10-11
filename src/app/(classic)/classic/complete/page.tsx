@@ -56,7 +56,7 @@ export default function CompletePage() {
           {/* The brand moment — a literal ticket stub with a perforated tear line. */}
           <div className="relative w-full">
             <div className="rounded-md bg-ink px-section pb-major pt-major text-paper">
-              <p className="type-label text-[0.75rem] text-muted">{t("complete.bookingReference")}</p>
+              <p className="type-label text-xs text-muted">{t("complete.bookingReference")}</p>
               <p className="mt-tight break-all font-mono text-2xl tracking-tight sm:text-3xl">{info.code}</p>
             </div>
             {/* perforation */}
@@ -66,18 +66,18 @@ export default function CompletePage() {
               <span className="mx-major flex-1 border-t-2 border-dashed border-paper/40" aria-hidden />
             </div>
             <div className="rounded-md bg-ink px-section pb-major pt-tight text-paper">
-              <p className="font-mono text-[0.75rem] text-muted">{t("complete.presentAtGate")}</p>
+              <p className="font-mono text-xs text-muted">{t("complete.presentAtGate")}</p>
             </div>
           </div>
 
           {info.change > 0 && (
             <p className="type-body text-muted">
-              {t("complete.changeDue")} <span className="font-mono text-fg">{formatMoney(info.change)}</span>
+              {t("complete.changeDue")} <span className="tabular-nums text-fg">{formatMoney(info.change)}</span>
             </p>
           )}
           {(info.balance ?? 0) > 0 && (
             <p className="type-body text-muted">
-              {t("complete.balanceDueAtArrival")} <span className="font-mono text-fg">{formatMoney(info.balance!)}</span>
+              {t("complete.balanceDueAtArrival")} <span className="tabular-nums text-fg">{formatMoney(info.balance!)}</span>
             </p>
           )}
 
@@ -86,17 +86,17 @@ export default function CompletePage() {
 
           {/* Real print (opens the browser print dialog on a clean layout) + SMS. */}
           <div className="flex w-full items-center gap-tight">
-            <button type="button" disabled={!info.orderId} onClick={() => router.push(`/print/tickets/${info.orderId}`)} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-sm text-muted active:bg-ember/10 disabled:opacity-40"><TicketIcon size={16} strokeWidth={1.5} /> {tk("printTickets")}</button>
-            <button type="button" disabled={!info.orderId} onClick={() => router.push(`/print/receipt/${info.orderId}`)} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-sm text-muted active:bg-ember/10 disabled:opacity-40"><Printer size={16} strokeWidth={1.5} /> {tk("printReceipt")}</button>
-            <button type="button" onClick={() => setSmsOpen(true)} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-sm text-muted active:bg-ember/10"><MessageSquare size={16} strokeWidth={1.5} /> {t("complete.sendSms")}</button>
+            <button type="button" disabled={!info.orderId} onClick={() => router.push(`/print/tickets/${info.orderId}`)} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-base text-muted active:bg-ember/10 disabled:opacity-40"><TicketIcon size={16} strokeWidth={1.5} /> {tk("printTickets")}</button>
+            <button type="button" disabled={!info.orderId} onClick={() => router.push(`/print/receipt/${info.orderId}`)} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-base text-muted active:bg-ember/10 disabled:opacity-40"><Printer size={16} strokeWidth={1.5} /> {tk("printReceipt")}</button>
+            <button type="button" onClick={() => setSmsOpen(true)} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-base text-muted active:bg-ember/10"><MessageSquare size={16} strokeWidth={1.5} /> {t("complete.sendSms")}</button>
           </div>
         </>
       )}
 
       {/* SMS preview — the exact message, rendered from the business template. */}
       <Modal open={smsOpen} onClose={() => setSmsOpen(false)} title={t("complete.smsTitle")} footer={<><Button variant="secondary" onClick={() => setSmsOpen(false)}>{t("complete.cancel")}</Button><Button onClick={() => { setSmsOpen(false); toast.success(t("complete.smsSent")); }}>{t("complete.sendSmsButton")}</Button></>}>
-        <div className="rounded-md rounded-bl-xs border border-line bg-subtle p-comfortable text-left text-sm">{smsText}</div>
-        <p className="mt-tight text-left text-[0.75rem] text-muted">{t("complete.smsMeta", { count: smsText.length })}</p>
+        <div className="rounded-md rounded-bl-xs border border-line bg-subtle p-comfortable text-left text-base">{smsText}</div>
+        <p className="mt-tight text-left text-xs text-muted">{t("complete.smsMeta", { count: smsText.length })}</p>
       </Modal>
     </main>
   );

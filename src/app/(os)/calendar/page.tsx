@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
-import { Button, DateField, Select, Tabs, useToast } from "@/components/ui";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Button, Checkbox, DateField, Notice, SegmentedControl, Select, Skeleton, Tabs, useToast } from "@/components/ui";
 import { PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -813,27 +813,12 @@ export default function CalendarPage() {
      thing it explains. */
   const section = (key: string, label: string, body: React.ReactNode) => (
     <div key={key} className="flex flex-col gap-inline border-b border-hairline px-comfortable py-comfortable last:border-0">
-      <span className="text-[0.75rem] font-medium text-muted">{label}</span>
+      <span className="text-xs font-medium text-muted">{label}</span>
       {body}
     </div>
   );
   const segmented = (label: string, items: { value: string; label: React.ReactNode }[], value: string, onPick: (v: string) => void) => (
-    <span role="group" aria-label={label} className="flex items-center gap-inline rounded-sm bg-muted-wash p-inline">
-      {items.map((it) => (
-        <button
-          key={it.value}
-          type="button"
-          aria-pressed={value === it.value}
-          onClick={() => onPick(it.value)}
-          className={cn(
-            "flex h-9 min-w-0 flex-auto items-center justify-center gap-inline rounded-xs px-tight text-[0.8125rem] font-medium transition-colors duration-quick md:h-7",
-            value === it.value ? "bg-card text-fg shadow-sm" : "text-muted hover:text-fg",
-          )}
-        >
-          {it.label}
-        </button>
-      ))}
-    </span>
+    <SegmentedControl aria-label={label} options={items} value={value} onChange={onPick} size="sm" fullWidth />
   );
   const filterBody = (
     <div>
@@ -844,21 +829,20 @@ export default function CalendarPage() {
           {TONES.map((tone) => {
             const on = tones.includes(tone);
             return (
-              <label key={tone} className="flex min-h-11 cursor-pointer items-center gap-tight px-comfortable text-[0.8125rem] transition-colors duration-quick hover:bg-muted-wash md:min-h-9">
-                <input type="checkbox" checked={on} onChange={() => toggleTone(tone)} className="peer sr-only" />
-                <span
-                  aria-hidden
-                  className={cn(
-                    "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-xs border peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-inverse",
-                    on ? "border-inverse bg-inverse text-inverse-fg" : "border-strong bg-card",
-                  )}
-                >
-                  {on && <Check size={12} strokeWidth={3} />}
-                </span>
-                <span aria-hidden className={cn("h-3.5 w-3.5 shrink-0 rounded-xs border", TONE_SWATCH[tone], !on && "opacity-40")} />
-                <span className="min-w-0 flex-1">{t(TONE_KEY[tone])}</span>
-                <span className="tabular-nums text-muted">{toneCounts.tones[tone]}</span>
-              </label>
+              <div key={tone} className="px-comfortable transition-colors duration-quick hover:bg-muted-wash">
+                <Checkbox
+                  className="-ml-tight min-w-0 flex-1"
+                  checked={on}
+                  onCheckedChange={() => toggleTone(tone)}
+                  label={
+                    <span className="flex items-center gap-tight text-sm">
+                      <span aria-hidden className={cn("h-3.5 w-3.5 shrink-0 rounded-inner border", TONE_SWATCH[tone], !on && "opacity-40")} />
+                      <span className="min-w-0 flex-1">{t(TONE_KEY[tone])}</span>
+                      <span className="tabular-nums text-muted">{toneCounts.tones[tone]}</span>
+                    </span>
+                  }
+                />
+              </div>
             );
           })}
         </div>,
@@ -873,7 +857,7 @@ export default function CalendarPage() {
             label:
               s === "marketplace" ? (
                 <>
-                  <span aria-hidden className="h-3 w-3 shrink-0 rounded-xs border border-l-[3px] border-market/40 border-l-market bg-market-wash" />
+                  <span aria-hidden className="h-3 w-3 shrink-0 rounded-inner border border-l-[3px] border-market/40 border-l-market bg-market-wash" />
                   <span className="min-w-0 truncate">{t("sourceMarket")}</span>
                   <span className="tabular-nums text-muted">{toneCounts.market}</span>
                 </>
@@ -935,7 +919,7 @@ export default function CalendarPage() {
         <button
           type="button"
           onClick={() => setHoldList(true)}
-          className="flex min-h-11 w-full items-center justify-between gap-tight px-comfortable text-left text-[0.8125rem] font-medium text-fg transition-colors duration-quick hover:bg-muted-wash"
+          className="flex min-h-11 w-full items-center justify-between gap-tight px-comfortable text-left text-sm font-medium text-fg transition-colors duration-quick hover:bg-muted-wash"
         >
           {t("statHolds")}
           <span className="tabular-nums text-muted">{activeHolds.length}</span>
@@ -994,14 +978,9 @@ export default function CalendarPage() {
               {t("today")}
             </Button>
             <div className="flex items-center gap-inline">
-              <button
-                type="button"
-                aria-label={t("previous")}
-                onClick={() => step(-1)}
-                className="flex h-11 w-11 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-muted-wash md:h-9 md:w-9"
-              >
+              <Button variant="secondary" size="icon" aria-label={t("previous")} onClick={() => step(-1)}>
                 <ChevronLeft size={16} strokeWidth={1.5} />
-              </button>
+              </Button>
               {/* Between the arrows, which is where you look for it — and a
                   live region, because stepping a week changes nothing else a
                   screen reader would announce. */}
@@ -1011,18 +990,13 @@ export default function CalendarPage() {
                    changes width — worth it on a desktop. On a phone the label
                    takes the width it needs and drops the year, which the week
                    strip and the month view already say. */
-                className="whitespace-nowrap px-tight text-center text-[0.9375rem] font-medium tracking-tight sm:min-w-[11rem]"
+                className="whitespace-nowrap px-tight text-center text-md font-medium sm:min-w-44"
               >
                 {rangeLabel}
               </h2>
-              <button
-                type="button"
-                aria-label={t("next")}
-                onClick={() => step(1)}
-                className="flex h-11 w-11 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-muted-wash md:h-9 md:w-9"
-              >
+              <Button variant="secondary" size="icon" aria-label={t("next")} onClick={() => step(1)}>
                 <ChevronRight size={16} strokeWidth={1.5} />
-              </button>
+              </Button>
             </div>
             {/* Ours — the native control rendered 07/29/2026 beside a range
                 label reading "27 Jul – 2 Aug 2026". A glyph: the label beside
@@ -1091,14 +1065,14 @@ export default function CalendarPage() {
               <span
                 key={c.key}
                 data-applied={c.key}
-                className="flex items-center gap-inline rounded-full bg-subtle py-inline pl-comfortable pr-inline text-[0.75rem] font-medium text-fg dark:bg-fg/10"
+                className="flex items-center gap-inline rounded-full bg-subtle py-inline pl-comfortable pr-inline text-xs font-medium text-fg dark:bg-fg/10"
               >
                 {c.label}: {c.text}
                 <button
                   type="button"
                   onClick={c.clear}
                   aria-label={tc("clearFilter", { name: c.label })}
-                  className="grid h-8 w-8 place-items-center rounded-full text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash md:h-6 md:w-6"
+                  className="-my-1.5 -mr-1 grid h-11 w-11 place-items-center rounded-full text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash md:my-0 md:mr-0 md:h-6 md:w-6"
                 >
                   <X size={13} strokeWidth={2} aria-hidden />
                 </button>
@@ -1110,7 +1084,7 @@ export default function CalendarPage() {
               <button
                 type="button"
                 onClick={resetFilters}
-                className="flex h-8 items-center rounded-sm px-tight text-[0.8125rem] font-medium text-brand-foreground underline-offset-2 hover:underline"
+                className="flex h-11 items-center rounded-control px-tight text-sm font-medium text-brand-foreground underline-offset-2 hover:underline md:h-8"
               >
                 {t("clearFilters")}
               </button>
@@ -1119,23 +1093,19 @@ export default function CalendarPage() {
         )}
 
         {emptyByFilter && (
-          <div
-            role="status"
-            className="flex flex-wrap items-center gap-comfortable rounded-sm border border-line bg-subtle px-comfortable py-tight"
+          <Notice
+            tone="neutral"
+            size="sm"
+            title={t("noMatch")}
+            action={{ label: t("clearFilters"), onClick: resetFilters, variant: "button" }}
           >
-            <span className="min-w-0 text-[13px]">
-              <span className="font-medium">{t("noMatch")}</span>{" "}
-              <span className="text-muted">{t("noMatchHint")}</span>
-            </span>
-            <Button variant="secondary" size="sm" onClick={resetFilters}>
-              {t("clearFilters")}
-            </Button>
-          </div>
+            {t("noMatchHint")}
+          </Notice>
         )}
 
         <div className="card-surface overflow-hidden">
           {loading ? (
-            <div aria-busy="true" className="h-[28rem] animate-pulse bg-line/40" />
+            <div aria-busy="true"><Skeleton h="28rem" /></div>
           ) : view === "day" ? (
             <DayGrid
               date={cursor}

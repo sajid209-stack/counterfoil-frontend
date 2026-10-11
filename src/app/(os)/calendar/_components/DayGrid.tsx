@@ -159,7 +159,7 @@ export function DayGrid({
   const shownLanes = showEmpty ? lanes : lanes.filter((l) => busy.has(l.id) || l.blocked);
 
   if (lanes.length === 0) {
-    return <p className="py-hero text-center text-[13px] text-muted">{emptyLabel}</p>;
+    return <p className="py-hero text-center text-sm text-muted">{emptyLabel}</p>;
   }
 
   /* ── phone ──────────────────────────────────────────────────────────────
@@ -213,7 +213,7 @@ export function DayGrid({
   if (shownLanes.length === 0) {
     return (
       <>
-        <p className="py-hero text-center text-[13px] text-muted">{emptyLabel}</p>
+        <p className="py-hero text-center text-sm text-muted">{emptyLabel}</p>
         <EmptyLaneToggle
           count={emptyLanes.length}
           open={showEmpty}
@@ -282,7 +282,7 @@ function EmptyLaneToggle({
         type="button"
         aria-expanded={open}
         onClick={onToggle}
-        className="flex h-9 items-center rounded-sm px-tight text-[13px] text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg"
+        className="flex h-11 items-center rounded-control px-tight text-sm text-muted md:h-9 transition-colors duration-quick hover:bg-muted-wash hover:text-fg"
       >
         {open ? hideLabel : showLabel(count)}
       </button>
@@ -444,14 +444,14 @@ function DayTrack({
         setScrolledY(e.currentTarget.scrollTop > 0);
         setScrolledX(e.currentTarget.scrollLeft > 0);
       }}
-      className="max-h-[70vh] overflow-auto"
+      className="max-h-[max(24rem,calc(100dvh-11rem))] overflow-auto"
     >
       <div style={{ minWidth: width + 160 }} className={avail && avail - 160 >= hourCount * 52 ? "w-full" : undefined}>
         {/* ── the one shared axis ─────────────────────────────────────────── */}
         <div
           className={cn(
             "sticky top-0 z-40 flex bg-card transition-shadow duration-quick",
-            scrolledY && "border-b border-hairline shadow-[0_1px_2px_rgb(0_0_0/0.06)]",
+            scrolledY && "border-b border-hairline shadow-sm",
           )}
         >
           <div
@@ -465,7 +465,7 @@ function DayTrack({
               <span
                 key={h}
                 className={cn(
-                  "absolute top-1.5 whitespace-nowrap font-mono text-[12px] text-muted",
+                  "absolute top-1.5 whitespace-nowrap text-xs tabular-nums text-muted",
                   // Centring the end labels would push them outside the track
                   // and clip them against the gutter.
                   i === 0 ? "translate-x-0" : i === hours.length - 1 ? "-translate-x-full" : "-translate-x-1/2",
@@ -547,20 +547,20 @@ function DayTrack({
                   the draft, so a block scrolled left slides under the name. */}
               <div
                 className={cn(
-                  "sticky left-0 z-[35] flex w-40 shrink-0 flex-col justify-center bg-card px-card transition-shadow duration-quick",
-                  scrolledX && "border-r border-hairline shadow-[1px_0_2px_rgb(0_0_0/0.06)]",
+                  "sticky left-0 z-30 flex w-40 shrink-0 flex-col justify-center bg-card px-card transition-shadow duration-quick",
+                  scrolledX && "border-r border-hairline shadow-sm",
                 )}
               >
                 {/* Two lines, then the rest on hover and for a screen reader.
                     A tour named in 84 characters wrapped to seven lines here
                     and pushed its own row to 130px. */}
-                <span title={lane.name} className="line-clamp-2 break-words text-[13px] font-medium leading-tight">
+                <span title={lane.name} className="line-clamp-2 break-words text-sm font-medium leading-tight">
                   {lane.name}
                 </span>
                 {lane.note && (
                   <span
                     className={cn(
-                      "mt-0.5 break-words text-[12px] leading-tight",
+                      "mt-0.5 break-words text-xs leading-tight",
                       lane.blocked ? "text-danger" : "text-muted",
                     )}
                   >
@@ -602,7 +602,7 @@ function DayTrack({
                           — a one-hour gap is 60px and "Changeover" is 68. */}
                       {changeover &&
                         (px >= 76 ? (
-                          <span className="truncate px-inline text-[12px] text-muted">{changeoverLabel}</span>
+                          <span className="truncate px-inline text-xs text-muted">{changeoverLabel}</span>
                         ) : (
                           <Hourglass size={13} strokeWidth={1.5} aria-label={changeoverLabel} className="text-muted" />
                         ))}
@@ -658,10 +658,10 @@ function DayTrack({
                       onPointerCancel={dragCancel}
                       onClick={(ev) => slotClick(ev, slot)}
                       className={cn(
-                        "group/open absolute flex overflow-hidden rounded-sm text-[12px] transition-colors duration-quick",
+                        "group/open absolute flex overflow-hidden rounded-control text-xs transition-colors duration-quick",
                         slot.isSession
-                          ? "items-center justify-center border border-dashed border-strong/60 text-muted hover:border-solid hover:border-ember hover:bg-ember/[0.07] hover:text-brand-foreground"
-                          : "flex-col items-start justify-start border border-transparent px-1 py-0.5 hover:border-dashed hover:border-ember/70 hover:bg-ember/[0.06]",
+                          ? "items-center justify-center border border-dashed border-strong/60 text-muted hover:border-solid hover:border-ember hover:bg-ember-wash/60 hover:text-brand-foreground"
+                          : "flex-col items-start justify-start border border-transparent px-1 py-0.5 hover:border-dashed hover:border-ember/70 hover:bg-ember-wash/50",
                       )}
                       style={{
                         left: `${pct(s)}%`,
@@ -674,7 +674,7 @@ function DayTrack({
                         <span className="truncate px-0.5">{wide >= 42 ? label?.short : label?.tiny}</span>
                       ) : !drag ? (
                         <span aria-hidden className="hidden min-w-0 flex-col leading-tight group-hover/open:flex">
-                          <span className="flex items-center gap-0.5 font-mono font-medium text-brand-foreground">
+                          <span className="flex items-center gap-0.5 font-medium tabular-nums text-brand-foreground">
                             <Plus size={10} strokeWidth={2.5} className="shrink-0" />
                             {wide >= 56 ? formatClock(slot.time, { short: true }) : null}
                           </span>
@@ -704,7 +704,7 @@ function DayTrack({
                       }${event.sourceLabel ? `, ${event.sourceLabel}` : ""}`}
                       className={cn(
                         // A one-hour block is ~58px: 4px sides leave room for "1 guest".
-                        "absolute overflow-hidden rounded-sm border text-left transition-shadow duration-quick",
+                        "absolute overflow-hidden rounded-control border text-left transition-shadow duration-quick",
                         wide < 90 ? "px-1" : "px-tight",
                         blockClass(event),
                         onSelect && "hover:shadow-sm",
@@ -716,7 +716,7 @@ function DayTrack({
                         height: height - 2,
                       }}
                     >
-                      <span className="flex items-start gap-0.5 text-[12px] font-medium leading-tight">
+                      <span className="flex items-start gap-0.5 text-xs font-medium leading-tight">
                         {/* Only where the name still gets a look in. A 29px
                             block reduced to a lone green tick says less than
                             the same block reading "Yog". The row already names
@@ -756,7 +756,7 @@ function DayTrack({
                       {/* Then what, or how many — hidden rather than cut to
                           three letters where the block cannot hold six. */}
                       {height > 28 && wide >= 64 && (event.guest ? (lane.single ? event.party : event.title) : (event.party ?? event.subtitle)) && (
-                        <span className="block truncate text-[12px] leading-tight opacity-70">
+                        <span className="block truncate text-xs leading-tight opacity-70">
                           {event.guest ? (lane.single ? event.party : event.title) : (event.party ?? event.subtitle)}
                         </span>
                       )}
@@ -768,7 +768,7 @@ function DayTrack({
                 {dragHere && (
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute z-30 rounded-sm border-2 border-ember-solid bg-ember/15 px-1 py-0.5 font-mono text-[12px] font-semibold leading-tight text-brand-foreground"
+                    className="pointer-events-none absolute z-20 rounded-control border-2 border-ember-solid bg-ember-wash px-1 py-0.5 text-xs font-semibold leading-tight tabular-nums text-brand-foreground"
                     style={{
                       left: `${pct(dragHere.from)}%`,
                       width: `calc(${((dragHere.to - dragHere.from) / span) * 100}% - 2px)`,
@@ -788,11 +788,11 @@ function DayTrack({
                     data-ghost
                     aria-hidden
                     className={cn(
-                        "pointer-events-none absolute z-30 overflow-hidden rounded-sm px-tight py-0.5 shadow-pop ring-2 ring-card",
+                        "pointer-events-none absolute z-20 overflow-hidden rounded-control px-tight py-0.5 shadow-md ring-2 ring-card",
                         /* A held draft is hatched warning, the same as every hold
                            already on this grid: an ember block would say the slot
                            is being sold. */
-                        draftHere.hold ? TONE_CLASS.held : "bg-ember-solid text-white",
+                        draftHere.hold ? TONE_CLASS.held : "bg-ember-solid text-on-solid",
                       )}
                     style={{
                       left: `${pct(Math.max(openMin, draftHere.start))}%`,
@@ -807,20 +807,20 @@ function DayTrack({
                         say the rest. */}
                     {((Math.min(closeMin, draftHere.end) - Math.max(openMin, draftHere.start)) / span) * width >= 110 ? (
                       <>
-                        <span className="block truncate text-[12px] font-semibold leading-tight">
+                        <span className="block truncate text-xs font-semibold leading-tight">
                           {draftHere.title ?? ghostLabel}
                         </span>
                         {!isSession && (
-                          <span className="block truncate font-mono text-[12px] leading-tight text-white/90">
+                          <span className="block truncate text-xs leading-tight tabular-nums text-on-solid/90">
                             {shortClockRange(draftHere.start, draftHere.end)}
                           </span>
                         )}
                       </>
                     ) : (
                       <>
-                        <span className="block truncate font-mono text-[12px] font-semibold leading-tight">{formatClockMin(draftHere.start, { short: true })}</span>
+                        <span className="block truncate text-xs font-semibold leading-tight tabular-nums">{formatClockMin(draftHere.start, { short: true })}</span>
                         {draftHere.title && !isSession && (
-                          <span className="block truncate text-[12px] leading-tight text-white/90">{draftHere.title}</span>
+                          <span className="block truncate text-xs leading-tight text-on-solid/90">{draftHere.title}</span>
                         )}
                       </>
                     )}
@@ -886,7 +886,7 @@ function CompactDay({
       {blocked.length > 0 && (
         <div className="flex flex-col gap-tight border-b border-hairline px-card py-tight">
           {blocked.map((l) => (
-            <span key={l.id} className="flex items-baseline gap-tight text-[12px]">
+            <span key={l.id} className="flex items-baseline gap-tight text-xs">
               <span className="font-medium text-fg">{l.name}</span>
               <span className="min-w-0 truncate text-danger">{l.note}</span>
             </span>
@@ -895,7 +895,7 @@ function CompactDay({
       )}
 
       {timed.length === 0 ? (
-        <p className="py-hero text-center text-[13px] text-muted">{emptyLabel}</p>
+        <p className="py-hero text-center text-sm text-muted">{emptyLabel}</p>
       ) : (
         <div ref={scroller} className="max-h-[70vh] overflow-y-auto">
           <div className="flex" style={{ height: trackHeight }}>
@@ -905,7 +905,7 @@ function CompactDay({
                 <span
                   key={h}
                   className={cn(
-                    "absolute right-tight whitespace-nowrap font-mono text-[12px] text-muted",
+                    "absolute right-tight whitespace-nowrap text-xs tabular-nums text-muted",
                     i === 0 ? "translate-y-0" : "-translate-y-1/2",
                   )}
                   style={{ top: `${pct(h * 60)}%` }}
@@ -931,6 +931,7 @@ function CompactDay({
                   className="absolute inset-x-0 z-10 h-px bg-info"
                   style={{ top: `${pct(nowMin)}%` }}
                 >
+                  {/* ds-exception: a 7px clock knob centred on a 1px rule — grid geometry, not spacing */}
                   <span className="absolute -left-0.5 -top-[3px] h-[7px] w-[7px] rounded-full bg-info" />
                 </span>
               )}
@@ -953,7 +954,7 @@ function CompactDay({
                       owner ? `, ${owner}` : ""
                     }${event.sourceLabel ? `, ${event.sourceLabel}` : ""}`}
                     className={cn(
-                      "absolute overflow-hidden rounded-sm border px-tight py-0.5 text-left",
+                      "absolute overflow-hidden rounded-control border px-tight py-0.5 text-left",
                       blockClass(event),
                     )}
                     style={{
@@ -963,7 +964,7 @@ function CompactDay({
                       width: `calc(${(1 / across) * 100}% - 2px)`,
                     }}
                   >
-                    <span className="flex items-center gap-0.5 truncate text-[12px] font-medium leading-tight">
+                    <span className="flex items-center gap-0.5 truncate text-xs font-medium leading-tight">
                       {across < 3 && tall > 24 && event.source && <MarketBadge id={event.source.id} />}
                       {event.locked && <Lock size={9} strokeWidth={2.5} className="shrink-0" />}
                       {event.tone === "arrived" && (
@@ -972,7 +973,7 @@ function CompactDay({
                       {event.title}
                     </span>
                     {tall > 30 && owner && (
-                      <span className="block truncate text-[12px] leading-tight opacity-70">
+                      <span className="block truncate text-xs leading-tight opacity-70">
                         {owner}
                       </span>
                     )}

@@ -50,8 +50,8 @@ export function SaleRow({
         className="flex min-h-14 w-full items-center gap-comfortable py-comfortable text-left"
       >
         <Icon size={22} strokeWidth={1.6} className="shrink-0 text-muted" aria-hidden />
-        <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-medium">{label}</span>
-        <span className="shrink-0 whitespace-nowrap text-[0.9375rem] font-medium text-fg">{value}</span>
+        <span className="min-w-0 flex-1 truncate text-md font-medium">{label}</span>
+        <span className="shrink-0 whitespace-nowrap text-md font-medium text-fg">{value}</span>
         <ChevronRight size={16} strokeWidth={1.5} className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-90")} aria-hidden />
       </button>
       {open && <div className="pb-comfortable">{children}</div>}
@@ -81,14 +81,14 @@ export function CustomerRow({
         <span className="min-w-0 flex-1">
           {attached ? (
             <>
-              <span className="block break-words text-[0.9375rem] font-medium">{attached.name}</span>
-              {detail && <span className="block truncate text-[0.8125rem] normal-nums text-muted">{detail}</span>}
+              <span className="block break-words text-md font-medium">{attached.name}</span>
+              {detail && <span className="block truncate text-sm normal-nums text-muted">{detail}</span>}
             </>
           ) : (
-            <span className="block text-[0.9375rem] font-medium">{t("cart.attachCustomer")}</span>
+            <span className="block text-md font-medium">{t("cart.attachCustomer")}</span>
           )}
         </span>
-        {attached && <span className="shrink-0 whitespace-nowrap text-[0.9375rem] font-medium text-fg">{t("cart.customerChange")}</span>}
+        {attached && <span className="shrink-0 whitespace-nowrap text-md font-medium text-fg">{t("cart.customerChange")}</span>}
         <ChevronRight size={16} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
       </button>
       {attached && (
@@ -96,7 +96,7 @@ export function CustomerRow({
           type="button"
           onClick={onRemove}
           aria-label={t("pay.removeCustomer", { name: attached.name })}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted active:bg-ember/10"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted active:bg-muted-wash"
         >
           <X size={18} strokeWidth={1.75} aria-hidden />
         </button>
@@ -136,10 +136,10 @@ export function PromoCodeRow({
     <div className="flex items-start gap-comfortable border-b border-line py-comfortable last:border-b-0">
       <TicketPercent size={22} strokeWidth={1.6} className="mt-0.5 shrink-0 text-muted" aria-hidden />
       <div className="min-w-0 flex-1">
-        <label htmlFor={id} className="block text-[0.9375rem] font-medium">{t("pay.promoCode")}</label>
+        <label htmlFor={id} className="block text-md font-medium">{t("pay.promoCode")}</label>
         {applied ? (
           <div className="mt-tight flex">
-            <span id={id} className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-line bg-card pl-comfortable pr-1 text-[0.9375rem]">
+            <span id={id} className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-line bg-card pl-comfortable pr-1 text-md">
               <Check size={16} strokeWidth={2.5} className="shrink-0 text-success" aria-hidden />
               <span className="min-w-0 truncate font-semibold">{code}</span>
               <span className="shrink-0 whitespace-nowrap font-medium tabular-nums text-muted">−{formatMoney(taken, currency)}</span>
@@ -147,7 +147,7 @@ export function PromoCodeRow({
                 type="button"
                 onClick={onRemove}
                 aria-label={t("pay.removeCode", { code })}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted active:bg-ember/10"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted active:bg-muted-wash"
               >
                 <X size={16} strokeWidth={1.75} aria-hidden />
               </button>
@@ -167,22 +167,22 @@ export function PromoCodeRow({
               aria-invalid={!!error}
               aria-describedby={error ? `${id}-err` : undefined}
               className={cn(
-                "h-11 min-w-0 flex-1 rounded-full border bg-card px-comfortable text-[0.9375rem] uppercase outline-none placeholder:normal-case placeholder:text-faint",
-                error ? "border-danger" : "border-line focus:border-ember",
+                "h-11 min-w-0 flex-1 rounded-full border bg-card px-comfortable text-md uppercase placeholder:normal-case placeholder:text-faint",
+                error ? "border-danger" : "border-line",
               )}
             />
             <button
               type="button"
               onClick={onApply}
               disabled={!input.trim()}
-              className="h-11 shrink-0 rounded-full border-2 border-line bg-card px-section text-[0.9375rem] font-semibold text-fg transition-transform duration-quick active:scale-[0.98] disabled:opacity-50"
+              className="h-11 shrink-0 rounded-full border-2 border-line bg-card px-section text-md font-semibold text-fg transition-transform duration-quick active:scale-[0.98] disabled:opacity-50"
             >
               {t("pay.apply")}
             </button>
           </div>
         )}
         {error && (
-          <p id={`${id}-err`} role="alert" className="mt-tight text-[0.8125rem] text-danger">
+          <p id={`${id}-err`} role="alert" className="mt-tight text-sm text-danger">
             {error}
           </p>
         )}
@@ -214,7 +214,7 @@ export function HowMuchNow({
     <div
       role="radiogroup"
       aria-label={t("pay.howMuch")}
-      className="go-surface grid overflow-hidden rounded-go"
+      className="card-surface grid overflow-hidden"
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >
       {options.map((o, i) => {
@@ -231,11 +231,11 @@ export function HowMuchNow({
             className={cn(
               "relative flex min-h-[4.25rem] flex-col items-center justify-center gap-0.5 px-inline text-center transition-colors duration-quick",
               i > 0 && "border-l border-line",
-              on ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10",
+              on ? "bg-ember-solid text-on-solid" : "bg-card text-fg active:bg-muted-wash",
             )}
           >
-            <span className="text-[0.9375rem] font-semibold">{o.label}</span>
-            <span className={cn("text-[0.8125rem] font-medium tabular-nums", on ? "text-white" : "text-muted")}>{formatPriceShort(o.amount, currency)}</span>
+            <span className="text-md font-semibold">{o.label}</span>
+            <span className={cn("text-sm font-medium tabular-nums", on ? "text-on-solid" : "text-muted")}>{formatPriceShort(o.amount, currency)}</span>
             {on && <Check size={14} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
           </button>
         );

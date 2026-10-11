@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowUpCircle, Ban, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, PlusCircle, RotateCcw, Search, Timer, UserPlus } from "lucide-react";
-import { ActionMenu, Button, DateField, EmptyState, FormField, Modal, useToast, type ActionMenuItem } from "@/components/ui";
+import { ActionMenu, Button, DateField, EmptyState, FormField, Modal, Notice, Skeleton, useToast, type ActionMenuItem } from "@/components/ui";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay } from "@/lib/schedule";
 import { cn } from "@/lib/cn";
 import { useEnumLabels } from "@/lib/labels";
@@ -34,6 +34,7 @@ import { toMinutes, toTime } from "@/lib/schedule";
 import { formatClock, formatDay, formatMoney } from "@/lib/format";
 import { type RefundReason } from "@/lib/api/refundRequests";
 import { pendingRefundFor, refundableFor } from "@/lib/api/refundRequests";
+import { Stepper } from "../_components/Stepper";
 import { useActor, canRefundDirectly } from "../schedule/_lib/actor";
 import { sendOrApproveRefund } from "../schedule/_lib/refundFlow";
 import { DiscountFields, discountFromState, discountReasonText, emptyDiscount, MoveSheet, RefundSheet, type DiscountState } from "../schedule/_components/Sheets";
@@ -370,15 +371,15 @@ export default function CheckInPage() {
           <div className="flex flex-wrap items-center justify-between gap-tight">
             <div className="min-w-0">
               <h1 className="type-h1 text-xl">{t("title")}</h1>
-              {dayLabel && <p className="text-[0.8125rem] text-muted">{dayLabel}</p>}
+              {dayLabel && <p className="text-sm text-muted">{dayLabel}</p>}
             </div>
-            <Button shape="pill" variant="secondary" icon={<UserPlus size={16} strokeWidth={1.5} />} onClick={() => { setWalkInProduct(productsQ.data?.data.find((p) => p.bookingType === "BT-01" && p.status === "active")?.id ?? ""); setWalkInOpen(true); }}>
+            <Button variant="secondary" icon={<UserPlus size={16} strokeWidth={1.5} />} onClick={() => { setWalkInProduct(productsQ.data?.data.find((p) => p.bookingType === "BT-01" && p.status === "active")?.id ?? ""); setWalkInOpen(true); }}>
               {t("addWalkIn")}
             </Button>
           </div>
 
           <div className="flex flex-wrap items-center gap-tight">
-            <button type="button" onClick={() => step(-1)} aria-label={t("prevDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted active:bg-ember/10">
+            <button type="button" onClick={() => step(-1)} aria-label={t("prevDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted active:bg-muted-wash">
               <ChevronLeft size={18} strokeWidth={1.5} />
             </button>
             <DateField
@@ -389,22 +390,22 @@ export default function CheckInPage() {
               labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
               className="w-[150px] shrink-0"
             />
-            <button type="button" onClick={() => step(1)} aria-label={t("nextDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted active:bg-ember/10">
+            <button type="button" onClick={() => step(1)} aria-label={t("nextDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted active:bg-muted-wash">
               <ChevronRight size={18} strokeWidth={1.5} />
             </button>
             {/* Touch at every width: this is a door device, so the `md:` shrink
                 that suits the admin app put a 38px field on a counter. */}
             <div data-focus-host className="flex h-11 min-w-40 flex-1 items-center gap-tight rounded-full border border-line bg-card px-comfortable focus-within:border-ember-solid">
               <Search size={16} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("searchPlaceholder")} placeholder={t("searchPlaceholder")} className="h-full w-full bg-transparent text-sm outline-none" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("searchPlaceholder")} placeholder={t("searchPlaceholder")} className="h-full w-full bg-transparent text-base" />
             </div>
           </div>
 
           {bookingsQ.loading ? (
-            <div aria-busy="true" className="flex animate-pulse flex-col gap-tight">
-              <div className="h-4 w-1/3 rounded-full bg-line" />
-              <div className="h-16 rounded-go bg-line" />
-              <div className="h-16 rounded-go bg-line" />
+            <div aria-busy="true" className="flex flex-col gap-tight">
+              <Skeleton h={16} w="33%" className="rounded-full" />
+              <Skeleton h={64} className="rounded-card" />
+              <Skeleton h={64} className="rounded-card" />
             </div>
           ) : groups.length === 0 ? (
             <EmptyState title={t("noBookingsTitle")} message={search ? t("noBookingsSearch") : t("noBookingsDay")} />
@@ -421,7 +422,7 @@ export default function CheckInPage() {
                 const isOpen = search ? true : (open[key] ?? key === nowKey);
                 const full = inCount >= expected;
                 return (
-                  <section key={key} data-group className="rounded-go go-surface">
+                  <section key={key} data-group className="card-surface">
                     <button
                       type="button"
                       onClick={() => setOpen((o) => ({ ...o, [key]: !isOpen }))}
@@ -431,14 +432,14 @@ export default function CheckInPage() {
                       {isOpen ? <ChevronDown size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" /> : <ChevronRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
                       <span className="min-w-0 flex-1">
                         <span className="flex items-baseline gap-tight">
-                          <span className="shrink-0 whitespace-nowrap text-base font-semibold">{formatClock(time(iso))}</span>
-                          <span className="min-w-0 truncate text-sm">{productName(pid)}</span>
+                          <span className="shrink-0 whitespace-nowrap text-md font-semibold">{formatClock(time(iso))}</span>
+                          <span className="min-w-0 truncate text-base">{productName(pid)}</span>
                         </span>
                         <span className="mt-inline flex items-center gap-tight">
                           <span aria-hidden className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-line">
                             <span className={cn("block h-full rounded-full", full ? "bg-success" : "bg-inverse/40")} style={{ width: `${expected ? Math.round((inCount / expected) * 100) : 0}%` }} />
                           </span>
-                          <span className={cn("text-[0.8125rem]", full ? "font-semibold text-success" : "text-muted")}>{t("inOfTotal", { done: inCount, total: expected })}</span>
+                          <span className={cn("text-sm", full ? "font-semibold text-success" : "text-muted")}>{t("inOfTotal", { done: inCount, total: expected })}</span>
                         </span>
                       </span>
                     </button>
@@ -484,15 +485,15 @@ export default function CheckInPage() {
                                     the person in front of them, so it leads and
                                     it WRAPS — it used to be third in a muted
                                     mono run-on, cut off with an ellipsis. */}
-                                <span className={cn("block break-words text-[0.9375rem] font-semibold", !name && "font-mono text-sm")}>{name || o?.reference || b.orderId}</span>
-                                <span className="mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline text-[0.8125rem] text-muted">
+                                <span className={cn("block break-words text-md font-semibold", !name && "font-mono text-base")}>{name || o?.reference || b.orderId}</span>
+                                <span className="mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline text-sm text-muted">
                                   <span>{t("guests", { count: b.partySize })}</span>
                                   {(b.checkedIn ?? 0) > 0 && !done && <span>· {t("inOfTotal", { done: b.checkedIn ?? 0, total: b.partySize })}</span>}
                                 </span>
                                 {/* The code on its own line: it is what a guest
                                     reads off their phone, and after a "·" it
                                     wrapped to a line that began with a dot. */}
-                                {name && <span className="mt-inline block break-all font-mono text-[0.8125rem] text-muted">{o?.reference ?? b.orderId}</span>}
+                                {name && <span className="mt-inline block break-all font-mono text-sm text-muted">{o?.reference ?? b.orderId}</span>}
                               </span>
 
                               {/* The row's one action is the right-most thing in
@@ -505,22 +506,22 @@ export default function CheckInPage() {
                                   <ActionMenu shape="go" items={menu} label={t("rowMenu", { name: name || (o?.reference ?? b.orderId) })} />
                                 ) : null}
                                 {b.noShow ? (
-                                  <span className="rounded-full bg-danger-solid px-comfortable py-inline text-[0.8125rem] font-medium text-white">
+                                  <span className="rounded-full bg-danger-solid px-comfortable py-inline text-sm font-medium text-on-solid">
                                     {b.noShowReason ? t("noShowTagReason", { reason: b.noShowReason }) : t("noShowTag")}
                                   </span>
                                 ) : due > 0 ? (
                                   <>
-                                    <span className="rounded-full border border-warning/50 bg-warning-wash px-comfortable py-inline text-[0.8125rem] font-semibold text-fg">{t("owes", { amount: formatMoney(due) })}</span>
-                                    <Button shape="pill" onClick={() => setPayFor(b)}>{t("takeBalanceBtn")}</Button>
+                                    <span className="rounded-full border border-warning/50 bg-warning-wash px-comfortable py-inline text-sm font-semibold tabular-nums text-fg">{t("owes", { amount: formatMoney(due) })}</span>
+                                    <Button onClick={() => setPayFor(b)}>{t("takeBalanceBtn")}</Button>
                                   </>
                                 ) : done ? (
-                                  <span className="rounded-full bg-success/15 px-comfortable py-inline text-[0.8125rem] font-semibold text-success">{t("allIn")}</span>
+                                  <span className="rounded-full bg-success-wash px-comfortable py-inline text-sm font-semibold text-fg">{t("allIn")}</span>
                                 ) : (
                                   <>
                                     {b.partySize > 1 && (b.checkedIn ?? 0) < b.partySize - 1 && (
-                                      <Button shape="pill" variant="secondary" loading={pending === b.id} aria-label={t("plusOneLabel")} onClick={() => checkIn(b, (b.checkedIn ?? 0) + 1)}>{t("plusOne")}</Button>
+                                      <Button variant="secondary" loading={pending === b.id} aria-label={t("plusOneLabel")} onClick={() => checkIn(b, (b.checkedIn ?? 0) + 1)}>{t("plusOne")}</Button>
                                     )}
-                                    <Button shape="pill" loading={pending === b.id} onClick={() => checkIn(b, b.partySize)}>
+                                    <Button loading={pending === b.id} onClick={() => checkIn(b, b.partySize)}>
                                       {b.partySize > 1 ? t("checkInCount", { count: b.partySize - (b.checkedIn ?? 0) }) : t("checkIn")}
                                     </Button>
                                   </>
@@ -540,9 +541,9 @@ export default function CheckInPage() {
 
         {/* The day, before anyone turns up. */}
         <aside className="flex flex-col gap-section">
-          <section className="flex flex-col gap-comfortable rounded-go p-section go-surface">
-            <h2 className="text-sm font-semibold">{t("summaryTitle")}</h2>
-            <div className="grid grid-cols-3 divide-x divide-line overflow-hidden rounded-go-sm border border-line text-center">
+          <section className="flex flex-col gap-comfortable p-section card-surface">
+            <h2 className="text-base font-semibold">{t("summaryTitle")}</h2>
+            <div className="grid grid-cols-3 divide-x divide-line overflow-hidden rounded-inner border border-line text-center">
               {(
                 [
                   ["expected", day.expected],
@@ -552,14 +553,12 @@ export default function CheckInPage() {
               ).map(([key, value]) => (
                 <div key={key} className="flex flex-col items-center gap-inline py-comfortable">
                   <span className="text-xl font-semibold tabular-nums">{value}</span>
-                  <span className="text-[0.8125rem] text-muted">{t(`stat_${key}`)}</span>
+                  <span className="text-sm text-muted">{t(`stat_${key}`)}</span>
                 </div>
               ))}
             </div>
             {day.owed > 0 && (
-              <p className="rounded-go-sm border border-warning/50 bg-warning-wash px-comfortable py-tight text-[0.8125rem] font-semibold text-fg">
-                {t("owedAcrossDay", { amount: formatMoney(day.owed) })}
-              </p>
+              <Notice tone="warning" size="sm" title={t("owedAcrossDay", { amount: formatMoney(day.owed) })} />
             )}
           </section>
         </aside>
@@ -568,8 +567,8 @@ export default function CheckInPage() {
       {/* Take the outstanding balance — any configured method works. */}
       <Modal open={!!payFor} onClose={closePay} title={payFor ? t("takeAmount", { amount: formatMoney(payDiscounted) }) : t("takeBalanceTitle")}>
         <div className="mb-section flex items-baseline justify-between gap-comfortable">
-          <span className="text-[0.8125rem] text-muted">{ts("sheet.owed")}</span>
-          <span className="text-[1.125rem] font-semibold tabular-nums">{formatMoney(payDue)}</span>
+          <span className="text-sm text-muted">{ts("sheet.owed")}</span>
+          <span className="text-lg font-semibold tabular-nums">{formatMoney(payDue)}</span>
         </div>
 
         <div className="mb-section">
@@ -579,7 +578,7 @@ export default function CheckInPage() {
         {payDiscounted > 0 && (
           <>
             <div className="mb-section flex flex-col gap-tight">
-              <label className="type-label text-[0.8125rem] text-muted" htmlFor="ci-amount">{t("amountLabel")}</label>
+              <label className="text-sm font-medium text-muted" htmlFor="ci-amount">{t("amountLabel")}</label>
               <div className="flex items-center gap-tight">
                 <input
                   id="ci-amount"
@@ -589,25 +588,25 @@ export default function CheckInPage() {
                     const n = parseFloat(e.target.value.trim());
                     setPayAmount(Number.isFinite(n) ? Math.max(0, Math.round(n * 100)) : 0);
                   }}
-                  className="h-12 min-w-0 flex-1 rounded-go-sm border border-line bg-card px-comfortable text-right font-mono text-sm outline-none focus:border-ember"
+                  className="h-12 min-w-0 flex-1 rounded-inner border border-line bg-card px-comfortable text-right text-base tabular-nums"
                 />
-                <button type="button" onClick={() => setPayAmount(null)} className="h-12 shrink-0 rounded-full border border-line px-comfortable text-[0.8125rem]">
+                <button type="button" onClick={() => setPayAmount(null)} className="h-12 shrink-0 rounded-full border border-line px-comfortable text-sm">
                   {t("amountAll")}
                 </button>
               </div>
               {payNow < payDiscounted && payNow > 0 && (
-                <p className="text-[0.8125rem] text-muted">{t("partRemaining", { left: formatMoney(payDiscounted - payNow) })}</p>
+                <p className="text-sm text-muted">{t("partRemaining", { left: formatMoney(payDiscounted - payNow) })}</p>
               )}
             </div>
-            <p className="mb-section text-[0.8125rem] text-muted">{t("receiptNote")}</p>
+            <p className="mb-section text-sm text-muted">{t("receiptNote")}</p>
             <div className="grid grid-cols-2 gap-tight">
-              {METHODS.map((m) => <Button shape="pill" key={m} variant="secondary" className="h-12" loading={busy} disabled={payNow <= 0 || !discountCalc.valid} onClick={() => takeBalance(m)}>{enumL.method(m)}</Button>)}
+              {METHODS.map((m) => <Button key={m} variant="secondary" className="h-12" loading={busy} disabled={payNow <= 0 || !discountCalc.valid} onClick={() => takeBalance(m)}>{enumL.method(m)}</Button>)}
             </div>
           </>
         )}
 
         {payDiscounted <= 0 && discountCalc.hasAmount && (
-          <Button shape="pill" className="w-full" loading={busy} disabled={!discountCalc.valid} onClick={applyDiscountOnly}>
+          <Button className="w-full" loading={busy} disabled={!discountCalc.valid} onClick={applyDiscountOnly}>
             {ts("discount.applyOnly")}
           </Button>
         )}
@@ -616,7 +615,7 @@ export default function CheckInPage() {
       <Modal open={!!extraFor} onClose={() => setExtraFor(null)} title={t("addExtraTitle")}>
         <div className="flex flex-col gap-tight">
           {(productsQ.data?.data.find((x) => x.id === extraFor?.productId)?.addOns ?? []).map((a) => (
-            <Button shape="pill" key={a.id} variant="secondary" className="justify-between" onClick={() => addExtra(a.id)}>
+            <Button key={a.id} variant="secondary" className="justify-between" onClick={() => addExtra(a.id)}>
               <span>{a.name}</span><span className="tabular-nums">{formatMoney(a.price)}{a.perPerson ? t("perHead") : ""}</span>
             </Button>
           ))}
@@ -624,33 +623,29 @@ export default function CheckInPage() {
       </Modal>
 
       <Modal open={!!upgradeFor} onClose={() => setUpgradeFor(null)} title={t("upgradeTitle")}>
-        <p className="mb-section text-[0.8125rem] text-muted">{t("upgradeNote")}</p>
+        <p className="mb-section text-sm text-muted">{t("upgradeNote")}</p>
         <div className="flex flex-col gap-tight">
           {(productsQ.data?.data.find((x) => x.id === upgradeFor?.productId)?.tiers.filter((tier) => tier.active) ?? []).map((tier) => (
-            <Button shape="pill" key={tier.id} variant="secondary" className="justify-between" onClick={() => upgrade(tier.id)}>
+            <Button key={tier.id} variant="secondary" className="justify-between" onClick={() => upgrade(tier.id)}>
               <span>{tier.name}</span><span className="tabular-nums">{formatMoney(tier.price)}</span>
             </Button>
           ))}
         </div>
       </Modal>
 
-      <Modal open={!!noShowFor} onClose={() => setNoShowFor(null)} title={t("recordNoShowTitle")} footer={<><Button shape="pill" variant="secondary" onClick={() => setNoShowFor(null)}>{t("cancel")}</Button><Button shape="pill" onClick={recordNoShow}>{t("recordNoShowBtn")}</Button></>}>
+      <Modal open={!!noShowFor} onClose={() => setNoShowFor(null)} title={t("recordNoShowTitle")} footer={<><Button variant="secondary" onClick={() => setNoShowFor(null)}>{t("cancel")}</Button><Button onClick={recordNoShow}>{t("recordNoShowBtn")}</Button></>}>
         <FormField label={t("reasonLabel")} placeholder={t("reasonPlaceholder")} value={noShowReason} onChange={(e) => setNoShowReason(e.target.value)} />
       </Modal>
 
-      <Modal open={walkInOpen} onClose={() => setWalkInOpen(false)} title={t("walkInTitle")} footer={<><Button shape="pill" variant="secondary" onClick={() => setWalkInOpen(false)}>{t("cancel")}</Button><Button shape="pill" disabled={!walkInProduct} onClick={addWalkIn}>{t("sellAndAdd")}</Button></>}>
+      <Modal open={walkInOpen} onClose={() => setWalkInOpen(false)} title={t("walkInTitle")} footer={<><Button variant="secondary" onClick={() => setWalkInOpen(false)}>{t("cancel")}</Button><Button disabled={!walkInProduct} onClick={addWalkIn}>{t("sellAndAdd")}</Button></>}>
         <div className="flex flex-col gap-section">
           <FormField label={t("productLabel")} variant="select" value={walkInProduct} onChange={(e) => setWalkInProduct(e.target.value)} options={(productsQ.data?.data ?? []).filter((p) => p.status === "active" && (p.bookingType === "BT-01" || p.bookingType === "BT-06")).map((p) => ({ value: p.id, label: p.name }))} />
           <FormField label={t("nameLabel")} placeholder={t("walkInDefaultName")} value={walkInName} onChange={(e) => setWalkInName(e.target.value)} />
-          <div className="flex items-center justify-between rounded-go border border-line bg-card p-comfortable">
-            <span className="text-sm">{t("partySize")}</span>
-            <div className="flex items-center gap-tight">
-              <button type="button" aria-label={t("fewer")} onClick={() => setWalkInParty((g) => Math.max(1, g - 1))} className="h-11 w-11 rounded-full border border-line text-lg">−</button>
-              <span className="w-8 text-center font-semibold tabular-nums">{walkInParty}</span>
-              <button type="button" aria-label={t("more")} onClick={() => setWalkInParty((g) => g + 1)} className="h-11 w-11 rounded-full border border-line text-lg">+</button>
-            </div>
+          <div className="flex items-center justify-between card-surface p-comfortable">
+            <span className="text-base">{t("partySize")}</span>
+            <Stepper value={walkInParty} min={1} onChange={setWalkInParty} lessLabel={t("fewer")} moreLabel={t("more")} />
           </div>
-          <p className="text-[0.8125rem] text-muted">{t("walkInHint")}</p>
+          <p className="text-sm text-muted">{t("walkInHint")}</p>
         </div>
       </Modal>
 

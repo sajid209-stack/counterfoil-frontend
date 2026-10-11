@@ -1,8 +1,8 @@
 "use client";
 
-import { BarChart3, Columns3, Download, Printer, Search } from "lucide-react";
+import { BarChart3, Columns3, Download, Printer } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button, FilterBar, type FilterSpec } from "@/components/ui";
+import { Button, FilterBar, FilterSearch, type FilterSpec } from "@/components/ui";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import type { SalesFilters } from "../_lib/filters";
 import type { SalesLabels } from "../_lib/labels";
@@ -95,19 +95,7 @@ export function OrdersToolbar({
     check("status", tf("status"), options.statuses, f.statuses, (statuses) => set({ statuses: statuses as SalesFilters["statuses"] })),
   ];
 
-  const search = (
-    <div className="relative min-w-0 md:w-60 md:min-w-[9rem] xl:w-72">
-      <Search size={16} strokeWidth={1.5} aria-hidden className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => onQuery(e.target.value)}
-        placeholder={to("searchPlaceholder")}
-        aria-label={to("filterResults")}
-        className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none placeholder:text-muted focus:border-inverse md:h-9"
-      />
-    </div>
-  );
+  const search = <FilterSearch value={query} onChange={onQuery} placeholder={to("searchPlaceholder")} aria-label={to("filterResults")} />;
 
   /* Desktop: the columns, the summary, printing. Phone: the table is a list of
      rows with no columns to choose, and Export is here with the rest. */
@@ -122,7 +110,7 @@ export function OrdersToolbar({
                 panel: (
                   <>
                     <Checklist label={t("columns")} options={columns.options} value={columns.value} onChange={columns.onChange} />
-                    <button type="button" onClick={columns.onReset} className="mx-comfortable mt-inline h-9 text-[0.8125rem] font-medium text-brand-foreground underline-offset-2 hover:underline">
+                    <button type="button" onClick={columns.onReset} className="mx-comfortable mt-inline h-9 text-sm font-medium text-brand-foreground underline-offset-2 hover:underline">
                       {t("columnsReset")}
                     </button>
                   </>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Languages } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { LOCALE_COOKIE, LOCALE_LABELS, LOCALES, type Locale } from "@/i18n/locale";
+import { SegmentedControl } from "@/components/ui";
 
 /** Persist the locale as a device cookie and re-render server + client in sync
  *  via a soft refresh (keeps the POS session/mock store — a hard reload resets
@@ -30,7 +31,7 @@ export function LocaleToggle({ className }: { className?: string }) {
       onClick={() => setLocale(next)}
       title={`Switch to ${LOCALE_LABELS[next]}`}
       aria-label={`Switch to ${LOCALE_LABELS[next]}`}
-      className={`flex h-11 items-center gap-inline rounded-sm border border-line bg-card px-comfortable text-[13px] text-muted transition-colors duration-quick hover:border-ember/40 hover:text-fg active:bg-ember/10 ${className ?? ""}`}
+      className={`flex h-11 items-center gap-inline rounded-control border border-line bg-card px-comfortable text-sm text-muted transition-colors duration-quick hover:border-ember/40 hover:text-fg active:bg-ember/10 ${className ?? ""}`}
     >
       <Languages size={16} strokeWidth={1.5} />
       <span className="font-medium">{LOCALE_LABELS[next]}</span>
@@ -58,25 +59,20 @@ export function LanguagePicker({
   return (
     <div className={className}>
       {showLabel && (
-        <span id={ownLabelId} className="type-label mb-tight block text-[12px] text-muted">
+        <span id={ownLabelId} className="mb-tight block text-sm font-medium text-muted">
           {t("language")}
         </span>
       )}
-      <div role="group" aria-labelledby={showLabel ? ownLabelId : labelledBy} aria-describedby={describedBy} className="flex gap-tight">
-        {LOCALES.map((l) => (
-          <button
-            key={l}
-            type="button"
-            // Each option is written in its own language, so a screen reader
-            // has to be told to pronounce "বাংলা" as Bangla.
-            lang={l}
-            onClick={() => setLocale(l)}
-            aria-pressed={locale === l}
-            className={`h-11 flex-1 rounded-sm border text-sm transition-colors duration-quick ${locale === l ? "border-ember bg-ember/5 font-medium" : "border-line bg-card"}`}
-          >
-            {LOCALE_LABELS[l]}
-          </button>
-        ))}
+      <div role={describedBy ? "group" : undefined} aria-describedby={describedBy}>
+        <SegmentedControl
+          fullWidth
+          value={locale}
+          onChange={(l) => setLocale(l as Locale)}
+          aria-labelledby={showLabel ? ownLabelId : labelledBy}
+          /* Each option is written in its own language, so a screen reader
+             has to be told to pronounce "বাংলা" as Bangla. */
+          options={LOCALES.map((l) => ({ value: l, label: <span lang={l}>{LOCALE_LABELS[l]}</span> }))}
+        />
       </div>
     </div>
   );

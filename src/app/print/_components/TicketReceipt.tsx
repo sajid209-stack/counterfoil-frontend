@@ -21,7 +21,7 @@ function Tear({ label }: { label?: string }) {
       <span aria-hidden className="h-0 flex-1 border-t border-dashed border-strong" />
       {label && (
         <>
-          <span className="shrink-0 text-[12px] font-medium uppercase tracking-[0.08em] text-muted">{label}</span>
+          <span className="shrink-0 text-xs font-medium uppercase tracking-[0.08em] text-muted">{label}</span>
           <span aria-hidden className="h-0 flex-1 border-t border-dashed border-strong" />
         </>
       )}
@@ -39,11 +39,11 @@ function Stub({ card, referenceLabel }: { card: TicketCardData; referenceLabel: 
       <div className="w-full min-w-0 flex-1">
         {/* Centred with the rest of the stub when it stacks; name and "1 of 2" at opposite ends beside the QR. */}
         <div className="flex flex-wrap items-baseline justify-center gap-x-2 @min-[19rem]:flex-nowrap @min-[19rem]:justify-between">
-          <p className="min-w-0 break-words text-[15px] font-semibold leading-snug text-fg">{card.productName}</p>
-          {card.indexLabel && <span className="shrink-0 text-[12px] text-muted">{card.indexLabel}</span>}
+          <p className="min-w-0 break-words text-md font-semibold leading-snug text-fg">{card.productName}</p>
+          {card.indexLabel && <span className="shrink-0 text-xs text-muted">{card.indexLabel}</span>}
         </div>
-        {card.tierName && <p className="text-[13px] text-muted">{card.tierName}</p>}
-        <dl className="mt-1.5 flex flex-col gap-0.5 text-[13px]">
+        {card.tierName && <p className="text-sm text-muted">{card.tierName}</p>}
+        <dl className="mt-1.5 flex flex-col gap-0.5 text-sm">
           {card.fields.map((field) => (
             <div key={field.label} className="flex justify-center gap-1.5 @min-[19rem]:justify-start">
               <dt className="shrink-0 text-muted">{field.label}</dt>
@@ -51,7 +51,7 @@ function Stub({ card, referenceLabel }: { card: TicketCardData; referenceLabel: 
             </div>
           ))}
         </dl>
-        <p className="mt-1.5 break-all font-mono text-[13px] text-fg">
+        <p className="mt-1.5 break-all font-mono text-sm text-fg">
           <span className="sr-only">{referenceLabel}: </span>
           {card.code}
         </p>
@@ -94,11 +94,11 @@ export function TicketReceipt({
   return (
     <article
       aria-label={t("printAllTitle")}
-      className="paper @container relative mx-auto w-full max-w-[380px] overflow-hidden rounded-[18px] bg-white px-6 pb-6 pt-7 text-fg shadow-[0_1px_2px_rgba(20,20,19,0.05),0_18px_40px_-18px_rgba(20,20,19,0.22)] print:rounded-none print:border print:border-neutral-300 print:shadow-none"
+      className="paper @container relative mx-auto w-full max-w-[380px] overflow-hidden rounded-go bg-white px-6 pb-6 pt-7 text-fg shadow-[0_1px_2px_rgba(20,20,19,0.05),0_18px_40px_-18px_rgba(20,20,19,0.22)] print:rounded-none print:border print:border-neutral-300 print:shadow-none"
     >
       <ReceiptHeader operator={operator} place={place} tax={tax}>
         {/* Two groups that each stay whole, so a narrow strip wraps between the reference and the date, never inside either. */}
-        <p className="mt-tight flex flex-wrap justify-center gap-x-3 font-mono text-[12px] text-muted">
+        <p className="mt-tight flex flex-wrap justify-center gap-x-3 font-mono text-xs text-muted">
           <span className="whitespace-nowrap">{order.reference}</span>
           <span className="whitespace-nowrap">
             {formatDate(order.createdAt)} · {time}
@@ -117,7 +117,7 @@ export function TicketReceipt({
               <Stub card={card.data} referenceLabel={t("referenceLabel")} />
             </div>
           ))}
-          <p className="mt-section text-center text-[13px] text-muted">{t("gateHint")}</p>
+          <p className="mt-section text-center text-sm text-muted">{t("gateHint")}</p>
         </>
       )}
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, ArrowRight, Check, ChevronUp, Circle, Pencil } from "lucide-react";
-import { Button, FormField, Modal, useToast } from "@/components/ui";
+import { Button, FormField, Modal, Notice, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
   createLocation,
@@ -368,7 +368,7 @@ export function ProductWizard({
         {/* What this is, and the way back to choosing something else — the
             one route back; the breadcrumb above it is the other. */}
         {kind && (
-          <div className="flex flex-wrap items-center gap-tight text-[0.8125rem]">
+          <div className="flex flex-wrap items-center gap-tight text-sm">
             <span className="text-muted">{t("adding")}</span>
             <span className="rounded-full bg-muted-wash px-comfortable py-0.5 font-medium text-fg">{tc(`type.${kind}`)}</span>
             <Link href="/catalog/new" className="inline-flex min-h-11 items-center font-medium text-brand-foreground underline-offset-2 hover:underline md:min-h-0">{t("changeKind")}</Link>
@@ -378,7 +378,7 @@ export function ProductWizard({
         {/* On a phone the steps are a sentence and a bar, not six pills that
             wrap onto two lines. */}
         <div className="flex flex-col gap-inline sm:hidden">
-          <p className="text-[13px] text-muted">
+          <p className="text-sm text-muted">
             {t("stepOf", { n: stepIndex + 1, total: steps.length })} · <span className="font-medium text-fg">{t(`step.${stepKey}`)}</span>
           </p>
           <span className="h-1 w-full overflow-hidden rounded-full bg-line" aria-hidden>
@@ -401,11 +401,11 @@ export function ProductWizard({
                   aria-current={current ? "step" : undefined}
                   onClick={() => go(i)}
                   className={cn(
-                    "flex min-h-9 items-center gap-inline rounded-sm px-comfortable py-tight text-[12px] transition-colors duration-quick",
+                    "flex min-h-9 items-center gap-inline rounded-control px-comfortable py-tight text-xs transition-colors duration-quick",
                     current ? "bg-inverse text-inverse-fg" : done ? "text-fg hover:bg-muted-wash" : "text-muted",
                   )}
                 >
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full border border-current text-[12px] tabular-nums">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full border border-current text-xs tabular-nums">
                     {done ? <Check size={12} strokeWidth={2} /> : i + 1}
                   </span>
                   {t(`step.${key}`)}
@@ -417,13 +417,13 @@ export function ProductWizard({
 
         <div className="card-surface p-card">
           <div className="mb-section">
-            <h2 className="text-[1.0625rem] font-semibold text-fg">{t(`title.${stepKey}`)}</h2>
-            <p className="mt-inline text-[13px] text-muted">{t(`help.${stepKey}`)}</p>
+            <h2 className="text-md font-semibold text-fg">{t(`title.${stepKey}`)}</h2>
+            <p className="mt-inline text-sm text-muted">{t(`help.${stepKey}`)}</p>
           </div>
 
           {stepError && (
-            <p role="alert" tabIndex={-1} data-step-error className="mb-section flex items-start gap-tight rounded-sm bg-danger-wash px-comfortable py-tight text-[0.8125rem] font-medium text-danger outline-none">
-              <AlertTriangle size={15} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0" />
+            <p role="alert" tabIndex={-1} data-step-error className="mb-section flex items-start gap-tight rounded-card bg-danger-wash p-comfortable text-sm font-medium text-fg outline-none">
+              <AlertTriangle size={15} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0 text-danger" />
               {stepError}
             </p>
           )}
@@ -469,7 +469,7 @@ export function ProductWizard({
                 bufferMinutes={effectiveBuffer(booking)}
                 bufferSlot={<ScheduleBufferField booking={booking} onChange={setBooking} resources={resources} />}
               />
-              <p className="text-[13px] text-muted">{t("windowWithLater", { window: bookingWindow })}</p>
+              <p className="text-sm text-muted">{t("windowWithLater", { window: bookingWindow })}</p>
               <FormField label={t("waitlist")} variant="toggle" checked={waitlist} onChange={(e) => setWaitlist((e.target as HTMLInputElement).checked)} />
             </div>
           )}
@@ -531,7 +531,7 @@ export function ProductWizard({
               )}
               <ReviewRow label={t("row.window")}>
                 <span className="block">{bookingWindow}</span>
-                <span className="block text-[13px] text-muted">{t("windowLater")}</span>
+                <span className="block text-sm text-muted">{t("windowLater")}</span>
               </ReviewRow>
               <ReviewRow label={t("row.price")} onEdit={() => goTo("price")} editText={t("edit")} editLabel={t("editStep", { step: t("step.price") })}>
                 {priced.length ? (
@@ -554,13 +554,13 @@ export function ProductWizard({
                 <span className="flex flex-col gap-0.5">
                   <Channel on={counter} label={t("atCounter")} />
                   <Channel on={online} label={t("online")} />
-                  {!online && counter && <span className="text-[13px] text-warning">{t("notOnlineShort")}</span>}
+                  {!online && counter && <span className="text-sm text-warning">{t("notOnlineShort")}</span>}
                   {locationNames.length > 0 ? <span className="text-muted">{locationNames.join(" · ")}</span> : <Missing>{t("hint.needsLocation")}</Missing>}
                 </span>
               </ReviewRow>
-              <p className={cn("mt-section rounded-sm px-comfortable py-tight text-[13px]", ready ? "bg-success-wash text-fg" : "bg-muted-wash text-muted")}>
+              <Notice tone={ready ? "success" : "neutral"} size="sm" icon={null} className="mt-section">
                 {t(ready ? "reviewReady" : "reviewNotReady")}
-              </p>
+              </Notice>
             </div>
           )}
         </div>
@@ -580,7 +580,7 @@ export function ProductWizard({
             type="button"
             onClick={() => setChecklistOpen((v) => !v)}
             aria-expanded={checklistOpen}
-            className="flex min-h-11 w-full items-center gap-tight px-gutter text-left text-[0.8125rem] lg:hidden"
+            className="flex min-h-11 w-full items-center gap-tight px-gutter text-left text-sm lg:hidden"
           >
             <span className="font-medium text-fg">{t("whatsLeft")}</span>
             <span className={cn("flex-1", ready ? "text-success" : "text-muted")}>
@@ -613,12 +613,12 @@ export function ProductWizard({
       <aside className="hidden h-fit lg:sticky lg:top-section lg:block" aria-label={t("summaryTitle")}>
         <div className="card-surface flex flex-col gap-section p-card">
           <div>
-            <p className="text-[0.8125rem] font-medium text-muted">{t("summaryTitle")}</p>
-            <p className={cn("mt-inline break-words text-base font-semibold leading-snug", !name.trim() && "text-muted")}>{name.trim() || t("untitled")}</p>
-            {kindNow && <p className="mt-0.5 text-[0.8125rem] text-muted">{tc(`type.${kindNow}`)}</p>}
-            {booking && <p className="mt-tight text-[0.8125rem] leading-snug">{booking.summary}</p>}
-            {bufferMinutes > 0 && <p className="mt-tight text-[0.8125rem] text-muted">{t("bufferLine", { time: formatDuration(bufferMinutes) })}</p>}
-            {priceLine && <p className="mt-tight text-[0.8125rem] tabular-nums">{priceLine}</p>}
+            <p className="text-sm font-medium text-muted">{t("summaryTitle")}</p>
+            <p className={cn("mt-inline break-words text-md font-semibold leading-snug", !name.trim() && "text-muted")}>{name.trim() || t("untitled")}</p>
+            {kindNow && <p className="mt-0.5 text-sm text-muted">{tc(`type.${kindNow}`)}</p>}
+            {booking && <p className="mt-tight text-sm leading-snug">{booking.summary}</p>}
+            {bufferMinutes > 0 && <p className="mt-tight text-sm text-muted">{t("bufferLine", { time: formatDuration(bufferMinutes) })}</p>}
+            {priceLine && <p className="mt-tight text-sm tabular-nums">{priceLine}</p>}
           </div>
           <Checklist checks={checks} reachable={(step) => seen.has(step)} onGo={goTo} ready={ready} />
         </div>
@@ -641,15 +641,15 @@ export function ProductWizard({
 
 function ReviewRow({ label, onEdit, editLabel, editText, children }: { label: string; onEdit?: () => void; editLabel?: string; editText?: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-section gap-y-inline border-t border-hairline py-comfortable text-[14px] sm:grid-cols-[8rem_minmax(0,1fr)_auto]">
-      <span className="col-span-2 text-[13px] font-medium text-muted sm:col-span-1">{label}</span>
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-section gap-y-inline border-t border-hairline py-comfortable text-base sm:grid-cols-[8rem_minmax(0,1fr)_auto]">
+      <span className="col-span-2 text-sm font-medium text-muted sm:col-span-1">{label}</span>
       <span className="min-w-0">{children}</span>
       {onEdit ? (
         <button
           type="button"
           onClick={onEdit}
           aria-label={editLabel}
-          className="-my-tight flex h-11 items-center gap-inline self-start rounded-sm px-tight text-[13px] font-medium text-brand-foreground hover:bg-muted-wash sm:h-9"
+          className="-my-tight flex h-11 items-center gap-inline self-start rounded-control px-tight text-sm font-medium text-brand-foreground hover:bg-muted-wash sm:h-9"
         >
           <Pencil size={13} strokeWidth={1.5} aria-hidden />
           <span className="max-sm:sr-only">{editText}</span>
@@ -697,7 +697,7 @@ function Checklist({
   const t = useTranslations("catalog.wizard");
   return (
     <div>
-      {!bare && <p className="mb-tight text-[0.8125rem] font-medium text-muted">{t("readyTitle")}</p>}
+      {!bare && <p className="mb-tight text-sm font-medium text-muted">{t("readyTitle")}</p>}
       <ul className="flex flex-col gap-0.5">
         {checks.map((c) => (
           <li key={c.key}>
@@ -705,7 +705,7 @@ function Checklist({
               type="button"
               disabled={!reachable(c.step)}
               onClick={() => onGo(c.step)}
-              className="flex min-h-11 w-full items-start gap-tight rounded-xs px-inline py-tight text-left text-[0.8125rem] transition-colors duration-quick enabled:hover:bg-muted-wash md:min-h-9"
+              className="flex min-h-11 w-full items-start gap-tight rounded-control px-inline py-tight text-left text-sm transition-colors duration-quick enabled:hover:bg-muted-wash md:min-h-9"
             >
               {c.done ? (
                 <Check size={16} strokeWidth={2} aria-hidden className="mt-px shrink-0 text-success" />
@@ -714,14 +714,14 @@ function Checklist({
               )}
               <span className="flex min-w-0 flex-col">
                 <span className={cn(!c.done && "text-muted")}>{t(`check.${c.key}`)}</span>
-                {c.hint && <span className="text-[12px] text-warning">{c.hint}</span>}
+                {c.hint && <span className="text-xs text-warning">{c.hint}</span>}
               </span>
               <span className="sr-only">{c.done ? t("checkDone") : t("checkTodo")}</span>
             </button>
           </li>
         ))}
       </ul>
-      <p className={cn("mt-tight text-[13px] font-medium", ready ? "text-success" : "text-muted")}>
+      <p className={cn("mt-tight text-sm font-medium", ready ? "text-success" : "text-muted")}>
         {ready ? t("readyYes") : t("readyNo", { count: checks.filter((c) => !c.done).length })}
       </p>
     </div>

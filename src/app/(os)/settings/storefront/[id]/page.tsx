@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowDown, ArrowUp, Copy, ExternalLink, Eye, Monitor, Plus, Smartphone, Ticket, X } from "lucide-react";
-import { Button, EmptyState, PageShell, Sheet, StatusPill, useToast } from "@/components/ui";
+import { Button, ChoiceCard, Chip, EmptyState, PageShell, SegmentedControl, Sheet, StatusPill, useToast } from "@/components/ui";
 import { PreviewFrame } from "@/components/PreviewFrame";
 import { StorefrontPreviewApp } from "@/app/s/_components/flow/StorefrontPreviewApp";
 import { cn } from "@/lib/cn";
@@ -295,30 +295,24 @@ export default function StorefrontEditorPage() {
     </PreviewFrame>
   );
   const deviceSwitch = (
-    <div role="radiogroup" aria-label={t("storefront.previewDevice")} className="inline-flex shrink-0 self-start rounded-sm border border-line bg-card p-[3px]">
-      {(["desktop", "phone"] as const).map((d) => {
+    <SegmentedControl
+      size="sm"
+      className="shrink-0 self-start"
+      aria-label={t("storefront.previewDevice")}
+      value={device}
+      onChange={(d) => setDevice(d as Device)}
+      options={(["desktop", "phone"] as const).map((d) => {
         const Icon = d === "desktop" ? Monitor : Smartphone;
-        return (
-          <button
-            key={d}
-            type="button"
-            role="radio"
-            aria-checked={device === d}
-            onClick={() => setDevice(d)}
-            className={cn(
-              "inline-flex min-h-9 items-center gap-inline rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick",
-              device === d ? "bg-ember-solid text-white" : "text-muted hover:text-fg",
-            )}
-          >
-            <Icon size={14} strokeWidth={1.5} aria-hidden />
-            {t(d === "desktop" ? "storefront.previewDesktop" : "storefront.previewPhone")}
-          </button>
-        );
+        return {
+          value: d,
+          icon: <Icon size={14} strokeWidth={1.5} aria-hidden />,
+          label: t(d === "desktop" ? "storefront.previewDesktop" : "storefront.previewPhone"),
+        };
       })}
-    </div>
+    />
   );
   const previewState = (
-    <p className="mt-inline flex items-center gap-inline text-[12px] text-muted">
+    <p className="mt-inline flex items-center gap-inline text-xs text-muted">
       <span aria-hidden className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dirty ? "bg-warning" : "bg-success")} />
       {t(dirty ? "storefront.previewUnsaved" : "storefront.previewSaved")}
     </p>
@@ -341,9 +335,9 @@ export default function StorefrontEditorPage() {
                 <StatusPill tone={record.published ? "success" : "neutral"}>
                   {t(record.published ? "storefront.statusLive" : "storefront.statusDraft")}
                 </StatusPill>
-                <span className="min-w-0 truncate font-mono text-[13px] text-muted">/s/{record.slug}</span>
+                <span className="min-w-0 truncate font-mono text-sm text-muted">/s/{record.slug}</span>
               </div>
-              <p className="mt-tight text-[13px] leading-relaxed text-muted">
+              <p className="mt-tight text-sm leading-relaxed text-muted">
                 {dirty ? t("storefront.saveFirst") : t(record.published ? "storefront.statusLiveDesc" : "storefront.statusDraftDesc")}
               </p>
             </div>
@@ -404,7 +398,7 @@ export default function StorefrontEditorPage() {
             <SettingRow label={t("storefront.slugLabel")} description={t("storefront.slugDesc")} error={slugErr}>
               {({ id, describedBy }) => (
                 <div className="flex items-center gap-inline">
-                  <span className="shrink-0 font-mono text-[13px] text-muted">/s/</span>
+                  <span className="shrink-0 font-mono text-sm text-muted">/s/</span>
                   <input
                     id={id}
                     value={form.slug}
@@ -450,22 +444,16 @@ export default function StorefrontEditorPage() {
               {() => (
                 <div role="group" aria-label={t("storefront.accentLabel")} className="flex flex-wrap gap-tight">
                   {[null, ...ACCENT_COLORS].map((c) => (
-                    <button
-                      key={c ?? "none"}
-                      type="button"
-                      aria-pressed={form.accent === c}
-                      onClick={() => set({ accent: c })}
-                      className={cn(
-                        "flex h-11 items-center gap-tight rounded-sm px-comfortable text-[13px] transition-colors duration-quick md:h-9",
-                        form.accent === c ? "bg-card font-medium ring-2 ring-inset ring-ember-solid" : "bg-muted-wash",
-                      )}
-                    >
-                      <span
-                        aria-hidden
-                        className={cn("h-3.5 w-3.5 rounded-full border", c ? `${COLOR_DOT[c]} border-transparent` : "border-dashed border-strong")}
-                      />
-                      {c ? t(`storefront.colors.${c}`) : t("storefront.colors.none")}
-                    </button>
+                    <Chip key={c ?? "none"} selected={form.accent === c} onClick={() => set({ accent: c })}>
+                      <span className="inline-flex items-center gap-tight">
+                        <span
+                          aria-hidden
+                          // A halo in the card colour keeps the swatch visible on a selected chip.
+                          className={cn("h-3.5 w-3.5 rounded-full border ring-2 ring-card", c ? `${COLOR_DOT[c]} border-transparent` : "border-dashed border-strong")}
+                        />
+                        {c ? t(`storefront.colors.${c}`) : t("storefront.colors.none")}
+                      </span>
+                    </Chip>
                   ))}
                 </div>
               )}
@@ -476,15 +464,11 @@ export default function StorefrontEditorPage() {
                   {[null, ...heroChoices].map((c) => {
                     const on = (form.heroImage ?? null) === (c?.url ?? null);
                     return (
-                      <button
+                      <ChoiceCard
                         key={c?.url ?? "none"}
-                        type="button"
-                        aria-pressed={on}
+                        selected={on}
                         onClick={() => set({ heroImage: c?.url ?? null })}
-                        className={cn(
-                          "flex flex-col overflow-hidden rounded-sm bg-muted-wash text-left text-[13px] transition-colors duration-quick",
-                          on ? "ring-2 ring-ember-solid" : "hover:ring-1 hover:ring-line",
-                        )}
+                        className="flex flex-col overflow-hidden text-sm"
                       >
                         {c ? (
                           // eslint-disable-next-line @next/next/no-img-element -- bundled/local assets
@@ -497,10 +481,10 @@ export default function StorefrontEditorPage() {
                         <span className="min-h-11 truncate px-comfortable py-tight font-medium leading-snug">
                           {c ? c.name : ts("editor.heroNone")}
                         </span>
-                      </button>
+                      </ChoiceCard>
                     );
                   })}
-                  {heroChoices.length === 0 && <p className="col-span-full text-[13px] text-muted">{ts("editor.heroEmpty")}</p>}
+                  {heroChoices.length === 0 && <p className="col-span-full text-sm text-muted">{ts("editor.heroEmpty")}</p>}
                 </div>
               )}
             </SettingRow>
@@ -522,7 +506,7 @@ export default function StorefrontEditorPage() {
 
           <SettingsSection title={t("storefront.linksTitle")} description={t("storefront.linksDesc")}>
             {form.links.length === 0 ? (
-              <p className="px-card pt-section text-sm text-muted">{t("storefront.linksEmpty")}</p>
+              <p className="px-card pt-section text-base text-muted">{t("storefront.linksEmpty")}</p>
             ) : (
               <ul className="divide-y divide-hairline">
                 {form.links.map((l, i) => {
@@ -533,7 +517,7 @@ export default function StorefrontEditorPage() {
                     <li key={l.id} className="flex items-start gap-tight px-card py-comfortable">
                       <div className="grid min-w-0 flex-1 gap-tight sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
                         <div>
-                          <label htmlFor={labelId} className="text-[13px] font-medium text-fg">{t("storefront.linkLabel")}</label>
+                          <label htmlFor={labelId} className="text-sm font-medium text-fg">{t("storefront.linkLabel")}</label>
                           <input
                             id={labelId}
                             value={l.label}
@@ -542,10 +526,10 @@ export default function StorefrontEditorPage() {
                             aria-invalid={!!e.label || undefined}
                             className={cn(controlCls(!!e.label), "mt-inline")}
                           />
-                          {e.label && <p className="mt-inline text-[13px] text-danger">{t(`storefront.${e.label}`)}</p>}
+                          {e.label && <p className="mt-inline text-sm text-danger">{t(`storefront.${e.label}`)}</p>}
                         </div>
                         <div>
-                          <label htmlFor={urlId} className="text-[13px] font-medium text-fg">{t("storefront.linkUrl")}</label>
+                          <label htmlFor={urlId} className="text-sm font-medium text-fg">{t("storefront.linkUrl")}</label>
                           <input
                             id={urlId}
                             type="url"
@@ -557,17 +541,18 @@ export default function StorefrontEditorPage() {
                             aria-invalid={!!e.url || undefined}
                             className={cn(controlCls(!!e.url), "mt-inline font-mono")}
                           />
-                          {e.url && <p className="mt-inline text-[13px] text-danger">{t(`storefront.${e.url}`)}</p>}
+                          {e.url && <p className="mt-inline text-sm text-danger">{t(`storefront.${e.url}`)}</p>}
                         </div>
                       </div>
-                      <button
-                        type="button"
+                      <Button
+                        variant="tertiary"
+                        size="icon"
                         aria-label={t("storefront.linkRemove", { label: l.label || t("storefront.linkLabel") })}
                         onClick={() => set({ links: form.links.filter((_, j) => j !== i) })}
-                        className="mt-[1.625rem] inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:h-9 md:w-9"
+                        className="mt-6 shrink-0 md:mt-7"
                       >
                         <X size={16} strokeWidth={1.5} aria-hidden />
-                      </button>
+                      </Button>
                     </li>
                   );
                 })}
@@ -590,7 +575,7 @@ export default function StorefrontEditorPage() {
             description={form.featured.length ? t("storefront.whatsOnChosen") : t("storefront.whatsOnAll")}
           >
             {sellable.length === 0 ? (
-              <p className="px-card py-section text-sm text-muted">{t("storefront.nothingSellable")}</p>
+              <p className="px-card py-section text-base text-muted">{t("storefront.nothingSellable")}</p>
             ) : (
               <ol className="divide-y divide-hairline">
                 {[...ordered, ...rest].map((p) => {
@@ -599,33 +584,33 @@ export default function StorefrontEditorPage() {
                   return (
                     <li key={p.id} className="flex items-center gap-tight px-card py-tight">
                       <div className="flex shrink-0">
-                        <button
-                          type="button"
+                        <Button
+                          variant="tertiary"
+                          size="icon"
                           aria-label={t("storefront.moveUp", { name: p.name })}
                           disabled={!on || i === 0}
                           onClick={() => move(p.id, -1)}
-                          className="inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg disabled:pointer-events-none disabled:opacity-40 md:h-9 md:w-9"
                         >
                           <ArrowUp size={16} strokeWidth={1.5} aria-hidden />
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="tertiary"
+                          size="icon"
                           aria-label={t("storefront.moveDown", { name: p.name })}
                           disabled={!on || i === ordered.length - 1}
                           onClick={() => move(p.id, 1)}
-                          className="inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg disabled:pointer-events-none disabled:opacity-40 md:h-9 md:w-9"
                         >
                           <ArrowDown size={16} strokeWidth={1.5} aria-hidden />
-                        </button>
+                        </Button>
                       </div>
-                      <span className={cn("min-w-0 flex-1 truncate text-sm", on ? "text-fg" : "text-muted")}>{p.name}</span>
+                      <span className={cn("min-w-0 flex-1 truncate text-base", on ? "text-fg" : "text-muted")}>{p.name}</span>
                       <Switch checked={on} onChange={() => toggle(p.id)} label={t("storefront.showSwitch", { name: p.name })} />
                     </li>
                   );
                 })}
               </ol>
             )}
-            <p className="px-card py-comfortable text-[13px] text-muted">
+            <p className="px-card py-comfortable text-sm text-muted">
               {t("storefront.showingCount", { count: showing.length })}
             </p>
           </SettingsSection>
@@ -634,16 +619,16 @@ export default function StorefrontEditorPage() {
         </div>
 
         {wide && (
-          <aside aria-label={t("storefront.previewTitle")} className="sticky top-[4.5rem] flex min-w-0 flex-1 flex-col gap-comfortable pb-hero">
+          <aside aria-label={t("storefront.previewTitle")} className="sticky top-18 flex min-w-0 flex-1 flex-col gap-comfortable pb-hero">
             <div className="flex flex-wrap items-start justify-between gap-tight">
               <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-fg">{t("storefront.previewTitle")}</h2>
+                <h2 className="text-md font-semibold text-fg">{t("storefront.previewTitle")}</h2>
                 {previewState}
               </div>
               {deviceSwitch}
             </div>
-            <div className="rounded-md bg-muted-wash p-tight">
-              <div className={cn("mx-auto overflow-hidden rounded-sm", device === "phone" && "max-w-[390px]")}>{preview(device)}</div>
+            <div className="rounded-card bg-muted-wash p-tight">
+              <div className={cn("mx-auto overflow-hidden rounded-control", device === "phone" && "max-w-[390px]")}>{preview(device)}</div>
             </div>
           </aside>
         )}
@@ -659,7 +644,7 @@ export default function StorefrontEditorPage() {
         >
           <div className="flex flex-col gap-comfortable p-card">
             {md && deviceSwitch}
-            {previewOpen && <div className="overflow-hidden rounded-sm">{preview(md ? device : "phone")}</div>}
+            {previewOpen && <div className="overflow-hidden rounded-control">{preview(md ? device : "phone")}</div>}
           </div>
         </Sheet>
       )}

@@ -1,0 +1,117 @@
+{
+  "$comment": "Reviewable exemptions for scripts/check-design-tokens.mjs. Every entry needs a reason; the checker refuses to run without one. exemptPaths: files where a rule (or every rule, \"*\") does not apply. exemptMatches: a rule does not apply to text matching the regex (optionally limited to paths). deadTokenIgnore: @theme tokens that are intentionally unused. One-off lines are exempted in the source instead, with `// ds-exception: <reason>` or `{/* ds-exception: <reason> */}` on the same line or on a comment-only line directly above. `proposed` is NOT applied: it lists files that look like they need an exemption, for a human to promote into exemptPaths.",
+  "exemptPaths": [
+    {
+      "path": "src/app/deck/**",
+      "rules": [
+        "*"
+      ],
+      "reason": "§12: the company deck is a fixed 1600 x 900 slide canvas in real pixels"
+    },
+    {
+      "path": "src/lib/events/**",
+      "rules": [
+        "*"
+      ],
+      "reason": "§12: event page templates carry their own type and palette, scoped to --e-*"
+    },
+    {
+      "path": "src/components/events/**",
+      "rules": [
+        "*"
+      ],
+      "reason": "§12: event page templates (EventTemplate, PreviewFrame) carry their own type and palette, scoped to --e-*"
+    },
+    {
+      "path": "src/app/e/**",
+      "rules": [
+        "*"
+      ],
+      "reason": "§12: public event pages render the event templates"
+    },
+    {
+      "path": "src/app/print/**",
+      "rules": [
+        "*"
+      ],
+      "reason": "§12: print pages use physical measurements (paper, thermal rolls, tickets)"
+    },
+    {
+      "path": "src/components/ui/charts.tsx",
+      "rules": [
+        "raw-colour"
+      ],
+      "reason": "§12: chart palettes (--chart-*, --heat-*) are the one place hues outside the semantic set are allowed"
+    },
+    {
+      "path": "src/lib/storefront/theme.ts",
+      "rules": [
+        "raw-colour"
+      ],
+      "reason": "§12: the storefront's venue accent (--sf-*) is computed per venue for contrast"
+    },
+    {
+      "path": "src/lib/mock/**",
+      "rules": [
+        "raw-colour"
+      ],
+      "reason": "§12: seed data may hold operator-chosen hex category colours"
+    },
+    {
+      "path": "src/lib/api/**",
+      "rules": [
+        "raw-colour"
+      ],
+      "reason": "§12: the data layer may hold operator-chosen hex category colours"
+    },
+    {
+      "path": "src/app/manifest.ts",
+      "rules": [
+        "raw-colour"
+      ],
+      "reason": "PWA manifest colours must be literal hex; there is no CSS variable to point at"
+    },
+    {
+      "path": "src/app/layout.tsx",
+      "rules": [
+        "raw-colour"
+      ],
+      "reason": "<meta name=theme-color> in the viewport export must be literal hex"
+    },
+    {
+      "path": "src/components/ThemeProvider.tsx",
+      "rules": [
+        "raw-colour"
+      ],
+      "reason": "keeps <meta name=theme-color> in step with the in-app theme; literal hex by necessity"
+    },
+    {
+      "path": "src/components/ui/Qr.tsx",
+      "rules": [
+        "raw-colour"
+      ],
+      "reason": "a QR code must be pure black on pure white to scan, in every theme"
+    },
+    {
+      "path": "src/lib/layout.ts",
+      "rules": [
+        "raw-colour"
+      ],
+      "reason": "§12 operator-chosen category colours: seat-layout templates seed the seat category colours"
+    }
+  ],
+  "exemptMatches": [
+    {
+      "rule": "arb-text",
+      "match": "^text-\\[(?:9px|0\\.5625rem)\\]$",
+      "reason": "§12: the seat plan's 9px seat labels (each seat carries its full name in a title)"
+    }
+  ],
+  "deadTokenIgnore": [
+    {
+      "match": "^--color-(?:brand|neutral|green|amber|red|blue|violet)-\\d+$",
+      "reason": "§2 layer A: the primitive palette scales are kept complete so any step is available; components use the semantic layer"
+    }
+  ],
+  "proposed": []
+}

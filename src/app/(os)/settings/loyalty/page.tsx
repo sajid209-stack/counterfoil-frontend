@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { PageShell, useToast } from "@/components/ui";
+import { Notice, PageShell, Skeleton, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getLoyaltyProgram, loyaltyTotals, updateLoyaltyProgram, type LoyaltyProgram } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
@@ -31,7 +31,7 @@ export default function LoyaltySettingsPage() {
 
   return (
     <PageShell title={t("settingsTitle")} description={t("settingsDescription")}>
-      <div className="flex max-w-3xl flex-col gap-section pb-hero">
+      <div className="flex flex-col gap-section pb-hero">
         {/* Remount on save so the form reflects what was actually stored. The
             totals are passed in as children so the save bar stays the LAST
             thing in the column: a bar that appears between two cards would push
@@ -47,7 +47,7 @@ export default function LoyaltySettingsPage() {
           <SettingsSection title={t("totalsTitle")}>
             <div className="px-card pb-card">
               {totalsQ.loading || !totalsQ.data ? (
-                <div className="h-16 animate-pulse rounded-sm bg-muted-wash" />
+                <Skeleton h={64} />
               ) : (
                 <div className="grid grid-cols-2 gap-tight sm:grid-cols-4">
                   <Stat label={t("totalMembers")} value={nf.number(totalsQ.data.members)} />
@@ -74,10 +74,10 @@ export default function LoyaltySettingsPage() {
 /** A figure and what it counts. The tile is a quiet fill: a stroke around four numbers is noise. */
 function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
-    <div className="rounded-sm bg-muted-wash p-comfortable">
-      <p className="text-[0.75rem] font-medium text-muted">{label}</p>
-      <p className="mt-inline text-lg font-semibold tabular-nums text-fg">{value}</p>
-      {note && <p className="mt-inline text-[0.75rem] text-muted">{note}</p>}
+    <div className="rounded-control bg-muted-wash p-comfortable">
+      <p className="text-xs font-medium text-muted">{label}</p>
+      <p className="type-figure mt-inline text-2xl font-semibold text-fg">{value}</p>
+      {note && <p className="mt-inline text-xs text-muted">{note}</p>}
     </div>
   );
 }
@@ -196,9 +196,8 @@ function ProgramForm({
         {/* What the numbers add up to, in words: a quiet panel, not a callout
             with a bar down its side. */}
         <div className="px-card pb-card pt-tight">
-          <div className="rounded-sm bg-muted-wash p-comfortable">
-            <p className="text-[0.75rem] font-medium text-muted">{t("previewLabel")}</p>
-            <p className="mt-inline text-[0.8125rem] text-fg">
+          <Notice tone="neutral" icon={null} title={t("previewLabel")}>
+            <p className="text-sm">
               {draft.enabled
                 ? t("previewLine", {
                     spend: formatMoney(exampleSpend),
@@ -208,11 +207,11 @@ function ProgramForm({
                 : t("previewOff")}
             </p>
             {draft.enabled && (
-              <p className="mt-inline text-[0.8125rem] text-muted">
+              <p className="mt-inline text-sm text-muted">
                 {draft.expiryMonths == null ? t("previewNoExpiry") : t("previewExpiry", { months: draft.expiryMonths })}
               </p>
             )}
-          </div>
+          </Notice>
         </div>
       </SettingsSection>
 

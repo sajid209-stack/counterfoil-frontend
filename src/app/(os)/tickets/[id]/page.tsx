@@ -8,8 +8,12 @@ import { Check, ChevronDown, KeyRound, ShieldOff, X } from "lucide-react";
 import {
   ActionMenu,
   Button,
+  EmptyState,
+  FormField,
   Modal,
+  Notice,
   PageShell,
+  SkeletonText,
   StatusPill,
   useToast,
   type ActionMenuItem,
@@ -105,7 +109,13 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   if (!ticket) {
     return (
       <PageShell title={t("fallbackTitle")}>
-        <p className="text-[13px] text-muted">{ticketQ.loading ? t("loading") : t("notFound")}</p>
+        {ticketQ.loading ? (
+          <div aria-busy="true" aria-label={t("loading")}>
+            <SkeletonText lines={3} />
+          </div>
+        ) : (
+          <EmptyState title={t("notFound")} />
+        )}
       </PageShell>
     );
   }
@@ -175,7 +185,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     <li key={c.id} className="flex flex-wrap items-baseline gap-x-tight gap-y-inline border-b border-hairline py-comfortable last:border-0">
       <span
         className={cn(
-          "min-w-0 flex-1 break-all font-mono text-[13px] font-medium",
+          "min-w-0 flex-1 break-all font-mono text-sm font-medium",
           c.status !== "active" && "text-muted line-through",
         )}
       >
@@ -184,7 +194,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       <StatusPill tone={c.status === "active" ? "success" : c.status === "revoked" ? "danger" : "neutral"}>
         {t(`credStatus.${c.status}`)}
       </StatusPill>
-      <span className="w-full text-[12px] text-muted">
+      <span className="w-full text-xs text-muted">
         {[
           t(`credReason.${c.reason}`),
           t(`credKind.${c.kind}`),
@@ -199,18 +209,18 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       </span>
       {/* Why it was replaced, in the operator's own words. Never blank on a
           reissue — the api refuses one without a reason. */}
-      {c.note && <p className="w-full text-[13px]">{c.note}</p>}
+      {c.note && <p className="w-full text-sm">{c.note}</p>}
     </li>
   );
 
   /** One presentation at the gate. Admitted or refused, both recorded. */
   const scanRow = (e: TicketEvent) => (
     <li key={e.id} className="flex flex-wrap items-baseline gap-x-tight gap-y-inline border-b border-hairline py-comfortable last:border-0">
-      <span className={cn("flex shrink-0 items-center gap-inline text-[13px] font-medium", e.outcome === "admitted" ? "text-success" : "text-danger")}>
+      <span className={cn("flex shrink-0 items-center gap-inline text-sm font-medium", e.outcome === "admitted" ? "text-success" : "text-danger")}>
         {e.outcome === "admitted" ? <Check size={15} strokeWidth={2.5} aria-hidden /> : <X size={15} strokeWidth={2.5} aria-hidden />}
         {e.outcome === "admitted" ? t("scan.admitted") : t("scan.refused")}
       </span>
-      <span className="min-w-0 flex-1 text-[13px] text-muted">
+      <span className="min-w-0 flex-1 text-sm text-muted">
         {[
           e.refusal ? t(`refusal.${e.refusal}`) : null,
           e.admitted && admits > 1 ? t("scan.people", { count: e.admitted }) : null,
@@ -222,7 +232,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
           .filter(Boolean)
           .join(" · ")}
       </span>
-      <span className="shrink-0 text-[12px] text-muted">
+      <span className="shrink-0 text-xs text-muted">
         {formatDateTime(e.at)}
         {e.by ? ` · ${e.by}` : ""}
         {/* A redemption recorded before the gate kept a log is stated as what it
@@ -257,14 +267,10 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
         {/* A terminated ticket says so before anything else on the page: every
             figure below it is still true and none of it can be used. */}
         {ticket.terminatedAt && (
-          <div className="flex items-start gap-tight rounded-md bg-danger-wash p-card">
-            <ShieldOff size={18} strokeWidth={1.75} aria-hidden className="mt-[2px] shrink-0 text-danger" />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">{t("terminatedTitle")}</p>
-              <p className="mt-inline text-[13px]">{ticket.terminatedReason}</p>
-              <p className="mt-inline text-[12px] text-muted">{formatDateTime(ticket.terminatedAt)}</p>
-            </div>
-          </div>
+          <Notice tone="danger" icon={<ShieldOff size={18} strokeWidth={1.75} />} title={t("terminatedTitle")}>
+            <p className="text-sm">{ticket.terminatedReason}</p>
+            <p className="mt-inline text-xs text-muted">{formatDateTime(ticket.terminatedAt)}</p>
+          </Notice>
         )}
 
         <div className="grid gap-section xl:grid-cols-[minmax(0,1fr)_22rem]">
@@ -289,7 +295,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                     ? {
                         k: "order",
                         v: (
-                          <Link href={`/orders/${order.id}`} className="inline-flex min-h-11 items-center font-mono text-[14px] font-medium text-brand-foreground hover:underline sm:min-h-0">
+                          <Link href={`/orders/${order.id}`} className="inline-flex min-h-11 items-center font-mono text-base font-medium text-brand-foreground hover:underline sm:min-h-0">
                             {order.reference}
                           </Link>
                         ),
@@ -306,8 +312,8 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                   .filter((f): f is { k: string; v: ReactNode } => !!f)
                   .map((f) => (
                     <div key={f.k} className={cn("flex min-w-0 flex-col gap-inline", f.k === "type" && "col-span-2 sm:col-span-1")}>
-                      <dt className="text-[12px] font-medium text-muted">{f.k === "order" ? tr("record.order") : t(`fact.${f.k}`)}</dt>
-                      <dd className="break-words text-[15px] font-semibold leading-snug">{f.v}</dd>
+                      <dt className="text-xs font-medium text-muted">{f.k === "order" ? tr("record.order") : t(`fact.${f.k}`)}</dt>
+                      <dd className="break-words text-md font-semibold leading-snug">{f.v}</dd>
                     </div>
                   ))}
               </dl>
@@ -316,7 +322,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                   type="button"
                   aria-expanded={moreOpen}
                   onClick={() => setMoreOpen((v) => !v)}
-                  className="mt-comfortable flex min-h-11 items-center gap-inline text-[13px] font-medium text-brand-foreground"
+                  className="mt-comfortable flex min-h-11 items-center gap-inline text-sm font-medium text-brand-foreground"
                 >
                   {moreOpen ? tr("record.fewerDetails") : tr("record.moreDetails")}
                   <ChevronDown size={16} strokeWidth={1.5} aria-hidden className={cn("transition-transform", moreOpen && "rotate-180")} />
@@ -326,8 +332,8 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
 
             {/* The tokens. */}
             <section className="card-surface p-card" aria-labelledby="tk-codes">
-              <h2 id="tk-codes" className="text-base font-semibold tracking-[-0.4px]">{t("credentials")}</h2>
-              <p className="mt-inline text-[12px] text-muted">{t("credentialsNote")}</p>
+              <h2 id="tk-codes" className="text-md font-semibold">{t("credentials")}</h2>
+              <p className="mt-inline text-xs text-muted">{t("credentialsNote")}</p>
               <ul className="mt-comfortable flex flex-col">{creds.map(credRow)}</ul>
             </section>
 
@@ -340,7 +346,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
               wide={wide}
             >
               {timeline.length === 0 ? (
-                <p className="text-[13px] text-muted">{t("neverScanned")}</p>
+                <p className="text-sm text-muted">{t("neverScanned")}</p>
               ) : (
                 <ul className="flex flex-col">{timeline.map(scanRow)}</ul>
               )}
@@ -352,7 +358,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
           <aside className="flex min-w-0 flex-col gap-comfortable">
             <FoldCard id="tk-preview" title={t("preview")} summary={active?.code ?? ticket.code} wide={wide} bare>
               {card ? <TicketCard data={{ ...card.data, code: active?.code ?? ticket.code }} /> : null}
-              <p className="mt-comfortable text-[12px] text-muted">{t("previewNote")}</p>
+              <p className="mt-comfortable text-xs text-muted">{t("previewNote")}</p>
             </FoldCard>
           </aside>
         </div>
@@ -366,24 +372,16 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
         onClose={() => setDialog(null)}
         title={dialog === "terminate" ? t("terminateTitle") : t("reissueTitle")}
       >
-        <p className="text-[13px] text-muted">{dialog === "terminate" ? t("terminateBody") : t("reissueBody")}</p>
-        <label className="mt-section block text-[12px] font-medium text-muted" htmlFor="tk-note">
-          {dialog === "terminate" ? t("terminateReason") : t("reissueReason")}
-        </label>
-        <input
+        <p className="text-sm text-muted">{dialog === "terminate" ? t("terminateBody") : t("reissueBody")}</p>
+        <FormField
           id="tk-note"
+          className="mt-section"
+          label={dialog === "terminate" ? t("terminateReason") : t("reissueReason")}
           value={note}
           onChange={(e) => { setNote(e.target.value); setError(""); }}
           placeholder={dialog === "terminate" ? t("terminatePlaceholder") : t("reissuePlaceholder")}
-          aria-invalid={!!error}
-          aria-describedby={error ? "tk-note-error" : undefined}
-          className="mt-inline h-11 w-full rounded-sm border border-line bg-card px-comfortable text-sm"
+          error={error || undefined}
         />
-        {error && (
-          <p id="tk-note-error" className="mt-inline text-[13px] text-danger">
-            {error}
-          </p>
-        )}
         <div className="mt-section flex flex-wrap justify-end gap-tight">
           <Button variant="secondary" onClick={() => setDialog(null)}>
             {t("cancel")}
@@ -432,12 +430,12 @@ function FoldCard({
   if (wide) {
     return bare ? (
       <section aria-labelledby={id}>
-        <h2 id={id} className="mb-comfortable text-base font-semibold tracking-[-0.4px]">{title}</h2>
+        <h2 id={id} className="mb-comfortable text-md font-semibold">{title}</h2>
         {children}
       </section>
     ) : (
       <section className="card-surface p-card" aria-labelledby={id}>
-        <h2 id={id} className="text-base font-semibold tracking-[-0.4px]">{title}</h2>
+        <h2 id={id} className="text-md font-semibold">{title}</h2>
         <div className="mt-comfortable">{children}</div>
       </section>
     );
@@ -452,8 +450,8 @@ function FoldCard({
         className="flex min-h-14 w-full items-center gap-tight px-card py-comfortable text-left"
       >
         <span className="min-w-0 flex-1">
-          <span className="block text-base font-semibold tracking-[-0.4px]">{title}</span>
-          {summary && <span className="block break-all text-[13px] font-normal text-muted">{summary}</span>}
+          <span className="block text-md font-semibold">{title}</span>
+          {summary && <span className="block break-all text-sm font-normal text-muted">{summary}</span>}
         </span>
         <ChevronDown size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0 text-muted transition-transform", open && "rotate-180")} />
       </button>

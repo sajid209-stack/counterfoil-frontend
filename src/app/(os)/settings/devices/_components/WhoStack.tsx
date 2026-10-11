@@ -55,7 +55,7 @@ export function WhoStack({
           {faces.map((s) => (
             <span
               key={s.id}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-subtle text-[12px] font-semibold leading-none text-fg ring-2 ring-card"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-subtle text-xs font-semibold leading-none text-fg ring-2 ring-card"
             >
               {firstName(s).charAt(0).toUpperCase()}
             </span>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, Wallet } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui";
+import { AffixInput, Button, SegmentedControl } from "@/components/ui";
 import {
   isVoidedOrder,
   orderNetPaid,
@@ -82,16 +82,16 @@ export function MoneyCard({
       {/* The lead figure. */}
       {!hideLead && (
       <div className="mb-section">
-        <p className="text-[13px] font-medium text-muted">{due > 0 ? t("stillDue") : voided ? t("nothingDue") : t("paid")}</p>
+        <p className="text-sm font-medium text-muted">{due > 0 ? t("stillDue") : voided ? t("nothingDue") : t("paid")}</p>
         <p
           data-figure={due > 0 ? "due" : "paid"}
           data-amount={due > 0 ? due : paid}
-          className={cn("mt-inline text-[1.75rem] font-semibold leading-tight tabular-nums", due > 0 && "text-warning", voided && due === 0 && "text-muted")}
+          className={cn("type-figure mt-inline text-3xl font-semibold leading-tight", due > 0 && "text-warning", voided && due === 0 && "text-muted")}
         >
           {formatMoney(due > 0 ? due : paid)}
         </p>
         {due === 0 && (
-          <p className="mt-inline flex items-center gap-inline text-[13px] text-muted">
+          <p className="mt-inline flex items-center gap-inline text-sm text-muted">
             {!voided && <Check size={14} strokeWidth={2} aria-hidden className="text-success" />}
             {voided ? (o.status === "cancelled" ? t("noteCancelled") : t("noteRefunded")) : t("settled")}
           </p>
@@ -99,7 +99,7 @@ export function MoneyCard({
       </div>
       )}
 
-      <dl className={cn("pt-tight text-[0.8125rem]", !hideLead && "border-t border-hairline")}>
+      <dl className={cn("pt-tight text-sm", !hideLead && "border-t border-hairline")}>
         {row("total", t("total"), formatMoney(o.total))}
         {row("captured", t("captured"), formatMoney(captured))}
         {since > 0 && row("since", t("since"), formatMoney(since))}
@@ -149,52 +149,35 @@ function CollectForm({ due, methods, onCollect }: { due: number; methods: Paymen
       }}
       className="mt-section border-t border-hairline pt-section"
     >
-      <h3 className="mb-tight text-base font-semibold text-fg" id="collect-title">{t("collect")}</h3>
+      <h3 className="mb-tight text-md font-semibold text-fg" id="collect-title">{t("collect")}</h3>
 
-      {/* How it is being paid: one of the venue's own methods, as chips. */}
-      <div role="radiogroup" aria-labelledby="collect-title" className="flex flex-wrap gap-tight">
-        {methods.map((m) => {
-          const on = m === method;
-          return (
-            <button
-              key={m}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              onClick={() => setMethod(m)}
-              className={cn(
-                "inline-flex h-11 items-center gap-inline rounded-sm border px-comfortable text-[0.8125rem] font-medium transition-colors duration-quick md:h-9",
-                on ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card text-fg hover:border-strong",
-              )}
-            >
-              {on && <Check size={13} strokeWidth={2.5} aria-hidden />}
-              {enumL.method(m)}
-            </button>
-          );
-        })}
-      </div>
+      {/* How it is being paid: one of the venue's own methods. A segmented
+          choice, not chips: it is one-of-many, and a solid orange chip beside
+          the orange Collect button would put two primaries on one card. */}
+      <SegmentedControl
+        aria-labelledby="collect-title"
+        value={method}
+        onChange={(v) => setMethod(v as typeof method)}
+        options={methods.map((m) => ({ value: m, label: enumL.method(m) }))}
+        className="max-w-full flex-wrap"
+      />
 
       <div className="mt-section flex flex-col gap-tight">
-        <label htmlFor="collect-amount" className="text-[13px] font-medium text-muted">{t("amount")}</label>
-        <div className="relative">
-          <span aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-sm text-muted">৳</span>
-          <input
-            id="collect-amount"
-            data-collect-amount
-            type="text"
-            inputMode="decimal"
-            autoComplete="off"
-            value={text}
-            onChange={(e) => { setText(e.target.value); setTouched(true); }}
-            aria-invalid={!!message || undefined}
-            aria-describedby="collect-msg"
-            className={cn(
-              "h-11 w-full rounded-sm border bg-card pl-7 pr-comfortable text-sm tabular-nums outline-none transition-colors duration-quick",
-              message ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20",
-            )}
-          />
-        </div>
-        <p id="collect-msg" aria-live="polite" className={cn("text-[0.75rem]", message ? "text-danger" : "text-muted")}>
+        <label htmlFor="collect-amount" className="text-sm font-medium text-muted">{t("amount")}</label>
+        <AffixInput
+          id="collect-amount"
+          data-collect-amount
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          prefix="৳"
+          value={text}
+          onChange={(e) => { setText(e.target.value); setTouched(true); }}
+          invalid={!!message}
+          aria-describedby="collect-msg"
+          inputClassName="tabular-nums"
+        />
+        <p id="collect-msg" aria-live="polite" className={cn("text-xs", message ? "text-danger" : "text-muted")}>
           {message ?? t("help", { amount: formatMoney(due) })}
         </p>
       </div>

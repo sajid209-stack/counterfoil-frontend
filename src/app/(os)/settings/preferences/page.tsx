@@ -40,7 +40,7 @@ export default function PreferencesPage() {
 
   return (
     <PageShell title={t("preferences.title")} description={t("preferences.description")}>
-      <div className="flex max-w-3xl flex-col gap-section pb-hero">
+      <div className="flex flex-col gap-section pb-hero">
         <SettingsSection title={t("preferences.displayTitle")} description={t("preferences.displayDesc")}>
           <SettingRow label={t("preferences.appearance")} description={t("preferences.appearanceDesc")} labelFor={false}>
             {({ labelId, describedBy }) => <AppearancePicker showLabel={false} labelledBy={labelId} describedBy={describedBy} />}
@@ -90,12 +90,12 @@ export default function PreferencesPage() {
           <dl className="divide-y divide-hairline">
             {shortcuts.map((s) => (
               <div key={s.label} className="flex items-center justify-between gap-section px-card py-comfortable">
-                <dt className="text-sm text-fg">{s.label}</dt>
+                <dt className="text-base text-fg">{s.label}</dt>
                 <dd className="flex shrink-0 gap-inline">
                   {s.keys.map((k) => (
                     <kbd
                       key={k}
-                      className="inline-flex min-w-7 items-center justify-center rounded-xs border border-line bg-card px-tight py-inline font-mono text-[12px] text-fg shadow-[inset_0_-1px_0_var(--color-line)]"
+                      className="inline-flex min-w-7 items-center justify-center rounded-inner border border-line bg-subtle px-tight py-inline text-xs font-medium text-fg"
                     >
                       {k}
                     </kbd>
@@ -106,7 +106,7 @@ export default function PreferencesPage() {
           </dl>
         </SettingsSection>
 
-        <p className="max-w-prose text-[13px] text-muted">{t("preferences.note")}</p>
+        <p className="max-w-prose text-sm text-muted">{t("preferences.note")}</p>
       </div>
     </PageShell>
   );

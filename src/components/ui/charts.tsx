@@ -20,16 +20,6 @@ export interface ChartPoint {
   compareTitle?: string;
 }
 
-const useTip = () => {
-  const [tip, setTip] = useState<{ x: number; y: number; text: string } | null>(null);
-  const node = tip ? (
-    <div className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-xs border border-line bg-card px-tight py-inline font-mono text-[0.75rem] tabular-nums shadow-sm" style={{ left: tip.x, top: tip.y - 30 }}>
-      {tip.text}
-    </div>
-  ) : null;
-  return { tip, setTip, node };
-};
-
 /** The rendered width in CSS pixels. The other charts here scale a fixed
  *  viewBox, which also scales their text — at 320px a 10px label renders at
  *  5px. A chart carrying an axis has to draw at 1:1 so the labels stay the
@@ -195,20 +185,20 @@ export function AreaChart({
             transform: "translateX(-50%)",
           }}
         >
-          <p className="text-[0.75rem] text-muted">{active.title ?? active.label}</p>
+          <p className="text-xs text-muted">{active.title ?? active.label}</p>
           {active.compare != null && active.compareTitle ? (
             <>
-              <p className="whitespace-nowrap text-[0.8125rem] font-medium">{fmt(active.value)}</p>
-              <p className="whitespace-nowrap text-[0.75rem] text-muted">
+              <p className="whitespace-nowrap text-sm font-medium">{fmt(active.value)}</p>
+              <p className="whitespace-nowrap text-xs text-muted">
                 {active.compareTitle} {fmt(active.compare)}
                 {tooltipDelta?.(active.value, active.compare) ? ` · ${tooltipDelta(active.value, active.compare)}` : ""}
               </p>
             </>
           ) : (
             <>
-              <p className="whitespace-nowrap text-[0.8125rem] font-medium">{fmt(active.value)}</p>
+              <p className="whitespace-nowrap text-sm font-medium">{fmt(active.value)}</p>
               {active.compare != null && (
-                <p className="whitespace-nowrap text-[0.75rem] text-muted">{fmt(active.compare)}</p>
+                <p className="whitespace-nowrap text-xs text-muted">{fmt(active.compare)}</p>
               )}
             </>
           )}
@@ -238,7 +228,7 @@ export function AreaChart({
                 x1={padL} x2={padL + plotW} y1={y(v)} y2={y(v)}
                 stroke="var(--color-line)" strokeWidth="1" strokeDasharray={grid === "dashed" ? "3 4" : undefined}
               />
-              <text x={padL - 10} y={y(v) + 4} textAnchor="end" className="fill-[var(--color-muted)] text-[0.75rem]">
+              <text x={padL - 10} y={y(v) + 4} textAnchor="end" className="fill-[var(--color-muted)] text-xs">
                 {axis(v)}
               </text>
             </g>
@@ -264,7 +254,7 @@ export function AreaChart({
             // The last label ends at the plot's right edge rather than centring on
             // it, or half of it ("29 Jul") is cut off by the card.
             return (
-              <text key={`x${i}`} x={x(i)} y={height - 8} textAnchor={isLast && i > 0 ? "end" : "middle"} className="fill-[var(--color-muted)] text-[0.75rem]">
+              <text key={`x${i}`} x={x(i)} y={height - 8} textAnchor={isLast && i > 0 ? "end" : "middle"} className="fill-[var(--color-muted)] text-xs">
                 {p.label}
               </text>
             );
@@ -304,13 +294,13 @@ export function AreaChart({
           aria-label. */}
       {hasCompare && compareLabel && legend && legendKeys && (
         <div data-chart-legend className="mt-tight flex flex-wrap items-center gap-x-section gap-y-inline">
-          <span className="flex items-center gap-tight text-[0.75rem] text-muted">
+          <span className="flex items-center gap-tight text-xs text-muted">
             <svg width="20" height="4" aria-hidden className="shrink-0">
               <line x1="0" x2="20" y1="2" y2="2" stroke="var(--color-ember)" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
             <span className="tabular-nums text-fg">{valueLabel}</span>
           </span>
-          <span className="flex items-center gap-tight text-[0.75rem] text-muted">
+          <span className="flex items-center gap-tight text-xs text-muted">
             <svg width="20" height="4" aria-hidden className="shrink-0">
               <line x1="0" x2="20" y1="2" y2="2" stroke="var(--color-muted)" strokeWidth="2" strokeDasharray="4 3" />
             </svg>
@@ -320,154 +310,14 @@ export function AreaChart({
       )}
       {hasCompare && compareLabel && legend && !legendKeys && (
         <div className="mt-tight flex items-center gap-section">
-          <span className="flex items-center gap-inline text-[0.75rem] text-muted">
+          <span className="flex items-center gap-inline text-xs text-muted">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ember" />{valueLabel}
           </span>
-          <span className="flex items-center gap-inline text-[0.75rem] text-muted">
+          <span className="flex items-center gap-inline text-xs text-muted">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted" />{compareLabel}
           </span>
         </div>
       )}
-    </div>
-  );
-}
-
-/** Line chart with an optional dashed comparison series. */
-export function LineChart({ points, fmt, height = 160 }: { points: ChartPoint[]; fmt: (v: number) => string; height?: number }) {
-  const { setTip, node } = useTip();
-  const w = 640, h = height, pad = 8;
-  const max = Math.max(...points.map((p) => Math.max(p.value, p.compare ?? 0)), 1);
-  const x = (i: number) => pad + (i / Math.max(1, points.length - 1)) * (w - pad * 2);
-  const y = (v: number) => h - pad - (v / max) * (h - pad * 2 - 12);
-  const path = (get: (p: ChartPoint) => number | undefined) =>
-    points.map((p, i) => (get(p) == null ? null : `${x(i)},${y(get(p)!)}`)).filter(Boolean).join(" ");
-  return (
-    <div className="relative">
-      {node}
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full" role="img">
-        {points.some((p) => p.compare != null) && (
-          <polyline points={path((p) => p.compare)} fill="none" stroke="var(--color-faint)" strokeWidth="1.5" strokeDasharray="4 4" />
-        )}
-        <polyline points={path((p) => p.value)} fill="none" stroke="var(--color-ember)" strokeWidth="2" />
-        {points.map((p, i) => (
-          <circle
-            key={i}
-            cx={x(i)} cy={y(p.value)} r={8} fill="transparent"
-            onMouseEnter={(e) => { const r = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect(); setTip({ x: ((x(i)) / w) * r.width, y: (y(p.value) / h) * r.height, text: `${p.label} · ${fmt(p.value)}${p.compare != null ? ` (prev ${fmt(p.compare)})` : ""}` }); }}
-            onMouseLeave={() => setTip(null)}
-          />
-        ))}
-        {points.map((p, i) => (points.length <= 14 || i % Math.ceil(points.length / 14) === 0 ? (
-          <text key={`l${i}`} x={x(i)} y={h - 1} textAnchor="middle" className="fill-[var(--color-faint)] font-mono text-[0.75rem]">{p.label}</text>
-        ) : null))}
-      </svg>
-    </div>
-  );
-}
-
-/** Vertical bars. */
-export function BarChart({ points, fmt, height = 140 }: { points: ChartPoint[]; fmt: (v: number) => string; height?: number }) {
-  const { setTip, node } = useTip();
-  const w = 320, h = height, pad = 4;
-  const max = Math.max(...points.map((p) => p.value), 1);
-  const bw = (w - pad * 2) / points.length;
-  return (
-    <div className="relative">
-      {node}
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full" role="img">
-        {points.map((p, i) => {
-          const bh = (p.value / max) * (h - 24);
-          return (
-            <g key={i}
-              onMouseEnter={(e) => { const r = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect(); setTip({ x: ((pad + i * bw + bw / 2) / w) * r.width, y: ((h - 12 - bh) / h) * r.height, text: `${p.label} · ${fmt(p.value)}` }); }}
-              onMouseLeave={() => setTip(null)}
-            >
-              <rect x={pad + i * bw + 1} y={h - 12 - bh} width={Math.max(1, bw - 2)} height={bh} rx={2} className="fill-[var(--color-ember)]" opacity={p.value === 0 ? 0.15 : 1} />
-              {(points.length <= 12 || i % 2 === 0) && (
-                <text x={pad + i * bw + bw / 2} y={h - 2} textAnchor="middle" className="fill-[var(--color-faint)] font-mono text-[0.5rem]">{p.label}</text>
-              )}
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
-
-/** Horizontal bars (top products). */
-export function HBarChart({ points, fmt }: { points: ChartPoint[]; fmt: (v: number) => string }) {
-  const max = Math.max(...points.map((p) => p.value), 1);
-  return (
-    <div className="flex flex-col gap-tight">
-      {points.map((p) => (
-        <div key={p.label} className="flex items-center gap-tight" title={`${p.label} · ${fmt(p.value)}`}>
-          <span className="w-40 min-w-0 shrink-0 truncate text-[0.75rem]">{p.label}</span>
-          <span className="h-3 flex-1 overflow-hidden rounded-xs bg-line"><span className="block h-full rounded-xs bg-ember" style={{ width: `${(p.value / max) * 100}%` }} /></span>
-          <span className="w-24 shrink-0 whitespace-nowrap text-right font-mono text-[0.75rem] tabular-nums">{fmt(p.value)}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** Donut with a legend carrying amounts and percentages. */
-export function DonutChart({
-  points,
-  fmt,
-  otherLabel = "Other",
-}: {
-  points: ChartPoint[];
-  fmt: (v: number) => string;
-  /** What the fifth-and-beyond slice is called. */
-  otherLabel?: string;
-}) {
-  /* Four slots, then "Other". A ninth series is never a generated hue, and a
-     fifth here would have to reuse one — which makes two segments claim the
-     same identity in the ring and the legend both. */
-  const shown = points.length <= 4
-    ? points
-    : [
-        ...points.slice(0, 3),
-        {
-          label: otherLabel,
-          value: points.slice(3).reduce((sum, p) => sum + p.value, 0),
-        },
-      ];
-  const total = shown.reduce((s, p) => s + p.value, 0) || 1;
-  /* The four validated categorical slots, in fixed order and never cycled.
-     A fifth category folds into "Other" rather than inventing a hue — see the
-     token comment in globals.css for what the old neutral ramp measured. */
-  const colors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
-  const r = 42, c = 2 * Math.PI * r;
-  let acc = 0;
-  return (
-    <div className="flex items-center gap-section">
-      <svg viewBox="0 0 110 110" className="h-28 w-28 shrink-0" role="img">
-        {shown.map((p, i) => {
-          const frac = p.value / total;
-          /* A 2px gap in the surface colour between neighbouring fills, so two
-             segments never touch — the mark spec's separator, and the secondary
-             encoding the 6–8 CVD band obliges. */
-          const gap = shown.length > 1 ? 2 : 0;
-          const seg = (
-            <circle key={p.label} cx="55" cy="55" r={r} fill="none" stroke={colors[i]} strokeWidth="14"
-              strokeDasharray={`${Math.max(0, frac * c - gap)} ${c}`} strokeDashoffset={-acc * c} transform="rotate(-90 55 55)">
-              <title>{`${p.label} · ${fmt(p.value)} · ${Math.round(frac * 100)}%`}</title>
-            </circle>
-          );
-          acc += frac;
-          return seg;
-        })}
-      </svg>
-      <div className="min-w-0 flex-1">
-        {shown.map((p, i) => (
-          <div key={p.label} className="flex items-center gap-tight text-[0.75rem]">
-            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: colors[i] }} />
-            <span className="min-w-0 flex-1 truncate">{p.label}</span>
-            <span className="whitespace-nowrap font-mono text-[0.75rem] tabular-nums">{fmt(p.value)} · {Math.round((p.value / total) * 100)}%</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -618,7 +468,7 @@ export function HeatmapChart({
     <div ref={wrap} className="relative">
       {tip && (
         <div
-          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-xs border border-line bg-card px-tight py-inline text-[0.75rem] font-medium shadow-sm"
+          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-xs border border-line bg-card px-tight py-inline text-xs font-medium shadow-sm"
           style={{ left: tip.x, top: tip.y - 4 }}
         >
           {tip.text}
@@ -645,12 +495,12 @@ export function HeatmapChart({
           className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ember"
           style={{ minWidth }}
         >
-          <div aria-hidden className="grid gap-[2px]" style={{ gridTemplateColumns: `${rowLabelWidth}px repeat(${n}, minmax(${colMinWidth}px, ${colMaxWidth ? `${colMaxWidth}px` : "1fr"}))` }}>
-            <span className="sticky left-0 z-[1] group-data-[scrolled=true]/heat:bg-card" />
+          <div aria-hidden className="grid gap-0.5" style={{ gridTemplateColumns: `${rowLabelWidth}px repeat(${n}, minmax(${colMinWidth}px, ${colMaxWidth ? `${colMaxWidth}px` : "1fr"}))` }}>
+            <span className="sticky left-0 z-10 group-data-[scrolled=true]/heat:bg-card" />
             {colLabels.map((l, c) => (
               <span key={c} className="relative h-5">
                 {c % labelEvery === 0 && (
-                  <span className="absolute left-1/2 top-0 -translate-x-1/2 whitespace-nowrap text-[0.75rem] text-muted">{l}</span>
+                  <span className="absolute left-1/2 top-0 -translate-x-1/2 whitespace-nowrap text-xs text-muted">{l}</span>
                 )}
               </span>
             ))}
@@ -658,8 +508,8 @@ export function HeatmapChart({
               <Fragment key={r}>
                 <span
                   className={cn(
-                    "sticky left-0 z-[1] flex items-center pr-tight text-[0.75rem] text-muted",
-                    "group-data-[scrolled=true]/heat:bg-card group-data-[scrolled=true]/heat:shadow-[2px_0_0_var(--color-hairline)]",
+                    "sticky left-0 z-10 flex items-center pr-tight text-xs text-muted",
+                    "group-data-[scrolled=true]/heat:bg-card group-data-[scrolled=true]/heat:border-r group-data-[scrolled=true]/heat:border-hairline",
                   )}
                 >
                   {longRowLabels ? <span className="line-clamp-2 break-words leading-tight" title={label}>{label}</span> : label}
@@ -674,7 +524,7 @@ export function HeatmapChart({
                       key={c}
                       ref={(el) => { refs.current[r * n + c] = el; }}
                       onMouseEnter={() => { setHovered([r, c]); showAt(r, c); }}
-                      className={cellHeight === undefined ? "h-7 rounded-[3px]" : "rounded-[3px]"}
+                      className={cellHeight === undefined ? "h-7 rounded-xs" : "rounded-xs"}
                       style={{
                         height: cellHeight,
                         background: step ? HEAT[step - 1] : "transparent",
@@ -714,11 +564,11 @@ export function HeatmapChart({
       </table></div>
       <span className="sr-only" aria-live="polite">{active ? cellText(active[0], active[1], values.get(active[0] * n + active[1]) ?? 0) : ""}</span>
 
-      <div className="mt-comfortable flex items-center gap-tight text-[0.75rem] text-muted" aria-hidden>
+      <div className="mt-comfortable flex items-center gap-tight text-xs text-muted" aria-hidden>
         <span>{legend.fewer}</span>
-        <span className="h-3 w-3 rounded-[3px]" style={{ boxShadow: "inset 0 0 0 1px var(--color-hairline)" }} />
+        <span className="h-3 w-3 rounded-xs" style={{ boxShadow: "inset 0 0 0 1px var(--color-hairline)" }} />
         {HEAT.map((h) => (
-          <span key={h} className="h-3 w-3 rounded-[3px]" style={{ background: h, boxShadow: "inset 0 0 0 1px var(--heat-edge)" }} />
+          <span key={h} className="h-3 w-3 rounded-xs" style={{ background: h, boxShadow: "inset 0 0 0 1px var(--heat-edge)" }} />
         ))}
         <span>{legend.more}</span>
       </div>

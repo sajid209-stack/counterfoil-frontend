@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Checkbox } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import type { ChipOption } from "./chip";
 
@@ -37,28 +37,17 @@ export function Checklist({
 }) {
   return (
     <div role="group" aria-label={label} className="-mx-comfortable max-h-52 overflow-y-auto overscroll-contain">
-      {options.length === 0 && empty && <p className="px-comfortable py-tight text-[0.8125rem] text-muted">{empty}</p>}
+      {options.length === 0 && empty && <p className="px-comfortable py-tight text-sm text-muted">{empty}</p>}
       {options.map((o) => {
         const picked = value.includes(o.value);
         return (
-          <label key={o.value} className="flex min-h-11 cursor-pointer items-center gap-tight px-comfortable text-sm transition-colors duration-quick hover:bg-muted-wash md:min-h-9">
-            <input
-              type="checkbox"
-              checked={picked}
-              onChange={() => onChange(picked ? value.filter((x) => x !== o.value) : [...value, o.value])}
-              className="peer sr-only"
-            />
-            <span
-              aria-hidden
-              className={cn(
-                "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-xs border peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-inverse",
-                picked ? "border-inverse bg-inverse text-inverse-fg" : "border-strong bg-card",
-              )}
-            >
-              {picked && <Check size={12} strokeWidth={3} />}
-            </span>
-            <span className={cn("min-w-0 flex-1 truncate", picked && "font-medium")}>{o.label}</span>
-          </label>
+          <Checkbox
+            key={o.value}
+            checked={picked}
+            onCheckedChange={() => onChange(picked ? value.filter((x) => x !== o.value) : [...value, o.value])}
+            label={<span className={cn("block truncate", picked && "font-medium")}>{o.label}</span>}
+            className="px-comfortable transition-colors duration-quick hover:bg-muted-wash"
+          />
         );
       })}
     </div>

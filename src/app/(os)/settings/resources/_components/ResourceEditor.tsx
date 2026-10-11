@@ -3,7 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, ConfirmDialog, Select, useToast } from "@/components/ui";
+import { Button, ConfirmDialog, Radio, Select, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { createResourceRecord, ownerBusyDetailed, updateResource, type Location, type Resource } from "@/lib/api";
 import { DEMO_TODAY } from "@/lib/schedule";
@@ -155,7 +155,7 @@ export function ResourceEditor({
   };
 
   return (
-    <div className="flex max-w-3xl flex-col gap-section pb-hero">
+    <div className="flex flex-col gap-section pb-hero">
       <SettingsSection title={t("resources.detailsTitle")} description={t("resources.detailsDesc")}>
         <SettingRow label={t("common.name")} error={nameErr}>
           {({ id, describedBy }) => (
@@ -203,26 +203,27 @@ export function ResourceEditor({
           {RATES.map((k) => {
             const checked = form.rateKind === k;
             return (
-              <label
+              // The tile is the target; the kit Radio inside is the control.
+              <div
                 key={k}
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).closest("label,input")) return;
+                  set({ rateKind: k });
+                }}
                 className={cn(
-                  "flex cursor-pointer items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick",
+                  "cursor-pointer rounded-control px-tight transition-colors duration-quick",
                   checked ? "bg-card ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:ring-1 hover:ring-inset hover:ring-line",
                 )}
               >
-                <input
-                  type="radio"
+                <Radio
                   name={radioName}
                   value={k}
                   checked={checked}
                   onChange={() => set({ rateKind: k })}
-                  className="mt-[3px] h-4 w-4 shrink-0 accent-ember"
+                  label={<span className="font-medium">{rateTitle[k]}</span>}
+                  description={rateDesc[k]}
                 />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium text-fg">{rateTitle[k]}</span>
-                  <span className="mt-inline block text-[13px] leading-relaxed text-muted">{rateDesc[k]}</span>
-                </span>
-              </label>
+              </div>
             );
           })}
         </div>
@@ -272,15 +273,15 @@ export function ResourceEditor({
       {mode === "edit" && (
         <SettingsSection title={t("resources.todayTitle")} description={t("resources.todayDesc")}>
           {today.length === 0 ? (
-            <p className="px-card py-section text-sm text-muted">{t("resources.todayNone")}</p>
+            <p className="px-card py-section text-base text-muted">{t("resources.todayNone")}</p>
           ) : (
             <ul className="divide-y divide-hairline">
               {today.map((s) => (
                 <li key={`${s.start}-${s.end}`} className="flex flex-wrap items-baseline gap-x-section gap-y-inline px-card py-comfortable">
-                  <span className="w-44 shrink-0 whitespace-nowrap text-sm font-medium tabular-nums text-fg">
+                  <span className="w-44 shrink-0 whitespace-nowrap text-base font-medium tabular-nums text-fg">
                     {formatClockRange(s.start, s.end)}
                   </span>
-                  <span className="min-w-0 text-sm text-muted">{s.label}</span>
+                  <span className="min-w-0 text-base text-muted">{s.label}</span>
                 </li>
               ))}
             </ul>

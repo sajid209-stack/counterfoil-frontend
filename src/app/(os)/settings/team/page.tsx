@@ -228,7 +228,7 @@ export default function TeamPage() {
 
   return (
     <PageShell title={t("team.title")} description={t("team.description")} primary={primary}>
-      <div className="flex max-w-5xl flex-col gap-section pb-hero">
+      <div className="flex flex-col gap-section pb-hero">
         {/* The first toolbar: the views, with the create button at the right of the
             same rule. A list has no header row above it for the button. */}
         <PageToolbar underline primary={primary}>
@@ -260,7 +260,7 @@ export default function TeamPage() {
             }
           >
             {rows.length === 0 ? (
-              <li className="px-card py-wide text-center text-sm text-muted">{filtering ? t("team.noMatch") : t("team.emptyTab")}</li>
+              <li className="px-card py-wide text-center text-base text-muted">{filtering ? t("team.noMatch") : t("team.emptyTab")}</li>
             ) : (
               rows.map((s) => {
                 const isYou = s.id === DEMO_STAFF_ID;
@@ -275,7 +275,7 @@ export default function TeamPage() {
                     badges={
                       <>
                         {isYou ? (
-                          <span className="rounded-xs bg-muted-wash px-tight text-[0.75rem] font-medium text-muted">{t("team.you")}</span>
+                          <span className="rounded-control bg-muted-wash px-tight text-xs font-medium text-muted">{t("team.you")}</span>
                         ) : null}
                         {s.status !== "active" ? <StatusPill status={s.status}>{statusWord(s)}</StatusPill> : null}
                       </>
@@ -288,8 +288,8 @@ export default function TeamPage() {
                     }
                     columns={
                       <>
-                        <span className="hidden w-44 text-right text-[13px] text-muted lg:block">{activity(s)}</span>
-                        <span className="hidden w-20 text-right text-[13px] text-muted xl:block">
+                        <span className="hidden w-44 text-right text-sm text-muted lg:block">{activity(s)}</span>
+                        <span className="hidden w-20 text-right text-sm text-muted xl:block">
                           {devs !== null ? t("team.deviceCount", { count: devs }) : ""}
                         </span>
                       </>

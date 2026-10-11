@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Download, Search } from "lucide-react";
-import { Button, EmptyState, FilterBar, PageShell, Select, formatRange, type FilterSpec } from "@/components/ui";
+import { Button, EmptyState, FilterBar, FilterSearch, PageShell, Select, Skeleton, formatRange, type FilterSpec } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
@@ -232,20 +232,14 @@ function ActivityView() {
       <div className="flex flex-col gap-section">
         <FilterBar
           search={
-            <label className="relative block min-w-0 md:w-60 xl:w-72">
-              <Search size={16} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setLimit(PAGE);
-                }}
-                placeholder={t("search")}
-                aria-label={t("search")}
-                className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none placeholder:text-muted focus:border-inverse md:h-9"
-              />
-            </label>
+            <FilterSearch
+              value={search}
+              onChange={(v) => {
+                setSearch(v);
+                setLimit(PAGE);
+              }}
+              placeholder={t("search")}
+            />
           }
           filters={filters}
           /* The one action. On a phone it is the download glyph beside Filters. */
@@ -256,7 +250,7 @@ function ActivityView() {
           }
         />
 
-        <p className="text-[0.8125rem] text-muted" aria-live="polite">
+        <p className="text-sm text-muted" aria-live="polite">
           {listQ.loading && !events ? " " : `${t("count", { count: total })} · ${PRESETS.some((p) => p.value === rangePreset) ? t(`period.${rangePreset}`) : formatRange(range.from, range.to)}`}
         </p>
 
@@ -273,12 +267,12 @@ function ActivityView() {
           <div aria-busy="true" className="flex flex-col gap-section">
             {[0, 1].map((i) => (
               <div key={i} className="flex flex-col gap-tight">
-                <div className="h-5 w-28 animate-pulse rounded-sm bg-line" />
+                <Skeleton className="h-5 w-28" />
                 <div className="card-surface overflow-hidden">
                   {[0, 1, 2, 3].map((j) => (
                     <div key={j} className="flex items-center gap-comfortable border-b border-hairline px-card py-comfortable last:border-0">
-                      <div className="h-8 w-8 animate-pulse rounded-full bg-line" />
-                      <div className="h-4 flex-1 animate-pulse rounded-sm bg-line" />
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <Skeleton className="h-4 flex-1" />
                     </div>
                   ))}
                 </div>
@@ -307,7 +301,8 @@ function ActivityView() {
                     and the bar is pinned above it (53px); from md the content
                     scrolls inside its own pane, which already starts below the
                     bar, so the header pins to the pane's top. */}
-                <h2 className="sticky top-[53px] z-10 -mx-gutter bg-surface px-gutter py-tight text-[0.8125rem] font-semibold text-muted md:top-0">
+                {/* ds-exception: 53px is the phone top bar's height, set in OsShell; there is no token for it */}
+                <h2 className="sticky top-[53px] z-10 -mx-gutter bg-surface px-gutter py-tight text-sm font-semibold text-muted md:top-0">
                   {dayLabel(day)}
                   <span className="ml-tight font-normal">{day === DEMO_TODAY || day === shift(DEMO_TODAY, -1) ? formatDay(day, { weekday: true }) : ""}</span>
                 </h2>
@@ -358,39 +353,40 @@ function Row({
           onToggle();
         }}
       >
-        <span className="hidden w-[4.75rem] shrink-0 pt-[0.4rem] text-[0.8125rem] tabular-nums text-muted md:block">{formatClockOf(e.at)}</span>
+        <span className="hidden w-[4.75rem] shrink-0 pt-1.5 text-sm tabular-nums text-muted md:block">{formatClockOf(e.at)}</span>
         <KindBadge kind={e.kind} severity={e.severity} />
         <div className="min-w-0 flex-1">
           {/* Two lines on a phone: the sentence (two lines at most; the whole of
               it is one press away) and what kind of thing it was. Where it
               happened is in the details, and beside the kind from md up. */}
-          <p className="line-clamp-2 break-words text-[0.8125rem] leading-snug md:line-clamp-none">{x.sentence(e, true)}</p>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-tight gap-y-0.5 text-[0.75rem] text-muted">
+          <p className="line-clamp-2 break-words text-sm leading-snug md:line-clamp-none">{x.sentence(e, true)}</p>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-tight gap-y-0.5 text-xs text-muted">
             <span className="md:hidden">{formatClockOf(e.at)} ·</span>
             <span>{x.kindLabel(e)}</span>
             {where && <span className="hidden min-w-0 break-words md:inline">· {where}</span>}
             <SeverityChip severity={e.severity} label={x.severityLabel(e.severity)} />
           </p>
         </div>
-        <span className="hidden items-center gap-inline pt-1 text-[0.75rem] text-muted md:flex">
+        <span className="hidden items-center gap-inline pt-1 text-xs text-muted md:flex">
           <Initials name={e.actor?.name ?? null} />
         </span>
-        <button
-          type="button"
+        <Button
+          variant="tertiary"
+          size="icon"
           onClick={onToggle}
           aria-expanded={expanded}
           aria-label={`${expanded ? t("hide") : t("show")}: ${x.plain(e)}`}
-          className="-my-1 -mr-2 grid h-11 w-11 shrink-0 place-items-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg"
+          className="-my-1 -mr-2 shrink-0 text-muted"
         >
           <ChevronDown size={16} strokeWidth={1.5} aria-hidden className={cn("transition-transform duration-quick", expanded && "rotate-180")} />
-        </button>
+        </Button>
       </div>
       {expanded && (
-        <dl className="grid gap-x-section gap-y-tight bg-muted-wash/60 px-card py-comfortable text-[0.8125rem] sm:grid-cols-2 md:pl-[calc(var(--spacing-card)+4.75rem+var(--spacing-comfortable)*2+2rem)]">
+        <dl className="grid gap-x-section gap-y-tight bg-muted-wash/60 px-card py-comfortable text-sm sm:grid-cols-2 md:pl-[calc(var(--spacing-card)+4.75rem+var(--spacing-comfortable)*2+2rem)]">
           {x.details(e).map((d, i) => (
             <div key={`${d.label}-${i}`} className="min-w-0">
-              <dt className="text-[0.75rem] font-medium text-muted">{d.label}</dt>
-              <dd className={cn("break-words text-fg", d.mono && "font-mono text-[0.75rem]")}>
+              <dt className="text-xs font-medium text-muted">{d.label}</dt>
+              <dd className={cn("break-words text-fg", d.mono && "font-mono text-xs")}>
                 {d.href ? (
                   <Link href={d.href} className="underline decoration-line underline-offset-2 hover:decoration-fg">
                     {d.value}

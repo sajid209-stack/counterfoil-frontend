@@ -32,6 +32,7 @@ import {
   FormField,
   Modal,
   PageShell,
+  Skeleton,
   StatusPill,
   useToast,
   type Column,
@@ -92,7 +93,7 @@ export default function MarketplacePage() {
   const resources = resourcesQ.data?.data ?? [];
 
   if (q.loading) {
-    return <PageShell title={t("title")}><div className="h-72 animate-pulse rounded-md bg-subtle" /></PageShell>;
+    return <PageShell title={t("title")}><Skeleton h={288} /></PageShell>;
   }
   if (!conn || !meta || !perf) {
     return (
@@ -163,8 +164,8 @@ export default function MarketplacePage() {
       header: t("col.listing"),
       render: (l) => (
         <div className="min-w-0">
-          <span className="block truncate font-medium">{l.productName}</span>
-          {l.rejectedReason && <span className="block text-[12px] text-danger">{l.rejectedReason}</span>}
+          <span className="block truncate text-base font-medium">{l.productName}</span>
+          {l.rejectedReason && <span className="block text-xs text-danger">{l.rejectedReason}</span>}
         </div>
       ),
     },
@@ -183,7 +184,7 @@ export default function MarketplacePage() {
         return (
           <span className="tabular-nums">
             {formatMoney(sp.net)}
-            <span className="block text-[12px] text-muted">{t("lessCommission", { amount: formatMoney(sp.commission) })}</span>
+            <span className="block text-xs text-muted">{t("lessCommission", { amount: formatMoney(sp.commission) })}</span>
           </span>
         );
       },
@@ -220,19 +221,19 @@ export default function MarketplacePage() {
           </div>
         )}
       </div>
-      <dl className="flex flex-col gap-comfortable text-[13px]">
+      <dl className="flex flex-col gap-comfortable text-sm">
         {/* The two questions a commission raises, answered in money. */}
         <div>
-          <dt className="text-[12px] font-medium text-muted">{t("onAExample")}</dt>
+          <dt className="text-xs font-medium text-muted">{t("onAExample")}</dt>
           <dd className="mt-inline">{t("dialog.example", { price: formatMoney(s.price), commission: formatMoney(s.commission), net: formatMoney(s.net) })}</dd>
         </div>
         <div>
-          <dt className="text-[12px] font-medium text-muted">{t("toMatchTitle")}</dt>
+          <dt className="text-xs font-medium text-muted">{t("toMatchTitle")}</dt>
           <dd className="mt-inline">{t("toMatch", { target: formatMoney(EXAMPLE), list: formatMoney(priceToNet(EXAMPLE, conn.commissionBps)) })}</dd>
         </div>
         {conn.lastSyncedAt && (
           <div>
-            <dt className="text-[12px] font-medium text-muted">{t("lastSync")}</dt>
+            <dt className="text-xs font-medium text-muted">{t("lastSync")}</dt>
             <dd className="mt-inline">{formatDateTime(conn.lastSyncedAt)}</dd>
           </div>
         )}
@@ -279,7 +280,7 @@ export default function MarketplacePage() {
     >
       {/* Cards belong to the Dashboard, Finances and Analytics. The figures a
           band would carry are one quiet line. */}
-      <p data-mk-summary className="mb-section text-[13px] text-muted">
+      <p data-mk-summary className="mb-section text-sm text-muted">
         {t("summaryOne", {
           listed: listings.length,
           live: listings.filter((l) => l.status === "live").length,
@@ -292,7 +293,7 @@ export default function MarketplacePage() {
       <div className="flex flex-col gap-section">
         {/* The listings: the working surface, so first. */}
         <section aria-labelledby="mk-listings">
-          <h2 id="mk-listings" className="mb-tight text-base font-semibold tracking-[-0.4px]">{t("listingsTitle")}</h2>
+          <h2 id="mk-listings" className="mb-tight text-md font-semibold">{t("listingsTitle")}</h2>
           {listings.length === 0 ? (
             <EmptyState
               title={t("noListings.title")}
@@ -314,13 +315,13 @@ export default function MarketplacePage() {
                   <span className="flex items-center gap-tight">
                     <span className="flex min-w-0 flex-1 flex-col gap-inline">
                       <span className="flex items-center gap-tight">
-                        <span className="min-w-0 flex-1 truncate font-medium">{l.productName}</span>
+                        <span className="min-w-0 flex-1 truncate text-base font-medium">{l.productName}</span>
                         <StatusPill tone={listingTone(l)}>{t(`listing.${l.status}`)}</StatusPill>
                       </span>
-                      <span className="text-[13px] text-muted">
+                      <span className="text-sm text-muted">
                         {t("theirPriceShort", { price: formatMoney(sp.price) })} · {t("youKeepShort", { net: formatMoney(sp.net) })}
                       </span>
-                      {l.rejectedReason && <span className="text-[13px] text-danger">{l.rejectedReason}</span>}
+                      {l.rejectedReason && <span className="text-sm text-danger">{l.rejectedReason}</span>}
                     </span>
                     <span className="-mr-tight shrink-0">
                       <ActionMenu label={t("rowActions", { name: l.productName })} items={listingItems(l)} />
@@ -336,7 +337,7 @@ export default function MarketplacePage() {
         <section className="card-surface" aria-labelledby="mk-terms">
           {wide ? (
             <div className="p-card">
-              <h2 id="mk-terms" className="mb-section text-base font-semibold tracking-[-0.4px]">{t("terms")}</h2>
+              <h2 id="mk-terms" className="mb-section text-md font-semibold">{t("terms")}</h2>
               {dealBody}
             </div>
           ) : (
@@ -350,8 +351,8 @@ export default function MarketplacePage() {
                   className="flex min-h-14 w-full items-center gap-tight px-card py-comfortable text-left"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block text-base font-semibold tracking-[-0.4px]">{t("terms")}</span>
-                    <span className="block text-[13px] font-normal text-muted">
+                    <span className="block text-md font-semibold">{t("terms")}</span>
+                    <span className="block text-sm font-normal text-muted">
                       {t("keepOf", { pct: bpsToPct(conn.commissionBps), net: formatMoney(s.net), price: formatMoney(s.price) })}
                     </span>
                   </span>
@@ -421,7 +422,7 @@ function AddListingDialog({
 
   return (
     <Modal open onClose={onClose} title={t("add.title")} description={t("add.body")} size="lg">
-      <FormField label={t("add.search")} value={q} onChange={(e) => setQ(e.target.value)} />
+      <FormField label={t("add.search")} variant="search" value={q} onChange={(e) => setQ(e.target.value)} />
       <ul className="mt-section flex max-h-[50vh] flex-col gap-tight overflow-y-auto">
         {rows.map((p) => {
           const listed = already.has(p.id);
@@ -435,11 +436,11 @@ function AddListingDialog({
                 type="button"
                 disabled={stopped}
                 onClick={() => onAdd(p.id)}
-                className="flex min-h-11 w-full items-center gap-tight rounded-sm border border-line p-comfortable text-left hover:bg-muted-wash disabled:opacity-60 disabled:hover:bg-transparent"
+                className="flex min-h-11 w-full items-center gap-tight rounded-control border border-line p-comfortable text-left hover:bg-muted-wash disabled:opacity-60 disabled:hover:bg-transparent"
               >
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{p.name}</span>
-                  <span className="block text-[12px] text-muted">
+                  <span className="block text-xs text-muted">
                     {listed
                       ? t("add.already")
                       : blockers.length

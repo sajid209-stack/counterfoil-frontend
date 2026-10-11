@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Check, Pencil, Plus, X } from "lucide-react";
-import { Button, DateField, DurationInput, FormField } from "@/components/ui";
+import { ArrowLeft, Pencil, Plus, X } from "lucide-react";
+import { Button, Checkbox, ChoiceCard, DateField, DurationInput, FormField } from "@/components/ui";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { formatDay } from "@/lib/format";
 import type { BookingTypeCode, Product, Resource, Staff } from "@/lib/api";
@@ -54,10 +54,10 @@ type Step = SetupStart | "q2";
 
 function Option({ title, helper, onClick }: { title: string; helper: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex w-full flex-col items-start gap-inline rounded-sm bg-muted-wash p-comfortable text-left transition-shadow duration-quick hover:ring-2 hover:ring-inset hover:ring-ember/40 active:bg-ember/5">
-      <span className="text-sm font-medium">{title}</span>
-      <span className="text-[13px] text-muted">{helper}</span>
-    </button>
+    <ChoiceCard onClick={onClick} className="flex w-full flex-col items-start gap-inline p-comfortable">
+      <span className="text-base font-medium">{title}</span>
+      <span className="text-sm text-muted">{helper}</span>
+    </ChoiceCard>
   );
 }
 
@@ -126,12 +126,12 @@ export function BookingSetup({
 
   if (value) {
     return (
-      <div className="rounded-sm bg-muted-wash p-comfortable">
+      <div className="rounded-control bg-muted-wash p-comfortable">
         <div className="flex items-start justify-between gap-section">
-          <p className="text-sm">{value.summary}</p>
-          <button type="button" onClick={() => { setStep(start); onChange(null); }} className="-my-tight flex min-h-11 shrink-0 items-center gap-inline rounded-sm px-tight text-[13px] font-medium text-brand-foreground hover:bg-muted-wash md:min-h-9">
-            <Pencil size={14} strokeWidth={1.5} /> {t("change")}
-          </button>
+          <p className="text-base">{value.summary}</p>
+          <Button variant="tertiary" size="sm" onClick={() => { setStep(start); onChange(null); }} icon={<Pencil size={14} strokeWidth={1.5} aria-hidden />} className="-my-tight shrink-0 text-brand-foreground">
+            {t("change")}
+          </Button>
         </div>
       </div>
     );
@@ -186,9 +186,9 @@ export function BookingSetup({
   const head = (text: string) => <div className="mb-inline"><Question>{text}</Question></div>;
   const backLink = () =>
     step === "q1" ? null : (
-      <button type="button" onClick={back} className="flex min-h-11 items-center gap-inline self-start text-[13px] text-muted hover:text-fg md:min-h-0">
-        <ArrowLeft size={14} strokeWidth={1.5} /> {t(start === step ? "allQuestions" : "back")}
-      </button>
+      <Button variant="tertiary" size="sm" onClick={back} icon={<ArrowLeft size={14} strokeWidth={1.5} aria-hidden />} className="self-start text-muted">
+        {t(start === step ? "allQuestions" : "back")}
+      </Button>
     );
   /* Done is never greyed out. Pressed with an answer missing, it says which
      one, beside the button — a disabled button that will not say why is the
@@ -196,7 +196,7 @@ export function BookingSetup({
   const footer = (onDone: () => void, missing: string | null) => (
     <div className="flex flex-col gap-tight">
       {doneError && missing && (
-        <p role="alert" className="text-[13px] font-medium text-danger">{missing}</p>
+        <p role="alert" className="text-sm font-medium text-danger">{missing}</p>
       )}
       <div className="flex items-center justify-between">
         {backLink()}
@@ -217,7 +217,9 @@ export function BookingSetup({
     <div className="flex flex-col gap-tight">
       {step === "q1" && (
         <>
-          {head(t("q1.title"))}
+          {/* The wizard step above already asks this, as its title; kept for a
+              screen reader so the options still have their question. */}
+          <p className="sr-only">{t("q1.title")}</p>
           <Option title={t("q1.showUp.title")} helper={t("q1.showUp.helper")} onClick={() => finish("BT-01", t("summary.showUp"))} />
           <Option title={t("q1.pickDate.title")} helper={t("q1.pickDate.helper")} onClick={() => setStep("q2")} />
           <Option title={t("q1.pickTime.title")} helper={t("q1.pickTime.helper")} onClick={() => setStep("q3")} />
@@ -266,13 +268,15 @@ export function BookingSetup({
             {head(t("resource.which"))}
             <div className="flex flex-col gap-tight">
               {resources.map((r) => (
-                <label key={r.id} className="flex min-h-11 cursor-pointer items-center gap-tight text-sm md:min-h-9">
-                  <input type="checkbox" checked={picked.includes(r.id)} onChange={() => setPicked((p) => toggle(p, r.id))} className="h-4 w-4 accent-ember" />
-                  {r.name} <span className="text-[12px] text-muted">({r.nounSingular})</span>
-                </label>
+                <Checkbox
+                  key={r.id}
+                  checked={picked.includes(r.id)}
+                  onChange={() => setPicked((p) => toggle(p, r.id))}
+                  label={<>{r.name} <span className="text-xs text-muted">({r.nounSingular})</span></>}
+                />
               ))}
               {onCreateResource && (
-                <div className="flex flex-wrap items-end gap-tight rounded-sm bg-muted-wash p-comfortable">
+                <div className="flex flex-wrap items-end gap-tight rounded-control bg-muted-wash p-comfortable">
                   <FormField label={t("resource.addOne")} placeholder={t("resource.addPlaceholder", { noun: newNoun })} value={newName} onChange={(e) => setNewName(e.target.value)} />
                   <FormField label={t("resource.type")} variant="select" value={newNoun} onChange={(e) => setNewNoun(e.target.value)} options={NOUNS.map((n) => ({ value: n, label: n }))} />
                   <Button size="sm" variant="secondary" icon={<Plus size={14} strokeWidth={1.5} />} loading={adding} onClick={addResource}>{t("resource.add")}</Button>
@@ -299,8 +303,8 @@ export function BookingSetup({
           <FormField label={t("provider.callThem")} variant="select" value={provNoun} onChange={(e) => setProvNoun(e.target.value)} options={PROVIDER_NOUNS.map((n) => ({ value: n, label: n }))} />
           <div className="flex flex-col gap-tight">
             <Question>{t("provider.who")}</Question>
-            {team.length === 0 ? <p className="text-[13px] text-muted">{t("provider.noTeam")}</p> : team.map((m) => (
-              <label key={m.id} className="flex min-h-11 cursor-pointer items-center gap-tight text-sm md:min-h-9"><input type="checkbox" checked={provIds.includes(m.id)} onChange={() => setProvIds((p) => toggle(p, m.id))} className="h-4 w-4 accent-ember" />{m.name}</label>
+            {team.length === 0 ? <p className="text-sm text-muted">{t("provider.noTeam")}</p> : team.map((m) => (
+              <Checkbox key={m.id} checked={provIds.includes(m.id)} onChange={() => setProvIds((p) => toggle(p, m.id))} label={m.name} />
             ))}
           </div>
           <DurationInput label={t("provider.howLong")} value={parseInt(provDuration, 10) || 60} min={5} onChange={(n) => setProvDuration(String(n))} chips={[30, 45, 60, 90]} className="max-w-xs" />
@@ -318,7 +322,7 @@ export function BookingSetup({
           <div className="flex flex-col gap-tight">
             <Question>{t("course.dates")}</Question>
             {courseDates.map((d) => (
-              <div key={d} className="flex items-center justify-between rounded-sm bg-muted-wash px-comfortable py-tight text-sm"><span className="text-[13px]">{formatDay(d, { weekday: true })}</span><button type="button" aria-label={t("course.remove", { date: formatDay(d, { weekday: true }) })} title={t("course.remove", { date: formatDay(d, { weekday: true }) })} onClick={() => setCourseDates((ds) => ds.filter((x) => x !== d))} className="-my-tight flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-danger md:h-9 md:w-9"><X size={16} strokeWidth={1.5} aria-hidden /></button></div>
+              <div key={d} className="flex items-center justify-between rounded-control bg-muted-wash px-comfortable py-tight text-base"><span className="text-sm">{formatDay(d, { weekday: true })}</span><button type="button" aria-label={t("course.remove", { date: formatDay(d, { weekday: true }) })} title={t("course.remove", { date: formatDay(d, { weekday: true }) })} onClick={() => setCourseDates((ds) => ds.filter((x) => x !== d))} className="-my-tight flex h-11 w-11 items-center justify-center rounded-control text-muted hover:bg-muted-wash hover:text-danger md:h-9 md:w-9"><X size={16} strokeWidth={1.5} aria-hidden /></button></div>
             ))}
             <div className="flex gap-tight">
               <DateField size="form" value={courseDate} today={DEMO_TODAY} onChange={setCourseDate} labels={{ previousMonth: t("previousMonth"), nextMonth: t("nextMonth"), today: t("today"), open: t("chooseDate") }} className="flex-1" />
@@ -333,9 +337,9 @@ export function BookingSetup({
       {step === "bundle" && (
         <div className="flex flex-col gap-section">
           {head(t("bundle.title"))}
-          <p className="-mt-tight text-[13px] text-muted">{t("bundle.help")}</p>
+          <p className="-mt-tight text-sm text-muted">{t("bundle.help")}</p>
           <div className="flex flex-col gap-tight">
-            {products.map((p) => (<label key={p.id} className="flex min-h-11 cursor-pointer items-center gap-tight text-sm md:min-h-9"><input type="checkbox" checked={bundleIds.includes(p.id)} onChange={() => setBundleIds((b) => toggle(b, p.id))} className="h-4 w-4 accent-ember" />{p.name}</label>))}
+            {products.map((p) => (<Checkbox key={p.id} checked={bundleIds.includes(p.id)} onChange={() => setBundleIds((b) => toggle(b, p.id))} label={p.name} />))}
           </div>
           {footer(finishBundle, bundleIds.length < 2 ? t("missing.bundle") : null)}
         </div>
@@ -349,7 +353,7 @@ export function BookingSetup({
           </div>
           <div className="flex flex-col gap-tight">
             <Question>{t("credits.spendable")}</Question>
-            {products.map((p) => (<label key={p.id} className="flex min-h-11 cursor-pointer items-center gap-tight text-sm md:min-h-9"><input type="checkbox" checked={creditIds.includes(p.id)} onChange={() => setCreditIds((c) => toggle(c, p.id))} className="h-4 w-4 accent-ember" />{p.name}</label>))}
+            {products.map((p) => (<Checkbox key={p.id} checked={creditIds.includes(p.id)} onChange={() => setCreditIds((c) => toggle(c, p.id))} label={p.name} />))}
           </div>
           {footer(finishCredits, creditIds.length === 0 ? t("missing.credits") : null)}
         </div>
@@ -361,7 +365,7 @@ export function BookingSetup({
 /** A question put to the operator — the same size and weight wherever one is
  *  asked, and in sentence case. */
 function Question({ children }: { children: React.ReactNode }) {
-  return <p className="text-base font-semibold text-fg">{children}</p>;
+  return <p className="text-md font-semibold text-fg">{children}</p>;
 }
 
 function Radio({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string; helper: string }[] }) {
@@ -372,11 +376,10 @@ function Radio({ label, value, onChange, options }: { label: string; value: stri
         {options.map((o) => {
           const selected = value === o.value;
           return (
-            <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={selected} className={`relative flex flex-col items-start rounded-sm bg-muted-wash p-comfortable pr-9 text-left transition-shadow duration-quick ${selected ? "ring-2 ring-inset ring-ember" : "hover:ring-2 hover:ring-inset hover:ring-ember/30"}`}>
-              {selected && <Check size={16} strokeWidth={2} className="absolute right-comfortable top-comfortable text-brand-foreground" aria-hidden />}
-              <span className="text-sm font-medium">{o.label}</span>
-              <span className="text-[0.8125rem] text-muted">{o.helper}</span>
-            </button>
+            <ChoiceCard key={o.value} selected={selected} onClick={() => onChange(o.value)} className="flex flex-col items-start p-comfortable pr-9">
+              <span className="text-base font-medium">{o.label}</span>
+              <span className="text-sm text-muted">{o.helper}</span>
+            </ChoiceCard>
           );
         })}
       </div>

@@ -125,7 +125,7 @@ export function DevicesSection({
         }
       >
         {rows.length === 0 ? (
-          <p className="px-card py-section text-sm text-muted">{t("team.devicesNone", { name: member.name.split(" ")[0] })}</p>
+          <p className="px-card py-section text-base text-muted">{t("team.devicesNone", { name: member.name.split(" ")[0] })}</p>
         ) : (
           <ul aria-label={t("team.devicesTitle")} className="divide-y divide-hairline">
             {rows.map(({ d, kind }) => {
@@ -136,12 +136,12 @@ export function DevicesSection({
                   <div className="min-w-0 flex-1">
                     <Link
                       href={`/settings/devices/${d.id}`}
-                      className="inline-flex min-h-11 items-center text-sm font-medium text-fg underline-offset-4 hover:underline md:min-h-0"
+                      className="inline-flex min-h-11 items-center text-base font-medium text-fg underline-offset-4 hover:underline md:min-h-0"
                     >
                       {d.name}
                     </Link>
-                    <p className="text-[13px] text-muted">{place.text}</p>
-                    <p className="text-[13px] text-muted" data-kind={kind}>
+                    <p className="text-sm text-muted">{place.text}</p>
+                    <p className="text-sm text-muted" data-kind={kind}>
                       {kind === "own"
                         ? t("team.kindOwn")
                         : kind === "assigned"
@@ -159,7 +159,7 @@ export function DevicesSection({
             })}
           </ul>
         )}
-        {anyOpen && <p className="px-card py-section text-[13px] leading-relaxed text-muted">{t("team.devicesOpenHint")}</p>}
+        {anyOpen && <p className="px-card py-section text-sm leading-relaxed text-muted">{t("team.devicesOpenHint")}</p>}
       </SettingsSection>
 
       <Modal
@@ -182,10 +182,10 @@ export function DevicesSection({
         }
       >
         {candidates.length === 0 ? (
-          <p className="text-sm text-muted">{t("team.assignNone")}</p>
+          <p className="text-base text-muted">{t("team.assignNone")}</p>
         ) : (
           <div>
-            <p id="assign-device-label" className="mb-tight text-sm font-medium text-fg">
+            <p id="assign-device-label" className="mb-tight text-base font-medium text-fg">
               {t("team.assignPick")}
             </p>
             <Select

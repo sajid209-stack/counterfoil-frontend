@@ -195,10 +195,10 @@ export function Verdict({
             it, because "you paid half at the counter" is the sentence a
             steward has to say, and the screen should hand it to them. */}
         <p className="type-display text-5xl tabular-nums">{labels.amount}</p>
-        {labels.paidOf && <p className="text-base tabular-nums text-fg/75">{labels.paidOf}</p>}
+        {labels.paidOf && <p className="text-md tabular-nums text-fg/75">{labels.paidOf}</p>}
         <p className="text-lg text-fg">{outcome.title}</p>
-        <p className="text-[0.8125rem] text-fg/75">{labels.code}</p>
-        {preview && <p className="text-[0.8125rem] text-fg/75">{labels.previewNote}</p>}
+        <p className="text-sm text-fg/75">{labels.code}</p>
+        {preview && <p className="text-sm text-fg/75">{labels.previewNote}</p>}
 
         <div className="flex w-full max-w-md shrink-0 flex-col gap-tight">
           <div className={cn("grid gap-tight", methods.length > 2 ? "grid-cols-2" : "grid-cols-1")}>
@@ -209,18 +209,18 @@ export function Verdict({
                 aria-pressed={method === m}
                 onClick={() => onMethod(m)}
                 className={cn(
-                  "h-14 rounded-full border text-sm font-medium transition-colors duration-quick",
-                  method === m ? "border-ember bg-ember-solid text-white" : "border-strong bg-card",
+                  "h-14 rounded-full border text-base font-medium transition-colors duration-quick",
+                  method === m ? "border-ember-solid bg-ember-solid text-on-solid" : "border-strong bg-card",
                 )}
               >
                 {labels.methodLabel(m)}
               </button>
             ))}
           </div>
-          <button type="button" disabled={busy} onClick={onSettle} className="h-16 rounded-full bg-ink text-lg font-medium text-paper disabled:opacity-50 active:opacity-90">
+          <button type="button" disabled={busy} onClick={onSettle} className="h-13 rounded-full bg-ink text-md font-semibold text-paper disabled:opacity-50 active:opacity-90">
             {labels.takeAndAdmit}
           </button>
-          <button type="button" onClick={onClose} className="h-12 rounded-full text-[0.8125rem] text-fg/75 underline-offset-4 hover:underline">
+          <button type="button" onClick={onClose} className="h-12 rounded-full text-sm text-fg/75 underline-offset-4 hover:underline">
             {labels.dismiss}
           </button>
         </div>
@@ -244,8 +244,8 @@ export function Verdict({
           ))}
         </span>
         <p className="text-lg text-paper/90">{labels.groupSummary}</p>
-        <p className="text-[0.8125rem] text-paper/70">{labels.code}</p>
-        {preview && <p className="text-[0.8125rem] text-paper/70">{labels.previewNote}</p>}
+        <p className="text-sm text-paper/70">{labels.code}</p>
+        {preview && <p className="text-sm text-paper/70">{labels.previewNote}</p>}
         {remaining > 0 ? (
           <div className="flex shrink-0 flex-wrap items-center justify-center gap-tight">
             <button type="button" disabled={busy} onClick={() => onAdmit(1)} aria-label={labels.plusOneLabel} className="h-14 rounded-full border-2 border-paper px-major text-lg font-medium active:bg-paper/20">
@@ -258,7 +258,7 @@ export function Verdict({
         ) : (
           <p className="text-lg">{labels.everyoneIn}</p>
         )}
-        <button type="button" onClick={onClose} className="mt-tight h-12 shrink-0 rounded-full px-major text-[0.8125rem] text-paper/70 underline-offset-4 hover:underline">
+        <button type="button" onClick={onClose} className="mt-tight h-12 shrink-0 rounded-full px-major text-sm text-paper/70 underline-offset-4 hover:underline">
           {labels.dismiss}
         </button>
       </div>
@@ -280,7 +280,8 @@ export function Verdict({
         shell,
         admit
           ? "bg-ink text-paper"
-          : "bg-danger-solid text-white bg-[repeating-linear-gradient(45deg,transparent,transparent_28px,rgba(0,0,0,0.18)_28px,rgba(0,0,0,0.18)_56px)]",
+          // ds-exception: verdict colours are mode-locked by design; hatch is texture not a theme colour
+          : "bg-danger-solid text-on-solid bg-[repeating-linear-gradient(45deg,transparent,transparent_28px,rgba(0,0,0,0.18)_28px,rgba(0,0,0,0.18)_56px)]",
       )}
     >
       <span className={cn("shrink-0", !admit && "animate-[shake_0.12s_ease-in-out_0s_2]")}>{admit ? <AdmitMark /> : <RefuseMark />}</span>
@@ -294,7 +295,7 @@ export function Verdict({
           {/* A statement, not a warning: the gate does not decide that a past
               date is wrong — it has no per-booking validity window to decide
               it with — so the date is put where a steward will see it. */}
-          {labels.dated && <span className="rounded-full border border-paper/40 bg-paper/10 px-comfortable py-inline text-base">{labels.dated}</span>}
+          {labels.dated && <span className="rounded-full border border-paper/40 bg-paper/10 px-comfortable py-inline text-md">{labels.dated}</span>}
         </>
       ) : (
         <>
@@ -306,13 +307,13 @@ export function Verdict({
           {/* Typed by a manager, so it is shown as written rather than
               translated, and it is the whole explanation a steward has. */}
           {labels.note && <span className="text-lg opacity-90">{labels.note}</span>}
-          {outcome.title && <span className="text-base opacity-80">{outcome.title}</span>}
+          {outcome.title && <span className="text-md opacity-80">{outcome.title}</span>}
         </>
       )}
 
-      <span className="text-sm opacity-75">{labels.code}</span>
-      {!admit && <span className="mt-tight max-w-sm text-base opacity-90">{labels.advice}</span>}
-      <span className="mt-tight text-[0.8125rem] opacity-70">{preview ? labels.previewNote : labels.dismiss}</span>
+      <span className="text-base opacity-75">{labels.code}</span>
+      {!admit && <span className="mt-tight max-w-sm text-md opacity-90">{labels.advice}</span>}
+      <span className="mt-tight text-sm opacity-70">{preview ? labels.previewNote : labels.dismiss}</span>
 
       {admit && !preview && (
         <span aria-hidden className="absolute inset-x-0 bottom-0 h-1 bg-paper/20">

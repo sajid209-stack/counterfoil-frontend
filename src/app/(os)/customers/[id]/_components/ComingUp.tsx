@@ -36,24 +36,24 @@ export function ComingUp({ bookings }: { bookings: Booking[] }) {
   return (
     <Panel title={t("comingUp")}>
       {rows.length === 0 ? (
-        <p className="text-sm text-muted">{t("nothingBooked")}</p>
+        <p className="text-base text-muted">{t("nothingBooked")}</p>
       ) : (
         <ul className="-mx-comfortable flex flex-col">
           {rows.map((r) => (
             <li key={r.id} className="border-b border-hairline last:border-0">
               <Link
                 href={`/orders/${r.orderId}`}
-                className="flex min-h-11 items-center gap-comfortable rounded-sm px-comfortable py-comfortable hover:bg-muted-wash"
+                className="flex min-h-11 items-center gap-comfortable rounded-control px-comfortable py-comfortable hover:bg-muted-wash"
               >
                 <div className="flex min-w-0 flex-1 flex-col gap-inline">
-                  <span className="break-words text-sm font-medium text-fg">{r.what}</span>
-                  <span className="flex items-center gap-tight text-[0.8125rem] text-muted">
+                  <span className="break-words text-base font-medium text-fg">{r.what}</span>
+                  <span className="flex items-center gap-tight text-sm text-muted">
                     <CalendarClock size={14} strokeWidth={1.6} aria-hidden className="shrink-0" />
                     <span className="min-w-0">
                       {r.day} · {r.time}
                     </span>
                   </span>
-                  <span className="flex flex-wrap items-center gap-x-comfortable gap-y-inline text-[0.8125rem] text-muted">
+                  <span className="flex flex-wrap items-center gap-x-comfortable gap-y-inline text-sm text-muted">
                     {r.where && (
                       <span className="flex min-w-0 items-center gap-tight">
                         <MapPin size={14} strokeWidth={1.6} aria-hidden className="shrink-0" />
@@ -66,7 +66,7 @@ export function ComingUp({ bookings }: { bookings: Booking[] }) {
                     </span>
                   </span>
                 </div>
-                <span className="flex shrink-0 items-center gap-inline text-[0.8125rem] font-medium text-brand-foreground">
+                <span className="flex shrink-0 items-center gap-inline text-sm font-medium text-brand-foreground">
                   {t("openOrder")}
                   <ChevronRight size={16} strokeWidth={1.6} aria-hidden />
                 </span>

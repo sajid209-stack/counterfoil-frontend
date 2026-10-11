@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button, StatusPill } from "@/components/ui";
+import { AffixInput, Button, Skeleton, StatusPill } from "@/components/ui";
 import type { Order, Ticket } from "@/lib/api";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
@@ -27,7 +27,7 @@ export function TicketsCard({ tickets, loading, className }: { tickets: Ticket[]
   return (
     <Section title={t("cardTickets", { count: tickets.length })} className={className} id="order-tickets">
       {loading ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /></div>
+        <div aria-busy="true" className="flex flex-col gap-tight"><Skeleton className="h-4 w-1/3" /><Skeleton className="h-4 w-2/3" /></div>
       ) : tickets.length === 0 ? (
         <Quiet>{t("noTickets")}</Quiet>
       ) : (
@@ -36,9 +36,9 @@ export function TicketsCard({ tickets, loading, className }: { tickets: Ticket[]
             <li key={tk.id}>
               <Link
                 href={`/tickets/${tk.id}`}
-                className="-mx-inline flex min-h-11 items-center justify-between gap-tight rounded-sm border-b border-hairline px-inline py-tight text-sm hover:bg-muted-wash"
+                className="-mx-inline flex min-h-11 items-center justify-between gap-tight rounded-control border-b border-hairline px-inline py-tight text-base hover:bg-muted-wash"
               >
-                <span className="min-w-0 break-all font-mono text-[12px]">{tk.code}</span>
+                <span className="min-w-0 break-all font-mono text-xs">{tk.code}</span>
                 <span className="flex shrink-0 items-center gap-inline">
                   {/* A ticket has its own lifecycle, so it names its own tone
                       rather than borrowing an order word. Issued = exists, not
@@ -70,18 +70,18 @@ export function WriteOffsCard({ o, className }: { o: Order; className?: string }
     <Section title={tw("title")} className={className} id="order-writeoffs">
       <ul>
         {list.map((w, i) => (
-          <li key={i} data-writeoff data-amount={w.amount} className="border-b border-hairline py-tight text-[13px] first:pt-0 last:border-0 last:pb-0">
+          <li key={i} data-writeoff data-amount={w.amount} className="border-b border-hairline py-tight text-sm first:pt-0 last:border-0 last:pb-0">
             <p className="flex items-baseline justify-between gap-tight">
               <span className="font-medium">{label(w.category)}</span>
               <span className="shrink-0 tabular-nums">{formatMoney(w.amount)}</span>
             </p>
             {w.reason && <p className="mt-inline break-words">{w.reason}</p>}
-            <p className="mt-inline text-[12px] text-muted">{formatDateTime(w.at)} · {w.who}</p>
+            <p className="mt-inline text-xs text-muted">{formatDateTime(w.at)} · {w.who}</p>
           </li>
         ))}
       </ul>
       {list.length > 1 && (
-        <p className="mt-tight flex justify-between border-t border-hairline pt-tight text-[13px] font-medium">
+        <p className="mt-tight flex justify-between border-t border-hairline pt-tight text-sm font-medium">
           <span>{tw("total")}</span>
           <span className="tabular-nums">{formatMoney(total)}</span>
         </p>
@@ -100,9 +100,9 @@ export function HistoryCard({ o, className }: { o: Order; className?: string }) 
         <Quiet>{t("noHistory")}</Quiet>
       ) : (
         list.map((h, i) => (
-          <div key={i} className="border-b border-hairline py-tight text-[13px] first:pt-0 last:border-0 last:pb-0">
+          <div key={i} className="border-b border-hairline py-tight text-sm first:pt-0 last:border-0 last:pb-0">
             <p className="break-words">{h.text}</p>
-            <p className="mt-inline text-[12px] text-muted">{formatDateTime(h.at)} · {h.who}</p>
+            <p className="mt-inline text-xs text-muted">{formatDateTime(h.at)} · {h.who}</p>
           </div>
         ))
       )}
@@ -127,20 +127,20 @@ export function NotesCard({ o, onAdd, className }: { o: Order; onAdd: (text: str
         <Quiet>{t("noNotes")}</Quiet>
       ) : (
         list.map((n, i) => (
-          <div key={i} className="border-b border-hairline py-tight text-[13px] first:pt-0 last:border-0">
+          <div key={i} className="border-b border-hairline py-tight text-sm first:pt-0 last:border-0">
             <p className="break-words">{n.text}</p>
-            <p className="mt-inline text-[12px] text-muted">{formatDateTime(n.at)} · {n.who}</p>
+            <p className="mt-inline text-xs text-muted">{formatDateTime(n.at)} · {n.who}</p>
           </div>
         ))
       )}
       <div className="mt-tight flex gap-tight">
-        <input
+        <AffixInput
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && void add()}
           placeholder={t("addNotePlaceholder")}
           aria-label={t("addNotePlaceholder")}
-          className="h-11 min-w-0 flex-1 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse md:h-9"
+          className="min-w-0 flex-1"
         />
         <Button size="sm" variant="secondary" disabled={!draft.trim()} onClick={() => void add()}>{t("add")}</Button>
       </div>

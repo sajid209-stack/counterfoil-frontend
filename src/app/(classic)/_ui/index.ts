@@ -10,9 +10,9 @@ export { Avatar, ChoiceCard } from "./ChoiceCard";
 export {
   Card, LogoMark, Logo, StatusPill, statusTone, Field, FormField, PageShell,
   EmptyState, Modal, ConfirmDialog, ToastProvider, useToast, Tabs, DataTable,
-  DurationInput, PercentInput, parsePercent, DiscountInput, parseDiscount,
+  DurationInput, DiscountInput, parseDiscount,
   TimeInput, BlockedNotice, DateStrip, ResourceTimeline, ProductThumb, Qr, TicketCard,
-  AreaChart, BarChart, DonutChart, HBarChart, LineChart,
+  AreaChart,
 } from "@/components/ui";
 export type {
   PillTone, FieldVariant, SelectOption, TabItem, Column, DataTableProps,

@@ -241,7 +241,7 @@ export default function DevicePage() {
       description={counter ? [counter.name, place?.name].filter(Boolean).join(" · ") : t("devices.notPaired")}
       status={device.status !== "active" ? <StatusPill status={device.status} /> : undefined}
     >
-      <div className="flex max-w-3xl flex-col gap-section pb-hero">
+      <div className="flex flex-col gap-section pb-hero">
         {/* What this tablet IS, before anything you can change about it. The
             page used to state none of it: the last-seen time was inside the
             description of a Turn-off button, the counter was in the page
@@ -253,8 +253,8 @@ export default function DevicePage() {
         {device.status === "active" && (!isPaired(device) || panelKept) && (
           <div id="pairing" className="flex flex-col gap-tight">
             <div>
-              <h2 className="text-base font-semibold text-fg">{t("devices.pairingTitle")}</h2>
-              <p className="mt-inline max-w-prose text-[13px] leading-relaxed text-muted">{t("devices.pairingDesc")}</p>
+              <h2 className="text-md font-semibold text-fg">{t("devices.pairingTitle")}</h2>
+              <p className="mt-inline max-w-prose text-sm leading-relaxed text-muted">{t("devices.pairingDesc")}</p>
             </div>
             <PairingPanel
               key={device.id}

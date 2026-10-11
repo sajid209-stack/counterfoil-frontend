@@ -297,13 +297,13 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
         <section aria-labelledby="fin-activity-title" id="fin-activity" className="card-surface scroll-mt-24">
           <div className="p-card pb-0">
             <div className="flex items-center justify-between gap-tight">
-              <h2 id="fin-activity-title" className="min-w-0 text-base font-semibold tracking-[-0.4px]">{t("activity.title")}</h2>
+              <h2 id="fin-activity-title" className="min-w-0 text-md font-semibold">{t("activity.title")}</h2>
               <div className="flex shrink-0 items-center gap-tight">
                 <PageAction label={t("activity.download")} icon={<Download size={15} strokeWidth={1.5} />} onClick={() => void downloadStatement()} />
                 <ActionMenu label={t("menu.more")} items={menu} />
               </div>
             </div>
-            <p className="mt-inline min-h-5 text-[13px] text-muted">
+            <p className="mt-inline min-h-5 text-sm text-muted">
               {summary && (
                 <>
                   <span>{periodLabel}</span>

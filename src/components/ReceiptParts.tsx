@@ -31,10 +31,10 @@ export function ReceiptHeader({
     tax?.showOnReceipts && tax.registrationNumber ? t("taxReg", { name: tax.taxName || "VAT", number: tax.registrationNumber }) : "";
   return (
     <div className="mb-section text-center">
-      <p className="type-h2 break-words text-base">{operator.name}</p>
-      {address && <p className="mt-inline break-words text-[12px] text-muted">{address}</p>}
-      {contact && <p className="break-words text-[12px] text-muted">{contact}</p>}
-      {reg && <p className="break-words text-[12px] text-muted">{reg}</p>}
+      <p className="type-h2 break-words text-md">{operator.name}</p>
+      {address && <p className="mt-inline break-words text-xs text-muted">{address}</p>}
+      {contact && <p className="break-words text-xs text-muted">{contact}</p>}
+      {reg && <p className="break-words text-xs text-muted">{reg}</p>}
       {children}
     </div>
   );
@@ -45,8 +45,8 @@ export function ReceiptFooter({ message }: { message?: string }) {
   const text = message?.trim();
   return (
     <>
-      {text && <p className="mt-major whitespace-pre-line break-words text-center text-[13px] leading-relaxed text-fg">{text}</p>}
-      <p className="mt-major text-center font-mono text-[12px] text-muted">{t("poweredBy")}</p>
+      {text && <p className="mt-major whitespace-pre-line break-words text-center text-sm leading-relaxed text-fg">{text}</p>}
+      <p className="mt-major text-center font-mono text-xs text-muted">{t("poweredBy")}</p>
     </>
   );
 }

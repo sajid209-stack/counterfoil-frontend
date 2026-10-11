@@ -3,17 +3,20 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { parseTimeOfDay } from "@/lib/duration";
 import { formatClock } from "@/lib/format";
 import { toMinutes, toTime } from "@/lib/schedule";
-import { Field } from "./Field";
+import { Field, controlShellClass } from "./Field";
 
 /** What the field draws for a stored "HH:MM": "7:30 PM". Empty stays empty —
  *  `formatClock`'s dash is for a read-only cell, not for a box to type in. */
 const shown = (hhmm: string) => (hhmm ? formatClock(hhmm) : "");
 
-/** A time-of-day field a human can type into. It DRAWS 12-hour — "7:30 PM",
+/** A time-of-day field a human can type into. Use it for a clock time an
+ *  operator sets (opening hours, a slot start); for a length of time use
+ *  DurationInput. It DRAWS 12-hour — "7:30 PM",
  *  like every time a person reads in the product — and its value stays the
  *  stored 24h "HH:MM". Typing reads either clock: `7:30 pm`, `7:30p`, `7pm`,
  *  `730p`, `19:30`, `1930`, `930`, `7` (→ 7:00 AM). Steppers adjust by `step`
@@ -47,8 +50,12 @@ export function TimeInput({
 }) {
   const id = useId();
   const listId = useId();
-  const [text, setText] = useState(() => shown(value));
-  const [focused, setFocused] = useState(false);
+  const t = useTranslations("common");
+  /* What the person is typing, while they are typing it. `null` means "not
+     editing": the field then shows the real value, so an external change needs
+     no effect that sets state. */
+  const [draft, setDraft] = useState<string | null>(null);
+  const text = draft ?? shown(value);
   const [parseError, setParseError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -60,10 +67,6 @@ export function TimeInput({
      list rather than a row of chips, and is why this is a dropdown. */
   const times: string[] = [];
   for (let m = 0; m < 1440; m += step) times.push(toTime(m));
-
-  useEffect(() => {
-    if (!focused) setText(shown(value));
-  }, [value, focused]);
 
   /* Placed in viewport coordinates and portalled to <body>, the same way the
      app's other dropdown is: a time field sits inside cards and scrollers
@@ -146,35 +149,30 @@ export function TimeInput({
     setOpen(true);
   };
 
-  const choose = (t: string) => {
+  const choose = (time: string) => {
     setParseError(null);
-    onChange(t);
-    setText(shown(t));
+    setDraft(null);
+    onChange(time);
     setOpen(false);
   };
 
   const commit = (raw: string) => {
+    setDraft(null);
     const parsed = parseTimeOfDay(raw);
     if (parsed == null) {
-      setParseError(`Couldn't read "${raw}" — try "9:30 AM", "6:30 PM" or "6:30p".`);
-      setText(shown(value));
+      setParseError(t("ui.timeParseError", { raw }));
       return;
     }
     setParseError(null);
     onChange(parsed);
-    setText(shown(parsed));
   };
 
   const nudge = (dir: 1 | -1) => {
     const next = toTime((toMinutes(value) + dir * step + 1440) % 1440);
     setParseError(null);
+    if (draft !== null) setDraft(shown(next));
     onChange(next);
-    setText(shown(next));
   };
-
-  /* An inset ring, not a border: a border takes two pixels out of the
-     44px box, and the steppers inside it were left 42px tall on a phone. */
-  const border = error || parseError ? "ring-danger focus-within:ring-danger" : "ring-line focus-within:ring-inverse";
 
   /* The floor is on the OUTER box, and it is the control's own rather than the
      caller's to get wrong: below md the two nudges are 44px squares each, so a
@@ -183,7 +181,7 @@ export function TimeInput({
      the layout instead of overflowing it. */
   return (
     <Field label={label} help={help} error={error ?? parseError ?? undefined} required={required} htmlFor={id} className={cn("min-w-[9.5rem] md:min-w-[7.75rem]", className)}>
-      <div ref={box} className={cn("flex h-11 items-stretch overflow-hidden rounded-sm bg-card ring-1 ring-inset transition-colors duration-quick", border, disabled && "bg-subtle")}>
+      <div ref={box} data-focus-host="" className={cn(controlShellClass(!!(error || parseError), true), "items-stretch overflow-hidden", disabled && "bg-subtle")}>
         <input
           id={id}
           type="text"
@@ -192,9 +190,9 @@ export function TimeInput({
           autoComplete="off"
           value={text}
           disabled={disabled}
-          onChange={(e) => setText(e.target.value)}
-          onFocus={(e) => { setFocused(true); e.target.select(); }}
-          onBlur={(e) => { setFocused(false); commit(e.target.value); }}
+          onChange={(e) => setDraft(e.target.value)}
+          onFocus={(e) => e.target.select()}
+          onBlur={(e) => commit(e.target.value)}
           role={picker ? "combobox" : undefined}
           aria-expanded={picker ? open : undefined}
           aria-controls={picker && open ? listId : undefined}
@@ -220,8 +218,8 @@ export function TimeInput({
               else nudge(-1);
             }
           }}
-          onWheel={(e) => { if (focused) { e.preventDefault(); nudge(e.deltaY < 0 ? 1 : -1); } }}
-          className="w-full bg-transparent px-comfortable text-sm tabular-nums outline-none placeholder:text-faint disabled:cursor-not-allowed"
+          onWheel={(e) => { if (draft !== null) { e.preventDefault(); nudge(e.deltaY < 0 ? 1 : -1); } }}
+          className="min-w-0 flex-1 bg-transparent px-comfortable text-base tabular-nums placeholder:text-faint disabled:cursor-not-allowed"
         />
         {/* Where the caller asked for a list, one control rather than three:
             a chevron that opens every time at the step. Typing still works,
@@ -230,7 +228,7 @@ export function TimeInput({
           <button
             type="button"
             ref={openBtn}
-            aria-label="Choose a time"
+            aria-label={t("ui.chooseTime")}
             aria-haspopup="listbox"
             aria-expanded={open}
             aria-controls={open ? listId : undefined}
@@ -251,8 +249,8 @@ export function TimeInput({
           </button>
         ) : (
         <div className="flex flex-row-reverse border-l border-line md:flex-col">
-          <button type="button" tabIndex={-1} aria-label="Later" disabled={disabled} onClick={() => nudge(1)} className="flex h-full w-11 items-center justify-center text-muted hover:text-fg active:bg-line md:h-1/2 md:w-8"><ChevronUp size={13} strokeWidth={1.5} /></button>
-          <button type="button" tabIndex={-1} aria-label="Earlier" disabled={disabled} onClick={() => nudge(-1)} className="flex h-full w-11 items-center justify-center border-r border-line text-muted hover:text-fg active:bg-line md:h-1/2 md:w-8 md:border-r-0 md:border-t"><ChevronDown size={13} strokeWidth={1.5} /></button>
+          <button type="button" tabIndex={-1} aria-label={t("ui.later")} disabled={disabled} onClick={() => nudge(1)} className="flex h-full w-11 items-center justify-center text-muted hover:text-fg active:bg-line md:h-1/2 md:w-8"><ChevronUp size={13} strokeWidth={1.5} /></button>
+          <button type="button" tabIndex={-1} aria-label={t("ui.earlier")} disabled={disabled} onClick={() => nudge(-1)} className="flex h-full w-11 items-center justify-center border-r border-line text-muted hover:text-fg active:bg-line md:h-1/2 md:w-8 md:border-r-0 md:border-t"><ChevronDown size={13} strokeWidth={1.5} /></button>
         </div>
         )}
       </div>
@@ -263,14 +261,14 @@ export function TimeInput({
             ref={panel}
             id={listId}
             role="listbox"
-            aria-label="Times"
+            aria-label={t("ui.times")}
             tabIndex={-1}
             onKeyDown={(e) => {
               /* The field owns the keyboard; this is for a pointer user whose
                  click put focus in here. */
               if (e.key === "Escape") { e.stopPropagation(); setOpen(false); openBtn.current?.focus(); }
             }}
-            className="fixed z-50 flex flex-col overflow-y-auto rounded-md border border-line bg-card py-inline shadow-lg"
+            className="fixed z-50 flex flex-col overflow-y-auto rounded-card border border-line bg-card py-inline shadow-lg"
           >
             {times.map((t, i) => (
               <button
@@ -284,7 +282,7 @@ export function TimeInput({
                 onClick={() => choose(t)}
                 onMouseEnter={() => setActive(i)}
                 className={cn(
-                  "flex min-h-11 items-center justify-between gap-tight px-comfortable text-left text-sm tabular-nums md:min-h-9",
+                  "flex min-h-11 items-center justify-between gap-tight px-comfortable text-left text-base tabular-nums md:min-h-9",
                   i === active ? "bg-muted-wash text-fg" : "text-fg",
                 )}
               >

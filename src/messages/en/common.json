@@ -31,5 +31,30 @@
   "nextPage": "Next page",
   "done": "Done",
   "clearFilters": "Clear filters",
-  "filtersApplied": "Filters, {count} applied"
+  "filtersApplied": "Filters, {count} applied",
+  "ui": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "dismiss": "Dismiss",
+    "undo": "Undo",
+    "pageOf": "Page {page} of {total}",
+    "range": "{from}–{to} of {total}",
+    "rowsPerPage": "Rows per page",
+    "pagination": "Pagination",
+    "loading": "Loading",
+    "durationParseError": "Couldn't read \"{raw}\" — try \"90\", \"1:30\" or \"1h30\".",
+    "timeParseError": "Couldn't read \"{raw}\" — try \"9:30 AM\", \"6:30 PM\" or \"6:30p\".",
+    "percentParseError": "Couldn't read \"{raw}\" — type a number like 12.",
+    "numberParseError": "Couldn't read \"{raw}\" — type a number.",
+    "less": "Less",
+    "more": "More",
+    "later": "Later",
+    "earlier": "Earlier",
+    "chooseTime": "Choose a time",
+    "times": "Times",
+    "none": "None",
+    "amountOff": "= {amount} off",
+    "percentOff": "= {pct}% off"
+  }
 }

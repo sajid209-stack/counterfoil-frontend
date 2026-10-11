@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, EmptyState, PageShell } from "@/components/ui";
+import { Button, EmptyState, PageShell, Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   getCustomer,
@@ -38,6 +38,13 @@ const AS_OF: WallTime = `${DEMO_TODAY}T${String(Math.floor(DEMO_NOW_MINUTES / 60
 /** Orders whose money counts towards a customer's balance — the same set
  *  `customerStats` sums, so the link behind "Owes" agrees with the figure. */
 const COUNTED = new Set(["paid", "partial", "partly_refunded"]);
+
+/** A card-shaped placeholder: the card's own corner, the kit's Skeleton inside. */
+const CardBlock = ({ className }: { className: string }) => (
+  <div className={`overflow-hidden rounded-card ${className}`}>
+    <Skeleton className="h-full w-full" />
+  </div>
+);
 
 /**
  * A customer, person first.
@@ -113,13 +120,13 @@ export default function CustomerDetailPage() {
     return (
       <PageShell title={t("title")}>
         <div aria-busy="true" className="flex flex-col gap-section">
-          <div className="h-40 animate-pulse rounded-md bg-line" />
+          <CardBlock className="h-40" />
           <div className="grid gap-section lg:grid-cols-[minmax(0,1fr)_21.25rem]">
             <div className="flex flex-col gap-section">
-              <div className="h-32 animate-pulse rounded-md bg-line" />
-              <div className="h-56 animate-pulse rounded-md bg-line" />
+              <CardBlock className="h-32" />
+              <CardBlock className="h-56" />
             </div>
-            <div className="h-72 animate-pulse rounded-md bg-line" />
+            <CardBlock className="h-72" />
           </div>
         </div>
       </PageShell>

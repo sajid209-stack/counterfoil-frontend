@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { Button, FormField, TimeInput } from "@/components/ui";
+import { Button, Chip, FormField, TimeInput } from "@/components/ui";
 import { resolveRulePrice } from "@/lib/pricing";
 import { formatClock, formatClockMin, formatClockRange, formatPriceShort } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -93,19 +93,19 @@ export function PricingRulesField({
   return (
     <div className="flex flex-col gap-section">
       <div className="flex flex-wrap items-center justify-between gap-tight">
-        <span className="text-base font-semibold text-fg">{t("bands")}</span>
+        <span className="text-md font-semibold text-fg">{t("bands")}</span>
         <Button size="sm" variant="secondary" icon={<Plus size={14} strokeWidth={1.5} aria-hidden />} onClick={add}>{t("addBand")}</Button>
       </div>
-      <p className="-mt-tight text-[0.8125rem] text-muted">{t("bandsHelp")}</p>
+      <p className="-mt-tight text-sm text-muted">{t("bandsHelp")}</p>
 
       {/* Visual day timeline */}
-      <div className="rounded-sm bg-muted-wash p-comfortable">
-        <div className="relative h-14 overflow-hidden rounded-xs bg-card">
+      <div className="rounded-control bg-muted-wash p-comfortable">
+        <div className="relative h-14 overflow-hidden rounded-inner bg-card">
           {/* The one empty message: with no time prices the track itself says
               the whole day sells at one price. With no price typed yet it says
               so in words — it used to print a dash where the price goes, which
               read "Same price all day · — —". */}
-          <span className="pointer-events-none absolute inset-0 grid place-items-center px-comfortable text-center text-[12px] text-muted">
+          <span className="pointer-events-none absolute inset-0 grid place-items-center px-comfortable text-center text-xs text-muted">
             {base > 0
               ? t(rules.length === 0 ? "allDay" : "base", { price: formatPriceShort(base, currency) })
               : t(rules.length === 0 ? "allDayEmpty" : "baseEmpty")}
@@ -124,17 +124,17 @@ export function PricingRulesField({
                 aria-label={`${formatClockRange(r.fromTime, r.toTime)} · ${r.price ? formatPriceShort(toMinor(r.price), currency) : t("bandNoPrice")}`}
                 aria-pressed={sel === i}
                 className={cn(
-                  "absolute inset-y-0 flex flex-col items-center justify-center overflow-hidden rounded-xs bg-ember/85 px-inline text-center text-paper transition-transform duration-quick active:scale-[0.98]",
-                  sel === i && "ring-2 ring-inverse",
+                  "absolute inset-y-0 flex flex-col items-center justify-center overflow-hidden rounded-inner bg-ember-solid px-inline text-center text-on-solid transition-transform duration-quick active:scale-[0.98]",
+                  sel === i && "ring-2 ring-ember-solid",
                 )}
               >
-                <span className="truncate text-[12px] font-medium tabular-nums">{r.price ? formatPriceShort(toMinor(r.price), currency) : t("bandNoPrice")}</span>
-                <span className="truncate text-[12px] opacity-80">{formatClock(r.fromTime, { short: true })}</span>
+                <span className="truncate text-xs font-medium tabular-nums">{r.price ? formatPriceShort(toMinor(r.price), currency) : t("bandNoPrice")}</span>
+                <span className="truncate text-xs opacity-80">{formatClock(r.fromTime, { short: true })}</span>
               </button>
             );
           })}
         </div>
-        <div aria-hidden className="relative mt-inline h-4 text-[12px] tabular-nums text-muted">
+        <div aria-hidden className="relative mt-inline h-4 text-xs tabular-nums text-muted">
           {/* On a phone every other hour is dropped, or the labels run into
               each other ("10:0011:00"). The two ends always stay. */}
           {ticks.map((m, i) => (
@@ -159,32 +159,27 @@ export function PricingRulesField({
           <div
             key={i}
             onClick={() => setSel(i)}
-            className={cn("flex flex-col gap-tight rounded-sm bg-muted-wash p-comfortable transition-shadow duration-quick", sel === i && "ring-2 ring-inset ring-ember")}
+            className={cn("flex flex-col gap-tight rounded-control bg-muted-wash p-comfortable transition-shadow duration-quick", sel === i && "ring-2 ring-inset ring-ember-solid")}
           >
             <div className="flex flex-wrap gap-inline">
               {WEEK.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  aria-pressed={rule.days.includes(d)}
-                  aria-label={dayLong(d)}
-                  title={dayLong(d)}
-                  onClick={(e) => { e.stopPropagation(); toggleDay(i, d); }}
-                  className={cn("h-11 min-w-11 rounded-xs bg-card px-inline text-[0.8125rem] md:h-8 md:min-w-10", rule.days.includes(d) ? "font-medium text-fg ring-2 ring-inset ring-ember" : "text-muted hover:text-fg")}
-                >
-                  {dayShort(d)}
-                </button>
+                <span key={d} onClick={(e) => e.stopPropagation()}>
+                  <Chip selected={rule.days.includes(d)} onClick={() => toggleDay(i, d)}>
+                    <span aria-hidden>{dayShort(d)}</span>
+                    <span className="sr-only">{dayLong(d)}</span>
+                  </Chip>
+                </span>
               ))}
-              {rule.days.length === 0 && <span className="ml-inline self-center text-[12px] text-muted">{t("anyDay")}</span>}
+              {rule.days.length === 0 && <span className="ml-inline self-center text-xs text-muted">{t("anyDay")}</span>}
             </div>
             <div className="flex flex-wrap items-end gap-tight">
               <TimeInput label={t("from")} value={rule.fromTime} onChange={(v) => update(i, { fromTime: v })} />
               <TimeInput label={t("to")} value={rule.toTime} onChange={(v) => update(i, { toTime: v })} />
               <FormField label={`${t("price")} (${currency === "BDT" ? "৳" : currency})`} variant="number" placeholder={t("bandPricePlaceholder")} value={rule.price} onChange={(e) => update(i, { price: e.target.value })} />
               <div className="flex items-center gap-inline pb-inline">
-                <button type="button" aria-label={t("earlier", { time: span })} title={t("earlier", { time: span })} onClick={(e) => { e.stopPropagation(); move(i, -1); }} disabled={i === 0} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm text-muted hover:bg-card disabled:text-faint"><ChevronUp size={16} strokeWidth={1.5} aria-hidden /></button>
-                <button type="button" aria-label={t("later", { time: span })} title={t("later", { time: span })} onClick={(e) => { e.stopPropagation(); move(i, 1); }} disabled={i === rules.length - 1} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm text-muted hover:bg-card disabled:text-faint"><ChevronDown size={16} strokeWidth={1.5} aria-hidden /></button>
-                <button type="button" aria-label={t("removeBand", { time: span })} title={t("removeBand", { time: span })} onClick={(e) => { e.stopPropagation(); remove(i); }} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm text-danger hover:bg-card"><Trash2 size={16} strokeWidth={1.5} aria-hidden /></button>
+                <Button variant="tertiary" size="icon" aria-label={t("earlier", { time: span })} title={t("earlier", { time: span })} onClick={(e) => { e.stopPropagation(); move(i, -1); }} disabled={i === 0} className="text-muted"><ChevronUp size={16} strokeWidth={1.5} aria-hidden /></Button>
+                <Button variant="tertiary" size="icon" aria-label={t("later", { time: span })} title={t("later", { time: span })} onClick={(e) => { e.stopPropagation(); move(i, 1); }} disabled={i === rules.length - 1} className="text-muted"><ChevronDown size={16} strokeWidth={1.5} aria-hidden /></Button>
+                <Button variant="tertiary" size="icon" aria-label={t("removeBand", { time: span })} title={t("removeBand", { time: span })} onClick={(e) => { e.stopPropagation(); remove(i); }} className="text-danger"><Trash2 size={16} strokeWidth={1.5} aria-hidden /></Button>
               </div>
             </div>
           </div>
@@ -192,9 +187,9 @@ export function PricingRulesField({
       })}
 
       {rules.length > 0 && base > 0 && (
-        <div className="rounded-sm bg-muted-wash p-section">
-          <p className="text-[0.8125rem] font-medium text-muted">{t("preview")}</p>
-          <p className="mt-inline flex flex-wrap gap-section text-[13px] tabular-nums">
+        <div className="rounded-control bg-muted-wash p-section">
+          <p className="text-sm font-medium text-muted">{t("preview")}</p>
+          <p className="mt-inline flex flex-wrap gap-section text-sm tabular-nums">
             {EXAMPLES.map(([dow, time]) => (
               <span key={`${dow}-${time}`}>{dayShort(dow)} {formatClock(time)} → <span className="font-medium">{formatPriceShort(resolveRulePrice(rulesMinor, dow, time, base), currency)}</span></span>
             ))}

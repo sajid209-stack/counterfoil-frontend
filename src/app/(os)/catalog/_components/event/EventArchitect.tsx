@@ -29,7 +29,7 @@ import {
   Handshake,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { FormField, Select, TimeInput } from "@/components/ui";
+import { Button, FormField, Select, SegmentedControl, StatusPill, Tabs, TimeInput } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { EventTemplate } from "@/components/events/EventTemplate";
 import { PreviewFrame } from "@/components/events/PreviewFrame";
@@ -187,17 +187,8 @@ export function EventArchitect({
      called and it is right whatever the dates are. */
   const dayTabs = content.days.length > 1 ? content.days.map((d, i) => ({ id: d.id, label: dayName(d, i, (n) => t("architect.dayNth", { n })) })) : [];
   const [openDay, setOpenDay] = useState(0);
-  /* Arrow keys have to move FOCUS as well as selection. Setting only the
-     selected index left the reader on a tab that had just become
-     `tabIndex="-1"` while the panel swapped silently underneath — and the next
-     Tab went back INTO the tablist instead of out of it. */
-  const dayTabRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const moveDay = (delta: number) =>
-    setOpenDay((v) => {
-      const next = (v + delta + dayTabs.length) % dayTabs.length;
-      requestAnimationFrame(() => dayTabRefs.current[next]?.focus());
-      return next;
-    });
+  /* The kit's Tabs moves focus with the arrow keys as well as the selection,
+     so the next Tab leaves the strip instead of going back INTO it. */
   const activeDay = dayTabs.length > 1 ? dayTabs[Math.min(openDay, dayTabs.length - 1)] : null;
   /* An entry written before the event had days belongs to nobody, so it is
      shown on the first tab — where somebody will see it and file it — rather
@@ -242,8 +233,8 @@ export function EventArchitect({
       {/* ── The architect ──────────────────────────────────────────────── */}
       <div className="card-surface overflow-hidden">
         <div className="border-b border-hairline px-card py-comfortable">
-          <p className="text-[0.75rem] font-medium text-muted">{t("architect.title")}</p>
-          <p className="mt-inline text-base font-semibold text-fg">{t(`category.${cat.key}`)}</p>
+          <p className="text-xs font-medium text-muted">{t("architect.title")}</p>
+          <p className="mt-inline text-md font-semibold text-fg">{t(`category.${cat.key}`)}</p>
         </div>
 
         {/* Brand identity is not a page section — it governs all of them, so it
@@ -264,7 +255,7 @@ export function EventArchitect({
                   aria-label={hex}
                   aria-pressed={custom.accent === hex}
                   className={cn(
-                    "relative h-11 w-11 rounded-sm transition-shadow duration-quick",
+                    "relative h-11 w-11 rounded-control transition-shadow duration-quick",
                     custom.accent === hex ? "ring-2 ring-inset ring-inverse" : "ring-1 ring-inset ring-line hover:ring-strong",
                   )}
                   style={{ background: hex }}
@@ -283,24 +274,12 @@ export function EventArchitect({
             <FontSelect label={t("customise.body")} value={custom.bodyFont} onChange={(v) => setC({ bodyFont: v })} />
           </Field>
           <Field label={t("customise.layout")}>
-            <div className="flex flex-wrap gap-inline">
-              {cat.variants.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setC({ variant: v })}
-                  aria-pressed={custom.variant === v}
-                  className={cn(
-                    "min-h-11 rounded-sm px-comfortable text-[0.8125rem] font-medium transition-colors duration-quick",
-                    custom.variant === v
-                      ? "bg-card text-fg ring-2 ring-inset ring-ember-solid"
-                      : "bg-muted-wash text-muted hover:bg-line/40 hover:text-fg",
-                  )}
-                >
-                  {t(`variant.${v}`)}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              aria-label={t("customise.layout")}
+              options={cat.variants.map((v) => ({ value: v, label: t(`variant.${v}`) }))}
+              value={custom.variant}
+              onChange={(v) => setC({ variant: v as typeof custom.variant })}
+            />
           </Field>
         </Row>
 
@@ -319,37 +298,40 @@ export function EventArchitect({
               onToggle={() => setOpen(open === id ? "" : id)}
               controls={
                 <>
-                  <button
-                    type="button"
+                  <Button
+                    variant="tertiary"
+                    size="icon"
                     aria-label={off ? t("architect.showSection", { name: label }) : t("architect.hideSection", { name: label })}
                     title={off ? t("architect.showSection", { name: label }) : t("architect.hideSection", { name: label })}
-                    aria-pressed={!off}
+                    selected={!off}
                     disabled={locked}
                     onClick={(e) => { e.stopPropagation(); toggle(id); }}
-                    className="flex h-9 w-9 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg disabled:opacity-30"
+                    className="text-muted"
                   >
-                    {off ? <EyeOff size={15} strokeWidth={1.5} /> : <Eye size={15} strokeWidth={1.5} />}
-                  </button>
-                  <button
-                    type="button"
+                    {off ? <EyeOff size={15} strokeWidth={1.5} aria-hidden /> : <Eye size={15} strokeWidth={1.5} aria-hidden />}
+                  </Button>
+                  <Button
+                    variant="tertiary"
+                    size="icon"
                     aria-label={t("architect.moveSectionUp", { name: label })}
                     title={t("architect.moveSectionUp", { name: label })}
                     disabled={off || i === 0}
                     onClick={(e) => { e.stopPropagation(); move(id, -1); }}
-                    className="flex h-9 w-7 items-center justify-center text-muted transition-colors duration-quick hover:text-fg disabled:opacity-25"
+                    className="text-muted"
                   >
-                    <ArrowUp size={14} strokeWidth={1.5} />
-                  </button>
-                  <button
-                    type="button"
+                    <ArrowUp size={14} strokeWidth={1.5} aria-hidden />
+                  </Button>
+                  <Button
+                    variant="tertiary"
+                    size="icon"
                     aria-label={t("architect.moveSectionDown", { name: label })}
                     title={t("architect.moveSectionDown", { name: label })}
                     disabled={off || i >= custom.sections.length - 1}
                     onClick={(e) => { e.stopPropagation(); move(id, 1); }}
-                    className="flex h-9 w-7 items-center justify-center text-muted transition-colors duration-quick hover:text-fg disabled:opacity-25"
+                    className="text-muted"
                   >
-                    <ArrowDown size={14} strokeWidth={1.5} />
-                  </button>
+                    <ArrowDown size={14} strokeWidth={1.5} aria-hidden />
+                  </Button>
                 </>
               }
             >
@@ -402,7 +384,7 @@ export function EventArchitect({
                   {content.videoUrl.trim() !== "" && (
                     <p
                       className={cn(
-                        "text-[13px]",
+                        "text-sm",
                         parseEventVideo(content.videoUrl) ? "text-muted" : "text-danger",
                       )}
                     >
@@ -422,21 +404,13 @@ export function EventArchitect({
                     </div>
                   ))}
                   <div className="flex gap-tight">
-                    <button
-                      type="button"
-                      onClick={addSponsor}
-                      className="min-h-11 rounded-sm bg-card px-comfortable text-[0.8125rem] font-medium text-fg transition-colors duration-quick hover:bg-line/40"
-                    >
+                    <Button variant="secondary" size="sm" onClick={addSponsor}>
                       {t("architect.addSponsor")}
-                    </button>
+                    </Button>
                     {event.sponsors.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={dropSponsor}
-                        className="min-h-11 rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:text-danger"
-                      >
+                      <Button variant="tertiary" size="sm" onClick={dropSponsor} className="text-muted hover:text-danger">
                         {t("architect.removeLast")}
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </>
@@ -525,51 +499,29 @@ export function EventArchitect({
                       open files it on that day. There is no day field to
                       remember and no way to leave one blank. */}
                   {dayTabs.length > 1 && (
-                    <div role="tablist" aria-label={t("architect.dayTabs")} className="flex flex-wrap gap-inline">
-                      {dayTabs.map((d, i) => {
-                        const on = i === openDay;
-                        const n = content.lineup.filter((l) => l.dayId === d.id).length;
-                        return (
-                          <button
-                            key={d.id}
-                            role="tab"
-                            type="button"
-                            aria-selected={on}
-                            tabIndex={on ? 0 : -1}
-                            onClick={() => setOpenDay(i)}
-                            ref={(el) => {
-                              dayTabRefs.current[i] = el;
-                            }}
-                            onKeyDown={(k) => {
-                              if (k.key === "ArrowRight" || k.key === "ArrowDown") { k.preventDefault(); moveDay(1); }
-                              if (k.key === "ArrowLeft" || k.key === "ArrowUp") { k.preventDefault(); moveDay(-1); }
-                            }}
-                            className={cn(
-                              "flex min-h-11 items-center gap-inline rounded-full px-comfortable text-[0.8125rem] font-medium transition-colors duration-quick sm:min-h-9",
-                              on ? "bg-card text-fg ring-2 ring-inset ring-ember-solid" : "bg-muted-wash text-muted hover:bg-line/40 hover:text-fg",
-                            )}
-                          >
-                            {d.label}
-                            <span className="text-[12px] tabular-nums opacity-70">{n}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <Tabs
+                      variant="pill"
+                      aria-label={t("architect.dayTabs")}
+                      items={dayTabs.map((d) => ({ value: d.id, label: d.label, count: content.lineup.filter((l) => l.dayId === d.id).length }))}
+                      value={activeDay?.id ?? ""}
+                      onChange={(id) => setOpenDay(Math.max(0, dayTabs.findIndex((d) => d.id === id)))}
+                    />
                   )}
                   {shownLineup.length === 0 && dayTabs.length > 1 && <Note>{t("architect.dayEmpty")}</Note>}
                   {shownLineup.map((l) => (
-                    <div key={l.id} className="rounded-sm bg-card p-comfortable">
+                    <div key={l.id} className="rounded-control bg-card p-comfortable">
                       <div className="mb-tight flex items-center justify-between gap-tight">
-                        <span className="text-[0.75rem] font-medium text-muted">{t("architect.entry")}</span>
-                        <button
-                          type="button"
+                        <span className="text-xs font-medium text-muted">{t("architect.entry")}</span>
+                        <Button
+                          variant="tertiary"
+                          size="icon"
                           aria-label={l.name.trim() ? t("architect.removeEntry", { name: l.name.trim() }) : t("architect.removeEntryUnnamed")}
                           title={l.name.trim() ? t("architect.removeEntry", { name: l.name.trim() }) : t("architect.removeEntryUnnamed")}
                           onClick={() => dropLineup(l.id)}
-                          className="flex h-9 w-9 items-center justify-center rounded-sm text-muted hover:text-danger"
+                          className="text-muted hover:text-danger"
                         >
-                          <Trash2 size={15} strokeWidth={1.5} />
-                        </button>
+                          <Trash2 size={15} strokeWidth={1.5} aria-hidden />
+                        </Button>
                       </div>
                       <div className="grid gap-tight">
                         <FormField label={t("architect.name")} placeholder={t("architect.namePlaceholder")} value={l.name} onChange={(e) => patchLineup(l.id, { name: e.target.value })} />
@@ -577,19 +529,18 @@ export function EventArchitect({
                             bill and the agenda, so each entry has to say which
                             it is — otherwise "Lunch" turns up in the speaker
                             grid with a portrait. */}
-                        <label className="grid gap-[6px]">
-                          <span className="text-[0.8125rem] font-medium text-muted">{t("architect.kind")}</span>
+                        <Field label={t("architect.kind")}>
                           <Select
                             value={l.kind ?? "person"}
                             onChange={(v) => patchLineup(l.id, { kind: v as "person" | "session" })}
                             aria-label={t("architect.kind")}
-                            triggerClassName="text-[14px] text-fg"
+                            triggerClassName="text-base text-fg"
                             options={[
                               { value: "person", label: t("architect.kindPerson") },
                               { value: "session", label: t("architect.kindSession") },
                             ]}
                           />
-                        </label>
+                        </Field>
                         {/* Two across, never three: the time field draws "9:30 PM"
                             with its list button, which a third of this card
                             cannot hold. */}
@@ -620,18 +571,19 @@ export function EventArchitect({
               {id === "faq" && (
                 <>
                   {content.faq.map((f) => (
-                    <div key={f.id} className="rounded-sm bg-card p-comfortable">
+                    <div key={f.id} className="rounded-control bg-card p-comfortable">
                       <div className="mb-tight flex items-center justify-between gap-tight">
-                        <span className="text-[0.75rem] font-medium text-muted">{t("architect.question")}</span>
-                        <button
-                          type="button"
+                        <span className="text-xs font-medium text-muted">{t("architect.question")}</span>
+                        <Button
+                          variant="tertiary"
+                          size="icon"
                           aria-label={f.q.trim() ? t("architect.removeQuestion", { q: f.q.trim() }) : t("architect.removeQuestionUnnamed")}
                           title={f.q.trim() ? t("architect.removeQuestion", { q: f.q.trim() }) : t("architect.removeQuestionUnnamed")}
                           onClick={() => dropFaq(f.id)}
-                          className="flex h-9 w-9 items-center justify-center rounded-sm text-muted hover:text-danger"
+                          className="text-muted hover:text-danger"
                         >
-                          <Trash2 size={15} strokeWidth={1.5} />
-                        </button>
+                          <Trash2 size={15} strokeWidth={1.5} aria-hidden />
+                        </Button>
                       </div>
                       <div className="grid gap-tight">
                         <FormField label={t("architect.q")} placeholder={t("placeholder.faqQ")} value={f.q} onChange={(e) => patchFaq(f.id, { q: e.target.value })} />
@@ -651,27 +603,23 @@ export function EventArchitect({
       {preview && (
       <div className="card-surface overflow-hidden xl:sticky xl:top-comfortable">
         <div className="flex items-center justify-between gap-tight border-b border-hairline px-card py-comfortable">
-          <h3 className="min-w-0 truncate text-base font-semibold text-fg">{t("customise.preview")}</h3>
-          <div className="flex shrink-0 items-center gap-inline">
-            {([["desktop", Monitor], ["tablet", Tablet], ["mobile", Smartphone]] as const).map(([d, Icon]) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setDevice(d)}
-                aria-label={t(`device.${d}`)}
-                aria-pressed={device === d}
-                className={cn(
-                  "flex h-11 w-11 items-center justify-center rounded-sm transition-colors duration-quick sm:h-9 sm:w-9",
-                  device === d ? "bg-inverse text-inverse-fg" : "text-muted hover:bg-muted-wash hover:text-fg",
-                )}
-              >
-                <Icon size={16} strokeWidth={1.5} />
-              </button>
-            ))}
-          </div>
+          <h3 className="min-w-0 truncate text-md font-semibold text-fg">{t("customise.preview")}</h3>
+          <SegmentedControl
+            size="sm"
+            className="shrink-0"
+            aria-label={t("customise.preview")}
+            options={([["desktop", Monitor], ["tablet", Tablet], ["mobile", Smartphone]] as const).map(([d, Icon]) => ({
+              value: d,
+              label: "",
+              icon: <Icon size={16} strokeWidth={1.5} aria-hidden />,
+              ariaLabel: t(`device.${d}`),
+            }))}
+            value={device}
+            onChange={(d) => setDevice(d as typeof device)}
+          />
         </div>
         <div className="max-h-[74vh] overflow-y-auto bg-muted-wash p-card">
-          <div className={cn("mx-auto overflow-hidden rounded-sm shadow-md", templateFontVars)} style={{ maxWidth: FRAME[device] }}>
+          <div className={cn("mx-auto overflow-hidden rounded-control shadow-md", templateFontVars)} style={{ maxWidth: FRAME[device] }}>
             <PreviewFrame width={FRAME[device]}>
               <EventTemplate event={event} device={device === "mobile" ? "mobile" : "desktop"} labels={labels} now={now} />
             </PreviewFrame>
@@ -715,8 +663,8 @@ function Row({
           className="flex min-h-11 min-w-0 flex-1 items-center gap-comfortable px-card py-comfortable text-left transition-colors duration-quick hover:bg-muted-wash"
         >
           <Icon size={16} strokeWidth={1.5} className={cn("shrink-0", "text-muted")} />
-          <span className={cn("min-w-0 flex-1 truncate text-[0.8125rem] font-medium", muted ? "text-muted line-through decoration-muted/40" : "text-fg")}>{label}</span>
-          {sample && <span className="shrink-0 rounded-full bg-warning-wash px-tight py-0.5 text-[12px] font-medium text-warning">{sample}</span>}
+          <span className={cn("min-w-0 flex-1 truncate text-sm font-medium", muted ? "text-muted line-through decoration-muted/40" : "text-fg")}>{label}</span>
+          {sample && <StatusPill tone="warning" className="shrink-0">{sample}</StatusPill>}
           <ChevronDown size={16} strokeWidth={1.5} className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-180")} />
         </button>
         {controls && <span className="flex shrink-0 items-center">{controls}</span>}
@@ -729,26 +677,21 @@ function Row({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-inline">
-      <span className="text-[0.8125rem] font-medium text-muted">{label}</span>
+      <span className="text-sm font-medium text-muted">{label}</span>
       {children}
     </label>
   );
 }
 
 function Note({ children }: { children: React.ReactNode }) {
-  return <p className="text-[13px] text-muted">{children}</p>;
+  return <p className="text-sm text-muted">{children}</p>;
 }
 
 function AddButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex min-h-11 items-center justify-center gap-inline rounded-sm bg-card text-[0.8125rem] font-medium text-muted transition-colors duration-quick hover:text-fg"
-    >
-      <Plus size={15} strokeWidth={1.5} />
+    <Button variant="secondary" size="sm" onClick={onClick} icon={<Plus size={15} strokeWidth={1.5} aria-hidden />} className="w-full">
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -774,15 +717,11 @@ function DetailsNote({ onEdit, children }: { onEdit?: () => void; children: Reac
   const t = useTranslations("events");
   return (
     <div className="flex flex-wrap items-center justify-between gap-tight">
-      <p className="text-[13px] text-muted">{children}</p>
+      <p className="text-sm text-muted">{children}</p>
       {onEdit && (
-        <button
-          type="button"
-          onClick={onEdit}
-          className="flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium underline underline-offset-2 hover:bg-muted-wash md:min-h-9"
-        >
+        <Button variant="tertiary" size="sm" onClick={onEdit}>
           {t("architect.editDetails")}
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -794,15 +733,11 @@ function DetailsNote({ onEdit, children }: { onEdit?: () => void; children: Reac
 function SampleNote({ onKeep }: { onKeep: () => void }) {
   const t = useTranslations("events");
   return (
-    <div className="flex flex-wrap items-center justify-between gap-tight rounded-sm bg-warning-wash px-comfortable py-tight">
-      <p className="min-w-0 flex-1 text-[13px] text-fg">{t("architect.sampleNote")}</p>
-      <button
-        type="button"
-        onClick={onKeep}
-        className="flex min-h-11 items-center rounded-sm border border-line bg-card px-comfortable text-[13px] font-medium hover:border-strong md:min-h-9"
-      >
+    <div className="flex flex-wrap items-center justify-between gap-tight rounded-control bg-warning-wash px-comfortable py-tight">
+      <p className="min-w-0 flex-1 text-sm text-fg">{t("architect.sampleNote")}</p>
+      <Button variant="secondary" size="sm" onClick={onKeep}>
         {t("architect.keepSample")}
-      </button>
+      </Button>
     </div>
   );
 }

@@ -39,32 +39,32 @@ export default function GoProfilePage() {
   const { counter } = useActiveCounter(countersQ.data?.data ?? peekCounters());
   const venue = locationsQ.data?.data.find((l) => l.id === counter?.locationId);
 
-  const card = "go-surface p-comfortable";
+  const card = "card-surface p-comfortable";
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-comfortable p-comfortable">
-      <h1 className="text-[1.25rem] font-semibold">{t("title")}</h1>
+      <h1 className="text-xl font-semibold">{t("title")}</h1>
 
       <div className={`${card} flex items-center gap-comfortable`}>
         <Avatar name={me?.name ?? "?"} size={56} />
         <div className="min-w-0">
-          <p className="truncate text-[1.0625rem] font-semibold">{me?.name ?? "…"}</p>
-          <p className="text-[0.8125rem] text-muted">{role?.name ?? t("noRole")}</p>
+          <p className="truncate text-md font-semibold">{me?.name ?? "…"}</p>
+          <p className="text-sm text-muted">{role?.name ?? t("noRole")}</p>
         </div>
       </div>
 
       <div className={card}>
-        <h2 className="text-[0.9375rem] font-semibold">{t("workingAt")}</h2>
+        <h2 className="text-md font-semibold">{t("workingAt")}</h2>
         <dl className="mt-tight flex flex-col gap-tight">
           <div className="flex items-center gap-tight">
             <Store size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
             <dt className="sr-only">{t("counter")}</dt>
-            <dd className="min-w-0 text-[0.875rem]">{counter?.name ?? "—"}</dd>
+            <dd className="min-w-0 text-base">{counter?.name ?? "—"}</dd>
           </div>
           <div className="flex items-center gap-tight">
             <MapPin size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
             <dt className="sr-only">{t("venue")}</dt>
-            <dd className="min-w-0 text-[0.875rem]">{venue?.name ?? "—"}</dd>
+            <dd className="min-w-0 text-base">{venue?.name ?? "—"}</dd>
           </div>
         </dl>
       </div>
@@ -73,16 +73,16 @@ export default function GoProfilePage() {
         {/* The picker's own label is off: this card already names it, and the
             OS label it draws is 12px — below the 13px floor the till holds
             every other piece of text to. */}
-        <h2 id="go-language" className="text-[0.9375rem] font-semibold">{t("language")}</h2>
-        <p className="mt-inline text-[0.8125rem] text-muted">{t("languageDesc")}</p>
+        <h2 id="go-language" className="text-md font-semibold">{t("language")}</h2>
+        <p className="mt-inline text-sm text-muted">{t("languageDesc")}</p>
         <div className="mt-tight">
           <LanguagePicker showLabel={false} labelledBy="go-language" />
         </div>
       </div>
 
       <div className={card}>
-        <h2 className="text-[0.9375rem] font-semibold">{t("detailsTitle")}</h2>
-        <dl className="mt-tight flex flex-col gap-tight text-[0.875rem]">
+        <h2 className="text-md font-semibold">{t("detailsTitle")}</h2>
+        <dl className="mt-tight flex flex-col gap-tight text-base">
           <div className="flex flex-wrap items-baseline gap-x-tight">
             <dt className="text-muted">{t("email")}</dt>
             <dd className="min-w-0 break-all">{me?.email || "—"}</dd>
@@ -92,20 +92,20 @@ export default function GoProfilePage() {
             <dd className="min-w-0">{me?.phone || "—"}</dd>
           </div>
         </dl>
-        <p className="mt-tight text-[0.8125rem] text-muted">{t("managerChanges")}</p>
+        <p className="mt-tight text-sm text-muted">{t("managerChanges")}</p>
       </div>
 
       {/* The way out, last and unmistakable: at a counter this is the control
           people actually come here for at the end of a shift. */}
       <Link
         href="/login"
-        className="go-surface flex min-h-14 items-center justify-center gap-tight text-[0.9375rem] font-semibold text-brand-foreground active:scale-[0.99]"
+        className="card-surface flex min-h-14 items-center justify-center gap-tight text-md font-semibold text-brand-foreground active:scale-[0.99]"
       >
         <LogOut size={18} strokeWidth={1.75} aria-hidden />
         {t("switchUser")}
       </Link>
 
-      <p className="flex items-center justify-center gap-inline text-[0.8125rem] text-muted">
+      <p className="flex items-center justify-center gap-inline text-sm text-muted">
         <ShieldCheck size={14} strokeWidth={1.5} aria-hidden />
         {t("pinNote")}
       </p>

@@ -124,7 +124,7 @@ export function MonthGrid({
       <div>
         <div className="grid grid-cols-7 border-b border-hairline">
           {weekdayLabels.map((w) => (
-            <div key={w} className="py-tight text-center text-[0.75rem] font-medium text-muted">
+            <div key={w} className="py-tight text-center text-xs font-medium text-muted">
               {w.slice(0, 1)}
             </div>
           ))}
@@ -146,15 +146,15 @@ export function MonthGrid({
                   aria-label={dayHeading?.(d)}
                   onClick={() => setPicked(key)}
                   className={cn(
-                    "flex min-h-[3.25rem] flex-col items-center gap-1 border-r border-hairline py-tight last:border-r-0",
+                    "flex min-h-13 flex-col items-center gap-1 border-r border-hairline py-tight last:border-r-0",
                     outside && "bg-subtle/40",
-                    on && "bg-ember/10",
+                    on && "bg-ember-wash",
                   )}
                 >
                   <span
                     className={cn(
-                      "flex h-7 min-w-[2rem] items-center justify-center rounded-sm px-1.5 font-mono text-[13px]",
-                      today && "bg-ember-solid font-semibold text-white",
+                      "flex h-7 min-w-8 items-center justify-center rounded-control px-1.5 text-sm tabular-nums",
+                      today && "bg-ember-solid font-semibold text-on-solid",
                       !today && on && "border border-ember text-brand-foreground",
                       !today && !on && outside && "text-muted",
                       !today && !on && !outside && "text-fg",
@@ -178,11 +178,11 @@ export function MonthGrid({
 
         {/* The chosen day, in full — the reason the grid can afford to be dots. */}
         <div className="border-t border-hairline">
-          <p className="px-card pt-comfortable text-[0.75rem] font-medium text-muted">
+          <p className="px-card pt-comfortable text-xs font-medium text-muted">
             {dayHeading ? dayHeading(selectedDate) : isoDate(selectedDate)}
           </p>
           {agenda.length === 0 ? (
-            <p className="px-card py-comfortable text-[13px] text-muted">{emptyLabel}</p>
+            <p className="px-card py-comfortable text-sm text-muted">{emptyLabel}</p>
           ) : (
             <ul className="flex flex-col gap-tight p-card">
               {agenda.map((e) => (
@@ -192,22 +192,22 @@ export function MonthGrid({
                     onClick={onSelect ? () => onSelect(e) : undefined}
                     {...peekHandlers(e, onPeek)}
                     className={cn(
-                      "flex w-full items-start gap-comfortable rounded-sm border px-comfortable py-tight text-left",
+                      "flex w-full items-start gap-comfortable rounded-control border px-comfortable py-tight text-left",
                       blockClass(e),
                     )}
                   >
-                    <span className="w-16 shrink-0 whitespace-nowrap font-mono text-[12px] opacity-70">
+                    <span className="w-16 shrink-0 whitespace-nowrap text-xs tabular-nums opacity-70">
                       {e.allDay ? "—" : clockOf(e.start, true)}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-0.5 text-[13px] font-medium leading-tight">
+                      <span className="flex items-center gap-0.5 text-sm font-medium leading-tight">
                         {e.source && <MarketBadge id={e.source.id} />}
                         {e.locked && <Lock size={11} strokeWidth={2.5} className="shrink-0" />}
                         <span className="min-w-0 break-words">{e.title}</span>
                         {e.sourceLabel && <span className="sr-only">, {e.sourceLabel}</span>}
                       </span>
                       {e.subtitle && (
-                        <span className="mt-0.5 block break-words text-[12px] leading-tight opacity-70">
+                        <span className="mt-0.5 block break-words text-xs leading-tight opacity-70">
                           {e.subtitle}
                         </span>
                       )}
@@ -227,7 +227,7 @@ export function MonthGrid({
       <div className="min-w-[44rem]">
         <div className="grid grid-cols-7 border-b border-hairline">
           {weekdayLabels.map((w) => (
-            <div key={w} className="px-tight py-tight text-[0.75rem] font-medium text-muted">
+            <div key={w} className="px-tight py-tight text-xs font-medium text-muted">
               {w}
             </div>
           ))}
@@ -259,9 +259,9 @@ export function MonthGrid({
                      tint: tinted, the 1st of next month — bookable — sampled
                      almost the shade that means "cannot be booked". */
                   className={cn(
-                    "group/day relative min-h-[7rem] border-r border-hairline/50 p-1 last:border-r-0",
+                    "group/day relative min-h-28 border-r border-hairline/50 p-1 last:border-r-0",
                     !!todayIso && key < todayIso && "bg-offtime",
-                    bookable && "cursor-pointer transition-colors duration-quick hover:bg-ember/[0.03]",
+                    bookable && "cursor-pointer transition-colors duration-quick hover:bg-ember-wash/30",
                   )}
                 >
                   {/* The keyboard's way in to the same thing, shown on hover. */}
@@ -270,7 +270,7 @@ export function MonthGrid({
                       type="button"
                       aria-label={createLabel?.(d)}
                       onClick={(ev) => onCreateDay?.(d, (ev.currentTarget.parentElement ?? ev.currentTarget).getBoundingClientRect())}
-                      className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-sm text-muted opacity-0 transition-opacity duration-quick hover:bg-muted-wash hover:text-brand-foreground focus-visible:opacity-100 group-hover/day:opacity-100"
+                      className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-control text-muted md:h-9 md:w-9 opacity-0 transition-opacity duration-quick hover:bg-muted-wash hover:text-brand-foreground focus-visible:opacity-100 group-hover/day:opacity-100"
                     >
                       <Plus size={14} strokeWidth={2} aria-hidden />
                     </button>
@@ -280,8 +280,8 @@ export function MonthGrid({
                     aria-label={openDayLabel?.(d)}
                     onClick={onPickDay ? () => onPickDay(d) : undefined}
                     className={cn(
-                      "mb-1 flex h-7 min-w-[2rem] items-center justify-center rounded-sm px-1.5 font-mono text-[13px] transition-colors duration-quick",
-                      today && "bg-ember-solid font-semibold text-white",
+                      "mb-1 flex h-11 min-w-11 items-center justify-center rounded-control px-1.5 text-sm tabular-nums transition-colors duration-quick md:h-9 md:min-w-9",
+                      today && "bg-ember-solid font-semibold text-on-solid",
                       !today && outside && "text-muted",
                       !today && !outside && "text-fg",
                       onPickDay && !today && "hover:bg-muted-wash",
@@ -304,7 +304,7 @@ export function MonthGrid({
                           e.subtitle ? `, ${e.subtitle}` : ""
                         }${e.sourceLabel ? `, ${e.sourceLabel}` : ""}`}
                         className={cn(
-                          "flex w-full items-center gap-0.5 overflow-hidden rounded-sm border px-1 py-0.5 text-left text-[12px] leading-tight",
+                          "flex w-full items-center gap-0.5 overflow-hidden rounded-control border px-1 py-0.5 text-left text-xs leading-tight",
                           blockClass(e),
                         )}
                       >
@@ -313,7 +313,7 @@ export function MonthGrid({
                         {e.source && <MarketBadge id={e.source.id} className="max-lg:hidden" />}
                         {e.locked && <Lock size={8} strokeWidth={2.5} className="shrink-0" />}
                         {!e.allDay && (
-                          <span className="shrink-0 font-mono opacity-70">{clockOf(e.start, true)}</span>
+                          <span className="shrink-0 tabular-nums opacity-70">{clockOf(e.start, true)}</span>
                         )}
                         <span className="truncate">{e.title}</span>
                       </button>
@@ -322,9 +322,9 @@ export function MonthGrid({
                       <span
                         data-ghost
                         aria-hidden
-                        className="flex w-full items-center gap-0.5 overflow-hidden rounded-sm bg-ember-solid px-1 py-0.5 text-[12px] font-semibold leading-tight text-white shadow-pop"
+                        className="flex w-full items-center gap-0.5 overflow-hidden rounded-control bg-ember-solid px-1 py-0.5 text-xs font-semibold leading-tight text-on-solid shadow-md"
                       >
-                        {!draftHere.allDay && <span className="shrink-0 font-mono font-normal text-white/90">{formatClockMin(draftHere.start, { short: true })}</span>}
+                        {!draftHere.allDay && <span className="shrink-0 font-normal tabular-nums text-on-solid/90">{formatClockMin(draftHere.start, { short: true })}</span>}
                         <span className="truncate">{draftHere.title ?? ghostLabel}</span>
                       </span>
                     )}
@@ -332,7 +332,7 @@ export function MonthGrid({
                       <button
                         type="button"
                         onClick={onPickDay ? () => onPickDay(d) : undefined}
-                        className="self-start rounded-xs px-1 text-left text-[12px] text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg"
+                        className="self-start rounded-control px-1 text-left text-xs text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg"
                       >
                         {moreLabel(rest)}
                       </button>

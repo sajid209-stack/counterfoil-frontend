@@ -4,8 +4,8 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Download, RotateCcw, Search, SearchX, TicketCheck } from "lucide-react";
-import { Button, DataTable, EmptyState, FilterBar, PageShell, StatusPill, formatRange, useToast, type Column, type FilterSpec, type PillTone } from "@/components/ui";
+import { Download, RotateCcw, SearchX, TicketCheck, TriangleAlert } from "lucide-react";
+import { Button, DataTable, EmptyState, FilterBar, FilterSearch, PageShell, Pagination, StatusPill, formatRange, useToast, type Column, type FilterSpec, type PillTone } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
@@ -23,7 +23,6 @@ import {
 } from "@/lib/api";
 import { Checklist, checklistSummary } from "../orders/_components/Checklist";
 import { DateChip } from "../orders/_components/DateChip";
-import { OrdersPager } from "../orders/_components/OrdersPager";
 import { PRESETS, presetOf } from "../orders/_lib/filters";
 
 /* ── Dates ───────────────────────────────────────────────────────────────
@@ -178,7 +177,7 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
       key: "code",
       header: t("col.code"),
       sortable: true,
-      render: (r) => <span className="whitespace-nowrap font-mono text-[13px]">{r.code}</span>,
+      render: (r) => <span className="whitespace-nowrap font-mono text-sm">{r.code}</span>,
     },
     {
       key: "state",
@@ -194,7 +193,7 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
       key: "start",
       header: t("col.start"),
       sortable: true,
-      render: (r) => <span className="whitespace-nowrap text-[0.8125rem] tabular-nums">{startText(r)}</span>,
+      render: (r) => <span className="whitespace-nowrap text-sm tabular-nums">{startText(r)}</span>,
     },
     {
       key: "booking",
@@ -212,9 +211,9 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
       sortable: true,
       render: (r) => (
         <span className="block min-w-0 max-w-[10rem]">
-          <span className="block truncate text-[0.8125rem]" title={r.variantName}>{r.variantName}</span>
+          <span className="block truncate text-sm" title={r.variantName}>{r.variantName}</span>
           {r.admits > 1 && r.state !== "void" && (
-            <span className="block text-[12px] text-muted">{t("partOf", { used: r.used, total: r.admits })}</span>
+            <span className="block text-xs text-muted">{t("partOf", { used: r.used, total: r.admits })}</span>
           )}
         </span>
       ),
@@ -223,7 +222,7 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
       key: "issued",
       header: t("col.issued"),
       sortable: true,
-      render: (r) => <span className="whitespace-nowrap text-[0.8125rem] tabular-nums">{formatDateTime(r.issuedAt)}</span>,
+      render: (r) => <span className="whitespace-nowrap text-sm tabular-nums">{formatDateTime(r.issuedAt)}</span>,
     },
     {
       key: "order",
@@ -234,11 +233,11 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
           <Link
             href={`/orders/${r.orderId}`}
             onClick={(e) => e.stopPropagation()}
-            className="block truncate font-mono text-[13px] text-fg underline-offset-2 hover:underline"
+            className="block truncate font-mono text-sm text-fg underline-offset-2 hover:underline"
           >
             {r.orderReference}
           </Link>
-          <span className="block truncate text-[12px] text-muted">{r.customerName ?? t("walkIn")}</span>
+          <span className="block truncate text-xs text-muted">{r.customerName ?? t("walkIn")}</span>
         </span>
       ),
     },
@@ -250,12 +249,12 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
   const renderCard = (r: IssuedTicket) => (
     <div className="flex min-w-0 flex-col gap-inline">
       <div className="flex items-center justify-between gap-tight">
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">{r.bookingName}</span>
+        <span className="min-w-0 flex-1 truncate text-base font-medium">{r.bookingName}</span>
         <StatusPill tone={PILL[r.state].tone} shape={PILL[r.state].shape} className="shrink-0">
           {stateLabel(r.state)}
         </StatusPill>
       </div>
-      <span className="truncate text-[0.75rem] text-muted">
+      <span className="truncate text-xs text-muted">
         <span className="font-mono">{r.code}</span> · {r.variantName} · {startText(r)}
       </span>
     </div>
@@ -344,20 +343,14 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
   const toolbar = (
     <FilterBar
       search={
-        <label className="relative block min-w-0 md:w-60 xl:w-72">
-          <Search size={16} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            placeholder={t("search")}
-            aria-label={t("search")}
-            className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none placeholder:text-muted focus:border-inverse md:h-9"
-          />
-        </label>
+        <FilterSearch
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          placeholder={t("search")}
+        />
       }
       filters={filters}
       actions={
@@ -380,17 +373,22 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
     <PageShell title={t("title")} description={t("description")}>
       <div className="flex flex-col gap-section">
         {listQ.error && !rows ? (
-          <div className="card-surface flex flex-col items-center gap-tight p-card py-major text-center">
-            <p className="text-[15px] font-semibold">{t("error.title")}</p>
-            <p className="text-[13px] text-muted">{t("error.text")}</p>
-            <Button variant="secondary" icon={<RotateCcw size={15} strokeWidth={1.5} aria-hidden />} onClick={() => listQ.reload()} className="mt-tight">
-              {t("error.retry")}
-            </Button>
+          <div className="card-surface">
+            <EmptyState
+              icon={<TriangleAlert size={24} strokeWidth={1.5} aria-hidden />}
+              title={t("error.title")}
+              message={t("error.text")}
+              action={
+                <Button variant="secondary" icon={<RotateCcw size={15} strokeWidth={1.5} aria-hidden />} onClick={() => listQ.reload()}>
+                  {t("error.retry")}
+                </Button>
+              }
+            />
           </div>
         ) : (
           <div className={cn("flex flex-col gap-section transition-opacity", loading && rows && "opacity-60")} aria-busy={loading}>
             {/* One quiet line, not a band of cards: the table is the point. */}
-            <p className="text-[0.8125rem] tabular-nums text-muted" aria-live="polite">
+            <p className="text-sm tabular-nums text-muted" aria-live="polite">
               {summary ? summaryParts.join(" · ") : "…"}
               <span className="sr-only"> {formatRange(range.from, range.to)}</span>
             </p>
@@ -424,12 +422,13 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
               }
             />
             {rows && rows.length > 0 && info && (
-              <OrdersPager
+              <Pagination
                 page={shownPage}
-                size={size}
+                pageSize={size}
                 total={info.total}
-                onPage={setPage}
-                onSize={(n) => {
+                onPageChange={setPage}
+                pageSizeOptions={PAGE_SIZES}
+                onPageSizeChange={(n) => {
                   setSize(n);
                   setPage(1);
                 }}

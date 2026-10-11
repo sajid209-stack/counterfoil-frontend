@@ -83,7 +83,7 @@ export function ColorPicker({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={label}
-        className="flex h-11 w-11 items-center justify-center rounded-sm transition-colors duration-quick hover:bg-muted-wash md:h-9 md:w-9"
+        className="flex h-11 w-11 items-center justify-center rounded-control transition-colors duration-quick hover:bg-muted-wash md:h-9 md:w-9"
       >
         <span
           aria-hidden
@@ -98,7 +98,7 @@ export function ColorPicker({
         <div
           role="menu"
           aria-label={label}
-          className="absolute right-0 top-[calc(100%+4px)] z-40 w-48 rounded-md border border-line bg-card py-inline shadow-lg"
+          className="absolute right-0 top-[calc(100%+4px)] z-40 w-48 rounded-card border border-line bg-card py-inline shadow-float"
         >
           {[null, ...ACCENT_COLORS].map((c) => (
             <button
@@ -107,7 +107,7 @@ export function ColorPicker({
               role="menuitemradio"
               aria-checked={(value ?? null) === c}
               onClick={() => pick(c)}
-              className="flex min-h-11 w-full items-center gap-comfortable px-comfortable text-left text-sm text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
+              className="flex min-h-11 w-full items-center gap-comfortable px-comfortable text-left text-base text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
             >
               <span
                 aria-hidden

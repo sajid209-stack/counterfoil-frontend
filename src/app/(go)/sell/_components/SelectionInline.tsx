@@ -22,8 +22,8 @@
 import { useState } from "react";
 import { useApiQuery } from "@/lib/useApi";
 import { useTranslations } from "next-intl";
-import { Minus, Plus, X } from "lucide-react";
-import { Avatar, BlockedNotice, ChoiceCard, DateStrip } from "@/components/ui";
+import { X } from "lucide-react";
+import { Avatar, BlockedNotice, ChoiceCard, DateStrip, SkeletonText } from "@/components/ui";
 import { availableSeats, explainUnavailable, type Product, type Resource, type Staff } from "@/lib/api";
 import { applyResourceRate } from "@/lib/api";
 import { productDurationPrice } from "@/lib/duration";
@@ -49,13 +49,14 @@ import {
 } from "@/lib/sale/selection";
 import { SessionList } from "../../_components/SessionList";
 import { getResourceMatrix } from "@/lib/api";
+import { Stepper } from "../../_components/Stepper";
 
 /** A question's heading. One shape for all of them, so the block reads as a
  *  sequence of decisions rather than as loose controls. */
 function Step({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mt-section first:mt-0">
-      <p className="mb-tight text-[0.875rem] font-semibold text-fg">{label}</p>
+      <p className="mb-tight text-base font-semibold text-fg">{label}</p>
       {children}
     </div>
   );
@@ -98,9 +99,9 @@ export function SelectionInline({
 
   if (pattern === "unsupported") {
     return (
-      <div className="rounded-go border border-dashed border-strong bg-subtle/40 p-section">
-        <p className="text-[0.875rem] font-medium">{t("unsupported.title")}</p>
-        <p className="mt-inline text-[0.8125rem] text-muted">{t("unsupported.body")}</p>
+      <div className="rounded-card border border-dashed border-strong bg-subtle p-section">
+        <p className="text-base font-medium">{t("unsupported.title")}</p>
+        <p className="mt-inline text-sm text-muted">{t("unsupported.body")}</p>
       </div>
     );
   }
@@ -150,10 +151,10 @@ export function SelectionInline({
     const low = left <= Math.max(1, Math.floor(cap * 0.2));
     return (
       <Step label={t("step.allowance")}>
-        <div className="rounded-go border border-line bg-card p-comfortable">
+        <div className="card-surface p-comfortable">
           <div className="flex items-baseline justify-between gap-tight">
-            <span className="min-w-0 truncate text-[0.8125rem] text-muted">{t("allowance.remaining")}</span>
-            <span className={`shrink-0 text-[0.9375rem] font-semibold ${low ? "text-brand-foreground" : ""}`}>
+            <span className="min-w-0 truncate text-sm text-muted">{t("allowance.remaining")}</span>
+            <span className={`shrink-0 text-md font-semibold ${low ? "text-brand-foreground" : ""}`}>
               {t("allowance.ofTotal", { left, total: cap })}
             </span>
           </div>
@@ -171,7 +172,7 @@ export function SelectionInline({
   const sessions = pattern === "sessions" && (
     <Step label={t(guided ? "step.departure" : "step.session")}>
       {rows.length === 0 ? (
-        <p className="rounded-go border border-line bg-subtle/40 p-comfortable text-[0.8125rem] text-muted">
+        <p className="rounded-card border border-line bg-subtle p-comfortable text-sm text-muted">
           {t("session.noneToday")}
         </p>
       ) : (
@@ -233,8 +234,8 @@ export function SelectionInline({
                 onClick={() => set({ guideId: id })}
                 className="flex min-w-[140px] flex-1 flex-col gap-inline py-tight pl-comfortable pr-7"
               >
-                <span className="min-w-0 truncate text-[0.875rem] font-medium">{person?.name ?? id}</span>
-                <span className={`text-[0.8125rem] ${free ? "text-success" : "text-muted"}`}>
+                <span className="min-w-0 truncate text-base font-medium">{person?.name ?? id}</span>
+                <span className={`text-sm ${free ? "text-success" : "text-muted"}`}>
                   {t(free ? "guide.available" : "guide.busy")}
                 </span>
               </ChoiceCard>
@@ -272,7 +273,7 @@ export function SelectionInline({
     <>
       {matrix.length === 0 ? (
         <Step label={t("step.slot")}>
-          <p className="rounded-go border border-line bg-subtle/40 p-comfortable text-[0.8125rem] text-muted">
+          <p className="rounded-card border border-line bg-subtle p-comfortable text-sm text-muted">
             {t("session.noneToday")}
           </p>
         </Step>
@@ -286,7 +287,7 @@ export function SelectionInline({
               label={`${row.resource.name}${takenHere ? ` · ${t("slot.chosenCount", { count: takenHere })}` : ""}`}
             >
               {row.resource.outOfService ? (
-                <p className="rounded-go border border-line bg-subtle/40 p-comfortable text-[0.8125rem] text-muted">
+                <p className="rounded-card border border-line bg-subtle p-comfortable text-sm text-muted">
                   {t("flex.outOfService")}
                 </p>
               ) : (
@@ -316,16 +317,16 @@ export function SelectionInline({
                           }
                           toggleSlot(row.resource.id, sl.time);
                         }}
-                        className={`flex min-h-[52px] flex-col items-center justify-center rounded-go border px-inline text-[0.8125rem] transition-colors duration-quick ${
+                        className={`flex min-h-[52px] flex-col items-center justify-center rounded-card border px-inline text-sm transition-colors duration-quick ${
                           on
-                            ? "border-ember bg-ember-solid font-medium text-white"
+                            ? "border-ember-solid bg-ember-solid font-medium text-on-solid"
                             : sl.available
-                              ? "border-line bg-card active:bg-ember/10"
+                              ? "border-line bg-card active:bg-muted-wash"
                               : "border-line bg-subtle text-muted line-through"
                         }`}
                       >
                         <ClockCell hhmm={sl.time} className={on || sl.available ? undefined : "line-through"} />
-                        <span className={on ? "text-[0.75rem] text-white/80" : "text-[0.75rem] text-muted"}>
+                        <span className={on ? "text-sm text-on-solid" : "text-sm text-muted"}>
                           {formatMoney(price, currency)}
                         </span>
                       </button>
@@ -343,7 +344,7 @@ export function SelectionInline({
           you are no longer looking at can still be given back. */}
       {picked.length > 0 && (
         <Step label={t("slot.chosen")}>
-          <div className="overflow-hidden rounded-go border border-line bg-card">
+          <div className="overflow-hidden card-surface">
             {[...picked]
               .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
               .map((x, i) => {
@@ -354,10 +355,10 @@ export function SelectionInline({
                     className={`flex items-center gap-tight p-comfortable ${i ? "border-t border-line" : ""}`}
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[0.875rem] font-medium">
+                      <span className="block truncate text-base font-medium">
                         {res?.name ?? x.resourceId} · {formatClock(x.time)}
                       </span>
-                      <span className="block text-[0.75rem] text-muted">
+                      <span className="block text-sm text-muted">
                         {formatDay(x.date, { weekday: true })}
                       </span>
                     </span>
@@ -365,7 +366,7 @@ export function SelectionInline({
                       type="button"
                       aria-label={t("slot.remove", { time: formatClock(x.time) })}
                       onClick={() => set({ slots: picked.filter((y) => y !== x) })}
-                      className="flex size-11 shrink-0 items-center justify-center rounded-full text-danger active:bg-ember/10"
+                      className="flex size-11 shrink-0 items-center justify-center rounded-full text-danger active:bg-muted-wash"
                     >
                       <X size={16} strokeWidth={1.75} />
                     </button>
@@ -394,9 +395,9 @@ export function SelectionInline({
               onClick={() => set({ validityId: v.id })}
               className="flex min-h-[56px] flex-col justify-center gap-inline py-tight pl-comfortable pr-7"
             >
-              <span className="min-w-0 truncate text-[0.875rem] font-medium">{v.label}</span>
+              <span className="min-w-0 truncate text-base font-medium">{v.label}</span>
               {(v.priceDelta ?? 0) > 0 && (
-                <span className="text-[0.8125rem] text-brand-foreground">+{formatMoney(v.priceDelta ?? 0, currency)}</span>
+                <span className="text-sm text-brand-foreground">+{formatMoney(v.priceDelta ?? 0, currency)}</span>
               )}
             </ChoiceCard>
           ))}
@@ -442,10 +443,10 @@ export function SelectionInline({
                     !flexStartBlocked(product, draft.date, draft.slotTime, d, draft.resourceId, 12 * 60);
                   set({ durationMinutes: d, slotTime: stillFits ? draft.slotTime : undefined });
                 }}
-                className={`h-12 min-w-[72px] flex-1 rounded-full border px-comfortable text-[0.875rem] transition-colors duration-quick ${
+                className={`h-12 min-w-[72px] flex-1 rounded-full border px-comfortable text-base transition-colors duration-quick ${
                   minutes === d
-                    ? "border-ember bg-ember/10 font-medium text-brand-foreground"
-                    : "border-line bg-card active:bg-ember/10"
+                    ? "border-ember-solid bg-ember-solid font-medium text-on-solid"
+                    : "border-line bg-card active:bg-muted-wash"
                 }`}
               >
                 {formatDuration(d)}
@@ -464,8 +465,8 @@ export function SelectionInline({
               onClick={() => set({ resourceId: undefined })}
               className="flex min-h-[56px] flex-col justify-center gap-inline px-comfortable py-tight"
             >
-              <span className="text-[0.875rem] font-medium">{t("flex.any")}</span>
-              <span className="text-[0.75rem] text-muted">{t("flex.anyHint")}</span>
+              <span className="text-base font-medium">{t("flex.any")}</span>
+              <span className="text-sm text-muted">{t("flex.anyHint")}</span>
             </ChoiceCard>
             {lanes.map((l) => (
               <ChoiceCard
@@ -476,8 +477,8 @@ export function SelectionInline({
                 onClick={() => set({ resourceId: l.id, slotTime: undefined })}
                 className="flex min-h-[56px] flex-col justify-center gap-inline px-comfortable py-tight"
               >
-                <span className="truncate text-[0.875rem] font-medium">{l.name}</span>
-                <span className="text-[0.75rem] text-muted">
+                <span className="truncate text-base font-medium">{l.name}</span>
+                <span className="text-sm text-muted">
                   {l.outOfService ? t("flex.outOfService") : formatMoney(price("12:00", l.id), currency)}
                 </span>
               </ChoiceCard>
@@ -495,12 +496,12 @@ export function SelectionInline({
                   key={time}
                   type="button"
                   onClick={() => (blocked ? setBlocked(blockWord(blocked)) : set({ slotTime: time }))}
-                  className={`flex min-h-12 flex-col items-center justify-center rounded-go border px-inline text-[0.8125rem] transition-colors duration-quick ${
+                  className={`flex min-h-12 flex-col items-center justify-center rounded-card border px-inline text-sm transition-colors duration-quick ${
                     on
-                      ? "border-ember bg-ember-solid font-medium text-white"
+                      ? "border-ember-solid bg-ember-solid font-medium text-on-solid"
                       : blocked
                         ? "border-line bg-subtle text-muted line-through"
-                        : "border-line bg-card active:bg-ember/10"
+                        : "border-line bg-card active:bg-muted-wash"
                   }`}
                 >
                   <ClockCell hhmm={time} className={on || !blocked ? undefined : "line-through"} />
@@ -511,7 +512,7 @@ export function SelectionInline({
           {/* The end time is the thing a customer asks for, and it is never
               typed — it falls out of the start and the length. */}
           {draft.slotTime && (
-            <p className="mt-tight text-[0.8125rem] text-muted">
+            <p className="mt-tight text-sm text-muted">
               {formatClockRange(draft.slotTime, toMinutes(draft.slotTime) + minutes)}
             </p>
           )}
@@ -544,11 +545,11 @@ export function SelectionInline({
                       ? set({ slotTime: time, providerId: undefined })
                       : setBlocked(t("provider.noneFree", { time: formatClock(time) }))
                   }
-                  className={`flex min-h-12 items-center justify-center rounded-go border px-inline text-[0.8125rem] transition-colors duration-quick ${
+                  className={`flex min-h-12 items-center justify-center rounded-card border px-inline text-sm transition-colors duration-quick ${
                     on
-                      ? "border-ember bg-ember-solid font-medium text-white"
+                      ? "border-ember-solid bg-ember-solid font-medium text-on-solid"
                       : anyFree
-                        ? "border-line bg-card active:bg-ember/10"
+                        ? "border-line bg-card active:bg-muted-wash"
                         : "border-line bg-subtle text-muted line-through"
                   }`}
                 >
@@ -557,7 +558,7 @@ export function SelectionInline({
               );
             })}
           </div>
-          <p className="mt-tight text-[0.8125rem] text-muted">{t("provider.length", { length: formatDuration(mins) })}</p>
+          <p className="mt-tight text-sm text-muted">{t("provider.length", { length: formatDuration(mins) })}</p>
         </Step>
 
         {draft.slotTime && people.length > 0 && (
@@ -579,12 +580,12 @@ export function SelectionInline({
                   >
                     <Avatar name={who?.name ?? pid} size={36} />
                     <span className="min-w-0 flex-1 text-left">
-                      <span className="block truncate text-[0.875rem] font-medium">{who?.name ?? pid}</span>
-                      <span className={`block text-[0.8125rem] ${free ? "text-success" : "text-muted"}`}>
+                      <span className="block truncate text-base font-medium">{who?.name ?? pid}</span>
+                      <span className={`block text-sm ${free ? "text-success" : "text-muted"}`}>
                         {t(free ? "guide.available" : "guide.busy")}
                       </span>
                     </span>
-                    <span className="shrink-0 whitespace-nowrap text-[0.8125rem] text-muted">
+                    <span className="shrink-0 whitespace-nowrap text-sm text-muted">
                       {premium > 0 ? t("provider.premium", { amount: formatMoney(premium, currency) }) : t("provider.standard")}
                     </span>
                   </ChoiceCard>
@@ -609,22 +610,22 @@ export function SelectionInline({
     const range = `${new Intl.DateTimeFormat("en-GB", { day: "numeric" }).format(day(dates[0]))}–${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(day(dates[dates.length - 1]))}`;
     return (
       <Step label={t("step.course")}>
-        <div className="rounded-go border border-success/30 bg-success/10 p-comfortable">
-          <p className="text-[0.875rem] font-medium text-success">{t("course.ready")}</p>
-          <p className="mt-inline text-[0.8125rem]">
+        <div className="rounded-card border border-success/30 bg-success/10 p-comfortable">
+          <p className="text-base font-medium text-success">{t("course.ready")}</p>
+          <p className="mt-inline text-sm">
             {t("course.runs", { count: dates.length, days: weekdays.join(" & "), range })}
           </p>
           <button
             type="button"
             onClick={() => setCourseOpen((v) => !v)}
-            className="mt-tight min-h-11 text-[0.8125rem] font-medium text-brand-foreground underline-offset-2 hover:underline"
+            className="mt-tight min-h-11 text-sm font-medium text-brand-foreground underline-offset-2 hover:underline"
           >
             {t(courseOpen ? "course.hideDates" : "course.showDates")}
           </button>
           {courseOpen && (
             <ul className="mt-tight flex flex-col gap-inline">
               {dates.map((x) => (
-                <li key={x} className="text-[0.8125rem] tabular-nums">{formatDay(x, { weekday: true })}</li>
+                <li key={x} className="text-sm tabular-nums">{formatDay(x, { weekday: true })}</li>
               ))}
             </ul>
           )}
@@ -643,10 +644,7 @@ export function SelectionInline({
     if (seatsQ.loading) {
       return (
         <Step label={t("step.seats")}>
-          <div aria-busy="true" className="flex animate-pulse flex-col gap-tight">
-            <div className="h-4 w-1/3 rounded-go-sm bg-line" />
-            <div className="h-16 w-full rounded-go-sm bg-line" />
-          </div>
+          <div aria-busy="true"><SkeletonText lines={3} /></div>
         </Step>
       );
     }
@@ -656,7 +654,7 @@ export function SelectionInline({
     const categories = [...new Map(rows.map((r) => [r.categoryUid, r])).values()];
     return (
       <Step label={t("step.seats")}>
-        <p className="mb-tight rounded-go bg-subtle py-inline text-center text-[0.75rem] uppercase tracking-widest text-muted">
+        <p className="mb-tight rounded-card bg-subtle py-inline text-center text-sm font-medium text-muted">
           {t("seats.screen")}
         </p>
         <div className="-mx-comfortable overflow-x-auto px-comfortable pb-1">
@@ -686,9 +684,9 @@ export function SelectionInline({
                                 }],
                           })
                         }
-                        className={`flex size-7 shrink-0 items-center justify-center rounded-go-sm border text-[0.5625rem] ${
+                        className={`flex size-7 shrink-0 items-center justify-center rounded-inner border text-[0.5625rem] ${
                           on
-                            ? "border-ember bg-ember-solid font-semibold text-white"
+                            ? "border-ember-solid bg-ember-solid font-semibold text-on-solid"
                             : seat.available
                               ? "border-line bg-card"
                               : "border-line bg-subtle text-muted line-through"
@@ -703,11 +701,11 @@ export function SelectionInline({
             ))}
           </div>
         </div>
-        <div className="mt-tight flex flex-wrap gap-comfortable text-[0.75rem] text-muted">
+        <div className="mt-tight flex flex-wrap gap-comfortable text-sm text-muted">
           {categories.map((c) => (
             <span key={c.categoryUid} className="flex items-center gap-inline">
               <span
-                className="size-3 rounded-go-sm border"
+                className="size-3 rounded-inner border"
                 style={{ backgroundColor: `${c.color}22`, borderColor: c.color }}
                 aria-hidden
               />
@@ -715,7 +713,7 @@ export function SelectionInline({
             </span>
           ))}
           <span className="flex items-center gap-inline">
-            <span className="size-3 rounded-go-sm border border-ember bg-ember" aria-hidden />
+            <span className="size-3 rounded-inner border border-ember-solid bg-ember-solid" aria-hidden />
             {t("seats.selected")}
           </span>
         </div>
@@ -735,7 +733,7 @@ export function SelectionInline({
       {/* One panel of hairline-separated rows. Each row states the three
           things in the order they are decided: what it is, who it admits,
           what it costs. Four bordered cards read as four unrelated objects. */}
-      <div className="overflow-hidden rounded-go border border-line bg-card">
+      <div className="overflow-hidden card-surface">
         {countable.map((tier) => {
           const price = draft.slotTime
             ? resolveProductPrice(product, draft.date, draft.slotTime, tier.price)
@@ -746,30 +744,11 @@ export function SelectionInline({
           return (
             <div key={tier.id} className="flex items-center gap-comfortable border-b border-line p-comfortable last:border-b-0">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[0.875rem] font-medium">{tier.name}</p>
-                {note && <p className="mt-inline truncate text-[0.75rem] text-muted">{note}</p>}
-                <p className="mt-inline text-[0.8125rem] font-medium text-brand-foreground">{formatMoney(price, currency)}</p>
+                <p className="truncate text-base font-medium">{tier.name}</p>
+                {note && <p className="mt-inline truncate text-sm text-muted">{note}</p>}
+                <p className="mt-inline text-sm font-medium text-brand-foreground">{formatMoney(price, currency)}</p>
               </div>
-              <div className="flex shrink-0 items-center gap-tight">
-                <button
-                  type="button"
-                  aria-label={t("qty.less", { tier: tier.name })}
-                  disabled={n === 0}
-                  onClick={() => set({ qty: { ...draft.qty, [tier.id]: Math.max(0, n - 1) } })}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-fg disabled:text-faint active:bg-ember/10"
-                >
-                  <Minus size={16} strokeWidth={2} />
-                </button>
-                <span className="w-6 text-center text-[0.9375rem] font-semibold tabular-nums">{n}</span>
-                <button
-                  type="button"
-                  aria-label={t("qty.more", { tier: tier.name })}
-                  onClick={() => set({ qty: { ...draft.qty, [tier.id]: n + 1 } })}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-fg active:bg-ember/10"
-                >
-                  <Plus size={16} strokeWidth={2} />
-                </button>
-              </div>
+              <Stepper value={n} min={0} onChange={(v) => set({ qty: { ...draft.qty, [tier.id]: v } })} lessLabel={t("qty.less", { tier: tier.name })} moreLabel={t("qty.more", { tier: tier.name })} />
             </div>
           );
         })}

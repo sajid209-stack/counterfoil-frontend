@@ -30,7 +30,7 @@ export function ShowMore({ children, className }: { children: React.ReactNode; c
         aria-expanded={open}
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex h-11 w-full items-center justify-center gap-inline rounded-sm text-[0.8125rem] font-medium text-fg transition-colors duration-quick hover:bg-muted-wash",
+          "flex h-11 w-full items-center justify-center gap-inline rounded-control text-sm font-medium text-fg transition-colors duration-quick hover:bg-muted-wash",
           className,
         )}
       >

@@ -39,7 +39,8 @@
     "notFound": "প্রোমোশন পাওয়া যায়নি",
     "statusActive": "চালু",
     "statusInactive": "বন্ধ",
-    "statusArchived": "সরিয়ে রাখা"
+    "statusArchived": "সরিয়ে রাখা",
+    "title": "প্রোমোশন বদলান"
   },
   "policy": {
     "title": "ক্যাশিয়ারের ছাড়ের সীমা",

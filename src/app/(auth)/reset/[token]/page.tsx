@@ -21,7 +21,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="card-surface flex flex-col gap-section p-card text-center">
         <h1 className="type-h1 text-2xl">{token === "used" ? t("usedTitle") : t("expiredTitle")}</h1>
-        <p className="type-body text-[13px] text-muted">{token === "used" ? t("usedLead") : t("expiredLead")}</p>
+        <p className="type-body text-sm text-muted">{token === "used" ? t("usedLead") : t("expiredLead")}</p>
         <Link href="/forgot-password"><Button size="lg" fullWidth>{t("again")}</Button></Link>
       </div>
     );
@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
     <div className="card-surface flex flex-col gap-section p-card">
       <div>
         <h1 className="type-h1 text-2xl">{t("title")}</h1>
-        <p className="type-body mt-tight text-[13px] text-muted">{t("lead")}</p>
+        <p className="type-body mt-tight text-sm text-muted">{t("lead")}</p>
       </div>
       <FormField label={t("password")} variant="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} error={shortErr} />
       <FormField label={t("repeat")} variant="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} error={matchErr} />

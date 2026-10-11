@@ -106,7 +106,7 @@ export function ToolbarMenu({ items, label }: { items: ToolbarMenuItem[]; label:
         title={label}
         onClick={() => (open ? close(false) : setOpen(true))}
         className={cn(
-          "grid h-11 w-11 shrink-0 place-items-center rounded-sm border border-line bg-card text-muted transition-colors duration-quick hover:text-fg md:h-9 md:w-9",
+          "grid h-11 w-11 shrink-0 place-items-center rounded-control border border-line bg-card text-muted transition-colors duration-quick hover:text-fg md:h-9 md:w-9",
           open && "border-strong text-fg",
         )}
       >
@@ -119,7 +119,7 @@ export function ToolbarMenu({ items, label }: { items: ToolbarMenuItem[]; label:
             id={id}
             role="menu"
             aria-label={label}
-            className="fixed z-50 flex min-w-[12rem] max-w-[min(20rem,calc(100vw-1rem))] flex-col overflow-y-auto overscroll-contain rounded-md border border-line bg-card py-inline shadow-lg"
+            className="fixed z-50 flex min-w-[12rem] max-w-[min(20rem,calc(100vw-1rem))] flex-col overflow-y-auto overscroll-contain rounded-card border border-line bg-card py-inline shadow-float"
           >
             {items.map((item) => {
               const isOpen = expanded === item.key;
@@ -136,7 +136,7 @@ export function ToolbarMenu({ items, label }: { items: ToolbarMenuItem[]; label:
                       item.onSelect?.();
                     }}
                     className={cn(
-                      "flex min-h-11 w-full items-center gap-tight px-comfortable text-left text-[0.8125rem] transition-colors duration-quick md:min-h-9",
+                      "flex min-h-11 w-full items-center gap-tight px-comfortable text-left text-sm transition-colors duration-quick md:min-h-9",
                       item.disabled ? "cursor-not-allowed text-muted" : "text-fg hover:bg-muted-wash",
                     )}
                   >

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, ImagePlus, Plus, Trash2, type LucideIcon } from "lucide-react";
-import { Button, DateField, Modal, Select, Sheet } from "@/components/ui";
+import { AffixInput, Button, DateField, Modal, Notice, SegmentedControl, Select, Sheet, controlClass } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatDay, formatMoney } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
@@ -29,13 +29,10 @@ export type DrawerMode = "new" | "edit" | "copy";
 
 const UNITS = ["pcs", "kg", "litre", "box", "pack", "bottle", "roll", "pair", "hr", "day", "job", "trip"];
 
-const input = "h-11 w-full rounded-sm border bg-card px-comfortable text-[14px] outline-none transition-colors duration-quick placeholder:text-muted focus:border-inverse";
-const edge = (bad: boolean) => (bad ? "border-danger" : "border-line");
-
 /** A message beside its field, in words. */
 function Problem({ id, text }: { id: string; text?: string }) {
   return text ? (
-    <p id={id} role="alert" className="mt-inline text-[12px] text-danger">
+    <p id={id} role="alert" className="mt-inline text-xs text-danger">
       {text}
     </p>
   ) : null;
@@ -44,7 +41,7 @@ function Problem({ id, text }: { id: string; text?: string }) {
 /** A small label above a control. */
 function Label({ htmlFor, children }: { htmlFor?: string; children: React.ReactNode }) {
   return (
-    <label htmlFor={htmlFor} className="block text-[12px] font-medium text-muted">
+    <label htmlFor={htmlFor} className="block text-sm font-medium text-muted">
       {children}
     </label>
   );
@@ -106,14 +103,18 @@ function Chips<V extends string>({
               }
             }}
             className={cn(
-              "relative flex items-center justify-center rounded-md border text-[13px] outline-none transition-colors duration-quick focus-visible:ring-2 focus-visible:ring-ink",
+              "relative flex items-center justify-center rounded-card border text-sm transition-[colors,box-shadow] duration-quick ease-counterfoil",
               row ? "h-11 gap-tight px-comfortable" : "min-h-[60px] flex-col gap-inline px-inline py-tight",
-              on ? "border-ember bg-ember/10 font-medium text-fg" : "border-line bg-card text-fg hover:border-inverse",
+              on ? "border-ember bg-ember-wash/60 font-medium text-fg ring-1 ring-inset ring-ember" : "border-line bg-card text-fg hover:border-ember/40 active:bg-ember-wash",
             )}
           >
             <Icon size={row ? 16 : 20} strokeWidth={1.5} aria-hidden />
             <span className="min-w-0 truncate">{o.label}</span>
-            {on && <Check size={13} strokeWidth={2.5} aria-hidden className="absolute right-1.5 top-1.5 text-brand-foreground" />}
+            {on && (
+              <span aria-hidden className="absolute right-tight top-tight flex h-4 w-4 items-center justify-center rounded-full bg-ember-solid text-on-solid">
+                <Check size={11} strokeWidth={3} />
+              </span>
+            )}
           </button>
         );
       })}
@@ -318,7 +319,7 @@ export function ExpenseDrawer({
         title={title}
         closeLabel={t("drawer.close")}
         side
-        lead={expense && editing ? <p className="font-mono text-[12px] text-muted">{expense.ref}</p> : undefined}
+        lead={expense && editing ? <p className="font-mono text-xs text-muted">{expense.ref}</p> : undefined}
         footer={
           <>
             {editing && expense && (
@@ -340,9 +341,9 @@ export function ExpenseDrawer({
         <div ref={bodyRef}>
           <form id={field("form")} onSubmit={save} noValidate className="flex flex-col gap-major p-card">
             {banner && (
-              <p role="alert" className="rounded-sm border border-danger/40 bg-danger/10 px-comfortable py-tight text-[13px] text-danger">
+              <Notice tone="danger" size="sm">
                 {banner}
-              </p>
+              </Notice>
             )}
 
             {/* The amount comes first and is the biggest thing here: it is what
@@ -350,49 +351,40 @@ export function ExpenseDrawer({
             <div>
               <Label htmlFor={field("amount")}>{form.mode === "items" ? t("drawer.totalFromItems") : t("drawer.amount")}</Label>
               {form.mode === "single" ? (
-                <div className={cn("mt-inline flex h-16 items-center gap-tight rounded-md border bg-card px-section transition-colors duration-quick focus-within:border-inverse", edge(!!problems.amount))}>
-                  <span aria-hidden className="text-[28px] font-semibold text-muted">৳</span>
-                  <input
-                    id={field("amount")}
-                    data-autofocus=""
-                    inputMode="decimal"
-                    autoComplete="off"
-                    value={form.amount}
-                    placeholder="0"
-                    aria-invalid={problems.amount ? true : undefined}
-                    aria-describedby={problems.amount ? field("amount-msg") : undefined}
-                    onChange={(e) => {
-                      patch({ amount: e.target.value });
-                      clear("amount");
-                    }}
-                    className="min-w-0 flex-1 bg-transparent text-[32px] font-semibold tabular-nums tracking-[-0.025em] outline-none placeholder:text-muted"
-                  />
-                </div>
+                <AffixInput
+                  id={field("amount")}
+                  data-autofocus=""
+                  inputMode="decimal"
+                  autoComplete="off"
+                  prefix={<span aria-hidden className="text-3xl font-semibold">৳</span>}
+                  value={form.amount}
+                  placeholder="0"
+                  invalid={!!problems.amount}
+                  aria-describedby={problems.amount ? field("amount-msg") : undefined}
+                  onChange={(e) => {
+                    patch({ amount: e.target.value });
+                    clear("amount");
+                  }}
+                  className="mt-inline h-16!"
+                  inputClassName="type-figure text-4xl! font-semibold"
+                />
               ) : (
-                <p id={field("amount")} aria-live="polite" className="mt-inline flex h-16 items-center text-[32px] font-semibold tabular-nums tracking-[-0.025em]">
+                <p id={field("amount")} aria-live="polite" className="type-figure mt-inline flex h-16 items-center text-4xl font-semibold">
                   {formatMoney(total)}
                 </p>
               )}
               <Problem id={field("amount-msg")} text={say(problems.amount)} />
-              <div role="group" aria-label={t("drawer.howLabel")} className="mt-comfortable inline-flex rounded-sm bg-line/60 p-inline">
-                {(["single", "items"] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    aria-pressed={form.mode === m}
-                    onClick={() => {
-                      setForm((f) => switchMode(f, m));
-                      clear("amount");
-                    }}
-                    className={cn(
-                      "h-11 rounded-xs px-comfortable text-[13px] font-medium outline-none transition-colors duration-quick focus-visible:ring-2 focus-visible:ring-ink sm:h-9",
-                      form.mode === m ? "bg-card text-fg shadow-sm ring-1 ring-line" : "text-fg/80 hover:text-fg",
-                    )}
-                  >
-                    {t(m === "single" ? "drawer.oneAmount" : "drawer.itemByItem")}
-                  </button>
-                ))}
-              </div>
+              <SegmentedControl
+                size="sm"
+                className="mt-comfortable"
+                aria-label={t("drawer.howLabel")}
+                value={form.mode}
+                onChange={(m) => {
+                  setForm((f) => switchMode(f, m as "single" | "items"));
+                  clear("amount");
+                }}
+                options={(["single", "items"] as const).map((m) => ({ value: m, label: t(m === "single" ? "drawer.oneAmount" : "drawer.itemByItem") }))}
+              />
             </div>
 
             {form.mode === "items" && (
@@ -402,7 +394,7 @@ export function ExpenseDrawer({
                   {form.lines.map((l, i) => {
                     const pk = (f: string) => problems[`lines.${i}.${f}`];
                     return (
-                      <li key={l.key} data-line={l.key} className="rounded-md border border-line bg-card p-comfortable">
+                      <li key={l.key} data-line={l.key} className="rounded-card border border-line bg-card p-comfortable">
                         <div className="flex items-start gap-tight">
                           <div className="min-w-0 flex-1">
                             <input
@@ -413,19 +405,20 @@ export function ExpenseDrawer({
                               aria-invalid={pk("description") ? true : undefined}
                               aria-describedby={pk("description") ? `${l.key}-d` : undefined}
                               onChange={(e) => setLine(l.key, { description: e.target.value }, `lines.${i}.description`, "amount")}
-                              className={cn(input, edge(!!pk("description")))}
+                              className={controlClass(!!pk("description"))}
                             />
                             <Problem id={`${l.key}-d`} text={say(pk("description"))} />
                           </div>
-                          <button
-                            type="button"
+                          <Button
+                            variant="tertiary"
+                            size="icon"
                             onClick={() => removeLine(l.key)}
                             disabled={form.lines.length === 1 && l.description === "" && l.price === ""}
                             aria-label={t("drawer.removeItem", { n: i + 1 })}
-                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg disabled:opacity-40 disabled:hover:bg-transparent"
+                            className="shrink-0 text-muted"
                           >
                             <Trash2 size={16} strokeWidth={1.5} aria-hidden />
-                          </button>
+                          </Button>
                         </div>
                         <div className="mt-tight grid grid-cols-3 gap-tight sm:grid-cols-[4.5rem_6rem_minmax(0,1fr)_7rem]">
                           <div className="min-w-0">
@@ -437,7 +430,7 @@ export function ExpenseDrawer({
                               aria-invalid={pk("qty") ? true : undefined}
                               aria-describedby={pk("qty") ? `${l.key}-qm` : undefined}
                               onChange={(e) => setLine(l.key, { qty: e.target.value }, `lines.${i}.qty`)}
-                              className={cn(input, "mt-inline tabular-nums", edge(!!pk("qty")))}
+                              className={cn(controlClass(!!pk("qty")), "mt-inline tabular-nums")}
                             />
                           </div>
                           <div className="min-w-0">
@@ -449,7 +442,7 @@ export function ExpenseDrawer({
                               aria-invalid={pk("unit") ? true : undefined}
                               aria-describedby={pk("unit") ? `${l.key}-um` : undefined}
                               onChange={(e) => setLine(l.key, { unit: e.target.value }, `lines.${i}.unit`)}
-                              className={cn(input, "mt-inline", edge(!!pk("unit")))}
+                              className={cn(controlClass(!!pk("unit")), "mt-inline")}
                             />
                           </div>
                           <div className="min-w-0">
@@ -462,12 +455,12 @@ export function ExpenseDrawer({
                               aria-invalid={pk("unitPrice") ? true : undefined}
                               aria-describedby={pk("unitPrice") ? `${l.key}-pm` : undefined}
                               onChange={(e) => setLine(l.key, { price: e.target.value }, `lines.${i}.unitPrice`, "amount")}
-                              className={cn(input, "mt-inline tabular-nums", edge(!!pk("unitPrice")))}
+                              className={cn(controlClass(!!pk("unitPrice")), "mt-inline tabular-nums")}
                             />
                           </div>
                           <div className="col-span-3 min-w-0 sm:col-span-1">
-                            <span className="block text-right text-[12px] font-medium text-muted">{t("drawer.lineTotal")}</span>
-                            <span className="mt-inline flex h-11 items-center justify-end text-[14px] font-medium tabular-nums">{formatMoney(lineMinor(l))}</span>
+                            <span className="block text-right text-xs font-medium text-muted">{t("drawer.lineTotal")}</span>
+                            <span className="mt-inline flex h-11 items-center justify-end text-base font-medium tabular-nums">{formatMoney(lineMinor(l))}</span>
                           </div>
                         </div>
                         <Problem id={`${l.key}-qm`} text={say(pk("qty"))} />
@@ -497,7 +490,7 @@ export function ExpenseDrawer({
                   patch({ title: e.target.value });
                   clear("title");
                 }}
-                className={cn(input, "mt-inline", edge(!!problems.title))}
+                className={cn(controlClass(!!problems.title), "mt-inline")}
               />
               <Problem id={field("title-msg")} text={say(problems.title)} />
             </div>
@@ -580,7 +573,7 @@ export function ExpenseDrawer({
                 <div className="mt-comfortable">
                   <Label htmlFor={field("counter")}>{t("drawer.counter")}</Label>
                   {counters.length === 0 ? (
-                    <p className="mt-inline text-[13px] text-muted">{t("drawer.noCounters")}</p>
+                    <p className="mt-inline text-sm text-muted">{t("drawer.noCounters")}</p>
                   ) : (
                     <>
                       <Select
@@ -612,7 +605,7 @@ export function ExpenseDrawer({
                 autoComplete="off"
                 placeholder={t("drawer.payeePlaceholder")}
                 onChange={(e) => patch({ payee: e.target.value })}
-                className={cn(input, "mt-inline", edge(false))}
+                className={cn(controlClass(false), "mt-inline")}
               />
               {(() => {
                 const typed = form.payee.trim().toLowerCase();
@@ -620,14 +613,9 @@ export function ExpenseDrawer({
                 return near.length > 0 ? (
                   <div className="mt-tight flex flex-wrap items-center gap-tight" role="group" aria-label={t("drawer.recentPayees")}>
                     {near.map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => patch({ payee: p })}
-                        className="h-11 max-w-full truncate rounded-full border border-line bg-card px-comfortable text-[13px] text-fg transition-colors duration-quick hover:border-inverse sm:h-8"
-                      >
-                        {p}
-                      </button>
+                      <Button key={p} variant="secondary" size="sm" shape="pill" onClick={() => patch({ payee: p })} className="max-w-full">
+                        <span className="min-w-0 truncate">{p}</span>
+                      </Button>
                     ))}
                   </div>
                 ) : null;
@@ -643,7 +631,7 @@ export function ExpenseDrawer({
                 maxLength={500}
                 placeholder={t("drawer.notePlaceholder")}
                 onChange={(e) => patch({ note: e.target.value })}
-                className={cn(input, "mt-inline h-auto resize-y py-tight", edge(false))}
+                className={cn(controlClass(false, true), "mt-inline resize-y")}
               />
             </div>
 
@@ -668,7 +656,7 @@ export function ExpenseDrawer({
                       onClick={() => setReceiptBig((v) => !v)}
                       aria-expanded={receiptBig}
                       aria-label={t(receiptBig ? "drawer.receiptSmaller" : "drawer.receiptLarger")}
-                      className="h-16 w-16 shrink-0 overflow-hidden rounded-sm border border-line bg-subtle outline-none focus-visible:ring-2 focus-visible:ring-ink"
+                      className="h-16 w-16 shrink-0 overflow-hidden rounded-control border border-line bg-subtle"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={form.receiptUrl} alt={t("drawer.receiptAlt")} className="h-full w-full object-cover" />
@@ -684,14 +672,14 @@ export function ExpenseDrawer({
                   </div>
                   {receiptBig && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={form.receiptUrl} alt={t("drawer.receiptAlt")} className="mt-tight max-h-80 w-full rounded-md border border-line bg-subtle object-contain" />
+                    <img src={form.receiptUrl} alt={t("drawer.receiptAlt")} className="mt-tight max-h-80 w-full rounded-card border border-line bg-subtle object-contain" />
                   )}
                 </div>
               ) : (
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="mt-inline flex min-h-[72px] w-full items-center justify-center gap-tight rounded-md border border-dashed border-strong text-[13px] text-muted outline-none transition-colors duration-quick hover:border-inverse hover:text-fg focus-visible:ring-2 focus-visible:ring-ink"
+                  className="mt-inline flex min-h-[72px] w-full items-center justify-center gap-tight rounded-card border border-dashed border-strong text-sm text-muted transition-colors duration-quick hover:border-inverse hover:text-fg"
                 >
                   <ImagePlus size={20} strokeWidth={1.5} aria-hidden />
                   {t("drawer.receiptAdd")}
@@ -699,7 +687,7 @@ export function ExpenseDrawer({
               )}
             </div>
 
-            <p className="text-[12px] text-muted">
+            <p className="text-xs text-muted">
               {editing && expense
                 ? t("drawer.addedBy", { name: expense.recordedByName, date: formatDay(expense.createdAt.slice(0, 10)) })
                 : t("drawer.willBeAddedBy", { name: me })}

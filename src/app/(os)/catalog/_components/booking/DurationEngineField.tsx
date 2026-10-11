@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { DurationInput, FormField } from "@/components/ui";
+import { ChoiceCard, DurationInput, FormField, controlClass } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import {
   durationConfigError,
   durationOptions,
@@ -79,27 +80,26 @@ export function DurationEngineField({
         <DurationInput label={t("step")} value={value.incrementMinutes} min={5} step={5} onChange={(n) => set("incrementMinutes", n)} chips={[15, 30, 60]} />
       </div>
       {err ? (
-        <p className="rounded-sm bg-danger-wash px-comfortable py-tight text-[0.8125rem] text-danger">{err}</p>
+        <p className="rounded-control bg-danger-wash px-comfortable py-tight text-sm text-danger">{err}</p>
       ) : (
-        <p className="text-[13px] text-muted">{t("lengths", { list: options.map(dur).join(" · ") })}</p>
+        <p className="text-sm text-muted">{t("lengths", { list: options.map(dur).join(" · ") })}</p>
       )}
 
       <div className="flex flex-col gap-tight">
-        <span className="text-[0.8125rem] font-medium text-muted">{t("modelTitle")}</span>
+        <span className="text-sm font-medium text-muted">{t("modelTitle")}</span>
         <div className="flex flex-wrap gap-tight">
           {MODELS.map((m) => {
             const on = value.pricingModel === m;
             return (
-              <button
+              <ChoiceCard
                 key={m}
-                type="button"
-                aria-pressed={on}
+                selected={on}
                 onClick={() => set("pricingModel", m)}
-                className={`flex min-h-11 flex-col items-start rounded-sm bg-muted-wash px-comfortable py-tight text-left transition-shadow duration-quick ${on ? "ring-2 ring-inset ring-ember" : "hover:ring-2 hover:ring-inset hover:ring-ember/30"}`}
+                className="flex min-h-11 flex-col items-start px-comfortable py-tight pr-9"
               >
-                <span className="text-sm font-medium">{t(`model.${m}.title`)}</span>
-                <span className="text-[0.8125rem] text-muted">{t(`model.${m}.helper`)}</span>
-              </button>
+                <span className="text-base font-medium">{t(`model.${m}.title`)}</span>
+                <span className="text-sm text-muted">{t(`model.${m}.helper`)}</span>
+              </ChoiceCard>
             );
           })}
         </div>
@@ -120,8 +120,8 @@ export function DurationEngineField({
       {value.pricingModel === "list" && !err && (
         <div className="flex flex-col gap-tight">
           <div className="flex items-center justify-between">
-            <span className="text-[0.8125rem] font-medium text-muted">{t("listTitle")}</span>
-            <button type="button" onClick={fillFromHourly} className="min-h-11 text-[13px] text-brand-foreground hover:underline md:min-h-0">{t("fillFromHourly")}</button>
+            <span className="text-sm font-medium text-muted">{t("listTitle")}</span>
+            <button type="button" onClick={fillFromHourly} className="min-h-11 text-sm text-brand-foreground hover:underline md:min-h-0">{t("fillFromHourly")}</button>
           </div>
           <div className="grid gap-tight sm:grid-cols-3">
             {options.map((d) => (
@@ -147,28 +147,29 @@ export function DurationEngineField({
       {value.pricingModel !== "list" && !err && options.length > 0 && (
         <div className="flex flex-col gap-tight">
           <div className="flex flex-wrap items-baseline justify-between gap-tight">
-            <span className="text-[0.8125rem] font-medium text-muted">{t("dealsTitle")}</span>
+            <span className="text-sm font-medium text-muted">{t("dealsTitle")}</span>
             {dealCount > 0 && (
-              <button type="button" onClick={() => set("priceOverrides", undefined)} className="min-h-11 text-[13px] text-brand-foreground hover:underline md:min-h-0">
+              <button type="button" onClick={() => set("priceOverrides", undefined)} className="min-h-11 text-sm text-brand-foreground hover:underline md:min-h-0">
                 {t("clearDeals", { count: dealCount })}
               </button>
             )}
           </div>
-          <p className="text-[0.8125rem] text-muted">{t("dealsHelp")}</p>
+          <p className="text-sm text-muted">{t("dealsHelp")}</p>
           <div className="grid gap-tight sm:grid-cols-2 lg:grid-cols-3">
             {options.map((d) => {
               const formula = formulaPrice(value, d);
               const deal = isDealDuration(value, d);
               return (
-                <div key={d} className={`flex items-center gap-comfortable rounded-sm bg-muted-wash p-comfortable ${deal ? "ring-2 ring-inset ring-ember" : ""}`}>
+                <div key={d} className={`flex items-center gap-comfortable rounded-control bg-muted-wash p-comfortable ${deal ? "ring-2 ring-inset ring-ember-solid" : ""}`}>
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-sm font-medium">{dur(d)}</span>
-                    <span className={`font-mono text-[12px] ${deal ? "text-muted line-through" : "text-muted"}`}>
+                    <span className="text-base font-medium">{dur(d)}</span>
+                    <span className={`text-xs tabular-nums ${deal ? "text-muted line-through" : "text-muted"}`}>
                       {formatMoney(formula, currency)}
                     </span>
                   </span>
                   {/* The empty field shows the formula's own number, so an
                       untouched length reads as "this is what it costs now". */}
+                  <span className="w-24 shrink-0">
                   <input
                     inputMode="decimal"
                     placeholder={String(Math.round(formula / 100))}
@@ -181,8 +182,9 @@ export function DurationEngineField({
                       else next[d] = majorToMinor(raw);
                       set("priceOverrides", Object.keys(next).length ? next : undefined);
                     }}
-                    className="h-11 w-24 shrink-0 rounded-sm border border-line bg-card px-tight text-right font-mono text-sm outline-none placeholder:text-muted focus:border-ember md:h-10"
+                    className={cn(controlClass(), "text-right tabular-nums")}
                   />
+                  </span>
                 </div>
               );
             })}
@@ -218,9 +220,9 @@ export function DurationEngineField({
 
       {/* The mandatory preview — concrete numbers before saving. */}
       {!err && options.length > 0 && (
-        <div className="rounded-sm border border-inverse bg-card p-section">
-          <p className="text-[0.8125rem] font-medium text-muted">{t("preview")}</p>
-          <p className="mt-inline text-[13px] tabular-nums">
+        <div className="rounded-control bg-muted-wash p-section">
+          <p className="text-sm font-medium text-muted">{t("preview")}</p>
+          <p className="mt-inline text-sm tabular-nums">
             {options.map((d, i) => (
               <span key={d}>
                 {i > 0 && " · "}
@@ -230,15 +232,15 @@ export function DurationEngineField({
               </span>
             ))}
           </p>
-          {dealCount > 0 && <p className="mt-inline text-[12px] text-muted">{t("previewDeals")}</p>}
+          {dealCount > 0 && <p className="mt-inline text-xs text-muted">{t("previewDeals")}</p>}
           {pricingRules.length > 0 && (
-            <p className="mt-tight text-[13px] text-muted">
+            <p className="mt-tight text-sm text-muted">
               {t("example", { when: exampleLabel, time: dur(exampleMinutes), price: formatMoney(bandedExample, currency) })}
               {bandedExample !== previewPrice(exampleMinutes) && ` ${t("exampleBands")}`}
             </p>
           )}
           {resources.some((r) => r.rateOverride) && (
-            <p className="mt-tight text-[12px] tabular-nums text-muted">
+            <p className="mt-tight text-xs tabular-nums text-muted">
               {exampleLabel} · {resources.slice(0, 4).map((r) => `${r.name} → ${formatMoney(applyResourceRate(bandedExample, exampleMinutes, r), currency)}`).join(" · ")}
             </p>
           )}

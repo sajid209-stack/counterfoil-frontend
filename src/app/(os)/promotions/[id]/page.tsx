@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, EmptyState, FormField, PageShell, useToast } from "@/components/ui";
+import { Button, Card, Chip, EmptyState, FormField, Notice, PageShell, Skeleton, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getPromotion, listCoupons, updatePromotion } from "@/lib/api";
 import type { Channel, Promotion, PromotionKind } from "@/lib/api";
@@ -23,10 +23,23 @@ export default function PromotionEditorPage() {
   const [saving, setSaving] = useState(false);
   useEffect(() => { if (q.data) setP(q.data); }, [q.data]);
 
+  /* Loading and not-found keep the page's own h1 — the back label titles the
+     link back, not the page. */
+  const back = { href: "/promotions", label: t("editor.back") };
   if (!q.loading && (q.error || !q.data)) {
-    return <PageShell title={t("editor.back")}><EmptyState title={t("editor.notFound")} action={<Button onClick={() => router.push("/promotions")}>{t("editor.back")}</Button>} /></PageShell>;
+    return (
+      <PageShell title={t("editor.title")} back={back}>
+        <EmptyState title={t("editor.notFound")} action={<Button onClick={() => router.push("/promotions")}>{t("editor.back")}</Button>} />
+      </PageShell>
+    );
   }
-  if (!p) return <PageShell title={t("editor.back")}><div className="h-40 animate-pulse rounded-md bg-line" /></PageShell>;
+  if (!p) {
+    return (
+      <PageShell title={t("editor.title")} back={back}>
+        <div aria-busy="true" className="overflow-hidden rounded-card"><Skeleton h={160} /></div>
+      </PageShell>
+    );
+  }
 
   const toggleChannel = (ch: Channel) => {
     const has = p.eligibility.channels.includes(ch);
@@ -46,8 +59,8 @@ export default function PromotionEditorPage() {
   const isBxgy = p.kind === "buy_x_get_y" || p.kind === "bundle_price";
 
   return (
-    <PageShell title={p.name || t("editor.back")} back={{ href: "/promotions", label: t("editor.back") }} actions={<Button loading={saving} onClick={save}>{t("editor.save")}</Button>}>
-      <div className="grid max-w-2xl gap-section card-surface p-card sm:grid-cols-2">
+    <PageShell title={p.name || t("editor.title")} back={back} actions={<Button variant="primary" size="md" loading={saving} onClick={save}>{t("editor.save")}</Button>}>
+      <Card className="grid max-w-2xl gap-section sm:grid-cols-2">
         <FormField label={t("editor.name")} value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} />
         <FormField label={t("editor.kind")} variant="select" value={p.kind} onChange={(e) => setP({ ...p, kind: e.target.value as PromotionKind })} options={KINDS.map((k) => ({ value: k, label: t(`kind.${k}`) }))} />
 
@@ -61,11 +74,11 @@ export default function PromotionEditorPage() {
         <FormField label={t("editor.validFrom")} variant="date" value={p.validFrom ?? ""} onChange={(e) => setP({ ...p, validFrom: e.target.value || undefined })} />
         <FormField label={t("editor.validTo")} variant="date" value={p.validTo ?? ""} onChange={(e) => setP({ ...p, validTo: e.target.value || undefined })} />
 
-        <div className="sm:col-span-2">
-          <span className="type-label mb-tight block text-[12px] text-muted">{t("editor.channels")}</span>
+        <div role="group" aria-labelledby="promo-channels" className="sm:col-span-2">
+          <span id="promo-channels" className="mb-tight block text-sm font-medium text-muted">{t("editor.channels")}</span>
           <div className="flex gap-tight">
             {(["counter", "online"] as Channel[]).map((ch) => (
-              <button key={ch} type="button" aria-pressed={p.eligibility.channels.includes(ch)} onClick={() => toggleChannel(ch)} className={`h-11 md:h-10 rounded-sm border px-comfortable text-[13px] ${p.eligibility.channels.includes(ch) ? "border-ember bg-ember/5 font-medium" : "border-line"}`}>{t(`editor.${ch}`)}</button>
+              <Chip key={ch} selected={p.eligibility.channels.includes(ch)} onClick={() => toggleChannel(ch)}>{t(`editor.${ch}`)}</Chip>
             ))}
           </div>
         </div>
@@ -73,11 +86,11 @@ export default function PromotionEditorPage() {
         {coupon && <FormField label={t("editor.couponCode")} value={coupon.code} disabled onChange={() => {}} />}
 
         {isBxgy && (
-          <p className="sm:col-span-2 rounded-sm border border-line border-l-[3px] border-l-ember bg-card p-tight text-[12px] text-muted">
+          <Notice tone="info" size="sm" className="sm:col-span-2">
             {p.buyXGetY ? t("editor.bxgyNote", { buy: p.buyXGetY.buyQuantity, get: p.buyXGetY.getQuantity, pct: (p.buyXGetY.getDiscountBps / 100) }) + " " : ""}{t("editor.advancedNote")}
-          </p>
+          </Notice>
         )}
-      </div>
+      </Card>
     </PageShell>
   );
 }

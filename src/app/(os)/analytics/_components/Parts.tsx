@@ -4,10 +4,10 @@ import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { SegmentedControl, Skeleton } from "@/components/ui";
 import { niceScale, smoothPath, useWidth } from "@/components/ui/charts";
 import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
-import { Segmented as CalmSegmented } from "../../dashboard/_components/Segmented";
 
 /* The small shapes the analytics cards are made of. Almost every chart here is
  * a nominal or ranked one, so every bar is one brand hue: the label beside it
@@ -23,7 +23,7 @@ import { Segmented as CalmSegmented } from "../../dashboard/_components/Segmente
  *  calm admin can put between two cards. */
 export function GroupHeading({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <h2 id={`an-group-${id}`} className="pt-comfortable text-[0.9375rem] font-semibold tracking-[-0.2px] text-fg">
+    <h2 id={`an-group-${id}`} className="pt-comfortable text-lg font-semibold text-fg">
       {children}
     </h2>
   );
@@ -97,7 +97,7 @@ export function Section({
     <Link
       href={view.href}
       aria-label={t("viewIn", { where: view.where })}
-      className="flex min-h-11 min-w-11 shrink-0 items-center justify-end whitespace-nowrap px-tight text-[0.75rem] text-muted transition-colors duration-quick hover:text-fg md:min-h-6 md:min-w-0 md:px-0"
+      className="flex min-h-11 min-w-11 shrink-0 items-center justify-end whitespace-nowrap px-tight text-xs text-muted transition-colors duration-quick hover:text-fg md:min-h-6 md:min-w-0 md:px-0"
     >
       {t("view")}
     </Link>
@@ -106,7 +106,7 @@ export function Section({
   if (!wide && !pinned) {
     return (
       <section data-card={id} aria-labelledby={`an-${id}`} className={cn("relative min-w-0", className)}>
-        <h3 className="m-0 text-base font-normal">
+        <h3 className="m-0 text-md font-normal">
           <button
             type="button"
             aria-expanded={open}
@@ -115,12 +115,12 @@ export function Section({
             className="flex min-h-14 w-full items-center gap-comfortable px-card py-comfortable text-left transition-colors duration-quick active:bg-muted-wash"
           >
             <span className="min-w-0 flex-1">
-              <span id={`an-${id}`} className="block text-[0.875rem] font-medium">
+              <span id={`an-${id}`} className="block text-base font-medium">
                 {title}
               </span>
-              {summary && <span className="mt-0.5 block text-[0.8125rem] text-muted">{summary}</span>}
+              {summary && <span className="mt-0.5 block text-sm text-muted">{summary}</span>}
             </span>
-            <span className="flex shrink-0 items-center gap-inline text-[0.8125rem] font-medium text-muted">
+            <span className="flex shrink-0 items-center gap-inline text-sm font-medium text-muted">
               {open ? t("card.hide") : t("card.show")}
               <ChevronDown size={16} strokeWidth={1.75} aria-hidden className={cn("transition-transform duration-quick", open && "rotate-180")} />
             </span>
@@ -128,7 +128,7 @@ export function Section({
         </h3>
         {open && (
           <div id={bodyId} className="px-card pb-card">
-            {sub && <p className="mb-comfortable text-[0.75rem] text-muted">{sub}</p>}
+            {sub && <p className="mb-comfortable text-xs text-muted">{sub}</p>}
             {children}
             {(view || info || actions) && (
               <div className="mt-comfortable flex items-center gap-tight">
@@ -149,10 +149,10 @@ export function Section({
     <section data-card={id} aria-labelledby={`an-${id}`} className={cn("group card-surface relative min-w-0 p-card", className)}>
       <div className="mb-comfortable flex items-start justify-between gap-tight">
         <div className="min-w-0">
-          <h3 id={`an-${id}`} className="min-w-0 text-base font-semibold tracking-[-0.4px]">
+          <h3 id={`an-${id}`} className="min-w-0 text-md font-semibold">
             {title}
           </h3>
-          {sub && <p className="mt-inline text-[0.75rem] text-muted">{sub}</p>}
+          {sub && <p className="mt-inline text-xs text-muted">{sub}</p>}
         </div>
         <div className="flex shrink-0 items-center gap-tight">
           {viewLink}
@@ -204,7 +204,7 @@ function InfoPopover({ title, text }: { title: string; text: string }) {
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         onClick={() => setOpen((o) => !o)}
-        className="-my-3 -mr-3 flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-[color,opacity] duration-quick hover:text-fg aria-expanded:opacity-100 sm:-my-2 sm:-mr-2 sm:h-8 sm:w-8 md:opacity-0 md:focus-visible:opacity-100 md:group-hover:opacity-100"
+        className="-my-3 -mr-3 flex h-11 w-11 items-center justify-center rounded-control text-muted transition-[color,opacity] duration-quick hover:text-fg aria-expanded:opacity-100 sm:-my-2 sm:-mr-2 sm:h-8 sm:w-8 md:opacity-0 md:focus-visible:opacity-100 md:group-hover:opacity-100"
       >
         <Info size={16} strokeWidth={1.5} aria-hidden />
       </button>
@@ -214,7 +214,7 @@ function InfoPopover({ title, text }: { title: string; text: string }) {
           role="group"
           aria-label={label}
           data-info-panel
-          className="absolute right-3 top-12 z-30 w-[min(21rem,calc(100%-1.5rem))] rounded-md border border-line bg-card p-comfortable text-[0.8125rem] leading-snug text-fg shadow-lg"
+          className="absolute right-3 top-12 z-30 w-[min(21rem,calc(100%-1.5rem))] rounded-card border border-line bg-card p-comfortable text-sm leading-snug text-fg shadow-float"
         >
           {text.split("\n").map((p, i) => (
             <p key={i} className={i > 0 ? "mt-tight" : undefined}>
@@ -229,7 +229,7 @@ function InfoPopover({ title, text }: { title: string; text: string }) {
 
 /** One line saying a card has nothing to show for the period. */
 export function Empty({ children }: { children: React.ReactNode }) {
-  return <p data-empty className="py-comfortable text-[0.8125rem] text-muted">{children}</p>;
+  return <p data-empty className="py-comfortable text-sm text-muted">{children}</p>;
 }
 
 /** Two or three views of one card: "Share · Over time". The shared calm
@@ -245,7 +245,16 @@ export function Segmented<T extends string>({
   options: { value: T; label: string }[];
   label: string;
 }) {
-  return <CalmSegmented value={value} onChange={onChange} options={options} label={label} className="mb-comfortable" />;
+  return (
+    <SegmentedControl
+      size="sm"
+      value={value}
+      onChange={(v) => onChange(v as T)}
+      options={options}
+      aria-label={label}
+      className="mb-comfortable"
+    />
+  );
 }
 
 /** The two periods, keyed as lines: solid for this period, dashed for the one
@@ -280,7 +289,7 @@ function BarKey({ dashed }: { dashed?: boolean }) {
 export function PairLegend({ kind, now, then }: { kind: "line" | "bar"; now: string; then: string }) {
   const Key = kind === "line" ? LineKey : BarKey;
   return (
-    <p data-chart-legend className="mb-comfortable flex flex-wrap items-center gap-x-section gap-y-inline text-[0.75rem] text-muted">
+    <p data-chart-legend className="mb-comfortable flex flex-wrap items-center gap-x-section gap-y-inline text-xs text-muted">
       <span className="flex items-center gap-tight">
         <Key />
         <span className="tabular-nums text-fg">{now}</span>
@@ -346,7 +355,7 @@ export function BarList({ rows }: { rows: BarRow[] }) {
     <ul className="flex flex-col gap-comfortable">
       {rows.map((r) => (
         <li key={r.key}>
-          <div className="flex items-baseline justify-between gap-tight text-[0.8125rem]">
+          <div className="flex items-baseline justify-between gap-tight text-sm">
             <span className={cn("min-w-0 flex-1 break-words", r.muted && "text-muted")}>{r.label}</span>
             <span className="shrink-0 whitespace-nowrap text-right">
               {r.figure}
@@ -419,7 +428,7 @@ export function PairedBars({ rows, nowLabel, thenLabel }: { rows: PairRow[]; now
           const sentence = [r.label, r.meta, `${nowLabel}: ${r.now}`, r.then !== undefined ? `${thenLabel}: ${r.then}` : "", r.changeText].filter(Boolean).join(". ");
           if (r.quiet) {
             return (
-              <li key={r.key} data-pair-quiet className="flex items-baseline justify-between gap-tight text-[0.8125rem] text-muted">
+              <li key={r.key} data-pair-quiet className="flex items-baseline justify-between gap-tight text-sm text-muted">
                 <span className="min-w-0 break-words">
                   {r.label}
                   {r.meta && ` · ${r.meta}`}
@@ -439,26 +448,26 @@ export function PairedBars({ rows, nowLabel, thenLabel }: { rows: PairRow[]; now
                 onPointerLeave={() => setTip((k) => (k === r.key ? null : k))}
                 onFocus={() => setTip(r.key)}
                 onBlur={() => setTip((k) => (k === r.key ? null : k))}
-                className="rounded-xs"
+                className="rounded-inner"
               >
-              <div className="flex items-baseline justify-between gap-tight text-[0.8125rem]">
+              <div className="flex items-baseline justify-between gap-tight text-sm">
                 <span className={cn("min-w-0 flex-1 break-words", r.muted && "text-muted")}>
                   {r.label}
                   {r.meta && <span className="text-muted"> · {r.meta}</span>}
                 </span>
                 {r.change && <span className="shrink-0 whitespace-nowrap text-right">{r.change}</span>}
               </div>
-              <div aria-hidden className="mt-inline grid grid-cols-[minmax(0,1fr)_6.5rem] items-center gap-x-tight gap-y-[3px]">
+              <div aria-hidden className="mt-inline grid grid-cols-[minmax(0,1fr)_6.5rem] items-center gap-x-tight gap-y-1">
                 <span className="block h-2">
                   {r.value > 0 && <span data-pair-now className={cn("block h-full rounded-r-full", r.muted ? "bg-muted" : "bg-ember")} style={{ width: wide(r.value) }} />}
                 </span>
-                <span className="text-right text-[0.75rem] font-medium">{r.figure}</span>
+                <span className="text-right text-xs font-medium">{r.figure}</span>
                 {r.previous !== undefined && (
                   <>
                     <span className="block h-2">
                       {r.previous > 0 && <span data-pair-then className="block h-full rounded-r-full border-[1.5px] border-dashed border-muted" style={{ width: wide(r.previous) }} />}
                     </span>
-                    <span className="text-right text-[0.75rem] text-muted">{r.previousFigure}</span>
+                    <span className="text-right text-xs text-muted">{r.previousFigure}</span>
                   </>
                 )}
               </div>
@@ -467,7 +476,7 @@ export function PairedBars({ rows, nowLabel, thenLabel }: { rows: PairRow[]; now
                 <div
                   role="tooltip"
                   data-pair-tip
-                  className="pointer-events-none absolute right-0 top-full z-20 mt-inline w-max max-w-full rounded-xs border border-line bg-card px-tight py-inline text-[0.75rem] shadow-sm"
+                  className="pointer-events-none absolute right-0 top-full z-20 mt-inline w-max max-w-full rounded-inner border border-line bg-card px-tight py-inline text-xs shadow-float"
                 >
                   <p className="text-muted">
                     {r.label}
@@ -527,7 +536,7 @@ export function ColumnBars({ items }: { items: ColumnItem[] }) {
     <ul className="grid grid-cols-5 gap-tight">
       {items.map((i) => (
         <li key={i.key} title={i.title} aria-label={i.title} className="flex min-w-0 flex-col items-center gap-inline">
-          <span className="text-[0.75rem] font-medium" aria-hidden>
+          <span className="text-xs font-medium" aria-hidden>
             {i.figure}
           </span>
           <span className="relative flex h-28 w-full items-end justify-center" aria-hidden>
@@ -542,7 +551,7 @@ export function ColumnBars({ items }: { items: ColumnItem[] }) {
               />
             )}
           </span>
-          <span className="text-center text-[0.75rem] leading-tight text-muted" aria-hidden>
+          <span className="text-center text-xs leading-tight text-muted" aria-hidden>
             {i.label}
           </span>
         </li>
@@ -573,7 +582,7 @@ export function Change({
   if (then <= 0) {
     if (now <= 0) return null;
     return (
-      <span data-change="new" title={t("change.newTitle", { range })} className="ml-tight text-[0.75rem] font-medium text-muted">
+      <span data-change="new" title={t("change.newTitle", { range })} className="ml-tight text-xs font-medium text-muted">
         <span aria-hidden>{t("change.new")}</span>
         <span className="sr-only">{t("change.newTitle", { range })}</span>
       </span>
@@ -585,7 +594,7 @@ export function Change({
   const good = goodWhen === "up" ? up : !up;
   const sentence = t(up ? "change.up" : "change.down", { pct: Math.abs(pct), range });
   return (
-    <span data-change={up ? "up" : "down"} title={sentence} className={cn("ml-tight text-[0.75rem] font-medium", good ? "text-success" : "text-danger")}>
+    <span data-change={up ? "up" : "down"} title={sentence} className={cn("ml-tight text-xs font-medium", good ? "text-success" : "text-danger")}>
       <span aria-hidden>
         {up ? "▲" : "▼"} {Math.abs(pct)}%
       </span>
@@ -612,7 +621,7 @@ export function SplitBar({ a, b, label }: { a: number; b: number; label: string 
 
 /** A pulse block, for the first load only. */
 export const Pulse = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
-  <span style={style} className={cn("block animate-pulse rounded-xs bg-line", className)} />
+  <Skeleton style={style} className={className} />
 );
 
 /** A card-shaped skeleton: a heading bar and a few rows. */
@@ -698,17 +707,17 @@ export function StackedColumns({
         <div
           role="tooltip"
           data-stack-tip
-          className="pointer-events-none absolute z-10 rounded-xs border border-line bg-card px-tight py-inline shadow-sm"
+          className="pointer-events-none absolute z-10 rounded-inner border border-line bg-card px-tight py-inline shadow-float"
           style={{ left: Math.min(Math.max(cx(hover!), 74), w - 74), top: 0, transform: "translateX(-50%)" }}
         >
-          <p className="text-[0.75rem] text-muted">{active.title}</p>
+          <p className="text-xs text-muted">{active.title}</p>
           {series.map((s, i) => (
-            <p key={s.label} className="flex items-center gap-tight whitespace-nowrap text-[0.8125rem]">
+            <p key={s.label} className="flex items-center gap-tight whitespace-nowrap text-sm">
               <span aria-hidden className="h-0.5 w-3 shrink-0 rounded-full" style={{ background: s.color }} />
               <span className="font-medium">{valueText(i, active.parts[i])}</span>
             </p>
           ))}
-          {active.note && <p className="whitespace-nowrap text-[0.75rem] text-muted">{active.note}</p>}
+          {active.note && <p className="whitespace-nowrap text-xs text-muted">{active.note}</p>}
         </div>
       )}
       <div className="relative w-full" style={{ height }}>
@@ -717,7 +726,7 @@ export function StackedColumns({
             {Array.from({ length: tk + 1 }, (_, i) => i * step).map((v) => (
               <g key={v}>
                 <line x1={padL} x2={padL + plotW} y1={y(v)} y2={y(v)} stroke="var(--color-line)" strokeWidth="1" />
-                <text x={padL - 8} y={y(v) + 4} textAnchor="end" className="fill-[var(--color-muted)] text-[0.75rem]">
+                <text x={padL - 8} y={y(v) + 4} textAnchor="end" className="fill-[var(--color-muted)] text-xs">
                   {v}
                 </text>
               </g>
@@ -752,7 +761,7 @@ export function StackedColumns({
               if (!isTick && !isLast) return null;
               if (isTick && !isLast && points.length - 1 - i < every) return null;
               return (
-                <text key={`x${i}`} x={cx(i)} y={height - 8} textAnchor={isLast && i > 0 ? "end" : "middle"} className="fill-[var(--color-muted)] text-[0.75rem]">
+                <text key={`x${i}`} x={cx(i)} y={height - 8} textAnchor={isLast && i > 0 ? "end" : "middle"} className="fill-[var(--color-muted)] text-xs">
                   {p.label}
                 </text>
               );
@@ -843,14 +852,14 @@ function MiniArea({ points, max, fmt }: { points: MiniPoint[]; max: number; fmt:
             role="tooltip"
             data-mini-tip
             className={cn(
-              "pointer-events-none absolute bottom-full z-10 mb-inline w-max max-w-[14rem] rounded-xs border border-line bg-card px-tight py-inline shadow-sm",
+              "pointer-events-none absolute bottom-full z-10 mb-inline w-max max-w-[14rem] rounded-inner border border-line bg-card px-tight py-inline shadow-float",
               edge < 0.34 ? "left-0" : edge > 0.66 ? "right-0" : "left-1/2 -translate-x-1/2",
             )}
           >
-            <p className="text-[0.75rem] text-muted">{p.title}</p>
-            <p className="whitespace-nowrap text-[0.8125rem] font-medium">{fmt(p.value)}</p>
+            <p className="text-xs text-muted">{p.title}</p>
+            <p className="whitespace-nowrap text-sm font-medium">{fmt(p.value)}</p>
             {p.previous !== undefined && (
-              <p className="whitespace-nowrap text-[0.75rem] text-muted">
+              <p className="whitespace-nowrap text-xs text-muted">
                 {p.previousTitle ? `${p.previousTitle} ` : ""}
                 {fmt(p.previous)}
               </p>
@@ -869,14 +878,14 @@ export function MiniMultiples({ panels, fmt, caption }: { panels: MiniPanel[]; f
       <ul className="grid grid-cols-2 gap-x-section gap-y-section">
         {panels.map((pn) => (
           <li key={pn.key} data-mini={pn.key} className="min-w-0">
-            <p className="break-words text-[0.8125rem] leading-tight">{pn.label}</p>
-            <p className="text-[0.8125rem]">
+            <p className="break-words text-sm leading-tight">{pn.label}</p>
+            <p className="text-sm">
               <span className="font-medium">{pn.total}</span>
               {pn.change}
             </p>
             <div className="mt-tight">
               <MiniArea points={pn.points} max={max} fmt={fmt} />
-              <p aria-hidden className="mt-inline flex justify-between gap-tight text-[0.75rem] text-muted">
+              <p aria-hidden className="mt-inline flex justify-between gap-tight text-xs text-muted">
                 <span>{pn.points[0]?.label}</span>
                 <span>{pn.points.length > 1 ? pn.points[pn.points.length - 1].label : ""}</span>
               </p>
@@ -884,7 +893,7 @@ export function MiniMultiples({ panels, fmt, caption }: { panels: MiniPanel[]; f
           </li>
         ))}
       </ul>
-      <p className="mt-comfortable text-[0.75rem] text-muted">{caption(fmt(max))}</p>
+      <p className="mt-comfortable text-xs text-muted">{caption(fmt(max))}</p>
     </div>
   );
 }

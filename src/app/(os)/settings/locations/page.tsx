@@ -99,15 +99,13 @@ export default function LocationsPage() {
       {!locationsQ.data || !countersQ.data ? (
         <SectionSkeleton />
       ) : locations.length === 0 ? (
-        <div className="max-w-3xl">
-          <EmptyState
-            title={t("locations.emptyTitle")}
-            message={t("locations.emptyMessage")}
-            action={<Button onClick={() => router.push("/settings/locations/new")}>{t("locations.add")}</Button>}
-          />
-        </div>
+        <EmptyState
+          title={t("locations.emptyTitle")}
+          message={t("locations.emptyMessage")}
+          action={<Button onClick={() => router.push("/settings/locations/new")}>{t("locations.add")}</Button>}
+        />
       ) : (
-        <div className="flex max-w-4xl flex-col gap-section pb-hero">
+        <div className="flex flex-col gap-section pb-hero">
           {/* The first toolbar: the views, with the create button at the right of the
               same rule. A list has no header row above it for the button. */}
           <PageToolbar underline primary={primary}>
@@ -118,7 +116,7 @@ export default function LocationsPage() {
             />
           </PageToolbar>
           {rows.length === 0 && !q ? (
-            <p className="py-section text-sm text-muted">{t("locations.emptyTab")}</p>
+            <p className="py-section text-base text-muted">{t("locations.emptyTab")}</p>
           ) : (
             <RecordList
               label={t("locations.title")}
@@ -150,7 +148,7 @@ export default function LocationsPage() {
                         <span className="hidden md:block">{[l.addressLine1, l.city].filter(Boolean).join(", ")}</span>
                       </>
                     }
-                    columns={<span className="w-24 text-right text-[13px] text-muted">{t("locations.countersCount", { count: here })}</span>}
+                    columns={<span className="w-24 text-right text-sm text-muted">{t("locations.countersCount", { count: here })}</span>}
                     control={
                       <Switch
                         checked={selling}

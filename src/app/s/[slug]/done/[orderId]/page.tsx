@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOrder, listTickets } from "@/lib/api";
 import { LiveStorefrontShell } from "../../../_components/flow/LiveFlowProvider";
@@ -27,9 +28,9 @@ function LoadedConfirmation({ orderId }: { orderId: string }) {
 
   if (orderQ.loading || ticketsQ.loading) {
     return (
-      <div className="mx-auto max-w-sm animate-pulse space-y-section px-gutter py-hero" aria-busy="true">
-        <div className="mx-auto h-8 w-2/3 rounded-sm bg-line" />
-        <div className="h-64 rounded-md bg-line/60" />
+      <div className="mx-auto max-w-sm space-y-section px-gutter py-hero" aria-busy="true">
+        <Skeleton className="mx-auto" h={32} w="67%" />
+        <Skeleton h={256} />
       </div>
     );
   }

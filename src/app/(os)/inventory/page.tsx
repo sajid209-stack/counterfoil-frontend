@@ -3,13 +3,14 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Boxes, PackagePlus, Search } from "lucide-react";
+import { Boxes, PackagePlus } from "lucide-react";
 import {
   ActionMenu,
   Button,
   DataTable,
   EmptyState,
   FilterBar,
+  FilterSearch,
   Select,
   StatusPill,
   Tabs,
@@ -149,12 +150,12 @@ export default function InventoryPage() {
   /** The one place a stock figure is drawn, so the table, the card and the
    *  item page cannot disagree about what "low" looks like. */
   const stockCell = (i: InventoryItemView) => {
-    if (!i.tracked) return <span className="text-[13px] text-muted">{t("untracked")}</span>;
+    if (!i.tracked) return <span className="text-sm text-muted">{t("untracked")}</span>;
     return (
       <span className="inline-flex items-center gap-tight whitespace-nowrap">
         <span
           className={cn(
-            "text-[13px] font-medium tabular-nums",
+            "text-sm font-medium tabular-nums",
             i.outOfStock ? "text-danger" : i.low ? "text-warning" : "text-fg",
           )}
         >
@@ -176,7 +177,7 @@ export default function InventoryPage() {
       render: (i) => (
         <span className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{i.name}</span>
-          <span className="truncate text-[12px] text-muted">
+          <span className="truncate text-xs text-muted">
             {t(`kind.${i.kind}`)}
             {i.sku && <> · <span className="font-mono">{i.sku}</span></>}
             {i.returnable && <> · {t("returnable")}</>}
@@ -192,9 +193,9 @@ export default function InventoryPage() {
           /* Not an error — an item can exist before anything sells it — but
              it is the one thing about a row that nobody would otherwise
              notice, and it is why stock sits still. */
-          <span className="text-[12px] text-muted">{t("soldWithNone")}</span>
+          <span className="text-xs text-muted">{t("soldWithNone")}</span>
         ) : (
-          <span className="block max-w-[22ch] truncate text-[13px]">
+          <span className="block max-w-[22ch] truncate text-sm">
             {i.soldWith.map((s) => s.name).join(", ")}
           </span>
         ),
@@ -205,7 +206,7 @@ export default function InventoryPage() {
       header: t("col.price"),
       align: "right",
       mono: false,
-      render: (i) => <span className="whitespace-nowrap text-[13px] tabular-nums">{formatPriceShort(i.price)}</span>,
+      render: (i) => <span className="whitespace-nowrap text-sm tabular-nums">{formatPriceShort(i.price)}</span>,
     },
     {
       key: "actions",
@@ -251,16 +252,13 @@ export default function InventoryPage() {
 
         <FilterBar
           search={
-            <div className="relative min-w-0 flex-1 md:flex-none">
-              <Search size={16} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("searchPlaceholder")}
-                aria-label={t("searchPlaceholder")}
-                className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-[0.8125rem] outline-none focus:border-inverse md:h-9 md:w-72"
-              />
-            </div>
+            <FilterSearch
+              value={query}
+              onChange={setQuery}
+              placeholder={t("searchPlaceholder")}
+              aria-label={t("searchPlaceholder")}
+              className="flex-1 md:flex-none"
+            />
           }
           filters={[
             {
@@ -273,7 +271,7 @@ export default function InventoryPage() {
                   value={kind}
                   onChange={setKind}
                   aria-label={t("filterKind")}
-                  triggerClassName="text-[0.8125rem] md:h-9"
+                  size="sm"
                   options={[
                     { value: "", label: t("kindAll") },
                     ...(["merch", "food", "equipment", "service"] as const).map((k) => ({ value: k, label: t(`kind.${k}`) })),
@@ -294,7 +292,7 @@ export default function InventoryPage() {
                   value={unsoldOnly ? "none" : ""}
                   onChange={(v) => setUnsoldOnly(v === "none")}
                   aria-label={t("filterSold")}
-                  triggerClassName="text-[0.8125rem] md:h-9"
+                  size="sm"
                   options={[
                     { value: "", label: t("soldAll") },
                     { value: "none", label: `${t("stat.unsold")} · ${summary.unsold}` },
@@ -338,12 +336,12 @@ export default function InventoryPage() {
                 <span className="flex items-center gap-comfortable">
                   <span className="flex min-w-0 flex-1 flex-col gap-inline">
                     <span className="flex items-baseline gap-tight">
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{i.name}</span>
-                      <span className={cn("shrink-0 text-[0.8125rem] tabular-nums", flag === "out" ? "text-danger" : flag === "low" ? "text-warning" : i.tracked ? "text-fg" : "text-muted")}>
+                      <span className="min-w-0 flex-1 truncate text-base font-medium">{i.name}</span>
+                      <span className={cn("shrink-0 text-sm tabular-nums", flag === "out" ? "text-danger" : flag === "low" ? "text-warning" : i.tracked ? "text-fg" : "text-muted")}>
                         {i.tracked ? t("countUnit", { count: i.onHand, unit: i.unit }) : t("untracked")}
                       </span>
                     </span>
-                    <span className="truncate text-[0.8125rem] text-muted">
+                    <span className="truncate text-sm text-muted">
                       {[t(`kind.${i.kind}`), formatMoney(i.price)].join(" · ")}
                       {flag && <span className={flag === "out" ? "text-danger" : "text-warning"}> · {t(flag === "out" ? "badge.out" : "badge.low")}</span>}
                       {i.soldWith.length === 0 && ` · ${t("soldWithNone")}`}

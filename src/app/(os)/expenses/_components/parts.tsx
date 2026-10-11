@@ -53,7 +53,7 @@ export function PaidTag({ paidFrom, counter, className }: { paidFrom: PaidFrom; 
   return (
     <span className={cn("block min-w-0", className)}>
       <span className="block truncate">{label}</span>
-      {counter && <span className="block truncate text-[12px] text-muted">{counter}</span>}
+      {counter && <span className="block truncate text-xs text-muted">{counter}</span>}
     </span>
   );
 }

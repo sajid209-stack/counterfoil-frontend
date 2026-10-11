@@ -4,10 +4,12 @@ import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { PackagePlus, ScanLine, TriangleAlert } from "lucide-react";
+import { PackagePlus, ScanLine } from "lucide-react";
 import {
   ActionMenu,
+  Notice,
   PageShell,
+  Skeleton,
   StatusPill,
   Tabs,
   useToast,
@@ -80,9 +82,9 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
     return (
       <PageShell title={t("title")} description={t("description")}>
         {itemQ.loading ? (
-          <div aria-busy="true" className="h-40 animate-pulse rounded-md bg-line/50" />
+          <div aria-busy="true"><Skeleton h={160} /></div>
         ) : (
-          <p className="text-[13px] text-muted">{t("notFound")}</p>
+          <p className="text-sm text-muted">{t("notFound")}</p>
         )}
       </PageShell>
     );
@@ -118,20 +120,20 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
   /** One row of the ledger. The sign is the fact; the words are the reason. */
   const moveRow = (m: StockMovement) => (
     <li key={m.id} className="flex flex-wrap items-baseline gap-x-tight gap-y-inline border-b border-hairline py-comfortable last:border-0">
-      <span className="w-24 shrink-0 text-[13px] font-medium tabular-nums">
+      <span className="w-24 shrink-0 text-sm font-medium tabular-nums">
         <span className={cn(m.quantity > 0 ? "text-success" : "text-danger")}>
           {m.quantity > 0 ? "+" : "−"}
           {Math.abs(m.quantity)}
         </span>
       </span>
-      <span className="w-28 shrink-0 text-[13px]">{t(`move.${m.kind}`)}</span>
-      <span className="min-w-0 flex-1 text-[13px] text-muted">
+      <span className="w-28 shrink-0 text-sm">{t(`move.${m.kind}`)}</span>
+      <span className="min-w-0 flex-1 text-sm text-muted">
         {/* A sale needs no typed reason — being a sale IS the reason, and
             an em-dash there read as missing data. */}
         {m.reason ?? (m.kind === "sold" ? t("soldAtTill") : m.kind === "returned" ? t("returnedAtDesk") : "—")}
         {locations.length > 1 && ` · ${nameOf(m.locationId)}`}
       </span>
-      <span className="shrink-0 text-[12px] text-muted">
+      <span className="shrink-0 text-xs text-muted">
         {/* The time as well as the day: a delivery at nine and a write-off
             at five were indistinguishable, and unorderable on screen. */}
         {formatDate(m.at.slice(0, 10))} {formatClock(m.at.slice(11, 16))} · {m.by}
@@ -170,7 +172,7 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
         <section className="card-surface p-card">
           {/* The state is in the header row beside the way back; this card says
               what the thing is and what the shelves hold. */}
-          <p className="text-[0.8125rem] text-muted">
+          <p className="text-sm text-muted">
             {t(`kind.${item.kind}`)}
             {item.sku && <> · <span className="font-mono">{item.sku}</span></>}
             {item.returnable && <> · {t("returnable")}</>}
@@ -190,8 +192,8 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
               .filter(Boolean)
               .map((f) => (
                 <div key={f!.k} className="flex min-w-0 flex-col gap-inline">
-                  <dt className="text-[0.75rem] font-medium text-muted">{t(`fact.${f!.k}`)}</dt>
-                  <dd className="type-figure text-[1.375rem] font-semibold leading-tight">{f!.v}</dd>
+                  <dt className="text-xs font-medium text-muted">{t(`fact.${f!.k}`)}</dt>
+                  <dd className="type-figure text-2xl font-semibold leading-tight">{f!.v}</dd>
                 </div>
               ))}
           </dl>
@@ -213,12 +215,12 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
               <>
                 {levels.length > 1 && (
                   <section className="card-surface p-card">
-                    <h2 className="text-base font-semibold">{t("byVenue")}</h2>
+                    <h2 className="text-md font-semibold">{t("byVenue")}</h2>
                     <ul className="mt-comfortable flex flex-col">
                       {levels.map((l) => (
                         <li key={l.locationId} className="flex flex-wrap items-baseline gap-tight border-b border-hairline py-comfortable last:border-0">
-                          <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{nameOf(l.locationId)}</span>
-                          <span className="text-[13px] tabular-nums">{t("countUnit", { count: l.onHand, unit: item.unit })}</span>
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium">{nameOf(l.locationId)}</span>
+                          <span className="text-sm tabular-nums">{t("countUnit", { count: l.onHand, unit: item.unit })}</span>
                         </li>
                       ))}
                     </ul>
@@ -227,11 +229,11 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
 
                 <section className="card-surface p-card">
                   <div className="flex flex-wrap items-baseline justify-between gap-tight">
-                    <h2 className="text-base font-semibold">{t("ledger")}</h2>
-                    <p className="text-[0.75rem] text-muted">{t("ledgerNote")}</p>
+                    <h2 className="text-md font-semibold">{t("ledger")}</h2>
+                    <p className="text-xs text-muted">{t("ledgerNote")}</p>
                   </div>
                   {ledger.length === 0 ? (
-                    <p className="mt-comfortable text-[13px] text-muted">{t("ledgerEmpty")}</p>
+                    <p className="mt-comfortable text-sm text-muted">{t("ledgerEmpty")}</p>
                   ) : (
                     <ul className="mt-comfortable flex flex-col">{ledger.map(moveRow)}</ul>
                   )}
@@ -242,7 +244,7 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
                  is better than an empty table that looks like a failure. */
               <section className="card-surface flex items-start gap-tight p-card">
                 <ScanLine size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-muted" />
-                <p className="text-[13px] text-muted">{t("untrackedNote")}</p>
+                <p className="text-sm text-muted">{t("untrackedNote")}</p>
               </section>
             )}
           </div>
@@ -261,18 +263,15 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
 
         {tab === "sold" && (
           <section className="card-surface p-card">
-            <h2 className="text-base font-semibold">{t("soldWithTitle")}</h2>
-            <p className="mt-inline text-[0.8125rem] text-muted">{t("soldWithHelp")}</p>
+            <h2 className="text-md font-semibold">{t("soldWithTitle")}</h2>
+            <p className="mt-inline text-sm text-muted">{t("soldWithHelp")}</p>
             {item.soldWith.length === 0 ? (
-              <div className="mt-section flex items-start gap-tight rounded-sm bg-muted-wash px-comfortable py-comfortable">
-                <TriangleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-warning" />
-                <p className="min-w-0 text-[13px]">
-                  {t("soldWithEmpty")}{" "}
-                  <Link href="/catalog" className="font-medium underline underline-offset-2">
-                    {t("soldWithEmptyLink")}
-                  </Link>
-                </p>
-              </div>
+              <Notice tone="warning" size="sm" className="mt-section">
+                {t("soldWithEmpty")}{" "}
+                <Link href="/catalog" className="font-medium underline underline-offset-2">
+                  {t("soldWithEmptyLink")}
+                </Link>
+              </Notice>
             ) : (
               <ul className="mt-comfortable flex flex-col">
                 {item.soldWith.map((s) => (
@@ -282,7 +281,7 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
                       onClick={() => router.push(s.kind === "booking" ? `/catalog/bookings/${s.id}` : `/catalog/events/${s.id}`)}
                       className="flex min-h-11 w-full items-center gap-tight py-comfortable text-left transition-colors duration-quick hover:bg-muted-wash"
                     >
-                      <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{s.name}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{s.name}</span>
                       <StatusPill tone="neutral">{t(`soldWithKind.${s.kind}`)}</StatusPill>
                     </button>
                   </li>

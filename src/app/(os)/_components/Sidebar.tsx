@@ -57,10 +57,10 @@ function RailTip({
           <div
             role="tooltip"
             style={{ top: at.top, left: at.left }}
-            className="pointer-events-none fixed z-50 flex -translate-y-1/2 items-center gap-comfortable whitespace-nowrap rounded-sm bg-inverse px-comfortable py-inline text-[12px] font-medium text-inverse-fg shadow-md"
+            className="pointer-events-none fixed z-50 flex -translate-y-1/2 items-center gap-comfortable whitespace-nowrap rounded-control bg-inverse px-comfortable py-inline text-xs font-medium text-inverse-fg shadow-float"
           >
             {label}
-            {shortcut && <kbd className="rounded-xs bg-inverse-fg/15 px-1.5 font-mono text-[12px] text-inverse-fg">{shortcut}</kbd>}
+            {shortcut && <kbd className="rounded-xs bg-inverse-fg/15 px-1.5 font-mono text-xs text-inverse-fg">{shortcut}</kbd>}
           </div>,
           document.body,
         )}
@@ -140,7 +140,7 @@ export function Sidebar({
             aria-label={narrow ? label : undefined}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "group relative flex h-9 items-center gap-comfortable rounded-sm text-sm font-medium transition-colors duration-quick [@media(pointer:coarse)]:h-11",
+              "group relative flex h-9 items-center gap-comfortable rounded-control text-base font-medium transition-colors duration-quick [@media(pointer:coarse)]:h-11",
               narrow ? "mx-auto w-9 justify-center [@media(pointer:coarse)]:w-11" : "px-comfortable",
               active ? "bg-fg/[0.07] text-fg dark:bg-fg/[0.09]" : "text-muted hover:bg-fg/[0.04] hover:text-fg",
             )}
@@ -175,7 +175,7 @@ export function Sidebar({
         aria-label={toggleLabel}
         aria-expanded={!collapsed}
         aria-keyshortcuts="["
-        className="flex h-9 w-9 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-fg/[0.06] hover:text-fg [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
+        className="flex h-9 w-9 items-center justify-center rounded-control text-muted transition-colors duration-quick hover:bg-fg/[0.06] hover:text-fg [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
       >
         <CollapseIcon size={16} strokeWidth={1.5} aria-hidden />
       </button>
@@ -202,7 +202,7 @@ export function Sidebar({
       {narrow ? (
         <>
           <div className="flex h-14 shrink-0 items-center justify-center">
-            <Link href="/dashboard" data-nav="logo" aria-label="Counterfoil" className="flex items-center justify-center rounded-sm">
+            <Link href="/dashboard" data-nav="logo" aria-label="Counterfoil" className="flex items-center justify-center rounded-control">
               <LogoMark size={28} />
             </Link>
           </div>
@@ -210,7 +210,7 @@ export function Sidebar({
         </>
       ) : (
         <div className="flex h-14 shrink-0 items-center justify-between pl-6 pr-comfortable">
-          <Link href="/dashboard" data-nav="logo" className="flex items-center rounded-sm">
+          <Link href="/dashboard" data-nav="logo" className="flex items-center rounded-control">
             <Logo size={22} />
           </Link>
           {toggle}
@@ -235,7 +235,7 @@ export function Sidebar({
       <div className={cn("shrink-0 pt-2", gutter)}>
         <ul className={list}>{row(NAV_SETTINGS)}</ul>
         {!narrow ? (
-          <p className="truncate px-comfortable pb-comfortable pt-2 text-[12px] text-muted">{t("version", { version: pkg.version })}</p>
+          <p className="truncate px-comfortable pb-comfortable pt-2 text-xs text-muted">{t("version", { version: pkg.version })}</p>
         ) : (
           <div className="h-comfortable" />
         )}

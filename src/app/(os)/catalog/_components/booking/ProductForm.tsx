@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, FormField, Tabs, useToast } from "@/components/ui";
+import { Button, Checkbox, FormField, Tabs, controlClass, useToast } from "@/components/ui";
 import {
   createResourceRecord,
   updateProduct,
@@ -294,7 +294,7 @@ export function ProductForm({
         {tab === "availability" && (
           <div className="flex flex-col gap-section">
             <div>
-              <p className="mb-tight text-base font-semibold text-fg">{t("howTitle")}</p>
+              <p className="mb-tight text-md font-semibold text-fg">{t("howTitle")}</p>
               <BookingSetup
                 value={state.booking}
                 resources={resources}
@@ -323,22 +323,21 @@ export function ProductForm({
                 operator adds a court. */}
             {state.booking.resource && (
               <div>
-                <p className="type-h2 mb-tight text-base">{resourceNoun}</p>
-                <p className="type-body text-[13px] text-muted">{t("resourceHelp", { noun: resourceNoun })}</p>
-                <p className="type-body mb-section text-[13px] text-muted">{t("resourceShared")}</p>
+                <p className="mb-tight text-md font-semibold text-fg">{resourceNoun}</p>
+                <p className="text-sm text-muted">{t("resourceHelp", { noun: resourceNoun })}</p>
+                <p className="mb-section text-sm text-muted">{t("resourceShared")}</p>
                 {resources.length === 0 ? (
-                  <p className="text-[13px] text-muted">{t("resourceNone", { noun: resourceNoun })}</p>
+                  <p className="text-sm text-muted">{t("resourceNone", { noun: resourceNoun })}</p>
                 ) : (
                   <div className="grid gap-tight sm:grid-cols-2">
                     {resources.map((r) => {
                       const on = (state.booking.resource?.resourceIds ?? []).includes(r.id);
                       return (
-                        <label
+                        <div
                           key={r.id}
-                          className={`flex min-h-11 cursor-pointer items-center gap-comfortable rounded-sm bg-muted-wash p-comfortable transition-shadow duration-quick ${on ? "ring-2 ring-inset ring-ember" : "hover:ring-2 hover:ring-inset hover:ring-ember/30"}`}
+                          className={`rounded-control bg-muted-wash px-comfortable transition-shadow duration-quick ${on ? "ring-2 ring-inset ring-ember-solid" : ""}`}
                         >
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={on}
                             onChange={() =>
                               setState((st) => {
@@ -350,28 +349,29 @@ export function ProductForm({
                                 return { ...st, booking: { ...st.booking, resource: { ...cur, resourceIds: ids } } };
                               })
                             }
-                            className="h-4 w-4 shrink-0 accent-ember"
+                            label={
+                              <span className="flex min-w-0 flex-col">
+                                <span className="truncate font-medium">{r.name}</span>
+                                <span className="truncate text-xs text-muted">
+                                  {r.nounSingular}
+                                  {r.outOfService ? ` · ${t("resourceNotInUse")}` : ""}
+                                </span>
+                              </span>
+                            }
                           />
-                          <span className="flex min-w-0 flex-col">
-                            <span className="truncate text-sm font-medium">{r.name}</span>
-                            <span className="truncate text-[12px] text-muted">
-                              {r.nounSingular}
-                              {r.outOfService ? ` · ${t("resourceNotInUse")}` : ""}
-                            </span>
-                          </span>
-                        </label>
+                        </div>
                       );
                     })}
                   </div>
                 )}
                 {(state.booking.resource.resourceIds ?? []).length === 0 && (
-                  <p className="mt-tight text-[12px] text-danger">{t("resourcePickOne")}</p>
+                  <p className="mt-tight text-xs text-danger">{t("resourcePickOne")}</p>
                 )}
               </div>
             )}
             {isFlexibleResource(state.booking.bookingType) && state.durationConfig && (
               <div>
-                <p className="type-h2 mb-section text-base">{t("lengthsTitle")}</p>
+                <p className="mb-section text-md font-semibold text-fg">{t("lengthsTitle")}</p>
                 <DurationEngineField
                   value={state.durationConfig}
                   onChange={(cfg) => set("durationConfig", cfg)}
@@ -383,7 +383,7 @@ export function ProductForm({
             )}
             {needsSchedule(state.booking.bookingType) && state.schedule && (
               <div>
-                <p className="type-h2 mb-section text-base">{t("scheduleTitle")}</p>
+                <p className="mb-section text-md font-semibold text-fg">{t("scheduleTitle")}</p>
                 <ScheduleBuilder
                   bookingType={state.booking.bookingType}
                   value={state.schedule}
@@ -416,19 +416,19 @@ export function ProductForm({
             <TypeSpecificFields state={state} set={set} team={team} providerNoun={product.providerNoun} />
             {state.booking.bookingType === "BT-03" && state.schedule && (
               <div className="flex flex-col gap-tight">
-                <span className="text-[0.8125rem] font-medium text-muted">{t("showNames")}</span>
-                <p className="text-[12px] text-muted">{t("showNamesHelp")}</p>
+                <span className="text-sm font-medium text-muted">{t("showNames")}</span>
+                <p className="text-xs text-muted">{t("showNamesHelp")}</p>
                 <div className="grid gap-tight sm:grid-cols-3">
                   {slotTimes(state.schedule).map((time) => (
                     <div key={time} className="flex items-center gap-tight">
-                      <span className="w-20 shrink-0 whitespace-nowrap text-[0.8125rem] tabular-nums text-muted">{formatClock(time)}</span>
+                      <span className="w-20 shrink-0 whitespace-nowrap text-sm tabular-nums text-muted">{formatClock(time)}</span>
                       <input
                         type="text"
                         value={state.sessionNames[time] ?? ""}
                         placeholder={t("showNamePlaceholder")}
                         aria-label={t("showNameFor", { time: formatClock(time) })}
                         onChange={(e) => set("sessionNames", { ...state.sessionNames, [time]: e.target.value })}
-                        className="h-11 w-full rounded-sm border border-line bg-card px-comfortable text-sm outline-none placeholder:text-muted focus:border-inverse md:h-10"
+                        className={controlClass()}
                       />
                     </div>
                   ))}
@@ -463,7 +463,7 @@ export function ProductForm({
                     className="max-w-xs"
                     help={t("perBookingHelp")}
                   />
-                  <p className="text-[12px] text-muted">{t("perBookingSwitch", { tab: t("tab.availability") })}</p>
+                  <p className="text-xs text-muted">{t("perBookingSwitch", { tab: t("tab.availability") })}</p>
                 </div>
               ) : (
                 <PriceTiersField tiers={state.tiers} onChange={(tiers) => set("tiers", tiers)} errors={errors} currency={currency} />
@@ -491,32 +491,29 @@ export function ProductForm({
         {tab === "where" && (
           <div className="grid gap-section sm:grid-cols-2">
             <div className="flex flex-col gap-tight">
-              <span className="text-[0.8125rem] font-medium text-muted">{tw("soldWhere")}</span>
+              <span className="text-sm font-medium text-muted">{tw("soldWhere")}</span>
               <FormField label={tw("atCounter")} variant="toggle" help={tw("atCounterHelp")} checked={state.counter} onChange={(e) => set("counter", (e.target as HTMLInputElement).checked)} />
               <FormField label={tw("online")} variant="toggle" help={tw("onlineHelp")} checked={state.online} onChange={(e) => set("online", (e.target as HTMLInputElement).checked)} />
               {!state.counter && !state.online ? (
-                <p className="text-[13px] font-medium text-danger">{tw("nowhere")}</p>
+                <p className="text-sm font-medium text-danger">{tw("nowhere")}</p>
               ) : !state.online ? (
-                <p className="text-[13px] text-warning">{tw("notOnline")}</p>
+                <p className="text-sm text-warning">{tw("notOnline")}</p>
               ) : null}
             </div>
             <div className="flex flex-col gap-tight">
-              <span className="text-[0.8125rem] font-medium text-muted">{tw("locations")}</span>
+              <span className="text-sm font-medium text-muted">{tw("locations")}</span>
               {locations.map((l) => (
-                <label key={l.id} className="flex min-h-11 cursor-pointer items-center gap-tight text-sm md:min-h-9">
-                  <input type="checkbox" checked={state.locationIds.includes(l.id)} onChange={() => toggleLocation(l.id)} className="h-4 w-4 accent-ember" />
-                  {l.name}
-                </label>
+                <Checkbox key={l.id} checked={state.locationIds.includes(l.id)} onChange={() => toggleLocation(l.id)} label={l.name} />
               ))}
             </div>
           </div>
         )}
 
         {tab === "advanced" && (
-          <div className="flex flex-col gap-tight text-sm">
-            <p className="text-[13px] text-muted">{t("advancedHelp")}</p>
-            <AdvancedRow label={t("advType")} value={state.booking.bookingType} />
-            <AdvancedRow label={t("advId")} value={product.id} />
+          <div className="flex flex-col gap-tight text-base">
+            <p className="text-sm text-muted">{t("advancedHelp")}</p>
+            <AdvancedRow label={t("advType")} value={state.booking.bookingType} mono />
+            <AdvancedRow label={t("advId")} value={product.id} mono />
             <AdvancedRow label={t("advCreated")} value={formatDateTime(product.createdAt)} />
             <AdvancedRow label={t("advUpdated")} value={formatDateTime(product.updatedAt)} />
           </div>
@@ -527,7 +524,7 @@ export function ProductForm({
           bottom-left (56px, 12px in from each edge), so the bar's own words
           start to the right of it rather than under it. */}
       <div className="sticky bottom-0 flex items-center justify-between gap-tight border-t border-hairline bg-chrome py-comfortable max-md:-mx-gutter max-md:pl-[calc(4.5rem+env(safe-area-inset-left))] max-md:pr-gutter max-md:pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:bg-surface md:py-section">
-        <span className="text-[0.8125rem] text-muted">{dirty ? t("unsaved") : t("noChanges")}</span>
+        <span className="text-sm text-muted">{dirty ? t("unsaved") : t("noChanges")}</span>
         <div className="flex items-center gap-tight">
           <Button variant="tertiary" onClick={() => router.push("/catalog?kind=bookings")} disabled={saving}>{t("cancel")}</Button>
           <Button onClick={save} loading={saving} disabled={!dirty}>{t("save")}</Button>
@@ -635,13 +632,13 @@ function TypeSpecificFields({
     if (ids.length === 0) return null;
     return (
       <div className="flex flex-col gap-tight">
-        <span className="text-[0.8125rem] font-medium text-muted">{t("providerExtras", { noun: state.booking.provider?.noun ?? providerNoun ?? t("providerFallback") })}</span>
+        <span className="text-sm font-medium text-muted">{t("providerExtras", { noun: state.booking.provider?.noun ?? providerNoun ?? t("providerFallback") })}</span>
         {ids.map((id) => {
           const extra = state.providerExtras[id] ?? { premium: "", durations: "" };
           const name = team.find((m) => m.id === id)?.name ?? id;
           return (
             <div key={id} className="grid items-center gap-tight sm:grid-cols-[1fr_10rem_12rem]">
-              <span className="text-sm">{name}</span>
+              <span className="text-base">{name}</span>
               <FormField label={t("extraCharge")} variant="number" placeholder="0" value={extra.premium} onChange={(e) => set("providerExtras", { ...state.providerExtras, [id]: { ...extra, premium: e.target.value } })} />
               <FormField label={t("lengthsMin")} placeholder={t("lengthsPlaceholder")} value={extra.durations} onChange={(e) => set("providerExtras", { ...state.providerExtras, [id]: { ...extra, durations: e.target.value } })} />
             </div>
@@ -672,11 +669,11 @@ function TypeSpecificFields({
   return null;
 }
 
-function AdvancedRow({ label, value }: { label: string; value: string }) {
+function AdvancedRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex justify-between border-b border-hairline py-tight last:border-0">
       <span className="text-muted">{label}</span>
-      <span className="font-mono text-[12px]">{value}</span>
+      <span className={mono ? "font-mono text-xs" : "text-sm tabular-nums"}>{value}</span>
     </div>
   );
 }

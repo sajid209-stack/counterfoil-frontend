@@ -72,15 +72,15 @@ export function EventPeek({
       // be worse than not announcing them here at all.
       aria-hidden
       className={cn(
-        "pointer-events-none fixed z-40 w-[16.5rem] rounded-md border border-line bg-card p-comfortable",
-        "shadow-lg ring-1 ring-ink/5",
+        "pointer-events-none fixed z-40 w-66 rounded-card border border-line bg-card p-comfortable",
+        "shadow-float",
         "motion-safe:animate-[peek-in_120ms_ease-out]",
       )}
       style={{ left: box.left, top: box.top }}
     >
       <div className="flex flex-col gap-tight">
         <div className="flex items-start justify-between gap-tight">
-          <span className="min-w-0 break-words text-[14px] font-semibold leading-tight">
+          <span className="min-w-0 break-words text-base font-semibold leading-tight">
             {event.title}
           </span>
           {event.locked && (
@@ -94,16 +94,16 @@ export function EventPeek({
           <StatusPill tone={TONE_PILL[event.tone]}>{t(TONE_KEY[event.tone])}</StatusPill>
         </span>
 
-        <span className="flex items-start gap-tight text-[13px]">
+        <span className="flex items-start gap-tight text-sm">
           <Clock size={13} strokeWidth={1.8} className="mt-0.5 shrink-0 text-muted" />
           <span className="min-w-0">
-            <span className="font-mono">{when}</span>
-            <span className="block text-[12px] text-muted">{dayLabel(event.start)}</span>
+            <span className="tabular-nums">{when}</span>
+            <span className="block text-xs text-muted">{dayLabel(event.start)}</span>
           </span>
         </span>
 
         {event.subtitle && (
-          <span className="flex items-start gap-tight text-[13px]">
+          <span className="flex items-start gap-tight text-sm">
             {event.kind === "hold" ? (
               <Tag size={13} strokeWidth={1.8} className="mt-0.5 shrink-0 text-muted" />
             ) : (
@@ -116,13 +116,13 @@ export function EventPeek({
         {/* Where it was sold, with the marketplace's own reference — the one
             thing a desk is asked for when a guest quotes their voucher. */}
         {event.source && (
-          <span className="flex items-start gap-tight text-[13px]">
+          <span className="flex items-start gap-tight text-sm">
             <MarketBadge id={event.source.id} className="mt-0.5" />
             <span className="min-w-0 break-words">{bookedOnLine(t, event.source)}</span>
           </span>
         )}
 
-        <span className="mt-inline text-[12px] text-muted">{t("peekHint")}</span>
+        <span className="mt-inline text-xs text-muted">{t("peekHint")}</span>
       </div>
     </div>
   );

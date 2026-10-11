@@ -48,18 +48,18 @@ export function SfRoot({
    48px tall (a 44px target with room), 12px corners, 16px semibold. The fill is
    the venue's accent, already nudged until its text reads at 4.5:1. */
 const BTN_BASE =
-  "inline-flex min-h-12 items-center justify-center gap-tight rounded-[12px] px-major text-[16px] font-semibold leading-none transition-[background-color,box-shadow,opacity] duration-quick focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed";
+  "inline-flex min-h-12 items-center justify-center gap-tight rounded-md px-major text-md font-semibold leading-none transition-[background-color,box-shadow,opacity] duration-quick disabled:cursor-not-allowed";
 export const sfBtn = {
   primary: cn(
     BTN_BASE,
-    "bg-[var(--sf-fill)] text-[var(--sf-on-fill)] hover:brightness-90 disabled:bg-[#e6e6e2] disabled:text-[#595959] disabled:hover:brightness-100",
+    "bg-ember-solid text-on-solid hover:brightness-90 disabled:bg-line disabled:text-muted disabled:hover:brightness-100",
   ),
   secondary: cn(
     BTN_BASE,
-    "border border-strong bg-white text-fg hover:border-fg disabled:border-line disabled:text-[#6b6b6b]",
+    "border border-strong bg-card text-fg hover:border-fg disabled:border-line disabled:text-muted",
   ),
   /** A quiet text link-button: 44px target, accent ink. */
-  link: "inline-flex min-h-11 items-center gap-inline text-[14px] font-semibold text-[var(--sf-ink)] underline-offset-4 hover:underline",
+  link: "inline-flex min-h-11 items-center gap-inline text-base font-semibold text-brand-foreground underline-offset-4 hover:underline",
 };
 
 /* ── Booking groups, for the filter row ─────────────────────────────────── */
@@ -200,7 +200,7 @@ export function Media({
       <Pattern kind={h % 4} />
       <span
         aria-hidden
-        className="relative flex items-center justify-center rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.10)] text-[var(--sf-ink)]"
+        className="relative flex items-center justify-center rounded-full bg-card shadow-float text-brand-foreground"
         style={{ width: iconSize * 2.2, height: iconSize * 2.2 }}
       >
         <TypeIcon bookingType={bookingType} size={iconSize} />
@@ -249,24 +249,24 @@ export function HeroArt({
     >
       <Pattern kind={h % 4} />
       <div
-        className="relative w-[76%] max-w-[360px] rounded-[16px] bg-white p-comfortable sm:p-section shadow-[0_18px_48px_rgba(0,0,0,0.16)]"
+        className="relative w-[76%] max-w-[360px] rounded-lg bg-card p-comfortable sm:p-section shadow-float"
         style={{ transform: "rotate(-3deg)" }}
       >
-        <p className="flex items-center gap-tight text-[12px] font-semibold uppercase tracking-[0.08em] text-[#595959]">
+        <p className="flex items-center gap-tight text-sm font-medium text-muted">
           <Ticket size={14} strokeWidth={1.75} /> {stub}
         </p>
-        <p className="mt-tight break-words text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#161616] sm:text-[26px]">{name}</p>
-        <p className="mt-inline text-[14px] text-[#595959]">{city}</p>
-        <div className="my-comfortable border-t-2 border-dashed border-[#dcdcd8]" />
+        <p className="mt-tight break-words text-xl font-semibold leading-tight tracking-title text-fg sm:text-2xl">{name}</p>
+        <p className="mt-inline text-base text-muted">{city}</p>
+        <div className="my-comfortable border-t-2 border-dashed border-line" />
         {/* The stub carries a QR, which is the only code a ticket has. It is the
             plate's decoration, so what it encodes is the plate's own seed. */}
         <div className="flex items-center gap-comfortable">
-          <span className="shrink-0 text-[#161616]">
+          <span className="shrink-0 text-fg">
             <Qr value={seed} size={44} />
           </span>
-          <div className="flex min-w-0 flex-1 flex-col gap-[6px]">
-            <span className="block h-[6px] w-4/5 rounded-full bg-[#dcdcd8]" />
-            <span className="block h-[6px] w-3/5 rounded-full bg-[#dcdcd8]" />
+          <div className="flex min-w-0 flex-1 flex-col gap-tight">
+            <span className="block h-1.5 w-4/5 rounded-full bg-line" />
+            <span className="block h-1.5 w-3/5 rounded-full bg-line" />
           </div>
         </div>
       </div>

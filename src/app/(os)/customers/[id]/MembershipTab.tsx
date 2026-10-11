@@ -7,6 +7,7 @@ import {
   EmptyState,
   FormField,
   Modal,
+  Skeleton,
   StatusPill,
   useToast,
   type PillTone,
@@ -43,10 +44,10 @@ function Stat({
   tone?: "warning";
 }) {
   return (
-    <div className="rounded-sm border border-line p-comfortable">
-      <p className="text-[0.75rem] font-medium text-muted">{label}</p>
+    <div className="rounded-control border border-line p-comfortable">
+      <p className="text-xs font-medium text-muted">{label}</p>
       <p
-        className={`mt-inline font-mono text-lg tabular-nums ${
+        className={`type-figure mt-inline text-lg font-semibold ${
           tone === "warning" ? "text-warning" : "text-fg"
         }`}
       >
@@ -94,7 +95,7 @@ export function MembershipTab({
     <div className="flex flex-col gap-major">
       <section className="flex flex-col gap-section">
         <div className="flex flex-wrap items-center justify-between gap-tight">
-          <h3 className="text-[0.75rem] font-medium text-muted">{t("membershipsHeading")}</h3>
+          <h3 className="text-xs font-medium text-muted">{t("membershipsHeading")}</h3>
           <Button size="sm" variant="secondary" onClick={() => setSellOpen(true)}>
             {t("sellMembership")}
           </Button>
@@ -109,7 +110,7 @@ export function MembershipTab({
                 <div className="flex flex-wrap items-start justify-between gap-tight">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-tight">
-                      <span className="break-words text-sm font-medium">{m.tierName}</span>
+                      <span className="break-words text-base font-medium">{m.tierName}</span>
                       <StatusPill tone={MEMBERSHIP_TONE[m.effectiveStatus]}>
                         {t(`mstatus_${m.effectiveStatus}` as "mstatus_active")}
                       </StatusPill>
@@ -119,8 +120,8 @@ export function MembershipTab({
                         </StatusPill>
                       )}
                     </div>
-                    <p className="mt-inline font-mono text-[12px] text-muted">{m.code}</p>
-                    <p className="text-[12px] text-muted">
+                    <p className="mt-inline font-mono text-xs text-muted">{m.code}</p>
+                    <p className="text-xs text-muted">
                       {t("mPeriod", {
                         from: formatDate(m.startedAt),
                         to: formatDate(m.expiresAt),
@@ -131,12 +132,12 @@ export function MembershipTab({
                         : t("mVisitsLeft", { count: m.visitsLeft })}
                     </p>
                     {m.members.length > 0 && (
-                      <p className="mt-inline break-words text-[12px] text-muted">
+                      <p className="mt-inline break-words text-xs text-muted">
                         {t("mCovers", { names: m.members.map((x) => x.name).join(", ") })}
                       </p>
                     )}
                     {m.cancelReason && (
-                      <p className="mt-inline break-words text-[12px] text-muted">
+                      <p className="mt-inline break-words text-xs text-muted">
                         {t("mCancelled", { reason: m.cancelReason })}
                       </p>
                     )}
@@ -185,7 +186,7 @@ export function MembershipTab({
 
       <section className="flex flex-col gap-section">
         <div className="flex flex-wrap items-center justify-between gap-tight">
-          <h3 className="text-[0.75rem] font-medium text-muted">{t("pointsHeading")}</h3>
+          <h3 className="text-xs font-medium text-muted">{t("pointsHeading")}</h3>
           <Button size="sm" variant="secondary" onClick={() => setAdjustOpen(true)}>
             {t("adjustPoints")}
           </Button>
@@ -203,13 +204,13 @@ export function MembershipTab({
         </div>
 
         {points.entries.length === 0 ? (
-          <p className="text-[13px] text-muted">{t("noPoints")}</p>
+          <p className="text-sm text-muted">{t("noPoints")}</p>
         ) : (
           <ul className="flex flex-col gap-inline">
             {points.entries.slice(0, 12).map((e) => (
               <li
                 key={e.id}
-                className="flex flex-wrap items-baseline justify-between gap-tight rounded-sm border border-line p-comfortable text-[13px]"
+                className="flex flex-wrap items-baseline justify-between gap-tight rounded-control border border-line p-comfortable text-sm"
               >
                 <span className="min-w-0">
                   <StatusPill tone={e.kind === "spend" ? "neutral" : "success"}>
@@ -217,7 +218,7 @@ export function MembershipTab({
                   </StatusPill>{" "}
                   <span className="text-muted">{e.note ?? t("pointsFromSale")}</span>
                 </span>
-                <span className="shrink-0 whitespace-nowrap font-mono">
+                <span className="shrink-0 whitespace-nowrap tabular-nums">
                   {e.kind === "spend" ? "−" : "+"}
                   {e.points.toLocaleString()} · {formatDate(e.at)}
                 </span>
@@ -352,19 +353,19 @@ function SellMembershipModal({
         </Button>
       }
     >
-      {tiersQ.loading && <div className="h-24 animate-pulse rounded-sm bg-subtle" />}
+      {tiersQ.loading && <Skeleton className="h-24 w-full" />}
       <ul className="flex flex-col gap-tight">
         {(tiersQ.data?.data ?? []).map((tier) => (
           <li
             key={tier.id}
-            className="flex flex-wrap items-center justify-between gap-tight rounded-sm border border-line p-comfortable"
+            className="flex flex-wrap items-center justify-between gap-tight rounded-control border border-line p-comfortable"
           >
             <div className="min-w-0">
-              <p className="break-words text-sm font-medium">{tier.name}</p>
-              <p className="break-words text-[12px] text-muted">{tier.description}</p>
+              <p className="break-words text-base font-medium">{tier.name}</p>
+              <p className="break-words text-xs text-muted">{tier.description}</p>
             </div>
             <div className="flex shrink-0 items-center gap-tight">
-              <span className="whitespace-nowrap font-mono text-sm">{formatMoney(tier.price)}</span>
+              <span className="whitespace-nowrap text-base tabular-nums">{formatMoney(tier.price)}</span>
               <Button size="sm" loading={busy === tier.id} onClick={() => sell(tier.id)}>
                 {t("issue")}
               </Button>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, SlidersHorizontal, Trash2 } from "lucide-react";
+import { AffixInput, Button, controlClass } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
 /**
@@ -90,14 +91,14 @@ export function TierTable({
   const anyUp = rows.some((r) => r.onUp);
   const anyDown = rows.some((r) => r.onDown);
   const cols = withSold
-    ? "sm:grid-cols-[minmax(0,1fr)_8rem_6rem_9rem_12.5rem]"
-    : "sm:grid-cols-[minmax(0,1fr)_8rem_6rem_12.5rem]";
+    ? "sm:grid-cols-[minmax(0,1fr)_8rem_6rem_9rem_14rem]"
+    : "sm:grid-cols-[minmax(0,1fr)_8rem_6rem_14rem]";
   return (
     <div className="flex flex-col">
       {/* One header for the table rather than a label on the first row only,
           which left every later row's fields unnamed. Hidden on a phone, where
           each ticket type is its own two lines. */}
-      <div aria-hidden className={cn("hidden gap-tight border-b border-hairline pb-tight text-[0.8125rem] font-medium text-muted sm:grid", cols)}>
+      <div aria-hidden className={cn("hidden gap-tight border-b border-hairline pb-tight text-sm font-medium text-muted sm:grid", cols)}>
         <span>{labels.name}</span>
         <span className="text-right">{labels.price}</span>
         <span className="text-right">{labels.qty}</span>
@@ -112,9 +113,6 @@ export function TierTable({
     </div>
   );
 }
-
-const inputCls =
-  "h-11 w-full min-w-0 rounded-sm border bg-card px-comfortable text-sm outline-none transition-colors duration-quick placeholder:text-muted focus:border-inverse";
 
 function TierRow({
   r,
@@ -148,7 +146,6 @@ function TierRow({
      and a comma never lands under the cursor mid-number. */
   const shownPrice = editingPrice || r.price === "" || !/^\d+(\.\d+)?$/.test(r.price) ? r.price : Number(r.price).toLocaleString("en-US", { maximumFractionDigits: 2 });
   const pct = r.sold !== undefined && cap > 0 ? Math.min(100, Math.round((r.sold / cap) * 100)) : 0;
-  const err = (e?: string) => (e ? "border-danger" : "border-line");
   const who = r.name.trim() || labels.unnamed;
   /* Hidden below `sm` until the disclosure is open. */
   const phoneHidden = !moreOpen && "max-sm:hidden";
@@ -164,29 +161,25 @@ function TierRow({
             placeholder={r.namePlaceholder}
             aria-label={labels.name}
             aria-invalid={!!r.nameError || undefined}
-            className={cn(inputCls, err(r.nameError))}
+            className={controlClass(!!r.nameError)}
           />
-          {r.nameError && <span className="text-[0.8125rem] text-danger">{r.nameError}</span>}
+          {r.nameError && <span className="text-sm text-danger">{r.nameError}</span>}
         </label>
         <label className="flex min-w-0 flex-col gap-inline">
           <span className="sr-only">{labels.price}</span>
-          <span className="relative">
-            <span aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-sm text-muted">
-              {currencySymbol}
-            </span>
-            <input
-              value={shownPrice}
-              onFocus={() => setEditingPrice(true)}
-              onBlur={() => setEditingPrice(false)}
-              onChange={(e) => r.onPrice(e.target.value.replace(/[^\d.]/g, ""))}
-              inputMode="decimal"
-              aria-label={labels.price}
-              placeholder={r.pricePlaceholder}
-              aria-invalid={!!r.priceError || undefined}
-              className={cn(inputCls, err(r.priceError), "pl-7 text-right tabular-nums")}
-            />
-          </span>
-          {r.priceError && <span className="text-[0.8125rem] text-danger">{r.priceError}</span>}
+          <AffixInput
+            prefix={currencySymbol}
+            value={shownPrice}
+            onFocus={() => setEditingPrice(true)}
+            onBlur={() => setEditingPrice(false)}
+            onChange={(e) => r.onPrice(e.target.value.replace(/[^\d.]/g, ""))}
+            inputMode="decimal"
+            aria-label={labels.price}
+            placeholder={r.pricePlaceholder}
+            invalid={!!r.priceError}
+            inputClassName="text-right tabular-nums"
+          />
+          {r.priceError && <span className="text-sm text-danger">{r.priceError}</span>}
         </label>
 
         {/* Phone, line 2: the summary and the way to the rest. */}
@@ -195,7 +188,7 @@ function TierRow({
           onClick={() => setMore((v) => !v)}
           aria-expanded={moreOpen}
           disabled={needsMore}
-          className="col-span-2 -mr-3 flex min-h-11 min-w-0 items-center gap-tight rounded-sm text-left text-[0.8125rem] text-muted sm:hidden"
+          className="col-span-2 -mr-3 flex min-h-11 min-w-0 items-center gap-tight rounded-control text-left text-sm text-muted sm:hidden"
         >
           <span className="min-w-0 flex-1 truncate">{line2}</span>
           <span className="sr-only">{labels.details(who)}</span>
@@ -205,7 +198,7 @@ function TierRow({
         </button>
 
         <label className={cn("col-span-2 flex min-w-0 flex-col gap-inline sm:col-span-1", phoneHidden)}>
-          <span className="text-[0.8125rem] font-medium text-muted sm:sr-only">{labels.qty}</span>
+          <span className="text-sm font-medium text-muted sm:sr-only">{labels.qty}</span>
           <input
             value={r.qty}
             onChange={(e) => r.onQty(e.target.value.replace(/\D/g, ""))}
@@ -213,24 +206,24 @@ function TierRow({
             aria-label={labels.qty}
             placeholder={r.qtyPlaceholder}
             aria-invalid={!!r.qtyError || undefined}
-            className={cn(inputCls, err(r.qtyError), "text-right tabular-nums")}
+            className={cn(controlClass(!!r.qtyError), "text-right tabular-nums")}
           />
-          {r.qtyError && <span className="text-[0.8125rem] text-danger">{r.qtyError}</span>}
+          {r.qtyError && <span className="text-sm text-danger">{r.qtyError}</span>}
         </label>
         {withSold && (
           <span className={cn("col-span-2 flex min-w-0 flex-col justify-center gap-inline sm:col-span-1 sm:h-11 sm:pl-section", phoneHidden)}>
             {r.sold !== undefined && r.sold > 0 ? (
               <>
-                <span className="text-[0.8125rem] tabular-nums">
+                <span className="text-sm tabular-nums">
                   <span className="sm:sr-only">{labels.sold}: </span>
                   {labels.soldOf(r.sold, cap)}
                 </span>
                 <span className="h-1.5 w-full overflow-hidden rounded-full bg-line">
-                  <span className={cn("block h-full rounded-full", pct >= 90 ? "bg-ember-solid" : "bg-success")} style={{ width: `${pct}%` }} />
+                  <span className={cn("block h-full rounded-full", pct >= 90 ? "bg-ember-solid" : "bg-success-solid")} style={{ width: `${pct}%` }} />
                 </span>
               </>
             ) : (
-              <span className="text-[0.8125rem] text-muted">
+              <span className="text-sm text-muted">
                 <span aria-hidden>—</span>
               </span>
             )}
@@ -238,51 +231,53 @@ function TierRow({
         )}
         <span className={cn("col-span-2 flex items-center justify-end gap-inline sm:col-span-1 sm:h-11", phoneHidden)}>
           {r.details && (
-            <button
-              type="button"
+            <Button
+              variant="tertiary"
+              size="sm"
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
               aria-label={labels.details(who)}
               title={labels.details(who)}
-              className={cn(
-                "flex h-11 items-center gap-inline rounded-sm px-tight text-[0.8125rem] font-medium hover:bg-muted-wash hover:text-fg sm:h-9",
-                open ? "bg-muted-wash text-fg" : "text-muted",
-              )}
+              selected={open}
+              icon={<SlidersHorizontal size={16} strokeWidth={1.5} aria-hidden />}
+              className="sm:h-9"
             >
-              <SlidersHorizontal size={16} strokeWidth={1.5} aria-hidden />
               <span aria-hidden>{labels.detailsShort}</span>
-            </button>
+            </Button>
           )}
           {!r.onUp && anyUp && <span aria-hidden className="hidden h-9 w-9 sm:block" />}
           {r.onUp && (
-            <button type="button" aria-label={labels.moveUp(who)} title={labels.moveUp(who)} onClick={r.onUp} className="flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-fg sm:h-9 sm:w-9">
-              <ArrowUp size={16} strokeWidth={1.5} aria-hidden />
-            </button>
+            <Button variant="tertiary" size="icon" aria-label={labels.moveUp(who)} title={labels.moveUp(who)} onClick={r.onUp} className="sm:h-9 sm:w-9">
+              <ArrowUp size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
+            </Button>
           )}
           {!r.onDown && anyDown && <span aria-hidden className="hidden h-9 w-9 sm:block" />}
           {r.onDown && (
-            <button type="button" aria-label={labels.moveDown(who)} title={labels.moveDown(who)} onClick={r.onDown} className="flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-fg sm:h-9 sm:w-9">
-              <ArrowDown size={16} strokeWidth={1.5} aria-hidden />
-            </button>
+            <Button variant="tertiary" size="icon" aria-label={labels.moveDown(who)} title={labels.moveDown(who)} onClick={r.onDown} className="sm:h-9 sm:w-9">
+              <ArrowDown size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
+            </Button>
           )}
-          <button
-            type="button"
+          {/* aria-disabled, not disabled: a row that cannot be removed (it has
+              sold) stays focusable so its tooltip can say why. */}
+          <Button
+            variant="tertiary"
+            size="icon"
             aria-label={r.remove.label}
             title={r.remove.label}
             aria-disabled={r.remove.disabled || undefined}
             onClick={r.remove.disabled ? undefined : r.remove.onRemove}
-            className="flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-danger aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted sm:h-9 sm:w-9"
+            className="group aria-disabled:cursor-not-allowed aria-disabled:opacity-40 sm:h-9 sm:w-9"
           >
-            <Trash2 size={16} strokeWidth={1.5} aria-hidden />
-          </button>
+            <Trash2 size={16} strokeWidth={1.5} aria-hidden className="text-muted group-hover:text-danger group-aria-disabled:group-hover:text-muted" />
+          </Button>
         </span>
       </div>
       {r.scope && <div className="mt-tight">{r.scope}</div>}
       {/* What the folded details hold, in a line, so nothing set is out of
           sight without a second row per tier when nothing is. (On a phone the
           summary is already on the row's second line.) */}
-      {!open && r.summary && <p className="mt-inline truncate text-[0.8125rem] text-muted max-sm:hidden">{r.summary}</p>}
-      {open && r.details && <div className={cn("mt-tight grid gap-section rounded-sm bg-muted-wash p-comfortable sm:grid-cols-2", phoneHidden)}>{r.details}</div>}
+      {!open && r.summary && <p className="mt-inline truncate text-sm text-muted max-sm:hidden">{r.summary}</p>}
+      {open && r.details && <div className={cn("mt-tight grid gap-section rounded-inner bg-muted-wash p-comfortable sm:grid-cols-2", phoneHidden)}>{r.details}</div>}
     </div>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { scrimClass, useDialogBehaviour } from "./Modal";
 
 /**
  * A sheet that rises from the bottom of a phone.
@@ -45,41 +46,19 @@ export function Sheet({
   side?: boolean;
 }) {
   const panel = useRef<HTMLDivElement>(null);
-  const restore = useRef<HTMLElement | null>(null);
+  const titleId = useId();
   /* How far it has been dragged, so the sheet follows the finger. Held in
      state rather than written to the node, because it is the thing the render
      is about. */
   const [drag, setDrag] = useState(0);
   const from = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    restore.current = document.activeElement as HTMLElement | null;
-    /* No reset needed, and one here would be a setState in an effect: `end`
-       always puts the offset back before it closes, so a closed sheet is
-       already at zero. */
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    /* Capture, so Escape closes this sheet rather than a dialog behind it. */
-    document.addEventListener("keydown", onKey, true);
-    /* The page must not scroll under an open sheet — on a phone that is how a
-       sheet ends up floating over content nobody asked to move. */
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const id = requestAnimationFrame(() => {
-      panel.current?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
-    });
-    return () => {
-      document.removeEventListener("keydown", onKey, true);
-      document.body.style.overflow = prev;
-      cancelAnimationFrame(id);
-      restore.current?.focus?.();
-    };
-  }, [open, onClose]);
+  /* Focus trap (Tab / Shift+Tab cycle), Escape (captured, so it closes this
+     sheet rather than a dialog behind it), body scroll lock, first-focusable on
+     open, and focus restored to the opener on close — shared with Modal. No
+     offset reset is needed here: `end` always puts the drag back before it
+     closes, so a closed sheet is already at zero. */
+  useDialogBehaviour(open, panel, onClose, { initialFocus: "first", captureEscape: true });
 
   if (!open) return null;
 
@@ -99,20 +78,21 @@ export function Sheet({
 
   return (
     <>
-      <div aria-hidden onClick={onClose} className="fixed inset-0 z-40 bg-ink/40 backdrop-blur-[2px]" />
+      <div aria-hidden onClick={onClose} className={cn("fixed inset-0 z-50", scrimClass)} />
       <div
         ref={panel}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-labelledby={titleId}
+        tabIndex={-1}
         style={drag ? { transform: `translateY(${drag}px)` } : undefined}
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col overflow-hidden rounded-t-md border border-hairline bg-card shadow-xl dark:border-line",
+          "fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col overflow-hidden rounded-t-sheet border border-transparent bg-card shadow-lg outline-none dark:border-line",
           // Rises from the edge it belongs to. `backwards`, so no transform is
           // left behind to create a containing block; the global
           // reduced-motion block neutralises it.
           !drag && "animate-[sheet-up_220ms_cubic-bezier(0.32,0.72,0,1)_backwards]",
-          side && "md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-[30rem] md:rounded-tr-none md:rounded-bl-md",
+          side && "md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-[30rem] md:rounded-t-none md:rounded-l-sheet",
           className,
         )}
       >
@@ -134,13 +114,13 @@ export function Sheet({
             {/* Wraps to a second line rather than cutting: a sheet's title is often
                 the name that tells two things apart ("…Walking Tour of Old
                 Dhaka" against "…Walking Tour of Old Dhaka with Rooftop Iftar"). */}
-            <p className="line-clamp-2 break-words text-sm font-semibold text-fg">{title}</p>
+            <p id={titleId} className="line-clamp-2 break-words text-base font-semibold text-fg">{title}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label={closeLabel}
-            className="-mt-inline flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash"
+            className="-mt-inline flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash"
           >
             <X size={18} strokeWidth={1.5} aria-hidden />
           </button>

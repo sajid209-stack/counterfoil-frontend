@@ -47,7 +47,7 @@ export function SettingsSectionList({ pathname, noun, attention, variant, onNavi
         <div key={group.key} className={cn(sheet ? "py-inline" : i > 0 && "pt-3")}>
           {/* Sentence case, 12px, muted — a heading in the quiet voice the rest
               of the chrome speaks in, not the old tracked-out capitals. */}
-          <p className={cn("pb-1 text-[12px] font-medium text-muted", sheet ? "px-card pt-tight" : "px-comfortable")}>
+          <p className={cn("pb-1 text-xs font-medium text-muted", sheet ? "px-card pt-tight" : "px-comfortable")}>
             {t(`nav.groups.${group.key}.title`)}
           </p>
           <ul className="flex flex-col gap-0.5">
@@ -64,7 +64,7 @@ export function SettingsSectionList({ pathname, noun, attention, variant, onNavi
                     title={sheet ? undefined : reason}
                     onClick={onNavigate}
                     className={cn(
-                      "flex items-center gap-comfortable rounded-sm text-sm font-medium transition-colors duration-quick",
+                      "flex items-center gap-comfortable rounded-control text-base font-medium transition-colors duration-quick",
                       sheet
                         ? "mx-tight min-h-11 px-comfortable py-tight"
                         : "h-9 px-comfortable [@media(pointer:coarse)]:h-11",
@@ -75,7 +75,7 @@ export function SettingsSectionList({ pathname, noun, attention, variant, onNavi
                     <span className="min-w-0 flex-1">
                       <span className={cn("block", !sheet && "truncate")}>{label}</span>
                       {sheet && reason && (
-                        <span className="mt-0.5 flex items-center gap-inline text-[12px] font-normal text-warning">
+                        <span className="mt-0.5 flex items-center gap-inline text-xs font-normal text-warning">
                           <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
                           {reason}
                         </span>
@@ -104,7 +104,7 @@ export function BackToList({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="-ml-comfortable inline-flex min-h-11 items-center gap-inline rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
+      className="-ml-comfortable inline-flex min-h-11 items-center gap-inline rounded-control px-comfortable text-sm font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
     >
       <ChevronLeft size={16} strokeWidth={1.5} aria-hidden />
       {label}

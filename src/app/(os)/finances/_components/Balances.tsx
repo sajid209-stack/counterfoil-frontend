@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Info } from "lucide-react";
-import { Button, Sheet } from "@/components/ui";
+import { Button, Sheet, Skeleton } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatDay, formatMoney } from "@/lib/format";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -93,14 +93,9 @@ export function Balances({
       {lastPayout && (
         <p className="flex flex-wrap items-center gap-x-inline">
           <span>{t("available.lastPayout", { amount: formatMoney(lastPayout.amount), date: formatDay(lastPayout.date, { weekday: true }) })}</span>
-          <button
-            type="button"
-            data-close
-            onClick={onViewPayouts}
-            className="-my-2 inline-flex h-11 items-center text-[13px] font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80 md:h-9"
-          >
+          <Button variant="link" data-close onClick={onViewPayouts} className="-my-2 h-11 text-sm md:h-9">
             {t("available.view")}
-          </button>
+          </Button>
         </p>
       )}
     </div>
@@ -159,7 +154,7 @@ export function Balances({
           </Button>
         </div>
         {reason && (
-          <p id={reasonId} className="text-[12px] text-muted">
+          <p id={reasonId} className="text-xs text-muted">
             {reason}
           </p>
         )}
@@ -234,7 +229,7 @@ export function Balances({
 function Tile({ labelId, label, children }: { labelId: string; label: string; children: React.ReactNode }) {
   return (
     <section aria-labelledby={labelId} className="group card-surface relative grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto_auto_1fr] items-center p-card">
-      <h2 id={labelId} className="col-start-1 row-start-1 text-[13px] font-medium leading-[18px] text-muted">
+      <h2 id={labelId} className="col-start-1 row-start-1 text-sm font-medium leading-[18px] text-muted">
         {label}
       </h2>
       {children}
@@ -245,23 +240,23 @@ function Tile({ labelId, label, children }: { labelId: string; label: string; ch
 /** The figure: 28px/600 on a wide tile, a step smaller on a phone so a seven-digit amount still fits. */
 function Figure({ value, danger, live }: { value: number | undefined; danger?: boolean; live?: boolean }) {
   return (
-    <p
+    <div
       aria-live={live ? "polite" : undefined}
-      className={cn("col-span-2 row-start-2 mt-1.5 text-xl font-semibold leading-[1.15] tracking-[-0.4px] tabular-nums md:text-[28px] md:tracking-[-0.5px]", danger ? "text-danger" : "text-fg")}
+      className={cn("type-figure col-span-2 row-start-2 mt-1.5 text-xl font-semibold leading-[1.15] md:text-3xl", danger ? "text-danger" : "text-fg")}
     >
-      {value === undefined ? <span className="inline-block h-6 w-28 animate-pulse rounded-sm bg-line md:h-8 md:w-40" aria-hidden /> : formatMoney(value)}
-    </p>
+      {value === undefined ? <Skeleton className="h-6 w-28 md:h-8 md:w-40" /> : formatMoney(value)}
+    </div>
   );
 }
 
 /** The one line of context under the figure. */
 function Line({ tone = "muted", action, children }: { tone?: "muted" | "danger"; action?: boolean; children: React.ReactNode }) {
-  return <p className={cn("col-span-2 row-start-3", action && "md:col-span-1", "mt-0.5 min-h-[18px] text-[13px] leading-[18px]", tone === "danger" ? "font-medium text-danger" : "text-muted")}>{children}</p>;
+  return <p className={cn("col-span-2 row-start-3", action && "md:col-span-1", "mt-0.5 min-h-[18px] text-sm leading-[18px]", tone === "danger" ? "font-medium text-danger" : "text-muted")}>{children}</p>;
 }
 
 /** Which dates a period tile covers; quiet, because the table's picker owns the choice. */
 function Period({ action, children }: { action?: boolean; children: React.ReactNode }) {
-  return <p className={cn("col-span-2 row-start-4 mt-0.5 min-h-3.5 text-[12px] leading-[14px] text-muted", action && "md:col-span-1")}>{children}</p>;
+  return <p className={cn("col-span-2 row-start-4 mt-0.5 min-h-3.5 text-xs leading-[14px] text-muted", action && "md:col-span-1")}>{children}</p>;
 }
 
 /** A small "i" that opens a note. A button rather than a hover tip, so a phone
@@ -304,7 +299,7 @@ function TileInfo({ label, align, children }: { label: string; align: "left" | "
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         onClick={() => setOpen((o) => !o)}
-        className="-m-3 flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-[color,opacity] duration-quick hover:text-fg aria-expanded:opacity-100 md:-m-2 md:h-9 md:w-9 md:opacity-0 md:focus-visible:opacity-100 md:group-hover:opacity-100"
+        className="-m-3 flex h-11 w-11 items-center justify-center rounded-control text-muted transition-[color,opacity] duration-quick hover:text-fg aria-expanded:opacity-100 md:-m-2 md:h-9 md:w-9 md:opacity-0 md:focus-visible:opacity-100 md:group-hover:opacity-100"
       >
         <Info size={16} strokeWidth={1.5} aria-hidden />
       </button>
@@ -317,7 +312,7 @@ function TileInfo({ label, align, children }: { label: string; align: "left" | "
           }}
           aria-label={label}
           className={cn(
-            "absolute top-full z-30 mt-inline w-[min(20rem,calc(100vw-2rem))] rounded-md border border-line bg-card p-comfortable text-[13px] leading-snug text-fg shadow-lg",
+            "absolute top-full z-30 mt-inline w-[min(20rem,calc(100vw-2rem))] rounded-card border border-line bg-card p-comfortable text-sm leading-snug text-fg shadow-float",
             align === "left" ? "left-0" : "right-0 xl:left-0 xl:right-auto",
           )}
         >
@@ -340,13 +335,13 @@ function PhoneInfo({ label, children }: { label: string; children: React.ReactNo
         aria-label={label}
         aria-haspopup="dialog"
         onClick={() => setOpen(true)}
-        className="-my-3 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-muted active:bg-muted-wash"
+        className="-my-3 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-muted active:bg-muted-wash"
       >
         <Info size={16} strokeWidth={1.5} aria-hidden />
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title={label} closeLabel={tc("close")}>
         <div
-          className="p-card text-[13px] leading-snug text-fg"
+          className="p-card text-sm leading-snug text-fg"
           onClick={(e) => {
             if ((e.target as HTMLElement).closest("[data-close]")) setOpen(false);
           }}
@@ -366,10 +361,10 @@ function ClearingSchedule({ extras }: { extras: FinanceExtras | undefined }) {
   const shown = rows.length > 3 ? [...rows.slice(0, 2), { key: "later", label: t("unsettled.later"), amount: rows.slice(2).reduce((s, r) => s + r.amount, 0) }] : rows;
   return (
     <div>
-      <p className="text-[13px] font-medium">{t("unsettled.availableOn")}</p>
+      <p className="text-sm font-medium">{t("unsettled.availableOn")}</p>
       <ul className="mt-inline divide-y divide-hairline" aria-label={t("unsettled.availableOn")}>
         {shown.map((r) => (
-          <li key={r.key} className="flex items-baseline justify-between gap-section py-tight text-[13px]">
+          <li key={r.key} className="flex items-baseline justify-between gap-section py-tight text-sm">
             <span>{r.label}</span>
             <span className="font-medium tabular-nums">{formatMoney(r.amount)}</span>
           </li>

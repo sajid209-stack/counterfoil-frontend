@@ -47,23 +47,26 @@ export function ContactCard({ customer, onChanged }: { customer: Customer; onCha
           {rows.map((r) => (
             <div key={r.id} className="flex items-center justify-between gap-comfortable border-b border-hairline py-comfortable first:pt-0 last:border-0 last:pb-0">
               <div className="min-w-0">
-                <dt className="text-[0.75rem] text-muted">{r.label}</dt>
-                <dd className={r.value ? "break-all text-sm text-fg" : "text-sm text-muted"}>{r.value ?? t("notAdded")}</dd>
+                <dt className="text-xs text-muted">{r.label}</dt>
+                <dd className={r.value ? "break-all text-base text-fg" : "text-base text-muted"}>{r.value ?? t("notAdded")}</dd>
               </div>
               {r.value && (
-                <button
-                  type="button"
+                <Button
+                  variant="tertiary"
+                  size="sm"
                   aria-label={copied === r.id ? t("copied") : r.aria}
                   onClick={() => doCopy(r.id, r.value!)}
-                  className="inline-flex h-11 shrink-0 items-center gap-inline rounded-sm px-comfortable text-[0.8125rem] font-medium text-fg hover:bg-muted-wash md:h-9"
+                  className="shrink-0"
+                  icon={
+                    copied === r.id ? (
+                      <Check size={14} strokeWidth={1.8} aria-hidden className="text-success" />
+                    ) : (
+                      <Copy size={14} strokeWidth={1.6} aria-hidden />
+                    )
+                  }
                 >
-                  {copied === r.id ? (
-                    <Check size={14} strokeWidth={1.8} aria-hidden className="text-success" />
-                  ) : (
-                    <Copy size={14} strokeWidth={1.6} aria-hidden />
-                  )}
                   {copied === r.id ? t("copied") : t("copy")}
-                </button>
+                </Button>
               )}
             </div>
           ))}

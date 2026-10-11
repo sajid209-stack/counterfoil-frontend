@@ -1,8 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { CircleAlert } from "lucide-react";
-import { cn } from "@/lib/cn";
+import { Checkbox, Chip, Notice } from "@/components/ui";
 import type { Counter, Location } from "@/lib/api";
 
 /**
@@ -56,36 +55,26 @@ export function WorkplacePicker({
           const pickedHere = here.filter((c) => counterIds.includes(c.id)).length;
           return (
             <li key={l.id} className="px-card py-tight">
-              <label className="flex min-h-12 cursor-pointer items-center gap-comfortable">
-                <input type="checkbox" checked={on} onChange={() => toggleLocation(l.id)} className="h-4 w-4 shrink-0 accent-ember" />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium text-fg">{l.name}</span>
-                  <span className="block text-[13px] text-muted">
-                    {l.status === "inactive" ? `${l.city} · ${t("common.inactive")}` : l.city}
-                  </span>
-                </span>
-              </label>
+              <Checkbox
+                checked={on}
+                onChange={() => toggleLocation(l.id)}
+                label={<span className="font-medium">{l.name}</span>}
+                description={l.status === "inactive" ? `${l.city} · ${t("common.inactive")}` : l.city}
+              />
               {on && here.length > 0 && (
-                <fieldset className="pb-tight pl-[28px]">
-                  <legend className="text-[13px] text-muted">{t("team.countersAt", { location: l.name })}</legend>
+                <fieldset className="pb-tight pl-13 md:pl-11">
+                  <legend className="text-sm text-muted">{t("team.countersAt", { location: l.name })}</legend>
                   <div className="mt-tight flex flex-wrap gap-tight">
                     {here.map((c) => {
                       const checked = counterIds.includes(c.id);
                       return (
-                        <label
-                          key={c.id}
-                          className={cn(
-                            "inline-flex min-h-11 cursor-pointer items-center gap-tight rounded-full px-comfortable text-[13px] transition-colors duration-quick md:min-h-9",
-                            checked ? "bg-ember/10 text-fg" : "bg-muted-wash/70 text-muted hover:bg-muted-wash",
-                          )}
-                        >
-                          <input type="checkbox" checked={checked} onChange={() => toggleCounter(c.id)} className="h-4 w-4 accent-ember" />
+                        <Chip key={c.id} selected={checked} onClick={() => toggleCounter(c.id)}>
                           {c.name}
-                        </label>
+                        </Chip>
                       );
                     })}
                   </div>
-                  {pickedHere === 0 && <p className="mt-tight text-[13px] text-muted">{t("team.noCounterHere")}</p>}
+                  {pickedHere === 0 && <p className="mt-tight text-sm text-muted">{t("team.noCounterHere")}</p>}
                 </fieldset>
               )}
             </li>
@@ -93,10 +82,11 @@ export function WorkplacePicker({
         })}
       </ul>
       {warnEmpty && locationIds.length === 0 && (
-        <p className="flex items-start gap-tight border-t border-hairline bg-warning-wash px-card py-tight text-[13px] text-fg">
-          <CircleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-warning" />
-          {t("team.noLocation")}
-        </p>
+        <div className="border-t border-hairline px-card py-section">
+          <Notice tone="warning" size="sm">
+            {t("team.noLocation")}
+          </Notice>
+        </div>
       )}
     </div>
   );

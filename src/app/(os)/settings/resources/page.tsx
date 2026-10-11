@@ -143,15 +143,13 @@ export default function ResourcesPage() {
       {loading ? (
         <SectionSkeleton />
       ) : resources.length === 0 ? (
-        <div className="max-w-3xl">
-          <EmptyState
-            title={t("resources.emptyTitle")}
-            message={t("resources.emptyMessage")}
-            action={<Button onClick={() => router.push("/settings/resources/new")}>{t("resources.emptyAction")}</Button>}
-          />
-        </div>
+        <EmptyState
+          title={t("resources.emptyTitle")}
+          message={t("resources.emptyMessage")}
+          action={<Button onClick={() => router.push("/settings/resources/new")}>{t("resources.emptyAction")}</Button>}
+        />
       ) : (
-        <div className="flex max-w-4xl flex-col gap-section pb-hero">
+        <div className="flex flex-col gap-section pb-hero">
           {/* The first toolbar: the views, with the create button at the right of the
               same rule. A list has no header row above it for the button. */}
           <PageToolbar underline primary={primary}>
@@ -162,7 +160,7 @@ export default function ResourcesPage() {
             />
           </PageToolbar>
           {visible.length === 0 ? (
-            <p className="py-section text-sm text-muted">{t("resources.emptyTab")}</p>
+            <p className="py-section text-base text-muted">{t("resources.emptyTab")}</p>
           ) : (
             <div className="flex flex-col gap-major">
               {kinds.map((kind) => {
@@ -172,7 +170,7 @@ export default function ResourcesPage() {
                 const headingId = `resources-${kind}`;
                 return (
                   <section key={kind} aria-labelledby={headingId} className="flex flex-col gap-tight">
-                    <h2 id={headingId} className="text-base font-semibold text-fg">
+                    <h2 id={headingId} className="text-md font-semibold text-fg">
                       {kind} <span className="font-normal text-muted">{group.length}</span>
                     </h2>
                     <RecordList label={kind}>
@@ -267,8 +265,8 @@ export default function ResourcesPage() {
           </>
         }
       >
-        <p className="text-[13px] leading-relaxed text-muted">{t("resources.outBody")}</p>
-        <label htmlFor={reasonId} className="mt-section block text-sm font-medium text-fg">
+        <p className="text-sm leading-relaxed text-muted">{t("resources.outBody")}</p>
+        <label htmlFor={reasonId} className="mt-section block text-base font-medium text-fg">
           {t("resources.reason")}
         </label>
         <input

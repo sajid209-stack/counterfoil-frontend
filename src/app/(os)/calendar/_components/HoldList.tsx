@@ -53,7 +53,7 @@ export function HoldList({
   return (
     <Modal open onClose={onClose} size="md" title={t("holdListTitle")} description={t("holdListHelp")}>
       {holds.length === 0 ? (
-        <p className="text-[13px] text-muted">{t("holdListEmpty")}</p>
+        <p className="text-sm text-muted">{t("holdListEmpty")}</p>
       ) : (
         <ul className="flex flex-col">
           {holds.map((h) => (
@@ -64,22 +64,22 @@ export function HoldList({
                 className="flex w-full flex-col gap-inline py-comfortable text-left transition-colors duration-quick hover:bg-muted-wash sm:flex-row sm:items-center sm:gap-section"
               >
                 {/* The day leads: a hold is read as "what is blocked when". */}
-                <span className="w-32 shrink-0 text-[13px] font-medium">{dayLabel(h.date)}</span>
+                <span className="w-32 shrink-0 text-sm font-medium">{dayLabel(h.date)}</span>
                 <span className="min-w-0 flex-1">
                   {/* The party is the whole reason the block is allowed to exist,
                       so it is the line that reads as the title — and it keeps
                       the width: a pill in the right-hand group squeezed
                       "Private event" to "Priv…". */}
-                  <span className="block truncate text-[13px] font-medium">{h.heldFor}</span>
+                  <span className="block truncate text-sm font-medium">{h.heldFor}</span>
                   <span className="flex min-w-0 items-center gap-tight">
                     {h.kind === "session" && <StatusPill tone="danger">{t("holdListWhole")}</StatusPill>}
-                    <span className="min-w-0 truncate text-[12px] text-muted">
+                    <span className="min-w-0 truncate text-xs text-muted">
                       {h.kind === "session" ? h.productName : `${what(h)} · ${h.productName}`}
                       {h.slotStart ? ` · ${formatClock(h.slotStart.slice(11, 16))}` : ` · ${t("holdListAllDay")}`}
                     </span>
                   </span>
                 </span>
-                <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{when(h)}</span>
+                <span className="shrink-0 whitespace-nowrap text-xs text-muted">{when(h)}</span>
               </button>
             </li>
           ))}

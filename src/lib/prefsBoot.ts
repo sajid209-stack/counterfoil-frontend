@@ -18,7 +18,21 @@
  * Declared here so the boot script and `GoShell` read one list. Two copies of
  * this would drift, and the symptom would be a cold load at the wrong size.
  */
-export const TILL_PATHS = ["/pos", "/sell", "/classic", "/schedule", "/scan", "/checkin", "/shift", "/login", "/reservations", "/quickpass", "/tills", "/till-settings"];
+export const TILL_PATHS = ["/pos", "/sell", "/classic", "/schedule", "/scan", "/checkin", "/shift", "/login", "/pair", "/reservations", "/quick-pass", "/profile", "/tills", "/till-settings"];
+
+/**
+ * The routes drawn in the Go product theme (`data-product="go"` on <html>):
+ * the till's softer radii, lifted cards and touch density. Set on <html> rather
+ * than on the shell, because dialogs, menus and toasts are portalled to <body>
+ * and would otherwise fall back to the OS shapes. `/classic` is left out on
+ * purpose: it is the till as it was before 6 September, with its own kit.
+ */
+export const GO_PATHS = TILL_PATHS.filter((p) => p !== "/classic" && p !== "/tills");
+
+/** Whether a path is one of `paths` or below one of them. */
+export function onPaths(pathname: string, paths: readonly string[]): boolean {
+  return paths.some((x) => pathname === x || pathname.startsWith(x + "/"));
+}
 
 /** 16px at normal — the browser's own default, and the size everything in the
  *  till was drawn against. */
@@ -29,6 +43,9 @@ export const PREFS_BOOT =
   'if(p.reduceMotion)d.dataset.motion="reduce";' +
   'if(p.moreContrast)d.dataset.contrast="more";' +
   "var s=" + JSON.stringify(TILL_TEXT_PX) + "[p.tillText]," +
-  "t=" + JSON.stringify(TILL_PATHS) + ";" +
-  "if(s&&t.some(function(x){return location.pathname===x||location.pathname.indexOf(x+\"/\")===0}))d.style.fontSize=s+\"px\"" +
+  "t=" + JSON.stringify(TILL_PATHS) + "," +
+  "g=" + JSON.stringify(GO_PATHS) + ";" +
+  "function on(a){return a.some(function(x){return location.pathname===x||location.pathname.indexOf(x+\"/\")===0})}" +
+  "if(s&&on(t))d.style.fontSize=s+\"px\";" +
+  "if(on(g))d.dataset.product=\"go\"" +
   "}catch(e){}";

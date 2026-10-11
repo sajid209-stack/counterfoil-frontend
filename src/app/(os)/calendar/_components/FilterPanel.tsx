@@ -114,9 +114,10 @@ export function FilterPanel({
 
   const words = label(count);
   const button = (
-    <button
+    <Button
       ref={trigger}
-      type="button"
+      variant="secondary"
+      size="sm"
       id="calendar-filters-button"
       aria-haspopup="dialog"
       aria-expanded={open}
@@ -124,17 +125,13 @@ export function FilterPanel({
       aria-label={words}
       title={words}
       onClick={() => (open ? close(false) : setOpenFor(wide))}
-      className={cn(
-        "relative flex h-11 shrink-0 items-center gap-tight rounded-sm border text-[0.8125rem] font-medium text-fg transition-colors duration-quick md:h-9",
-        glyphOnPhone ? "w-11 justify-center md:w-auto md:justify-start md:px-comfortable" : "px-comfortable",
-        open || count > 0 ? "border-strong bg-subtle dark:bg-fg/5" : "border-line bg-card hover:border-strong",
-      )}
+      className={cn("shrink-0", glyphOnPhone && "max-md:w-11 max-md:px-0")}
     >
       <ListFilter size={16} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
       <span className={cn(glyphOnPhone && "max-md:sr-only")}>{label(0)}</span>
       {count > 0 && (
         <>
-          <span data-filter-count aria-hidden className="grid h-5 min-w-5 place-items-center rounded-full bg-inverse px-inline text-[0.75rem] font-semibold text-inverse-fg max-md:hidden">
+          <span data-filter-count aria-hidden className="grid h-5 min-w-5 place-items-center rounded-full bg-inverse px-inline text-xs font-semibold text-inverse-fg max-md:hidden">
             {count}
           </span>
           {/* A dot rather than a count when the words have gone: the accessible
@@ -142,7 +139,7 @@ export function FilterPanel({
           <span aria-hidden className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-inverse md:hidden" />
         </>
       )}
-    </button>
+    </Button>
   );
 
   const footer = (
@@ -169,7 +166,7 @@ export function FilterPanel({
             id="calendar-filters"
             role="dialog"
             aria-label={title}
-            className="fixed z-50 flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-md border border-hairline bg-card shadow-lg dark:border-line"
+            className="fixed z-50 flex w-88 max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-card border border-hairline bg-card shadow-float dark:border-line"
           >
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
             <div className="flex shrink-0 items-center gap-tight border-t border-hairline px-tight py-inline">{footer}</div>

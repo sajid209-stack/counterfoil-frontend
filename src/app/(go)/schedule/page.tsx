@@ -4,7 +4,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
 import { Check, ChevronLeft, ChevronRight, LayoutGrid, List, Lock, ShoppingBag, TriangleAlert, X } from "lucide-react";
-import { Button, EmptyState, FormField, MarketBadge, Modal, ProductThumb, useToast } from "@/components/ui";
+import { Button, Checkbox, EmptyState, FormField, MarketBadge, Modal, Notice, ProductThumb, Skeleton, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClockMin, formatClockRange, formatDay, formatMoney } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
@@ -609,7 +609,7 @@ export default function SchedulePage() {
     <div
       role="tablist"
       aria-label={t("board.whatLabel")}
-      className={cn("grid gap-1 rounded-go p-1", frame)}
+      className={cn("grid gap-1 rounded-card p-1", frame)}
       style={{ gridTemplateColumns: `repeat(${Math.min(groups.length, 4)}, minmax(0, 1fr))` }}
     >
       {groups.map((g) => {
@@ -623,8 +623,8 @@ export default function SchedulePage() {
             aria-label={t("board.groupAria", { name: g.label, count: g.freeCount })}
             onClick={() => setGroupKey(g.key)}
             className={cn(
-              "flex min-h-12 items-center justify-center rounded-go-sm px-1 text-center text-[0.875rem] font-semibold leading-tight transition-colors duration-quick",
-              on ? "bg-ember-solid text-white" : "text-fg hover:bg-muted-wash",
+              "flex min-h-12 items-center justify-center rounded-inner px-1 text-center text-base font-semibold leading-tight transition-colors duration-quick",
+              on ? "bg-ember-solid text-on-solid" : "text-fg hover:bg-muted-wash",
             )}
           >
             {g.label}
@@ -642,20 +642,20 @@ export default function SchedulePage() {
           One row of controls (which week, back to today, grid or list) over
           one row of days. Every pixel above the board is an hour the cashier
           cannot see, so nothing here takes a line of its own. */}
-      <section className="go-surface flex flex-col gap-inline rounded-go p-tight">
+      <section className="card-surface flex flex-col gap-inline p-tight">
         <div className="flex items-center gap-inline">
           <button type="button" onClick={() => setDate(shiftDay(date, -7))} aria-label={t("prevWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-muted-wash">
             <ChevronLeft size={20} strokeWidth={2} aria-hidden />
           </button>
-          <p className="min-w-0 truncate text-center text-[0.9375rem] font-semibold text-fg">
+          <p className="min-w-0 truncate text-center text-md font-semibold text-fg">
             {format.dateTime(dayDate, { month: "long", year: "numeric", ...latn })}
           </p>
           <button type="button" onClick={() => setDate(shiftDay(date, 7))} aria-label={t("nextWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-muted-wash">
             <ChevronRight size={20} strokeWidth={2} aria-hidden />
           </button>
-          {showTabs && wide ? <div className="min-w-0 flex-1 px-tight">{groupTabs("bg-subtle")}</div> : <span className="flex-1" />}
+          {showTabs && wide ? <div className="min-w-0 flex-1 px-tight">{groupTabs("border border-line bg-subtle")}</div> : <span className="flex-1" />}
           {!isToday && (
-            <button type="button" onClick={() => setDate(DEMO_TODAY)} className="inline-flex h-11 shrink-0 items-center rounded-full border-2 border-line px-comfortable text-[0.875rem] font-semibold text-fg">
+            <button type="button" onClick={() => setDate(DEMO_TODAY)} className="inline-flex h-11 shrink-0 items-center rounded-full border-2 border-line px-comfortable text-base font-semibold text-fg">
               {t("today")}
             </button>
           )}
@@ -692,17 +692,17 @@ export default function SchedulePage() {
                 aria-pressed={on}
                 aria-label={format.dateTime(dt, { weekday: "long", day: "numeric", month: "long", ...latn })}
                 className={cn(
-                  "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-go-sm transition-colors duration-quick",
-                  on ? "bg-ember-solid text-white" : today ? "ring-2 ring-inset ring-ember-solid text-fg" : "text-fg hover:bg-muted-wash",
+                  "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-inner transition-colors duration-quick",
+                  on ? "bg-ember-solid text-on-solid" : today ? "ring-2 ring-inset ring-ember-solid text-fg" : "text-fg hover:bg-muted-wash",
                 )}
               >
-                <span className={cn("text-[0.8125rem] font-medium", on ? "text-white" : "text-muted")}>
+                <span className={cn("text-sm font-medium", on ? "text-on-solid" : "text-muted")}>
                   {format.dateTime(dt, { weekday: "narrow" })}
                 </span>
-                <span className="text-[1.125rem] font-semibold tabular-nums leading-none">{dt.getDate()}</span>
+                <span className="text-lg font-semibold tabular-nums leading-none">{dt.getDate()}</span>
                 <span aria-hidden className="flex h-1.5 gap-0.5">
                   {Array.from({ length: Math.min(3, d.load) }, (_, i) => (
-                    <span key={i} className={cn("h-1.5 w-1.5 rounded-full", on ? "bg-white" : "bg-ember")} />
+                    <span key={i} className={cn("h-1.5 w-1.5 rounded-full", on ? "bg-on-solid" : "bg-ember")} />
                   ))}
                 </span>
               </button>
@@ -711,10 +711,10 @@ export default function SchedulePage() {
         </div>
       </section>
 
-      {showTabs && !wide && groupTabs("go-surface")}
+      {showTabs && !wide && groupTabs("card-surface")}
 
       {loading ? (
-        <div className="go-surface h-[60dvh] animate-pulse rounded-go" />
+        <Skeleton h="60dvh" className="rounded-card" />
       ) : !group ? (
         <EmptyState title={t("board.emptyTitle")} message={t("board.emptyMessage")} />
       ) : view === "grid" ? (
@@ -733,7 +733,7 @@ export default function SchedulePage() {
                 key={block.key}
                 type="button"
                 onClick={() => setBlockPick({ column, block })}
-                className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-warning/40 bg-warning-wash px-comfortable text-left text-[0.875rem] text-fg"
+                className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-warning/40 bg-warning-wash px-comfortable text-left text-base text-fg"
               >
                 <TriangleAlert size={16} strokeWidth={2} className="shrink-0 text-warning" aria-hidden />
                 <span className="min-w-0 truncate">
@@ -743,7 +743,7 @@ export default function SchedulePage() {
                 </span>
               </button>
             ))}
-            {unassigned.length > 3 && <span className="text-[0.875rem] text-muted">{t("board.noPlaceMore", { count: unassigned.length - 3 })}</span>}
+            {unassigned.length > 3 && <span className="text-base text-muted">{t("board.noPlaceMore", { count: unassigned.length - 3 })}</span>}
           </div>
         )}
           onFree={toggleFree}
@@ -756,7 +756,7 @@ export default function SchedulePage() {
       ) : listItems.length === 0 ? (
         <EmptyState title={t("board.listEmptyTitle")} message={t("board.listEmptyMessage")} />
       ) : (
-        <ul className="go-surface divide-y divide-line overflow-hidden rounded-go">
+        <ul className="card-surface divide-y divide-line overflow-hidden">
           {listItems.map(({ column, block }) => {
             const isHold = block.type === "hold";
             const who = isHold ? block.hold.heldFor : (block.guest ?? t("board.walkIn"));
@@ -769,7 +769,7 @@ export default function SchedulePage() {
                   onClick={() => setBlockPick({ column, block })}
                   className="flex min-h-16 w-full items-center gap-comfortable px-card py-tight text-left hover:bg-muted-wash"
                 >
-                  <span className="w-[4.75rem] shrink-0 text-[0.9375rem] font-semibold tabular-nums text-fg">{formatClockMin(block.start)}</span>
+                  <span className="w-[4.75rem] shrink-0 text-md font-semibold tabular-nums text-fg">{formatClockMin(block.start)}</span>
                   <span
                     aria-hidden
                     className={cn(
@@ -784,13 +784,13 @@ export default function SchedulePage() {
                     )}
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1 text-[0.9375rem] font-semibold text-fg">
+                    <span className="flex items-center gap-1 text-md font-semibold text-fg">
                       {isHold && <Lock size={14} className="shrink-0 text-muted" aria-hidden />}
                       {block.type === "booking" && block.source && <MarketBadge id={block.source.marketplaceId} size="go" />}
                       <span className="truncate">{who}</span>
                       {block.type === "booking" && block.source && <span className="sr-only">, {t("board.bookedOn", { name: block.source.marketplaceName })}</span>}
                     </span>
-                    <span className="block truncate text-[0.875rem] text-muted">{[what, place].filter(Boolean).join(" · ")}</span>
+                    <span className="block truncate text-base text-muted">{[what, place].filter(Boolean).join(" · ")}</span>
                   </span>
                 </button>
               </li>
@@ -831,7 +831,7 @@ export default function SchedulePage() {
         >
           {offered.length > 1 && (
             <div role="radiogroup" aria-label={t("bar.sellAs")} className="flex flex-wrap items-center gap-tight">
-              <span className="text-[0.8125rem] font-semibold text-muted">{t("bar.sellAs")}</span>
+              <span className="text-sm font-semibold text-muted">{t("bar.sellAs")}</span>
               {offered.map((p) => {
                 const on = (choice ?? spans[0]?.product.id) === p.id;
                 return (
@@ -842,8 +842,8 @@ export default function SchedulePage() {
                     aria-checked={on}
                     onClick={() => setChoice(p.id)}
                     className={cn(
-                      "inline-flex h-11 items-center gap-tight rounded-full border-2 pl-1 pr-comfortable text-[0.9375rem] font-semibold",
-                      on ? "border-ember-solid bg-ember-solid text-white" : "border-line bg-card text-fg",
+                      "inline-flex h-11 items-center gap-tight rounded-full border-2 pl-1 pr-comfortable text-md font-semibold",
+                      on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg",
                     )}
                   >
                     {/* The booking's own picture, so the choice can be made by
@@ -856,7 +856,7 @@ export default function SchedulePage() {
                       /* No photograph: its first letters, not the fallback
                          glyph — a map pin beside a cricket photo read as a
                          picture that failed to load. */
-                      <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-inverse text-[0.8125rem] font-semibold text-inverse-fg">
+                      <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-inverse text-sm font-semibold text-inverse-fg">
                         {p.name.slice(0, 2)}
                       </span>
                     )}
@@ -869,17 +869,14 @@ export default function SchedulePage() {
           )}
 
           {waiver && (
-            <label className="flex min-h-11 cursor-pointer items-center gap-tight text-[0.875rem] text-fg">
-              <input
-                type="checkbox"
-                checked={waiverOk}
-                onChange={(e) => { setWaiverOk(e.target.checked); setWaiverMissing(false); }}
-                className="h-5 w-5 accent-[var(--color-ember-solid)]"
-              />
-              {t("bar.waiver")}
-            </label>
+            <Checkbox
+              checked={waiverOk}
+              onCheckedChange={(c) => { setWaiverOk(c); setWaiverMissing(false); }}
+              invalid={waiverMissing}
+              label={t("bar.waiver")}
+            />
           )}
-          {waiverMissing && <p role="alert" className="text-[0.8125rem] text-danger">{t("bar.waiverMissing")}</p>}
+          {waiverMissing && <Notice tone="danger" size="sm">{t("bar.waiverMissing")}</Notice>}
         </ActionBar>
       )}
 
@@ -984,17 +981,17 @@ export default function SchedulePage() {
         title={oos ? (oos.outOfService ? t("oosTitleOut", { name: oos.name }) : t("oosTitleIn", { name: oos.name })) : ""}
         footer={
           <>
-            <Button shape="pill" variant="secondary" onClick={() => setOos(null)}>
+            <Button variant="secondary" onClick={() => setOos(null)}>
               {t("cancel")}
             </Button>
-            <Button shape="pill" loading={oosSaving} onClick={() => saveOos(!oos?.outOfService)}>
+            <Button loading={oosSaving} onClick={() => saveOos(!oos?.outOfService)}>
               {oos?.outOfService ? t("returnToService") : t("markOutOfService")}
             </Button>
           </>
         }
       >
         {oos?.outOfService ? (
-          <p className="text-sm text-muted">{oos.outOfServiceReason ? t("currentlyOutReason", { reason: oos.outOfServiceReason }) : t("currentlyOut")}</p>
+          <p className="text-base text-muted">{oos.outOfServiceReason ? t("currentlyOutReason", { reason: oos.outOfServiceReason }) : t("currentlyOut")}</p>
         ) : (
           <FormField label={t("reasonLabel")} placeholder={t("reasonPlaceholder")} value={oosReason} onChange={(e) => setOosReason(e.target.value)} help={t("reasonHelp")} />
         )}

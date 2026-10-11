@@ -5,10 +5,13 @@ import { useTranslations } from "next-intl";
 import { Archive } from "lucide-react";
 import {
   Button,
+  Chip,
   ConfirmDialog,
   EmptyState,
   FormField,
   Modal,
+  Notice,
+  Skeleton,
   StatusPill,
   useToast,
 } from "@/components/ui";
@@ -76,11 +79,11 @@ export default function MembershipTiersPage() {
 
   return (
     <PageShell title={t("tiersTitle")} description={t("tiersDescription")} primary={primary}>
-      <div className="flex max-w-3xl flex-col gap-section pb-hero">
+      <div className="flex flex-col gap-section pb-hero">
         {tiersQ.loading && (
           <div className="flex flex-col gap-section">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-28 animate-pulse rounded-md bg-line/60" />
+              <Skeleton key={i} h={112} />
             ))}
           </div>
         )}
@@ -109,19 +112,19 @@ export default function MembershipTiersPage() {
                 <div className="flex items-start justify-between gap-section">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-x-tight gap-y-inline">
-                      <h3 className="break-words text-base font-semibold text-fg">{tier.name}</h3>
+                      <h3 className="break-words text-md font-semibold text-fg">{tier.name}</h3>
                       <StatusPill tone="neutral">{t(`period_${tier.billingPeriod}`)}</StatusPill>
                       {tier.maxMembers > 1 && (
                         <StatusPill tone="info">{t("coversPeople", { count: tier.maxMembers })}</StatusPill>
                       )}
                     </div>
-                    {tier.description && <p className="mt-inline break-words text-[0.8125rem] text-muted">{tier.description}</p>}
-                    <p className="mt-inline text-[0.8125rem] text-muted">{summaryOf(tier, t)}</p>
+                    {tier.description && <p className="mt-inline break-words text-sm text-muted">{tier.description}</p>}
+                    <p className="mt-inline text-sm text-muted">{summaryOf(tier, t)}</p>
                   </div>
-                  <span className="shrink-0 whitespace-nowrap text-base font-semibold tabular-nums text-fg">{formatMoney(tier.price)}</span>
+                  <span className="shrink-0 whitespace-nowrap text-md font-semibold tabular-nums text-fg">{formatMoney(tier.price)}</span>
                 </div>
                 <div className="mt-comfortable flex flex-wrap items-center justify-between gap-x-section gap-y-tight">
-                  <p className="text-[0.8125rem] text-muted">{t("membersOnTier", { count: held(tier.id) })}</p>
+                  <p className="text-sm text-muted">{t("membersOnTier", { count: held(tier.id) })}</p>
                   <div className="flex shrink-0 items-center gap-tight">
                     <Button variant="secondary" size="sm" onClick={() => setEditing(tier)}>
                       {t("edit")}
@@ -309,8 +312,8 @@ function TierEditor({
           />
         </div>
 
-        <div className="rounded-sm bg-muted-wash p-comfortable">
-          <p className="mb-comfortable text-sm font-semibold text-fg">{t("sectionEntry")}</p>
+        <div className="rounded-control bg-muted-wash p-comfortable">
+          <p className="mb-comfortable text-base font-semibold text-fg">{t("sectionEntry")}</p>
           <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
             <FormField
               label={t("fieldIncludedVisits")}
@@ -332,18 +335,18 @@ function TierEditor({
               help={t("guestPassesHelp")}
             />
           </div>
-          <p className="mb-tight mt-section text-[0.8125rem] font-medium text-muted">{t("fieldIncludedProducts")}</p>
+          <p className="mb-tight mt-section text-sm font-medium text-muted">{t("fieldIncludedProducts")}</p>
           <ChipPicker
             options={products.map((p) => ({ id: p.id, label: p.name }))}
             selected={draft.includedProductIds}
             onToggle={(id) => toggleIn("includedProductIds", id)}
             emptyLabel={t("noProducts")}
           />
-          <p className="mt-tight text-[0.75rem] text-muted">{t("includedProductsHelp")}</p>
+          <p className="mt-tight text-xs text-muted">{t("includedProductsHelp")}</p>
         </div>
 
-        <div className="rounded-sm bg-muted-wash p-comfortable">
-          <p className="mb-comfortable text-sm font-semibold text-fg">{t("sectionDiscount")}</p>
+        <div className="rounded-control bg-muted-wash p-comfortable">
+          <p className="mb-comfortable text-base font-semibold text-fg">{t("sectionDiscount")}</p>
           <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
             <FormField
               label={t("fieldDiscount")}
@@ -373,15 +376,15 @@ function TierEditor({
           )}
         </div>
 
-        <div className="rounded-sm bg-muted-wash p-comfortable">
-          <p className="mb-comfortable text-sm font-semibold text-fg">{t("sectionRenewal")}</p>
+        <div className="rounded-control bg-muted-wash p-comfortable">
+          <p className="mb-comfortable text-base font-semibold text-fg">{t("sectionRenewal")}</p>
           <div className="flex flex-col gap-section">
             <div className="flex items-center justify-between gap-section">
               <div className="min-w-0">
-                <p id="tier-autorenew" className="text-sm font-medium text-fg">
+                <p id="tier-autorenew" className="text-base font-medium text-fg">
                   {t("fieldAutoRenew")}
                 </p>
-                <p id="tier-autorenew-help" className="mt-inline text-[0.75rem] text-muted">
+                <p id="tier-autorenew-help" className="mt-inline text-xs text-muted">
                   {t("autoRenewHelp")}
                 </p>
               </div>
@@ -405,19 +408,18 @@ function TierEditor({
 
         {/* The mandatory concrete preview, as everywhere else in this app: say
             what a member gets in the words a member would use. */}
-        <div className="rounded-sm bg-muted-wash p-comfortable">
-          <p className="text-[0.75rem] font-medium text-muted">{t("previewLabel")}</p>
-          <p className="mt-inline text-[0.8125rem] text-fg">
+        <Notice tone="neutral" icon={null} title={t("previewLabel")}>
+          <p className="text-sm">
             {t("previewLine", {
               name: draft.name || t("previewFallbackName"),
               price: formatMoney(draft.price),
               period: t(`period_${draft.billingPeriod}`).toLowerCase(),
             })}
           </p>
-          <p className="mt-inline text-[0.8125rem] text-muted">
+          <p className="mt-inline text-sm text-muted">
             {summaryOf({ ...draft, id: "", createdAt: "", updatedAt: "" } as MembershipTier, t)}
           </p>
-        </div>
+        </Notice>
       </div>
     </Modal>
   );
@@ -435,24 +437,16 @@ function ChipPicker({
   emptyLabel: string;
 }) {
   if (options.length === 0) {
-    return <p className="text-[13px] text-muted">{emptyLabel}</p>;
+    return <p className="text-sm text-muted">{emptyLabel}</p>;
   }
   return (
     <div className="flex flex-wrap gap-inline">
       {options.map((o) => {
         const on = selected.includes(o.id);
         return (
-          <button
-            key={o.id}
-            type="button"
-            onClick={() => onToggle(o.id)}
-            aria-pressed={on}
-            className={`min-h-11 max-w-full rounded-sm px-comfortable text-[0.8125rem] transition-colors duration-quick md:min-h-9 ${
-              on ? "bg-ember/5 text-fg ring-2 ring-inset ring-ember-solid" : "bg-card text-muted hover:bg-line/40"
-            }`}
-          >
-            <span className="block truncate">{o.label}</span>
-          </button>
+          <Chip key={o.id} selected={on} onClick={() => onToggle(o.id)}>
+            {o.label}
+          </Chip>
         );
       })}
     </div>
