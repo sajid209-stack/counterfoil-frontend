@@ -103,7 +103,7 @@ export function SessionList({
                   // something you can pick up. The page's own colour, which is
                   // a step down from the card in both themes.
                   ? "bg-surface"
-                  : "bg-card hover:bg-muted-wash/60 active:bg-muted-wash",
+                  : "bg-card hover:bg-muted-wash active:bg-muted-wash",
             )}
           >
             <span className="flex min-w-0 flex-1 flex-col gap-1.5">

@@ -239,14 +239,16 @@ export function FilterBar({
       aria-label={count ? t("filtersApplied", { count }) : t("filters")}
       onClick={() => (open ? close(false) : setOpenFor(wide))}
       className={cn(
-        "flex h-11 shrink-0 items-center gap-tight rounded-sm border px-comfortable text-sm font-medium text-fg transition-colors duration-quick md:h-9",
-        open || count > 0 ? "border-strong bg-subtle dark:bg-fg/5" : "border-line bg-card hover:border-strong",
+        "flex h-11 shrink-0 items-center gap-tight rounded-sm border px-comfortable text-sm font-medium transition-colors duration-quick md:h-9",
+        // Open, or holding a filter: the accent (soft selection). Otherwise
+        // a plain control that fills with muted-wash under the pointer.
+        open || count > 0 ? "border-ember-line bg-ember-wash text-brand-foreground" : "border-line bg-card text-fg hover:border-strong hover:bg-muted-wash",
       )}
     >
       <ListFilter size={16} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
       {t("filters")}
       {count > 0 && (
-        <span data-filter-count className="grid h-5 min-w-5 place-items-center rounded-full bg-inverse px-inline text-xs font-semibold text-inverse-fg">
+        <span data-filter-count className="grid h-5 min-w-5 place-items-center rounded-full bg-ember-solid px-inline text-xs font-semibold text-on-solid">
           {count}
         </span>
       )}
@@ -293,7 +295,7 @@ export function FilterBar({
               <span
                 key={f.key}
                 data-applied={f.key}
-                className="flex items-center gap-inline rounded-full bg-subtle py-inline pl-comfortable pr-inline text-xs font-medium text-fg dark:bg-fg/10"
+                className="flex items-center gap-inline rounded-full bg-ember-wash py-inline pl-comfortable pr-inline text-xs font-medium text-brand-foreground ring-1 ring-inset ring-ember-line"
               >
                 {chipText(f)}
                 <button
@@ -327,7 +329,7 @@ export function FilterBar({
             role="dialog"
             aria-label={t("filters")}
             onKeyDown={onPanelKey}
-            className="fixed z-50 flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-md border border-hairline bg-card shadow-lg dark:border-line"
+            className="fixed z-50 flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-md border border-hairline bg-card shadow-lg"
           >
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{body}</div>
             <div className="flex shrink-0 items-center gap-tight border-t border-hairline px-tight py-inline">

@@ -733,7 +733,7 @@ export default function SchedulePage() {
                 key={block.key}
                 type="button"
                 onClick={() => setBlockPick({ column, block })}
-                className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-warning/40 bg-warning-wash px-comfortable text-left text-base text-fg"
+                className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-warning-line bg-warning-wash px-comfortable text-left text-base text-fg"
               >
                 <TriangleAlert size={16} strokeWidth={2} className="shrink-0 text-warning" aria-hidden />
                 <span className="min-w-0 truncate">

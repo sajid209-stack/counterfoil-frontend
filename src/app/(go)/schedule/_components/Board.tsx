@@ -438,7 +438,7 @@ function BlockView({
           frame,
           "border-l-[3px] px-tight py-1",
           /* Status wins once something has happened; a plain booking sold on
-             a marketplace is violet INSTEAD of orange. */
+             a marketplace is info blue INSTEAD of orange. */
           b.noShow
             ? "border-l-muted bg-muted-wash text-muted line-through"
             : b.arrived

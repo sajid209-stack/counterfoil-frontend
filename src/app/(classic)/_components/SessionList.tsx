@@ -94,10 +94,10 @@ export function SessionList({
             className={cn(
               "flex min-h-16 w-full items-center rounded-md border p-comfortable text-left transition-colors duration-quick",
               isSelected
-                ? "border-ember bg-ember/10"
+                ? "border-ember bg-ember-wash"
                 : full
                   ? "border-line bg-subtle"
-                  : "border-line bg-card hover:bg-muted-wash active:bg-ember/10",
+                  : "border-line bg-card hover:bg-muted-wash active:bg-ember-wash",
             )}
           >
             <span className="flex min-w-0 flex-1 flex-col gap-1.5">

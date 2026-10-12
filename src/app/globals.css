@@ -29,17 +29,17 @@
   --color-brand-900: #541900;
   --color-brand-950: #2d0d00;
 
-  /* ── Primitive: Neutral / Warm Gray — hue 40°, 3% sat ────────────────── */
+  /* ── Primitive: Neutral / Warm Gray — hue 40°, 3% sat ──────────────────
+     Exactly the eleven steps of the Color System. The in-between steps that
+     used to live here (150, 450, 650, 850, 875) were removed on 2026-10-12:
+     nothing outside the published scale may be drawn. */
   --color-neutral-50:  #f5f2eb;
   --color-neutral-100: #efece5;
-  --color-neutral-150: #eae8e3;
   --color-neutral-200: #e2ded5;
   --color-neutral-300: #d1cdc3;
   --color-neutral-400: #b8b3a8;
-  --color-neutral-450: #a09b92;
   --color-neutral-500: #969188;
   --color-neutral-600: #706c65;
-  --color-neutral-650: #6b675f;
   --color-neutral-700: #514e48;
   --color-neutral-800: #383632;
   --color-neutral-900: #22211f;
@@ -95,15 +95,6 @@
   --color-blue-900: #1e3a8a;
   --color-blue-950: #172554;
 
-  /* ── Primitive: Violet — the marketplace axis only ───────────────────── */
-  --color-violet-400: #a78bfa;
-  --color-violet-600: #7c3aed;
-
-  /* ── Primitive: Neutral in-between steps ───────────────────────────────
-     Dark mode needs one fill a step ABOVE the card (#22211f) for a quiet
-     sunken/hover surface; neutral-800 is a border, too heavy for a fill. */
-  --color-neutral-850: #2e2c29;
-  --color-neutral-875: #2b2a27;
 
   /* ══════════════════════════════════════════════════════════════════════
      SEMANTIC LAYER — every token below names a ROLE and points at a
@@ -146,11 +137,15 @@
      band — the alternative, amber-600, sits ΔE 9.4 from orange under NORMAL
      vision, and a pair a full-colour reader cannot separate is a worse fault
      than a palette that is not quite one family. */
-  --color-cat-orange: #f94a00;
-  --color-cat-amber:  #f59e0b;
-  --color-cat-green:  #16a34a;
-  --color-cat-blue:   #2563eb;
-  --color-cat-rose:   #be185d;
+  /* Every accent is a step of the Color System's own scales. Rose (#be185d)
+     was replaced by red-600 on 2026-10-12: it was the one hue on the page
+     that no scale contained. The key name stays `rose` so saved choices and
+     the storefront records keep resolving. */
+  --color-cat-orange: var(--color-brand-500);
+  --color-cat-amber:  var(--color-amber-500);
+  --color-cat-green:  var(--color-green-600);
+  --color-cat-blue:   var(--color-blue-600);
+  --color-cat-rose:   var(--color-red-600);
 
   /* ── Functional / semantic status colours ──────────────────────────────
      WCAG-validated foreground values (readable as text AND as fills on the
@@ -159,11 +154,17 @@
   --color-warning: var(--color-amber-800);
   --color-danger:  var(--color-red-700);
   --color-info:    var(--color-blue-700);
-  /* Where a sale came from. A second axis beside status: the five status colours
+  /* Where a sale came from. A second axis beside status: the status colours
      say what is happening to a booking, this says it was sold through a
-     marketplace (Viator, Klook…) and not at our own counter or website. Text-
-     weight step here; the fill and the stripe use the pinned -solid token. */
-  --color-market:  var(--color-violet-600);
+     marketplace (Viator, Klook…) and not at our own counter or website. It is
+     the Info family — the Color System has no violet, and "where it came from"
+     is information, not a warning. Calendar states never use info, so the
+     marketplace axis stays distinct from every state. */
+  --color-market:  var(--color-blue-700);
+
+  /* Secondary text: quieter than fg, firmer than muted (Color System
+     "secondary-foreground"). */
+  --color-fg-secondary: var(--color-neutral-700);
 
   /* The focus ring: one colour for every focus-visible outline in both
      products. It is the brand accent, which is a 3:1+ non-text mark on every
@@ -171,8 +172,6 @@
   --color-ring: var(--color-ember);
   /* Brand-coloured TEXT and links: brand-700, 6.7:1 on white. */
   --color-brand-foreground: var(--color-brand-700);
-  /* Text on any -solid fill (primary, success, danger, market). */
-  --color-on-solid: #ffffff;
 
   /* ── Type ──────────────────────────────────────────────────────────────
      Inter for everything; DM Mono ONLY for identifiers (booking refs, ticket
@@ -558,84 +557,119 @@
 }
 @theme {
   /* ── Surfaces & content — the semantic colour roles ──────────────────────
-     Role (the Design System's name)        token            light → dark
-     background (the page ground)           surface          neutral-50 → 950
-     surface (cards, panels)                card             white → neutral-900
-     surface-raised (menus, sheets, chrome) sheet / chrome   = card in both modes
-     surface-sunken (a fill inside a card)  subtle           neutral-100 → 850
-     hover / pressed fill                   muted-wash       neutral-150 → 850
-     unavailable time                       offtime          = surface
-     foreground                             fg               neutral-900 → 100
-     muted-foreground                       muted            neutral-650 → 450
-     disabled / placeholder                 faint            neutral-400 → 600
-     border, input edge                     line             neutral-200 → 800
-     border-strong                          strong           neutral-300 → 700
-     divider between rows                   hairline         neutral-100 → 875
-     inverse surface / its text             inverse / inverse-fg                 */
+     Mapped one-to-one onto the Counterfoil Color System (2026-10-12). Each
+     row is "Color System name → token → light / dark". Nothing here may point
+     at a value that is not a step of a published scale.
+
+     01 Content
+       foreground             fg            neutral-900 / neutral-100
+       secondary-foreground   fg-secondary  neutral-700 / neutral-400
+       muted-foreground       muted         neutral-600 / neutral-500
+       disabled-foreground    faint         neutral-400 / neutral-700
+       brand-foreground       brand-foreground  brand-700 / brand-300
+       success/warning/destructive/info-foreground
+                              success warning danger info   800·800·700·700 / 400s
+     02 Surfaces
+       background             surface       neutral-50  / neutral-950
+       card                   card          white       / neutral-900
+       popover                sheet, chrome = card
+       secondary-surface      subtle        neutral-100 / neutral-900
+       muted-surface          muted-wash    neutral-100 / neutral-800 (hover fill:
+                              the Color System's secondary-hover step in dark)
+       accent-surface         ember-wash    brand-50    / brand-950
+       success/warning/destructive/info-surface
+                              *-wash        50s / 950s
+     03 Interaction
+       primary / -foreground  ember-solid / on-solid   brand-500 + white / brand-400 + neutral-950
+       primary hover · active ember-hover · ember-active  brand-600·700 / brand-300·500
+       secondary / -fg        subtle / fg-secondary    (+ secondary-hover · secondary-active)
+       destructive / -fg      danger-solid / on-solid  red-600 + white / red-500 + neutral-950
+       accent / -foreground   ember-wash / brand-foreground
+       ring, focus-ring       ring = ember             brand-500 / brand-400
+     04 Structure
+       border, input          line          neutral-200 / neutral-800
+       divider                hairline      neutral-200 / neutral-800
+       (hover edge)           strong        neutral-300 / neutral-700  — the
+                              Color System's secondary-active step         */
   --color-surface: var(--color-neutral-50);
   --color-card: #ffffff;
   /* The chrome (rail, top bar, settings column) and the sheet (popovers, menus)
-     are the card in both modes: a step above the page in dark, white in light. */
+     are the card in both modes — the Color System's "popover" is the card. */
   --color-chrome: var(--color-card);
   --color-sheet: var(--color-card);
   --color-fg: var(--color-neutral-900);
-  /* neutral-650: neutral-600 nudged darker; at #706c65 it fell to 4.43:1 on
-     the sunken fill, and AA needs 4.5. */
-  --color-muted: var(--color-neutral-650);
+  --color-muted: var(--color-neutral-600);
   --color-faint: var(--color-neutral-400);
   --color-line: var(--color-neutral-200);
   --color-strong: var(--color-neutral-300);
   --color-subtle: var(--color-neutral-100);
-  --color-muted-wash: var(--color-neutral-150);
-  --color-hairline: var(--color-neutral-100);
+  --color-muted-wash: var(--color-neutral-100);
+  --color-hairline: var(--color-neutral-200);
   --color-inverse: var(--color-neutral-950);
   --color-inverse-fg: var(--color-neutral-50);
   /* Calendar time that cannot be sold. It is the PAGE showing through the
      card — a hole in the bookable time — in both modes. */
   --color-offtime: var(--color-surface);
 
-  /* ── Solid fills that carry white text (--color-on-solid) ───────────────
-     Pinned: they do NOT lift in dark, because a lift under white text loses
-     contrast. Each is ≥4.5:1 with white, so a 13–14px label on it passes AA.
-       ember-solid  brand-600  4.64:1  primary buttons, selected chips/days
-       danger-solid red-700    6.47:1  destructive buttons
-       success-solid green-700 5.02:1  a confirmed/positive fill
-       market-solid violet-600 5.70:1  marketplace badge and stripe
-     (The brand-500 #F94A00 is 3.50:1 under white, below AA for body-size
-     text; it stays the ACCENT — marks, dots, stripes, the focus ring, charts.) */
-  --color-ember-solid: var(--color-brand-600);
-  --color-danger-solid: var(--color-red-700);
-  --color-success-solid: var(--color-green-700);
-  --color-market-solid: var(--color-violet-600);
+  /* ── Interaction: the primary, secondary and destructive families ──────
+     Every state comes from its own family's scale — no opacity hovers.
+     States darken in light (a deeper step) and lighten in dark (a brighter
+     step), exactly as the Color System's "Component State Tokens" table.
 
-  /* ── Tints: a status colour dropped into the card ──────────────────────
-     Written out rather than taken as an alpha of the base colour: the status
-     colours are 700/800-level, and 10% of a dark green over paper is a grey-
-     green rather than a pastel. Text in --color-fg reads on every one of them
-     in both modes (checked by scripts/check-design-tokens.mjs). */
-  --color-ember-wash: var(--color-brand-100);
-  --color-success-wash: #d8efdf;
-  --color-warning-wash: #f3e3c4;
-  --color-danger-wash: #f3d4d0;
-  --color-market-wash: #ede5fd;
+     Primary is #F94A00 (brand-500) with white text in light: 3.50:1, which
+     the Color System accepts for UI controls (AA large text / UI, WCAG 1.4.11)
+     and never for body text. In dark the fill lifts to brand-400 and the text
+     turns to neutral-950 (7.1:1). The same flip applies to destructive
+     (red-600 + white 4.8:1 / red-500 + neutral-950 4.9:1). */
+  --color-ember-solid: var(--color-brand-500);
+  --color-ember-hover: var(--color-brand-600);
+  --color-ember-active: var(--color-brand-700);
+  --color-ember-disabled: color-mix(in srgb, var(--color-brand-100) 60%, transparent);
+  --color-on-solid: #ffffff;
+  --color-danger-solid: var(--color-red-600);
+  --color-danger-hover: var(--color-red-700);
+  --color-danger-active: var(--color-red-800);
+  --color-danger-disabled: color-mix(in srgb, var(--color-red-100) 60%, transparent);
+  /* Secondary buttons: a neutral-100 fill with neutral-700 text, hover
+     neutral-200, pressed neutral-300. */
+  --color-secondary-hover: var(--color-neutral-200);
+  --color-secondary-active: var(--color-neutral-300);
+  /* Fills the Color System does not name, kept on its scales: a confirmed
+     fill (green-700 + white, 5.0:1) and the marketplace badge (blue-700 +
+     white, 6.7:1). They lift and flip like primary in dark. */
+  --color-success-solid: var(--color-green-700);
+  --color-market-solid: var(--color-blue-700);
+
+  /* ── Status surfaces and their container borders ───────────────────────
+     Foreground tokens are used directly for text and icons; a surface (and
+     its border) only when the component needs a container — an alert, a
+     badge, a callout. 50 / 200 steps in light, 950 / 900 in dark. */
+  --color-ember-wash: var(--color-brand-50);
+  --color-success-wash: var(--color-green-50);
+  --color-warning-wash: var(--color-amber-50);
+  --color-danger-wash: var(--color-red-50);
+  --color-info-wash: var(--color-blue-50);
+  --color-market-wash: var(--color-blue-50);
+  --color-success-line: var(--color-green-200);
+  --color-warning-line: var(--color-amber-200);
+  --color-danger-line: var(--color-red-200);
+  --color-info-line: var(--color-blue-200);
+  --color-ember-line: var(--color-brand-200);
 
   /* ── Data visualisation ─────────────────────────────────────────────────
-     Categorical slots, assigned in this fixed order and never cycled.
-     Validated with the dataviz palette checker (--pairs all) against the
-     card in both modes: lightness band, chroma floor, normal-vision floor
-     (ΔE 25.3 light / 23.7 dark) and 3:1 against the card. One accepted WARN
-     (a deuteranopia pair in the 6–8 band) — every chart ships direct labels.
-     Charts are the one place hues outside the semantic set are allowed. */
+     Categorical slots, assigned in this fixed order and never cycled. Every
+     slot is a step of a Color System scale. Charts ship direct labels, so a
+     colour is never the only carrier of a series. */
   --chart-1: var(--color-brand-500);
   --chart-2: var(--color-blue-600);
   --chart-3: var(--color-amber-700);
   --chart-4: var(--color-green-600);
-  /* The spending breakdown (Expenses): orange, blue, green, rose, then a
+  /* The spending breakdown (Expenses): orange, blue, green, red, then a
      neutral that reads as "the rest". */
   --chart-cat-1: var(--chart-1);
   --chart-cat-2: var(--chart-2);
   --chart-cat-3: var(--chart-4);
-  --chart-cat-4: #be185d;
+  --chart-cat-4: var(--color-red-600);
   --chart-cat-other: var(--color-neutral-500);
   /* The heatmap: one hue, six steps by quantile. Light is the brand ramp. */
   --heat-1: var(--color-brand-50);
@@ -665,13 +699,14 @@
   --color-chrome: var(--color-card);
   --color-sheet: var(--color-card);
   --color-fg: var(--color-neutral-900);
-  --color-muted: var(--color-neutral-650);
+  --color-fg-secondary: var(--color-neutral-700);
+  --color-muted: var(--color-neutral-600);
   --color-faint: var(--color-neutral-400);
   --color-line: var(--color-neutral-200);
   --color-strong: var(--color-neutral-300);
   --color-subtle: var(--color-neutral-100);
-  --color-muted-wash: var(--color-neutral-150);
-  --color-hairline: var(--color-neutral-100);
+  --color-muted-wash: var(--color-neutral-100);
+  --color-hairline: var(--color-neutral-200);
   --color-inverse: var(--color-neutral-950);
   --color-inverse-fg: var(--color-neutral-50);
   --color-offtime: var(--color-surface);
@@ -682,16 +717,36 @@
   --color-warning: var(--color-amber-800);
   --color-danger: var(--color-red-700);
   --color-info: var(--color-blue-700);
-  --color-market: var(--color-violet-600);
-  --color-ember-wash: var(--color-brand-100);
-  --color-success-wash: #d8efdf;
-  --color-warning-wash: #f3e3c4;
-  --color-danger-wash: #f3d4d0;
-  --color-market-wash: #ede5fd;
+  --color-market: var(--color-blue-700);
+  --color-ember-solid: var(--color-brand-500);
+  --color-ember-hover: var(--color-brand-600);
+  --color-ember-active: var(--color-brand-700);
+  --color-ember-disabled: color-mix(in srgb, var(--color-brand-100) 60%, transparent);
+  --color-on-solid: #ffffff;
+  --color-danger-solid: var(--color-red-600);
+  --color-danger-hover: var(--color-red-700);
+  --color-danger-active: var(--color-red-800);
+  --color-danger-disabled: color-mix(in srgb, var(--color-red-100) 60%, transparent);
+  --color-secondary-hover: var(--color-neutral-200);
+  --color-secondary-active: var(--color-neutral-300);
+  --color-success-solid: var(--color-green-700);
+  --color-market-solid: var(--color-blue-700);
+  --color-ember-wash: var(--color-brand-50);
+  --color-success-wash: var(--color-green-50);
+  --color-warning-wash: var(--color-amber-50);
+  --color-danger-wash: var(--color-red-50);
+  --color-info-wash: var(--color-blue-50);
+  --color-market-wash: var(--color-blue-50);
+  --color-success-line: var(--color-green-200);
+  --color-warning-line: var(--color-amber-200);
+  --color-danger-line: var(--color-red-200);
+  --color-info-line: var(--color-blue-200);
+  --color-ember-line: var(--color-brand-200);
+  --color-cat-rose: var(--color-red-600);
   --chart-2: var(--color-blue-600);
   --chart-3: var(--color-amber-700);
   --chart-cat-2: var(--chart-2);
-  --chart-cat-4: #be185d;
+  --chart-cat-4: var(--color-red-600);
   --chart-cat-other: var(--color-neutral-500);
   --heat-1: var(--color-brand-50);
   --heat-2: var(--color-brand-100);
@@ -723,22 +778,18 @@
   --color-chrome: var(--color-card);
   --color-sheet: var(--color-card);
   --color-fg: var(--color-neutral-100);
-  /* neutral-450, not 500: muted text sits on the sunken fill and on tints as
-     well as on the card, and 500 measured 4.44:1 on the sunken step. 450 clears
-     4.5 on every dark surface (card 5.8, sunken 5.0, ember wash 4.65). */
-  --color-muted: var(--color-neutral-450);
-  /* Not neutral-700: that is strong, and a disabled label must not be the
-     same colour as a border. */
-  --color-faint: var(--color-neutral-600);
+  --color-fg-secondary: var(--color-neutral-400);
+  --color-muted: var(--color-neutral-500);
+  --color-faint: var(--color-neutral-700);
   --color-line: var(--color-neutral-800);
   --color-strong: var(--color-neutral-700);
-  /* A real step above the card. It used to BE the card, so every bg-subtle
-     fill vanished in dark. */
-  --color-subtle: var(--color-neutral-850);
-  --color-muted-wash: var(--color-neutral-850);
-  /* Lighter here means LESS contrast, not a lighter colour: on ink a stroke
-     softens by moving toward the card it sits on, not toward white. */
-  --color-hairline: var(--color-neutral-875);
+  /* The Color System puts the secondary and muted surfaces ON the card in
+     dark (neutral-900): a sunken fill there is told apart by its border, as
+     its Visual Hierarchy panel draws it. The hover fill is the next step up,
+     neutral-800 — the secondary button's hover. */
+  --color-subtle: var(--color-neutral-900);
+  --color-muted-wash: var(--color-neutral-800);
+  --color-hairline: var(--color-neutral-800);
   --color-inverse: var(--color-neutral-100);
   --color-inverse-fg: var(--color-neutral-950);
   --color-offtime: var(--color-surface);
@@ -749,27 +800,46 @@
   --color-warning: var(--color-amber-400);
   --color-danger: var(--color-red-400);
   --color-info: var(--color-blue-400);
-  --color-market: var(--color-violet-400);
-  /* A tint of the status colour dropped into the card, not a pastel lifted
-     onto it (a pastel here would glow). */
-  --color-ember-wash: #4a2a17;
-  --color-success-wash: #17362a;
-  --color-warning-wash: #4a3a1a;
-  --color-danger-wash: #4a2724;
-  --color-market-wash: #2e2447;
-  /* Dark takes its own chart steps rather than flipping the light ones: every
-     400-level step measured L 0.71–0.84, outside the dark band of 0.48–0.67.
-     Rose steps to pink-500 (rose-700 is 2.66:1 on the dark card). */
+  --color-market: var(--color-blue-400);
+  /* Primary lifts to brand-400 and carries neutral-950 text (7.1:1); hover
+     brightens, pressed returns to brand-500. Destructive does the same on red. */
+  --color-ember-solid: var(--color-brand-400);
+  --color-ember-hover: var(--color-brand-300);
+  --color-ember-active: var(--color-brand-500);
+  --color-ember-disabled: color-mix(in srgb, var(--color-brand-900) 40%, transparent);
+  --color-on-solid: var(--color-neutral-950);
+  --color-danger-solid: var(--color-red-500);
+  --color-danger-hover: var(--color-red-400);
+  --color-danger-active: var(--color-red-600);
+  --color-danger-disabled: color-mix(in srgb, var(--color-red-900) 40%, transparent);
+  --color-secondary-hover: var(--color-neutral-800);
+  --color-secondary-active: var(--color-neutral-700);
+  --color-success-solid: var(--color-green-500);
+  --color-market-solid: var(--color-blue-500);
+  --color-ember-wash: var(--color-brand-950);
+  --color-success-wash: var(--color-green-950);
+  --color-warning-wash: var(--color-amber-950);
+  --color-danger-wash: var(--color-red-950);
+  --color-info-wash: var(--color-blue-950);
+  --color-market-wash: var(--color-blue-950);
+  --color-success-line: var(--color-green-900);
+  --color-warning-line: var(--color-amber-900);
+  --color-danger-line: var(--color-red-900);
+  --color-info-line: var(--color-blue-900);
+  --color-ember-line: var(--color-brand-900);
+  --color-cat-rose: var(--color-red-500);
+  /* Dark takes brighter chart steps so each series keeps its contrast on ink. */
   --chart-2: var(--color-blue-500);
   --chart-3: var(--color-amber-600);
   --chart-cat-2: var(--chart-2);
-  --chart-cat-4: #ec4899;
+  --chart-cat-4: var(--color-red-500);
   --chart-cat-other: var(--color-neutral-600);
-  --heat-1: #3a2a22;
-  --heat-2: #523223;
-  --heat-3: #733a21;
-  --heat-4: #9c451f;
-  --heat-5: #d0531f;
+  /* The heatmap's dark ramp is the brand scale read from its dark end. */
+  --heat-1: var(--color-brand-950);
+  --heat-2: var(--color-brand-900);
+  --heat-3: var(--color-brand-800);
+  --heat-4: var(--color-brand-700);
+  --heat-5: var(--color-brand-600);
   --heat-6: var(--color-brand-400);
   --heat-edge: rgb(255 255 255 / 0.06);
   /* The resting card draws a line instead of a shadow; floating layers keep a
@@ -978,6 +1048,20 @@ html[data-motion="reduce"] *::after {
    harnesses find the bar by it. */
 .glass-navbar { background-color: var(--color-chrome); }
 
+/* Muted text on a secondary surface. The Color System's muted-foreground
+   (neutral-600 / neutral-500) reads 4.43:1 on secondary-surface in light and
+   3.85:1 on the hover fill in dark — under the 4.5:1 body floor. The spec pairs
+   a secondary surface with secondary-foreground, so inside one (at rest, or
+   while it is the hover fill) muted text steps up to fg-secondary. One rule
+   here instead of a sweep of every row and track that sits on these fills. */
+.bg-subtle,
+.bg-muted-wash,
+.bg-secondary-hover,
+.hover\:bg-muted-wash:hover,
+.hover\:bg-secondary-hover:hover {
+  --color-muted: var(--color-fg-secondary);
+}
+
 /* A scroller that is still scrollable but draws no scrollbar — the rail and the
    settings column, where a bar beside a 36px row is chrome on chrome. Wheel,
    touch, keyboard and focus-scrolling all still work. Unlayered so it beats
@@ -1022,16 +1106,17 @@ html[data-motion="reduce"] *::after {
    exactly as they are, so nothing changes meaning. html[...] outranks :root and
    html.dark[...] outranks .dark, whatever order the blocks sit in. */
 html[data-contrast="more"] {
-  --color-muted: #4a463f;
-  --color-line: #c4bfb4;
-  --color-strong: #aaa498;
-  --color-hairline: #d6d1c6;
+  /* One step firmer on every axis, and still only Color System steps. */
+  --color-muted: var(--color-neutral-700);
+  --color-line: var(--color-neutral-300);
+  --color-strong: var(--color-neutral-400);
+  --color-hairline: var(--color-neutral-300);
 }
 html.dark[data-contrast="more"] {
-  --color-muted: #c4bfb5;
-  --color-line: #5a564f;
-  --color-strong: #736f67;
-  --color-hairline: #48453f;
+  --color-muted: var(--color-neutral-400);
+  --color-line: var(--color-neutral-700);
+  --color-strong: var(--color-neutral-600);
+  --color-hairline: var(--color-neutral-700);
 }
 
 /* ── The public storefront's own theme ──────────────────────────────────
@@ -1050,26 +1135,19 @@ html.dark[data-contrast="more"] {
   /* The light set comes from the `.light, .paper, .sf` block above; this adds
      the storefront's own neutral greys and maps the venue's accent onto the
      app's accent tokens, so shared components inside follow the venue. */
-  --color-surface: #ffffff;
-  --color-fg: #161616;
-  --color-muted: #595959;
-  --color-faint: #a3a3a3;
-  --color-line: #dcdcd8;
-  --color-strong: #bdbdb8;
-  --color-subtle: #f6f6f3;
-  --color-muted-wash: #efefec;
-  --color-inverse: #161616;
-  --color-inverse-fg: #ffffff;
-  --color-hairline: #ececec;
-  --color-success-wash: #dcf1e3;
-  --color-warning-wash: #fdf0d5;
-  --color-danger-wash: #fde4e4;
-  --color-ember: var(--sf-accent, #161616);
-  --color-ember-solid: var(--sf-fill, #161616);
-  --color-ember-wash: var(--sf-soft, #f0f0ee);
+  /* The page ground is white (the card), the type the Color System ink; the
+     rest of the light set comes from the block above, so the storefront uses
+     the same neutral steps as the app. */
+  --color-surface: var(--color-card);
+  --color-inverse: var(--color-neutral-900);
+  --color-ember: var(--sf-accent, var(--color-neutral-900));
+  --color-ember-solid: var(--sf-fill, var(--color-neutral-900));
+  --color-ember-hover: var(--sf-fill, var(--color-neutral-900));
+  --color-ember-active: var(--sf-fill, var(--color-neutral-900));
+  --color-ember-wash: var(--sf-soft, var(--color-neutral-100));
   --color-on-solid: var(--sf-on-fill, #ffffff);
-  --color-ring: var(--sf-accent, #161616);
-  --color-brand-foreground: var(--sf-ink, #161616);
+  --color-ring: var(--sf-accent, var(--color-neutral-900));
+  --color-brand-foreground: var(--sf-ink, var(--color-neutral-900));
   background: var(--color-surface);
   color: var(--color-fg);
   font-family: var(--font-sans);

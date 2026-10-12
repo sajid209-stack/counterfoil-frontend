@@ -134,7 +134,7 @@ export function RoleEditor({
                     <li key={m.id}>
                       <Link
                         href={`/settings/team/${m.id}`}
-                        className="inline-flex min-h-11 items-center gap-tight rounded-full bg-muted-wash/70 py-inline pl-inline pr-comfortable text-sm text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
+                        className="inline-flex min-h-11 items-center gap-tight rounded-full bg-muted-wash py-inline pl-inline pr-comfortable text-sm text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
                       >
                         <Avatar name={m.name} size={24} soft />
                         {m.name}

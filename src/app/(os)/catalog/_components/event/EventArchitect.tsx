@@ -663,13 +663,13 @@ function Row({
           className="flex min-h-11 min-w-0 flex-1 items-center gap-comfortable px-card py-comfortable text-left transition-colors duration-quick hover:bg-muted-wash"
         >
           <Icon size={16} strokeWidth={1.5} className={cn("shrink-0", "text-muted")} />
-          <span className={cn("min-w-0 flex-1 truncate text-sm font-medium", muted ? "text-muted line-through decoration-muted/40" : "text-fg")}>{label}</span>
+          <span className={cn("min-w-0 flex-1 truncate text-sm font-medium", muted ? "text-muted line-through decoration-strong" : "text-fg")}>{label}</span>
           {sample && <StatusPill tone="warning" className="shrink-0">{sample}</StatusPill>}
           <ChevronDown size={16} strokeWidth={1.5} className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-180")} />
         </button>
         {controls && <span className="flex shrink-0 items-center">{controls}</span>}
       </div>
-      {open && <div className="flex flex-col gap-section bg-muted-wash/60 px-card pb-card pt-tight">{children}</div>}
+      {open && <div className="flex flex-col gap-section bg-muted-wash px-card pb-card pt-tight">{children}</div>}
     </div>
   );
 }

@@ -511,7 +511,7 @@ export default function CheckInPage() {
                                   </span>
                                 ) : due > 0 ? (
                                   <>
-                                    <span className="rounded-full border border-warning/50 bg-warning-wash px-comfortable py-inline text-sm font-semibold tabular-nums text-fg">{t("owes", { amount: formatMoney(due) })}</span>
+                                    <span className="rounded-full border border-warning-line bg-warning-wash px-comfortable py-inline text-sm font-semibold tabular-nums text-fg">{t("owes", { amount: formatMoney(due) })}</span>
                                     <Button onClick={() => setPayFor(b)}>{t("takeBalanceBtn")}</Button>
                                   </>
                                 ) : done ? (

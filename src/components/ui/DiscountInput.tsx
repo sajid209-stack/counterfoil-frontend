@@ -93,7 +93,7 @@ export function DiscountInput({
               type="button"
               aria-pressed={mode === m}
               onClick={() => { onMode(m); setDraft(null); setError(null); }}
-              className={cn(h, "w-12 text-base font-medium", mode === m ? "bg-ember-solid text-on-solid" : "bg-card")}
+              className={cn(h, "w-12 text-base font-medium", mode === m ? "bg-ember-solid text-on-solid hover:bg-ember-hover active:bg-ember-active" : "bg-card hover:bg-muted-wash")}
             >
               {m === "percent" ? "%" : "৳"}
             </button>
@@ -131,7 +131,7 @@ export function DiscountInput({
                 "min-w-12 flex-1 border px-tight text-sm font-medium",
                 shape === "go" ? "rounded-full" : "rounded-control",
                 "transition-colors duration-quick",
-                value === c ? "border-ember bg-ember/10 text-brand-foreground" : "border-line bg-card active:bg-ember/10",
+                value === c ? "border-ember bg-ember-wash text-brand-foreground" : "border-line bg-card hover:bg-muted-wash active:bg-ember-wash",
               )}
             >
               {c === 0 ? t("ui.none") : `${c}%`}

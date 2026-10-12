@@ -169,7 +169,7 @@ export function DataTable<T>({
                   ? "border-b border-hairline px-card py-comfortable last:border-0"
                   : "card-surface p-card",
                 onRowClick && "cursor-pointer active:bg-muted-wash",
-                isSelected?.(row) && (list ? "bg-ember/5" : "border-ember bg-ember/5"),
+                isSelected?.(row) && (list ? "bg-ember-wash" : "border-ember bg-ember-wash"),
               )}
             >
               {renderCard ? (
@@ -358,7 +358,7 @@ export function DataTable<T>({
                   aria-selected={isSelected ? isSelected(row) : undefined}
                   className={cn(
                     "h-12 [&>td]:border-b [&>td]:border-hairline last:[&>td]:border-b-0",
-                    isSelected?.(row) && "bg-ember/5",
+                    isSelected?.(row) && "bg-ember-wash",
                     onRowClick &&
                       // The ring itself comes from the app's one unlayered :focus-visible
                       // rule, which already paints ember at 2px. Utilities here only
@@ -366,11 +366,11 @@ export function DataTable<T>({
                       // Tailwind, which cannot tell a colour from a width, so it
                       // emitted the wrong property and the row fell back to the
                       // browser default.
-                      /* A selected row keeps its tint under the pointer —
-                         deepened, not swapped for the plain hover grey. */
+                      /* A selected row keeps its accent under the pointer — it is
+                         not swapped for the plain hover grey. */
                       (isSelected?.(row)
-                        ? "cursor-pointer transition-colors duration-quick hover:bg-ember/10 focus-visible:bg-ember/10"
-                        : "cursor-pointer transition-colors duration-quick hover:bg-muted-wash/60 focus-visible:bg-muted-wash/60"),
+                        ? "cursor-pointer transition-colors duration-quick hover:bg-ember-wash focus-visible:bg-ember-wash"
+                        : "cursor-pointer transition-colors duration-quick hover:bg-muted-wash focus-visible:bg-muted-wash"),
                   )}
                 >
                   {columns.map((col) => (

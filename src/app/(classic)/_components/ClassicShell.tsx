@@ -79,7 +79,7 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
         aria-current={active ? "page" : undefined}
         onClick={() => { if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
         className={cn(
-          "relative flex min-w-12 flex-1 flex-col items-center justify-center gap-inline transition-colors duration-quick active:bg-ember/10",
+          "relative flex min-w-12 flex-1 flex-col items-center justify-center gap-inline transition-colors duration-quick active:bg-ember-wash",
           rail ? "h-18 flex-none" : "h-14",
           active ? "text-brand-foreground" : "text-muted",
         )}
@@ -97,7 +97,7 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
       type="button"
       onClick={() => setMoreOpen(true)}
       className={cn(
-        "flex min-w-12 flex-1 flex-col items-center justify-center gap-inline text-muted transition-colors duration-quick active:bg-ember/10",
+        "flex min-w-12 flex-1 flex-col items-center justify-center gap-inline text-muted transition-colors duration-quick active:bg-ember-wash",
         rail ? "h-18 flex-none" : "h-14",
       )}
     >
@@ -181,11 +181,11 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
                   </>
                 );
                 return "href" in item && item.href ? (
-                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-sm border border-line bg-card text-fg active:bg-ember/10">
+                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-sm border border-line bg-card text-fg active:bg-ember-wash">
                     {inner}
                   </Link>
                 ) : (
-                  <button key={item.key} type="button" onClick={() => runItem(item)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-sm border border-line bg-card text-fg active:bg-ember/10">
+                  <button key={item.key} type="button" onClick={() => runItem(item)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-sm border border-line bg-card text-fg active:bg-ember-wash">
                     {inner}
                   </button>
                 );

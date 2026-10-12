@@ -36,7 +36,7 @@ const fromCounter = (c: Counter): Draft => ({
 });
 
 const chip =
-  "inline-flex min-h-11 items-center rounded-full bg-muted-wash/70 px-comfortable text-sm text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9";
+  "inline-flex min-h-11 items-center rounded-full bg-muted-wash px-comfortable text-sm text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9";
 const quiet =
   "inline-flex min-h-11 items-center rounded-sm px-tight text-sm font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9";
 

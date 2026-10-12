@@ -426,7 +426,7 @@ function ProductCard({
           type="button"
           aria-label={t("card.lessOf", { name: p.name })}
           onClick={() => setQty(tierQty - 1)}
-          className="flex h-11 w-11 items-center justify-center rounded-md text-fg hover:bg-card/60"
+          className="flex h-11 w-11 items-center justify-center rounded-md text-fg hover:bg-card"
         >
           <Minus size={16} strokeWidth={2} aria-hidden />
         </button>
@@ -438,7 +438,7 @@ function ProductCard({
           aria-label={t("card.moreOf", { name: p.name })}
           disabled={tierQty >= capQty}
           onClick={() => setQty(tierQty + 1)}
-          className="flex h-11 w-11 items-center justify-center rounded-md text-fg hover:bg-card/60 disabled:text-faint"
+          className="flex h-11 w-11 items-center justify-center rounded-md text-fg hover:bg-card disabled:text-faint"
         >
           <Plus size={16} strokeWidth={2} aria-hidden />
         </button>

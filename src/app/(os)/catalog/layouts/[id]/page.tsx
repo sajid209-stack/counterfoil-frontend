@@ -545,7 +545,7 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
                   marquee ? (
                     <div
                       aria-hidden
-                      className="absolute border border-ember-solid bg-ember/10"
+                      className="absolute border border-ember-solid bg-ember-wash"
                       style={{
                         left: (Math.min(marquee.ax, marquee.bx) - ex.minX) * s,
                         top: (Math.min(marquee.ay, marquee.by) - ex.minY) * s,

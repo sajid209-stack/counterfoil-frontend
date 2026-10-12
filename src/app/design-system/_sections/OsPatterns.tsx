@@ -23,7 +23,7 @@ function ShellMock() {
       <div className="flex">
         <div className="hidden w-14 shrink-0 flex-col items-center gap-tight py-comfortable sm:flex" aria-hidden>
           {[0, 1, 2, 3].map((i) => (
-            <span key={i} className={`h-6 w-6 rounded-sm ${i === 1 ? "bg-fg/[0.12]" : "bg-fg/[0.06]"}`} />
+            <span key={i} className={`h-6 w-6 rounded-sm ${i === 1 ? "bg-ember-wash" : "bg-subtle"}`} />
           ))}
         </div>
         <div className="min-w-0 flex-1">

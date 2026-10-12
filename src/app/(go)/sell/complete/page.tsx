@@ -103,7 +103,7 @@ export default function SellCompletePage() {
             <div className="relative flex items-center">
               <span className="absolute -left-2 h-4 w-4 rounded-full bg-surface" aria-hidden />
               <span className="absolute -right-2 h-4 w-4 rounded-full bg-surface" aria-hidden />
-              <span className="mx-major flex-1 border-t-2 border-dashed border-paper/40" aria-hidden />
+              <span className="mx-major flex-1 border-t-2 border-dashed border-neutral-600" aria-hidden />
             </div>
             <div className="rounded-card bg-ink px-section pb-major pt-tight text-paper">
               <p className="text-sm text-muted">{t("complete.presentAtGate")}</p>

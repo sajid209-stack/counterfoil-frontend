@@ -4,16 +4,17 @@ import type { MarketplaceId } from "@/lib/api/types";
 
 /**
  * "This one was sold through a marketplace" — the marketplace's letters in a
- * small violet rounded rectangle.
+ * small info-blue rounded rectangle.
  *
- * Colour is never the only carrier of that fact: the block's violet says it at
+ * Colour is never the only carrier of that fact: the block's blue says it at
  * a glance, and this badge says it again with a shape and letters, so it
  * survives a grey screenshot and a colour-blind reader. It is decoration for a
  * sighted reader — the marketplace's NAME is in the block's accessible name —
- * so it is `aria-hidden`, which also exempts its white-on-violet text from the
- * 4.5:1 reading floor (it measures 5.7:1 anyway). Bold, because it is small.
+ * so it is `aria-hidden`. Bold, because it is small.
  *
- * The fill is `market-solid`, pinned, so the white keeps its contrast in dark.
+ * The fill is `market-solid` (the info-blue family) and the letters are
+ * `on-solid`, the text token for a solid fill, so the pair keeps its contrast
+ * in light and in dark.
  *
  * `size` carries the type: OS holds a 12px floor and Go a 13px one, and `cn`
  * does not merge conflicting utilities, so the two cannot be a className.
@@ -31,7 +32,7 @@ export function MarketBadge({
     <span
       aria-hidden
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-xs bg-market-solid px-1 font-bold leading-none text-white",
+        "inline-flex shrink-0 items-center justify-center rounded-xs bg-market-solid px-1 font-bold leading-none text-on-solid",
         size === "go" ? "h-[1.125rem] min-w-[1.125rem] text-sm" : "h-4 min-w-4 text-xs",
         className,
       )}

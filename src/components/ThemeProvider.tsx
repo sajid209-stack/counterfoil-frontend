@@ -59,7 +59,7 @@ export function ModeButton({ className, shape = "square" }: { className?: string
       onClick={() => setTheme(dark ? "light" : "dark")}
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-      className={`flex h-11 w-11 items-center justify-center text-muted transition-colors duration-quick hover:text-fg active:bg-ember/10 ${shape === "round" ? "rounded-full bg-subtle dark:bg-line" : "rounded-control border border-line bg-card hover:border-ember/40"} ${className ?? ""}`}
+      className={`flex h-11 w-11 items-center justify-center text-muted transition-colors duration-quick hover:text-fg active:bg-ember-wash ${shape === "round" ? "rounded-full bg-subtle dark:bg-line" : "rounded-control border border-line bg-card hover:border-ember-line"} ${className ?? ""}`}
     >
       {dark ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
     </button>

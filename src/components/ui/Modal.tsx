@@ -170,7 +170,7 @@ export function Modal({
           /* A solid sheet: the scrim already separates it from the page, and
              the level-3 shadow lifts it. Dark has no visible shadow on ink, so
              it keeps a line edge instead. */
-          "relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-sheet border border-transparent bg-card p-card shadow-lg outline-none dark:border-line",
+          "relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-sheet border border-transparent bg-card p-card shadow-lg outline-none",
           width,
         )}
       >

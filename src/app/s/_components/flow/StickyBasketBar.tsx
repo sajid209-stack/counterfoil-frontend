@@ -22,7 +22,7 @@ export function StickyBasketBar() {
   return (
     <>
       <div aria-hidden className="h-20" />
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-card/95 shadow-float backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-card shadow-float backdrop-blur">
         <div className={cn(WRAP, "flex items-center justify-between gap-section py-comfortable")}>
           <p className="tnum min-w-0 truncate text-md font-semibold">
             {t("basket.itemCount", { count: flow.itemCount })} · {formatMoney(flow.totals.total)}

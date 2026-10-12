@@ -93,7 +93,7 @@ type ListProps = {
   totals: Totals;
 };
 
-const RECESSED = "bg-muted-wash/35 hover:bg-muted-wash/70";
+const RECESSED = "bg-muted-wash hover:bg-muted-wash";
 
 function RowTable({ days, isOpen, onToggle, onPick, totals }: ListProps) {
   const t = useTranslations("finances");
@@ -126,7 +126,7 @@ function RowTable({ days, isOpen, onToggle, onPick, totals }: ListProps) {
         const x = info(d);
         return (
           <tbody key={d.date} className="border-t border-hairline">
-            <tr onClick={() => onToggle(d.date, !open)} className="cursor-pointer transition-colors duration-quick hover:bg-muted-wash/40">
+            <tr onClick={() => onToggle(d.date, !open)} className="cursor-pointer transition-colors duration-quick hover:bg-muted-wash">
               <td className="py-comfortable pr-tight"><DateCell day={d} open={open} tag={x.tag} /></td>
               <td className="px-tight py-comfortable text-muted">{t("day.transactions", { count: x.rows.length })}</td>
               <td className="px-tight py-comfortable"><DayStatus clearing={x.clearing} /></td>
@@ -160,7 +160,7 @@ function RowTable({ days, isOpen, onToggle, onPick, totals }: ListProps) {
         );
       })}
       <tfoot>
-        <tr className="border-t border-hairline bg-subtle/60 font-semibold">
+        <tr className="border-t border-hairline bg-subtle font-semibold">
           <td colSpan={3} className="py-comfortable text-fg">{t("table.total", { count: days.length })}</td>
           <td className={cn(num, "px-tight py-comfortable")}>{formatMoney(totals.credit)}</td>
           <td className={cn(num, "px-tight py-comfortable")}>{formatMoney(totals.debit)}</td>
@@ -210,7 +210,7 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
               <span className={cn("shrink-0 text-base font-semibold tabular-nums", amountTone(d.net))}>{signed(d.net)}</span>
             </div>
             {open && (
-              <ul className="bg-muted-wash/35">
+              <ul className="bg-muted-wash">
                 {x.rows.map((r) => {
                   const rt = rowText(r);
                   const st = rowStatus(r);
@@ -240,7 +240,7 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
           </div>
         );
       })}
-      <div className="border-t border-hairline bg-subtle/60 px-card py-comfortable">
+      <div className="border-t border-hairline bg-subtle px-card py-comfortable">
         <p className="flex items-baseline justify-between gap-tight text-base font-semibold">
           <span>{t("table.total", { count: days.length })}</span>
           <span className={cn("tabular-nums", amountTone(totals.net))}>{signed(totals.net)}</span>

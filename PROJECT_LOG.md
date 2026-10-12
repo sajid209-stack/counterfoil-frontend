@@ -17000,3 +17000,118 @@ Run against a production build, then re-run after each fix:
 - The classic till got token fixes only; it is a deliberate restoration.
 - The scripts in the session scratchpads were updated to the new markup; they
   live outside the repo, as before.
+
+## The Counterfoil Color System, applied everywhere (2026-10-12)
+
+The owner supplied a "Counterfoil Color System" spec. It has six tonal scales of exactly
+eleven steps, semantic tokens in four groups (content, surfaces, interaction,
+structure), component state tokens and a contrast matrix. They asked for the product
+to match it exactly, with nothing drawn outside the system, and for #F94A00 to be
+used a bit more where it is functionally right.
+
+### Tokens (`globals.css`)
+
+- **Primitives are the spec's six scales and nothing else**: brand, neutral, green,
+  amber, red and blue. The steps neutral-150/450/650/850/875 and violet-400/600 are
+  removed.
+- **The primary fill is #F94A00 again** (brand-500), with white text in light (3.50:1,
+  AA Large / UI). The spec accepts this for controls but never for body text. In dark
+  the fill is brand-400 with neutral-950 text (7.11:1).
+  - This reverses the brand-600 primary from the 2026-10-11 design-system pass.
+  - Brand-coloured text at body size stays `brand-foreground` (brand-700 / brand-300).
+- **New state tokens**:
+  - primary: `ember-hover`, `ember-active`, `ember-disabled`;
+  - secondary: `secondary-hover`, `secondary-active`;
+  - destructive: `danger-hover`, `danger-active`, `danger-disabled`.
+
+  A state is the next step of its own scale. Nothing is an opacity of the fill.
+- **New content and surface tokens**: `fg-secondary`, `info-wash`, and container
+  borders `success-line`, `warning-line`, `danger-line`, `info-line` and `ember-line`
+  (the 200 steps in light, 900 in dark).
+- **`text-on-solid` is dark (neutral-950) in dark mode.** It is only correct on a
+  solid fill (ember, danger, success, market). Text on `inverse` uses
+  `inverse-fg`.
+- **The marketplace axis is the info blue family.** Violet is gone.
+
+### Components and pages
+
+These were built by three Sonnet agents (UI kit, app pages, design-system docs) with
+separate file ownership, then reviewed on Opus.
+
+- **The kit has no alpha tints or `dark:` overrides.**
+  - Notice and Toast are `*-wash` fills with a `*-line` edge and the tone's own
+    foreground.
+  - StatusPill is a wash with its foreground. Record states are `subtle` with
+    `fg-secondary` and a `line` ring.
+  - Buttons, switches, chips, checkboxes and the date pickers use the state tokens.
+  - A selected day is `ember-solid`; a range band is `ember-wash`.
+- **#F94A00 is used more, where it is functional.**
+  - The active item in the rail, the settings column and the settings list is the
+    accent (`ember-wash` + `brand-foreground`, with an ember icon).
+  - Underline tabs and the open FilterBar trigger are accented too.
+- **About 60 app files** lost their opacity tints. Status tints became `*-wash`,
+  borders became `*-line`, and ember tints became `ember-wash`.
+  - `color-mix` is removed from login, the catalogue, the calendar hatch and RoleMatrix.
+  - The classic till's Button uses the state tokens.
+  - The mode-locked scan screens use neutral primitives.
+- **`/design-system/colour` is rebuilt to the spec.** It has:
+  - the six scales;
+  - the four semantic groups, with live hex values and primitive names;
+  - the state swatches in light and dark;
+  - status examples text-only and with a surface;
+  - a contrast matrix computed live from the tokens.
+
+  `docs/design-system.md` §2 and §12 are rewritten to match.
+
+### Found and fixed in review
+
+- **The calendar's held draft** (on `warning-wash`) printed its time and title in
+  `text-on-solid`, which is white on a pale fill. This predates the pass. The lines now
+  inherit their colour from the block.
+- **Cover-photo chips in the event designer** had become theme-adaptive `inverse` with
+  a `neutral-800` hover. In dark that put dark text on a dark fill. They are
+  mode-locked to neutral-950 / neutral-50, because a chip over a photograph does not
+  follow the theme.
+- **The sidebar tooltip's shortcut key** was a `neutral-700` fill under
+  `inverse-fg`, which was unreadable in dark. It is now an edge, not a fill.
+- **The OS Patterns rail mock** still drew the old ink tints. It now uses `ember-wash`
+  and `subtle`.
+
+### Verified
+
+- `tsc` is clean. `lint:tokens` reports 0 errors and 0 warnings. i18n is 0 missing /
+  0 extra.
+- The production build passes.
+- Screenshots were checked in light and dark: the dashboard, orders, settings, the
+  till, and the full Colour page.
+- **Regression against the production build: 95 runs and 9,090 checks.** The first
+  pass failed 91 checks, for three reasons:
+  - **A real contrast gap in the spec.** `muted` (neutral-600) on secondary-surface
+    (neutral-100) is 4.43:1 in light, and `muted` (neutral-500) on the hover fill
+    (neutral-800) is 3.85:1 in dark. Both are under the 4.5:1 floor. The spec pairs a
+    secondary surface with secondary-foreground, so one rule in `globals.css` makes
+    muted text step up to `fg-secondary` inside `bg-subtle`, `bg-muted-wash` and
+    `bg-secondary-hover`, at rest or while hovered. That gives 7.03:1.
+  - **`muted-wash` and `subtle` are the same neutral-100 in light**, so a hover on a
+    segmented track was invisible. Segmented options now hover to `secondary-hover`.
+  - **Six harnesses asserted the old design.** They checked: the ink tint on the
+    rail; dark `subtle` as its own step; rose as chart colour 4; a white marketplace
+    badge in dark; the old neutral-650 muted border; and red-700 for the clock. A
+    seventh counted the today header as a booking. All were updated to assert the
+    spec, never loosened.
+
+  After the fixes, the 22 affected runs pass with 0 failures. That includes analytics
+  511/511 at both widths, the marketplace harness 52/52 and 50/50, finances, expenses,
+  orders, devices and settings.
+- `tsc` and `check-i18n` are clean. `eslint` on every changed file shows only the
+  documented PosScreen ×2 and OsShell errors.
+
+### Open
+
+- Chart colour 4 is now red-600, because the spec has no rose. It sits close to the
+  orange in slot 1. The expense legend names every slice, so colour is never the only
+  carrier, but the pair was not re-run through the palette validator.
+
+- The old :3000 dev server had leaked to 10.5 GB and stopped answering. It was left
+  running, because the session could not stop it. Restart it before using it again.
+- Bangla strings added in the design-system pass still want a native review.

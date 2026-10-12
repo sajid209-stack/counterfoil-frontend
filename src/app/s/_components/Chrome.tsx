@@ -131,7 +131,7 @@ export function StorefrontChrome({
 
   return (
     <SfRoot accent={storefront.accent} className="flex flex-col">
-      <header className="sticky top-0 z-50 border-b border-hairline bg-card/95 backdrop-blur" data-sf-header>
+      <header className="sticky top-0 z-50 border-b border-hairline bg-card backdrop-blur" data-sf-header>
         <div className={cn(WRAP, "flex h-16 items-center gap-section")}>
           {preview ? (
             <button type="button" onClick={flow.goVenue} className={cn(brandCls, "text-left")}>

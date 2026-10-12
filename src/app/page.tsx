@@ -37,8 +37,8 @@ export default function Home() {
     <main className="relative min-h-full overflow-hidden">
       {/* Ambient warmth — a soft ember glow bleeding in from the top-right, the
           brand colour used as atmosphere rather than decoration. */}
-      <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 size-128 rounded-full bg-ember/15 blur-[120px]" />
-      <div aria-hidden className="pointer-events-none absolute -left-32 top-1/2 h-96 w-96 rounded-full bg-ember/5 blur-[120px]" />
+      <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 size-128 rounded-full bg-ember-wash blur-[120px]" />
+      <div aria-hidden className="pointer-events-none absolute -left-32 top-1/2 h-96 w-96 rounded-full bg-ember-wash blur-[120px]" />
 
       <div className="relative mx-auto max-w-5xl px-gutter py-hero">
         {/* Wordmark */}
@@ -68,7 +68,7 @@ export default function Home() {
             >
               {/* Banner — the vertical's glyph on a warm ground. */}
               <div className="relative flex h-28 w-full items-center justify-center overflow-hidden bg-subtle">
-                <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-ember/10 blur-3xl" />
+                <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-ember-wash blur-3xl" />
                 {(() => {
                   const Glyph = DEMO_GLYPH[d.id] ?? Landmark;
                   return <Glyph aria-hidden size={32} strokeWidth={1.5} className="relative text-muted transition-transform duration-considered group-hover:scale-110" />;
@@ -102,7 +102,7 @@ export default function Home() {
             onClick={fresh}
             className="card-interactive group flex min-h-60 flex-col items-start justify-center gap-tight rounded-card border border-dashed border-strong bg-transparent p-section text-left hover:border-ember"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-control bg-ember/10 text-brand-foreground">
+            <span className="flex h-10 w-10 items-center justify-center rounded-control bg-ember-wash text-brand-foreground">
               <Plus size={20} strokeWidth={1.5} />
             </span>
             <span className="type-h2 mt-tight text-md">Start fresh</span>

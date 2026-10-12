@@ -29,42 +29,101 @@ Three layers. A layer only ever points at the one beneath it.
 
 | Layer | What it is | Examples | Where |
 |---|---|---|---|
-| **A · Primitive** | The raw palette and scales. Named by value, never used in components. | `--color-neutral-150`, `--color-brand-600`, `--radius-sm`, `--spacing-tight`, `--elevation-2` | `@theme`, first block |
+| **A · Primitive** | The raw palette and scales. Named by value, never used in components. | `--color-neutral-100`, `--color-brand-600`, `--radius-sm`, `--spacing-tight`, `--elevation-2` | `@theme`, first block |
 | **B · Semantic** | A role. Named by purpose; points at a primitive. Changes with the mode. | `--color-surface`, `--color-fg`, `--color-line`, `--color-ember-solid`, `--text-sm`, `--shadow-md` | `@theme` + `.light` / `.dark` |
 | **C · Component** | What a role is in one product or one component. Points at a semantic or primitive token. Changes with the product. | `--radius-card`, `--radius-control`, `--radius-sheet`, `--shadow-card`, `--shadow-float` | `@theme` + `[data-product="go"]` |
 
+### Primitive scales
+
+Six tonal scales, each exactly eleven steps (50 to 950). Nothing else is a primitive.
+
+| Scale | Role | Character |
+|---|---|---|
+| `brand` | Brand / Primary | Hue 18° · High chroma · Derived from `#F94A00` |
+| `neutral` | Neutral / Warm Gray | Hue 40° · 3% saturation · Brand-compatible structural palette |
+| `green` | Success | Hue 142° · Positive actions, confirmations |
+| `amber` | Warning | Hue 38° · Caution, attention needed |
+| `red` | Destructive | Hue 0° · Errors, destructive actions, critical alerts |
+| `blue` | Info | Hue 217° · Informational, neutral guidance |
+
 ### Colour roles (semantic)
 
-| Role | Token | Light | Dark |
-|---|---|---|---|
-| background (page ground) | `surface` | neutral-50 `#f5f2eb` | neutral-950 `#141413` |
-| surface (cards) | `card` | white | neutral-900 `#22211f` |
-| surface-raised (menus, sheets, chrome) | `sheet`, `chrome` | = card | = card |
-| surface-sunken (a fill inside a card) | `subtle` | neutral-100 `#efece5` | neutral-850 `#2b2a27` |
-| hover / pressed fill | `muted-wash` | neutral-150 `#eae8e3` | neutral-850 |
-| unavailable time | `offtime` | = surface | = surface |
-| foreground | `fg` | neutral-900 | neutral-100 |
-| muted-foreground | `muted` | neutral-650 `#6b675f` | neutral-500 |
-| disabled / placeholder | `faint` | neutral-400 | neutral-600 |
-| border, input edge | `line` | neutral-200 | neutral-800 |
-| border-strong | `strong` | neutral-300 | neutral-700 |
-| divider between rows | `hairline` | neutral-100 | neutral-875 |
-| inverse | `inverse` / `inverse-fg` | ink / paper | paper / ink |
-| accent (marks, dots, stripes, focus) | `ember` | brand-500 `#f94a00` | brand-400 |
-| primary fill (white text on it) | `ember-solid` | brand-600 `#d63d00` | brand-600 |
-| brand text, links | `brand-foreground` | brand-700 | brand-300 |
-| focus ring | `ring` | = ember | = ember |
-| text on a solid fill | `on-solid` | white | white |
-| status text | `success` `warning` `danger` `info` | 800/700 steps | 400 steps |
-| status fills under white | `success-solid` `danger-solid` | green-700, red-700 | same |
-| status tints | `*-wash` | pale | dark tint |
-| marketplace axis | `market`, `market-wash`, `market-solid` | violet | violet |
+The Counterfoil Color System, in its four groups. Our token is the name in the
+stylesheet; the spec name is what the Color System calls the role. Each value is
+a step of a scale.
 
-**Contrast is measured, not assumed.** Body text ≥ 4.5:1, large text (≥ 18.66px
-bold or 24px) ≥ 3:1, UI marks and focus ≥ 3:1, in both modes. Every `-solid`
-fill is ≥ 4.5:1 under white. `ember` (`#f94a00`) is **3.50:1** under white, so it
-is never a fill behind text: that is `ember-solid`. `faint` is only for disabled
-controls and placeholders, never content.
+**01 Content**
+
+| Spec name | Token | Light | Dark |
+|---|---|---|---|
+| foreground | `fg` | neutral-900 | neutral-100 |
+| secondary-foreground | `fg-secondary` | neutral-700 | neutral-400 |
+| muted-foreground | `muted` | neutral-600 | neutral-500 |
+| disabled-foreground | `faint` | neutral-400 | neutral-700 |
+| brand / accent-foreground (text, links) | `brand-foreground` | brand-700 | brand-300 |
+| success / warning / destructive / info foreground | `success` `warning` `danger` `info` | green-800 · amber-800 · red-700 · blue-700 | the 400 steps |
+
+**02 Surfaces**
+
+| Spec name | Token | Light | Dark |
+|---|---|---|---|
+| background (page ground) | `surface` | neutral-50 | neutral-950 |
+| card | `card` | white | neutral-900 |
+| popover (menus, sheets, chrome) | `sheet`, `chrome` | = card | = card |
+| secondary-surface (a fill inside a card) | `subtle` | neutral-100 | neutral-900 (= the card; needs `border-line` to be seen) |
+| muted-surface (hover fill) | `muted-wash` | neutral-100 | neutral-800 |
+| accent-surface | `ember-wash` | brand-50 | brand-950 |
+| success / warning / destructive / info surface | `success-wash` `warning-wash` `danger-wash` `info-wash` | the 50 steps | the 950 steps |
+| container borders | `success-line` `warning-line` `danger-line` `info-line` `ember-line` | the 200 steps | the 900 steps |
+| marketplace surface | `market-wash` | blue-50 | blue-950 |
+| unavailable time | `offtime` | = surface | = surface |
+| inverse | `inverse` / `inverse-fg` | ink / paper | paper / ink |
+
+**03 Interaction** (component state tokens). A state is the next step of the
+family's own scale: deeper in light, brighter in dark. No state is an opacity of
+the fill.
+
+| Spec name | Token | Light | Dark |
+|---|---|---|---|
+| primary | `ember-solid` | brand-500 `#f94a00` | brand-400 |
+| primary-foreground | `on-solid` | white | neutral-950 |
+| primary-hover · active | `ember-hover` · `ember-active` | brand-600 · brand-700 | brand-300 · brand-500 |
+| primary-disabled | `ember-disabled` | brand-100 at 60% | brand-900 at 40% |
+| secondary | `subtle`, with `fg-secondary` text | neutral-100 | neutral-900 |
+| secondary-hover · active | `secondary-hover` · `secondary-active` | neutral-200 · neutral-300 | neutral-800 · neutral-700 |
+| destructive | `danger-solid` | red-600 | red-500 |
+| destructive-hover · active | `danger-hover` · `danger-active` | red-700 · red-800 | red-400 · red-600 |
+| destructive-disabled | `danger-disabled` | red-100 at 60% | red-900 at 40% |
+| accent | `ember-wash`, with `brand-foreground` text | brand-50 | brand-950 |
+| ring, focus-ring | `ring` (= `ember`) | brand-500 | brand-400 |
+| confirmed fill | `success-solid` | green-700 | green-500 |
+| marketplace fill | `market-solid` | blue-700 | blue-500 |
+
+The accent mark `ember` (`bg-ember`, `text-ember`) is brand-500 in light and
+brand-400 in dark: marks, dots, stripes and the focus ring. A solid fill that
+carries text is `ember-solid`; they are the same orange.
+
+**04 Structure**
+
+| Spec name | Token | Light | Dark |
+|---|---|---|---|
+| border, input | `line` | neutral-200 | neutral-800 |
+| divider | `hairline` | neutral-200 | neutral-800 |
+| border-strong (hover edge) | `strong` | neutral-300 | neutral-700 |
+
+The marketplace axis (`market`, `market-wash`, `market-solid`) is the info blue
+family, so every hue on a screen is a step of one of the six scales. Chart colours (`--chart-*`,
+`--heat-*`) are steps of the scales too.
+
+**Contrast is measured, not assumed.** Body text needs 4.5:1, large text (at
+least 18.66px bold, or 24px) 3:1, and UI marks and focus 3:1, in both modes. The
+WCAG level for a pair is AAA from 7:1, AA from 4.5:1, and AA Large / UI from
+3:1. White on `ember-solid` (`#f94a00`) is **3.50:1** in light: AA Large / UI,
+accepted for UI controls (buttons, chips, badges) and never for body text. In
+dark the fill is brand-400 with neutral-950 text, 7.1:1. Brand-coloured text at
+body size is `brand-foreground`, never `ember`. `faint` is only for disabled
+controls and placeholders, never content. The live matrix is at
+`/design-system/colour`.
 
 ## 3. Four theme configurations
 
@@ -207,7 +266,7 @@ own hover, focus-visible, pressed, disabled, loading, selected and invalid
 states. A page never restyles one with `className` for a different look; it
 picks a variant.
 
-- **Button** — `primary` (one per screen, `ember-solid`), `secondary` (white,
+- **Button** — `primary` (one per screen, `ember-solid`), `secondary` (neutral-100 fill,
   `line` edge), `tertiary` (no fill), `destructive` (`danger-solid`), `link`.
   Sizes `sm` 36 / `md` 44 / `lg` 48, and `icon` (square). Radius is
   `rounded-control`, so it is a pill in Go without a per-call prop. Loading
@@ -266,9 +325,14 @@ These may use raw values; nothing else may.
 A one-off exception elsewhere is marked on its own line with
 `// ds-exception: <reason>`; a marker without a reason is itself an error.
 
-White on the primary fill is **not** an exception: `ember-solid` is brand-600
-(#d63d00), 4.64:1 under white. `ember` (#f94a00, 3.50:1) is the accent for
-marks, rings and charts, never a fill behind text.
+White on the primary fill is the Color System’s own position, not a leak:
+`ember-solid` is `#f94a00` (brand-500) and white on it is **3.50:1** in light:
+AA Large / UI (WCAG 1.4.11). It is accepted for UI controls (buttons, chips,
+badges, the selected state of a choice) and **never for body text**; text at
+body size in the brand colour is `brand-foreground` (brand-700, brand-300 in
+dark). In dark the fill is brand-400 and its text is neutral-950, 7.1:1, so the
+exception exists only in light. A label that has to be read at length is never
+put on the primary fill.
 
 ## 13. Enforcement
 

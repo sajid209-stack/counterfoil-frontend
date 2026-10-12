@@ -4,6 +4,7 @@ import { Button } from "@/components/ui";
 import { Callout, Code, CodeBlock, DocSection, P, SectionHeader, Small } from "../_components/Doc";
 import { ContrastTable } from "../_components/ContrastTable";
 import { Preview } from "../_components/Preview";
+import { ACCENT_HEX } from "../_components/brand";
 
 const EXCEPTIONS = [
   ["src/app/deck/**", "A fixed 1600 × 900 slide canvas in real pixels."],
@@ -64,7 +65,8 @@ export function AccessibilitySection() {
             { fg: "--color-fg", bg: "--color-card", label: "Body text", need: 4.5 },
             { fg: "--color-muted", bg: "--color-card", label: "Supporting text", need: 4.5 },
             { fg: "--color-brand-foreground", bg: "--color-card", label: "Links and brand text", need: 4.5 },
-            { fg: "--color-on-solid", bg: "--color-ember-solid", label: "The primary button", need: 4.5 },
+            { fg: "--color-fg-secondary", bg: "--color-subtle", label: "Secondary button text", need: 4.5 },
+            { fg: "--color-on-solid", bg: "--color-ember-solid", label: "The primary button", need: 3, note: `White on ${ACCENT_HEX} is 3.50:1 in light: AA Large / UI, accepted for UI controls only and never for body text. In dark, neutral-950 on brand-400 is 7.1:1.` },
             { fg: "--color-on-solid", bg: "--color-danger-solid", label: "The destructive button", need: 4.5 },
             { fg: "--color-ring", bg: "--color-card", label: "The focus ring", need: 3 },
           ]}
@@ -92,10 +94,11 @@ export function AccessibilitySection() {
 
       <DocSection id="house-exceptions" title="House exceptions to the floors">
         <P>
-          The primary button is <strong className="font-semibold">not</strong> an exception: white on <Code>ember-solid</Code> (brand-600) is 4.64:1, above the 4.5:1 text floor, in both modes. The accent <Code>ember</Code> is 3.50:1 under white, which is exactly why it is never a fill behind text.
+          The primary fill is <Code>ember-solid</Code>: {ACCENT_HEX} (brand-500) in light, brand-400 in dark. White on {ACCENT_HEX} is <strong className="font-semibold">3.50:1</strong>, which the Color System accepts for UI controls — buttons, chips and badges — as AA Large / UI (WCAG 1.4.11), and never for body text. In dark the fill lifts and its text turns to neutral-950, 7.1:1. Brand-coloured text at body size is <Code>brand-foreground</Code> (brand-700, brand-300 in dark), 4.5:1 or better on the card and on the accent surface.
         </P>
         <P>What is left is short, and each has a reason:</P>
         <ul className="flex max-w-prose list-disc flex-col gap-tight pl-major text-base text-fg marker:text-muted">
+          <li><strong className="font-semibold">White on {ACCENT_HEX} in light (3.50:1)</strong>: UI controls only, as above.</li>
           <li><strong className="font-semibold">The 11px POS tab labels</strong> (<Code>text-2xs</Code>): five labelled tabs do not fit across a 390px phone at 14px, and every tab also carries an icon.</li>
           <li><strong className="font-semibold">The 9px seat labels</strong> on a seat plan: each seat carries its full name as an accessible name and a title.</li>
           <li><strong className="font-semibold">The scopes below</strong> — the deck, event templates, the storefront accent, print pages, charts and fluid till figures — which use raw values for their own reasons.</li>

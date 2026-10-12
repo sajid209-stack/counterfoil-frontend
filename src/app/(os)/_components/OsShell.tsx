@@ -229,7 +229,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
                 aria-label={t("settingsSections")}
                 aria-haspopup="dialog"
                 data-settings-back-phone
-                className="-ml-tight flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-fg/[0.06] active:bg-fg/[0.08] peer-[:not(:empty)]:hidden"
+                className="-ml-tight flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-muted-wash active:bg-secondary-hover peer-[:not(:empty)]:hidden"
               >
                 <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
               </button>

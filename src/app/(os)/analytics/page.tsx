@@ -275,7 +275,7 @@ function kpiItems(o: AnalyticsOverview, t: ReturnType<typeof useTranslations>): 
     if (d === 0) return undefined;
     const up = d > 0;
     return (
-      <span title={since} className={cn("inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-xs", up ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+      <span title={since} className={cn("inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-xs", up ? "bg-success-wash text-success" : "bg-danger-wash text-danger")}>
         {up ? "↗" : "↘"} {t("kpi.pts", { value: `${up ? "+" : "−"}${Math.abs(d)}` })}
         {since && <span className="sr-only">{` ${since}`}</span>}
       </span>

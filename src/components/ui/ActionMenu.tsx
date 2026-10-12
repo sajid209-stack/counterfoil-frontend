@@ -157,7 +157,7 @@ export function ActionMenu({
           aria-orientation="vertical"
           aria-label={label}
           className={cn(
-            "absolute right-0 z-30 min-w-[11rem] max-w-[17rem] border border-hairline bg-card py-inline shadow-lg dark:border-line",
+            "absolute right-0 z-30 min-w-[11rem] max-w-[17rem] border border-hairline bg-card py-inline shadow-lg",
             shape === "go" ? "rounded-go" : "rounded-card",
             up ? "bottom-[calc(100%+4px)]" : "top-[calc(100%+4px)]",
           )}
@@ -191,7 +191,7 @@ export function ActionMenu({
                 item.disabled
                   ? "cursor-not-allowed text-muted"
                   : item.destructive
-                    ? "text-danger hover:bg-danger/10 focus-visible:bg-danger/10"
+                    ? "text-danger hover:bg-danger-wash focus-visible:bg-danger-wash"
                     : "text-fg hover:bg-muted-wash focus-visible:bg-muted-wash",
               )}
             >

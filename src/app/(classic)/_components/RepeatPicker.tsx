@@ -55,7 +55,7 @@ export function RepeatPicker({
             aria-label={t("repeat.fewer")}
             onClick={() => onCount(Math.max(1, count - 1))}
             disabled={count <= 1}
-            className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-lg disabled:opacity-40 active:bg-ember/10"
+            className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-lg disabled:opacity-40 active:bg-ember-wash"
           >
             −
           </button>
@@ -67,7 +67,7 @@ export function RepeatPicker({
             aria-label={t("repeat.more")}
             onClick={() => onCount(Math.min(max, count + 1))}
             disabled={count >= max}
-            className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-lg disabled:opacity-40 active:bg-ember/10"
+            className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-lg disabled:opacity-40 active:bg-ember-wash"
           >
             +
           </button>
@@ -79,7 +79,7 @@ export function RepeatPicker({
             onClick={() => onCount(n)}
             className={cn(
               "h-12 shrink-0 rounded-sm border px-comfortable text-base transition-colors duration-quick",
-              count === n ? "border-ember bg-ember/10 text-brand-foreground" : "border-line bg-card active:bg-ember/10",
+              count === n ? "border-ember bg-ember-wash text-brand-foreground" : "border-line bg-card active:bg-ember-wash",
             )}
           >
             {t("repeat.weeks", { count: n })}

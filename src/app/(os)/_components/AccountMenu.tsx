@@ -61,8 +61,8 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
         aria-expanded={open}
         aria-label={t("account")}
         className={cn(
-          "flex h-11 items-center gap-tight rounded-control text-muted transition-colors duration-quick hover:text-fg active:bg-ember/10",
-          compact ? "w-11 justify-center" : "border border-line bg-card pl-inline pr-tight hover:border-ember/40",
+          "flex h-11 items-center gap-tight rounded-control text-muted transition-colors duration-quick hover:text-fg active:bg-ember-wash",
+          compact ? "w-11 justify-center" : "border border-line bg-card pl-inline pr-tight hover:border-ember-line",
           open && "text-fg",
         )}
       >
@@ -107,7 +107,7 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
           <Link
             href="/settings/profile"
             onClick={() => setOpen(false)}
-            className="mt-section flex h-11 items-center gap-comfortable rounded-control border border-line px-comfortable text-base font-medium text-fg transition-colors duration-quick hover:border-ember/40 hover:bg-muted-wash"
+            className="mt-section flex h-11 items-center gap-comfortable rounded-control border border-line px-comfortable text-base font-medium text-fg transition-colors duration-quick hover:border-ember-line hover:bg-muted-wash"
           >
             <UserRound size={16} strokeWidth={1.5} className="text-muted" aria-hidden />
             {t("myProfile")}
@@ -115,7 +115,7 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
           <Link
             href="/settings/business"
             onClick={() => setOpen(false)}
-            className="mt-tight flex h-11 items-center gap-comfortable rounded-control border border-line px-comfortable text-base font-medium text-fg transition-colors duration-quick hover:border-ember/40 hover:bg-muted-wash"
+            className="mt-tight flex h-11 items-center gap-comfortable rounded-control border border-line px-comfortable text-base font-medium text-fg transition-colors duration-quick hover:border-ember-line hover:bg-muted-wash"
           >
             <SettingsIcon size={16} strokeWidth={1.5} className="text-muted" aria-hidden />
             {t("settings")}

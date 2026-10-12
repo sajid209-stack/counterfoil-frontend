@@ -85,7 +85,7 @@ export function LineDrawer({ row, locationId, onClose }: { row: DisplayRow | nul
               {row.lines.map((l) => (
                 <li key={l.id} className="flex items-center justify-between gap-section py-comfortable">
                   {l.orderId ? (
-                    <Link href={`/orders/${l.orderId}`} className="inline-flex min-h-11 items-center font-mono text-sm text-brand-foreground underline underline-offset-2 hover:opacity-80 md:min-h-0">
+                    <Link href={`/orders/${l.orderId}`} className="inline-flex min-h-11 items-center font-mono text-sm text-brand-foreground underline underline-offset-2 hover:text-ember-hover md:min-h-0">
                       {l.orderReference}
                     </Link>
                   ) : (
@@ -102,7 +102,7 @@ export function LineDrawer({ row, locationId, onClose }: { row: DisplayRow | nul
             {line.orderId && line.orderReference &&
               item(
                 t("detail.order"),
-                <Link href={`/orders/${line.orderId}`} className="inline-flex min-h-11 items-center font-mono text-sm text-brand-foreground underline underline-offset-2 hover:opacity-80 md:min-h-0">
+                <Link href={`/orders/${line.orderId}`} className="inline-flex min-h-11 items-center font-mono text-sm text-brand-foreground underline underline-offset-2 hover:text-ember-hover md:min-h-0">
                   {line.orderReference}
                 </Link>,
               )}

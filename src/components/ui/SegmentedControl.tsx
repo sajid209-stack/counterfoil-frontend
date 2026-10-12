@@ -76,7 +76,7 @@ export function SegmentedControl({
       aria-label={ariaLabel}
       aria-labelledby={ariaLabelledBy}
       className={cn(
-        "inline-flex items-stretch gap-0.5 rounded-control bg-subtle p-0.5",
+        "inline-flex items-stretch gap-0.5 rounded-control bg-subtle p-0.5 ring-1 ring-inset ring-line",
         fullWidth && "flex w-full",
         className,
       )}
@@ -105,7 +105,7 @@ export function SegmentedControl({
               // The option is the target, not the track: 44px on touch, denser from md.
               size === "sm" ? "h-11 text-sm md:h-8" : "h-11 text-base md:h-10",
               fullWidth && "flex-1",
-              on ? "bg-card text-fg shadow-sm" : "text-muted hover:text-fg",
+              on ? "bg-card text-fg shadow-sm ring-1 ring-inset ring-strong" : "text-muted hover:bg-secondary-hover hover:text-fg",
               "disabled:cursor-not-allowed disabled:opacity-50",
             )}
           >

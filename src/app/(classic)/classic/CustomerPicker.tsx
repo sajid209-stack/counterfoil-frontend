@@ -197,7 +197,7 @@ function PickerBody({
             <button
               type="button"
               onClick={() => attach(c)}
-              className="flex min-h-12 w-full items-center justify-between gap-tight rounded-sm border border-line p-comfortable text-left transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10"
+              className="flex min-h-12 w-full items-center justify-between gap-tight rounded-sm border border-line p-comfortable text-left transition-colors duration-quick hover:bg-muted-wash active:bg-ember-wash"
             >
               <span className="min-w-0">
                 <span className="flex items-center gap-inline">

@@ -31,31 +31,42 @@ export type ButtonSize = "sm" | "md" | "lg" | "icon";
  *  still works and forces the full round in either product. */
 export type ButtonShape = "default" | "pill";
 
+/* Every state is a step of the variant's own scale (the Color System's
+   Component State Tokens): primary brand-500 → hover 600 → pressed 700 in
+   light, brand-400 → 300 → 500 in dark; destructive red-600 → 700 → 800 /
+   red-500 → 400 → 600; secondary neutral-100 → 200 → 300 / 900 → 800 → 700.
+   No opacity hovers — a faded fill is a colour the system does not have. */
 const VARIANTS: Record<ButtonVariant, string> = {
-  /* Solid ember-solid (brand-600, 4.64:1 under white) — the one brand accent
-     for the primary action. Never an outline. */
-  primary: "bg-ember-solid text-on-solid enabled:hover:opacity-90",
-  /* The stroke stays (a secondary button on a white card needs an edge to be
-     found) but hovers one step firmer, not to ink. */
+  /* #F94A00 with white text in light, brand-400 with neutral-950 text in dark
+     — the one brand fill, for the one primary action. Never an outline. */
+  primary:
+    "bg-ember-solid text-on-solid enabled:hover:bg-ember-hover enabled:active:bg-ember-active",
+  /* A neutral-100 fill with secondary-foreground text. The 1px line keeps it
+     findable where the fill meets a fill of the same step (a dark card). */
   secondary:
-    "bg-card text-fg border border-line enabled:hover:border-strong enabled:hover:bg-muted-wash",
-  tertiary: "bg-transparent text-fg enabled:hover:bg-muted-wash",
-  link: "bg-transparent text-brand-foreground underline underline-offset-2 enabled:hover:opacity-80",
-  destructive: "bg-danger-solid text-on-solid enabled:hover:opacity-90",
+    "bg-subtle text-fg-secondary border border-line enabled:hover:bg-secondary-hover enabled:hover:text-fg enabled:active:bg-secondary-active",
+  tertiary:
+    "bg-transparent text-fg enabled:hover:bg-muted-wash enabled:active:bg-secondary-hover",
+  link: "bg-transparent text-brand-foreground underline underline-offset-2 enabled:hover:text-ember-hover",
+  destructive:
+    "bg-danger-solid text-on-solid enabled:hover:bg-danger-hover enabled:active:bg-danger-active",
 };
 
-/* One disabled treatment. A solid fill cannot just fade — white on a 50% ember
-   is unreadable — so a disabled solid becomes the neutral `line` fill with
-   `muted` text (still readable); everything else fades to half strength. In
-   both cases the cursor says "not allowed" and the press feedback is gone. */
+/* One disabled treatment per family. A solid becomes its own family's
+   disabled tint (brand-100 at 60% / brand-900 at 40%, the same on red) with
+   disabled-foreground text; everything else fades to half strength. In both
+   cases the cursor says "not allowed" and the press feedback is gone. */
 const SOLID = new Set<ButtonVariant>(["primary", "destructive"]);
-const DISABLED_SOLID = "disabled:bg-line disabled:text-muted";
+const DISABLED: Partial<Record<ButtonVariant, string>> = {
+  primary: "disabled:bg-ember-disabled disabled:text-faint",
+  destructive: "disabled:bg-danger-disabled disabled:text-faint",
+};
 const DISABLED_SOFT = "disabled:opacity-50";
 
 /* A toggle button that is on. aria-pressed says it to assistive tech; this
    says it to the eye without relying on colour alone (a firmer edge/fill). */
 const SELECTED: Partial<Record<ButtonVariant, string>> = {
-  secondary: "border-strong bg-muted-wash",
+  secondary: "border-strong bg-secondary-hover text-fg",
   tertiary: "bg-muted-wash",
 };
 
@@ -116,7 +127,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         "disabled:cursor-not-allowed",
         variant === "link" ? "" : SIZES[size],
         VARIANTS[variant],
-        SOLID.has(variant) ? DISABLED_SOLID : DISABLED_SOFT,
+        SOLID.has(variant) ? DISABLED[variant] : DISABLED_SOFT,
         selected && SELECTED[variant],
         fullWidth && "w-full",
         className,
@@ -165,7 +176,7 @@ export function buttonClass({
   fullWidth?: boolean;
   asButton?: boolean;
 } = {}): string {
-  const look = asButton ? VARIANTS[variant] : VARIANTS[variant].replaceAll("enabled:hover:", "hover:");
+  const look = asButton ? VARIANTS[variant] : VARIANTS[variant].replaceAll("enabled:", "");
   return cn(
     "relative inline-flex items-center justify-center gap-tight font-medium",
     shape === "pill" ? "rounded-full" : "rounded-control",

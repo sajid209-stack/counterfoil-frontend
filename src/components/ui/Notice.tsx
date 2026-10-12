@@ -9,19 +9,23 @@ import { cn } from "@/lib/cn";
 export type NoticeTone = "info" | "success" | "warning" | "danger" | "neutral";
 
 /**
- * Tone → background wash, icon colour, default icon.
+ * Tone → container, icon colour, title colour, default icon.
  *
- * The wash is a soft fill with NO border; the text is always `fg`, because the
- * washes were tuned against `fg` in light and dark (>= 4.5:1). The tone shows
- * in the icon and the tint only, so colour never has to carry the words.
- * `info` has no wash token of its own, so it is the info colour at 10%.
+ * This is the Color System's "With surface" alert: a `*-wash` fill, a
+ * `border-*-line` edge, and the tone's own foreground token on the icon and the
+ * title. The body copy stays `fg` (the washes are tuned against it in light and
+ * dark), and the words always carry the meaning, so colour never has to.
+ * Nothing here is derived from an alpha or a `dark:` override — light and dark
+ * differ only because the tokens do. `neutral` is the quiet one: `subtle` with a
+ * `line` edge, which is what makes it visible in dark, where `subtle` and the
+ * card are the same value.
  */
-const TONES: Record<NoticeTone, { box: string; icon: string; Icon: LucideIcon }> = {
-  info: { box: "bg-info/10", icon: "text-info", Icon: Info },
-  success: { box: "bg-success-wash", icon: "text-success", Icon: CircleCheck },
-  warning: { box: "bg-warning-wash", icon: "text-warning", Icon: TriangleAlert },
-  danger: { box: "bg-danger-wash", icon: "text-danger", Icon: CircleAlert },
-  neutral: { box: "bg-subtle dark:bg-fg/10", icon: "text-muted", Icon: Info },
+const TONES: Record<NoticeTone, { box: string; icon: string; title: string; Icon: LucideIcon }> = {
+  info: { box: "border border-info-line bg-info-wash", icon: "text-info", title: "text-info", Icon: Info },
+  success: { box: "border border-success-line bg-success-wash", icon: "text-success", title: "text-success", Icon: CircleCheck },
+  warning: { box: "border border-warning-line bg-warning-wash", icon: "text-warning", title: "text-warning", Icon: TriangleAlert },
+  danger: { box: "border border-danger-line bg-danger-wash", icon: "text-danger", title: "text-danger", Icon: CircleAlert },
+  neutral: { box: "border border-line bg-subtle", icon: "text-muted", title: "text-fg", Icon: Info },
 };
 
 export interface NoticeAction {
@@ -92,7 +96,7 @@ export function Notice({
         </span>
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-inline">
-        {title && <p className={cn("font-semibold", small ? "text-sm" : "text-base")}>{title}</p>}
+        {title && <p className={cn("font-semibold", cfg.title, small ? "text-sm" : "text-base")}>{title}</p>}
         {children && <div className={cn(small ? "text-sm" : "text-base")}>{children}</div>}
         {action &&
           (action.href ? (

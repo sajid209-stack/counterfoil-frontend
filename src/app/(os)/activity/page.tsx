@@ -382,7 +382,7 @@ function Row({
         </Button>
       </div>
       {expanded && (
-        <dl className="grid gap-x-section gap-y-tight bg-muted-wash/60 px-card py-comfortable text-sm sm:grid-cols-2 md:pl-[calc(var(--spacing-card)+4.75rem+var(--spacing-comfortable)*2+2rem)]">
+        <dl className="grid gap-x-section gap-y-tight bg-muted-wash px-card py-comfortable text-sm sm:grid-cols-2 md:pl-[calc(var(--spacing-card)+4.75rem+var(--spacing-comfortable)*2+2rem)]">
           {x.details(e).map((d, i) => (
             <div key={`${d.label}-${i}`} className="min-w-0">
               <dt className="text-xs font-medium text-muted">{d.label}</dt>

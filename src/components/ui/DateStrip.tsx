@@ -111,10 +111,10 @@ export function DateStrip({
                   onClick={() => onChange(d)}
                   className={cn(
                     "relative flex min-h-[3.75rem] flex-col items-center justify-center border-b border-r border-line px-inline py-tight text-center transition-colors duration-quick",
-                    on ? "bg-ember-solid text-on-solid" : "bg-card text-fg active:bg-ember-wash",
+                    on ? "bg-ember-solid text-on-solid hover:bg-ember-hover active:bg-ember-active" : "bg-card text-fg hover:bg-muted-wash active:bg-ember-wash",
                   )}
                 >
-                  {isMarked && <span className={cn("absolute left-1.5 top-1.5 size-1.5 rounded-full", on ? "bg-white" : "bg-ember")} aria-hidden />}
+                  {isMarked && <span className={cn("absolute left-1.5 top-1.5 size-1.5 rounded-full", on ? "bg-on-solid" : "bg-ember")} aria-hidden />}
                   {on && <Check size={13} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
                   <span className="w-full truncate text-base font-semibold leading-tight">{label(d)}</span>
                   {/* Ink on the chosen day: muted on the orange tint fell to 4.4:1 in
@@ -133,7 +133,7 @@ export function DateStrip({
               onClick={() => setPickerOpen((v) => !v)}
               className={cn(
                 "flex min-h-[3.75rem] flex-col items-center justify-center gap-0.5 border-b border-r border-line px-inline text-sm font-medium transition-colors duration-quick",
-                pickerOpen ? "bg-ember-wash text-fg" : "bg-card text-muted active:bg-ember-wash",
+                pickerOpen ? "bg-ember-wash text-fg" : "bg-card text-muted hover:bg-muted-wash active:bg-ember-wash",
               )}
             >
               <CalendarDays size={18} strokeWidth={1.75} aria-hidden />
@@ -179,8 +179,8 @@ export function DateStrip({
               className={cn(
                 "relative flex min-h-14 flex-col items-center justify-center rounded-inner border px-inline py-tight text-center transition-colors duration-quick",
                 on
-                  ? "border-ember bg-ember-wash/60 ring-1 ring-inset ring-ember"
-                  : "border-line bg-card active:bg-ember-wash",
+                  ? "border-ember bg-ember-wash ring-1 ring-inset ring-ember"
+                  : "border-line bg-card hover:bg-muted-wash active:bg-ember-wash",
               )}
             >
               {/* A day carrying part of the sale says so, so the selection is
@@ -209,7 +209,7 @@ export function DateStrip({
               <span
                 className={cn(
                   "w-full truncate text-xs leading-tight",
-                  on ? "text-brand-foreground/70" : "text-muted",
+                  on ? "text-brand-foreground" : "text-muted",
                 )}
               >
                 {sub(d)}
@@ -218,7 +218,7 @@ export function DateStrip({
                 <span
                   className={cn(
                     "w-full truncate text-xs leading-tight",
-                    cap.low ? "font-medium text-brand-foreground" : on ? "text-brand-foreground/70" : "text-muted",
+                    cap.low ? "font-medium text-brand-foreground" : on ? "text-brand-foreground" : "text-muted",
                   )}
                 >
                   {cap.text}

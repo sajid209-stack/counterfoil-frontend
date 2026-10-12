@@ -68,10 +68,10 @@ export function SettingsSectionList({ pathname, noun, attention, variant, onNavi
                       sheet
                         ? "mx-tight min-h-11 px-comfortable py-tight"
                         : "h-9 px-comfortable [@media(pointer:coarse)]:h-11",
-                      current ? "bg-fg/[0.07] text-fg dark:bg-fg/[0.09]" : "text-muted hover:bg-fg/[0.04] hover:text-fg",
+                      current ? "bg-ember-wash text-brand-foreground" : "text-muted hover:bg-muted-wash hover:text-fg",
                     )}
                   >
-                    <Icon size={18} strokeWidth={1.5} aria-hidden className="shrink-0" />
+                    <Icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", current && "text-ember")} />
                     <span className="min-w-0 flex-1">
                       <span className={cn("block", !sheet && "truncate")}>{label}</span>
                       {sheet && reason && (
@@ -87,7 +87,7 @@ export function SettingsSectionList({ pathname, noun, attention, variant, onNavi
                         <span className="sr-only">{`: ${reason}`}</span>
                       </>
                     )}
-                    {sheet && current && <Check size={16} strokeWidth={2} aria-hidden className="shrink-0 text-fg" />}
+                    {sheet && current && <Check size={16} strokeWidth={2} aria-hidden className="shrink-0 text-ember" />}
                   </Link>
                 </li>
               );

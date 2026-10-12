@@ -80,7 +80,7 @@ export default function ShiftClosePage() {
             onChange={(e) => setReason(e.target.value)}
             rows={2}
             placeholder={t("varianceReasonPlaceholder")}
-            className="min-h-[72px] rounded-inner border border-warning/50 bg-card p-section text-base"
+            className="min-h-[72px] rounded-inner border border-warning-line bg-card p-section text-base"
           />
         </div>
       )}

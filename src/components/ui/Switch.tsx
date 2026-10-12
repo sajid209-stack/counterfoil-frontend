@@ -13,8 +13,9 @@ import { cn } from "@/lib/cn";
  *
  * A real `role="switch"` button, so it is announced as a switch with its state
  * rather than as a checkbox, and the target is the full 44px rather than the
- * 20px track. On is the pinned `ember-solid`; off is `strong`; the thumb is the
- * card colour (white when on, whatever the theme).
+ * 20px track. On is `ember-solid` (`ember-hover` under the pointer,
+ * `ember-active` pressed); off is `strong`; the thumb is `on-solid` when on and
+ * the card colour when off.
  *
  * Give it a `label` (and optionally a `description`) and it draws them beside
  * the track, wired up as its accessible name and description; clicking the
@@ -76,13 +77,13 @@ export function Switch({
       aria-describedby={description ? descId : describedBy}
       disabled={disabled}
       onClick={flip}
-      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control disabled:cursor-not-allowed disabled:opacity-50"
+      className="group inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control disabled:cursor-not-allowed disabled:opacity-50"
     >
       <span
         aria-hidden
         className={cn(
           "relative h-5 w-9 rounded-full transition-colors duration-quick ease-counterfoil",
-          on ? "bg-ember-solid" : "bg-strong",
+          on ? "bg-ember-solid group-hover:bg-ember-hover group-active:bg-ember-active" : "bg-strong",
         )}
       >
         {/* left-0.5 is load-bearing: a button centres its content, and an

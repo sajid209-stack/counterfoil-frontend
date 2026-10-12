@@ -119,10 +119,10 @@ function MenuBody({ onClose }: { onClose: () => void }) {
           onClick={onClose}
           className={cn(
             "flex h-12 items-center gap-section rounded-control px-comfortable text-md font-medium transition-colors duration-quick",
-            active ? "bg-fg/[0.07] text-fg dark:bg-fg/[0.09]" : "text-fg hover:bg-fg/[0.04] active:bg-fg/[0.06]",
+            active ? "bg-ember-wash text-brand-foreground" : "text-fg hover:bg-muted-wash active:bg-secondary-hover",
           )}
         >
-          <Icon size={20} strokeWidth={1.5} aria-hidden className={cn("shrink-0", active ? "text-fg" : "text-muted")} />
+          <Icon size={20} strokeWidth={1.5} aria-hidden className={cn("shrink-0", active ? "text-ember" : "text-muted")} />
           <span className="min-w-0 flex-1 truncate">{t(d.key)}</span>
           {leaves && <ArrowUpRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
         </Link>
@@ -177,7 +177,7 @@ function MenuBody({ onClose }: { onClose: () => void }) {
           <Link
             href="/settings/profile"
             onClick={onClose}
-            className="flex h-11 shrink-0 items-center rounded-control px-comfortable text-sm font-medium text-muted transition-colors duration-quick hover:bg-fg/[0.04] hover:text-fg"
+            className="flex h-11 shrink-0 items-center rounded-control px-comfortable text-sm font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg"
           >
             {t("myProfile")}
           </Link>
@@ -200,7 +200,7 @@ function MenuBody({ onClose }: { onClose: () => void }) {
         <Link
           href="/sign-in"
           data-menu-item="signOut"
-          className="flex h-12 items-center gap-section rounded-control px-comfortable text-md font-medium text-fg transition-colors duration-quick hover:bg-fg/[0.04] active:bg-fg/[0.06]"
+          className="flex h-12 items-center gap-section rounded-control px-comfortable text-md font-medium text-fg transition-colors duration-quick hover:bg-muted-wash active:bg-secondary-hover"
         >
           <LogOut size={20} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
           {t("signOut")}

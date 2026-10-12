@@ -202,8 +202,9 @@ function ElementFace({ el, state, scale }: { el: PlanElement; state: PlanElement
      the theme's own ink. An operator picks these colours by hand, so drawing
      small text in one cannot be guaranteed readable — a blue category measured
      2.79:1 on a dark card. It is the rule the calendar settled on: the hue is
-     a ground, never a letterform. White on a selected element is the declared
-     white-on-ember exception, at display weight against a solid fill. */
+     a ground, never a letterform. The fill and border are the operator's own
+     colour — data, not a system token — so a selected element reads in
+     `on-solid`, which is the text token for a solid fill. */
   const style: React.CSSProperties = {
     borderRadius: radiusFor(el.shape, scale),
     ...(idle || taken
@@ -252,7 +253,7 @@ function FixtureView({ fixture: f, extent, scale }: { fixture: LayoutFixture; ex
   const common = "absolute flex items-center justify-center overflow-hidden text-center leading-none";
 
   if (f.kind === "wall") {
-    return <div data-fixture={f.kind} className="absolute rounded-full bg-strong/70" style={style} aria-hidden />;
+    return <div data-fixture={f.kind} className="absolute rounded-full bg-strong" style={style} aria-hidden />;
   }
   if (f.kind === "text") {
     return (
@@ -264,7 +265,7 @@ function FixtureView({ fixture: f, extent, scale }: { fixture: LayoutFixture; ex
   if (f.kind === "door") {
     return (
       <div data-fixture={f.kind} className={cn(common, "flex-col gap-0.5")} style={style}>
-        <span className="h-[2px] w-full rounded-full bg-strong/60" />
+        <span className="h-[2px] w-full rounded-full bg-strong" />
         <span className="truncate text-muted" style={{ fontSize: Math.max(9, fontSize - 1) }}>{f.label}</span>
       </div>
     );

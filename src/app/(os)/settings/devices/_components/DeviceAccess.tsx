@@ -52,7 +52,7 @@ export function SetPinLink({ person }: { person: Pick<Staff, "id" | "name"> }) {
     <Link
       href={`/settings/team/${person.id}`}
       aria-label={t("devices.setPinFor", { name: person.name })}
-      className="inline-flex min-h-11 shrink-0 items-center px-tight text-sm font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80"
+      className="inline-flex min-h-11 shrink-0 items-center px-tight text-sm font-medium text-brand-foreground underline underline-offset-2 hover:text-ember-hover"
     >
       {t("devices.setPin")}
     </Link>
@@ -278,7 +278,7 @@ export function AccessFields({
                 <button
                   type="button"
                   onClick={() => setOthers((v) => !v)}
-                  className="mt-tight inline-flex min-h-11 items-center text-sm font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80"
+                  className="mt-tight inline-flex min-h-11 items-center text-sm font-medium text-brand-foreground underline underline-offset-2 hover:text-ember-hover"
                 >
                   {others ? t("devices.pickOnlyVenue", { place: venueScope.venueName }) : t("devices.pickOthers")}
                 </button>

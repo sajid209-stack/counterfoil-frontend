@@ -467,7 +467,7 @@ export function WeekGrid({
                 onClick={onPickDay ? () => onPickDay(d) : undefined}
                 className={cn(
                   "flex flex-1 flex-col items-center gap-0.5 py-tight",
-                  today && "bg-ember-wash/50",
+                  today && "bg-ember-wash",
                   onPickDay && "transition-colors duration-quick hover:bg-muted-wash",
                 )}
               >
@@ -500,7 +500,7 @@ export function WeekGrid({
             at whatever hour you have scrolled to. `top` is the header's own
             height, measured rather than assumed — it grows with the label. */}
         {(allDay.length > 0 || ghostAllDay) && (
-          <div className="flex border-t border-hairline bg-subtle/50">
+          <div className="flex border-t border-hairline bg-subtle">
             <div
               className={cn(
                 gutter,
@@ -510,7 +510,7 @@ export function WeekGrid({
               {compact ? allDayLabel.slice(0, 3) : allDayLabel}
             </div>
             {days.map((d) => (
-              <div key={isoDate(d)} className="flex-1 border-r border-hairline/50 p-0.5 last:border-r-0">
+              <div key={isoDate(d)} className="flex-1 border-r border-hairline p-0.5 last:border-r-0">
                 {allDay
                   .filter((e) => sameDay(e.start, d))
                   .map((e) => (
@@ -674,7 +674,7 @@ export function WeekGrid({
                    one column was a third, the colour of a booking, on time
                    that was simply free. The header's badge and the now-line
                    say "today" without borrowing either meaning. */
-                className="relative flex-1 border-r border-hairline/50 last:border-r-0"
+                className="relative flex-1 border-r border-hairline last:border-r-0"
               >
                 {/* Time that cannot be sold, shaded — and nothing else marked.
                     This grid used to write "6 open" into every hour that had
@@ -736,7 +736,7 @@ export function WeekGrid({
                             className={cn(
                               // ds-exception: the hover outline sits 3px / 1px inside its cell, the same inset as a block, so the preview lines up with the draft it makes
                               "absolute inset-x-[3px] inset-y-[1px] hidden rounded-control border border-dashed px-1 py-0.5 text-left group-hover/cell:block",
-                              s === "open" ? "border-ember/70 bg-ember-wash/50" : "border-strong bg-card/60",
+                              s === "open" ? "border-ember-line bg-ember-wash" : "border-strong bg-card",
                             )}
                           >
                             {!covered.has(h) && (
@@ -883,7 +883,7 @@ export function WeekGrid({
                         {across > 1 ? (
                           <>
                             <span className="block truncate text-xs font-semibold leading-tight tabular-nums">{range}</span>
-                            {tall >= 30 && <span className="block truncate text-xs font-medium leading-tight text-on-solid/90">{draft.title ?? ghostLabel}</span>}
+                            {tall >= 30 && <span className="block truncate text-xs font-medium leading-tight">{draft.title ?? ghostLabel}</span>}
                           </>
                         ) : (
                           <>
@@ -891,7 +891,7 @@ export function WeekGrid({
                               {draft.title ?? ghostLabel}
                             </span>
                             {tall >= 30 && (
-                              <span className="block truncate text-xs leading-tight tabular-nums text-on-solid/90">
+                              <span className="block truncate text-xs leading-tight tabular-nums">
                                 {shortClockRange(draft.start, draft.end)}
                               </span>
                             )}
@@ -918,7 +918,7 @@ export function WeekGrid({
                       >
                         <span className="flex items-start gap-0.5 text-xs font-medium leading-tight">
                           {roomForIcon && event.source && <MarketBadge id={event.source.id} />}
-                          <span className="shrink-0 rounded-inner bg-fg/10 px-0.5 tabular-nums">{stack.length}</span>
+                          <span className="shrink-0 rounded-inner bg-subtle px-0.5 tabular-nums">{stack.length}</span>
                           <span className={cn("min-w-0", canWrap ? "line-clamp-2" : "truncate")}>{event.title}</span>
                         </span>
                         {tall >= TWO_LINE_PX && across === 1 && (
@@ -969,7 +969,7 @@ export function WeekGrid({
                     >
                       <span className="flex items-start gap-0.5 text-xs font-medium leading-tight">
                         {/* The channel, in a shape and letters as well as in
-                            violet. Dropped where the block has no room for an
+                            info blue. Dropped where the block has no room for an
                             icon — the accessible name still says it. */}
                         {roomForIcon && event.source && <MarketBadge id={event.source.id} />}
                         {roomForIcon && event.locked && (

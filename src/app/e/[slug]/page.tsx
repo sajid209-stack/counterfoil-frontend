@@ -66,7 +66,7 @@ export default function PublicEventPage() {
         <div className="mx-auto max-w-5xl animate-pulse space-y-section">
           <div className="h-10 w-2/3 rounded-sm bg-line" />
           <div className="h-4 w-1/2 rounded-sm bg-line" />
-          <div className="h-64 rounded-md bg-line/60" />
+          <div className="h-64 rounded-md bg-line" />
         </div>
       </div>
     );

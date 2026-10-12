@@ -94,7 +94,7 @@ export function WithdrawDialog({ locationId, summary, onClose, onDone }: { locat
             <Landmark size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
             {bank}
           </p>
-          <Link href="/settings/payments" className="mt-tight inline-flex min-h-11 items-center text-sm font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80 md:min-h-9">
+          <Link href="/settings/payments" className="mt-tight inline-flex min-h-11 items-center text-sm font-medium text-brand-foreground underline underline-offset-2 hover:text-ember-hover md:min-h-9">
             {t("withdraw.change")}
           </Link>
         </div>

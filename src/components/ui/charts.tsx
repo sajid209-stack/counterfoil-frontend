@@ -217,8 +217,8 @@ export function AreaChart({
           <defs>
             {/* The fill is what makes this read as volume rather than a wire. */}
             <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-ember)" stopOpacity="0.22" />
-              <stop offset="100%" stopColor="var(--color-ember)" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--color-ember-wash)" stopOpacity="1" />
+              <stop offset="100%" stopColor="var(--color-ember-wash)" stopOpacity="0" />
             </linearGradient>
           </defs>
 

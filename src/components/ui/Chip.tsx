@@ -49,7 +49,7 @@ export function Chip({
   const t = useTranslations("common");
 
   const tone = selected
-    ? "border-transparent bg-ember-solid text-on-solid"
+    ? "border-transparent bg-ember-solid text-on-solid enabled:hover:bg-ember-hover enabled:active:bg-ember-active"
     : "border-line bg-card text-fg enabled:hover:bg-muted-wash";
 
   const body = (

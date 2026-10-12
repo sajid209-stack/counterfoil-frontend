@@ -54,7 +54,7 @@ export function ResourceTimeline({
           </button>
         ))}
         {sel && (
-          <span className="pointer-events-none absolute inset-y-0 bg-ember/70" style={{ left: pct(sel.start), width: pct(sel.end - sel.start + openMin) }} aria-hidden />
+          <span className="pointer-events-none absolute inset-y-0 bg-ember-solid" style={{ left: pct(sel.start), width: pct(sel.end - sel.start + openMin) }} aria-hidden />
         )}
       </div>
       <div className="relative mt-inline h-3">

@@ -1497,7 +1497,7 @@ function Chip({
         disabled
           ? "cursor-not-allowed border-dashed border-line bg-[repeating-linear-gradient(45deg,var(--color-muted-wash),var(--color-muted-wash)_3px,transparent_3px,transparent_7px)] text-muted"
           : on
-            ? "border-ember bg-ember-wash/60 ring-1 ring-inset ring-ember"
+            ? "border-ember bg-ember-wash ring-1 ring-inset ring-ember"
             : "border-line hover:border-strong",
       )}
     >
@@ -1602,7 +1602,7 @@ function OptionRow({
       onClick={onChoose}
       className={cn(
         "flex min-h-11 w-full items-center gap-comfortable rounded-control border px-comfortable py-tight text-left transition-colors duration-quick",
-        on ? "border-ember bg-ember-wash/60 ring-1 ring-inset ring-ember" : "border-line hover:border-strong hover:bg-muted-wash",
+        on ? "border-ember bg-ember-wash ring-1 ring-inset ring-ember" : "border-line hover:border-strong hover:bg-muted-wash",
       )}
     >
       <span
@@ -1849,7 +1849,7 @@ function GuestField({
               active === matches.length && "bg-muted-wash",
             )}
           >
-            <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-dashed border-ember/60">
+            <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-dashed border-ember-line">
               <Plus size={14} strokeWidth={2} />
             </span>
             <span className="min-w-0 flex-1 break-words">{t("book.addNew", { name: q })}</span>

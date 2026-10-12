@@ -376,7 +376,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     return !q || e.title.toLowerCase().includes(q) || e.venueName.toLowerCase().includes(q);
   });
   const customTile = (
-    <button type="button" data-wall-tile data-focus-inset onClick={() => setCustomOpen(true)} className={cn(WALL_CARD, "min-h-[9.5rem] items-center justify-center gap-tight text-center text-muted hover:bg-muted-wash/60 active:bg-muted-wash sm:min-h-[10.5rem]")}>
+    <button type="button" data-wall-tile data-focus-inset onClick={() => setCustomOpen(true)} className={cn(WALL_CARD, "min-h-[9.5rem] items-center justify-center gap-tight text-center text-muted hover:bg-muted-wash active:bg-muted-wash sm:min-h-[10.5rem]")}>
       <span className="flex size-11 items-center justify-center rounded-full border-2 border-dashed border-strong"><Plus size={20} strokeWidth={2} aria-hidden /></span>
       <span className="text-base font-medium">{t("customAmount")}</span>
     </button>
@@ -1436,7 +1436,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                           }),
                         });
                       }}
-                      className="flex h-11 items-center gap-inline rounded-full px-tight text-sm font-medium text-danger active:bg-danger/10"
+                      className="flex h-11 items-center gap-inline rounded-full px-tight text-sm font-medium text-danger active:bg-danger-wash"
                     >
                       <Trash2 size={15} strokeWidth={2} aria-hidden />
                       <span className="whitespace-nowrap">{t("cart.remove")}</span>

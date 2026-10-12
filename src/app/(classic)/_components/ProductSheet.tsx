@@ -129,7 +129,7 @@ function SheetFooter({
             aria-label={buyLabel}
             title={buyLabel}
             onClick={() => onAdd(true)}
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-ember text-brand-foreground transition-colors duration-quick disabled:opacity-40 hover:bg-ember/10 active:bg-ember/20"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-ember text-brand-foreground transition-colors duration-quick disabled:opacity-40 hover:bg-ember-wash active:bg-ember-wash"
           >
             <Zap size={20} strokeWidth={1.5} />
           </button>
@@ -286,9 +286,9 @@ export function ProductSheet({
       <div className="flex items-center justify-between rounded-sm border border-line bg-card p-comfortable">
         <span className="text-base">{t("sheet.groupSize")}</span>
         <div className="flex items-center gap-tight">
-          <button type="button" aria-label={t("sheet.fewer")} onClick={() => setGroup((g) => Math.max(partyMin, g - 1))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">−</button>
+          <button type="button" aria-label={t("sheet.fewer")} onClick={() => setGroup((g) => Math.max(partyMin, g - 1))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember-wash">−</button>
           <span className="w-8 text-center">{group}</span>
-          <button type="button" aria-label={t("sheet.morePeople")} onClick={() => setGroup((g) => Math.min(partyMax, g + 1))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">+</button>
+          <button type="button" aria-label={t("sheet.morePeople")} onClick={() => setGroup((g) => Math.min(partyMax, g + 1))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember-wash">+</button>
         </div>
       </div>
     ) : null;
@@ -327,12 +327,12 @@ export function ProductSheet({
                 </span>
               </div>
               {n === 0 ? (
-                <button type="button" disabled={out} aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.min(cap, a.perPerson ? headsFor() : 1) }))} className="h-12 w-12 shrink-0 rounded-sm border border-line text-lg disabled:border-line/60 disabled:text-faint active:bg-ember/10">+</button>
+                <button type="button" disabled={out} aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.min(cap, a.perPerson ? headsFor() : 1) }))} className="h-12 w-12 shrink-0 rounded-sm border border-line text-lg disabled:border-line disabled:text-faint active:bg-ember-wash">+</button>
               ) : (
                 <div className="flex shrink-0 items-center gap-tight">
-                  <button type="button" aria-label={t("sheet.less")} disabled={(addOnQty[a.id] ?? 0) === 0} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.max(0, (q[a.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg disabled:border-line/60 disabled:text-faint active:bg-ember/10">−</button>
+                  <button type="button" aria-label={t("sheet.less")} disabled={(addOnQty[a.id] ?? 0) === 0} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.max(0, (q[a.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg disabled:border-line disabled:text-faint active:bg-ember-wash">−</button>
                   <span className="w-6 text-center">{n}</span>
-                  <button type="button" aria-label={t("sheet.more")} disabled={n >= cap} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.min(cap, (q[a.id] ?? 0) + 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg disabled:border-line/60 disabled:text-faint active:bg-ember/10">+</button>
+                  <button type="button" aria-label={t("sheet.more")} disabled={n >= cap} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.min(cap, (q[a.id] ?? 0) + 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg disabled:border-line disabled:text-faint active:bg-ember-wash">+</button>
                 </div>
               )}
             </div>
@@ -543,14 +543,14 @@ export function ProductSheet({
             <h2 id="sheet-title" className="type-h2 break-words text-2xl">{product.name}</h2>
             <p className="mt-inline text-sm text-muted">{subtitle(product, { resources, team })}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg active:bg-ember/10"><X size={20} strokeWidth={1.75} /></button>
+          <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg active:bg-ember-wash"><X size={20} strokeWidth={1.75} /></button>
         </div>
 
         {/* Under two minutes it stops being information and becomes a
             deadline, so it changes register — the same threshold the rest of
             the app uses to switch a warning to a refusal. */}
         {heldUntil && holdLeft > 0 && (
-          <div className={`mb-section flex items-center gap-tight rounded-sm border px-comfortable py-tight text-sm ${holdLeft < 120 ? "border-danger/30 bg-danger/10 text-danger" : "border-warning/30 bg-warning/10 text-warning"}`}>
+          <div className={`mb-section flex items-center gap-tight rounded-sm border px-comfortable py-tight text-sm ${holdLeft < 120 ? "border-danger-line bg-danger-wash text-danger" : "border-warning-line bg-warning-wash text-warning"}`}>
             <Clock size={14} strokeWidth={1.75} className="shrink-0" />
             <span>
               {t(holdLeft < 120 ? "sheet.holdExpiring" : "sheet.holdRemaining", {
@@ -769,7 +769,7 @@ export function ProductSheet({
           return (
             <div className="mb-section flex flex-col gap-tight">
               {date === TODAY && (
-                <button type="button" disabled={!nowLane || !waiverOk} onClick={() => nowLane && submitResource(nowLane.id, nowLane.name, nowTime, nowPrice, duration)} className={`flex h-12 items-center justify-between rounded-sm border px-comfortable text-base ${nowLane && waiverOk ? "border-ember bg-ember/10 font-medium" : "border-line bg-subtle text-muted"}`}>
+                <button type="button" disabled={!nowLane || !waiverOk} onClick={() => nowLane && submitResource(nowLane.id, nowLane.name, nowTime, nowPrice, duration)} className={`flex h-12 items-center justify-between rounded-sm border px-comfortable text-base ${nowLane && waiverOk ? "border-ember bg-ember-wash font-medium" : "border-line bg-subtle text-muted"}`}>
                   <span>{t("sheet.startNow", { time: formatClock(nowTime), duration: formatDuration(duration), lane: nowLane ? ` · ${nowLane.name}` : "" })}</span>
                   <span>{!nowLane ? t("sheet.noLaneFree") : !waiverOk ? t("sheet.waiverFirst") : formatMoney(nowPrice, currency)}</span>
                 </button>
@@ -795,7 +795,7 @@ export function ProductSheet({
                       aria-label={t("sheet.shorter")}
                       disabled={prev == null}
                       onClick={() => prev != null && pickDuration(prev)}
-                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-line text-xl disabled:opacity-40 active:bg-ember/10"
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-line text-xl disabled:opacity-40 active:bg-ember-wash"
                     >
                       −
                     </button>
@@ -812,7 +812,7 @@ export function ProductSheet({
                       aria-label={t("sheet.longer")}
                       disabled={next == null}
                       onClick={() => next != null && pickDuration(next)}
-                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-line text-xl disabled:opacity-40 active:bg-ember/10"
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-line text-xl disabled:opacity-40 active:bg-ember-wash"
                     >
                       +
                     </button>
@@ -850,9 +850,9 @@ export function ProductSheet({
                 <span className="type-label text-xs text-muted">{t("sheet.startTime")}</span>
                 {/* Chips for speed, the stepper for precision (walk-in rounding). */}
                 <div className="flex items-center gap-inline">
-                  <button type="button" aria-label={t("sheet.earlier")} onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const next = Math.max(flexTimes.length ? toMinutes(flexTimes[0]) : 0, base - round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-lg active:bg-ember/10">−</button>
+                  <button type="button" aria-label={t("sheet.earlier")} onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const next = Math.max(flexTimes.length ? toMinutes(flexTimes[0]) : 0, base - round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-lg active:bg-ember-wash">−</button>
                   <span className="min-w-16 whitespace-nowrap text-center text-sm">{slotTime ? formatClock(slotTime) : "—"}</span>
-                  <button type="button" aria-label={t("sheet.later")} onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const cap = mustEnd ? closeMin - duration : 24 * 60 - round; const next = Math.min(cap, base + round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-lg active:bg-ember/10">+</button>
+                  <button type="button" aria-label={t("sheet.later")} onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const cap = mustEnd ? closeMin - duration : 24 * 60 - round; const next = Math.min(cap, base + round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-lg active:bg-ember-wash">+</button>
                 </div>
               </div>
               <div className="flex flex-wrap gap-inline">
@@ -861,7 +861,7 @@ export function ProductSheet({
                   if (!st.ok) {
                     return <button key={tt} type="button" onClick={() => setBlocked(t("sheet.unavailableStart", { time: formatClock(tt), reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }))} className="h-12 rounded-sm border border-line bg-subtle px-comfortable text-sm text-muted line-through" title={st.reason}>{formatClock(tt)}</button>;
                   }
-                  return <button key={tt} type="button" onClick={() => { setSlotTime(tt); setBlocked(null); }} className={`h-12 rounded-sm border px-comfortable text-sm ${slotTime === tt ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatClock(tt)}</button>;
+                  return <button key={tt} type="button" onClick={() => { setSlotTime(tt); setBlocked(null); }} className={`h-12 rounded-sm border px-comfortable text-sm ${slotTime === tt ? "border-ember bg-ember-wash font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatClock(tt)}</button>;
                 })}
               </div>
 
@@ -959,7 +959,7 @@ export function ProductSheet({
               {providerTimes.map((t) => {
                 const free = providerTimeFree(t);
                 return (
-                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-sm border px-comfortable text-sm ${!free ? "border-line bg-subtle text-muted line-through" : slotTime === t ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatClock(t)}</button>
+                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-sm border px-comfortable text-sm ${!free ? "border-line bg-subtle text-muted line-through" : slotTime === t ? "border-ember bg-ember-wash font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatClock(t)}</button>
                 );
               })}
             </div>
@@ -978,7 +978,7 @@ export function ProductSheet({
             affirmative rather than presenting a list that looks like a choice
             the cashier still has to make. */}
         {course && (
-          <div className="mb-section rounded-sm border border-success/30 bg-success/10 p-comfortable">
+          <div className="mb-section rounded-sm border border-success-line bg-success-wash p-comfortable">
             <p className="flex items-center gap-inline text-base font-medium text-success">
               <Check size={14} strokeWidth={2.5} />
               {t("sheet.readyToAdd")}
@@ -1162,9 +1162,9 @@ export function ProductSheet({
                     </div>
                   ) : (
                     <div className="flex items-center gap-tight">
-                      <button type="button" aria-label={t("sheet.less")} disabled={(qty[row.id] ?? 0) === 0} onClick={() => setQty((q) => ({ ...q, [row.id]: Math.max(0, (q[row.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg disabled:border-line/60 disabled:text-faint active:bg-ember/10">−</button>
+                      <button type="button" aria-label={t("sheet.less")} disabled={(qty[row.id] ?? 0) === 0} onClick={() => setQty((q) => ({ ...q, [row.id]: Math.max(0, (q[row.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg disabled:border-line disabled:text-faint active:bg-ember-wash">−</button>
                       <span className="w-8 text-center">{qty[row.id] ?? 0}</span>
-                      <button type="button" aria-label={t("sheet.more")} onClick={() => setQty((q) => ({ ...q, [row.id]: (q[row.id] ?? 0) + 1 }))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">+</button>
+                      <button type="button" aria-label={t("sheet.more")} onClick={() => setQty((q) => ({ ...q, [row.id]: (q[row.id] ?? 0) + 1 }))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember-wash">+</button>
                     </div>
                   )}
                 </div>
@@ -1263,7 +1263,7 @@ export function ProductSheet({
 
         {/* Waitlist mini-form */}
         {wl && (
-          <div className="mt-section rounded-sm border border-warning bg-warning/5 p-section">
+          <div className="mt-section rounded-sm border border-warning bg-warning-wash p-section">
             <p className="text-base font-medium">{t("sheet.joinWaitlistFor", { time: formatClock(wl.time) })}</p>
             <div className="mt-tight grid grid-cols-1 gap-tight sm:grid-cols-2">
               <FormField label={t("sheet.name")} value={wlName} onChange={(e) => setWlName(e.target.value)} />

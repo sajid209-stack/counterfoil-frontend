@@ -80,8 +80,8 @@ export const SEVERITY_ICON_CLASS: Record<ActivitySeverity, string> = {
 /** The faint tint a warning or serious row carries. Never the only carrier. */
 export const SEVERITY_ROW_CLASS: Record<ActivitySeverity, string> = {
   info: "",
-  warning: "bg-warning/[0.06]",
-  critical: "bg-danger/[0.06]",
+  warning: "bg-warning-wash",
+  critical: "bg-danger-wash",
 };
 
 /** "staff.signed_in" -> "staffSignedIn" - message keys cannot carry a dot. */
@@ -313,7 +313,7 @@ export function useActivityText() {
 export function KindBadge({ kind, severity, className }: { kind: ActivityKind; severity: ActivitySeverity; className?: string }) {
   const Icon = ACTIVITY_ICON[kind];
   return (
-    <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full bg-subtle dark:bg-fg/10", SEVERITY_ICON_CLASS[severity], className)}>
+    <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full bg-subtle dark:ring-1 dark:ring-line", SEVERITY_ICON_CLASS[severity], className)}>
       <Icon size={15} strokeWidth={1.5} aria-hidden />
     </span>
   );
@@ -330,7 +330,7 @@ export function Initials({ name, className }: { name: string | null; className?:
         .toUpperCase()
     : "CF";
   return (
-    <span aria-hidden className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-full bg-subtle text-xs font-semibold text-muted dark:bg-fg/10", className)}>
+    <span aria-hidden className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-full bg-subtle text-xs font-semibold text-muted dark:ring-1 dark:ring-line", className)}>
       {text}
     </span>
   );

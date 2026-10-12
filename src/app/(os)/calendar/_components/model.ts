@@ -46,7 +46,7 @@ export interface CalEvent {
     commissionAmount: number;
   };
   /** "Booked on Viator" — appended to a block's accessible name, so the
-   *  channel is said in words and not only drawn in violet. */
+   *  channel is said in words and not only drawn in info blue. */
   sourceLabel?: string;
   /** Holds only: what the detail panel needs to answer "is this court still
    *  ours next Tuesday, and who blocked it?" without going back to the store.
@@ -446,8 +446,8 @@ export const TONE_CLASS: Record<EventTone, string> = {
   booked: "bg-ember-wash border-transparent border-l-[3px] border-l-ember-solid text-fg",
   arrived: "bg-success-wash border-transparent border-l-[3px] border-l-success text-fg",
   noshow: "bg-muted-wash border-transparent border-l-[3px] border-l-strong text-muted line-through",
-  held: "border-warning/35 border-l-[3px] border-l-warning text-fg bg-warning-wash bg-[repeating-linear-gradient(45deg,color-mix(in_srgb,var(--color-fg)_5%,transparent),color-mix(in_srgb,var(--color-fg)_5%,transparent)_3px,transparent_3px,transparent_7px)]",
-  locked: "border-danger/35 border-l-[3px] border-l-danger-solid text-fg bg-danger-wash bg-[repeating-linear-gradient(45deg,color-mix(in_srgb,var(--color-fg)_5%,transparent),color-mix(in_srgb,var(--color-fg)_5%,transparent)_3px,transparent_3px,transparent_7px)]",
+  held: "border-warning-line border-l-[3px] border-l-warning text-fg bg-warning-wash bg-[repeating-linear-gradient(45deg,var(--color-hairline),var(--color-hairline)_3px,transparent_3px,transparent_7px)]",
+  locked: "border-danger-line border-l-[3px] border-l-danger-solid text-fg bg-danger-wash bg-[repeating-linear-gradient(45deg,var(--color-hairline),var(--color-hairline)_3px,transparent_3px,transparent_7px)]",
 };
 
 
@@ -459,14 +459,14 @@ export const TONE_CLASS: Record<EventTone, string> = {
  * has happened — arrived, no-show, locked — the status colours win and source
  * is carried by the badge alone. The stripe is `market` rather than
  * `market-solid`: in dark the pinned solid measures 2.82:1 against the card,
- * under the 3:1 a mark needs, and `market` is the lifted violet that clears it
+ * under the 3:1 a mark needs, and `market` is the lifted info blue that clears it
  * (5.9:1). The solid is for the badge, where white text sits on it.
  */
 export const MARKET_CLASS =
   "bg-market-wash border-transparent border-l-[3px] border-l-market text-fg";
 
 /** What a block wears: its status, unless it is a plain booking sold on a
- *  marketplace — then the marketplace's violet. */
+ *  marketplace — then the marketplace's info blue. */
 export const toneClass = (e: Pick<CalEvent, "tone" | "source">): string =>
   e.source && e.tone === "booked" ? MARKET_CLASS : TONE_CLASS[e.tone];
 

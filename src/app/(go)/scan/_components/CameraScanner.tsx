@@ -142,7 +142,7 @@ export function CameraScanner({ onCode, onClose, labels }: { onCode: (code: stri
       {denied ? (
         <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-comfortable px-section text-center">
           <p className="text-xl font-semibold">{labels.denied}</p>
-          <p className="max-w-sm text-base text-paper/80">{labels.deniedHint}</p>
+          <p className="max-w-sm text-base text-paper">{labels.deniedHint}</p>
           <button
             type="button"
             onClick={() => {
@@ -170,17 +170,17 @@ export function CameraScanner({ onCode, onClose, labels }: { onCode: (code: stri
       )}
 
       <div className="relative z-10 flex items-center justify-between gap-tight px-section pb-[calc(24px+env(safe-area-inset-bottom))] pt-section">
-        <button type="button" onClick={onClose} aria-label={labels.close} className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-paper/60">
+        <button type="button" onClick={onClose} aria-label={labels.close} className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-neutral-400">
           <X size={24} strokeWidth={2} />
         </button>
-        {!denied && <p className="min-w-0 flex-1 truncate text-center text-base text-paper/90">{labels.aim}</p>}
+        {!denied && <p className="min-w-0 flex-1 truncate text-center text-base text-paper">{labels.aim}</p>}
         {canTorch ? (
           <button
             type="button"
             onClick={toggleTorch}
             aria-pressed={torchOn}
             aria-label={labels.torch}
-            className={cn("flex h-14 w-14 items-center justify-center rounded-full border-2", torchOn ? "border-paper bg-paper text-ink" : "border-paper/60")}
+            className={cn("flex h-14 w-14 items-center justify-center rounded-full border-2", torchOn ? "border-paper bg-paper text-ink" : "border-neutral-400")}
           >
             <Flashlight size={22} strokeWidth={2} />
           </button>

@@ -18,13 +18,13 @@ export type ButtonSize = "sm" | "md" | "lg";
 
 const VARIANTS: Record<ButtonVariant, string> = {
   // Solid ember — the one brand accent for the primary action. Never an outline.
-  // ink text on ember passes AA; white would not.
-  primary: "bg-ember text-ink hover:opacity-90 disabled:bg-line disabled:text-faint",
+  // white on the primary fill (ember-solid + on-solid).
+  primary: "bg-ember-solid text-on-solid hover:bg-ember-hover active:bg-ember-active disabled:bg-ember-disabled disabled:text-faint",
   secondary:
     "bg-card text-fg border border-line hover:border-inverse disabled:text-faint disabled:border-line",
   tertiary: "bg-transparent text-fg hover:bg-line disabled:text-faint",
-  link: "bg-transparent text-brand-foreground underline underline-offset-2 hover:opacity-80 disabled:text-faint",
-  destructive: "bg-danger text-white hover:opacity-90 disabled:opacity-40",
+  link: "bg-transparent text-brand-foreground underline underline-offset-2 hover:text-ember-hover disabled:text-faint",
+  destructive: "bg-danger-solid text-on-solid hover:bg-danger-hover active:bg-danger-active disabled:bg-danger-disabled disabled:text-faint",
 };
 
 const SIZES: Record<ButtonSize, string> = {

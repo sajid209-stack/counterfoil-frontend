@@ -195,7 +195,7 @@ function Footer({
       className={
         inSheet
           ? "shrink-0 border-t border-hairline bg-card px-section pb-section pt-comfortable"
-          : "fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-card/95 px-gutter pb-comfortable pt-comfortable shadow-float backdrop-blur lg:static lg:mt-section lg:border-line lg:bg-transparent lg:p-0 lg:pt-section lg:shadow-none lg:backdrop-blur-none"
+          : "fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-card px-gutter pb-comfortable pt-comfortable shadow-float backdrop-blur lg:static lg:mt-section lg:border-line lg:bg-transparent lg:p-0 lg:pt-section lg:shadow-none lg:backdrop-blur-none"
       }
     >
       {missing && (

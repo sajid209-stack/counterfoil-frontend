@@ -610,7 +610,7 @@ export function SelectionInline({
     const range = `${new Intl.DateTimeFormat("en-GB", { day: "numeric" }).format(day(dates[0]))}–${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(day(dates[dates.length - 1]))}`;
     return (
       <Step label={t("step.course")}>
-        <div className="rounded-card border border-success/30 bg-success/10 p-comfortable">
+        <div className="rounded-card border border-success-line bg-success-wash p-comfortable">
           <p className="text-base font-medium text-success">{t("course.ready")}</p>
           <p className="mt-inline text-sm">
             {t("course.runs", { count: dates.length, days: weekdays.join(" & "), range })}

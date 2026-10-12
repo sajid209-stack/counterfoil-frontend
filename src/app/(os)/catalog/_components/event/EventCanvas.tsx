@@ -125,7 +125,7 @@ export function EventCanvas({
           <button
             type="button"
             onClick={() => file.current?.click()}
-            className="flex min-h-11 items-center gap-inline rounded-control bg-ink/70 px-comfortable text-sm font-medium text-white backdrop-blur transition-colors duration-quick hover:bg-ink/85 sm:min-h-9"
+            className="flex min-h-11 items-center gap-inline rounded-control bg-neutral-950 px-comfortable text-sm font-medium text-neutral-50 backdrop-blur transition-colors duration-quick hover:bg-neutral-800 sm:min-h-9"
           >
             {content.coverUrl ? <RefreshCw size={14} strokeWidth={1.5} aria-hidden /> : <ImagePlus size={14} strokeWidth={1.5} aria-hidden />}
             {content.coverUrl ? t("replaceCover") : t("addCover")}
@@ -135,7 +135,7 @@ export function EventCanvas({
               type="button"
               onClick={() => onContent({ coverUrl: "" })}
               aria-label={t("removeCover")}
-              className="flex h-11 w-11 items-center justify-center rounded-control bg-ink/70 text-white backdrop-blur transition-colors duration-quick hover:bg-ink/85 sm:h-9 sm:w-9"
+              className="flex h-11 w-11 items-center justify-center rounded-control bg-neutral-950 text-neutral-50 backdrop-blur transition-colors duration-quick hover:bg-neutral-800 sm:h-9 sm:w-9"
             >
               <Trash2 size={14} strokeWidth={1.5} aria-hidden />
             </button>
@@ -164,8 +164,8 @@ export function EventCanvas({
             aria-invalid={errors.title ? true : undefined}
             style={{ fontFamily: displayFont }}
             className={cn(
-              "w-full resize-none overflow-hidden bg-transparent text-3xl font-semibold leading-tight tracking-title placeholder:text-muted/60 sm:text-display",
-              errors.title && "placeholder:text-danger/70",
+              "w-full resize-none overflow-hidden bg-transparent text-3xl font-semibold leading-tight tracking-title placeholder:text-faint sm:text-display",
+              errors.title && "placeholder:text-danger",
             )}
           />
           {/* Partiful's one great idea: the typeface is a property of the
@@ -213,7 +213,7 @@ export function EventCanvas({
             onChange={(e) => onContent({ subtitle: e.target.value })}
             placeholder={t("taglinePlaceholder")}
             aria-label={te("field.subtitle")}
-            className="mt-tight w-full bg-transparent text-md text-muted placeholder:text-muted/60"
+            className="mt-tight w-full bg-transparent text-md text-muted placeholder:text-faint"
           />
         </div>
 

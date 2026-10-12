@@ -126,7 +126,7 @@ function Misc() {
             </span>
           ))}
         </div>
-        <p className="text-xs text-muted">MarketBadge: initials in a violet rounded rectangle. The marketplace&rsquo;s name is always in the accessible name beside it.</p>
+        <p className="text-xs text-muted">MarketBadge: initials in an info-blue rounded rectangle (market-solid, with on-solid text). The marketplace&rsquo;s name is always in the accessible name beside it.</p>
       </div>
     </div>
   );

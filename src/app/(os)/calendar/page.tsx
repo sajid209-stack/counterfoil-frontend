@@ -78,11 +78,11 @@ const TONE_KEY: Record<EventTone, string> = {
  *  they are filled, so is this. A key that does not look like the thing it
  *  explains is a key you have to learn twice. */
 const TONE_SWATCH: Record<EventTone, string> = {
-  booked: "bg-ember-wash border-ember/40",
-  arrived: "bg-success-wash border-success/40",
+  booked: "bg-ember-wash border-ember-line",
+  arrived: "bg-success-wash border-success-line",
   noshow: "bg-muted-wash border-line",
-  held: "bg-warning-wash border-warning/40",
-  locked: "bg-danger-wash border-danger/40",
+  held: "bg-warning-wash border-warning-line",
+  locked: "bg-danger-wash border-danger-line",
 };
 
 /** Which sales the grid shows. Source is a second axis beside status, so it is
@@ -857,7 +857,7 @@ export default function CalendarPage() {
             label:
               s === "marketplace" ? (
                 <>
-                  <span aria-hidden className="h-3 w-3 shrink-0 rounded-inner border border-l-[3px] border-market/40 border-l-market bg-market-wash" />
+                  <span aria-hidden className="h-3 w-3 shrink-0 rounded-inner border border-l-[3px] border-info-line border-l-market bg-market-wash" />
                   <span className="min-w-0 truncate">{t("sourceMarket")}</span>
                   <span className="tabular-nums text-muted">{toneCounts.market}</span>
                 </>
@@ -1065,7 +1065,7 @@ export default function CalendarPage() {
               <span
                 key={c.key}
                 data-applied={c.key}
-                className="flex items-center gap-inline rounded-full bg-subtle py-inline pl-comfortable pr-inline text-xs font-medium text-fg dark:bg-fg/10"
+                className="flex items-center gap-inline rounded-full bg-subtle py-inline pl-comfortable pr-inline text-xs font-medium text-fg dark:ring-1 dark:ring-line"
               >
                 {c.label}: {c.text}
                 <button

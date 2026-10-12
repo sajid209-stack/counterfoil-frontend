@@ -47,10 +47,10 @@ export function ChoiceCard({
         disabled
           ? "border-line bg-subtle text-muted"
           : selected
-            ? "border-ember bg-ember-wash/60 ring-1 ring-inset ring-ember"
+            ? "border-ember bg-ember-wash ring-1 ring-inset ring-ember"
             : raised
-              ? "border-transparent bg-card shadow-card hover:border-ember/40 active:bg-ember-wash dark:border-line"
-              : "border-line bg-card hover:border-ember/40 hover:shadow-sm active:bg-ember-wash",
+              ? "border-transparent bg-card shadow-card hover:border-strong active:bg-ember-wash"
+              : "border-line bg-card hover:border-strong hover:shadow-sm active:bg-ember-wash",
         className,
       )}
     >

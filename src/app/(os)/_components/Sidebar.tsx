@@ -60,7 +60,7 @@ function RailTip({
             className="pointer-events-none fixed z-50 flex -translate-y-1/2 items-center gap-comfortable whitespace-nowrap rounded-control bg-inverse px-comfortable py-inline text-xs font-medium text-inverse-fg shadow-float"
           >
             {label}
-            {shortcut && <kbd className="rounded-xs bg-inverse-fg/15 px-1.5 font-mono text-xs text-inverse-fg">{shortcut}</kbd>}
+            {shortcut && <kbd className="rounded-xs border border-strong px-1.5 font-mono text-xs text-inverse-fg">{shortcut}</kbd>}
           </div>,
           document.body,
         )}
@@ -142,10 +142,10 @@ export function Sidebar({
             className={cn(
               "group relative flex h-9 items-center gap-comfortable rounded-control text-base font-medium transition-colors duration-quick [@media(pointer:coarse)]:h-11",
               narrow ? "mx-auto w-9 justify-center [@media(pointer:coarse)]:w-11" : "px-comfortable",
-              active ? "bg-fg/[0.07] text-fg dark:bg-fg/[0.09]" : "text-muted hover:bg-fg/[0.04] hover:text-fg",
+              active ? "bg-ember-wash text-brand-foreground" : "text-muted hover:bg-muted-wash hover:text-fg",
             )}
           >
-            <Icon size={18} strokeWidth={1.5} aria-hidden className="shrink-0" />
+            <Icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", active && "text-ember")} />
             {!narrow && <span className="min-w-0 flex-1 truncate">{label}</span>}
             {/* Leaving the console. Collapsed, the arrow is a corner mark on the
                 icon, so the two apps are still told apart from the daily list. */}
@@ -175,7 +175,7 @@ export function Sidebar({
         aria-label={toggleLabel}
         aria-expanded={!collapsed}
         aria-keyshortcuts="["
-        className="flex h-9 w-9 items-center justify-center rounded-control text-muted transition-colors duration-quick hover:bg-fg/[0.06] hover:text-fg [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
+        className="flex h-9 w-9 items-center justify-center rounded-control text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
       >
         <CollapseIcon size={16} strokeWidth={1.5} aria-hidden />
       </button>

@@ -138,14 +138,14 @@ export function Tabs({
                 ? cn(
                     "-mb-px h-11 border-b-2 px-comfortable md:h-10",
                     active
-                      ? "border-inverse font-medium text-fg"
+                      ? "border-ember-solid font-medium text-fg"
                       : // An unselected tab is a control you are meant to read
                         // and click, not a disabled one: `muted`, never `faint`.
                         "border-transparent text-muted hover:text-fg",
                   )
                 : cn(
                     "h-11 rounded-control px-comfortable md:h-9",
-                    active ? "bg-muted-wash font-medium text-fg" : "text-muted hover:bg-muted-wash hover:text-fg",
+                    active ? "bg-ember-wash font-medium text-brand-foreground" : "text-muted hover:bg-muted-wash hover:text-fg",
                   ),
             )}
           >

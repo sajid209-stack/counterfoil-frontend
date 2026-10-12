@@ -90,14 +90,14 @@ export function DurationInput({
         {/* Side by side and full height below md, where a thumb needs 44px;
             stacked for a pointer. Same as TimeInput. */}
         <div className="flex flex-row-reverse border-l border-line md:flex-col">
-          <button type="button" tabIndex={-1} aria-label={t("ui.more")} disabled={disabled} onClick={() => nudge(1)} className="flex h-full w-11 items-center justify-center text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg active:bg-line md:h-1/2 md:w-8"><ChevronUp size={13} strokeWidth={1.5} /></button>
-          <button type="button" tabIndex={-1} aria-label={t("ui.less")} disabled={disabled} onClick={() => nudge(-1)} className="flex h-full w-11 items-center justify-center border-r border-line text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg active:bg-line md:h-1/2 md:w-8 md:border-r-0 md:border-t"><ChevronDown size={13} strokeWidth={1.5} /></button>
+          <button type="button" tabIndex={-1} aria-label={t("ui.more")} disabled={disabled} onClick={() => nudge(1)} className="flex h-full w-11 items-center justify-center text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg active:bg-secondary-active md:h-1/2 md:w-8"><ChevronUp size={13} strokeWidth={1.5} /></button>
+          <button type="button" tabIndex={-1} aria-label={t("ui.less")} disabled={disabled} onClick={() => nudge(-1)} className="flex h-full w-11 items-center justify-center border-r border-line text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg active:bg-secondary-active md:h-1/2 md:w-8 md:border-r-0 md:border-t"><ChevronDown size={13} strokeWidth={1.5} /></button>
         </div>
       </div>
       {chips && chips.length > 0 && (
         <div className="flex flex-wrap gap-inline">
           {chips.map((c) => (
-            <button key={c} type="button" disabled={disabled} onClick={() => { setParseError(null); setDraft(null); onChange(c); }} className={cn("h-11 min-w-11 rounded-xs border px-tight text-xs tabular-nums transition-colors duration-quick md:h-7 md:min-w-0", value === c ? "border-inverse bg-inverse text-inverse-fg" : "border-line text-muted hover:border-inverse")}>
+            <button key={c} type="button" disabled={disabled} onClick={() => { setParseError(null); setDraft(null); onChange(c); }} className={cn("h-11 min-w-11 rounded-xs border px-tight text-xs tabular-nums transition-colors duration-quick md:h-7 md:min-w-0", value === c ? "border-transparent bg-ember-solid text-on-solid hover:bg-ember-hover active:bg-ember-active" : "border-line text-muted hover:border-strong hover:bg-muted-wash hover:text-fg")}>
               {formatDuration(c)}
             </button>
           ))}

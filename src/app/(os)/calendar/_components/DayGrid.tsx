@@ -615,7 +615,7 @@ function DayTrack({
                   <span
                     key={h}
                     aria-hidden
-                    className="pointer-events-none absolute inset-y-0 w-px bg-hairline/60"
+                    className="pointer-events-none absolute inset-y-0 w-px bg-hairline"
                     style={{ left: `${pct(h * 60)}%` }}
                   />
                 ))}
@@ -660,8 +660,8 @@ function DayTrack({
                       className={cn(
                         "group/open absolute flex overflow-hidden rounded-control text-xs transition-colors duration-quick",
                         slot.isSession
-                          ? "items-center justify-center border border-dashed border-strong/60 text-muted hover:border-solid hover:border-ember hover:bg-ember-wash/60 hover:text-brand-foreground"
-                          : "flex-col items-start justify-start border border-transparent px-1 py-0.5 hover:border-dashed hover:border-ember/70 hover:bg-ember-wash/50",
+                          ? "items-center justify-center border border-dashed border-strong text-muted hover:border-solid hover:border-ember hover:bg-ember-wash hover:text-brand-foreground"
+                          : "flex-col items-start justify-start border border-transparent px-1 py-0.5 hover:border-dashed hover:border-ember-line hover:bg-ember-wash",
                       )}
                       style={{
                         left: `${pct(s)}%`,
@@ -726,7 +726,7 @@ function DayTrack({
                             here, so the badge has to be allowed in before the
                             icons are — it is the one cue that survives a grey
                             screenshot — and "GYG" is wider than "V", so it asks
-                            for a little more room. Below that the violet and
+                            for a little more room. Below that the info blue and
                             the accessible name carry it. */}
                         {event.source && wide >= 48 + (marketInitials(event.source.id).length - 1) * 14 && (
                           <MarketBadge id={event.source.id} />
@@ -811,7 +811,7 @@ function DayTrack({
                           {draftHere.title ?? ghostLabel}
                         </span>
                         {!isSession && (
-                          <span className="block truncate text-xs leading-tight tabular-nums text-on-solid/90">
+                          <span className="block truncate text-xs leading-tight tabular-nums">
                             {shortClockRange(draftHere.start, draftHere.end)}
                           </span>
                         )}
@@ -820,7 +820,7 @@ function DayTrack({
                       <>
                         <span className="block truncate text-xs font-semibold leading-tight tabular-nums">{formatClockMin(draftHere.start, { short: true })}</span>
                         {draftHere.title && !isSession && (
-                          <span className="block truncate text-xs leading-tight text-on-solid/90">{draftHere.title}</span>
+                          <span className="block truncate text-xs leading-tight">{draftHere.title}</span>
                         )}
                       </>
                     )}

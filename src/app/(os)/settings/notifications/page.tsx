@@ -144,7 +144,7 @@ function PlaceholderChips({
             type="button"
             onClick={() => onInsert(p.key)}
             aria-label={t("notifications.insertInto", { placeholder: p.key, field })}
-            className="inline-flex min-h-11 items-center gap-tight rounded-sm bg-muted-wash px-comfortable text-sm transition-colors duration-quick hover:bg-line/40 md:min-h-9"
+            className="inline-flex min-h-11 items-center gap-tight rounded-sm bg-muted-wash px-comfortable text-sm transition-colors duration-quick hover:bg-line md:min-h-9"
           >
             <Plus size={14} strokeWidth={1.5} aria-hidden className="text-muted" />
             <code className="font-mono text-xs text-fg">{p.key}</code>

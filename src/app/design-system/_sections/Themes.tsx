@@ -4,6 +4,7 @@ import { Button, StatusPill } from "@/components/ui";
 import { Plus } from "lucide-react";
 import { Callout, Code, CodeBlock, DocSection, P, SectionHeader } from "../_components/Doc";
 import { ThemeQuad } from "../_components/Preview";
+import { ACCENT_HEX } from "../_components/brand";
 
 const ROWS: Array<{ ref: string; who: string; total: string; status: string }> = [
   { ref: "CF-2026-001053", who: "Ayesha Siddika", total: "৳1,725", status: "paid" },
@@ -93,6 +94,7 @@ export function ThemesSection() {
                   ["Floating", "level 2", "POS float"],
                   ["Minimum target", "44 phone, 36 desktop", "44 everywhere"],
                   ["Text floor", "12", "13"],
+                  ["Primary fill", `brand-500 ${ACCENT_HEX} (brand-400 in dark)`, "the same, in both products"],
                   ["Accent", "ember", "ember (the same brand)"],
                 ].map(([k, os, go]) => (
                   <tr key={k} className="border-b border-hairline last:border-0">

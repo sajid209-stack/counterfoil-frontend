@@ -83,7 +83,7 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
   };
 
   return (
-    <section aria-labelledby="refund-requests-title" className="card-surface overflow-hidden border border-warning/40">
+    <section aria-labelledby="refund-requests-title" className="card-surface overflow-hidden border border-warning-line">
       <header className="flex items-start gap-comfortable border-b border-line bg-warning-wash px-card py-comfortable">
         <span aria-hidden className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-control bg-card text-warning">
           <RotateCcw size={18} strokeWidth={2} />
@@ -92,7 +92,7 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
           <h2 id="refund-requests-title" className="text-md font-semibold text-fg">
             {t("title", { count: list.length })}
           </h2>
-          <p className="text-base text-fg/80">{t("lead")}</p>
+          <p className="text-base text-fg-secondary">{t("lead")}</p>
         </div>
       </header>
       <ul className="divide-y divide-line">

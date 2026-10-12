@@ -243,14 +243,14 @@ export function TimeInput({
             onKeyDown={(e) => {
               if (e.key === "ArrowDown" && !open) { e.preventDefault(); openList(); }
             }}
-            className="flex w-11 shrink-0 items-center justify-center border-l border-line text-muted transition-colors duration-quick hover:text-fg active:bg-line md:w-8"
+            className="flex w-11 shrink-0 items-center justify-center border-l border-line text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg active:bg-secondary-active md:w-8"
           >
             <ChevronDown size={15} strokeWidth={1.5} aria-hidden />
           </button>
         ) : (
         <div className="flex flex-row-reverse border-l border-line md:flex-col">
-          <button type="button" tabIndex={-1} aria-label={t("ui.later")} disabled={disabled} onClick={() => nudge(1)} className="flex h-full w-11 items-center justify-center text-muted hover:text-fg active:bg-line md:h-1/2 md:w-8"><ChevronUp size={13} strokeWidth={1.5} /></button>
-          <button type="button" tabIndex={-1} aria-label={t("ui.earlier")} disabled={disabled} onClick={() => nudge(-1)} className="flex h-full w-11 items-center justify-center border-r border-line text-muted hover:text-fg active:bg-line md:h-1/2 md:w-8 md:border-r-0 md:border-t"><ChevronDown size={13} strokeWidth={1.5} /></button>
+          <button type="button" tabIndex={-1} aria-label={t("ui.later")} disabled={disabled} onClick={() => nudge(1)} className="flex h-full w-11 items-center justify-center text-muted hover:bg-muted-wash hover:text-fg active:bg-secondary-active md:h-1/2 md:w-8"><ChevronUp size={13} strokeWidth={1.5} /></button>
+          <button type="button" tabIndex={-1} aria-label={t("ui.earlier")} disabled={disabled} onClick={() => nudge(-1)} className="flex h-full w-11 items-center justify-center border-r border-line text-muted hover:bg-muted-wash hover:text-fg active:bg-secondary-active md:h-1/2 md:w-8 md:border-r-0 md:border-t"><ChevronDown size={13} strokeWidth={1.5} /></button>
         </div>
         )}
       </div>

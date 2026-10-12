@@ -478,7 +478,7 @@ export default function SellPage() {
                     className="flex min-h-11 min-w-0 flex-1 items-start gap-tight text-left"
                   >
                     <span
-                      className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${lines.length ? "bg-success/15 text-success" : "bg-line text-muted"}`}
+                      className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${lines.length ? "bg-success-wash text-success" : "bg-line text-muted"}`}
                       aria-hidden
                     >
                       {lines.length ? <Check size={13} strokeWidth={2.5} /> : <ChevronDown size={13} strokeWidth={2.5} className={open ? "rotate-180" : ""} />}
@@ -535,7 +535,7 @@ export default function SellPage() {
 
           {customItems.map((c) => (
             <div key={c.id} className="flex items-center gap-tight card-surface p-comfortable">
-              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success" aria-hidden>
+              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-success-wash text-success" aria-hidden>
                 <Check size={13} strokeWidth={2.5} />
               </span>
               <span className="min-w-0 flex-1">
@@ -604,7 +604,7 @@ export default function SellPage() {
               <p className="mb-tight text-base font-semibold">{t("pay.label")}</p>
 
               <div
-                className="relative grid h-14 rounded-full bg-line/60 p-inline"
+                className="relative grid h-14 rounded-full bg-line p-inline"
                 style={{ gridTemplateColumns: `repeat(${methods.length}, minmax(0, 1fr))` }}
               >
                 {methods.length > 1 && (
@@ -757,7 +757,7 @@ export default function SellPage() {
               )}
 
               {method === "bangla_qr" && (
-                <p className="mt-section rounded-card border border-line bg-subtle/40 p-comfortable text-sm text-muted">
+                <p className="mt-section rounded-card border border-line bg-subtle p-comfortable text-sm text-muted">
                   {t("pay.qrHint")}
                 </p>
               )}
@@ -787,7 +787,7 @@ export default function SellPage() {
                 count, which the button cannot say — exactly as the v1 till's
                 collapsed bar does. */}
             <span className="min-w-0 flex-1">
-              <span className="block text-sm text-inverse-fg/70">
+              <span className="block text-sm text-inverse-fg">
                 {balance > 0 ? t("footer.total") : t("footer.items", { count: items.length })}
               </span>
               {balance > 0 && (

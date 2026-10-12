@@ -256,8 +256,8 @@ export function DatePicker({
                 off && "cursor-not-allowed text-muted",
                 !off && !isSelected && outside && "text-muted hover:bg-muted-wash",
                 !off && !isSelected && !outside && "text-fg hover:bg-muted-wash",
-                // The house rule: white inside a solid ember frame.
-                isSelected && "bg-ember-solid font-semibold text-white",
+                // The chosen day is the primary: on-solid inside an ember-solid frame.
+                isSelected && "bg-ember-solid font-semibold text-on-solid hover:bg-ember-hover active:bg-ember-active",
                 // Today, when it is not the chosen day, is outlined rather than
                 // filled — two filled squares would read as two selections.
                 !isSelected && isToday && "border border-ember text-brand-foreground",

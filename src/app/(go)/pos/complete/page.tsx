@@ -193,7 +193,7 @@ export default function CompletePage() {
         <div className="flex flex-col gap-major">
           <section className="flex flex-col items-center text-center" aria-labelledby="sale-complete">
             <div id="sale-status" aria-live="polite" className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-success/15 text-success">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-success-wash text-success">
                 <Check size={16} strokeWidth={2.6} aria-hidden />
               </span>
               <h1 id="sale-complete" className="text-md font-semibold text-fg">
@@ -593,7 +593,7 @@ function UndoBar({
       <div className="overflow-hidden">
         <div
           className={cn(
-            "overflow-hidden rounded-card border border-warning/40 bg-warning-wash transition-opacity duration-considered ease-counterfoil",
+            "overflow-hidden rounded-card border border-warning-line bg-warning-wash transition-opacity duration-considered ease-counterfoil",
             collapsing && "opacity-0",
           )}
         >
@@ -617,7 +617,7 @@ function UndoBar({
               CSS transition rather than a per-frame width calculation — smooth
               with no extra JS, and instant under reduced motion like every
               other transition in this app. */}
-          <div aria-hidden className="h-1 bg-line/60">
+          <div aria-hidden className="h-1 bg-line">
             <div
               className="h-full bg-ember-solid"
               style={{ width: draining ? "0%" : "100%", transition: draining ? `width ${totalMs}ms linear` : "none" }}

@@ -97,7 +97,7 @@ export function ConnectDialog({
         ) : (
           /* The site is known: say which, once, as a header rather than a
              control. Not a form field — nothing here can be changed. */
-          <div data-connect-site className="flex items-center gap-comfortable rounded-control bg-subtle p-comfortable dark:bg-fg/10">
+          <div data-connect-site className="flex items-center gap-comfortable rounded-control bg-subtle p-comfortable dark:ring-1 dark:ring-line">
             <span
               aria-hidden
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-inner bg-market-solid text-lg font-bold leading-none text-on-solid"

@@ -351,7 +351,7 @@ export function Select({
           ref={panel}
           data-select-panel=""
           className={cn(
-            "fixed z-50 flex max-h-[18rem] min-w-[12rem] flex-col overflow-hidden rounded-card border border-hairline bg-card shadow-lg dark:border-line",
+            "fixed z-50 flex max-h-[18rem] min-w-[12rem] flex-col overflow-hidden rounded-card border border-hairline bg-card shadow-lg",
             bare && "w-max max-w-[18rem]",
           )}
         >

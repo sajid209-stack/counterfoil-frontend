@@ -498,11 +498,8 @@ function Catalog() {
     return (
       <span
         aria-hidden
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-inner border"
-        style={{
-          background: `color-mix(in srgb, ${accent} 16%, transparent)`,
-          borderColor: `color-mix(in srgb, ${accent} 40%, transparent)`,
-        }}
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-inner border bg-card"
+        style={{ borderColor: accent }}
       >
         <Icon size={18} strokeWidth={1.5} className="text-fg" />
       </span>

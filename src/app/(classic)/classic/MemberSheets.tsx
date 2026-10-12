@@ -38,7 +38,7 @@ export function MembershipSheet({
       }
     >
       {!hasCustomer ? (
-        <div className="rounded-sm border-l-2 border-ember bg-ember/5 p-comfortable">
+        <div className="rounded-sm border-l-2 border-ember bg-ember-wash p-comfortable">
           <p className="text-base font-medium">{t("membership.needCustomerTitle")}</p>
           <p className="mt-inline text-sm text-muted">{t("membership.needCustomerBody")}</p>
         </div>
@@ -51,7 +51,7 @@ export function MembershipSheet({
                 <button
                   type="button"
                   onClick={() => onPick(tier)}
-                  className="flex min-h-12 w-full items-center justify-between gap-tight rounded-sm border border-line p-comfortable text-left transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10"
+                  className="flex min-h-12 w-full items-center justify-between gap-tight rounded-sm border border-line p-comfortable text-left transition-colors duration-quick hover:bg-muted-wash active:bg-ember-wash"
                 >
                   <span className="min-w-0">
                     <span className="block break-words text-base font-medium">{tier.name}</span>
@@ -186,7 +186,7 @@ function PointsSheetBody({
                   onClick={() => setDraft(n)}
                   className={`h-12 rounded-sm border px-section text-base transition-colors duration-quick ${
                     draft === n
-                      ? "border-ember bg-ember/10 text-brand-foreground"
+                      ? "border-ember bg-ember-wash text-brand-foreground"
                       : "border-line text-muted"
                   }`}
                 >
@@ -204,7 +204,7 @@ function PointsSheetBody({
               className="w-full accent-ember"
               aria-label={t("points.slider")}
             />
-            <div className="rounded-sm border-l-2 border-ember bg-ember/5 p-comfortable">
+            <div className="rounded-sm border-l-2 border-ember bg-ember-wash p-comfortable">
               <p className="text-base tabular-nums">
                 {t("points.line", {
                   points: draft.toLocaleString(),

@@ -86,7 +86,7 @@ export function BarBack({ href, label }: { href: string; label: string }) {
       href={href}
       aria-label={t("backTo", { label })}
       data-bar-back
-      className="-ml-tight flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-fg/[0.06] active:bg-fg/[0.08]"
+      className="-ml-tight flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-muted-wash active:bg-secondary-hover"
     >
       <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
     </Link>,
@@ -235,8 +235,8 @@ function PhoneActions({ children }: { children: React.ReactNode }) {
         aria-expanded={open}
         data-page-actions-toggle
         className={cn(
-          "flex h-11 w-11 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-fg/[0.06] active:bg-fg/[0.08]",
-          open && "bg-fg/[0.07]",
+          "flex h-11 w-11 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-muted-wash active:bg-secondary-hover",
+          open && "bg-muted-wash",
         )}
       >
         <MoreHorizontal size={22} strokeWidth={1.75} aria-hidden />
@@ -346,11 +346,11 @@ export function PageShell({
   const narrowPrimary = primary
     ? (() => {
         const cls = cn(
-          "flex h-11 w-11 items-center justify-center rounded-full transition-opacity duration-quick active:opacity-80",
+          "group flex h-11 w-11 items-center justify-center rounded-full",
           primary.disabled && "pointer-events-none opacity-40",
         );
         const body = (
-          <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-inverse text-inverse-fg">
+          <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-ember-solid text-on-solid transition-colors duration-quick group-hover:bg-ember-hover group-active:bg-ember-active">
             {primary.icon ?? <Plus size={18} strokeWidth={2} />}
           </span>
         );

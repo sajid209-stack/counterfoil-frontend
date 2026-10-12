@@ -63,7 +63,7 @@ export default function CompletePage() {
             <div className="relative flex items-center">
               <span className="absolute -left-2 h-4 w-4 rounded-full bg-surface" aria-hidden />
               <span className="absolute -right-2 h-4 w-4 rounded-full bg-surface" aria-hidden />
-              <span className="mx-major flex-1 border-t-2 border-dashed border-paper/40" aria-hidden />
+              <span className="mx-major flex-1 border-t-2 border-dashed border-neutral-600" aria-hidden />
             </div>
             <div className="rounded-md bg-ink px-section pb-major pt-tight text-paper">
               <p className="font-mono text-xs text-muted">{t("complete.presentAtGate")}</p>
@@ -86,9 +86,9 @@ export default function CompletePage() {
 
           {/* Real print (opens the browser print dialog on a clean layout) + SMS. */}
           <div className="flex w-full items-center gap-tight">
-            <button type="button" disabled={!info.orderId} onClick={() => router.push(`/print/tickets/${info.orderId}`)} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-base text-muted active:bg-ember/10 disabled:opacity-40"><TicketIcon size={16} strokeWidth={1.5} /> {tk("printTickets")}</button>
-            <button type="button" disabled={!info.orderId} onClick={() => router.push(`/print/receipt/${info.orderId}`)} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-base text-muted active:bg-ember/10 disabled:opacity-40"><Printer size={16} strokeWidth={1.5} /> {tk("printReceipt")}</button>
-            <button type="button" onClick={() => setSmsOpen(true)} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-base text-muted active:bg-ember/10"><MessageSquare size={16} strokeWidth={1.5} /> {t("complete.sendSms")}</button>
+            <button type="button" disabled={!info.orderId} onClick={() => router.push(`/print/tickets/${info.orderId}`)} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-base text-muted active:bg-ember-wash disabled:opacity-40"><TicketIcon size={16} strokeWidth={1.5} /> {tk("printTickets")}</button>
+            <button type="button" disabled={!info.orderId} onClick={() => router.push(`/print/receipt/${info.orderId}`)} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-base text-muted active:bg-ember-wash disabled:opacity-40"><Printer size={16} strokeWidth={1.5} /> {tk("printReceipt")}</button>
+            <button type="button" onClick={() => setSmsOpen(true)} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-base text-muted active:bg-ember-wash"><MessageSquare size={16} strokeWidth={1.5} /> {t("complete.sendSms")}</button>
           </div>
         </>
       )}

@@ -142,7 +142,7 @@ export function Checkbox({
           aria-hidden
           className={cn(
             "flex h-5 w-5 items-center justify-center rounded-xs border transition-colors duration-quick ease-counterfoil",
-            mark ? "border-ember-solid bg-ember-solid text-on-solid" : cn("bg-card", invalid ? "border-danger" : "border-strong group-hover:border-fg"),
+            mark ? "border-ember-solid bg-ember-solid text-on-solid group-hover:border-ember-hover group-hover:bg-ember-hover group-active:border-ember-active group-active:bg-ember-active" : cn("bg-card", invalid ? "border-danger" : "border-strong group-hover:border-fg"),
             disabled && "opacity-50",
             FOCUS_ON_MARK,
           )}
@@ -199,7 +199,7 @@ export function Radio({
             "relative h-5 w-5 rounded-full border bg-card transition-colors duration-quick ease-counterfoil",
             invalid ? "border-danger" : "border-strong group-hover:border-fg",
             // Checked: the whole disc fills, with a small white dot as the mark.
-            "peer-checked:border-ember-solid peer-checked:bg-ember-solid",
+            "peer-checked:border-ember-solid peer-checked:bg-ember-solid peer-checked:group-hover:border-ember-hover peer-checked:group-hover:bg-ember-hover peer-checked:group-active:border-ember-active peer-checked:group-active:bg-ember-active",
             "after:absolute after:left-1/2 after:top-1/2 after:h-2 after:w-2 after:-translate-x-1/2 after:-translate-y-1/2 after:scale-0 after:rounded-full after:bg-on-solid after:transition-transform after:duration-quick peer-checked:after:scale-100",
             disabled && "opacity-50",
             FOCUS_ON_MARK,

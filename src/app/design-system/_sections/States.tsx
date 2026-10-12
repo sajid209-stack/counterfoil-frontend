@@ -213,7 +213,7 @@ function RowStates() {
   return (
     <div className="card-surface p-card">
       <h3 className="text-md font-semibold">Table row</h3>
-      <p className="text-sm text-muted">Point at a row, tab to one and press Enter, or press and hold. The second row is the selected one (an ember tint).</p>
+      <p className="text-sm text-muted">Point at a row, tab to one and press Enter, or press and hold. The second row is the selected one (the accent: ember-wash).</p>
       <div className="mt-comfortable overflow-hidden rounded-inner border border-hairline">
         <DataTable columns={COLS} rows={ROWS} getRowId={(r) => r.id} onRowClick={() => {}} isSelected={(r) => r.id === "2"} height="page" />
       </div>
@@ -251,11 +251,11 @@ function RailItem({ current, className, children }: { current?: boolean; classNa
       aria-current={current ? "page" : undefined}
       className={cn(
         "flex h-9 w-full items-center gap-comfortable rounded-control px-comfortable text-base font-medium transition-colors duration-quick",
-        current ? "bg-fg/[0.07] text-fg" : "text-muted hover:bg-fg/[0.04] hover:text-fg",
+        current ? "bg-ember-wash text-brand-foreground" : "text-muted hover:bg-muted-wash hover:text-fg",
         className,
       )}
     >
-      <ReceiptText size={18} strokeWidth={1.5} aria-hidden className="shrink-0" />
+      <ReceiptText size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", current && "text-ember")} />
       {children}
     </button>
   );
@@ -263,7 +263,7 @@ function RailItem({ current, className, children }: { current?: boolean; classNa
 
 function RailStates() {
   return (
-    <Block title="Rail / nav item" note="The OS rail's row, drawn from the Sidebar's recipe. Current is a soft ink tint — no border, no shadow." cols="lg:grid-cols-4">
+    <Block title="Rail / nav item" note="The OS rail's row, drawn from the Sidebar's recipe. Current is the accent: an ember-wash fill, brand-foreground text and an ember icon — no border, no shadow. Hover is muted-wash." cols="lg:grid-cols-4">
       <Cell label="Rest">
         <RailItem>Orders</RailItem>
       </Cell>
@@ -352,7 +352,7 @@ const CHANGES: Array<{ state: string; what: React.ReactNode }> = [
     state: "Hover",
     what: (
       <>
-        Primary and destructive: <Code>opacity 90%</Code>. Secondary: border to <Code>strong</Code> and a <Code>muted-wash</Code> fill. Tertiary, menu items and table rows: <Code>muted-wash</Code>. Link: <Code>opacity 80%</Code>. Interactive card: <Code>shadow-float</Code>. Fields: border to <Code>strong</Code>. ChoiceCard: an ember edge at 40%. Rail row: a 4% ink tint.
+        Every hover is a step of the control&rsquo;s own scale, never an opacity. Primary: <Code>ember-hover</Code> (brand-600; brand-300 in dark). Destructive: <Code>danger-hover</Code> (red-700; red-400). Secondary: <Code>secondary-hover</Code> (neutral-200; neutral-800). Tertiary, menu items, rail rows and table rows: <Code>muted-wash</Code>. Link: text to <Code>ember-hover</Code>. Interactive card: <Code>shadow-float</Code>. Fields: border to <Code>strong</Code>. ChoiceCard: an ember edge.
       </>
     ),
   },
@@ -368,7 +368,7 @@ const CHANGES: Array<{ state: string; what: React.ReactNode }> = [
     state: "Pressed",
     what: (
       <>
-        Button and chip: <Code>scale 0.98</Code>. Interactive card: <Code>scale 0.995</Code>. ChoiceCard: an <Code>ember-wash</Code> fill. Rows: <Code>muted-wash</Code>. Over <Code>duration-quick</Code> (120ms); reduced motion removes the transition.
+        Button and chip: <Code>scale 0.98</Code>, and the button fill moves one step deeper again: primary <Code>ember-active</Code> (brand-700; brand-500 in dark), destructive <Code>danger-active</Code> (red-800; red-600), secondary <Code>secondary-active</Code> (neutral-300; neutral-700). Interactive card: <Code>scale 0.995</Code>. ChoiceCard: an <Code>ember-wash</Code> fill. Rows: <Code>muted-wash</Code>. Over <Code>duration-quick</Code> (120ms); reduced motion removes the transition.
       </>
     ),
   },
@@ -376,7 +376,7 @@ const CHANGES: Array<{ state: string; what: React.ReactNode }> = [
     state: "Selected",
     what: (
       <>
-        Chip: <Code>ember-solid</Code> fill, white text and a check. SegmentedControl: a raised <Code>card</Code> tile with <Code>shadow-sm</Code>. ChoiceCard: a 2px ember ring and a check. Toggle button: a firmer edge or <Code>muted-wash</Code> fill with <Code>aria-pressed</Code>. Table row: an ember tint. Rail row: a 7% ink tint. Selection is never colour alone.
+        Chip: <Code>ember-solid</Code> fill, <Code>on-solid</Code> text (white in light, neutral-950 in dark) and a check. SegmentedControl: a raised <Code>card</Code> tile with <Code>shadow-sm</Code>. ChoiceCard: a 2px ember ring and a check. Toggle button: a firmer edge or <Code>muted-wash</Code> fill with <Code>aria-pressed</Code>. Table row and rail row: the accent, <Code>ember-wash</Code> with <Code>brand-foreground</Code> text. Selection is never colour alone.
       </>
     ),
   },
@@ -384,7 +384,7 @@ const CHANGES: Array<{ state: string; what: React.ReactNode }> = [
     state: "Disabled",
     what: (
       <>
-        Solid buttons (primary, destructive): the neutral <Code>line</Code> fill with <Code>muted</Code> text — still readable. Everything else: <Code>50%</Code> opacity. Fields: a <Code>subtle</Code> fill and <Code>faint</Code> text. The cursor says not-allowed and the press feedback is gone. Say why, nearby.
+        Solid buttons (primary, destructive): their own family&rsquo;s tint — <Code>ember-disabled</Code> / <Code>danger-disabled</Code>, the 100 step at 60% (the 900 step at 40% in dark) — with <Code>faint</Code> text. Secondary and the rest: the whole control at <Code>50%</Code> opacity. Fields: a <Code>subtle</Code> fill and <Code>faint</Code> text. The cursor says not-allowed and the press feedback is gone. Say why, nearby.
       </>
     ),
   },

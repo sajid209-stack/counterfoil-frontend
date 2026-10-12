@@ -761,7 +761,7 @@ export default function PosPage() {
             {query && <button type="button" onClick={() => setQuery("")} className="text-xs text-muted hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
-            <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 shrink-0 items-center rounded-sm border border-ember bg-ember/10 px-comfortable text-xs text-brand-foreground">
+            <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 shrink-0 items-center rounded-sm border border-ember bg-ember-wash px-comfortable text-xs text-brand-foreground">
               {t("parkedBadge", { count: parked.length })}
             </button>
           )}
@@ -788,7 +788,7 @@ export default function PosPage() {
                    "Open entry · no …". Moving it onto the subtitle's row gives
                    the name the full width beside the thumbnail. */
                 <div key={p.id} className="card-surface flex items-center overflow-hidden transition-colors duration-quick hover:bg-muted-wash">
-                <button type="button" onClick={() => tapProduct(p)} className="flex min-w-0 flex-1 items-center gap-comfortable p-tight text-left active:bg-ember/10">
+                <button type="button" onClick={() => tapProduct(p)} className="flex min-w-0 flex-1 items-center gap-comfortable p-tight text-left active:bg-ember-wash">
                   <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="thumb" />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="line-clamp-2 text-md font-semibold leading-tight">{p.name}</span>
@@ -821,7 +821,7 @@ export default function PosPage() {
                 </button>
                 </div>
               ))}
-              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-22 items-center justify-center gap-tight rounded-sm border border-dashed border-line text-muted transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10">
+              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-22 items-center justify-center gap-tight rounded-sm border border-dashed border-line text-muted transition-colors duration-quick hover:bg-muted-wash active:bg-ember-wash">
                 <Plus size={20} strokeWidth={1.5} /><span className="text-sm">{t("customAmount")}</span>
               </button>
             </div>
@@ -872,20 +872,20 @@ export default function PosPage() {
                     type="button"
                     aria-label={t("cart.lineDiscountLabel")}
                     onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
-                    className={`flex h-12 w-12 items-center justify-center rounded-sm border text-xs active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "border-ember text-brand-foreground" : "border-line"}`}
+                    className={`flex h-12 w-12 items-center justify-center rounded-sm border text-xs active:bg-ember-wash ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "border-ember text-brand-foreground" : "border-line"}`}
                   >
                     {e.lineDiscountAmount ? "৳" : (e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
                   </button>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
-                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight text-xs active:bg-ember/10">
+                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight text-xs active:bg-ember-wash">
                       +{productById(e.productId)!.durationConfig!.incrementMinutes}m
                     </button>
                   )}
-                  {productById(e.productId) && <button type="button" aria-label={t("cart.edit")} onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line active:bg-ember/10"><Pencil size={15} strokeWidth={1.5} /></button>}
-                  <button type="button" aria-label={t("cart.remove")} onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-danger active:bg-ember/10"><Trash2 size={15} strokeWidth={1.5} /></button>
+                  {productById(e.productId) && <button type="button" aria-label={t("cart.edit")} onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line active:bg-ember-wash"><Pencil size={15} strokeWidth={1.5} /></button>}
+                  <button type="button" aria-label={t("cart.remove")} onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-danger active:bg-ember-wash"><Trash2 size={15} strokeWidth={1.5} /></button>
                 </div>
                 {lineDiscEdit === e.id && (
-                  <div className="mt-tight rounded-sm border border-line bg-subtle/50 p-tight">
+                  <div className="mt-tight rounded-sm border border-line bg-subtle p-tight">
                     <DiscountInput
                       compact
                       label={t("cart.lineDiscountLabel")}
@@ -1003,7 +1003,7 @@ export default function PosPage() {
                   <button
                     type="button"
                     onClick={() => setAdvance(null)}
-                    className={`h-12 shrink-0 rounded-sm border px-comfortable text-sm ${advance == null ? "border-ember bg-ember/10 text-brand-foreground" : "border-line"}`}
+                    className={`h-12 shrink-0 rounded-sm border px-comfortable text-sm ${advance == null ? "border-ember bg-ember-wash text-brand-foreground" : "border-line"}`}
                   >
                     {t("advance.full")}
                   </button>
@@ -1014,7 +1014,7 @@ export default function PosPage() {
                       key={i}
                       type="button"
                       onClick={() => setAdvance(amt >= total ? null : amt)}
-                      className="h-12 flex-1 rounded-sm border border-line bg-card px-tight text-sm active:bg-ember/10"
+                      className="h-12 flex-1 rounded-sm border border-line bg-card px-tight text-sm active:bg-ember-wash"
                     >
                       {i === 0 ? t("advance.minimum", { amount: formatMoney(amt, currency) }) : i === 1 ? t("advance.half") : t("advance.full")}
                     </button>
@@ -1089,7 +1089,7 @@ export default function PosPage() {
 
           {/* The member price is an entitlement, so say whose it is. */}
           {benefit && (
-            <div className="mb-tight rounded-sm border-l-2 border-ember bg-ember/5 px-comfortable py-tight">
+            <div className="mb-tight rounded-sm border-l-2 border-ember bg-ember-wash px-comfortable py-tight">
               <p className="min-w-0 break-words text-xs">
                 <span className="font-medium">{benefit.tierName}</span>
                 {" · "}
@@ -1136,9 +1136,9 @@ export default function PosPage() {
             const pct = 100 / n;
             const idx = Math.max(0, availableMethods.findIndex((m) => m.value === method));
             return (
-              <div className="relative mt-tight grid h-14 rounded-sm bg-line/60 p-inline dark:bg-line/25" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+              <div className="relative mt-tight grid h-14 rounded-sm bg-line p-inline dark:bg-line" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
                 {/* The thumb draws even when there is only one method.
-                    Guarding it on `n > 1` left the selected label in `text-ink`
+                    Guarding it on `n > 1` left the selected label in dark text
                     on the bare track — fine in light, 1.35:1 in dark, where the
                     track is #383632. A single-option control showing its one
                     option as selected is also honest: it is what the sale will
@@ -1149,7 +1149,7 @@ export default function PosPage() {
                   style={{ width: `calc(${pct}% - 8px)`, left: `calc(${idx * pct}% + 4px)` }}
                 />
                 {availableMethods.map((m) => (
-                  <button key={m.value} type="button" aria-pressed={method === m.value} onClick={() => setMethod(m.value)} className={`relative z-10 text-sm transition-colors duration-quick ${method === m.value ? "font-medium text-ink" : "text-muted"}`}>{enumL.method(m.value)}</button>
+                  <button key={m.value} type="button" aria-pressed={method === m.value} onClick={() => setMethod(m.value)} className={`relative z-10 text-sm transition-colors duration-quick ${method === m.value ? "font-medium text-on-solid" : "text-muted"}`}>{enumL.method(m.value)}</button>
                 ))}
               </div>
             );
@@ -1188,7 +1188,7 @@ export default function PosPage() {
                     <p className="type-label text-sm text-brand-foreground">{t("cash.label")}</p>
                     <h2 className="type-h2 text-lg">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</h2>
                   </div>
-                  <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-10 w-10 items-center justify-center rounded-sm active:bg-ember/10"><X size={20} strokeWidth={1.5} /></button>
+                  <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-10 w-10 items-center justify-center rounded-sm active:bg-ember-wash"><X size={20} strokeWidth={1.5} /></button>
                 </div>
 
                 <div className="card-surface p-section">
@@ -1203,9 +1203,9 @@ export default function PosPage() {
 
                 {/* Quick chips: exact, then the common notes in the drawer. */}
                 <div className="mt-section flex gap-tight">
-                  <button type="button" onClick={() => setTenderTaka(String(Math.ceil(dueNow / 100)))} className="h-12 flex-1 rounded-sm border border-inverse bg-card text-base active:bg-ember/10">{t("cash.exact")}</button>
+                  <button type="button" onClick={() => setTenderTaka(String(Math.ceil(dueNow / 100)))} className="h-12 flex-1 rounded-sm border border-inverse bg-card text-base active:bg-ember-wash">{t("cash.exact")}</button>
                   {[500, 1000, 2000].map((amt) => (
-                    <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-line bg-card text-base active:bg-ember/10">৳{amt}</button>
+                    <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-line bg-card text-base active:bg-ember-wash">৳{amt}</button>
                   ))}
                 </div>
 
@@ -1309,7 +1309,7 @@ export default function PosPage() {
                 <Button onClick={takeSettle} loading={settling}>{t("settle.take", { amount: formatMoney(settleOutstanding, currency) })}</Button>
               </>
             ) : (
-              <p className="rounded-sm bg-success/10 py-tight text-center text-base font-medium text-success">{t("settle.fullyPaid")}</p>
+              <p className="rounded-sm bg-success-wash py-tight text-center text-base font-medium text-success">{t("settle.fullyPaid")}</p>
             )}
             <button type="button" onClick={() => { setSettleOrder(null); setSettleRef(""); }} className="text-center text-sm text-muted hover:text-fg">{t("settle.lookupAnother")}</button>
           </div>
@@ -1327,7 +1327,7 @@ export default function PosPage() {
       <Modal open={!!nc} onClose={() => setNc(null)} title={nc?.method === "bkash" ? t("wallet.bkashTitle") : t("wallet.qrTitle")}>
         {nc?.state === "failed" ? (
           <div className="flex flex-col gap-section">
-            <div className="rounded-sm border border-danger/40 bg-danger/10 p-comfortable text-base text-danger">
+            <div className="rounded-sm border border-danger-line bg-danger-wash p-comfortable text-base text-danger">
               {t("wallet.failed")}
             </div>
             <div className="flex gap-tight">

@@ -43,9 +43,9 @@ export function ChoiceCard({
           ? "border-line bg-subtle text-muted"
           : selected
             ? hideCheck
-              ? "border-ember bg-ember/10 ring-1 ring-inset ring-ember"
-              : "border-ember bg-ember/5"
-            : "border-line bg-card hover:border-ember/40 hover:shadow-sm active:bg-ember/5",
+              ? "border-ember bg-ember-wash ring-1 ring-inset ring-ember"
+              : "border-ember bg-ember-wash"
+            : "border-line bg-card hover:border-ember-line hover:shadow-sm active:bg-ember-wash",
         className,
       )}
     >

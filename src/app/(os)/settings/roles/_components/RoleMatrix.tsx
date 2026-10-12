@@ -36,11 +36,9 @@ function No({ label }: { label: string }) {
  */
 export function RoleMatrix({ roles }: { roles: Role[] }) {
   const t = useTranslations("settings");
-  // The pinned cells must be opaque to hide what scrolls under them, and the
-  // card they sit on is 72% card over the page — a plain bg-card drew a whiter
-  // stripe down the column. This is that composite, made solid.
+  // The pinned cells must be opaque to hide what scrolls under them.
   const pinned =
-    "max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-[color-mix(in_srgb,var(--color-card)_72%,var(--color-surface))]";
+    "max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-card";
 
   const discount = (r: Role) =>
     !r.permissions.includes("pos.sell") ? (

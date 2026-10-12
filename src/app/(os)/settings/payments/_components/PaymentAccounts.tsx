@@ -169,7 +169,7 @@ export function PaymentAccounts() {
                 }}
                 className={cn(
                   "cursor-pointer rounded-control px-tight transition-colors duration-quick",
-                  checked ? "bg-card ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:bg-line/40",
+                  checked ? "bg-card ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:bg-line",
                 )}
               >
                 <Radio

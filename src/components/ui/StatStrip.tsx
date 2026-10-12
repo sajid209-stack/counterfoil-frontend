@@ -199,8 +199,8 @@ function Cell({ item, loading }: { item: StatItem; loading: boolean }) {
         // thrown away — the same clip that ate the till's selected-card ring.
         // Tailwind v4 resets a button to the default cursor, and a cell that
         // looks like content has nothing else to say it can be pressed.
-        item.onClick && "cursor-pointer hover:bg-fg/[0.03]",
-        item.pressed && "bg-subtle",
+        item.onClick && "cursor-pointer hover:bg-muted-wash",
+        item.pressed && "bg-ember-wash",
       )}
     >
       <span className="col-start-1 min-w-0 truncate text-sm font-medium text-muted">{item.label}</span>
@@ -247,13 +247,13 @@ function Tile({ item, loading, row = false }: { item: StatItem; loading: boolean
           : "card-surface flex flex-col p-card",
         item.onClick && "transition-colors duration-quick hover:border-strong",
         item.pressed && !row && "border-strong",
-        item.pressed && row && "bg-subtle",
+        item.pressed && row && "bg-ember-wash",
       )}
     >
       {item.icon && (
         <span
           className={cn(
-            "flex shrink-0 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground",
+            "flex shrink-0 items-center justify-center rounded-sm bg-ember-wash text-brand-foreground",
             row ? "mt-0.5 h-9 w-9" : "h-7 w-7 [&>svg]:h-4 [&>svg]:w-4",
           )}
         >
@@ -305,7 +305,7 @@ export function DeltaPill({ now, then, goodWhen = "up", since }: { now: number; 
   const up = pct > 0;
   const good = goodWhen === "up" ? up : !up;
   return (
-    <span title={since} className={cn("inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-xs", good ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+    <span title={since} className={cn("inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-xs", good ? "bg-success-wash text-success" : "bg-danger-wash text-danger")}>
       {up ? "↗" : "↘"} {Math.abs(pct)}%
       {since && <span className="sr-only">{` ${since}`}</span>}
     </span>

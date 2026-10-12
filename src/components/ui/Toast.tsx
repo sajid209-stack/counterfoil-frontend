@@ -29,9 +29,9 @@ interface ToastApi {
 const ToastContext = createContext<ToastApi | null>(null);
 
 const TONE_STYLES: Record<ToastTone, string> = {
-  success: "border-success/30 text-success",
-  error: "border-danger/30 text-danger",
-  info: "border-info/30 text-info",
+  success: "border-success-line bg-success-wash text-success",
+  error: "border-danger-line bg-danger-wash text-danger",
+  info: "border-info-line bg-info-wash text-info",
 };
 
 const TONE_ICON: Record<ToastTone, React.ReactNode> = {
@@ -128,7 +128,7 @@ function ToastView({ toast: t, onRemove }: { toast: ToastItem; onRemove: (id: nu
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) start();
       }}
       className={cn(
-        "pointer-events-auto flex items-start gap-tight rounded-card border bg-card p-comfortable shadow-float",
+        "pointer-events-auto flex items-start gap-tight rounded-card border p-comfortable shadow-float",
         TONE_STYLES[t.tone],
       )}
     >

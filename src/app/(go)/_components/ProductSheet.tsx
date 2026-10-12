@@ -749,7 +749,7 @@ export function ProductSheet({
             deadline, so it changes register — the same threshold the rest of
             the app uses to switch a warning to a refusal. */}
         {heldUntil && holdLeft > 0 && (
-          <div className={`mb-section flex items-center gap-tight rounded-full border px-comfortable py-tight text-sm ${holdLeft < 120 ? "border-danger/30 bg-danger/10 text-danger" : "border-warning/30 bg-warning/10 text-warning"}`}>
+          <div className={`mb-section flex items-center gap-tight rounded-full border px-comfortable py-tight text-sm ${holdLeft < 120 ? "border-danger-line bg-danger-wash text-danger" : "border-warning-line bg-warning-wash text-warning"}`}>
             <Clock size={14} strokeWidth={1.75} className="shrink-0" />
             <span>
               {t(holdLeft < 120 ? "sheet.holdExpiring" : "sheet.holdRemaining", {
@@ -1234,7 +1234,7 @@ export function ProductSheet({
             ? `${new Intl.DateTimeFormat("en-GB", { day: "numeric" }).format(d(dates[0]))}–${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(d(dates[dates.length - 1]))}`
             : "";
           return (
-            <div className="mb-section rounded-card border border-success/30 bg-success/10 p-comfortable">
+            <div className="mb-section rounded-card border border-success-line bg-success-wash p-comfortable">
               <p className="flex items-center gap-inline text-base font-medium text-success">
                 <Check size={14} strokeWidth={2.5} />
                 {t("sheet.readyToAdd")}

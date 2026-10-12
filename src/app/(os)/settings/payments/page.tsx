@@ -402,7 +402,7 @@ export default function PaymentsPage() {
                     // One step down from the card: a frame set inside another
                     // frame takes the next radius on the scale.
                     "cursor-pointer rounded-control px-tight transition-colors duration-quick",
-                    checked ? "bg-ember/5 ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:bg-line/40",
+                    checked ? "bg-ember-wash ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:bg-line",
                   )}
                 >
                   <Radio

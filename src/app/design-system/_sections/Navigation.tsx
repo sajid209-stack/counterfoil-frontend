@@ -82,10 +82,10 @@ function Rail() {
         aria-current={current === label ? "page" : undefined}
         className={cn(
           "flex h-9 w-full items-center gap-comfortable rounded-sm px-comfortable text-base font-medium transition-colors duration-quick",
-          current === label ? "bg-fg/[0.07] text-fg dark:bg-fg/[0.09]" : "text-muted hover:bg-fg/[0.04] hover:text-fg",
+          current === label ? "bg-ember-wash text-brand-foreground" : "text-muted hover:bg-muted-wash hover:text-fg",
         )}
       >
-        <Icon size={18} strokeWidth={1.5} aria-hidden className="shrink-0" />
+        <Icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", current === label && "text-ember")} />
         <span className="min-w-0 flex-1 truncate text-left">{label}</span>
         {leaves && <ArrowUpRight size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
       </button>
@@ -172,13 +172,13 @@ export function NavigationSection() {
 
       <DocSection id="rail" title="The OS rail">
         <P>
-          One list of destinations feeds the rail, the collapsed rail&rsquo;s tooltips, the phone&rsquo;s menu sheet and the command palette, so they cannot drift. Rows are 36px (44 on touch); the current page is a soft ink tint, with no border or shadow; the apps you leave OS for carry a <Code>↗</Code> and are set apart by a hairline; Settings sits at the foot.
+          One list of destinations feeds the rail, the collapsed rail&rsquo;s tooltips, the phone&rsquo;s menu sheet and the command palette, so they cannot drift. Rows are 36px (44 on touch); the current page is the accent (an <Code>ember-wash</Code> fill, <Code>brand-foreground</Code> text and an ember icon), with no border or shadow, and hover is <Code>muted-wash</Code>; the apps you leave OS for carry a <Code>↗</Code> and are set apart by a hairline; Settings sits at the foot.
         </P>
         <Preview label="The rail pattern">
           <Rail />
         </Preview>
         <Callout>
-          On a phone the rail becomes a floating menu button that opens the same list as a sheet. Press the rows above to see the current-page tint move.
+          On a phone the rail becomes a floating menu button that opens the same list as a sheet. Press the rows above to see the accent move.
         </Callout>
       </DocSection>
     </>

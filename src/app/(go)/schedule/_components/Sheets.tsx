@@ -617,7 +617,7 @@ export function RefundSheet({
             placeholder={t("refund.notePlaceholder")}
             aria-invalid={!!err}
             aria-describedby={err ? "refund-note-err" : undefined}
-            className="min-h-[5.5rem] rounded-inner border border-line bg-card px-comfortable py-tight text-md text-fg focus:border-ember focus:ring-2 focus:ring-ember/25"
+            className="min-h-[5.5rem] rounded-inner border border-line bg-card px-comfortable py-tight text-md text-fg focus:border-ember focus:ring-2 focus:ring-ember"
           />
           {err && <span id="refund-note-err" className="text-base font-medium text-danger">{err}</span>}
         </label>

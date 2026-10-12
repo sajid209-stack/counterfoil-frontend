@@ -12,7 +12,7 @@ const WORDS: Array<{ word: string; slug: string; anchor?: string; what: string }
   { word: "Radius", slug: "radius", what: "The scale, and 12 in OS against 18 in POS." },
   { word: "Fonts", slug: "typography", anchor: "fonts", what: "Inter, DM Mono, Hind Siliguri and how they load." },
   { word: "Typography", slug: "typography", anchor: "scale", what: "The scale and the role recipes." },
-  { word: "Colour", slug: "colour", what: "Ramps, roles, charts and live contrast." },
+  { word: "Colour", slug: "colour", what: "Scales, roles, states, status and live contrast." },
   { word: "Spacing", slug: "spacing", what: "The 4px grid, rhythm and breakpoints." },
   { word: "Strokes", slug: "borders", what: "1px lines, and where 2px is allowed." },
   { word: "Cards", slug: "cards", what: "Anatomy, surfaces, variants, nested corners." },

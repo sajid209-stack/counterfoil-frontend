@@ -29,7 +29,7 @@ export const SECTIONS: readonly SectionMeta[] = [
   { slug: "overview", number: 1, title: "Overview", group: "Foundations", status: "done",
     summary: "What the system is for, the five principles it holds, the four configurations every screen has to work in, and a quick reference to everything below." },
   { slug: "colour", number: 2, title: "Colour", group: "Foundations", status: "done",
-    summary: "Primitive ramps, the semantic roles that point at them, the chart and heat palettes, and contrast measured live." },
+    summary: "The Counterfoil Color System: six tonal scales, semantic tokens in four groups, component state tokens, status and feedback, contrast measured live, and the two hierarchies." },
   { slug: "typography", number: 3, title: "Typography", group: "Foundations", status: "done",
     summary: "Fonts and how they load, one scale from 11 to 40px, the role recipes built on it, and the rule for Inter, DM Mono and Hind Siliguri." },
   { slug: "spacing", number: 4, title: "Spacing & layout", group: "Foundations", status: "done",

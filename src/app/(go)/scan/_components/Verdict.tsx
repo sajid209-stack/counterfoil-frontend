@@ -195,10 +195,10 @@ export function Verdict({
             it, because "you paid half at the counter" is the sentence a
             steward has to say, and the screen should hand it to them. */}
         <p className="type-display text-5xl tabular-nums">{labels.amount}</p>
-        {labels.paidOf && <p className="text-md tabular-nums text-fg/75">{labels.paidOf}</p>}
+        {labels.paidOf && <p className="text-md tabular-nums text-fg-secondary">{labels.paidOf}</p>}
         <p className="text-lg text-fg">{outcome.title}</p>
-        <p className="text-sm text-fg/75">{labels.code}</p>
-        {preview && <p className="text-sm text-fg/75">{labels.previewNote}</p>}
+        <p className="text-sm text-fg-secondary">{labels.code}</p>
+        {preview && <p className="text-sm text-fg-secondary">{labels.previewNote}</p>}
 
         <div className="flex w-full max-w-md shrink-0 flex-col gap-tight">
           <div className={cn("grid gap-tight", methods.length > 2 ? "grid-cols-2" : "grid-cols-1")}>
@@ -217,10 +217,10 @@ export function Verdict({
               </button>
             ))}
           </div>
-          <button type="button" disabled={busy} onClick={onSettle} className="h-13 rounded-full bg-ink text-md font-semibold text-paper disabled:opacity-50 active:opacity-90">
+          <button type="button" disabled={busy} onClick={onSettle} className="h-13 rounded-full bg-ink text-md font-semibold text-paper disabled:opacity-50 active:bg-neutral-800">
             {labels.takeAndAdmit}
           </button>
-          <button type="button" onClick={onClose} className="h-12 rounded-full text-sm text-fg/75 underline-offset-4 hover:underline">
+          <button type="button" onClick={onClose} className="h-12 rounded-full text-sm text-fg-secondary underline-offset-4 hover:underline">
             {labels.dismiss}
           </button>
         </div>
@@ -243,22 +243,22 @@ export function Verdict({
             <span key={i} className={cn("h-3 w-3 rounded-full border-2 border-paper", i < through && "bg-paper")} />
           ))}
         </span>
-        <p className="text-lg text-paper/90">{labels.groupSummary}</p>
-        <p className="text-sm text-paper/70">{labels.code}</p>
-        {preview && <p className="text-sm text-paper/70">{labels.previewNote}</p>}
+        <p className="text-lg text-paper">{labels.groupSummary}</p>
+        <p className="text-sm text-neutral-400">{labels.code}</p>
+        {preview && <p className="text-sm text-neutral-400">{labels.previewNote}</p>}
         {remaining > 0 ? (
           <div className="flex shrink-0 flex-wrap items-center justify-center gap-tight">
-            <button type="button" disabled={busy} onClick={() => onAdmit(1)} aria-label={labels.plusOneLabel} className="h-14 rounded-full border-2 border-paper px-major text-lg font-medium active:bg-paper/20">
+            <button type="button" disabled={busy} onClick={() => onAdmit(1)} aria-label={labels.plusOneLabel} className="h-14 rounded-full border-2 border-paper px-major text-lg font-medium active:bg-neutral-800">
               {labels.plusOne}
             </button>
-            <button type="button" disabled={busy} onClick={() => onAdmit(remaining)} className="h-14 rounded-full bg-paper px-major text-lg font-medium text-ink active:bg-paper/80">
+            <button type="button" disabled={busy} onClick={() => onAdmit(remaining)} className="h-14 rounded-full bg-paper px-major text-lg font-medium text-ink active:bg-neutral-200">
               {labels.admitAll(remaining)}
             </button>
           </div>
         ) : (
           <p className="text-lg">{labels.everyoneIn}</p>
         )}
-        <button type="button" onClick={onClose} className="mt-tight h-12 shrink-0 rounded-full px-major text-sm text-paper/70 underline-offset-4 hover:underline">
+        <button type="button" onClick={onClose} className="mt-tight h-12 shrink-0 rounded-full px-major text-sm text-neutral-400 underline-offset-4 hover:underline">
           {labels.dismiss}
         </button>
       </div>
@@ -295,7 +295,7 @@ export function Verdict({
           {/* A statement, not a warning: the gate does not decide that a past
               date is wrong — it has no per-booking validity window to decide
               it with — so the date is put where a steward will see it. */}
-          {labels.dated && <span className="rounded-full border border-paper/40 bg-paper/10 px-comfortable py-inline text-md">{labels.dated}</span>}
+          {labels.dated && <span className="rounded-full border border-neutral-400 bg-neutral-900 px-comfortable py-inline text-md">{labels.dated}</span>}
         </>
       ) : (
         <>
@@ -316,8 +316,8 @@ export function Verdict({
       <span className="mt-tight text-sm opacity-70">{preview ? labels.previewNote : labels.dismiss}</span>
 
       {admit && !preview && (
-        <span aria-hidden className="absolute inset-x-0 bottom-0 h-1 bg-paper/20">
-          <span className="verdict-timer block h-full w-full bg-paper/70" />
+        <span aria-hidden className="absolute inset-x-0 bottom-0 h-1 bg-neutral-800">
+          <span className="verdict-timer block h-full w-full bg-neutral-300" />
         </span>
       )}
     </button>

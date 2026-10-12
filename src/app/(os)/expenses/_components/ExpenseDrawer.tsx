@@ -105,7 +105,7 @@ function Chips<V extends string>({
             className={cn(
               "relative flex items-center justify-center rounded-card border text-sm transition-[colors,box-shadow] duration-quick ease-counterfoil",
               row ? "h-11 gap-tight px-comfortable" : "min-h-[60px] flex-col gap-inline px-inline py-tight",
-              on ? "border-ember bg-ember-wash/60 font-medium text-fg ring-1 ring-inset ring-ember" : "border-line bg-card text-fg hover:border-ember/40 active:bg-ember-wash",
+              on ? "border-ember bg-ember-wash font-medium text-fg ring-1 ring-inset ring-ember" : "border-line bg-card text-fg hover:border-ember-line active:bg-ember-wash",
             )}
           >
             <Icon size={row ? 16 : 20} strokeWidth={1.5} aria-hidden />

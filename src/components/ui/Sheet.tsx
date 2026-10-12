@@ -87,7 +87,7 @@ export function Sheet({
         tabIndex={-1}
         style={drag ? { transform: `translateY(${drag}px)` } : undefined}
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col overflow-hidden rounded-t-sheet border border-transparent bg-card shadow-lg outline-none dark:border-line",
+          "fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col overflow-hidden rounded-t-sheet border border-transparent bg-card shadow-lg outline-none",
           // Rises from the edge it belongs to. `backwards`, so no transform is
           // left behind to create a containing block; the global
           // reduced-motion block neutralises it.

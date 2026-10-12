@@ -75,7 +75,7 @@ export function WallTile({
           ? "bg-surface shadow-none dark:bg-surface"
           : count > 0
             ? "bg-ember-wash ring-2 ring-inset ring-ember active:bg-muted-wash"
-            : "active:bg-muted-wash hover:bg-muted-wash/60",
+            : "active:bg-muted-wash hover:bg-muted-wash",
         soldOut && "border border-line",
       )}
     >

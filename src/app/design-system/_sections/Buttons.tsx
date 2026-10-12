@@ -4,12 +4,13 @@ import { Button, type ButtonSize, type ButtonVariant } from "@/components/ui";
 import { ArrowRight, Download, Plus, Trash2 } from "lucide-react";
 import { Callout, Code, ComponentDoc, DocSection, P, SectionHeader } from "../_components/Doc";
 import { Preview, ThemeQuad } from "../_components/Preview";
+import { ACCENT_HEX } from "../_components/brand";
 
 const VARIANTS: Array<{ v: ButtonVariant; use: string }> = [
-  { v: "primary", use: "One per screen. The ember-solid fill with white text." },
-  { v: "secondary", use: "White with a line edge. The default companion." },
-  { v: "tertiary", use: "No fill. Quiet actions in a toolbar or a row." },
-  { v: "destructive", use: "danger-solid. Archive, delete, refund — and confirm first." },
+  { v: "primary", use: `One per screen. The ember-solid fill (brand-500, ${ACCENT_HEX}) with on-solid text; hover brand-600, pressed brand-700. In dark: brand-400, text neutral-950.` },
+  { v: "secondary", use: "A neutral-100 fill with secondary-foreground text and a line edge; hover neutral-200, pressed neutral-300. The default companion." },
+  { v: "tertiary", use: "No fill. Quiet actions in a toolbar or a row; hover is muted-wash." },
+  { v: "destructive", use: "danger-solid (red-600; red-500 in dark); hover red-700, pressed red-800. Archive, delete, refund — and confirm first." },
   { v: "link", use: "Brand text, underlined. Inside a sentence or beside a field." },
 ];
 const SIZES: Array<{ s: ButtonSize; px: string }> = [
@@ -131,7 +132,7 @@ export function ButtonsSection() {
 
       <DocSection id="states" title="States">
         <P>
-          Loading keeps the button&rsquo;s width and shows a spinner (and sets <Code>aria-busy</Code>); a loading button is also disabled. A disabled button should say why, nearby — it is not an explanation on its own.
+          Loading keeps the button&rsquo;s width and shows a spinner (and sets <Code>aria-busy</Code>); a loading button is also disabled. A disabled solid button (primary, destructive) takes its own family&rsquo;s tint — the 100 step at 60%, or the 900 step at 40% in dark — with disabled-foreground text; the others fade to half strength. No state is an opacity of the fill. A disabled button should say why, nearby — it is not an explanation on its own.
         </P>
         <Preview label="Default · disabled · loading">
           <StateMatrix />

@@ -100,8 +100,8 @@ export function SlotMatrix({
                 row.outOfService
                   ? "border-line bg-subtle text-muted line-through"
                   : on
-                    ? "border-ember bg-ember/10 font-medium text-brand-foreground"
-                    : "border-line bg-card active:bg-ember/10",
+                    ? "border-ember bg-ember-wash font-medium text-brand-foreground"
+                    : "border-line bg-card active:bg-ember-wash",
               )}
             >
               <span className="whitespace-nowrap">{row.name}</span>
@@ -148,8 +148,8 @@ export function SlotMatrix({
                 // then names, so it is the one selection in this pattern drawn
                 // as a fill rather than a tint.
                 selected
-                  ? "border-ember bg-ember font-medium text-ink"
-                  : "border-line bg-card active:bg-ember/10",
+                  ? "border-ember-solid bg-ember-solid font-medium text-on-solid"
+                  : "border-line bg-card active:bg-ember-wash",
               )}
             >
               <ClockCell hhmm={cell.time} ampmClassName="" />

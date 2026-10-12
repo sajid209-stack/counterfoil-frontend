@@ -73,7 +73,7 @@ export function ProfileHeader({
       <div className="flex items-center gap-section">
         <span
           aria-hidden
-          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-subtle text-xl font-semibold text-fg dark:bg-fg/10"
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-subtle text-xl font-semibold text-fg dark:ring-1 dark:ring-line"
         >
           {initialsOf(customer.name)}
         </span>

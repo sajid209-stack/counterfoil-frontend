@@ -36,7 +36,7 @@ export function OpenHourChips({
             aria-label={chipName(hour, count)}
             onClick={(e) => onPick(hour, e.currentTarget.getBoundingClientRect())}
             className={cn(
-              "flex min-h-11 flex-col items-start justify-center rounded-control border border-dashed border-strong/60 px-comfortable py-inline text-left",
+              "flex min-h-11 flex-col items-start justify-center rounded-control border border-dashed border-strong px-comfortable py-inline text-left",
               "transition-colors duration-quick active:border-ember active:bg-ember-wash",
             )}
           >

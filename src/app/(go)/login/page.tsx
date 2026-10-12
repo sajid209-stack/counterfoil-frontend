@@ -48,10 +48,9 @@ function Face({ color, name, size }: { color: FaceColor; name: string; size: "lg
   return (
     <span
       aria-hidden
-      className={`flex items-center justify-center rounded-full border-2 font-semibold text-fg ${size === "lg" ? "h-12 w-12 text-md" : "h-10 w-10 text-md"}`}
+      className={`flex items-center justify-center rounded-full border-2 bg-card font-semibold text-fg ${size === "lg" ? "h-12 w-12 text-md" : "h-10 w-10 text-md"}`}
       style={{
         borderColor: `var(--color-cat-${c})`,
-        background: `color-mix(in srgb, var(--color-cat-${c}) 22%, var(--color-card))`,
       }}
     >
       {name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}

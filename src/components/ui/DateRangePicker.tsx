@@ -264,11 +264,11 @@ export function DateRangePicker({
                 "relative flex h-10 w-10 items-center justify-center text-sm tabular-nums transition-colors duration-quick md:h-9 md:w-9",
                 // The band: a continuous wash across the span, rounded only
                 // where a week or the range starts and stops.
-                inRange && !isEnd && "bg-ember/10 text-fg",
+                inRange && !isEnd && "bg-ember-wash text-fg",
                 inRange && edgeL && !isEnd && "rounded-l-sm",
                 inRange && edgeR && !isEnd && "rounded-r-sm",
-                // The ends: the house rule, white inside solid ember.
-                isEnd && "rounded-sm bg-ember-solid font-semibold text-white",
+                // The ends are the primary: on-solid inside ember-solid.
+                isEnd && "rounded-sm bg-ember-solid font-semibold text-on-solid hover:bg-ember-hover active:bg-ember-active",
                 !inRange && !off && "rounded-sm text-fg hover:bg-muted-wash",
                 off && "cursor-not-allowed text-muted opacity-50",
                 !inRange && iso === today && "ring-1 ring-inset ring-ember",
@@ -329,7 +329,7 @@ export function DateRangePicker({
           role="dialog"
           aria-label={labels.choose}
           className={cn(
-            "z-50 flex flex-col overflow-hidden border border-hairline bg-card shadow-xl dark:border-line",
+            "z-50 flex flex-col overflow-hidden border border-hairline bg-card shadow-xl",
             // A sheet from the bottom on a phone; a popover under the button beyond.
             "fixed inset-x-0 bottom-0 max-h-[88vh] rounded-t-md md:absolute md:inset-x-auto md:bottom-auto md:left-0 md:top-[calc(100%+6px)] md:max-h-none md:w-max md:rounded-md",
           )}
@@ -348,7 +348,7 @@ export function DateRangePicker({
                       onClick={() => pickPreset(p)}
                       className={cn(
                         "flex h-11 w-full items-center gap-tight whitespace-nowrap rounded-sm px-comfortable text-left text-sm transition-colors duration-quick md:h-9",
-                        on ? "bg-subtle font-medium text-fg dark:bg-fg/10" : "border border-line hover:bg-muted-wash md:border-0",
+                        on ? "bg-ember-wash font-medium text-brand-foreground" : "border border-line hover:bg-muted-wash md:border-0",
                       )}
                     >
                       <span className="flex-1">{p.label}</span>
@@ -361,7 +361,7 @@ export function DateRangePicker({
                 <span
                   className={cn(
                     "flex h-9 items-center gap-tight rounded-sm px-comfortable text-sm",
-                    pressed === "custom" ? "bg-subtle font-medium text-fg dark:bg-fg/10" : "text-muted",
+                    pressed === "custom" ? "bg-ember-wash font-medium text-brand-foreground" : "text-muted",
                   )}
                 >
                   <span className="flex-1">{labels.custom}</span>
@@ -422,7 +422,7 @@ export function DateRangePicker({
               type="button"
               onClick={apply}
               disabled={!draft.to}
-              className="h-11 rounded-sm bg-ember-solid px-comfortable text-sm font-medium text-white transition-opacity duration-quick disabled:opacity-40 md:h-9"
+              className="h-11 rounded-sm bg-ember-solid px-comfortable text-sm font-medium text-on-solid transition-colors duration-quick enabled:hover:bg-ember-hover enabled:active:bg-ember-active disabled:opacity-40 md:h-9"
             >
               {labels.apply}
             </button>

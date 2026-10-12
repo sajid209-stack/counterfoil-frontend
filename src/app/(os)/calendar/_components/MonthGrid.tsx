@@ -147,7 +147,7 @@ export function MonthGrid({
                   onClick={() => setPicked(key)}
                   className={cn(
                     "flex min-h-13 flex-col items-center gap-1 border-r border-hairline py-tight last:border-r-0",
-                    outside && "bg-subtle/40",
+                    outside && "bg-subtle",
                     on && "bg-ember-wash",
                   )}
                 >
@@ -259,9 +259,9 @@ export function MonthGrid({
                      tint: tinted, the 1st of next month — bookable — sampled
                      almost the shade that means "cannot be booked". */
                   className={cn(
-                    "group/day relative min-h-28 border-r border-hairline/50 p-1 last:border-r-0",
+                    "group/day relative min-h-28 border-r border-hairline p-1 last:border-r-0",
                     !!todayIso && key < todayIso && "bg-offtime",
-                    bookable && "cursor-pointer transition-colors duration-quick hover:bg-ember-wash/30",
+                    bookable && "cursor-pointer transition-colors duration-quick hover:bg-ember-wash",
                   )}
                 >
                   {/* The keyboard's way in to the same thing, shown on hover. */}
@@ -309,7 +309,7 @@ export function MonthGrid({
                         )}
                       >
                         {/* Cells between md and lg are ~80px: no room for a
-                            badge there, and the chip is violet anyway. */}
+                            badge there, and the chip is info blue anyway. */}
                         {e.source && <MarketBadge id={e.source.id} className="max-lg:hidden" />}
                         {e.locked && <Lock size={8} strokeWidth={2.5} className="shrink-0" />}
                         {!e.allDay && (
@@ -324,7 +324,7 @@ export function MonthGrid({
                         aria-hidden
                         className="flex w-full items-center gap-0.5 overflow-hidden rounded-control bg-ember-solid px-1 py-0.5 text-xs font-semibold leading-tight text-on-solid shadow-md"
                       >
-                        {!draftHere.allDay && <span className="shrink-0 font-normal tabular-nums text-on-solid/90">{formatClockMin(draftHere.start, { short: true })}</span>}
+                        {!draftHere.allDay && <span className="shrink-0 font-normal tabular-nums text-on-solid">{formatClockMin(draftHere.start, { short: true })}</span>}
                         <span className="truncate">{draftHere.title ?? ghostLabel}</span>
                       </span>
                     )}

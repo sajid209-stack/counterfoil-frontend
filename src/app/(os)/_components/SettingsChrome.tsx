@@ -89,7 +89,7 @@ export function SettingsChrome({ open, onClose }: { open: boolean; onClose: () =
             href={backTo}
             data-settings-back
             aria-label={t("settingsExit")}
-            className="-ml-tight inline-flex h-9 items-center gap-inline rounded-control pl-tight pr-comfortable text-md font-semibold text-fg transition-colors duration-quick hover:bg-fg/[0.05] [@media(pointer:coarse)]:h-11"
+            className="-ml-tight inline-flex h-9 items-center gap-inline rounded-control pl-tight pr-comfortable text-md font-semibold text-fg transition-colors duration-quick hover:bg-muted-wash [@media(pointer:coarse)]:h-11"
           >
             <ChevronLeft size={18} strokeWidth={1.75} aria-hidden className="text-muted" />
             {t("settings")}
@@ -133,7 +133,7 @@ export function SettingsChrome({ open, onClose }: { open: boolean; onClose: () =
           aria-current={profileCurrent ? "page" : undefined}
           className={cn(
             "mx-comfortable mb-comfortable flex shrink-0 items-center gap-comfortable rounded-control px-comfortable py-tight transition-colors duration-quick [@media(pointer:coarse)]:min-h-11",
-            profileCurrent ? "bg-fg/[0.07] dark:bg-fg/[0.09]" : "hover:bg-fg/[0.04]",
+            profileCurrent ? "bg-ember-wash" : "hover:bg-muted-wash",
           )}
         >
           <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-subtle text-xs font-semibold text-fg ring-1 ring-line">

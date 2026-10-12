@@ -12,49 +12,35 @@ export type PillTone = "success" | "warning" | "danger" | "info" | "neutral";
  * booking is on sale) and "Confirmed" (a reservation exists) were drawn
  * identically, so two unrelated lifecycles read as one.
  *
- * The calm pass took every outline off: a pill is sentence case Inter 12/500 on
- * a rounded-full soft tint, with no border and no ring. What used to be carried
- * by an outline (record states) is now carried by the neutral tint and the
- * full-ink word, and what used to be carried by a ring (attention) is carried
- * by a stronger tint. The owner removed chip dots on 2026-09-27, so there is no
- * dot on any pill. Contrast is
- * measured, not assumed: every pair below is >= 4.5:1 on a card, in light and
- * in dark (the dark neutral steps off `bg-subtle`, which IS the card there).
+ * A pill is sentence case Inter 12/500 on a rounded-full soft badge — the Color
+ * System's `*-wash` fill with the tone's own foreground token on the word, and
+ * no border, no ring and no dot (the owner removed chip dots on 2026-09-27).
+ * Neutral and record states are `subtle` with `fg-secondary`; because `subtle`
+ * and the card are the same value in dark, those two carry a `line` ring so
+ * the badge still has an edge there. Nothing is an alpha tint or a `dark:`
+ * override: light and dark differ only because the tokens do, and each pair is
+ * >= 4.5:1 on a card in both modes.
  */
 type PillShape = "transaction" | "record";
 
 const TONES: Record<PillTone, string> = {
-  success: "bg-success/10 text-success",
+  success: "bg-success-wash text-success",
   /* ATTENTION — the only tone that means somebody has to do something. It is
-     the one that costs an operator money when it is missed, so it gets the
-     strongest non-destructive treatment available: a heavier tint than every
-     other tone, so it separates from `info` by weight as well as by hue. Not
-     a filled ember pill: white on ember is 3.50:1, which a 12px label cannot
-     carry. */
-  warning: "bg-warning/20 text-warning",
-  danger: "bg-danger/10 text-danger",
-  info: "bg-info/10 text-info",
-  /* Dark: `subtle` is the card colour there, so the tint comes off the
-     foreground instead — and the text steps up from `muted`, which measures
-     3.9:1 on that tint. */
-  neutral: "bg-subtle text-muted dark:bg-fg/10 dark:text-fg/75",
+     the one that costs an operator money when it is missed, and it separates
+     from `info` by hue and by its amber wash. */
+  warning: "bg-warning-wash text-warning",
+  danger: "bg-danger-wash text-danger",
+  info: "bg-info-wash text-info",
+  neutral: "bg-subtle text-fg-secondary ring-1 ring-inset ring-line",
 };
 
-/* A record state is quiet on purpose: a neutral tint with the word in full ink,
-   so it reads apart from the transaction tints without a dot (the owner removed
-   chip dots on 2026-09-27). "Active" is a fact about a record, not an event to
-   be noticed. */
-const RECORD_BG = "bg-subtle dark:bg-fg/10";
-const RECORD_TEXT: Record<PillTone, string> = {
-  success: "text-fg",
-  warning: "text-fg",
-  danger: "text-fg",
-  info: "text-fg",
-  neutral: "text-muted dark:text-fg/75",
-};
+/* A record state is quiet on purpose: `subtle` with `fg-secondary` and a `line`
+   ring (the outlined record style), so it reads apart from the transaction
+   tints. "Active" is a fact about a record, not an event to be noticed. */
+const RECORD = "bg-subtle text-fg-secondary ring-1 ring-inset ring-line";
 
 /** Record lifecycle — is this thing on the shelf? — rather than what a sale did. */
-const RECORD = new Set(["active", "inactive", "archived", "suspended", "invited"]);
+const RECORD_STATES = new Set(["active", "inactive", "archived", "suspended", "invited"]);
 
 /**
  * Map a domain status string to a tone. Colour never carries meaning alone —
@@ -119,7 +105,7 @@ export function StatusPill({
 }) {
   const { status: statusLabel } = useEnumLabels();
   const resolvedTone = tone ?? (status ? statusTone(status) : "neutral");
-  const resolvedShape: PillShape = shape ?? (status && RECORD.has(status) ? "record" : "transaction");
+  const resolvedShape: PillShape = shape ?? (status && RECORD_STATES.has(status) ? "record" : "transaction");
   const label = children ?? (status ? statusLabel(status) : "");
   const record = resolvedShape === "record";
   return (
@@ -127,7 +113,7 @@ export function StatusPill({
       className={cn(
         "inline-flex items-center gap-inline rounded-full py-0.5 font-sans font-medium leading-5",
         size === "md" ? "px-3 text-sm" : "px-2.5 text-xs",
-        record ? cn(RECORD_BG, RECORD_TEXT[resolvedTone]) : TONES[resolvedTone],
+        record ? RECORD : TONES[resolvedTone],
         className,
       )}
     >
