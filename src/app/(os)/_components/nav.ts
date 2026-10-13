@@ -43,41 +43,63 @@ export interface NavDestination {
   /** The `nav` message key that names it. */
   key: string;
   icon: LucideIcon;
+  /**
+   * Pages that belong under this one, Shopify-style: they are drawn indented
+   * beneath the parent, label only, and only while the parent or one of them
+   * is the page you are on. The parent row still goes to the parent's page.
+   * One level deep — a menu inside a menu inside a menu is a site map.
+   */
+  children?: readonly NavDestination[];
 }
 
 /**
+ * The daily destinations, grouped so the rail reads as seven places rather than
+ * twelve. A child is something you only go to from its parent's context:
+ *  - Activity log is the dashboard's feed, opened out;
+ *  - Issued orders are the same sales as Orders, one ticket at a time;
+ *  - Inventory and Marketplaces are the catalogue on the shelf and on other
+ *    sites — Shopify files Inventory under Products for the same reason;
+ *  - Expenses is the money going out, beside the balance it comes out of.
+ *
  * Memberships and Promotions are built but hidden — the backend does not
  * implement them yet. See lib/features; restoring the flag restores the row.
  */
 export const NAV_MAIN: readonly NavDestination[] = [
-  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  {
+    href: "/dashboard",
+    key: "dashboard",
+    icon: LayoutDashboard,
+    children: [{ href: "/activity", key: "activityLog", icon: Activity }],
+  },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
-  { href: "/orders", key: "orders", icon: ReceiptText },
-  /* The same sales seen one ticket at a time: what was issued, and whether it
-     has been used. Right after Orders because it is that list, opened up. */
-  { href: "/issued-orders", key: "issuedOrders", icon: TicketCheck },
+  {
+    href: "/orders",
+    key: "orders",
+    icon: ReceiptText,
+    children: [{ href: "/issued-orders", key: "issuedOrders", icon: TicketCheck }],
+  },
   { href: "/customers", key: "customers", icon: UsersRound },
-  /* One door for everything sold. Bookings and Events were two rows that each
-     held half the answer to "what do we sell?". */
-  { href: "/catalog", key: "catalog", icon: Ticket },
-  /* Beside the catalogue on purpose: one answers "what can somebody buy", the
-     other "what is on the shelf", and an operator moves between the two
-     constantly. */
-  { href: "/inventory", key: "inventory", icon: Boxes },
-  /* Beside the catalogue, because that is what it lists: the marketplaces are
-     where the same catalogue is sold by somebody else. */
-  { href: "/marketplaces", key: "marketplaces", icon: Globe },
+  {
+    href: "/catalog",
+    key: "catalog",
+    icon: Ticket,
+    children: [
+      { href: "/inventory", key: "inventory", icon: Boxes },
+      { href: "/marketplaces", key: "marketplaces", icon: Globe },
+    ],
+  },
   { href: "/analytics", key: "analytics", icon: ChartNoAxesColumn },
-  /* Finances is the venue's money with Counterfoil — one balance. */
-  { href: "/finances", key: "finances", icon: Wallet },
-  /* Expenses is what the venue spends, straight after the money it takes in.
-     Not a receipt or a wallet: Orders is already the receipt and Finances the
-     wallet, and at 18px a second one is the first one with a different name. */
-  { href: "/expenses", key: "expenses", icon: HandCoins },
+  {
+    href: "/finances",
+    key: "finances",
+    icon: Wallet,
+    children: [{ href: "/expenses", key: "expenses", icon: HandCoins }],
+  },
 ];
 
-/** The surfaces you leave OS for. Each has its own glyph because the rail
- *  collapses to 64px, where every one would otherwise be an identical ↗. */
+/** The surfaces you leave OS for, drawn under one collapsible "Other apps"
+ *  heading (Shopify's "Sales channels ›"). Each has its own glyph because the
+ *  rail collapses to 64px, where every one would otherwise be an identical ↗. */
 export const NAV_OPEN: readonly NavDestination[] = [
   { href: "/pos", key: "pos", icon: Store },
   { href: "/deck", key: "deck", icon: SquareStack },
@@ -92,8 +114,25 @@ export const NAV_OPEN: readonly NavDestination[] = [
  *  page; every section lists the rest in its own Settings menu. */
 export const NAV_SETTINGS: NavDestination = { href: "/settings/business", key: "settings", icon: Settings };
 
-/** The whole list, in the order every surface shows it. */
-export const DESTINATIONS: readonly NavDestination[] = [...NAV_MAIN, ...NAV_OPEN, NAV_SETTINGS];
+/** Every destination as one flat list — parents, then their children, in rail
+ *  order. The command palette and anything that needs "every page" reads this. */
+export const flatten = (list: readonly NavDestination[]): NavDestination[] =>
+  list.flatMap((d) => [d, ...(d.children ?? [])]);
+
+/** The whole list, flat, in the order every surface shows it. */
+export const DESTINATIONS: readonly NavDestination[] = [...flatten(NAV_MAIN), ...NAV_OPEN, NAV_SETTINGS];
+
+/** True when `pathname` is this destination's page or one beneath it. */
+export const isAt = (d: NavDestination, pathname: string): boolean =>
+  d === NAV_SETTINGS
+    ? pathname.startsWith("/settings")
+    : pathname === d.href || pathname.startsWith(`${d.href}/`) ||
+      /* /tickets redirects to Issued orders, and a ticket record is one of its rows. */
+      (d.href === "/issued-orders" && pathname.startsWith("/tickets"));
+
+/** The parent whose group the page belongs to — itself or one of its children. */
+export const groupOf = (pathname: string): NavDestination | undefined =>
+  NAV_MAIN.find((d) => isAt(d, pathname) || (d.children ?? []).some((c) => isAt(c, pathname)));
 
 /**
  * What the phone's top bar calls a page, and the glyph that stands beside it.

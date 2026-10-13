@@ -6,6 +6,7 @@ import { ToastProvider } from "@/components/ui";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { PREFS_BOOT } from "@/lib/prefsBoot";
 import { PwaSetup } from "@/components/PwaSetup";
+import { ScrollActivity } from "@/components/ScrollActivity";
 import "./globals.css";
 
 // Inter is a variable font — the full weight axis is available without
@@ -87,6 +88,7 @@ export default async function RootLayout({
           </NextIntlClientProvider>
         </ThemeProvider>
         <PwaSetup />
+        <ScrollActivity />
       </body>
     </html>
   );

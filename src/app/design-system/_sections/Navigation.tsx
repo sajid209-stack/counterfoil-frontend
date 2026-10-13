@@ -2,10 +2,11 @@
 
 import { ActionMenu, Pagination, Tabs, tabPanelProps } from "@/components/ui";
 import { useState } from "react";
-import { ArrowUpRight, CalendarDays, LayoutDashboard, ReceiptText, Settings, Store, Ticket, UsersRound, Eye, Pencil, Archive } from "lucide-react";
+import { ArrowUpRight, CalendarDays, ChevronDown, LayoutDashboard, ReceiptText, Settings, Ticket, UsersRound, Eye, Pencil, Archive } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Callout, Code, ComponentDoc, DocSection, P, SectionHeader } from "../_components/Doc";
 import { Preview } from "../_components/Preview";
+import { NAV_IDLE, NAV_PARENT_OF_SELECTED, NAV_SELECTED, NAV_SELECTED_ICON } from "@/components/ui/navStyles";
 
 function TabsDemo() {
   const [v, setV] = useState("all");
@@ -64,7 +65,8 @@ function PagerDemo() {
 }
 
 /* The OS rail, redrawn from the same classes the real Sidebar uses, so the
-   pattern can be shown inside a preview without a router. */
+   pattern can be shown inside a preview without a router. The three row states
+   come from navStyles, the one definition every menu shares. */
 const RAIL = [
   { label: "Dashboard", Icon: LayoutDashboard },
   { label: "Calendar", Icon: CalendarDays },
@@ -72,30 +74,59 @@ const RAIL = [
   { label: "Customers", Icon: UsersRound },
   { label: "Catalog", Icon: Ticket },
 ];
+/* A parent's children: label only, drawn only while you are inside the group. */
+const CHILDREN: Record<string, string[]> = { Catalog: ["Bookings", "Events"] };
 function Rail() {
-  const [current, setCurrent] = useState("Orders");
-  const row = (label: string, Icon: typeof Ticket, leaves = false) => (
-    <li key={label}>
-      <button
-        type="button"
-        onClick={() => setCurrent(label)}
-        aria-current={current === label ? "page" : undefined}
-        className={cn(
-          "flex h-9 w-full items-center gap-comfortable rounded-sm px-comfortable text-base font-medium transition-colors duration-quick",
-          current === label ? "bg-ember-wash text-brand-foreground" : "text-muted hover:bg-muted-wash hover:text-fg",
-        )}
-      >
-        <Icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", current === label && "text-ember")} />
-        <span className="min-w-0 flex-1 truncate text-left">{label}</span>
-        {leaves && <ArrowUpRight size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
-      </button>
-    </li>
-  );
+  const [current, setCurrent] = useState("Bookings");
+  const [appsOpen, setAppsOpen] = useState(false);
+  const row = (label: string, Icon: typeof Ticket | null, leaves = false) => {
+    const kids = CHILDREN[label];
+    const childIsCurrent = !!kids?.includes(current);
+    const selected = current === label;
+    return (
+      <li key={label}>
+        <button
+          type="button"
+          onClick={() => setCurrent(label)}
+          aria-current={selected ? "page" : undefined}
+          className={cn(
+            "flex h-9 w-full items-center gap-comfortable rounded-sm px-comfortable text-base transition-colors duration-quick",
+            !Icon && "pl-10",
+            selected ? NAV_SELECTED : childIsCurrent ? NAV_PARENT_OF_SELECTED : `font-medium ${NAV_IDLE}`,
+          )}
+        >
+          {Icon && <Icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", selected && NAV_SELECTED_ICON)} />}
+          <span className="min-w-0 flex-1 truncate text-left">{label}</span>
+          {leaves && <ArrowUpRight size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
+        </button>
+      </li>
+    );
+  };
   return (
     <nav aria-label="Example rail" className="w-60 max-w-full rounded-md bg-chrome p-tight">
-      <ul className="flex flex-col gap-inline">{RAIL.map((r) => row(r.label, r.Icon))}</ul>
+      <ul className="flex flex-col gap-inline">
+        {RAIL.flatMap((r) => {
+          const kids = CHILDREN[r.label];
+          const open = !!kids && (current === r.label || kids.includes(current));
+          return [row(r.label, r.Icon), ...(open ? kids.map((k) => row(k, null)) : [])];
+        })}
+      </ul>
       <div aria-hidden className="mx-comfortable my-tight h-px bg-hairline" />
-      <ul className="flex flex-col gap-inline">{row("Point of Sale", Store, true)}</ul>
+      <button
+        type="button"
+        aria-expanded={appsOpen}
+        onClick={() => setAppsOpen((v) => !v)}
+        className={cn("flex h-9 w-full items-center gap-comfortable rounded-sm px-comfortable text-base font-medium transition-colors duration-quick", NAV_IDLE)}
+      >
+        <ChevronDown size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0 transition-transform duration-quick", !appsOpen && "-rotate-90")} />
+        <span className="min-w-0 flex-1 truncate text-left">Other apps</span>
+      </button>
+      {appsOpen && (
+        <ul className="mt-inline flex flex-col gap-inline">
+          {row("Point of Sale", null, true)}
+          {row("Counterfoil Deck", null, true)}
+        </ul>
+      )}
       <div aria-hidden className="mx-comfortable my-tight h-px bg-hairline" />
       <ul className="flex flex-col gap-inline">{row("Settings", Settings)}</ul>
     </nav>
@@ -172,13 +203,16 @@ export function NavigationSection() {
 
       <DocSection id="rail" title="The OS rail">
         <P>
-          One list of destinations feeds the rail, the collapsed rail&rsquo;s tooltips, the phone&rsquo;s menu sheet and the command palette, so they cannot drift. Rows are 36px (44 on touch); the current page is the accent (an <Code>ember-wash</Code> fill, <Code>brand-foreground</Code> text and an ember icon), with no border or shadow, and hover is <Code>muted-wash</Code>; the apps you leave OS for carry a <Code>↗</Code> and are set apart by a hairline; Settings sits at the foot.
+          One list of destinations feeds the rail, the collapsed rail&rsquo;s tooltips, the phone&rsquo;s menu sheet and the command palette, so they cannot drift. Rows are 36px (44 on touch). The current page is the <Code>NAV_SELECTED</Code> surface from <Code>navStyles</Code>, used by every menu: the accent fill (<Code>ember-wash</Code>) with a 1px inset <Code>ember-line</Code> ring, a semibold <Code>brand-foreground</Code> label and an ember icon. The fill alone is about 1.03:1 against a white rail, so the ring and the weight carry it. Other rows are muted with a <Code>muted-wash</Code> hover; the apps you leave OS for carry a <Code>↗</Code> and sit under a collapsible &ldquo;Other apps&rdquo; group; Settings sits at the foot.
         </P>
-        <Preview label="The rail pattern">
+        <P>
+          <strong>Nested groups.</strong> A parent with children shows them indented, label only (no icon), and only while you are inside that group. The current page carries the selected surface; its parent goes bold with no fill (<Code>NAV_PARENT_OF_SELECTED</Code>), so exactly one row on the screen is filled. &ldquo;Other apps&rdquo; is a collapsible group.
+        </P>
+        <Preview label="The rail pattern, with a nested group">
           <Rail />
         </Preview>
         <Callout>
-          On a phone the rail becomes a floating menu button that opens the same list as a sheet. Press the rows above to see the accent move.
+          On a phone the rail becomes a floating menu button that opens the same list as a sheet, and the till&rsquo;s tab bar draws its active tab the same way. Press the rows above to see the surface move and the parent stay bold.
         </Callout>
       </DocSection>
     </>

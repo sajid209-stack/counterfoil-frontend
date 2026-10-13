@@ -47,6 +47,7 @@ import { applyTillText, usePrefs } from "@/lib/prefs";
 const BAR_CLEAR = "12px + 62px + env(safe-area-inset-bottom)";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
+import { NAV_IDLE, NAV_SELECTED, NAV_SELECTED_ICON } from "@/components/ui/navStyles";
 
 // F10 — nav is responsive by form factor, not fixed. Phone + tablet portrait
 // get a bottom tab bar (thumb zone); a tablet held in landscape gets an 88px
@@ -160,17 +161,17 @@ export function GoShell({ children }: { children: React.ReactNode }) {
         aria-current={active ? "page" : undefined}
         onClick={() => { if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
         className={cn(
-          "relative flex min-w-12 flex-1 flex-col items-center justify-center gap-inline rounded-control transition-colors duration-quick active:bg-muted-wash",
+          "flex min-w-12 flex-1 flex-col items-center justify-center gap-inline rounded-control transition-colors duration-quick",
           rail ? "h-[64px] flex-none" : "h-[54px]",
-          active ? "text-brand-foreground" : "text-muted",
+          /* The same "you are here" as every other menu (navStyles): the wash
+              WITH its edge, a semibold label and an ember icon. The wash alone
+              is about 1.03:1 against the bar, so the ring and the weight carry
+              it. The heavier icon stroke is a fourth way, kept for the tab bar. */
+          active ? NAV_SELECTED : `font-medium active:bg-muted-wash ${NAV_IDLE}`,
         )}
       >
-        {/* Selection is a soft ember pill behind the whole tab, the way the
-            reference draws it — not a 2px rule on one edge. The heavier icon
-            stroke says it a second way, so the tint is never doing it alone. */}
-        {active && <span aria-hidden className="absolute inset-0 rounded-control bg-ember-wash" />}
-        <Icon size={22} strokeWidth={active ? 2.25 : 1.6} className="relative" />
-        <span className="relative max-w-full truncate text-2xs font-medium">{t(tab.key)}</span>
+        <Icon size={22} strokeWidth={active ? 2.25 : 1.6} className={active ? NAV_SELECTED_ICON : undefined} />
+        <span className="max-w-full truncate text-2xs">{t(tab.key)}</span>
       </Link>
     );
   };

@@ -602,6 +602,7 @@
   --color-faint: var(--color-neutral-400);
   --color-line: var(--color-neutral-200);
   --color-strong: var(--color-neutral-300);
+  --color-scrollbar: var(--color-neutral-400);
   --color-subtle: var(--color-neutral-100);
   --color-muted-wash: var(--color-neutral-100);
   --color-hairline: var(--color-neutral-200);
@@ -704,6 +705,7 @@
   --color-faint: var(--color-neutral-400);
   --color-line: var(--color-neutral-200);
   --color-strong: var(--color-neutral-300);
+  --color-scrollbar: var(--color-neutral-400);
   --color-subtle: var(--color-neutral-100);
   --color-muted-wash: var(--color-neutral-100);
   --color-hairline: var(--color-neutral-200);
@@ -783,6 +785,7 @@
   --color-faint: var(--color-neutral-700);
   --color-line: var(--color-neutral-800);
   --color-strong: var(--color-neutral-700);
+  --color-scrollbar: var(--color-neutral-600);
   /* The Color System puts the secondary and muted surfaces ON the card in
      dark (neutral-900): a sunken fill there is told apart by its border, as
      its Visual Hierarchy panel draws it. The hover fill is the next step up,
@@ -1071,6 +1074,33 @@ html[data-motion="reduce"] *::after {
   -ms-overflow-style: none;
 }
 .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* Every other scroller: a thin overlay-style thumb, the way Shopify admin and
+   macOS draw it — invisible at rest, there while you scroll. A permanent grey
+   bar beside every card list is chrome on chrome; a bar that never appears
+   hides that there is more. `data-scrolling` is set on the element being
+   scrolled, and cleared a moment after it stops, by ScrollActivity. The track
+   stays transparent, so the page never changes width when it appears.
+   Unlayered so it beats the browser's own rule in every engine; .no-scrollbar
+   above still wins where a scroller should draw none at all. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+[data-scrolling] {
+  scrollbar-color: var(--color-scrollbar) transparent;
+}
+/* Safari has no scrollbar-color: the same idea through its own pseudo-elements. */
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar { width: 10px; height: 10px; background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+    background-color: transparent;
+  }
+  [data-scrolling]::-webkit-scrollbar-thumb { background-color: var(--color-scrollbar); }
+}
 
 /* The floating menu button on a phone, and the room every page keeps clear for
    it. The button is 56px, 12px off the bottom and left edge (plus the safe

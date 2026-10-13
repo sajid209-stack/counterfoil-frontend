@@ -70,5 +70,6 @@
   "signedInAs": "{name} হিসেবে সাইন ইন করা",
   "signOut": "সাইন আউট",
   "backTo": "{label}-এ ফিরে যান",
-  "designSystem": "ডিজাইন সিস্টেম"
+  "designSystem": "ডিজাইন সিস্টেম",
+  "flyout": "{label} মেনু"
 }

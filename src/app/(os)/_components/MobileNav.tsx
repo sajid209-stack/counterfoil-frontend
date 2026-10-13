@@ -12,8 +12,9 @@ import { useApiQuery } from "@/lib/useApi";
 import { getStaff, listRoles } from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { cn } from "@/lib/cn";
+import { NAV_IDLE, NAV_PARENT_OF_SELECTED, NAV_SELECTED, NAV_SELECTED_ICON } from "@/components/ui/navStyles";
 import { LocationSwitcher } from "./LocationSwitcher";
-import { NAV_MAIN, NAV_OPEN, NAV_SETTINGS, type NavDestination } from "./nav";
+import { NAV_MAIN, NAV_OPEN, NAV_SETTINGS, isAt, type NavDestination } from "./nav";
 
 /**
  * The phone's way around — a round menu button at the bottom-left, and the
@@ -93,6 +94,7 @@ function MenuBody({ onClose }: { onClose: () => void }) {
   const tCommon = useTranslations("common");
   const pathname = usePathname();
   const appearanceId = useId();
+  const appsId = useId();
   const languageId = useId();
 
   const meQ = useApiQuery(() => getStaff(DEMO_STAFF_ID), []);
@@ -100,32 +102,62 @@ function MenuBody({ onClose }: { onClose: () => void }) {
   const me = meQ.data;
   const role = me ? rolesQ.data?.data.find((r) => r.id === me.roleId)?.name : undefined;
 
-  const isActive = (d: NavDestination) =>
-    d === NAV_SETTINGS ? pathname.startsWith("/settings") : pathname === d.href || pathname.startsWith(`${d.href}/`);
+  /* One row, the rail's own states (NAV_*) at a thumb's height. A child is the
+     rail's nested row: label only, indented to its parent's label (the row's
+     padding, the 20px icon and the gap), and always listed — a sheet is the
+     full map, where the rail shows children only for the page you are in. */
+  const state = (selected: boolean, parentOf: boolean) =>
+    selected ? NAV_SELECTED : parentOf ? NAV_PARENT_OF_SELECTED : cn("font-medium active:bg-secondary-hover", NAV_IDLE);
 
-  /* One row, the rail's own shape and tint at a thumb's height. */
   const row = (d: NavDestination, leaves = false) => {
     const Icon = d.icon;
-    const active = isActive(d);
+    const exact = isAt(d, pathname);
+    const kids = d.children ?? [];
+    const parentOf = !exact && kids.some((c) => isAt(c, pathname));
     return (
       <li key={d.key}>
         <Link
           href={d.href}
           data-menu-item={d.key}
-          aria-current={active ? "page" : undefined}
+          aria-current={exact ? "page" : undefined}
           /* Focus lands on the page you are on when the sheet opens, so a keyboard
              or screen-reader user starts inside the dialog, where they are. */
-          data-autofocus={active ? "" : undefined}
+          data-autofocus={exact ? "" : undefined}
           onClick={onClose}
           className={cn(
-            "flex h-12 items-center gap-section rounded-control px-comfortable text-md font-medium transition-colors duration-quick",
-            active ? "bg-ember-wash text-brand-foreground" : "text-fg hover:bg-muted-wash active:bg-secondary-hover",
+            "flex h-12 items-center gap-section rounded-control px-comfortable text-md transition-colors duration-quick",
+            state(exact, parentOf),
           )}
         >
-          <Icon size={20} strokeWidth={1.5} aria-hidden className={cn("shrink-0", active ? "text-ember" : "text-muted")} />
+          <Icon size={20} strokeWidth={1.5} aria-hidden className={cn("shrink-0", exact && NAV_SELECTED_ICON)} />
           <span className="min-w-0 flex-1 truncate">{t(d.key)}</span>
           {leaves && <ArrowUpRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
         </Link>
+        {kids.length > 0 && (
+          <ul className="mt-0.5 flex flex-col gap-0.5">
+            {kids.map((c) => {
+              const sel = isAt(c, pathname);
+              return (
+                <li key={c.key}>
+                  <Link
+                    href={c.href}
+                    data-menu-item={c.key}
+                    aria-current={sel ? "page" : undefined}
+                    data-autofocus={sel ? "" : undefined}
+                    onClick={onClose}
+                    style={{ paddingLeft: "calc(var(--spacing-comfortable) + 20px + var(--spacing-section))" }}
+                    className={cn(
+                      "flex h-11 items-center rounded-control pr-comfortable text-md transition-colors duration-quick",
+                      state(sel, false),
+                    )}
+                  >
+                    <span className="min-w-0 flex-1 truncate">{t(c.key)}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </li>
     );
   };
@@ -146,10 +178,18 @@ function MenuBody({ onClose }: { onClose: () => void }) {
 
       {hairline}
 
-      <ul role="group" aria-label={t("otherApps")} className="flex flex-col gap-0.5">
+      {/* The group's own heading, as the rail's "Other apps" — not collapsible
+          here: the sheet is the whole map. */}
+      <p id={appsId} className="px-comfortable pb-1 pt-1 text-sm font-medium text-muted">
+        {t("otherApps")}
+      </p>
+      <ul aria-labelledby={appsId} className="flex flex-col gap-0.5">
         {NAV_OPEN.map((d) => row(d, true))}
-        {row(NAV_SETTINGS)}
       </ul>
+
+      {hairline}
+
+      <ul className="flex flex-col gap-0.5">{row(NAV_SETTINGS)}</ul>
 
       {hairline}
 

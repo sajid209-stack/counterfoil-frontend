@@ -10,6 +10,7 @@ import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getStaff, listLocations, listRoles } from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { cn } from "@/lib/cn";
+import { NAV_IDLE, NAV_SELECTED } from "@/components/ui/navStyles";
 import { SettingsSectionList } from "../settings/_components/SettingsNav";
 import { useResourceNoun } from "../settings/_lib/nav";
 import { useSettingsAttention } from "../settings/_lib/attention";
@@ -45,8 +46,8 @@ const initialsOf = (name: string | undefined) => {
  *  - the way out: "‹ Settings", back to the last page that was not Settings
  *    (the dashboard when there was none — a new tab opened straight onto Tax);
  *  - whose business this is: an initials tile, the name, how many venues;
- *  - the sections, grouped, with attention dots and the current one tinted the
- *    way the rail tints its current page;
+ *  - the sections, grouped, with attention dots and the current one drawn the
+ *    way the rail draws its current page (navStyles);
  *  - who is signed in, at the foot — name and role — linking to My profile.
  *
  * It scrolls on its own and draws no scrollbar. The page beside it is just the
@@ -133,7 +134,7 @@ export function SettingsChrome({ open, onClose }: { open: boolean; onClose: () =
           aria-current={profileCurrent ? "page" : undefined}
           className={cn(
             "mx-comfortable mb-comfortable flex shrink-0 items-center gap-comfortable rounded-control px-comfortable py-tight transition-colors duration-quick [@media(pointer:coarse)]:min-h-11",
-            profileCurrent ? "bg-ember-wash" : "hover:bg-muted-wash",
+            profileCurrent ? NAV_SELECTED : NAV_IDLE,
           )}
         >
           <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-subtle text-xs font-semibold text-fg ring-1 ring-line">
@@ -142,7 +143,7 @@ export function SettingsChrome({ open, onClose }: { open: boolean; onClose: () =
           <span className="min-w-0 flex-1">
             {me ? (
               <>
-                <span className="block truncate text-sm font-medium leading-tight text-fg">{me.name}</span>
+                <span className={cn("block truncate text-sm leading-tight", profileCurrent ? "font-semibold text-brand-foreground" : "font-medium text-fg")}>{me.name}</span>
                 <span className="mt-0.5 block truncate text-xs leading-tight text-muted">{role ?? me.email ?? ""}</span>
               </>
             ) : (

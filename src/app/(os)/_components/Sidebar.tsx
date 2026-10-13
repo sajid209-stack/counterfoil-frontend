@@ -1,15 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState, useSyncExternalStore, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ArrowUpRight, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Logo, LogoMark } from "@/components/ui";
+import { NAV_PARENT_OF_SELECTED, NAV_IDLE, NAV_SELECTED, NAV_SELECTED_ICON } from "@/components/ui/navStyles";
 import { cn } from "@/lib/cn";
 import pkg from "../../../../package.json";
-import { NAV_MAIN, NAV_OPEN, NAV_SETTINGS, type NavDestination } from "./nav";
+import { NAV_MAIN, NAV_OPEN, NAV_SETTINGS, groupOf, isAt, type NavDestination } from "./nav";
 
 /**
  * A label for an icon, drawn beside it on hover or focus.
@@ -68,37 +69,256 @@ function RailTip({
   );
 }
 
+/* "Other apps" open/closed, remembered per browser. A store rather than state
+   plus an effect: the server (and the first client render) draw it open, and
+   useSyncExternalStore swaps in the saved choice after hydration without a
+   mismatch. Storage can throw (private window, blocked site data), so the last
+   choice is also held in memory and the toggle still works for the session. */
+const APPS_KEY = "cf_nav_apps";
+let appsMemory: boolean | null = null;
+const appsListeners = new Set<() => void>();
+const readApps = () => {
+  try {
+    const v = localStorage.getItem(APPS_KEY);
+    if (v !== null) return v !== "0";
+  } catch {
+    /* fall through to the in-memory choice */
+  }
+  return appsMemory ?? true;
+};
+const subscribeApps = (cb: () => void) => {
+  appsListeners.add(cb);
+  window.addEventListener("storage", cb);
+  return () => {
+    appsListeners.delete(cb);
+    window.removeEventListener("storage", cb);
+  };
+};
+const writeApps = (next: boolean) => {
+  appsMemory = next;
+  try {
+    localStorage.setItem(APPS_KEY, next ? "1" : "0");
+  } catch {
+    /* kept in memory above */
+  }
+  appsListeners.forEach((f) => f());
+};
+
+/* One row's look, from one place: the selected row, the parent of the selected
+   row, or idle. The weight is only set on idle because the other two carry
+   their own. */
+const stateClass = (selected: boolean, parentOf: boolean) =>
+  selected ? NAV_SELECTED : parentOf ? NAV_PARENT_OF_SELECTED : cn("font-medium", NAV_IDLE);
+
+/* A parent row: 36px (44 under a coarse pointer). Open it carries a label;
+   collapsed it is a centred 36px square holding the icon alone. */
+const parentRowClass = (narrow: boolean, selected: boolean, parentOf: boolean) =>
+  cn(
+    "group relative flex h-9 items-center gap-comfortable rounded-control text-base transition-colors duration-quick [@media(pointer:coarse)]:h-11",
+    narrow ? "mx-auto w-9 justify-center [@media(pointer:coarse)]:w-11" : "px-comfortable",
+    stateClass(selected, parentOf),
+  );
+
+/* A child's label starts where its parent's label starts: the row's own
+   padding, the 18px icon and the gap after it. Written from the same tokens so
+   the two cannot drift apart. */
+const CHILD_INDENT = "calc(var(--spacing-comfortable) * 2 + 18px)";
+
+/**
+ * A collapsed parent that has children: the icon, and a card of links beside it
+ * on hover or keyboard focus.
+ *
+ * Portalled for the same reason RailTip is (the rail clips). The card's left
+ * edge touches the icon's, with an 8px transparent pad in front of it, so the
+ * pointer never crosses dead air on its way in; the 150ms grace covers the rest.
+ * The card's links are not in the rail's tab order (they live in <body>), so the
+ * keyboard reaches them from the icon with ArrowRight, ArrowDown or Tab, moves
+ * between them with the arrow keys, and Escape (or Tab off the end) returns to
+ * the icon. They carry data-flyout-item rather than data-nav, because the icon
+ * already is data-nav={key}.
+ */
+function RailFlyout({ d, group }: { d: NavDestination; group: NavDestination | undefined }) {
+  const t = useTranslations("nav");
+  const pathname = usePathname();
+  const id = useId();
+  const kids = d.children ?? [];
+  const label = t(d.key);
+  const [at, setAt] = useState<{ top: number; left: number } | null>(null);
+  const wrap = useRef<HTMLDivElement>(null);
+  const card = useRef<HTMLDivElement>(null);
+  const icon = useRef<HTMLAnchorElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const open = () => {
+    clearTimeout(timer.current);
+    if (!wrap.current) return;
+    const r = wrap.current.getBoundingClientRect();
+    /* Keep the card on screen near the foot of a short window: rows are at most
+       44px, plus the card's own padding. */
+    const rows = kids.length + 1;
+    const est = rows * 44 + (rows - 1) * 2 + 12;
+    setAt({ top: Math.max(8, Math.min(r.top - 4, window.innerHeight - est - 8)), left: r.right });
+  };
+  const closeNow = () => {
+    clearTimeout(timer.current);
+    setAt(null);
+  };
+  const closeSoon = () => {
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setAt(null), 150);
+  };
+  const leftFlyout = (e: React.FocusEvent) => {
+    const next = e.relatedTarget as Node | null;
+    if (next && (wrap.current?.contains(next) || card.current?.contains(next))) return;
+    closeNow();
+  };
+  const links = () => Array.from(card.current?.querySelectorAll<HTMLAnchorElement>("a") ?? []);
+  const backToIcon = () => {
+    icon.current?.focus();
+    closeNow();
+  };
+
+  const onIconKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape" && at) {
+      e.preventDefault();
+      backToIcon();
+    } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      if (!at) open();
+      else {
+        e.preventDefault();
+        links()[0]?.focus();
+      }
+    } else if (e.key === "Tab" && !e.shiftKey && at) {
+      e.preventDefault();
+      links()[0]?.focus();
+    }
+  };
+  const onCardKey = (e: React.KeyboardEvent) => {
+    const list = links();
+    const i = list.indexOf(document.activeElement as HTMLAnchorElement);
+    if (e.key === "Escape" || e.key === "ArrowLeft" || e.key === "Tab") {
+      e.preventDefault();
+      backToIcon();
+    } else if (e.key === "ArrowDown" && list.length) {
+      e.preventDefault();
+      list[(i + 1) % list.length]?.focus();
+    } else if (e.key === "ArrowUp" && list.length) {
+      e.preventDefault();
+      list[(i - 1 + list.length) % list.length]?.focus();
+    }
+  };
+
+  const here = group === d;
+  const itemClass = (selected: boolean, parentOf: boolean) =>
+    cn(
+      "flex h-9 items-center whitespace-nowrap rounded-control px-comfortable text-base transition-colors duration-quick [@media(pointer:coarse)]:h-11",
+      stateClass(selected, parentOf),
+    );
+  const parentHere = isAt(d, pathname);
+
+  return (
+    <div ref={wrap} onMouseEnter={open} onMouseLeave={closeSoon} onFocus={open} onBlur={leftFlyout} onKeyDown={onIconKey}>
+      <Link
+        ref={icon}
+        href={d.href}
+        data-nav={d.key}
+        aria-label={label}
+        aria-current={parentHere ? "page" : undefined}
+        aria-haspopup="true"
+        aria-expanded={!!at}
+        aria-controls={at ? id : undefined}
+        className={parentRowClass(true, here, false)}
+      >
+        <d.icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", here && NAV_SELECTED_ICON)} />
+      </Link>
+      {at &&
+        createPortal(
+          <div
+            id={id}
+            ref={card}
+            style={{ top: at.top, left: at.left }}
+            className="fixed z-50 pl-tight"
+            onMouseEnter={open}
+            onMouseLeave={closeSoon}
+            onBlur={leftFlyout}
+            onKeyDown={onCardKey}
+          >
+            <nav
+              aria-label={t("flyout", { label })}
+              data-flyout={d.key}
+              className="min-w-48 rounded-card border border-line bg-card p-inline shadow-float"
+            >
+              <ul className="flex flex-col gap-0.5">
+                <li>
+                  <Link
+                    href={d.href}
+                    data-flyout-item={d.key}
+                    aria-current={parentHere ? "page" : undefined}
+                    onClick={closeNow}
+                    className={itemClass(parentHere, here && !parentHere)}
+                  >
+                    {label}
+                  </Link>
+                </li>
+                {kids.map((c) => {
+                  const sel = isAt(c, pathname);
+                  return (
+                    <li key={c.key}>
+                      <Link
+                        href={c.href}
+                        data-flyout-item={c.key}
+                        aria-current={sel ? "page" : undefined}
+                        onClick={closeNow}
+                        className={itemClass(sel, false)}
+                      >
+                        {t(c.key)}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </div>,
+          document.body,
+        )}
+    </div>
+  );
+}
+
 /**
  * The OS rail.
  *
- * Calm, in the way Linear's, Overlay's and Notion's are — and, since the calm
- * pass, on the CHROME: white like the top bar beside it, with no line between
- * them and none down its right edge. The page is the paper frame next to it.
+ * Calm, in the way Linear's, Overlay's, Notion's and Shopify admin's are — and
+ * on the CHROME: white like the top bar beside it, with no line between them.
+ * The page is the paper frame next to it.
  *  - the logo, and beside it one small control that folds the rail — not the
  *    business, not the product, not a venue; the console says whose it is
  *    elsewhere;
  *  - no search field: Ctrl/⌘ K opens the command palette from anywhere (wired
  *    in OsShell);
- *  - the destinations as one list, one icon size and one row height (36px; 44
+ *  - the destinations as one list, one icon size and one row height (36px; 44px
  *    under a coarse pointer, since a tablet gets this rail too) with a small
- *    gap between rows. The page you are on is a soft tint of the ink with the
- *    label and icon in full ink — no card, border, shadow or coloured bar;
- *  - the other apps under a hairline, marked ↗ because they leave the console;
+ *    gap between rows;
+ *  - Shopify-style nesting: a parent that has children shows them, indented to
+ *    its label, ONLY while you are on the parent or on one of them. Exactly one
+ *    row on screen is the selected one (the page you are on); when that is a
+ *    child its parent stays in bold ink without the fill;
+ *  - the other apps under a collapsible "Other apps ›" heading, marked ↗ because
+ *    they leave the console. The choice is remembered;
  *  - Settings pinned at the foot, with the version in small print under it.
  *
- * It is sized to fit WITHOUT scrolling at 1280×720 and 1440×768: every row of
- * the main list plus both apps plus Settings and the version, measured against
- * the shortest laptop windows. If a window is shorter still the middle scrolls,
- * but it draws no scrollbar (`no-scrollbar`) — a bar beside a 36px row is
- * chrome on chrome. Settings and the version stay pinned either way.
+ * It is sized to fit WITHOUT scrolling at 1280×720 and 1440×768 with the
+ * nesting open. If a window is shorter still the middle scrolls, but it draws
+ * no scrollbar (`no-scrollbar`) — a bar beside a 36px row is chrome on chrome.
+ * Settings and the version stay pinned either way.
  *
- * Groups are told apart by spacing and a hairline, not by uppercase labels:
- * the owner asked for "Overview" and "Settings" to go, and a row's own icon
- * and name already say what it is.
- *
- * Collapsed, it is a 64px column of the same things in the same order, as
- * icons: the mark, an expand control beneath it, then the destinations,
- * each with a tooltip. `[` toggles it from the keyboard (wired in OsShell).
+ * Collapsed, it is a 64px column of the same things as icons: the mark, an
+ * expand control beneath it, then the parents (the one holding the current page
+ * carries the selected look, since its children are hidden). A parent with
+ * children opens a flyout of links on hover or focus; the rest get a tooltip.
+ * `[` toggles it from the keyboard (wired in OsShell).
  *
  * `locked` is the Shopify-style Settings mode: the rail is held collapsed
  * while a second column of settings sections stands beside it. The person's own
@@ -118,41 +338,70 @@ export function Sidebar({
   const pathname = usePathname();
   const t = useTranslations("nav");
   const narrow = collapsed || locked;
+  const group = groupOf(pathname);
+  const appsOpen = useSyncExternalStore(subscribeApps, readApps, () => true);
+  const appsId = useId();
 
-  const isActive = (d: NavDestination) =>
-    d === NAV_SETTINGS ? pathname.startsWith("/settings") : pathname === d.href || pathname.startsWith(`${d.href}/`);
-
-  /* One row, for every destination. 36px (44 under a coarse pointer), an
-     18px / 1.5 icon on a fixed edge so every label starts on one line, 14px/500
-     muted text. The page you are on is a soft tint of the ink with its label and
-     icon in full ink. Hover is a lighter tint, so the two never read as the
-     same thing. */
-  const row = (d: NavDestination, opts: { leaves?: boolean } = {}) => {
+  /* One row, for a parent with no flyout and for every other destination. 36px
+     (44 under a coarse pointer), an 18px / 1.5 icon on a fixed edge so every
+     label starts on one line. The look comes from NAV_* (see navStyles). */
+  const row = (d: NavDestination, opts: { selected: boolean; parentOf?: boolean; leaves?: boolean }) => {
     const label = t(d.key);
-    const active = isActive(d);
+    const exact = isAt(d, pathname);
     const Icon = d.icon;
     return (
+      <RailTip label={label} enabled={narrow}>
+        <Link
+          href={d.href}
+          data-nav={d.key}
+          aria-label={narrow ? label : undefined}
+          aria-current={exact ? "page" : undefined}
+          className={parentRowClass(narrow, opts.selected, !!opts.parentOf)}
+        >
+          <Icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", opts.selected && NAV_SELECTED_ICON)} />
+          {!narrow && <span className="min-w-0 flex-1 truncate">{label}</span>}
+          {/* Leaving the console. Collapsed, the arrow is a corner mark on the
+              icon, so the other apps are still told apart from the daily list. */}
+          {opts.leaves && !narrow && <ArrowUpRight size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
+          {opts.leaves && narrow && <ArrowUpRight size={10} strokeWidth={2} aria-hidden className="absolute right-0.5 top-0.5 text-muted" />}
+        </Link>
+      </RailTip>
+    );
+  };
+
+  const mainItem = (d: NavDestination) => {
+    const kids = d.children ?? [];
+    const exact = isAt(d, pathname);
+    const here = group === d;
+    if (narrow && kids.length) return <li key={d.key}><RailFlyout d={d} group={group} /></li>;
+    /* Collapsed with no children, the parent is the whole group. */
+    if (narrow) return <li key={d.key}>{row(d, { selected: here })}</li>;
+    return (
       <li key={d.key}>
-        <RailTip label={label} enabled={narrow}>
-          <Link
-            href={d.href}
-            data-nav={d.key}
-            aria-label={narrow ? label : undefined}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "group relative flex h-9 items-center gap-comfortable rounded-control text-base font-medium transition-colors duration-quick [@media(pointer:coarse)]:h-11",
-              narrow ? "mx-auto w-9 justify-center [@media(pointer:coarse)]:w-11" : "px-comfortable",
-              active ? "bg-ember-wash text-brand-foreground" : "text-muted hover:bg-muted-wash hover:text-fg",
-            )}
-          >
-            <Icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", active && "text-ember")} />
-            {!narrow && <span className="min-w-0 flex-1 truncate">{label}</span>}
-            {/* Leaving the console. Collapsed, the arrow is a corner mark on the
-                icon, so the two apps are still told apart from the daily list. */}
-            {opts.leaves && !narrow && <ArrowUpRight size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
-            {opts.leaves && narrow && <ArrowUpRight size={10} strokeWidth={2} aria-hidden className="absolute right-0.5 top-0.5 text-muted" />}
-          </Link>
-        </RailTip>
+        {row(d, { selected: exact, parentOf: here && !exact && kids.length > 0 })}
+        {here && kids.length > 0 && (
+          <ul className="mt-0.5 flex flex-col gap-0.5">
+            {kids.map((c) => {
+              const sel = isAt(c, pathname);
+              return (
+                <li key={c.key}>
+                  <Link
+                    href={c.href}
+                    data-nav={c.key}
+                    aria-current={sel ? "page" : undefined}
+                    style={{ paddingLeft: CHILD_INDENT }}
+                    className={cn(
+                      "flex h-8 items-center rounded-control pr-comfortable text-base transition-colors duration-quick [@media(pointer:coarse)]:h-11",
+                      stateClass(sel, false),
+                    )}
+                  >
+                    <span className="min-w-0 flex-1 truncate">{t(c.key)}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </li>
     );
   };
@@ -221,19 +470,43 @@ export function Sidebar({
           screen however short the window is. */}
       <div className={cn("no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto pt-1", gutter)}>
         <nav aria-label={t("main")}>
-          <ul className={list}>{NAV_MAIN.map((d) => row(d))}</ul>
+          <ul className={list}>{NAV_MAIN.map((d) => mainItem(d))}</ul>
         </nav>
 
         <div aria-hidden className={hairline} />
 
-        <ul role="group" aria-label={t("otherApps")} className={list}>
-          {NAV_OPEN.map((d) => row(d, { leaves: true }))}
+        {/* Like Shopify's "Sales channels ›": a small muted heading that folds the
+            list. Collapsed there is no heading — the three rows are icons. */}
+        {!narrow && (
+          <button
+            type="button"
+            data-nav="otherApps"
+            onClick={() => writeApps(!appsOpen)}
+            aria-expanded={appsOpen}
+            aria-controls={appsId}
+            className="mb-0.5 flex h-8 w-full items-center gap-inline rounded-control px-comfortable text-left text-sm font-medium text-muted transition-colors duration-quick hover:text-fg [@media(pointer:coarse)]:h-11"
+          >
+            <span className="min-w-0 truncate">{t("otherApps")}</span>
+            <ChevronRight
+              size={14}
+              strokeWidth={1.5}
+              aria-hidden
+              className={cn("shrink-0 transition-transform duration-quick", appsOpen && "rotate-90")}
+            />
+          </button>
+        )}
+        <ul id={appsId} role="group" aria-label={t("otherApps")} hidden={!narrow && !appsOpen} className={cn(list, !narrow && !appsOpen && "hidden")}>
+          {NAV_OPEN.map((d) => (
+            <li key={d.key}>{row(d, { selected: isAt(d, pathname), leaves: true })}</li>
+          ))}
         </ul>
       </div>
 
       {/* Pinned to the foot: Settings, and the version in small print. */}
       <div className={cn("shrink-0 pt-2", gutter)}>
-        <ul className={list}>{row(NAV_SETTINGS)}</ul>
+        <ul className={list}>
+          <li>{row(NAV_SETTINGS, { selected: isAt(NAV_SETTINGS, pathname) })}</li>
+        </ul>
         {!narrow ? (
           <p className="truncate px-comfortable pb-comfortable pt-2 text-xs text-muted">{t("version", { version: pkg.version })}</p>
         ) : (

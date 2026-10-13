@@ -17115,3 +17115,104 @@ separate file ownership, then reviewed on Opus.
 - The old :3000 dev server had leaked to 10.5 GB and stopped answering. It was left
   running, because the session could not stop it. Restart it before using it again.
 - Bangla strings added in the design-system pass still want a native review.
+
+## Grouped navigation, a selection you can see, and a scrollbar that shows while you scroll (2026-10-13)
+
+Owner, with three screenshots (Shopify's sidebar with Customers opening onto
+Segments and Companies; Counterfoil's rail with Dashboard faintly selected; the
+till's tab bar with Sell faintly selected): put related pages under one menu
+item, make the selected item clearly visible, and add a minimal scrollbar that
+shows while you scroll, using Shopify as the reference.
+
+### 1. Pages grouped under a parent
+
+Shopify, Linear, Stripe and Notion all show a section's sub-pages only while
+that section is open. Everything else stays one line. The rail went from 15
+equal rows to 7 parents:
+
+| Parent | Children |
+|---|---|
+| Dashboard | Activity log |
+| Calendar | — |
+| Orders | Issued orders |
+| Customers | — |
+| Catalog | Inventory, Marketplaces |
+| Analytics | — |
+| Finances | Expenses |
+
+- **`_components/nav.ts`** holds the tree (`NavDestination.children`) and the
+  helpers every surface uses: `flatten`, `DESTINATIONS` (all 16, flat, for the
+  command palette), `isAt` and `groupOf`. A child page lights its parent's
+  group, and `/tickets` belongs to Issued orders.
+- **Expanded rail**: a parent's children appear under it, indented and without
+  icons, only while you are in that group. The parent of the page you are on is
+  bold but not filled, so exactly one row is ever selected.
+- **Other apps** (Point of Sale, Counterfoil Deck, Design System) is a group
+  that can be folded. It starts open and remembers the choice on this device
+  (`cf_nav_apps`).
+- **Collapsed rail**: only the 7 parents are shown. A parent with children
+  opens a flyout beside the rail on hover or focus, listing the parent and its
+  children. The flyout closes 150ms after the pointer leaves, on Escape, and
+  can be moved through with the arrow keys. A parent without children keeps
+  its tooltip.
+- **Phone menu sheet**: lists every page, with each child under its parent.
+- The command palette still finds every page by name.
+
+### 2. A selection you can see
+
+The selected row was a 7% ink tint with the same weight as every other row,
+which is easy to miss. `components/ui/navStyles.ts` is now the one recipe
+behind every navigation surface:
+
+- **Selected**: the ember wash, brand-coloured text at 600, a 1px ember ring,
+  and an ember icon.
+- **Parent of the current page**: full ink at 600, with no fill.
+- **Idle**: muted text, filling to `muted-wash` on hover.
+
+It applies to the OS rail, the collapsed rail, the flyout, the phone sheet, the
+settings column and the settings list. It also applies to the till's tab bar:
+its active tab was an absolutely-positioned pill drawn behind the link, and it
+is now the link itself. The Design System's Navigation page shows the three
+states, and `docs/design-system.md` records the rule.
+
+### 3. A scrollbar that shows while you scroll
+
+Shopify admin and macOS do this: the scrollbar is thin and hidden at rest, and
+appears only while something scrolls.
+
+- **`globals.css`**: every scroller has a thin scrollbar with a transparent
+  thumb. The thumb takes the new `--color-scrollbar` (neutral-400 in light,
+  neutral-600 in dark) only while the element has `data-scrolling`. A
+  `::-webkit-scrollbar` fallback covers browsers without `scrollbar-color`.
+- **`components/ScrollActivity.tsx`**: a single passive, capturing `scroll`
+  listener on the document. It marks whatever is scrolling (the page, the frame,
+  a table, a sheet, a dropdown) and clears the mark 900ms after scrolling stops.
+  It is mounted once in the root layout.
+- `.no-scrollbar` scrollers still never draw one.
+
+### Verified
+
+- **Probe, 36/36, in light and dark**:
+  - children appear only in their own group;
+  - the selected row has the wash, ring and 600 weight, and a parent is bold
+    without a fill;
+  - Other apps folds and remembers;
+  - the collapsed rail's flyout opens and closes;
+  - the scrollbar is hidden, shown while scrolling, then hidden again;
+  - the till's active tab and the phone sheet.
+- **Regression against the production build**: 95 runs, 8,813 checks. The one
+  failing harness asserted the old flat 15-row rail. It has been rewritten for
+  the grouped rail and still checks the same things, only against the new
+  structure: the row order in each state, a 36px parent and a 32px child, icons
+  on parents only, tooltips on parents without children, flyouts on parents with
+  them, a palette of all 16 pages in rail order, and a phone sheet of all 16. It
+  now passes 201/201.
+- `tsc` is clean, `lint:tokens` is clean, `eslint` shows only the documented
+  baseline, and i18n is 0 missing / 0 extra (one new key, `nav.flyout`).
+
+### Open
+
+- The till's inactive tabs now fill on hover, which they did not before.
+- Headless screenshots do not draw scrollbars, so the scrollbar was checked
+  through its computed `scrollbar-color`, not by looking at it.
+- The Bangla strings for the flyout and Other apps are drafts.

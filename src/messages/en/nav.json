@@ -70,5 +70,6 @@
   "signedInAs": "Signed in as {name}",
   "signOut": "Sign out",
   "backTo": "Back to {label}",
-  "designSystem": "Design System"
+  "designSystem": "Design System",
+  "flyout": "{label} menu"
 }

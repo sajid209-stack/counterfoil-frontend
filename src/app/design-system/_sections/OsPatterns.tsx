@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ArrowLeft, Download, Plus } from "lucide-react";
 import { Callout, Code, DoDont, DocSection, P, SectionHeader } from "../_components/Doc";
 import { Preview } from "../_components/Preview";
+import { NAV_SELECTED } from "@/components/ui/navStyles";
 
 const STATUS = [
   { value: "", label: "All statuses" },
@@ -23,7 +24,7 @@ function ShellMock() {
       <div className="flex">
         <div className="hidden w-14 shrink-0 flex-col items-center gap-tight py-comfortable sm:flex" aria-hidden>
           {[0, 1, 2, 3].map((i) => (
-            <span key={i} className={`h-6 w-6 rounded-sm ${i === 1 ? "bg-ember-wash" : "bg-subtle"}`} />
+            <span key={i} className={`h-6 w-6 rounded-sm ${i === 1 ? NAV_SELECTED : "bg-subtle"}`} />
           ))}
         </div>
         <div className="min-w-0 flex-1">

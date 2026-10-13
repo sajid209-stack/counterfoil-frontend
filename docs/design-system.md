@@ -278,6 +278,21 @@ picks a variant.
 - **Checkbox / Radio / Switch** — one each. 44px target, 20px mark.
 - **SegmentedControl** — mutually exclusive views or modes (Today / This week).
 - **Tabs** — navigation between related content in one page.
+- **Navigation rows** (rail, Settings column, phone menu sheet, Go tab bar) — one
+  definition in `components/ui/navStyles`. The current page is `NAV_SELECTED`:
+  `ember-wash` fill + 1px inset `ember-line` ring + semibold `brand-foreground`
+  label + `NAV_SELECTED_ICON` (`text-ember`); the fill alone is ~1.03:1 on a white
+  rail, so the ring and weight carry it. Other rows are `NAV_IDLE` (muted,
+  `muted-wash` hover).
+  *Nested groups:* a parent with children shows them indented, label only, and only
+  while you are inside that group. The current page carries the selected surface;
+  its parent goes bold with no fill (`NAV_PARENT_OF_SELECTED`), so exactly one row
+  is filled. "Other apps" is a collapsible group. In the collapsed 64px rail a
+  parent with children opens a flyout card listing the parent and its children.
+- **Scrollbars** — thin and overlay-style everywhere: the thumb
+  (`--color-scrollbar`, neutral-400 / neutral-600) is transparent at rest and
+  shown only while that element is scrolling (`data-scrolling`, set by
+  `components/ScrollActivity`). `.no-scrollbar` still draws none.
 - **Chip** — a filter or a choice that toggles; selected = `ember-solid` fill
   with white text and a check.
 - **StatusPill** — sentence case on a soft tint, no dot, no border; the word

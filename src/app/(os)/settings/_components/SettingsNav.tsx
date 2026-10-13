@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Check, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { NAV_IDLE, NAV_SELECTED, NAV_SELECTED_ICON } from "@/components/ui/navStyles";
 import { SETTINGS_GROUPS, isCurrentSettingsHref, type SettingsItemKey } from "../_lib/nav";
 
 type Attention = Partial<Record<SettingsItemKey, string>>;
@@ -34,9 +35,10 @@ interface ListProps {
  * the column the reason is the row's tooltip and accessible name; the sheet has
  * room to say it in words under the name.
  *
- * Rows use the main rail's own language — 36px (44 under a coarse pointer), a
- * soft tint of the ink for the current one, no border or coloured bar — so the
- * two columns read as one piece of chrome, not as two systems.
+ * Rows use the main rail's own language — 36px (44 under a coarse pointer) and
+ * the shared "you are here" from navStyles (the accent wash with its edge, a
+ * semibold label, an ember icon) — so the two columns read as one piece of
+ * chrome, not as two systems.
  */
 export function SettingsSectionList({ pathname, noun, attention, variant, onNavigate }: ListProps) {
   const t = useTranslations("settings");
@@ -64,14 +66,14 @@ export function SettingsSectionList({ pathname, noun, attention, variant, onNavi
                     title={sheet ? undefined : reason}
                     onClick={onNavigate}
                     className={cn(
-                      "flex items-center gap-comfortable rounded-control text-base font-medium transition-colors duration-quick",
+                      "flex items-center gap-comfortable rounded-control text-base transition-colors duration-quick",
                       sheet
                         ? "mx-tight min-h-11 px-comfortable py-tight"
                         : "h-9 px-comfortable [@media(pointer:coarse)]:h-11",
-                      current ? "bg-ember-wash text-brand-foreground" : "text-muted hover:bg-muted-wash hover:text-fg",
+                      current ? NAV_SELECTED : `font-medium ${NAV_IDLE}`,
                     )}
                   >
-                    <Icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", current && "text-ember")} />
+                    <Icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", current && NAV_SELECTED_ICON)} />
                     <span className="min-w-0 flex-1">
                       <span className={cn("block", !sheet && "truncate")}>{label}</span>
                       {sheet && reason && (
@@ -87,7 +89,7 @@ export function SettingsSectionList({ pathname, noun, attention, variant, onNavi
                         <span className="sr-only">{`: ${reason}`}</span>
                       </>
                     )}
-                    {sheet && current && <Check size={16} strokeWidth={2} aria-hidden className="shrink-0 text-ember" />}
+                    {sheet && current && <Check size={16} strokeWidth={2} aria-hidden className={cn("shrink-0", NAV_SELECTED_ICON)} />}
                   </Link>
                 </li>
               );
