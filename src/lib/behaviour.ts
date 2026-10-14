@@ -15,6 +15,13 @@ type Ctx = { resources?: Resource[]; team?: Staff[] };
  * The words follow docs/plain-language.md — "time slot" not "session",
  * "visits" not "credits", "limited per day" not "daily cap".
  */
+/** A schedule whose window holds a single session — "every 2 hr" would be a
+ *  number about a gap that never happens. */
+function oneSessionADay(sch: { startTime: string; endTime: string; slotMinutes: number }): boolean {
+  const m = (t: string) => { const [h, mm] = t.split(":").map(Number); return h * 60 + (mm || 0); };
+  return m(sch.endTime) - m(sch.startTime) <= sch.slotMinutes;
+}
+
 export function useBehaviourSubtitle(): (product: Product, ctx?: Ctx) => string {
   const t = useTranslations("behaviour");
 
@@ -36,7 +43,13 @@ export function useBehaviourSubtitle(): (product: Product, ctx?: Ctx) => string 
       case "BT-01": return t("openEntry");
       case "BT-02": return t("datePass");
       case "BT-06": return t("dailyLimit");
-      case "BT-03": return sch ? t("slotsEvery", { length: length(sch.slotMinutes) }) : t("slots");
+      case "BT-03":
+        if (!sch) return t("slots");
+        // A gap between sessions (a 90-minute class at 11 and at 4) makes the
+        // interval a meaningless number; how long each one runs is what a buyer needs.
+        return sch.slotMinutes > sch.sessionMinutes || oneSessionADay(sch)
+          ? t("sessionsLasting", { length: length(sch.sessionMinutes) })
+          : t("slotsEvery", { length: length(sch.slotMinutes) });
       case "BT-09": return sch ? t("guidedEvery", { length: length(sch.slotMinutes) }) : t("guided");
       case "BT-04":
         return sch?.slotMinutes === 60 ? t("byHour", { places: places() }) : t("bySlot", { places: places() });

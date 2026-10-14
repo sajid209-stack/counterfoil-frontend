@@ -5,11 +5,22 @@ export interface DemoBusiness {
   tagline: string;
   types: string;
   productIds: string[];
+  /** A whole-business demo with its own venue, shelf and storefront (lib/api/client BUNDLES). */
+  bundle?: boolean;
 }
 
 // Five coherent demo businesses. Selecting one swaps the whole mock state so a
 // prospect sees Counterfoil as *their* kind of business.
 export const DEMOS: DemoBusiness[] = [
+  {
+    id: "doers",
+    name: "The Doers Club",
+    currency: "BDT",
+    tagline: "Small-group workshops — matcha, sushi, tea and social nights",
+    types: "Timed sessions · seat caps · pair tickets · workshop pass · web page",
+    productIds: [],
+    bundle: true,
+  },
   {
     id: "museum",
     name: "Dhaka National Museum",

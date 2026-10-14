@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Plus, Landmark, Trophy, Disc3, Flower2, Clapperboard, type LucideIcon } from "lucide-react";
-import { loadDemoBusiness, startFreshBusiness } from "@/lib/api";
+import { ArrowRight, Plus, Landmark, Trophy, Disc3, Flower2, Clapperboard, Coffee, type LucideIcon } from "lucide-react";
+import { loadDemoBusiness, loadWholeDemo, startFreshBusiness } from "@/lib/api";
 import { DEMOS } from "@/lib/demos";
 import { Logo } from "@/components/ui";
 
@@ -18,6 +18,7 @@ const DEMO_GLYPH: Record<string, LucideIcon> = {
   bowling: Disc3,
   spa: Flower2,
   cinema: Clapperboard,
+  doers: Coffee,
 };
 
 export default function Home() {
@@ -25,7 +26,8 @@ export default function Home() {
 
   const explore = (id: string) => {
     const d = DEMOS.find((x) => x.id === id)!;
-    loadDemoBusiness(d.name, d.currency, d.productIds);
+    if (d.bundle) loadWholeDemo(d.id);
+    else loadDemoBusiness(d.name, d.currency, d.productIds);
     router.push("/dashboard");
   };
   const fresh = () => {

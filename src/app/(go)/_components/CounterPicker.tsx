@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Check, ChevronDown } from "lucide-react";
@@ -34,12 +34,18 @@ import { counterIsOpen, setActiveCounter, useActiveCounter } from "@/lib/activeC
  * group heading inside the list, and it is in the button's accessible name.
  * 44px tall; the name truncates with an ellipsis and never wraps.
  */
+const noSubscribe = () => () => {};
+
 export function CounterPicker({ saleCount }: { saleCount: number }) {
   const t = useTranslations("pos.shell");
   const router = useRouter();
   const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
-  const counters = countersQ.data?.data ?? peekCounters();
+  /* The store is only read once the browser has taken over: it can hold a
+     different business there (a whole-business demo remembered in this tab)
+     than the server rendered, and a chip named from it would not match. */
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const counters = countersQ.data?.data ?? (hydrated ? peekCounters() : []);
   const { counter: active } = useActiveCounter(counters);
   const [open, setOpen] = useState(false);
   const [blocked, setBlocked] = useState<Counter | null>(null);

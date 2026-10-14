@@ -4,6 +4,7 @@
   "dailyLimit": "Pick a date · limited per day",
   "slots": "Time slots",
   "slotsEvery": "Time slots · every {length}",
+  "sessionsLasting": "Set times · {length} each",
   "guided": "Tours with a guide",
   "guidedEvery": "With a guide · every {length}",
   "byHour": "Book by the hour · {places}",

@@ -17295,3 +17295,39 @@ Owner, with seven screenshots and fifteen points. Planned, the shared contracts 
 - **Orders table at 1440.** Now that the seed names counters, the Channel cell grew and the table scrolled sideways inside its card. The channel, customer and staff cells truncate a little sooner (6.5rem, 8rem, 7.5rem), with the full text on hover.
 - **Check-in.** A booking whose order doesn't exist was titled with its internal order id. It now reads "Walk-in".
 - **Regression** against a production build: all suites pass once the tests that asserted the old design were updated: the calendar fee, the analytics cards and CSV sections, the checkout's inline privacy link, the orders counter and orange-selection checks, the activity rows, and the check-in and booked-slot layouts. `rf2`, `disc`, `checkin2` and `sn/verify` are retired in favour of the new check-in and schedule scripts.
+
+## A prospect demo: The Doers Club (2026-10-14)
+
+Owner: set up a demo, a storefront and product pages for a new lead, The Doers
+Club — a Dhaka "social experience club" running small-group workshops (matcha
+whisking, sushi making, tea tasting, social nights), seen on their Instagram.
+
+- **A whole-business demo, not a product filter.** `lib/mock/doers.ts` is its
+  own venue, counter, catalogue, shelf and storefront; `client.ts` gains
+  `BUNDLES` and swaps those collections in (events, holds, marketplaces and
+  resources emptied; 40 orders of history generated for it). The venue keeps
+  the internal ids `loc_fort` / `cnt_fort_main` so the session's counter and the
+  shared staff still resolve.
+- **It survives a reload and a shared link.** The choice is kept in this browser
+  (`cf_demo`); `/s/thedoersclub` opens it for a stranger with no memory, and any
+  other storefront address stays the default seed. `/demo/doers-club` opens the
+  admin as The Doers Club. Picking another demo or Start fresh forgets it.
+- **Catalogue (prices illustrative):** Matcha Whisking ৳2,500 (Wed eve, Fri,
+  Sat; 12 seats; a two-seat ticket ৳4,600; take-home kit extra), Sushi Making
+  ৳3,500 (Fri/Sat; 10 seats), Tea Tasting ৳1,800 (Wed/Sun; 14 seats), Doers
+  Social Night ৳1,200 (Thu; 30 places), Doers Pass ৳11,000 (5 workshop credits,
+  90 days). Shelf: matcha kit, tote bag. Storefront headline is their own bio.
+- **"Set times · 90 min each"** replaces "Time slots · every 5 hr" wherever a
+  timed booking has gaps between sessions or runs once a day.
+- **Three hydration mismatches the demo exposed** (the store can hold another
+  business in the browser than the server rendered): the till's Shop/Event
+  chips, the Schedule week's load dots and the Go counter chip are now read only
+  after hydration.
+
+Verified: 16-check walk as The Doers Club (14 admin and till routes with no
+console errors and no default-seed names, a storefront basket, a till sheet);
+6 checks that the default seed and the other demos are untouched; build, lint
+and i18n clean.
+
+Open: no photographs — their own would make it; addresses, prices, times and
+seat counts are placeholders to set with the owner.

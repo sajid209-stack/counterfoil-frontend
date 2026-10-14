@@ -11,6 +11,7 @@
    ────────────────────────────────────────────────────────────────────────── */
 import * as seed from "@/lib/mock/data";
 import { generateSales } from "@/lib/mock/generate";
+import * as doers from "@/lib/mock/doers";
 import type {
   AdvancePolicy,
   ApiError,
@@ -162,6 +163,60 @@ export function loadBusiness(name: string, currency: string, productIds: string[
   (store as Record<string, unknown[]>).rescheduleRequests = [];
   (store as Record<string, unknown[]>).financeLines = [];
   (store as Record<string, unknown[]>).bookings = [...sales.bookings, ...keepBookings];
+}
+
+/* ── Whole-business demos ──────────────────────────────────────────────────
+   `loadBusiness` filters the default seed; a prospect demo like The Doers Club
+   is a different business — its own venue, counter, shelf and storefront — so
+   it replaces those collections too. The choice is remembered in this browser
+   (and implied by its storefront address) so a reload or a shared link opens
+   the same business instead of falling back to the default seed. */
+export const DEMO_KEY = "cf_demo";
+const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
+  doers: {
+    slug: "thedoersclub",
+    apply: () => {
+      operatorState = { ...structuredClone(seed.operator), ...doers.doersOperator };
+      const S = store as Record<string, unknown[]>;
+      S.products = structuredClone(doers.doersProducts);
+      S.locations = structuredClone(doers.doersLocations);
+      S.counters = structuredClone(doers.doersCounters);
+      S.devices = structuredClone(seed.devices).filter((d) => d.counterId === "cnt_fort_main");
+      S.storefronts = structuredClone(doers.doersStorefronts);
+      S.inventoryItems = structuredClone(doers.doersInventoryItems);
+      S.stockMovements = structuredClone(doers.doersStockMovements);
+      for (const k of ["resources", "events", "holds", "marketplaceConnections", "marketplaceListings", "ticketCredentials", "ticketScans", "refundRequests"]) S[k] = [];
+      const sales = generateSales({ products: doers.doersProducts, locations: doers.doersLocations, staff: seed.staff, taxRatePct: operatorState.taxRatePct, reducedRatePct: operatorState.reducedRatePct, count: 40 });
+      S.orders = sales.orders;
+      S.tickets = sales.tickets;
+      S.bookings = sales.bookings;
+    },
+  },
+};
+export const isBundleDemo = (id: string) => id in BUNDLES;
+/** Load a whole-business demo and remember it for this browser. */
+export function loadBundleDemo(id: string): void {
+  BUNDLES[id]?.apply();
+  try { localStorage.setItem(DEMO_KEY, id); } catch {}
+}
+/** Forget any remembered whole-business demo (the other demos and "Start fresh"). */
+export function forgetBundleDemo(): void {
+  try { localStorage.removeItem(DEMO_KEY); } catch {}
+}
+// On first load in the browser: a demo's own storefront address or demo link
+// opens that demo; any other storefront is the default seed's; otherwise the
+// demo this browser last chose.
+if (typeof window !== "undefined") {
+  try {
+    const path = window.location.pathname;
+    let id: string | null = localStorage.getItem(DEMO_KEY);
+    const slugHit = Object.entries(BUNDLES).find(([, b]) => path === `/s/${b.slug}` || path.startsWith(`/s/${b.slug}/`));
+    if (slugHit) id = slugHit[0];
+    else if (path.startsWith("/s/")) id = null;
+    const demoHit = path.match(/^\/demo\/([a-z-]+)/);
+    if (demoHit) id = Object.keys(BUNDLES).find((k) => demoHit[1].startsWith(k)) ?? id;
+    if (id && BUNDLES[id]) BUNDLES[id].apply();
+  } catch {}
 }
 
 /** Empty the operator's data for the golden path ("Start fresh"). */

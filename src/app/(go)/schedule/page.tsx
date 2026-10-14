@@ -701,7 +701,7 @@ export default function SchedulePage() {
                 </span>
                 <span className="text-lg font-semibold tabular-nums leading-none">{dt.getDate()}</span>
                 <span aria-hidden className="flex h-1.5 gap-0.5">
-                  {Array.from({ length: Math.min(3, d.load) }, (_, i) => (
+                  {Array.from({ length: hydrated ? Math.min(3, d.load) : 0 }, (_, i) => (
                     <span key={i} className={cn("h-1.5 w-1.5 rounded-full", on ? "bg-on-solid" : "bg-ember")} />
                   ))}
                 </span>

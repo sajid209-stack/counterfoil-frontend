@@ -4,6 +4,7 @@
   "dailyLimit": "তারিখ বাছুন · দিনে সীমিত",
   "slots": "সময়ের স্লট",
   "slotsEvery": "সময়ের স্লট · প্রতি {length}",
+  "sessionsLasting": "নির্দিষ্ট সময় · প্রতিটি {length}",
   "guided": "গাইডসহ ট্যুর",
   "guidedEvery": "গাইডসহ · প্রতি {length}",
   "byHour": "ঘণ্টা ধরে বুক · {places}",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
@@ -90,6 +90,8 @@ function ShopGlyph({ kind }: { kind: "merch" | "food" | "equipment" | "service" 
  *  The same condition the booking sheet draws its date strip under. */
 const isDatedProduct = (p: Product) =>
   needsSchedule(p.bookingType) || p.bookingType === "BT-10" || p.bookingType === "BT-02";
+
+const noSubscribe = () => () => {};
 
 export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const router = useRouter();
@@ -316,10 +318,15 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
      with an item that has no variations. Kept out of the catalogue's chips
      because these are not bookings: one chip of their own, and only when this
      counter's venue actually keeps something. */
+  /* Read only once the browser has taken over. The store can hold a different
+     business in the browser (a whole-business demo remembered in this tab) than
+     the server rendered, and a chip row drawn from it on the server would not
+     match the one the browser draws. */
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
   const shopItems = useMemo(
-    () => counterItems(tillLocationId),
+    () => (hydrated ? counterItems(tillLocationId) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- derived from the store; the cart changing is when it can have moved
-    [tillLocationId, cart],
+    [hydrated, tillLocationId, cart],
   );
   const SHOP = "shop";
   /* Events at the counter. Like the shelf, one chip of their own rather than a
@@ -328,9 +335,9 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
      would put it behind a chip that means something else. Only events this
      counter's venue actually sells. */
   const eventsForSale = useMemo(
-    () => counterEvents(tillLocationId),
+    () => (hydrated ? counterEvents(tillLocationId) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- derived from the store; the cart changing is when it can have moved
-    [tillLocationId, cart],
+    [hydrated, tillLocationId, cart],
   );
   const EVENTS = "events";
   const [eventSheet, setEventSheet] = useState<EventRecord | null>(null);
