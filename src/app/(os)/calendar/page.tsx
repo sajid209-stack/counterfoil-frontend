@@ -187,7 +187,9 @@ export default function CalendarPage() {
   const today = DEMO_TODAY;
   const nowMin = minutesOf(now);
 
-  const products = useMemo(() => productsQ.data?.data ?? [], [productsQ.data]);
+  // Events (BT-15) put no bookings on the calendar, as they never did; keep them
+  // out of its booking filter and its sell list.
+  const products = useMemo(() => (productsQ.data?.data ?? []).filter((p) => p.bookingType !== "BT-15"), [productsQ.data]);
   const resources = useMemo(() => resourcesQ.data?.data ?? [], [resourcesQ.data]);
   const staff = useMemo(() => staffQ.data?.data ?? [], [staffQ.data]);
 

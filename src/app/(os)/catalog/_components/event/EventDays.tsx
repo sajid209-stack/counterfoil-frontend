@@ -6,7 +6,7 @@ import { Button, ConfirmDialog, DateField, TimeInput, controlClass } from "@/com
 import { formatDay } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { daysForRange, nextDay } from "@/lib/events/days";
-import type { EventContent } from "./EventArchitect";
+import type { EventContent } from "./eventContent";
 
 /**
  * How many days it runs, and what each one is called.
@@ -125,7 +125,7 @@ export function EventDays({
               className={controlClass()}
             />
             {showTimes && (
-              <span className="flex items-center gap-inline">
+              <span className="flex flex-wrap items-center gap-inline">
                 <TimeInput picker value={d.startTime ?? ""} onChange={(v) => patchDay(d.id, { startTime: v })} className="w-24" />
                 <span aria-hidden className="text-muted">–</span>
                 <TimeInput picker value={d.endTime ?? ""} onChange={(v) => patchDay(d.id, { endTime: v })} className="w-24" />

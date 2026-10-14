@@ -33,10 +33,11 @@ const nextConfig: NextConfig = {
       { source: "/bookings/new", destination: "/catalog/new/booking", permanent: false },
       { source: "/bookings/layouts", destination: "/catalog/layouts", permanent: false },
       { source: "/bookings/layouts/:id", destination: "/catalog/layouts/:id", permanent: false },
-      { source: "/bookings/:id", destination: "/catalog/bookings/:id", permanent: false },
+      { source: "/bookings/:id", destination: "/catalog/:id", permanent: false },
       { source: "/events", destination: "/catalog?kind=events", permanent: false },
       { source: "/events/new", destination: "/catalog/new/event", permanent: false },
-      { source: "/events/:id", destination: "/catalog/events/:id", permanent: false },
+      { source: "/events/:id", destination: "/catalog/:id", permanent: false },
+      { source: "/events/:id/edit", destination: "/catalog/:id?tab=details", permanent: false },
       // The breadcrumb is built from the path, so a record's trail has a
       // "bookings" or "events" crumb — which lands on its tab of the list.
       { source: "/catalog/bookings", destination: "/catalog?kind=bookings", permanent: false },
@@ -45,6 +46,11 @@ const nextConfig: NextConfig = {
       // would be cached by browsers long after it changed.
       { source: "/settings", destination: "/settings/business", permanent: false },
       { source: "/catalog/events", destination: "/catalog?kind=events", permanent: false },
+      // One record page for every item (docs/catalog.md §9.4): a booking and an
+      // event are both /catalog/<id>, and an event's old editor is its Details tab.
+      { source: "/catalog/bookings/:id", destination: "/catalog/:id", permanent: false },
+      { source: "/catalog/events/:id/edit", destination: "/catalog/:id?tab=details", permanent: false },
+      { source: "/catalog/events/:id", destination: "/catalog/:id", permanent: false },
       // Finances is one page now: the venue's money with Counterfoil as a
       // single balance, with Withdraw, Deposit and an activity list. It
       // replaced Transactions, Fees & balances, Payouts and Fee collections —

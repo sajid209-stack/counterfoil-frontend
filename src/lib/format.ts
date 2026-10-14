@@ -62,6 +62,27 @@ export function formatDay(ymd: string | null | undefined, opts: { weekday?: bool
   }).format(d);
 }
 
+/** The days a ticket admits: "Sat 24 Oct" for one, "Sat 24 Oct – Sun 25 Oct" for a
+ *  run of days in a row, and "Sat 24 Oct, Mon 26 Oct" when they are not in a row
+ *  (a dash would say the days between were included). `year` appends the year
+ *  once, after the last day — a printed ticket outlives the week it was sold in. */
+export function formatDayRange(days: string[], opts: { weekday?: boolean; year?: boolean } = {}): string {
+  const list = days.filter(Boolean);
+  if (list.length === 0) return "\u2014";
+  const day = (ymd: string) => Date.UTC(+ymd.slice(0, 4), +ymd.slice(5, 7) - 1, +ymd.slice(8, 10));
+  const inARow = list.every((d, i) => i === 0 || day(d) - day(list[i - 1]) === 86_400_000);
+  const text =
+    list.length > 1 && inARow
+      ? `${formatDay(list[0], opts)} – ${formatDay(list[list.length - 1], opts)}`
+      : list.map((d) => formatDay(d, opts)).join(", ");
+  return opts.year ? `${text} ${list[list.length - 1].slice(0, 4)}` : text;
+}
+
+/** When an event ticket is good for, for a basket or a summary: "Sat 24 Oct – Sun 25 Oct · 4:00 PM". */
+export function formatEventWhen(days: string[], startTime?: string | null): string {
+  return [formatDayRange(days, { weekday: true }), startTime ? formatClock(startTime) : null].filter(Boolean).join(" · ");
+}
+
 /** ISO datetime → "29 Jul 2026". Empty/nullish → "—". */
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";

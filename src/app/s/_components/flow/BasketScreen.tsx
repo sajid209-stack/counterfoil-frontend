@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Minus, Plus, ShieldCheck, ShoppingBag, Trash2 } from "lucide-react";
-import { formatClock, formatDay, formatMoney } from "@/lib/format";
+import { formatClock, formatDay, formatEventWhen, formatMoney } from "@/lib/format";
 import { lineSubtotal } from "@/lib/storefront/basket";
 import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
 import { BackLink, StorefrontChrome } from "../Chrome";
@@ -88,6 +88,7 @@ export function BasketScreen() {
                       <li key={tr.tierId} className="flex items-center justify-between gap-comfortable py-comfortable">
                         <div className="min-w-0">
                           <p className="text-md font-medium">{tr.tierName}</p>
+                          {tr.days && tr.days.length > 0 && <p className="text-base text-muted">{formatEventWhen(tr.days, tr.startTime)}</p>}
                           <p className="tnum text-base text-muted">
                             {formatMoney(tr.price)} {t("basket.each")}
                           </p>

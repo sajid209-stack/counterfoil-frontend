@@ -279,7 +279,7 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
                   <li key={`${s.kind}-${s.id}`} className="border-b border-hairline last:border-0">
                     <button
                       type="button"
-                      onClick={() => router.push(s.kind === "booking" ? `/catalog/bookings/${s.id}` : `/catalog/events/${s.id}`)}
+                      onClick={() => router.push(`/catalog/${s.id}`)}
                       className="flex min-h-11 w-full items-center gap-tight py-comfortable text-left transition-colors duration-quick hover:bg-muted-wash"
                     >
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">{s.name}</span>

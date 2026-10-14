@@ -19,9 +19,3 @@ export function productMinutes(p: Product): number | null {
       return null;
   }
 }
-
-/** The cheapest active tier, which is what a public card says. */
-export function fromPrice(tiers: { price: number; active: boolean }[]): number | null {
-  const open = tiers.filter((x) => x.active);
-  return open.length ? Math.min(...open.map((x) => x.price)) : null;
-}

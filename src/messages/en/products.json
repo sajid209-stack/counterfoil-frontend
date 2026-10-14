@@ -24,5 +24,8 @@
   "rowActions": "Actions for {name}",
   "copyOf": "{name} (copy)",
   "archiveTitle": "Archive this booking?",
-  "archiveBody": "It stops selling and leaves the list. Past orders stay. You can still find it under Archived."
+  "archiveBody": "It stops selling and leaves the list. Past orders stay. You can still find it under Archived.",
+  "blockerNoDate": "No date",
+  "blockerNoVenue": "No venue",
+  "blockerNoTicket": "No tickets to sell"
 }

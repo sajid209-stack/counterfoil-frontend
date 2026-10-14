@@ -77,8 +77,19 @@ export interface StorefrontTheme {
   accent: string;
 }
 
-export function storefrontTheme(accent: AccentColor | null | undefined): StorefrontTheme {
-  const base = accent ? ACCENT_HEX[accent] : NEUTRAL;
+/** A venue picks one of five named colours; an item's own page may also carry
+ *  any hex (`ProductPage.accent`). Both end up as one base colour. */
+export type AccentInput = AccentColor | (string & {}) | null | undefined;
+
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+const baseOf = (accent: AccentInput): string => {
+  if (!accent) return NEUTRAL;
+  if (accent in ACCENT_HEX) return ACCENT_HEX[accent as AccentColor];
+  return HEX_RE.test(accent) ? accent : NEUTRAL;
+};
+
+export function storefrontTheme(accent: AccentInput): StorefrontTheme {
+  const base = baseOf(accent);
 
   let fill = base;
   let onFill = INK;
@@ -125,7 +136,7 @@ export function storefrontTheme(accent: AccentColor | null | undefined): Storefr
 /** The inline custom properties that scope a storefront's colours. Put on the
  *  `.sf` root; `globals.css` maps the app's own tokens onto them so shared
  *  components (the date picker, the ticket card) follow the venue. */
-export function storefrontVars(accent: AccentColor | null | undefined): CSSProperties {
+export function storefrontVars(accent: AccentInput): CSSProperties {
   const t = storefrontTheme(accent);
   return {
     "--sf-accent": t.accent,

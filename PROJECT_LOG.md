@@ -17411,3 +17411,135 @@ The research was Square Appointments, Fresha, and Google Calendar on a phone. Al
 - `/pos/payment` and `/pair` only redirect, so they have no entries.
 - `global-error` was not screenshotted; it renders only when the root layout throws.
 - The page-state dropdown is shown to everyone. It was asked for as a developer tool. If it should be hidden in production or behind a role, that is one condition in each shell.
+
+## Catalog: one booking system, a designed page for every item, three ways to sell (2026-10-14)
+
+Owner, after an engineering meeting: *"all types of catalogs, and events are under one booking
+system, so we need to remove different events pages system, all events maintenance will be under
+catalog system … a last one step added to catalog adding … for individual product details page …
+in storefront we only can customize the storefront page not individual product details page … from
+catalog there need to be option to publish the product on storefront or a option not to publish in
+storefront but in counters or a own url for booking that product."*
+
+The plan, the user stories, the information architecture, the add flow, the screen specs and the
+backend contract are in **`docs/catalog.md`**, the spec for both lanes. The plan was written on
+Opus; the work was built in phases by Sonnet agents with separate file ownership and reviewed on
+Opus between rounds.
+
+### The decision, in the data
+
+Events stop being a separate record. **An event is a catalogue item (`Product`) with booking
+type `BT-15`.** The contract (in `types.ts`, additive):
+- `Product.event`: the kind of event, the days, and the venue in the operator's words.
+- `Product.page`: the item's designed page, with its look, colour, cover, tagline, sections in
+  order, their words, and which sections still show sample text.
+- `Product.online`: `"listed"` or `"link"`.
+- `Product.slug`: the item's own link, `/b/<slug>`.
+- `PriceTier` gains `capacity`, `openingSold`, `dayIds`, `salesEndsAt` and `perks`.
+
+`EventRecord` survives only as a derived view (`eventView(product)`). The 3,900-line event page
+template and the day and capacity helpers read that view, so they did not need rewriting. An event
+ticket sold anywhere is an ordinary product line; the `evt_` prefix is read for old lines only.
+The seeded events kept their ids, slugs and every figure. The generated fixture is byte-identical
+(156 orders, ৳758,180.03).
+
+### What the operator sees
+
+- **One list.** The Bookings/Events tabs are gone. There is a Type filter beside search, and
+  Filters by state and **Where it's sold** (Storefront · Link only · Counter · Not online). A new
+  **Where it's sold** column shows a mark each for storefront, link and counter.
+- **One chooser.** Two groups in the same card style: *Repeats on a schedule* (eight kinds) and
+  *Happens on a date* (six kinds of event, each with a swatch of its page look).
+- **One wizard** (`/catalog/new/<kind>`): Name → When → Tickets & prices → **Where it's sold** →
+  **Page** → Check.
+  - The Where-it's-sold step is new for everything: at the counter (which venues) and online as
+    three radio cards (*On your storefront* / *Only by its link* / *Not online*), plus the item's
+    link with live checks for format and uniqueness.
+  - The Page step opens on a finished page, with the real page beside the controls at a real phone
+    or desktop width. It is skipped when the item is not sold online.
+  - Sample text on an event page must be edited, hidden or kept before it can go on sale.
+  - A new item starts sold at the counter and on the storefront, at the venue chosen in the bar.
+- **One record page** (`/catalog/<id>`) for every item. Tabs: Overview · Details · When · Tickets &
+  prices · Where it's sold · Page · Rules · For support, with the settings save bar. Put on sale
+  is the only orange primary; Stop selling is secondary.
+- **The page designer** (`PageDesigner`) works for every item.
+  - Events choose from the six designed looks; other items use the standard page.
+  - Colour, cover, the line under the name, and sections that can be reordered (handles and
+    Move up/down buttons), hidden and edited in place: About, Highlights, What's included, Good
+    to know, Photos, Video, FAQ, Where.
+- **Settings → Storefront** designs only the venue's front page, and lists only items that are
+  listed.
+
+### What the customer sees
+
+- **One renderer**, `ProductPageView`, for `/s/<venue>/<item>`, the item's own link `/b/<slug>`
+  and the designer's preview, so what is approved is what is read.
+- `/b/<slug>` has a slim header, and "More at <venue>" only when the item is listed. It has its
+  own one-item basket, checkout and confirmation, so a private link never sends a guest to a
+  storefront that does not list it. A link-only page is `noindex`. An unknown or unavailable
+  link answers 404 with one refusal.
+- Events can be bought online: choose a day, then tickets. Each ticket is capped by its own
+  remaining quantity and by every day it admits. Multi-day passes state their saving.
+- The storefront lists listed events at the venues that sell them. `/e/<slug>` redirects to
+  `/b/<slug>`.
+- **One "from" price rule** (`fromPriceOf`): the cheapest ticket that can still be bought.
+  Before this, the storefront advertised a sold-out early bird's price.
+
+### Found and fixed along the way
+
+- **Event sales never counted.** The till's cart line had no ticket type, so the ledger skipped
+  it. This was a pre-existing bug, fixed in phase 1.
+- **The event settlement double-counted** live sales. Event ticket sales created phantom calendar
+  bookings.
+- **Changing a ticket's price rewrote money already taken.** "Money in" was sold × the current
+  price. Money is now read from the orders that sold the ticket, and tickets sold before
+  Counterfoil carry none.
+- **The online confirmation dated an event ticket with the day it was bought.** It now gives the
+  days the ticket admits.
+- **Event titles fell back to body size** on any route that did not load the six display faces.
+  The template sets type with the `font` shorthand, which is discarded whole when a variable is
+  undefined. The faces now travel with the page.
+- `/b/underground` scrolled sideways on a phone. The till's event sheet said "1 tickets".
+
+### Review
+
+Three rounds of review against screenshots of every screen at 1440 and 390, in light, dark and
+Bangla (173 captures in round 2). Each finding was fixed and checked before the next round.
+
+- **Round 1:**
+  - "Stop selling" was the orange primary, and an unlabelled disc on a phone.
+  - The event wizard had two near-identical type selects.
+  - New bookings defaulted to not online.
+  - The booking and event records disagreed on headings.
+- **Round 2:**
+  - Two identical refusal banners.
+  - The from-price mismatch.
+  - No venue was pre-ticked.
+  - A sideways scroll on `/b/underground`.
+  - Disabled controls on rows that can never use them.
+- **Round 3** (the new harness): the money and date bugs above.
+
+### Verified
+
+- `tsc`, `lint:tokens` and i18n are clean. `eslint` shows only the documented baseline
+  (PosScreen, OsShell, useApi, duration).
+- The production build passes.
+- **Full regression: 105 runs on the final build, all passing** once the harnesses below were brought to the new design. The route sweeps are clean on all 59 routes ×3. The phone audit
+  shows hidden 0 · under-44 0 · clipped 0 · errors 0.
+- The harnesses that asserted the old design were updated to it, never loosened:
+  - `bar`: new routes; the wizard has a back row; the back link reads "Catalog".
+  - `t12`: the event time picker is now on the record's Details tab.
+  - `sf quick`: the storefront now shows events, so the card count follows the seed.
+  - `cu`: waits for real rows, not the route's loading skeleton.
+  - The buffer harnesses: `Done` matched exactly, because the wizard rail's "Your page done" also matched; bowling's buffer is on the record's When tab.
+- `catalog-e2e` (95 checks, old design) is replaced by **`catalog2-e2e`: 357 checks**. It covers
+  list, chooser, both wizards, every record tab, redirects, public pages, link-only, the from-price
+  rule, buying an event online and at the till, Bangla and the phone.
+
+### Open
+
+- Bangla strings are drafts.
+- Events have no separate When tab: their dates live in Details.
+- A guest reaching an item by its link has a one-item basket. Mixing items means using the
+  storefront.
+- The `/bookings` and `/events` redirects keep their old `?kind=` query in the address.

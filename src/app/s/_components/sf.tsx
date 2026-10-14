@@ -24,8 +24,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Qr } from "@/components/ui/Qr";
-import { storefrontVars } from "@/lib/storefront/theme";
-import type { AccentColor, BookingTypeCode } from "@/lib/api/types";
+import { storefrontVars, type AccentInput } from "@/lib/storefront/theme";
+import type { BookingTypeCode } from "@/lib/api/types";
 
 /** The themed root every storefront screen sits in. */
 export function SfRoot({
@@ -33,7 +33,7 @@ export function SfRoot({
   className,
   children,
 }: {
-  accent: AccentColor | null | undefined;
+  accent: AccentInput;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -63,9 +63,11 @@ export const sfBtn = {
 };
 
 /* ── Booking groups, for the filter row ─────────────────────────────────── */
-export type TypeGroup = "entry" | "timed" | "space" | "packs";
+export type TypeGroup = "entry" | "timed" | "space" | "packs" | "events";
 export function typeGroup(bt: BookingTypeCode): TypeGroup {
   switch (bt) {
+    case "BT-15":
+      return "events";
     case "BT-04":
     case "BT-05":
       return "space";
@@ -84,7 +86,7 @@ export function typeGroup(bt: BookingTypeCode): TypeGroup {
       return "entry";
   }
 }
-export const GROUP_ORDER: TypeGroup[] = ["entry", "timed", "space", "packs"];
+export const GROUP_ORDER: TypeGroup[] = ["entry", "timed", "space", "packs", "events"];
 
 export function TypeIcon({ bookingType, size }: { bookingType?: BookingTypeCode; size: number }) {
   const p = { size, strokeWidth: 1.5 };

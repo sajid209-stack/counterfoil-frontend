@@ -258,7 +258,8 @@ export default function PosPage() {
 
   const operator = opQ.data;
   const currency = operator?.currency ?? "BDT";
-  const products = productsQ.data?.data ?? [];
+  // Events (BT-15) are not part of this wall: a booking sheet cannot sell one.
+  const products = (productsQ.data?.data ?? []).filter((p) => p.bookingType !== "BT-15");
   const nonCashLive = nonCashOk;
   const method: PaymentMethod = nonCashLive || pickedMethod === "cash" ? pickedMethod : "cash";
   const deepLinked =

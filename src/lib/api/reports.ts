@@ -1,5 +1,6 @@
 import { getTaxConfigState, ok } from "./client";
 import { peekBookings } from "./bookings";
+import { isEventLine } from "./events";
 import { peekCounters } from "./counters";
 import { peekLocations } from "./locations";
 import { peekOrders } from "./orders";
@@ -233,12 +234,14 @@ export async function getSalesReport(query: SalesReportQuery): Promise<ApiResult
              group somebody had to maintain. "The shop took ৳12,000" and "event
              tickets took ৳40,000" are questions an operator asks, and each is
              answered by the line's own id — an extra on a booking, something
-             off the shelf, an event ticket, a typed charge, or a booking. */
+             off the shelf, a typed charge — or by its product: an event ticket
+             is "Event tickets" because its product is BT-15, not because of a
+             prefix on the id. Anything else is a booking. */
           const kind = line.productId.startsWith("addon_")
             ? "addons"
             : line.productId.startsWith("inv_")
               ? "shop"
-              : line.productId.startsWith("evt_")
+              : isEventLine(line.productId)
                 ? "events"
                 : line.productId === "custom"
                   ? "custom"

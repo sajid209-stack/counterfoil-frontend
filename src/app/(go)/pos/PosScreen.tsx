@@ -8,6 +8,7 @@ import { Archive, Banknote, Check, CupSoda, Sparkles, ShoppingBag, Wrench, Chevr
 import { BlockedNotice, Button, DiscountInput, FormField, Modal, ProductThumb, Notice, SkeletonText, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { counterEvents, counterItems, inventoryItem, inventoryLineId, levelOf, peekTicketCodeSettings, tillMethods, advanceMinimum, checkout, getAdvancePolicy, earnPoints, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isOpenOn, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type MembershipTier, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord } from "@/lib/api";
+import { eventFromPrice as sharedEventFromPrice } from "@/lib/api/eventModel";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_TILL_ID } from "@/lib/session";
 import { useActiveCounterNow } from "@/lib/activeCounter";
@@ -297,11 +298,20 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
      sell (Settings, Counters). A product kept at the fort is not on the
      museum's wall. */
   const products = useMemo(
-    () => (productsQ.data?.data ?? []).filter((p) => p.locationIds.includes(tillLocationId) && (allowedHere === "all" || allowedHere.includes(p.id))),
+    // Events (BT-15) are catalogue items too, but they are sold through the
+    // event sheet under their own chip (`counterEvents`), never the booking
+    // wall and never ProductSheet — so they are not part of this list.
+    () => (productsQ.data?.data ?? []).filter((p) => p.bookingType !== "BT-15" && p.locationIds.includes(tillLocationId) && (allowedHere === "all" || allowedHere.includes(p.id))),
     [productsQ.data, tillLocationId, allowedHere],
   );
   const resources = resourcesQ.data?.data ?? [];
-  const productById = (id: string) => products.find((p) => p.id === id);
+  /* A cart line is an ordinary product line, an event ticket included: its
+     productId is the product's id (BT-15) and its tier is the ticket. So a line
+     is looked up among the events as well as the bookings — which is what
+     gives it its tier on the order, and therefore a place in the event's
+     ledger — even though events are never part of the booking wall above. */
+  const productById = (id: string) =>
+    products.find((p) => p.id === id) ?? (productsQ.data?.data ?? []).find((p) => p.id === id && p.bookingType === "BT-15");
 
   /** Everything this till can actually sell, before the cashier narrows it.
    *  The chip row is built from THIS rather than from the filtered grid, so
@@ -343,10 +353,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const [eventSheet, setEventSheet] = useState<EventRecord | null>(null);
   /** The cheapest ticket somebody could still buy — what a tile leads with,
    *  the same "from" price the event's own page states. */
-  const eventFromPrice = (e: EventRecord) => {
-    const open = e.tiers.filter((t) => t.sold < t.quantity);
-    return open.length ? Math.min(...open.map((t) => t.price)) : Math.min(...e.tiers.map((t) => t.price), 0);
-  };
+  const eventFromPrice = (e: EventRecord) => sharedEventFromPrice(e) ?? Math.min(...e.tiers.map((t) => t.price), 0);
   /** Places left across the whole event, so a tile can say it is nearly gone. */
   const eventPlacesLeft = (e: EventRecord) =>
     e.tiers.reduce((n, t) => n + Math.max(0, t.quantity - t.sold), 0);
@@ -613,7 +620,9 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     // §61.11 — hold the places while this cart is open, so a second till
     // cannot sell the same seats out from under it. The hold carries its own
     // expiry, so an abandoned cart gives them back without anyone noticing.
-    if (entry.slotDate) {
+    /* An event ticket holds no slot: it has a day, not a place in a session,
+       so there is nothing to keep back for the cart and no reservation to make. */
+    if (entry.slotDate && !isEventEntry(entry)) {
       const seats = entry.items.reduce((sum, i) => sum + i.qty, 0);
       if (seats > 0) {
         void placeCheckoutHold({
@@ -633,6 +642,10 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     // never moves someone's money for them.
     if (pay) openCart();
   };
+
+  /** Is this cart line an event ticket? Those are ordinary product lines but
+   *  never slot reservations, so they leave no Booking on the calendar. */
+  const isEventEntry = (e: CartEntry) => productById(e.productId)?.bookingType === "BT-15";
 
   // Extend a flexible booking still in the cart by one increment: the lane
   // behind must be free (buffer included) and the new length re-prices.
@@ -949,7 +962,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   const buildSale = () => {
     // The SAME inputs the live totals were computed from — no drift possible.
     const lines = saleInputs;
-    const bookings = cart.filter((e) => e.slotDate).map((e) => ({ productId: e.productId, resourceId: e.resourceId ?? null, slotStart: entrySlotISO(e)!, slotEnd: e.slotEnd, partySize: entrySeats(e) }));
+    const bookings = cart.filter((e) => e.slotDate && !isEventEntry(e)).map((e) => ({ productId: e.productId, resourceId: e.resourceId ?? null, slotStart: entrySlotISO(e)!, slotEnd: e.slotEnd, partySize: entrySeats(e) }));
     // Receipt detail for the complete screen: lines, discounts, tax, payments.
     const receipt = {
       lines: sale.lines.map((l) => ({ name: l.tierId && l.tierName !== l.productName ? `${l.productName} · ${l.tierName}` : l.productName, qty: l.quantity, amount: l.subtotal, child: !!l.parentLineId })),
@@ -1377,8 +1390,8 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                       tabIndex={0}
                       /* Guarded on the PRODUCT: a custom amount and something off
                          the shelf have no booking behind them. */
-                      onClick={() => { const prod = productById(e.productId); if (prod) setSheet({ product: prod, initial: e }); }}
-                      onKeyDown={(k) => { const prod = productById(e.productId); if (k.key === "Enter" && prod) setSheet({ product: prod, initial: e }); }}
+                      onClick={() => { const prod = productById(e.productId); if (prod && prod.bookingType !== "BT-15") setSheet({ product: prod, initial: e }); }}
+                      onKeyDown={(k) => { const prod = productById(e.productId); if (k.key === "Enter" && prod && prod.bookingType !== "BT-15") setSheet({ product: prod, initial: e }); }}
                     >
                       <div className="flex items-start justify-between gap-tight">
                         <span className="min-w-0 flex-1 break-words text-md font-semibold leading-snug">{e.productName}</span>

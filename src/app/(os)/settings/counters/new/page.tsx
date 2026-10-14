@@ -22,7 +22,7 @@ export default function NewCounterPage() {
         <CounterEditor
           mode="create"
           locations={locations.data?.data ?? []}
-          products={products.data?.data ?? []}
+          products={(products.data?.data ?? []).filter((p) => p.bookingType !== "BT-15")}
           liveAccount={(accounts.data?.data ?? []).some((a) => a.status === "active" && a.chargesEnabled)}
         />
       )}

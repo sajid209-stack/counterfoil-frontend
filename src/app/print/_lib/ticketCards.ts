@@ -2,7 +2,8 @@ import { peekTicketCodeSettings } from "@/lib/api";
 import { useTranslations } from "next-intl";
 import type { TicketCardData, TicketField } from "@/components/ui/TicketCard";
 import type { Order, Ticket } from "@/lib/api/types";
-import { formatClock, formatClockRange, formatDay } from "@/lib/format";
+import { eventTicketWhen } from "@/lib/api/eventTickets";
+import { formatClock, formatClockRange, formatDay, formatDayRange } from "@/lib/format";
 
 export interface TicketLabels {
   date: string;
@@ -50,9 +51,17 @@ export function ticketCards(order: Order | undefined, tickets: Ticket[], busines
 
     // A printed ticket outlives the week it was sold in, so the date states its year — appended
     // rather than asked of Intl, whose en-GB form with a year puts a comma after the weekday.
+    /* An event ticket has no booking snapshot, and `validFor` names the day it was BOUGHT. It is
+       good for the days its ticket type admits, and the event's start time. */
+    const when = line ? eventTicketWhen(line.productId, line.tierId) : null;
     const day = booking?.date ?? ticket.validFor;
-    const fields: TicketField[] = [{ label: labels.date, value: `${formatDay(day, { weekday: true })} ${day.slice(0, 4)}` }];
-    if (booking?.startTime) fields.push({ label: labels.time, value: booking.endTime ? formatClockRange(booking.startTime, booking.endTime) : formatClock(booking.startTime) });
+    const fields: TicketField[] = [
+      when
+        ? { label: labels.date, value: formatDayRange(when.days.map((d) => d.date), { weekday: true, year: true }) }
+        : { label: labels.date, value: `${formatDay(day, { weekday: true })} ${day.slice(0, 4)}` },
+    ];
+    if (when?.startTime) fields.push({ label: labels.time, value: when.endTime ? formatClockRange(when.startTime, when.endTime) : formatClock(when.startTime) });
+    else if (booking?.startTime) fields.push({ label: labels.time, value: booking.endTime ? formatClockRange(booking.startTime, booking.endTime) : formatClock(booking.startTime) });
     const productName = line?.productName ?? ticket.tierName;
     // Nothing on a ticket says the same thing twice: a court booked as "Badminton Court" does not
     // also need "Where: Badminton Court", and "Day Pass Bundle" does not need the tier "Bundle".

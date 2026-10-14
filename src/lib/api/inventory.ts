@@ -22,7 +22,6 @@
       asks is "how many are HERE", and that is the one this answers. */
 import { createResource, fail, notFoundError, ok, validationError } from "./client";
 import { demoNow } from "@/lib/schedule";
-import type { EventRecord } from "./events";
 import type {
   ApiResult,
   Product,
@@ -44,7 +43,6 @@ import type {
    two modules importing each other is a cycle that breaks differently in the
    bundler and in a test runner. A handle is just a view on the store. */
 const productsStore = createResource<Product>("products", "Booking");
-const eventsStore = createResource<EventRecord>("events", "Event");
 
 const items = createResource<InventoryItem>("inventoryItems", "Inventory item", {
   search: (i, q) =>
@@ -113,14 +111,12 @@ export function movementsOf(itemId: ID, locationId?: ID): StockMovement[] {
  */
 export function linksTo(itemId: ID): { kind: "booking" | "event"; id: ID; name: string; addOnId: ID }[] {
   const out: { kind: "booking" | "event"; id: ID; name: string; addOnId: ID }[] = [];
+  /* An event is a catalogue item (BT-15) and keeps its extras where every item
+     does, in `addOns`; it is named an event here because that is the page it
+     opens. */
   for (const p of productsStore.peek()) {
     for (const a of p.addOns ?? []) {
-      if (a.itemId === itemId) out.push({ kind: "booking", id: p.id, name: p.name, addOnId: a.id });
-    }
-  }
-  for (const e of eventsStore.peek()) {
-    for (const a of e.extras ?? []) {
-      if (a.itemId === itemId) out.push({ kind: "event", id: e.id, name: e.title, addOnId: a.id });
+      if (a.itemId === itemId) out.push({ kind: p.bookingType === "BT-15" ? "event" : "booking", id: p.id, name: p.name, addOnId: a.id });
     }
   }
   return out;
@@ -141,10 +137,6 @@ export const itemForAddOn = (ref: ID): InventoryItem | undefined => {
   const addOnId = ref.startsWith("addon_") ? ref.slice("addon_".length) : ref;
   for (const p of productsStore.peek()) {
     const a = (p.addOns ?? []).find((x: { id: ID }) => x.id === addOnId);
-    if (a?.itemId) return inventoryItem(a.itemId);
-  }
-  for (const e of eventsStore.peek()) {
-    const a = (e.extras ?? []).find((x: { id: ID }) => x.id === addOnId);
     if (a?.itemId) return inventoryItem(a.itemId);
   }
   return undefined;

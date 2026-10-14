@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -19,20 +19,19 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AffixInput, Notice } from "@/components/ui";
-import { cn } from "@/lib/cn";
 import { useMediaQuery } from "@/lib/useMedia";
 import { useApiQuery } from "@/lib/useApi";
 import { createProduct, duplicateEvent, listEvents, listProducts, type Product } from "@/lib/api";
-import { CATEGORIES, categoryById, type CategoryId } from "@/lib/events/catalog";
+import { CATEGORIES, categoryById, type CategoryDef, type CategoryId } from "@/lib/events/catalog";
 import { templateFontVars } from "@/lib/events/fonts";
 import { BOOKING_KINDS, bookingKindOf, productCopy, type BookingKind } from "@/lib/catalog";
 
-/** Tailwind's sm. Below it the chooser is rows in one card per family; from it,
+/** Tailwind's sm. Below it the chooser is rows in one card per group; from it,
  *  a grid of cards with their examples. Branched in JS, not hidden with CSS, so
  *  there is exactly one copy of each row in the document. */
 const SM = "(min-width: 40rem)";
 
-const ICON: Record<BookingKind, LucideIcon> = {
+const ICON: Record<Exclude<BookingKind, "event">, LucideIcon> = {
   entry: DoorOpen,
   timed: Clock,
   tour: Compass,
@@ -46,30 +45,27 @@ const ICON: Record<BookingKind, LucideIcon> = {
 /**
  * "What are you selling?"
  *
- * The first question of every new thing, asked in the operator's words. The
- * old flow asked it twice and in the wrong order: first "Bookings or Events?"
- * — a question about this software's menu, not about the business — and then,
- * for a booking, "How do visitors book this?" on the second step, after a name
- * had already been typed for a thing whose shape was not yet known.
+ * The first question of every new thing, asked in the operator's words, on one
+ * page with two groups and ONE card style: what repeats on a schedule (the
+ * eight kinds of booking) and what happens on a date (the six kinds of event).
+ * The groups are told apart by the sentence under their heading, not by a
+ * different look — the dark poster cards the events used to have read as a
+ * different product.
  *
- * So the chooser is the whole of that decision, once, up front: eight kinds
- * of booking and six kinds of event, each with a line saying what it is for
- * and two examples a venue would recognise, searchable by the word the
- * operator would use ("bowling", "massage", "concert"). Picking one starts
- * the right form already answered.
+ * A booking's card carries its glyph in a small tile. An event's card carries,
+ * in the same tile, a swatch of the page look that kind publishes in — its own
+ * colours and display face — because choosing a kind of event is also choosing
+ * a look, and nothing more than that: the swatch is a hint, not a poster.
  *
- * Two ways out for the unsure: answer three questions instead (the original
- * question tree, still there), or copy something already on sale — the most
- * common way anything new gets made.
+ * Search runs across both groups ("bowling", "massage", "concert"). Two ways
+ * out for the unsure: answer a few questions instead, or copy something already
+ * on sale — the most common way anything new gets made. A card goes to
+ * `/catalog/new/<kind>`, or `/catalog/new/event?type=<id>`.
  *
- * The calm pass: cards have no edge of their own (`card-surface` — a soft
- * shadow does the work), the count of what is already added is quiet text, and
- * the rule that separates the two families is one muted line under its heading.
- * On a phone each family is ONE card of two-line rows, which is the shape the
- * rest of the admin uses for a list on a small screen; the event categories
- * stay as small themed tiles, two across, because a look is chosen by seeing it.
+ * On a phone each group is ONE card of two-line rows, the shape the rest of the
+ * admin uses for a list on a small screen.
  */
-export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "events" }) {
+export function CatalogChooser() {
   const t = useTranslations("catalog");
   const te = useTranslations("events");
   const router = useRouter();
@@ -79,12 +75,14 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
 
   const productsQ = useApiQuery(() => listProducts({ pageSize: 500 }), []);
   const eventsQ = useApiQuery(() => listEvents({ pageSize: 200 }), []);
-  const products = useMemo(() => productsQ.data?.data ?? [], [productsQ.data]);
+  /* Events are catalogue items too (BT-15), but they have cards of their own
+     below; counted or copied as bookings they would appear twice. */
+  const products = useMemo(() => (productsQ.data?.data ?? []).filter((p) => p.bookingType !== "BT-15"), [productsQ.data]);
   const events = useMemo(() => eventsQ.data?.data ?? [], [eventsQ.data]);
 
-  /* What the operator already sells of each kind — a card that says "4 in
-     your catalog" tells a returning operator where they have been, and tells
-     a new one nothing false. */
+  /* What the operator already sells of each kind — a card that says "4 added"
+     tells a returning operator where they have been, and tells a new one
+     nothing false. */
   const bookingCount = useMemo(() => {
     const m = new Map<BookingKind, number>();
     for (const p of products) m.set(bookingKindOf(p.bookingType), (m.get(bookingKindOf(p.bookingType)) ?? 0) + 1);
@@ -99,122 +97,52 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
   const words = (key: string) => `${t(`${key}.title`)} ${t(`${key}.body`)} ${t(`${key}.examples`)} ${t(`${key}.keywords`)}`.toLowerCase();
   const matches = (key: string) => !q || q.split(/\s+/).every((w) => words(key).includes(w));
   const bookingCards = BOOKING_KINDS.filter((k) => matches(`chooser.booking.${k}`));
-  /* An event card's title is its category's own name, so that is searched
-     too — "tour" has to find Travel & Tours, not only "tournament". */
-  const eventMatches = (key: string, title: string) => !q || q.split(/\s+/).every((w) => `${words(key)} ${title.toLowerCase()}`.includes(w));
+  /* An event card's title is its own friendly name, so the category's name is
+     searched too — "business" has to find Conference or talk. */
+  const eventMatches = (key: string, category: string) => !q || q.split(/\s+/).every((w) => `${words(key)} ${category.toLowerCase()}`.includes(w));
   const eventCards = CATEGORIES.filter((c) => eventMatches(`chooser.event.${c.key}`, te(`category.${c.key}`)));
 
   const bookingsSection = bookingCards.length > 0 && (
-    <section key="bookings" aria-labelledby="chooser-bookings">
-      <FamilyHead id="chooser-bookings" title={t("chooser.bookingsTitle")} rule={t("chooser.bookingsRule")} />
-      {wide ? (
-        <ul className="grid gap-section sm:grid-cols-2 xl:grid-cols-4">
-          {bookingCards.map((k) => {
-            const Icon = ICON[k];
-            const n = bookingCount.get(k) ?? 0;
-            return (
-              <li key={k}>
-                <Link
-                  href={`/catalog/new/booking?kind=${k}`}
-                  className="card-surface card-interactive group flex h-full flex-col gap-tight p-card"
-                >
-                  <span className="flex items-start justify-between gap-tight">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-inner bg-muted-wash text-fg">
-                      <Icon size={20} strokeWidth={1.5} aria-hidden />
-                    </span>
-                    {n > 0 && <span className="text-xs text-muted">{t("chooser.have", { count: n })}</span>}
-                  </span>
-                  <span className="mt-tight text-md font-semibold leading-snug text-fg">{t(`chooser.booking.${k}.title`)}</span>
-                  <span className="text-sm leading-snug text-muted">{t(`chooser.booking.${k}.body`)}</span>
-                  <span className="mt-auto pt-tight text-xs leading-snug text-muted">
-                    <span className="font-medium text-fg">{t("chooser.eg")}</span> {t(`chooser.booking.${k}.examples`)}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        /* One card, two lines a row: the name (with what is already added, as
-           quiet text), then the one line that says what it is for. */
-        <ul className="card-surface divide-y divide-hairline overflow-hidden">
-          {bookingCards.map((k) => {
-            const Icon = ICON[k];
-            const n = bookingCount.get(k) ?? 0;
-            return (
-              <li key={k}>
-                <Link
-                  href={`/catalog/new/booking?kind=${k}`}
-                  data-focus-inset=""
-                  className="flex min-h-14 items-center gap-comfortable px-card py-comfortable transition-colors duration-quick active:bg-muted-wash"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-inner bg-muted-wash text-fg">
-                    <Icon size={20} strokeWidth={1.5} aria-hidden />
-                  </span>
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="flex items-baseline justify-between gap-tight">
-                      <span className="min-w-0 truncate text-md font-semibold leading-snug text-fg">{t(`chooser.booking.${k}.title`)}</span>
-                      {n > 0 && <span className="shrink-0 text-xs text-muted">{t("chooser.haveShort", { count: n })}</span>}
-                    </span>
-                    <span className="line-clamp-2 text-sm leading-snug text-muted">{t(`chooser.booking.${k}.body`)}</span>
-                  </span>
-                  <ChevronRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </section>
+    <Group wide={wide} key="bookings" id="chooser-bookings" title={t("chooser.bookingsTitle")} rule={t("chooser.bookingsRule")}>
+      {bookingCards.map((k) => {
+        const Icon = ICON[k];
+        return (
+          <KindCard
+            wide={wide}
+            key={k}
+            href={`/catalog/new/${k}`}
+            mark={
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-inner bg-muted-wash text-fg">
+                <Icon size={20} strokeWidth={1.5} aria-hidden />
+              </span>
+            }
+            title={t(`chooser.booking.${k}.title`)}
+            body={t(`chooser.booking.${k}.body`)}
+            examples={t(`chooser.booking.${k}.examples`)}
+            count={bookingCount.get(k) ?? 0}
+          />
+        );
+      })}
+    </Group>
   );
 
   const eventsSection = eventCards.length > 0 && (
-    <section key="events" aria-labelledby="chooser-events">
-      <FamilyHead id="chooser-events" title={t("chooser.eventsTitle")} rule={t("chooser.eventsRule")} />
-      <ul className={cn("grid grid-cols-2 gap-section md:grid-cols-2 xl:grid-cols-3", templateFontVars)}>
-        {eventCards.map((c) => {
-          const n = eventCount.get(c.id) ?? 0;
-          return (
-            <li key={c.id}>
-              <Link
-                href={`/catalog/new/event?category=${c.id}`}
-                className="card-surface card-interactive group flex h-full flex-col overflow-hidden"
-              >
-                {/* The swatch is the template, in its own literal colours and
-                    display face: choosing a kind of event is also choosing a
-                    look, and a look is chosen by seeing it. */}
-                <span className="flex min-h-14 items-end px-comfortable py-comfortable sm:h-20 sm:px-card" style={{ background: c.theme.bg, borderBottom: `1px solid ${c.theme.line}` }}>
-                  <span className="min-w-0">
-                    <span
-                      className="text-md sm:text-2xl"
-                      style={{
-                        display: "block",
-                        fontFamily: `${c.theme.display}, var(--font-hind-siliguri), sans-serif`,
-                        fontWeight: 700,
-                        lineHeight: 1.05,
-                        letterSpacing: c.theme.displayTracking,
-                        color: c.theme.fg,
-                        textTransform: c.theme.eyebrowCase === "upper" ? "uppercase" : "none",
-                      }}
-                    >
-                      {te(`category.${c.key}`)}
-                    </span>
-                    <span style={{ marginTop: 6, display: "block", height: 3, width: 32, background: c.theme.accent, borderRadius: 999 }} />
-                  </span>
-                </span>
-                <span className="flex flex-1 flex-col gap-inline px-comfortable py-comfortable sm:px-card sm:py-section">
-                  <span className="line-clamp-2 text-sm leading-snug text-muted sm:line-clamp-none">{t(`chooser.event.${c.key}.body`)}</span>
-                  <span className="mt-auto hidden pt-inline text-xs leading-snug text-muted sm:block">
-                    <span className="font-medium text-fg">{t("chooser.eg")}</span> {t(`chooser.event.${c.key}.examples`)}
-                  </span>
-                  {n > 0 && <span className="pt-inline text-xs text-muted">{t(wide ? "chooser.have" : "chooser.haveShort", { count: n })}</span>}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+    <div key="events" className={templateFontVars}>
+      <Group wide={wide} id="chooser-events" title={t("chooser.eventsTitle")} rule={t("chooser.eventsRule")}>
+        {eventCards.map((c) => (
+          <KindCard
+            wide={wide}
+            key={c.id}
+            href={`/catalog/new/event?type=${c.id}`}
+            mark={<LookSwatch c={c} />}
+            title={t(`chooser.event.${c.key}.title`)}
+            body={t(`chooser.event.${c.key}.body`)}
+            examples={t(`chooser.event.${c.key}.examples`)}
+            count={eventCount.get(c.id) ?? 0}
+          />
+        ))}
+      </Group>
+    </div>
   );
 
   // ── copy something already on sale ───────────────────────────────────────
@@ -234,19 +162,19 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
     if (x.product) {
       const res = await createProduct(productCopy(x.product, t("copyName", { name: x.product.name })));
       setCopying(null);
-      if (res.ok) router.push(`/catalog/bookings/${res.data.id}`);
+      if (res.ok) router.push(`/catalog/${res.data.id}`);
       return;
     }
     const res = await duplicateEvent(x.eventId!, te("copyTitle", { title: x.name }));
     setCopying(null);
-    if (res.ok) router.push(`/catalog/events/${res.data.id}/edit`);
+    if (res.ok) router.push(`/catalog/${res.data.id}`);
   };
 
   const nothing = bookingCards.length === 0 && eventCards.length === 0;
-  /* A word that finds both families — "show", "class", "tour" — is where a
-     wrong pick starts, and a booking made as an event (or the other way) has
-     no way to convert later. So when a search lands in both, the rule that
-     separates them is said once, right there. */
+  /* A word that finds both groups — "show", "class", "tour" — is where a wrong
+     pick starts, and a booking made as an event (or the other way) has no way
+     to convert later. So when a search lands in both, the rule that separates
+     them is said once, right there. */
   const both = !!q && bookingCards.length > 0 && eventCards.length > 0;
 
   return (
@@ -262,16 +190,12 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
       />
 
       <div className="order-3 flex flex-col gap-major">
-        {both && (
-          <Notice tone="neutral" size="sm">{t("chooser.tieBreak")}</Notice>
-        )}
+        {both && <Notice tone="neutral" size="sm">{t("chooser.tieBreak")}</Notice>}
         {nothing ? (
           <div className="rounded-card bg-muted-wash px-card py-major text-center">
             <p className="text-base font-medium">{t("chooser.noMatch", { query: query.trim() })}</p>
             <p className="mt-inline text-sm text-muted">{t("chooser.noMatchHint")}</p>
           </div>
-        ) : lead === "events" ? (
-          [eventsSection, bookingsSection]
         ) : (
           [bookingsSection, eventsSection]
         )}
@@ -346,7 +270,90 @@ export function CatalogChooser({ lead = "all" }: { lead?: "all" | "bookings" | "
   );
 }
 
-/** A family's heading and the rule that separates it from the other — the
+/** One card, in either group. Wide: a card with a tile, the title, what it is
+ *  for and an example. Narrow: a two-line row inside the group's one card. */
+function KindCard({ wide, href, mark, title, body, examples, count }: { wide: boolean; href: string; mark: ReactNode; title: string; body: string; examples: string; count: number }) {
+  const t = useTranslations("catalog");
+  return wide ? (
+    <li>
+      <Link href={href} className="card-surface card-interactive group flex h-full flex-col gap-tight p-card">
+        <span className="flex items-start justify-between gap-tight">
+          {mark}
+          {count > 0 && <span className="text-xs text-muted">{t("chooser.have", { count })}</span>}
+        </span>
+        <span className="mt-tight text-md font-semibold leading-snug text-fg">{title}</span>
+        <span className="text-sm leading-snug text-muted">{body}</span>
+        <span className="mt-auto pt-tight text-xs leading-snug text-muted">
+          <span className="font-medium text-fg">{t("chooser.eg")}</span> {examples}
+        </span>
+      </Link>
+    </li>
+  ) : (
+    <li>
+      <Link
+        href={href}
+        data-focus-inset=""
+        className="flex min-h-14 items-center gap-comfortable px-card py-comfortable transition-colors duration-quick active:bg-muted-wash"
+      >
+        {mark}
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="flex items-baseline justify-between gap-tight">
+            <span className="min-w-0 truncate text-md font-semibold leading-snug text-fg">{title}</span>
+            {count > 0 && <span className="shrink-0 text-xs text-muted">{t("chooser.haveShort", { count })}</span>}
+          </span>
+          <span className="line-clamp-2 text-sm leading-snug text-muted">{body}</span>
+        </span>
+        <ChevronRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
+      </Link>
+    </li>
+  );
+}
+
+/** The cards of a group: a grid from sm, one card of rows below. */
+function Group({ wide, id, title, rule, children }: { wide: boolean; id: string; title: string; rule: string; children: ReactNode }) {
+  return (
+    <section aria-labelledby={id}>
+      <FamilyHead id={id} title={title} rule={rule} />
+      {wide ? (
+        <ul className="grid gap-section sm:grid-cols-2 xl:grid-cols-4">{children}</ul>
+      ) : (
+        <ul className="card-surface divide-y divide-hairline overflow-hidden">{children}</ul>
+      )}
+    </section>
+  );
+}
+
+/**
+ * A kind of event's page look, as a 40px swatch where a booking has its glyph:
+ * the look's own ground and line, "Aa" in its display face and ink, and a bar of
+ * its accent. Literal colours on purpose — a published page does not follow the
+ * operator's theme, so neither does the hint of it.
+ */
+function LookSwatch({ c }: { c: CategoryDef }) {
+  return (
+    <span
+      aria-hidden
+      className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-inner"
+      style={{ background: c.theme.bg, border: `1px solid ${c.theme.line}` }}
+    >
+      <span
+        style={{
+          fontFamily: `${c.theme.display}, var(--font-hind-siliguri), sans-serif`,
+          fontWeight: 700,
+          fontSize: 17,
+          lineHeight: 1,
+          letterSpacing: c.theme.displayTracking,
+          color: c.theme.fg,
+        }}
+      >
+        Aa
+      </span>
+      <span style={{ position: "absolute", left: 7, right: 7, bottom: 5, height: 3, borderRadius: 999, background: c.theme.accent }} />
+    </span>
+  );
+}
+
+/** A group's heading and the rule that separates it from the other — the
  *  one sentence that settles "is a boat trip a tour or an event?", as one muted
  *  line under the heading rather than a pill beside it. */
 function FamilyHead({ id, title, rule }: { id: string; title: string; rule: string }) {

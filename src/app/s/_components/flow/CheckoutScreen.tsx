@@ -6,10 +6,11 @@ import { Lock } from "lucide-react";
 import { Checkbox, Notice, Radio } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { cn } from "@/lib/cn";
-import { checkout as apiCheckout, getPrivacySettings, type Order, type PaymentMethod, type Ticket } from "@/lib/api";
+import { checkout as apiCheckout, getPrivacySettings, type Order, type PaymentMethod, type Product, type Ticket } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { peekPaymentSettings } from "@/lib/api/paymentSettings";
-import { formatClock, formatDay, formatMoney } from "@/lib/format";
+import { formatClock, formatDay, formatEventWhen, formatMoney } from "@/lib/format";
+import { eventTicketWhen } from "@/lib/api/eventTickets";
 import { slotISO } from "@/lib/schedule";
 import { basketToLineInputs, type BasketLine } from "@/lib/storefront/basket";
 import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
@@ -21,9 +22,12 @@ const PHONE_RE = /^01\d{9}$/;
 
 /** The slots a sale needs to hold, from the basket's dated lines, so a
  *  storefront purchase decrements the same capacity the till reads. */
-function bookingsFor(basket: BasketLine[]) {
+function bookingsFor(basket: BasketLine[], products: Product[]) {
+  /* An event (BT-15) sells tickets, not a slot: it books nothing and holds
+     nothing, so it never becomes a Booking even if a line were to carry a date. */
+  const isEvent = (id: string) => products.find((p) => p.id === id)?.bookingType === "BT-15";
   return basket
-    .filter((l) => l.date)
+    .filter((l) => l.date && !isEvent(l.productId))
     .map((l) => ({
       productId: l.productId,
       resourceId: l.resourceId ?? null,
@@ -104,7 +108,7 @@ export function CheckoutScreen() {
         staffId: null,
         customerName: contact.name.trim(),
         lines: inputs,
-        bookings: bookingsFor(flow.basket),
+        bookings: bookingsFor(flow.basket, flow.products),
         taxPct: flow.operator?.taxRatePct ?? 0,
         method: method!,
         amountTendered: flow.totals.total,
@@ -155,7 +159,7 @@ export function CheckoutScreen() {
           tierName: line.tierName,
           admits: line.admits,
           status: "issued",
-          validFor: now.slice(0, 10),
+          validFor: eventTicketWhen(line.productId, line.tierId)?.days[0]?.date ?? now.slice(0, 10),
           redeemedAt: null,
         });
       }
@@ -188,6 +192,7 @@ export function CheckoutScreen() {
         <BackLink
           label={t("basket.title")}
           href={flow.mode === "live" ? `/s/${flow.storefront.slug}/basket` : undefined}
+          to="basket"
           onClick={flow.goBasket}
         />
       </div>
@@ -262,9 +267,12 @@ export function CheckoutScreen() {
               <p className="mt-section text-base text-muted">
                 {t.rich("checkout.privacyLine", {
                   link: (chunks) =>
-                    flow.mode === "live" ? (
+                    /* On an item's own link the policy is the venue's, and lives at the
+                       venue's page — which a link-only item's visitor may not be sent to
+                       unless that page is live. */
+                    flow.mode === "live" && (!flow.link || flow.link.venueSlug) ? (
                       <a
-                        href={`/s/${flow.storefront.slug}/privacy`}
+                        href={`/s/${flow.link?.venueSlug ?? flow.storefront.slug}/privacy`}
                         target="_blank"
                         rel="noreferrer noopener"
                         className="text-brand-foreground underline underline-offset-4"
@@ -292,12 +300,15 @@ export function CheckoutScreen() {
                     .join(" · ")}
                 </p>
                 {line.tiers.map((tr) => (
-                  <p key={tr.tierId} className="mt-inline flex justify-between gap-comfortable text-muted">
-                    <span>
-                      {tr.qty} × {tr.tierName}
-                    </span>
-                    <span className="tnum shrink-0">{formatMoney(tr.price * tr.qty)}</span>
-                  </p>
+                  <div key={tr.tierId} className="mt-inline text-muted">
+                    <p className="flex justify-between gap-comfortable">
+                      <span>
+                        {tr.qty} × {tr.tierName}
+                      </span>
+                      <span className="tnum shrink-0">{formatMoney(tr.price * tr.qty)}</span>
+                    </p>
+                    {tr.days && tr.days.length > 0 && <p>{formatEventWhen(tr.days, tr.startTime)}</p>}
+                  </div>
                 ))}
               </li>
             ))}

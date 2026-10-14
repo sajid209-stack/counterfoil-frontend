@@ -7,10 +7,12 @@ import { ArrowRight, CalendarClock, Check, Clock, MapPin, MessageSquareText, Min
 import { cn } from "@/lib/cn";
 import type { Product } from "@/lib/api";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
-import { formatClock, formatClockRange, formatPriceShort } from "@/lib/format";
+import { formatClock, formatClockRange, formatDay, formatPriceShort } from "@/lib/format";
 import { formatDuration } from "@/lib/duration";
-import { fromPrice, productMinutes } from "@/lib/storefront/facts";
+import { productMinutes } from "@/lib/storefront/facts";
+import { fromPriceOf } from "@/lib/price";
 import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
+import { eventDays, spansDays } from "@/lib/api/eventModel";
 import { isOneTap, nextAvailable, storefrontPattern } from "@/lib/storefront/pattern";
 import { StorefrontChrome, directionsHref } from "./Chrome";
 import { QuickAddSheet } from "./flow/QuickAddSheet";
@@ -43,7 +45,9 @@ export function StorefrontView() {
   const flow = useStorefrontFlow();
   const sf = flow.storefront;
   const location = flow.location;
-  const products = flow.products;
+  /* Link-only items can be priced and opened by address, but are never drawn
+     on the page. */
+  const products = useMemo(() => flow.products.filter((p) => !flow.unlistedIds?.includes(p.id)), [flow.products, flow.unlistedIds]);
   const t = useTranslations("storefront");
   const hours = useVenueHours(location, flow.now);
   const [group, setGroup] = useState<TypeGroup | "all">("all");
@@ -62,7 +66,7 @@ export function StorefrontView() {
 
   const groups = GROUP_ORDER.filter((g) => products.some((p) => typeGroup(p.bookingType) === g));
   const shown = group === "all" ? products : products.filter((p) => typeGroup(p.bookingType) === group);
-  const prices = products.map((p) => fromPrice(p.tiers)).filter((x): x is number => x !== null);
+  const prices = products.map((p) => fromPriceOf(p, flow.now)).filter((x): x is number => x !== null);
   const cheapest = prices.length ? Math.min(...prices) : null;
   const todayRow = location.openingHours.find((h) => h.dayOfWeek === flow.now.getDay());
 
@@ -311,7 +315,7 @@ function ProductCard({
   const t = useTranslations("storefront");
   const locale = useLocale();
   const subtitle = useBehaviourSubtitle();
-  const from = fromPrice(p.tiers);
+  const from = fromPriceOf(p, flow.now);
   const minutes = productMinutes(p);
   const tier = p.tiers.find((x) => x.active);
   const oneTap = isOneTap(p);
@@ -336,7 +340,12 @@ function ProductCard({
     return d.toLocaleDateString(locale === "bn" ? "bn-BD" : "en-GB", { weekday: "short", day: "numeric", month: "short" });
   };
   let when: string;
-  if (storefrontPattern(p.bookingType) === "open") {
+  if (storefrontPattern(p.bookingType) === "event" && p.event) {
+    /* An event card says WHEN it is: the day, or the run of days. */
+    const days = eventDays({ id: p.id, startsAt: p.event.startsAt, days: p.event.days });
+    const first = formatDay(days[0].date, { weekday: true });
+    when = spansDays({ days: p.event.days }) ? `${first} – ${formatDay(days[days.length - 1].date, { weekday: true })}` : first;
+  } else if (storefrontPattern(p.bookingType) === "open") {
     when =
       todayRow && todayRow.intervals.length > 0
         ? t("openToday", { hours: todayRow.intervals.map((i) => formatClockRange(i.opensAt, i.closesAt)).join(", ") })

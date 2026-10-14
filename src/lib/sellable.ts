@@ -13,10 +13,22 @@ import { isResourceType, needsSchedule } from "@/lib/schedule";
  * Everything here is derived from the record. Nothing is stored, so it cannot
  * drift out of date the way a cached "ready" flag would.
  */
-export type Blocker = "noPrice" | "noSchedule" | "noResource" | "noChannel";
+export type Blocker = "noPrice" | "noSchedule" | "noResource" | "noChannel" | "noDate" | "noVenue" | "noTicket";
 
 export function sellingBlockers(product: Product, resources: Resource[] = []): Blocker[] {
   const out: Blocker[] = [];
+
+  /* An event (BT-15) is ready when the event wizard's own list says so: it has a
+     date, a place, and a ticket that can actually be bought — one with a
+     number of places, free or priced. It has no schedule and no resources to
+     ask about. */
+  if (product.bookingType === "BT-15") {
+    if (!product.event?.startsAt) out.push("noDate");
+    if (!product.event?.venueName?.trim()) out.push("noVenue");
+    if (!product.tiers.some((t) => t.active && (t.capacity ?? 0) > 0 && t.price >= 0)) out.push("noTicket");
+    if (product.channels.length === 0) out.push("noChannel");
+    return out;
+  }
 
   // Nothing to charge. `priceRange` already renders "—" for this; the row just
   // never said that the dash was a problem.

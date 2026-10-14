@@ -23,5 +23,6 @@
   "quickPass": "Quick pass",
   "unfinished": "Setup not finished",
   "hours": "{count, plural, one {# hr} other {# hr}}",
-  "minutes": "{count, number} min"
+  "minutes": "{count, number} min",
+  "event": "On set dates · event tickets"
 }

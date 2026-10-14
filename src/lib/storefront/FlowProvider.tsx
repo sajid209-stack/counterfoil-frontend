@@ -33,12 +33,35 @@ export interface StorefrontFlowData {
   mode: "live" | "preview";
   storefront: Storefront;
   location: Location;
+  /** Everything a visitor can reach on this page, which includes link-only
+   *  items (`unlistedIds`) so a basket and a checkout can price them. */
   products: Product[];
+  /** The ones in `products` that are sold only by their link: never drawn on
+   *  the venue page, never offered in its search. */
+  unlistedIds?: string[];
   slugs: Record<string, string>;
   resources: Resource[];
   team: Staff[];
   now: Date;
   operator: Operator | undefined;
+  /** Every action is a no-op: the Page designer's preview of the page. Distinct
+   *  from `mode: "preview"`, which is the Storefront editor's click-through
+   *  (that one works, in memory, and writes nothing). */
+  inert?: boolean;
+  /** Set when the page is an item's own link (`/b/<slug>`) rather than a page of
+   *  a venue's storefront: where its basket, checkout and confirmation live,
+   *  and whether (and where) the venue's storefront lists it. */
+  link?: LinkFlow;
+}
+
+export interface LinkFlow {
+  /** The item's own address: /b/<slug>. */
+  slug: string;
+  itemName: string;
+  /** The venue's storefront address, when the item is listed on a published
+   *  storefront. Null for a link-only item, which never sends a visitor to a
+   *  page that does not list it. */
+  venueSlug: string | null;
 }
 
 export interface DoneResult {
@@ -70,6 +93,12 @@ export interface StorefrontFlowCtx extends StorefrontFlowData, StorefrontFlowNav
 }
 
 const Ctx = createContext<StorefrontFlowCtx | null>(null);
+
+/** The flow when there is one; null on a page drawn on its own (the Page
+ *  designer's preview), which supplies its own. */
+export function useOptionalStorefrontFlow(): StorefrontFlowCtx | null {
+  return useContext(Ctx);
+}
 
 export function useStorefrontFlow(): StorefrontFlowCtx {
   const v = useContext(Ctx);

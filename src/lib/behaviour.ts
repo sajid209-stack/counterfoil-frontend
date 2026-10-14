@@ -72,6 +72,7 @@ export function useBehaviourSubtitle(): (product: Product, ctx?: Ctx) => string 
         return first ? t("courseFrom", { count, date: formatDay(first) }) : t("course", { count });
       }
       case "BT-14": return t("quickPass");
+      case "BT-15": return t("event");
       default: return t("unfinished");
     }
   };

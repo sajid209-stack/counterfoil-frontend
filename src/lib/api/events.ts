@@ -1,19 +1,24 @@
 import { createResource, fail, notFoundError, ok, validationError } from "./client";
 import { peekOrders } from "./orders";
-import type { AddOn, ApiResult, Channel, ListParams, ListResponse, Lifecycle, Minor } from "./types";
-import type { CategoryId, SectionId } from "@/lib/events/catalog";
-import { DEMO_TODAY } from "@/lib/schedule";
+import {
+  eventDays,
+  eventSold,
+  eventViewBase,
+  dayFill,
+  isEventProduct,
+  productFromEvent,
+  slugify,
+  tierToPrice,
+} from "./eventModel";
+import type { AddOn, ApiResult, Channel, ListParams, ListResponse, Lifecycle, Minor, PriceTier, Product } from "./types";
+import { categoryById, type CategoryId, type SectionId } from "@/lib/events/catalog";
 
-/**
- * An event is a published PAGE plus the tickets sold from it.
- *
- * It deliberately does not reuse `Product`. A product is a thing on a till with
- * a schedule and capacity; an event is a one-off occasion with a cover image, a
- * lineup, a countdown and a public URL. Modelling one as the other would have
- * put `heroImage` and `sections` on every General Admission ticket in the
- * catalogue. They meet at the ticket tier, which is why `EventTier` mirrors the
- * shape `PriceTier` already uses.
- */
+/* The pure half of the event model — the view, its inverse, and the day and
+   capacity helpers — lives in eventModel.ts so the mock seed can import it
+   without closing a cycle through the store. Re-exported here so every screen
+   keeps importing from "@/lib/api". */
+export * from "./eventModel";
+
 /**
  * One day of a multi-day event.
  *
@@ -54,6 +59,19 @@ export interface EventTier {
    * so nothing stores a running total that can drift from the orders.
    */
   sold: number;
+  /**
+   * How many of `sold` were sold before Counterfoil recorded sales. They are
+   * counted as tickets and carry NO money here: inventing a figure for them
+   * would put a number in the books that nothing backs.
+   */
+  opening?: number;
+  /**
+   * Money actually taken for this ticket: the sum of the order lines that sold
+   * it, net of refunds, at the price each line was sold at. Replayed from the
+   * ledger on read (`withLiveSales`), so editing the price never rewrites it.
+   * Absent on a view read without the ledger, and then zero.
+   */
+  taken?: Minor;
   description?: string;
   /** An early-bird tier stops selling on its own rather than by hand. */
   salesEnd?: string;
@@ -155,10 +173,25 @@ export interface EventSponsor {
   tier?: string;
 }
 
+/**
+ * An event is a catalogue item: a `Product` whose bookingType is "BT-15"
+ * (docs/catalog.md §7). There is no events collection any more.
+ *
+ * `EventRecord` is a DERIVED VIEW of such a product — the shape the event
+ * screens (the list, the record, the editor, the designer, the public page and
+ * the till's event sheet) were written against, rebuilt from the product on
+ * every read by `eventView` and written back through the functions below. The
+ * old note here said events deliberately do not reuse `Product`; that decision
+ * is reversed. They meet at the ticket tier, which is why `EventTier` always
+ * mirrored the shape `PriceTier` uses: a tier is now a price tier with
+ * `capacity`, `openingSold`, `dayIds`, `salesEndsAt` and `perks`.
+ */
 export interface EventRecord {
   id: string;
   status: Lifecycle;
-  /** draft until the operator publishes; the page is only reachable when live. */
+  /** On sale: the product's status is active. Whether the public page serves it
+   *  is a separate question of the channels (it needs "online"), asked where it
+   *  matters — a counter-only event is on sale and has no page. */
   published: boolean;
   slug: string;
   title: string;
@@ -208,25 +241,38 @@ export interface EventRecord {
 
 export type EventInput = Omit<EventRecord, "id" | "createdAt" | "updatedAt">;
 
-const resource = createResource<EventRecord>("events", "Event", {
-  search: (e, q) =>
-    e.title.toLowerCase().includes(q) ||
-    e.venueName.toLowerCase().includes(q) ||
-    e.subtype.toLowerCase().includes(q),
-  filter: (e, f) =>
-    (f.categoryId === undefined || e.categoryId === f.categoryId) &&
-    (f.published === undefined || e.published === f.published) &&
+/* ── The store: events are BT-15 products ─────────────────────────────────
+ *
+ * There is no events collection. Every function below reads and writes the
+ * PRODUCTS store and translates at the edge, so the screens that were written
+ * against `EventRecord` keep working and the catalogue sees an event as one
+ * more item. Each handle on a collection is just a view on the store (the same
+ * trick `inventory.ts` uses), so this file never imports `products.ts`.
+ */
+const resource = createResource<Product>("products", "Event", {
+  search: (p, q) =>
+    p.name.toLowerCase().includes(q) ||
+    (p.event?.venueName ?? "").toLowerCase().includes(q) ||
+    (p.event?.subtype ?? "").toLowerCase().includes(q),
+  filter: (p, f) =>
+    isEventProduct(p) &&
+    (f.categoryId === undefined || p.event?.kind === f.categoryId) &&
+    (f.published === undefined || (p.status === "active") === f.published) &&
     // Archived is out unless it is asked for by name. Without this an archived
     // event would keep sitting in the list it was archived to leave, which is
     // the rule every other collection in this layer already follows.
-    (f.status === undefined ? e.status !== "archived" : e.status === f.status),
+    (f.status === undefined ? p.status !== "archived" : p.status === f.status),
   sort: {
-    title: (a, b) => a.title.localeCompare(b.title),
-    startsAt: (a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt),
+    title: (a, b) => a.name.localeCompare(b.name),
+    startsAt: (a, b) => Date.parse(a.event?.startsAt ?? a.createdAt) - Date.parse(b.event?.startsAt ?? b.createdAt),
     createdAt: (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
   },
   defaultSort: "startsAt",
 });
+
+/** Every event product, whatever its state. */
+const eventProducts = (): Product[] => resource.peek().filter(isEventProduct);
+const eventProduct = (id: string): Product | undefined => eventProducts().find((p) => p.id === id);
 
 const validate = (input: Partial<EventInput>, existingDays?: EventDay[]): Record<string, string> => {
   const errors: Record<string, string> = {};
@@ -256,21 +302,35 @@ const validate = (input: Partial<EventInput>, existingDays?: EventDay[]): Record
 
 /* ── What has actually sold ───────────────────────────────────────────────
  *
- * `EventTier.sold` is an OPENING BALANCE — what went before this system was
- * recording, which is exactly what a venue migrating mid-season has. Sales
- * made here are replayed from the ledger and added to it, the same rule seat
- * availability and loyalty balances follow: a stored running total and a
+ * A ticket's opening balance (`PriceTier.openingSold`) is what went before this
+ * system was recording, which is exactly what a venue migrating mid-season has.
+ * Sales made here are replayed from the ledger and added to it, the same rule
+ * seat availability and loyalty balances follow: a stored running total and a
  * ledger disagree exactly once, and then nobody can say which is right.
  *
- * It is folded in at the READ, so every screen downstream — the templates, the
- * catalogue, `dayFill`, `bundleSaving`, the settlement report — is live without
- * knowing anything about orders.
+ * An event ticket is an ORDINARY product line now: productId is the product's
+ * id and tierId is the ticket. Lines written when events were a separate record
+ * carry an `evt_` prefix in front of the same id, and are still read — mapped
+ * to the same event — so an old sale keeps counting.
  */
-const EVENT_LINE_PREFIX = "evt_";
-/** The order-line product id an event ticket is sold under. */
-export const eventLineId = (eventId: string) => `${EVENT_LINE_PREFIX}${eventId}`;
-export const eventIdFromLine = (productId: string) =>
-  productId.startsWith(EVENT_LINE_PREFIX) ? productId.slice(EVENT_LINE_PREFIX.length) : null;
+const LEGACY_LINE_PREFIX = "evt_";
+
+/** Which event a sales line belongs to, or null when it is not an event ticket.
+ *  The line's own product id wins; the legacy prefix is only tried when that
+ *  id is not an event, because the seeded events' own ids start with `evt_`. */
+export function eventIdFromLine(productId: string): string | null {
+  const ids = new Set(eventProducts().map((p) => p.id));
+  if (ids.has(productId)) return productId;
+  if (productId.startsWith(LEGACY_LINE_PREFIX)) {
+    const rest = productId.slice(LEGACY_LINE_PREFIX.length);
+    if (ids.has(rest)) return rest;
+  }
+  return null;
+}
+
+/** Is this order line an event ticket? Reports bucket on this: a ticket is
+ *  "Event tickets" because its product is BT-15, not because of any prefix. */
+export const isEventLine = (productId: string): boolean => eventIdFromLine(productId) !== null;
 
 export interface EventTierSales {
   sold: number;
@@ -279,40 +339,77 @@ export interface EventTierSales {
   net: Minor;
 }
 
-/** Per-tier sales for one event, replayed from the ledger. */
-export function eventLedger(eventId: string): Map<string, EventTierSales> {
-  const out = new Map<string, EventTierSales>();
+/** Per-tier sales for every event, replayed from the ledger in one pass. */
+function ledgerAll(): Map<string, Map<string, EventTierSales>> {
+  const ids = new Set(eventProducts().map((p) => p.id));
+  const out = new Map<string, Map<string, EventTierSales>>();
+  if (!ids.size) return out;
+  const idOf = (productId: string) => {
+    if (ids.has(productId)) return productId;
+    if (productId.startsWith(LEGACY_LINE_PREFIX)) {
+      const rest = productId.slice(LEGACY_LINE_PREFIX.length);
+      if (ids.has(rest)) return rest;
+    }
+    return null;
+  };
   for (const o of peekOrders()) {
     if (o.status === "cancelled") continue;
     for (const l of o.lines) {
-      if (eventIdFromLine(l.productId) !== eventId || !l.tierId) continue;
-      const cur = out.get(l.tierId) ?? { sold: 0, refunded: 0, gross: 0, net: 0 };
+      const eventId = idOf(l.productId);
+      if (!eventId || !l.tierId) continue;
+      let tiers = out.get(eventId);
+      if (!tiers) out.set(eventId, (tiers = new Map()));
+      const cur = tiers.get(l.tierId) ?? { sold: 0, refunded: 0, gross: 0, net: 0 };
       const refunded = l.refundedQuantity ?? 0;
       cur.sold += l.quantity - refunded;
       cur.refunded += refunded;
       cur.gross += l.total;
       cur.net += l.total - (l.refundedAmount ?? 0);
-      out.set(l.tierId, cur);
+      tiers.set(l.tierId, cur);
     }
   }
   return out;
 }
 
-/** The record with its tiers' `sold` brought up to date from the ledger. */
-export function withLiveSales(e: EventRecord): EventRecord {
-  const led = eventLedger(e.id);
-  if (!led.size) return e;
-  return { ...e, tiers: e.tiers.map((t) => ({ ...t, sold: t.sold + (led.get(t.id)?.sold ?? 0) })) };
+/** Per-tier sales for one event, replayed from the ledger. */
+export function eventLedger(eventId: string): Map<string, EventTierSales> {
+  return ledgerAll().get(eventId) ?? new Map();
 }
+
+const liveIn = (led: Map<string, EventTierSales> | undefined, e: EventRecord): EventRecord =>
+  led?.size
+    ? {
+        ...e,
+        tiers: e.tiers.map((t) => ({ ...t, sold: t.sold + (led.get(t.id)?.sold ?? 0), taken: led.get(t.id)?.net ?? 0 })),
+      }
+    : e;
+
+/** The record with its tiers' `sold` brought up to date from the ledger. Takes
+ *  the opening-balance view (`eventViewBase`); a view from `eventView` is
+ *  already live and must not be passed through again. */
+export function withLiveSales(e: EventRecord): EventRecord {
+  return liveIn(eventLedger(e.id), e);
+}
+
+/** The event view of a BT-15 product, with tickets sold here counted. The one
+ *  place the catalogue, the till and every event screen get an `EventRecord`. */
+export const eventView = (p: Product): EventRecord => withLiveSales(eventViewBase(p));
+
+const viewsOf = (rows: Product[]): EventRecord[] => {
+  const all = ledgerAll();
+  return rows.map((p) => liveIn(all.get(p.id), eventViewBase(p)));
+};
+
+const toView = (res: ApiResult<Product>): ApiResult<EventRecord> => (res.ok ? { ...res, data: eventView(res.data) } : res);
 
 export const listEvents = async (params?: ListParams): Promise<ApiResult<ListResponse<EventRecord>>> => {
   const res = await resource.list(params);
-  return res.ok ? { ...res, data: { ...res.data, data: res.data.data.map(withLiveSales) } } : res;
+  return res.ok ? { ...res, data: { ...res.data, data: viewsOf(res.data.data) } } : res;
 };
 
 export const getEvent = async (id: string): Promise<ApiResult<EventRecord>> => {
   const res = await resource.get(id);
-  return res.ok ? { ...res, data: withLiveSales(res.data) } : res;
+  return res.ok && isEventProduct(res.data) ? toView(res) : fail<EventRecord>(notFoundError("Event"));
 };
 
 /* ── The settlement ───────────────────────────────────────────────────────
@@ -350,7 +447,11 @@ export interface EventSettlement {
 
 export function eventSettlement(e: EventRecord, dayLabel: (i: number) => string): EventSettlement {
   const led = eventLedger(e.id);
-  const tiers: SettlementRow[] = e.tiers.map((t) => {
+  /* Opening balances come from the product itself, so a record that is already
+     live (what the screens hand in) is never counted twice. */
+  const p = eventProduct(e.id);
+  const raw = p ? eventViewBase(p) : e;
+  const tiers: SettlementRow[] = raw.tiers.map((t) => {
     const l = led.get(t.id);
     /* The opening balance counts as sold and as face value, but carries no
        money here: it was taken before this system was recording, and inventing
@@ -363,6 +464,7 @@ export function eventSettlement(e: EventRecord, dayLabel: (i: number) => string)
       capacity: t.quantity,
       sold,
       unsold: Math.max(0, t.quantity - sold),
+      /* A guide, not money: the tickets sold, at the price they cost today. */
       faceValue: sold * t.price,
       gross: l?.gross ?? 0,
       refunded: l?.refunded ?? 0,
@@ -374,7 +476,7 @@ export function eventSettlement(e: EventRecord, dayLabel: (i: number) => string)
      read in, and the one every box-office report uses. */
   tiers.sort((a, b) => b.price - a.price || a.name.localeCompare(b.name));
 
-  const live = withLiveSales(e);
+  const live = liveIn(led, raw);
   const days = eventDays(live).map((d, i) => {
     const f = dayFill(live, d.id);
     return {
@@ -388,7 +490,7 @@ export function eventSettlement(e: EventRecord, dayLabel: (i: number) => string)
   });
 
   const byChannel = new Map<string, { sold: number; net: Minor }>();
-  const opening = e.tiers.reduce((n, t) => n + t.sold, 0);
+  const opening = raw.tiers.reduce((n, t) => n + t.sold, 0);
   if (opening > 0) byChannel.set("opening", { sold: opening, net: 0 });
   for (const o of peekOrders()) {
     if (o.status === "cancelled") continue;
@@ -420,68 +522,151 @@ export function eventSettlement(e: EventRecord, dayLabel: (i: number) => string)
 }
 
 /**
- * An event's public page, by its address.
+ * An event's public page, by its address (the item's `slug`).
  *
- * Refused unless it is **live** — published, active, and sold online. A draft
- * and an address nobody has taken look identical from outside, which is the
- * rule the storefront already follows: "not published yet" tells a guesser
- * they are close.
+ * Refused unless it is **live** — on sale, and sold online. A draft and an
+ * address nobody has taken look identical from outside, which is the rule the
+ * storefront already follows: "not published yet" tells a guesser they are
+ * close.
  */
 export async function getPublicEvent(slug: string): Promise<ApiResult<EventRecord>> {
-  const e = resource
-    .peek()
-    .find((x) => x.slug === slug && x.published && x.status === "active" && (x.channels ?? ["online"]).includes("online"));
-  if (!e) return fail<EventRecord>(notFoundError("Event"));
-  return ok(structuredClone(withLiveSales(e)));
+  const p = eventProducts().find((x) => (x.slug ?? slugify(x.name)) === slug && x.status === "active" && x.channels.includes("online"));
+  if (!p) return fail<EventRecord>(notFoundError("Event"));
+  return ok(structuredClone(eventView(p)));
 }
 
 /** Every event whose counters sell it at this venue, on sale today. */
 export function counterEvents(locationId: string | null): EventRecord[] {
-  return resource
-    .peek()
-    .filter(
-      (e) =>
-        e.status === "active" &&
-        e.published &&
-        (e.channels ?? ["online"]).includes("counter") &&
-        (!locationId || !e.locationIds?.length || e.locationIds.includes(locationId)),
-    )
-    .map(withLiveSales);
+  return viewsOf(
+    eventProducts().filter(
+      (p) =>
+        p.status === "active" &&
+        p.channels.includes("counter") &&
+        (!locationId || !p.locationIds.length || p.locationIds.includes(locationId)),
+    ),
+  );
 }
 
 export function createEvent(input: EventInput): Promise<ApiResult<EventRecord>> {
   const errors = validate(input);
   if (Object.keys(errors).length) return Promise.resolve(fail(validationError(errors)));
-  return resource.create(input);
+  const prod = productFromEvent(input);
+  return resource
+    .create({ ...prod, archivedAt: prod.status === "archived" ? new Date().toISOString() : null } as Omit<Product, "id" | "createdAt" | "updatedAt">)
+    .then(toView);
+}
+
+/** An event patch applied to its product, field by field. Written out rather
+ *  than round-tripped through the view, so anything the view does not carry
+ *  (photos, the page's sample marks, other tiers' fields) survives an edit. */
+function applyPatch(p: Product, patch: Partial<EventInput>): Partial<Product> {
+  const next: Partial<Product> = {};
+  const ev = { ...(p.event ?? { kind: "entertainment" as const, subtype: "event", startsAt: p.createdAt, venueName: "" }) };
+  const cat = categoryById(ev.kind);
+  const pg = { ...(p.page ?? { look: ev.kind, sections: cat.sections, stats: [], highlights: [], info: [], faq: [], lineup: [], sponsors: [] }) };
+  let evTouched = false;
+  let pgTouched = false;
+  const setEv = <K extends keyof typeof ev>(k: K, v: (typeof ev)[K]) => {
+    ev[k] = v;
+    evTouched = true;
+  };
+  const setPg = <K extends keyof typeof pg>(k: K, v: (typeof pg)[K]) => {
+    pg[k] = v;
+    pgTouched = true;
+  };
+
+  if ("title" in patch) next.name = patch.title;
+  if ("description" in patch) next.description = patch.description ?? "";
+  if ("slug" in patch) next.slug = patch.slug;
+  if ("channels" in patch) next.channels = patch.channels ?? ["online"];
+  if ("locationIds" in patch) next.locationIds = patch.locationIds ?? [];
+  if ("extras" in patch) next.addOns = patch.extras;
+  const statusChange = patch.status !== undefined && patch.status !== p.status ? patch.status : undefined;
+  if (statusChange) {
+    next.status = statusChange;
+    next.archivedAt = statusChange === "archived" ? new Date().toISOString() : null;
+  } else if (patch.published !== undefined && p.status !== "archived" && patch.published !== (p.status === "active")) {
+    // Echoing back the value a view already had is not a change.
+    next.status = patch.published ? "active" : "inactive";
+  }
+
+  if ("categoryId" in patch && patch.categoryId) {
+    setEv("kind", patch.categoryId);
+    setPg("look", patch.categoryId);
+  }
+  if ("subtype" in patch && patch.subtype !== undefined) setEv("subtype", patch.subtype);
+  if ("startsAt" in patch && patch.startsAt) setEv("startsAt", patch.startsAt);
+  if ("endsAt" in patch) setEv("endsAt", patch.endsAt);
+  if ("days" in patch) setEv("days", patch.days);
+  if ("venueName" in patch && patch.venueName !== undefined) setEv("venueName", patch.venueName);
+  if ("venueAddress" in patch) setEv("venueAddress", patch.venueAddress);
+
+  if ("subtitle" in patch) setPg("tagline", patch.subtitle);
+  if ("lineup" in patch && patch.lineup) setPg("lineup", patch.lineup);
+  if ("stats" in patch && patch.stats) setPg("stats", patch.stats);
+  if ("highlights" in patch && patch.highlights) setPg("highlights", patch.highlights);
+  if ("info" in patch && patch.info) setPg("info", patch.info);
+  if ("faq" in patch && patch.faq) setPg("faq", patch.faq);
+  if ("videoUrl" in patch) setPg("videoUrl", patch.videoUrl);
+  if ("organiser" in patch) setPg("organiser", patch.organiser);
+  if ("sponsors" in patch && patch.sponsors) setPg("sponsors", patch.sponsors);
+  if ("customisation" in patch && patch.customisation) {
+    const c = patch.customisation;
+    pg.accent = c.accent;
+    pg.displayFont = c.displayFont;
+    pg.bodyFont = c.bodyFont;
+    pg.variant = c.variant;
+    pg.sections = c.sections;
+    pg.coverUrl = c.coverUrl;
+    pgTouched = true;
+  }
+
+  if ("tiers" in patch && patch.tiers) {
+    /* The editor hands back the tickets as it read them — `sold` already
+       includes what was sold here. Taking that as the opening balance would
+       count every sale twice, so the ledger's share comes back off. */
+    const led = eventLedger(p.id);
+    const existing = new Map(p.tiers.map((t) => [t.id, t]));
+    next.tiers = patch.tiers.map((t) => {
+      const mapped = tierToPrice({ ...t, sold: Math.max(0, t.sold - (led.get(t.id)?.sold ?? 0)) });
+      return { ...(existing.get(t.id) ?? {}), ...mapped, id: t.id } as PriceTier;
+    });
+  }
+
+  if (evTouched) next.event = ev;
+  if (pgTouched) next.page = pg;
+  return next;
 }
 
 export function updateEvent(id: string, patch: Partial<EventInput>): Promise<ApiResult<EventRecord>> {
-  const errors = validate(patch, resource.peek().find((x) => x.id === id)?.days);
+  const p = eventProduct(id);
+  if (!p) return Promise.resolve(fail(notFoundError("Event")));
+  const errors = validate(patch, p.event?.days);
   if (Object.keys(errors).length) return Promise.resolve(fail(validationError(errors)));
-  return resource.update(id, patch);
+  return resource.update(id, applyPatch(p, patch)).then(toView);
 }
 
 /**
  * Take an event off the list without losing it.
  *
- * Unpublishes as it goes: an archived event that kept serving its public page
- * would be on sale to the world and invisible to the operator, which is the
- * worst of both. Its orders are untouched — that is the whole difference
+ * Takes it off sale as it goes: an archived event that kept serving its public
+ * page would be on sale to the world and invisible to the operator, which is
+ * the worst of both. Its orders are untouched — that is the whole difference
  * between archiving and deleting.
  */
 export function archiveEvent(id: string): Promise<ApiResult<EventRecord>> {
-  return resource.update(id, { status: "archived", published: false });
+  return resource.archive(id).then(toView);
 }
 
-/** Back onto the list, as a draft. It does NOT republish itself: whoever
+/** Back onto the list, as a draft. It does NOT go back on sale: whoever
  *  archived it took it off sale, and putting it back is a separate decision. */
 export function restoreEvent(id: string): Promise<ApiResult<EventRecord>> {
-  return resource.update(id, { status: "active" });
+  return resource.update(id, { status: "inactive", archivedAt: null }).then(toView);
 }
 
-/** Publish or unpublish. The page is only reachable while this is true. */
+/** On sale or off sale. */
 export function setEventPublished(id: string, published: boolean): Promise<ApiResult<EventRecord>> {
-  return resource.update(id, { published });
+  return resource.update(id, { status: published ? "active" : "inactive", archivedAt: null }).then(toView);
 }
 
 /**
@@ -492,42 +677,42 @@ export function setEventPublished(id: string, published: boolean): Promise<ApiRe
  * exactly the case archiving exists for, so the refusal names it.
  */
 export function deleteEvent(id: string): Promise<ApiResult<EventRecord>> {
-  const e = resource.peek().find((x) => x.id === id);
-  if (!e) return Promise.resolve(fail(notFoundError("Event")));
-  if (eventSold(e) > 0) {
+  const p = eventProduct(id);
+  if (!p) return Promise.resolve(fail(notFoundError("Event")));
+  if (eventSold(eventView(p)) > 0) {
     return Promise.resolve(
       fail(validationError({ event: "Tickets have been sold for this event. Archive it instead." })),
     );
   }
-  return resource.remove(id);
+  return resource.remove(id).then(toView);
 }
 
 /**
  * Copy an event to build the next one from — the commonest thing anyone does
  * to a recurring event, and it was a full trip through the wizard.
  *
- * Three things deliberately do NOT come across. It lands **unpublished**,
- * because a half-edited copy must not be on sale the moment it exists. Every
- * tier's **sold count resets to zero**, because last year's numbers are not
- * this year's and a copy that inherited them would report revenue nobody took.
- * And each tier gets a **fresh id**, so an order can never resolve to a tier on
- * the wrong event.
+ * Three things deliberately do NOT come across. It lands **off sale**, because
+ * a half-edited copy must not be on sale the moment it exists. Every tier's
+ * **sold count resets to zero**, because last year's numbers are not this
+ * year's and a copy that inherited them would report revenue nobody took. And
+ * each tier gets a **fresh id**, so an order can never resolve to a tier on the
+ * wrong event.
  */
 export function duplicateEvent(id: string, title: string): Promise<ApiResult<EventRecord>> {
-  const e = resource.peek().find((x) => x.id === id);
-  if (!e) return Promise.resolve(fail(notFoundError("Event")));
-  const taken = resource.peek().map((x) => x.slug);
-  const c = structuredClone(e);
+  const p = eventProduct(id);
+  if (!p) return Promise.resolve(fail(notFoundError("Event")));
+  const taken = eventProducts().map((x) => x.slug ?? slugify(x.name));
+  const c = structuredClone(eventViewBase(p));
   const stamp = Date.now().toString(36);
   const dayMap = new Map((c.days ?? []).map((d, i) => [d.id, `day_${stamp}_${i}`]));
   /* Written out rather than spread, and deliberately: a field added to
      EventRecord tomorrow must not start copying itself into duplicates
      silently. The bookings catalogue's `omit` carries the same note. */
-  return resource.create({
+  return createEvent({
     title,
     slug: slugify(title, taken),
     published: false,
-    status: "active",
+    status: "inactive",
     subtitle: c.subtitle,
     categoryId: c.categoryId,
     subtype: c.subtype,
@@ -559,138 +744,4 @@ export function duplicateEvent(id: string, title: string): Promise<ApiResult<Eve
       dayIds: t.dayIds?.map((d) => dayMap.get(d)).filter((d): d is string => !!d),
     })),
   });
-}
-
-/** Where an event is sold, read the same way for old and new records: one
- *  written before events had channels is sold on its page and nowhere else. */
-export const eventChannels = (e: Pick<EventRecord, "channels">): Channel[] => e.channels ?? ["online"];
-
-/** Capacity and takings, derived — never stored, so they cannot drift. */
-export const eventCapacity = (e: EventRecord) => e.tiers.reduce((s, t) => s + t.quantity, 0);
-export const eventSold = (e: EventRecord) => e.tiers.reduce((s, t) => s + t.sold, 0);
-export const eventRevenue = (e: EventRecord) => e.tiers.reduce((s, t) => s + t.sold * t.price, 0);
-/** What a public card says: the cheapest tier anyone can still buy. */
-export const eventFromPrice = (e: EventRecord): Minor | null => {
-  const open = e.tiers.filter((t) => t.sold < t.quantity);
-  return open.length ? Math.min(...open.map((t) => t.price)) : null;
-};
-
-/* ── days ─────────────────────────────────────────────────────────────────── */
-
-/** The days an event runs, always at least one.
- *
- *  A one-day event has no `days` array and never needs one, so rather than
- *  make every caller branch, this hands back the single day it implies. The
- *  id is the event's own, so a tier or a fixture can point at it either way. */
-export function eventDays(e: Pick<EventRecord, "id" | "startsAt" | "days">): EventDay[] {
-  if (e.days?.length) return e.days;
-  return [{ id: `${e.id}_d1`, date: e.startsAt.slice(0, 10) }];
-}
-
-/** The one question every screen asks before drawing a day CONTROL: does this
- *  event have real days to point at? */
-export const spansDays = (e: Pick<EventRecord, "days">) => (e.days?.length ?? 0) > 1;
-
-/**
- * Does it run past the day it starts on? A different question, and the one
- * every screen that merely *states* when an event happens should ask.
- *
- * An event can run for days without having day records — the three-day
- * Sundarbans tour does, on the free-text shape it was written in. Asking
- * `spansDays` there would print its first morning's clock under a page about a
- * three-day cruise, which is the same class of lie as a cross-day time range.
- */
-export const runsOverDays = (e: Pick<EventRecord, "days" | "startsAt" | "endsAt">) =>
-  spansDays(e) || (!!e.endsAt && e.endsAt.slice(0, 10) > e.startsAt.slice(0, 10));
-
-/** How many days it covers, whichever shape it is written in. */
-export function dayCountOf(e: Pick<EventRecord, "id" | "days" | "startsAt" | "endsAt">): number {
-  if (e.days?.length) return e.days.length;
-  if (!e.endsAt) return 1;
-  const a = Date.parse(`${e.startsAt.slice(0, 10)}T00:00:00Z`);
-  const b = Date.parse(`${e.endsAt.slice(0, 10)}T00:00:00Z`);
-  return Number.isNaN(a) || Number.isNaN(b) || b < a ? 1 : Math.round((b - a) / 86400000) + 1;
-}
-
-/** Which days a ticket admits. No scope means the whole event — which is what
- *  every ticket sold before this meant, and what a single-day event's tickets
- *  mean for ever. */
-export function tierDays(e: Pick<EventRecord, "id" | "startsAt" | "days">, t: Pick<EventTier, "dayIds">): EventDay[] {
-  const all = eventDays(e);
-  if (!t.dayIds?.length) return all;
-  const want = new Set(t.dayIds);
-  return all.filter((d) => want.has(d.id));
-}
-
-/** Does this ticket admit every day there is? A "both days" pass on a two-day
- *  event is a bundle whether or not it says so in its name. */
-export const isBundleTier = (e: Pick<EventRecord, "id" | "startsAt" | "days">, t: Pick<EventTier, "dayIds">) =>
-  spansDays(e) && tierDays(e, t).length > 1;
-
-/**
- * What one day has sold, and out of how many.
- *
- * **Every ticket that admits the day draws it down**, which is the whole point:
- * a weekend pass takes a place on Saturday and on Sunday. Counting only the
- * tickets named after a day would let a festival sell its Saturday twice.
- *
- * It counts TICKETS, not people, and is worded that way wherever it is shown.
- * A team entry admitting eleven players is one ticket here — `EventTier` has
- * no headcount, unlike a booking's `PriceTier.admits` — so calling these
- * "places" would understate a day against a venue's fire limit. Adding a
- * headcount is the real fix and is recorded as open.
- */
-export function dayFill(e: EventRecord, dayId: string): { sold: number; cap: number; pct: number } {
-  const admits = e.tiers.filter((t) => tierDays(e, t).some((d) => d.id === dayId));
-  const sold = admits.reduce((n, t) => n + t.sold, 0);
-  const cap = admits.reduce((n, t) => n + t.quantity, 0);
-  return { sold, cap, pct: cap > 0 ? Math.min(100, Math.round((sold / cap) * 100)) : 0 };
-}
-
-/**
- * What a bundle saves against buying its days one at a time, or null.
- *
- * The comparison is the cheapest ticket that admits **only** that day, because
- * that is the alternative a buyer actually has. Null rather than zero when
- * there is nothing to compare against, when the sum is not cheaper, or when the
- * ticket is not a bundle — a page that claims a saving of ৳0, or claims one for
- * a pass that costs more than the parts, is worse than one that says nothing.
- */
-export function bundleSaving(e: EventRecord, t: EventTier, today: string = DEMO_TODAY): Minor | null {
-  if (!isBundleTier(e, t)) return null;
-  let sum = 0;
-  for (const d of tierDays(e, t)) {
-    /* Only against a ticket somebody could actually buy instead. A day pass
-       that has sold out, or whose sales window has closed, is not an
-       alternative — advertising a discount against it is advertising a
-       discount against nothing. */
-    const singles = e.tiers.filter(
-      (x) => x.id !== t.id && x.dayIds?.length === 1 && x.dayIds[0] === d.id && x.sold < x.quantity && (!x.salesEnd || x.salesEnd > today),
-    );
-    if (!singles.length) return null;
-    sum += Math.min(...singles.map((x) => x.price));
-  }
-  const saving = sum - t.price;
-  if (saving <= 0) return null;
-  /* And only where the comparison is like for like.
-     A ৳1,000 student pass "saving ৳6,000" against two full-price day tickets
-     is arithmetically true and commercially meaningless: the baseline is a
-     ticket that buyer was never going to buy. There is no concession field to
-     read, so the signal used is the size of the claim — a saving larger than
-     the ticket's own price means two different products are being compared,
-     and the honest answer is to say nothing. */
-  return saving <= t.price ? saving : null;
-}
-
-/** A slug an operator can read, and that cannot collide with an existing one. */
-export function slugify(title: string, taken: string[] = []): string {
-  const base =
-    title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .trim()
-      .replace(/\s+/g, "-")
-      .slice(0, 48) || "event";
-  if (!taken.includes(base)) return base;
-  for (let i = 2; ; i++) if (!taken.includes(`${base}-${i}`)) return `${base}-${i}`;
 }

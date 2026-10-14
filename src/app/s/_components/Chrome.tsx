@@ -8,7 +8,7 @@ import { useApiQuery } from "@/lib/useApi";
 import { getPrivacySettings } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import type { AccentColor, Location, Storefront } from "@/lib/api";
-import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
+import { useOptionalStorefrontFlow, useStorefrontFlow } from "@/lib/storefront/FlowProvider";
 import { SfRoot } from "./sf";
 
 /** The container every storefront section sits in. */
@@ -54,24 +54,48 @@ export function directionsHref(location: Location): string {
  * `current` says whether the page is the venue's own, because "What's on" and
  * "Visit" scroll on it and go to it from anywhere else.
  */
-export function StorefrontChrome({
-  storefront,
-  location,
-  poweredBy,
-  current = "other",
-  children,
-}: {
+export interface ChromeProps {
   storefront: Storefront;
   location: Location;
   poweredBy: string;
   current?: "venue" | "other";
+  /** Which frame. Absent: the slim one when the page is an item's own link,
+   *  the venue's full header otherwise. */
+  variant?: "storefront" | "link";
+  /** The slim header's "More at <venue>", for a page drawn on its own (the
+   *  Page designer) where there is no link flow to say whether the item is
+   *  listed. The live link page reads it from the flow. */
+  showMore?: boolean;
+  /** Full width with no page gutters: the event template draws its own. */
+  bleed?: boolean;
+  /** An accent for this page only (an item's own colour), as a named colour
+   *  or a hex. Absent: the venue's. */
+  accent?: string | null;
   /** Kept so callers can say what they used to; the header no longer carries
    *  a back link, a breadcrumb in the page does (see `BackLink`). */
   backHref?: string;
   backLabel?: string;
   preview?: boolean;
   children: React.ReactNode;
-}) {
+}
+
+/** The frame every public page sits in: the venue's full storefront header, or
+ *  the slim one of an item's own link. */
+export function StorefrontChrome(props: ChromeProps) {
+  const flow = useOptionalStorefrontFlow();
+  const variant = props.variant ?? (flow?.link ? "link" : "storefront");
+  return variant === "link" ? <LinkChrome {...props} /> : <FullChrome {...props} />;
+}
+
+function FullChrome({
+  storefront,
+  location,
+  poweredBy,
+  current = "other",
+  accent,
+  bleed,
+  children,
+}: ChromeProps) {
   const t = useTranslations("storefront");
   const flow = useStorefrontFlow();
   const preview = flow.mode === "preview";
@@ -135,8 +159,8 @@ export function StorefrontChrome({
   const basketLabel = t("basket.ariaLabel", { count: flow.itemCount });
 
   return (
-    <SfRoot accent={storefront.accent} className="flex flex-col">
-      <header className="sticky top-0 z-50 border-b border-hairline bg-card backdrop-blur" data-sf-header>
+    <SfRoot accent={accent ?? storefront.accent} className="flex flex-col">
+      <header className={cn(bleed ? "relative" : "sticky top-0", "z-50 border-b border-hairline bg-card backdrop-blur")} data-sf-header>
         <div className={cn(WRAP, "flex h-16 items-center gap-section")}>
           {preview ? (
             <button type="button" onClick={flow.goVenue} className={cn(brandCls, "text-left")}>
@@ -165,7 +189,7 @@ export function StorefrontChrome({
         </div>
       </header>
 
-      <main className={cn(WRAP, "w-full flex-1 pb-hero")}>{children}</main>
+      <main className={bleed ? "w-full flex-1" : cn(WRAP, "w-full flex-1 pb-hero")}>{children}</main>
 
       <footer className="border-t border-hairline bg-subtle">
         <div className={cn(WRAP, "grid grid-cols-1 gap-major py-major sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]")}>
@@ -244,8 +268,25 @@ export function StorefrontChrome({
 
 /** "‹ Everything at Lalbagh Fort": a link on the live page (so back works and
  *  the address is shareable) and a flow step inside the editor's preview. */
-export function BackLink({ label, href, onClick }: { label: string; href?: string; onClick?: () => void }) {
+export function BackLink({
+  label,
+  href,
+  onClick,
+  to = "venue",
+}: {
+  label: string;
+  href?: string;
+  onClick?: () => void;
+  /** Where "back" is. On an item's own link there is no venue page to go back
+   *  to (the item may not be listed on it): back is the item, or its basket. */
+  to?: "venue" | "basket";
+}) {
   const flow = useStorefrontFlow();
+  const t = useTranslations("storefront");
+  if (flow.link) {
+    href = to === "basket" ? `/b/${flow.link.slug}/basket` : `/b/${flow.link.slug}`;
+    if (to === "venue") label = t("backToItem", { name: flow.link.itemName });
+  }
   const cls =
     "-ml-tight inline-flex min-h-11 items-center gap-tight rounded-md px-tight text-base font-medium text-muted transition-colors duration-quick hover:text-fg";
   if (flow.mode === "preview" || !href) {
@@ -275,6 +316,138 @@ export function StorefrontMissing({ title, message }: { title: string; message: 
         <h1 className="mt-section text-2xl font-semibold tracking-title">{title}</h1>
         <p className="mt-tight text-md text-muted">{message}</p>
       </div>
+    </SfRoot>
+  );
+}
+
+/**
+ * The slim frame of an item's own link (`/b/<slug>`): the venue's mark and
+ * name, a basket, and a way into the venue's page ONLY when the item is listed
+ * there. A link-only item (a private event, a school group, a poster QR) must
+ * never send its visitor to a page that does not list it, so for those the
+ * header says whose it is and offers nothing else to click.
+ */
+function LinkChrome({ storefront, location, poweredBy, showMore, accent, bleed, children }: ChromeProps) {
+  const t = useTranslations("storefront");
+  const flow = useStorefrontFlow();
+  const privacyQ = useApiQuery(() => getPrivacySettings(), []);
+  const mark = initials(location.name);
+  const inert = !!flow.inert;
+  const link = flow.link;
+  const moreHref = link?.venueSlug ? `/s/${link.venueSlug}` : null;
+  const more = link ? !!moreHref : !!showMore;
+  const showPrivacy = !!privacyQ.data?.showInFooter && !!moreHref;
+
+  const brand = (
+    <>
+      <span
+        aria-hidden
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-ember-solid text-base font-semibold text-on-solid"
+      >
+        {mark}
+      </span>
+      <span className="min-w-0 truncate text-md font-semibold">{location.name}</span>
+    </>
+  );
+  const brandCls = "flex min-h-11 min-w-0 items-center gap-comfortable rounded-md";
+
+  const basketInner = (
+    <>
+      <ShoppingBag size={20} strokeWidth={1.75} aria-hidden />
+      <span className="hidden sm:inline">{t("basket.label")}</span>
+      {flow.itemCount > 0 && (
+        <span className="tnum flex h-5 min-w-5 items-center justify-center rounded-full bg-ember-solid px-1 text-xs font-semibold leading-none text-on-solid">
+          {flow.itemCount}
+        </span>
+      )}
+    </>
+  );
+  const basketCls =
+    "relative flex min-h-11 min-w-11 items-center justify-center gap-tight rounded-md border border-line px-comfortable text-base font-medium text-fg transition-colors duration-quick hover:border-strong";
+  const basketLabel = t("basket.ariaLabel", { count: flow.itemCount });
+  const moreCls = "inline-flex min-h-11 items-center rounded-md px-comfortable text-base font-medium text-brand-foreground underline-offset-4 hover:underline";
+
+  return (
+    <SfRoot accent={accent ?? storefront.accent} className="flex flex-col">
+      <header className={cn(bleed ? "relative" : "sticky top-0", "z-50 border-b border-hairline bg-card backdrop-blur")} data-sf-header data-sf-link-header>
+        <div className={cn(WRAP, "flex h-16 items-center gap-section")}>
+          {moreHref && !inert ? (
+            <Link href={moreHref} className={brandCls}>
+              {brand}
+            </Link>
+          ) : (
+            <div className={brandCls}>{brand}</div>
+          )}
+          <div className="ml-auto flex items-center gap-tight">
+            {more &&
+              (moreHref && !inert ? (
+                <Link href={moreHref} className={moreCls}>
+                  {t("moreAt", { venue: location.name })}
+                </Link>
+              ) : (
+                <span className={cn(moreCls, "hidden sm:inline-flex")}>{t("moreAt", { venue: location.name })}</span>
+              ))}
+            {link && !inert ? (
+              <Link href={`/b/${link.slug}/basket`} aria-label={basketLabel} className={basketCls}>
+                {basketInner}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                aria-label={basketLabel}
+                onClick={inert ? undefined : flow.goBasket}
+                className={basketCls}
+              >
+                {basketInner}
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className={bleed ? "w-full flex-1" : cn(WRAP, "w-full flex-1 pb-hero")}>{children}</main>
+
+      <footer className="border-t border-hairline bg-subtle">
+        <div className={cn(WRAP, "flex flex-col gap-comfortable py-section text-base text-muted sm:flex-row sm:items-center sm:justify-between")}>
+          <p className="flex min-w-0 items-start gap-tight">
+            <MapPin size={16} strokeWidth={1.5} className="mt-0.5 shrink-0" aria-hidden />
+            <span>
+              <span className="font-semibold text-fg">{location.name}</span>
+              {" · "}
+              {[location.addressLine1, location.city].filter(Boolean).join(", ")}
+            </span>
+          </p>
+          <ul className="flex flex-wrap items-center gap-x-section gap-y-inline">
+            {storefront.contactPhone && (
+              <li>
+                <a href={`tel:${storefront.contactPhone}`} className="inline-flex min-h-11 items-center hover:text-fg hover:underline sm:min-h-0">
+                  {storefront.contactPhone}
+                </a>
+              </li>
+            )}
+            {storefront.contactEmail && (
+              <li>
+                <a href={`mailto:${storefront.contactEmail}`} className="inline-flex min-h-11 items-center break-all hover:text-fg hover:underline sm:min-h-0">
+                  {storefront.contactEmail}
+                </a>
+              </li>
+            )}
+            {showPrivacy && moreHref && (
+              <li>
+                <Link href={`${moreHref}/privacy`} className="inline-flex min-h-11 items-center text-brand-foreground underline-offset-4 hover:underline sm:min-h-0">
+                  {t("footer.privacy")}
+                </Link>
+              </li>
+            )}
+          </ul>
+        </div>
+        <div className="border-t border-hairline">
+          <div className={cn(WRAP, "flex items-center gap-tight py-section text-xs text-muted")}>
+            <LogoMark size={16} />
+            {poweredBy}
+          </div>
+        </div>
+      </footer>
     </SfRoot>
   );
 }

@@ -14,7 +14,9 @@ import {
   Disc3,
   Eye,
   EyeOff,
+  Globe,
   LayoutGrid,
+  Link2,
   Music,
   Palette,
   Pencil,
@@ -23,6 +25,7 @@ import {
   PowerOff,
   RotateCcw,
   Ship,
+  Store,
   Trash2,
   Trophy,
   type LucideIcon,
@@ -41,13 +44,12 @@ import {
   FilterSearch,
   Select,
   StatusPill,
-  Tabs,
   useToast,
   type ActionMenuItem,
   type Column,
   type PillTone,
 } from "@/components/ui";
-import { PageAction, PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
+import { PageAction, PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { MD, XL, useMediaQuery } from "@/lib/useMedia";
@@ -58,10 +60,9 @@ import {
   deleteEvent,
   duplicateEvent,
   dayCountOf,
-  eventRevenue,
+  eventTaken,
   runsOverDays,
   listBookings,
-  listEvents,
   listProducts,
   listResources,
   listStaff,
@@ -75,26 +76,35 @@ import { categoryById } from "@/lib/events/catalog";
 import { templateFontVars } from "@/lib/events/fonts";
 import { formatClockOf, formatClockRange, formatDay, formatPriceShort } from "@/lib/format";
 import { DEMO_TODAY, demoNow } from "@/lib/schedule";
+import { slugOf } from "@/lib/api/products";
 import type { Blocker, SellingWarning } from "@/lib/sellable";
 import {
+  BOOKING_KINDS,
   bookingKindOf,
   bookingUse,
   eventFill,
-  eventItem,
   needsAttention,
   productCopy,
   productItem,
+  type BookingKind,
   type CatalogItem,
   type CatalogState,
 } from "@/lib/catalog";
 import { CatalogChooser } from "./_components/CatalogChooser";
+import { copyText, itemUrl, useOrigin } from "./_components/record/parts";
 
 /* A catalog is scanned, not paged through: fifty rows is a whole venue's
    catalog on one screen of scrolling, and paging at twelve split a list of
    twenty-six across three. */
 const PAGE_SIZE = 50;
 
-type Kind = "all" | "bookings" | "events";
+/** The Type filter: every kind of booking, or events. There are no Bookings /
+ *  Events views any more — they taught the split the catalog no longer has. */
+type TypeFilter = "all" | Exclude<BookingKind, "event"> | "event";
+const TYPE_FILTERS: TypeFilter[] = ["all", ...BOOKING_KINDS, "event"];
+/** Where it's sold, as the filter names it. "none" is Not online. */
+type WhereFilter = "storefront" | "link" | "counter" | "none";
+const WHERE_FILTERS: WhereFilter[] = ["storefront", "link", "counter", "none"];
 /** The state chips, plus one facet that is not a state: needs attention cuts
  *  across them — a course on sale whose dates run out next week is on sale AND
  *  needs somebody. */
@@ -156,15 +166,19 @@ function Catalog() {
   const xl = useMediaQuery(XL);
   const now = useMemo(() => demoNow(), []);
 
-  const kindParam = params.get("kind");
-  const kind: Kind = kindParam === "bookings" || kindParam === "events" ? kindParam : "all";
-  const setKind = (k: Kind) => {
+  /* The type lives in the address (`?type=tour`), so a filtered list is a link.
+     The old `?kind=events` from before the views went still lands on events. */
+  const typeParam = params.get("type") ?? (params.get("kind") === "events" ? "event" : null);
+  const type: TypeFilter = TYPE_FILTERS.includes(typeParam as TypeFilter) ? (typeParam as TypeFilter) : "all";
+  const setType = (next: TypeFilter) => {
     setPage(1);
-    router.replace(k === "all" ? "/catalog" : `/catalog?kind=${k}`, { scroll: false });
+    router.replace(next === "all" ? "/catalog" : `/catalog?type=${next}`, { scroll: false });
   };
+  const origin = useOrigin();
 
   const [search, setSearch] = useState("");
   const [states, setStates] = useState<Facet[]>([]);
+  const [wheres, setWheres] = useState<WhereFilter[]>([]);
   const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "smart", order: "asc" });
   const [page, setPage] = useState(1);
   const [reloadKey, setReloadKey] = useState(0);
@@ -176,11 +190,6 @@ function Catalog() {
     () => listProducts({ pageSize: 500, filters: { includeArchived: wantArchived } }),
     [reloadKey, wantArchived],
   );
-  const eventsQ = useApiQuery(
-    () => listEvents({ pageSize: 200 }),
-    [reloadKey],
-  );
-  const archivedEventsQ = useApiQuery(() => listEvents({ pageSize: 200, filters: { status: "archived" } }), [reloadKey]);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
   const teamQ = useApiQuery(() => listStaff({ pageSize: 100 }), []);
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), [reloadKey]);
@@ -211,15 +220,15 @@ function Catalog() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productsQ.data, bookingsQ.data]);
 
-  const items = useMemo<CatalogItem[]>(() => {
-    const events = [...(eventsQ.data?.data ?? []), ...(wantArchived ? (archivedEventsQ.data?.data ?? []) : [])];
-    return [
-      ...(productsQ.data?.data ?? []).map((p) => productItem(p, resources, DEMO_TODAY)),
-      ...events.map((e) => eventItem(e, now)),
-    ];
-  }, [productsQ.data, eventsQ.data, archivedEventsQ.data, wantArchived, resources, now]);
+  /* One list, one record: an event is a BT-15 product, so it arrives with the
+     rest and `productItem` reads it as an event row. Fetching events apart and
+     adding them here would list every event twice. */
+  const items = useMemo<CatalogItem[]>(
+    () => (productsQ.data?.data ?? []).map((p) => productItem(p, resources, DEMO_TODAY, now)),
+    [productsQ.data, resources, now],
+  );
 
-  const loading = (productsQ.loading && !productsQ.data) || (eventsQ.loading && !eventsQ.data);
+  const loading = productsQ.loading && !productsQ.data;
 
   // ── filtering ─────────────────────────────────────────────────────────────
   const q = search.trim().toLowerCase();
@@ -240,15 +249,19 @@ function Catalog() {
    *  lists already followed, and what makes Archive safe rather than a
    *  disappearance. */
   const visibleByState = (i: CatalogItem) => (states.length ? states.some((f) => inFacet(i, f)) : i.state !== "archived");
-  const ofKind = (i: CatalogItem, k: Kind) => k === "all" || (k === "bookings" ? i.kind === "booking" : i.kind === "event");
+  const ofType = (i: CatalogItem, k: TypeFilter) =>
+    k === "all" || (k === "event" ? i.kind === "event" : i.product !== undefined && bookingKindOf(i.product.bookingType) === k);
+  /** Where it's sold: any of the chosen answers. Not online means neither the
+   *  storefront nor its link — an item sold only at the counter, or nowhere. */
+  const inWhere = (i: CatalogItem, w: WhereFilter) =>
+    w === "storefront" ? i.where.storefront : w === "link" ? i.where.link : w === "counter" ? i.where.counter : !i.where.storefront && !i.where.link;
+  const wheresOk = (i: CatalogItem) => wheres.length === 0 || wheres.some((w) => inWhere(i, w));
 
-  const base = items.filter(matchesSearch);
-  const counts = {
-    all: base.filter(visibleByState).length,
-    bookings: base.filter((i) => i.kind === "booking" && visibleByState(i)).length,
-    events: base.filter((i) => i.kind === "event" && visibleByState(i)).length,
-  };
-  const inKind = base.filter((i) => ofKind(i, kind));
+  const base = items.filter(matchesSearch).filter(wheresOk);
+  /* How many of each type there are under the other filters, so the dropdown
+     says what it would show before it is opened. */
+  const typeCounts = Object.fromEntries(TYPE_FILTERS.map((k) => [k, base.filter((i) => ofType(i, k) && visibleByState(i)).length])) as Record<TypeFilter, number>;
+  const inKind = base.filter((i) => ofType(i, type));
   const facetCounts = Object.fromEntries(FACETS.map((f) => [f, inKind.filter((i) => inFacet(i, f)).length])) as Record<Facet, number>;
   const sorted = useMemo(() => {
     const list = inKind.filter(visibleByState);
@@ -271,13 +284,13 @@ function Catalog() {
       );
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- derived from the filters above
-  }, [items, kind, q, states, sort]);
+  }, [items, type, q, states, wheres, sort]);
   /* Rows hold their places through an action. The default order ranks by
      state, so taking a row off sale would otherwise move it — often to a later
      page — at the moment someone looks for it to check the change, or to press
      Undo. Changing a filter or the sort is asking for a new order, so the held
      one lapses as soon as any of them moves. */
-  const sig = `${kind}|${q}|${states.join()}|${sort.key}|${sort.order}`;
+  const sig = `${type}|${q}|${states.join()}|${wheres.join()}|${sort.key}|${sort.order}`;
   const [held, setHeld] = useState<{ sig: string; keys: string[] } | null>(null);
   const rows = useMemo(() => {
     if (!held || held.sig !== sig) return sorted;
@@ -320,7 +333,7 @@ function Catalog() {
       return next;
     });
   const selectedItems = items.filter((i) => selected.has(i.key));
-  const isOn = (i: CatalogItem) => (i.product ? i.product.status === "active" : !!i.event?.published);
+  const isOn = (i: CatalogItem) => (i.product ? i.product.status === "active" : i.event?.status === "active");
   const actionable = (i: CatalogItem) => i.state !== "archived" && i.state !== "ended";
   /* What each bulk action would actually change. A button that would do
      nothing to anything selected says so by being unavailable, and one that
@@ -394,7 +407,7 @@ function Catalog() {
       setBusy(false);
       if (res.ok) {
         toast.success(t("toast.duplicated", { name: res.data.name }));
-        router.push(`/catalog/bookings/${res.data.id}`);
+        router.push(`/catalog/${res.data.id}`);
       }
       return;
     }
@@ -402,7 +415,7 @@ function Catalog() {
     setBusy(false);
     if (!res.ok) return toast.error(res.error.message);
     toast.success(t("toast.duplicated", { name: res.data.title }));
-    router.push(`/catalog/events/${res.data.id}`);
+    router.push(`/catalog/${res.data.id}`);
   };
 
   const actionsFor = (i: CatalogItem): ActionMenuItem[] => {
@@ -428,8 +441,16 @@ function Catalog() {
       ];
     }
     const on = isOn(i);
+    const online = i.where.storefront || i.where.link;
+    const slug = i.slug ?? (i.product ? slugOf(i.product) : "");
     return [
-      { key: "edit", label: t("action.edit"), icon: <Pencil size={14} strokeWidth={1.5} />, onSelect: () => router.push(i.event ? `${i.href}/edit` : i.href) },
+      { key: "edit", label: t("action.edit"), icon: <Pencil size={14} strokeWidth={1.5} />, onSelect: () => router.push(`${i.href}?tab=details`) },
+      online
+        ? { key: "copy", label: t("action.copyLink"), icon: <Link2 size={14} strokeWidth={1.5} />, onSelect: async () => ((await copyText(itemUrl(origin, slug))) ? toast.success(t("toast.linkCopied")) : toast.error(t("toast.linkCopyFailed"))) }
+        : null,
+      online
+        ? { key: "view", label: t("action.viewPage"), icon: <Globe size={14} strokeWidth={1.5} />, onSelect: () => window.open(`/b/${slug}`, "_blank", "noopener,noreferrer") }
+        : null,
       { key: "duplicate", label: t("action.duplicate"), icon: <Copy size={14} strokeWidth={1.5} />, onSelect: () => duplicate(i) },
       i.state === "ended"
         ? null
@@ -458,7 +479,15 @@ function Catalog() {
 
   // ── how a row reads ───────────────────────────────────────────────────────
   const blockerLabel = (b: Blocker) =>
-    tp(b === "noPrice" ? "blockerNoPrice" : b === "noSchedule" ? "blockerNoSchedule" : b === "noResource" ? "blockerNoResource" : "blockerNoChannel");
+    tp(
+      b === "noPrice" ? "blockerNoPrice"
+        : b === "noSchedule" ? "blockerNoSchedule"
+        : b === "noResource" ? "blockerNoResource"
+        : b === "noDate" ? "blockerNoDate"
+        : b === "noVenue" ? "blockerNoVenue"
+        : b === "noTicket" ? "blockerNoTicket"
+        : "blockerNoChannel",
+    );
   const warningLabel = (w: SellingWarning) => t(`warning.${w.kind}`, { date: formatDay(w.date) });
   const dateOf = (iso: string) =>
     new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
@@ -552,7 +581,7 @@ function Catalog() {
   const Selling = ({ i }: { i: CatalogItem }) => {
     if (i.event) {
       const f = eventFill(i.event);
-      return <Fill top={t("soldOf", { sold: f.sold.toLocaleString(), cap: f.cap.toLocaleString() })} pct={f.pct} bottom={formatPriceShort(eventRevenue(i.event))} />;
+      return <Fill top={t("soldOf", { sold: f.sold.toLocaleString(), cap: f.cap.toLocaleString() })} pct={f.pct} bottom={t("moneyTaken", { amount: formatPriceShort(eventTaken(i.event)) })} />;
     }
     const u = use.get(i.id);
     if (u) {
@@ -583,6 +612,43 @@ function Catalog() {
 
   const priceText = (i: CatalogItem) =>
     i.fromPrice === null ? t(i.kind === "event" ? "soldOut" : "noPrice") : i.fromPrice === 0 ? t("free") : formatPriceShort(i.fromPrice);
+
+  /** The three marks of "where it's sold", in a fixed order so the column lines
+   *  up: storefront, link, counter. An absent one is empty space of the same
+   *  size; each present one carries its word as tooltip and accessible name. */
+  const Marks = ({ w, size = 16 }: { w: CatalogItem["where"]; size?: number }) => {
+    const marks: { on: boolean; key: string; Icon: LucideIcon }[] = [
+      { on: w.storefront, key: "storefront", Icon: Globe },
+      { on: w.link, key: "link", Icon: Link2 },
+      { on: w.counter, key: "counter", Icon: Store },
+    ];
+    const none = !w.storefront && !w.link && !w.counter;
+    return (
+      <span className="inline-flex items-center gap-tight">
+        {marks.map(({ on, key, Icon }) =>
+          on ? (
+            <span key={key} role="img" title={t(`where.${key}`)} aria-label={t(`where.${key}`)} className="inline-flex shrink-0 items-center justify-center text-fg-secondary" style={{ width: size, height: size }}>
+              <Icon size={size} strokeWidth={1.5} aria-hidden />
+            </span>
+          ) : (
+            <span key={key} aria-hidden className="inline-block shrink-0" style={{ width: size, height: size }} />
+          ),
+        )}
+        {none && <span className="sr-only">{t("where.nowhere")}</span>}
+      </span>
+    );
+  };
+
+  const typeSelect = (
+    <Select
+      aria-label={t("typeFilter.label")}
+      value={type}
+      onChange={(v) => setType(v as TypeFilter)}
+      size="sm"
+      triggerClassName="w-full md:w-48"
+      options={TYPE_FILTERS.map((k) => ({ value: k, label: `${t(`typeFilter.${k}`)} (${typeCounts[k]})` }))}
+    />
+  );
 
   const somePicked = pageRows.some((r) => selected.has(r.key)) && !allOnPage;
   const allColumns: Column<CatalogItem>[] = [
@@ -663,6 +729,7 @@ function Catalog() {
         <span className={cn("whitespace-nowrap text-sm tabular-nums", i.fromPrice === null && "text-muted")}>{priceText(i)}</span>
       ),
     },
+    { key: "where", header: t("col.where"), width: "6.5rem", render: (i) => <Marks w={i.where} /> },
     { key: "selling", header: t("col.selling"), width: "10.5rem", render: (i) => <Selling i={i} /> },
     { key: "state", header: t("col.state"), width: "7.5rem", render: (i) => <StatePill i={i} /> },
     {
@@ -679,12 +746,14 @@ function Catalog() {
 
   const columns = xl ? allColumns : allColumns.filter((c) => c.key !== "type" && c.key !== "when");
 
-  const filtered = !!q || states.length > 0;
+  const filtered = !!q || states.length > 0 || wheres.length > 0 || type !== "all";
   const empty = !loading && items.filter((i) => i.state !== "archived").length === 0 && !wantArchived;
   const clearAll = () => {
     setSearch("");
     setStates([]);
+    setWheres([]);
     setPage(1);
+    if (type !== "all") setType("all");
   };
 
   /* Chips that apply to this view, and among those only the ones with
@@ -692,10 +761,8 @@ function Catalog() {
      the page already knows the answer to. An active chip always stays, so it
      can be switched off; Archived always stays, because its count is not
      known until it is asked for. */
-  const facetChips = FACETS.filter((f) =>
-    kind === "bookings" ? !["soldOut", "ended"].includes(f) : kind === "events" ? f !== "attention" : true,
-  ).filter((f) => f === "archived" || states.includes(f) || facetCounts[f] > 0);
-  const primary: PagePrimary = { label: t("add"), href: kind === "all" ? "/catalog/new" : `/catalog/new?kind=${kind}` };
+  const facetChips = FACETS.filter((f) => f === "archived" || states.includes(f) || facetCounts[f] > 0);
+  const primary: PagePrimary = { label: t("add"), href: "/catalog/new" };
 
   return (
     <PageShell title={t("title")} description={t("description")} primary={primary}>
@@ -720,29 +787,6 @@ function Catalog() {
         </Card>
       ) : (
         <div className={cn("flex flex-col gap-section", templateFontVars, selected.size > 0 && "pb-24")}>
-          {/* The page's first toolbar: the views on the left, and what the page
-              does on the right — Add, and the seat layouts. There is no header
-              row for them; on a phone Add is the bar's plus. */}
-          <PageToolbar
-            underline
-            primary={primary}
-            actions={
-              !compact ? (
-                <PageAction label={tp("seatLayouts")} icon={<LayoutGrid size={16} strokeWidth={1.5} />} onClick={() => router.push("/catalog/layouts")} />
-              ) : undefined
-            }
-          >
-            <Tabs
-              items={[
-                { value: "all", label: t("kind.all"), count: counts.all },
-                { value: "bookings", label: t("kind.bookings"), count: counts.bookings },
-                { value: "events", label: t("kind.events"), count: counts.events },
-              ]}
-              value={kind}
-              onChange={(v) => setKind(v as Kind)}
-            />
-          </PageToolbar>
-
           <DataTable
             columns={columns}
             rows={pageRows}
@@ -750,7 +794,7 @@ function Catalog() {
             loading={loading}
             layout="fixed"
             height="page"
-            minWidth={xl ? "60rem" : "44rem"}
+            minWidth={xl ? "66rem" : "50rem"}
             isSelected={(i) => selected.has(i.key)}
             sort={sort.key === "smart" ? undefined : sort}
             onSortChange={(key) => {
@@ -791,6 +835,7 @@ function Catalog() {
                         {i.event ? ` · ${dateOf(i.event.startsAt)}` : ""}
                       </span>
                     )}
+                    <Marks w={i.where} size={14} />
                   </span>
                 </span>
                 <span className="-mr-tight shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -804,6 +849,11 @@ function Catalog() {
                  facets and the sort live in the panel; nothing else is drawn
                  until it is chosen. */
               <FilterBar
+                /* The Type filter, beside the search: the one cut a catalog is made by
+                   most often. It replaced the All / Bookings / Events views. On a
+                   phone there is no room beside a search field, so it moves into
+                   the Filters sheet with the rest. */
+                lead={compact ? undefined : typeSelect}
                 search={
                   <FilterSearch
                     value={search}
@@ -817,13 +867,28 @@ function Catalog() {
                   />
                 }
                 actions={
-                  /* Ticking rows is a mode on a phone, where a checkbox on every
-                     row would take the room the name needs. */
-                  <Button variant="secondary" size="sm" selected={selecting} onClick={() => setSelecting((v) => !v)} className="shrink-0 md:hidden">
-                    {selecting ? t("selectDone") : t("select")}
-                  </Button>
+                  <>
+                    {/* Ticking rows is a mode on a phone, where a checkbox on every
+                        row would take the room the name needs. */}
+                    <Button variant="secondary" size="sm" selected={selecting} onClick={() => setSelecting((v) => !v)} className="shrink-0 md:hidden">
+                      {selecting ? t("selectDone") : t("select")}
+                    </Button>
+                    {!compact && <PageAction label={tp("seatLayouts")} icon={<LayoutGrid size={16} strokeWidth={1.5} />} onClick={() => router.push("/catalog/layouts")} />}
+                    <PagePrimaryButton primary={primary} />
+                  </>
                 }
                 filters={[
+                  ...(compact
+                    ? [
+                        {
+                          key: "type",
+                          label: t("typeFilter.label"),
+                          active: type !== "all" ? t(`typeFilter.${type}`) : null,
+                          onClear: () => setType("all"),
+                          control: typeSelect,
+                        },
+                      ]
+                    : []),
                   {
                     key: "state",
                     label: t("col.state"),
@@ -844,6 +909,31 @@ function Catalog() {
                             count={s !== "archived" ? facetCounts[s] : undefined}
                           >
                             {t(s === "attention" ? "facet.attention" : `state.${s}`)}
+                          </Chip>
+                        ))}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: "where",
+                    label: t("where.title"),
+                    active: wheres.length ? wheres.map((w) => t(`where.${w}`)).join(", ") : null,
+                    onClear: () => {
+                      setWheres([]);
+                      setPage(1);
+                    },
+                    control: (
+                      <div role="group" aria-label={t("where.title")} className="flex flex-wrap items-center gap-tight">
+                        {WHERE_FILTERS.map((w) => (
+                          <Chip
+                            key={w}
+                            selected={wheres.includes(w)}
+                            onClick={() => {
+                              setPage(1);
+                              setWheres((cur) => (cur.includes(w) ? cur.filter((x) => x !== w) : [...cur, w]));
+                            }}
+                          >
+                            {t(`where.${w}`)}
                           </Chip>
                         ))}
                       </div>
@@ -875,12 +965,12 @@ function Catalog() {
             emptyState={
               <EmptyState
                 title={t("emptyTitle")}
-                message={filtered ? t("emptyFiltered") : t(`emptyKind.${kind}`)}
+                message={filtered ? t("emptyFiltered") : t("emptyKind.all")}
                 action={
                   filtered ? (
                     <Button variant="secondary" onClick={clearAll}>{t("clearFilters")}</Button>
                   ) : (
-                    <Link href={kind === "all" ? "/catalog/new" : `/catalog/new?kind=${kind}`}>
+                    <Link href="/catalog/new">
                       <Button icon={<Plus size={16} strokeWidth={1.5} />}>{t("add")}</Button>
                     </Link>
                   )

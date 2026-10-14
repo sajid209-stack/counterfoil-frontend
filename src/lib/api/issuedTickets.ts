@@ -18,6 +18,7 @@
  *   - Scoped to the venue the order was sold at.
  */
 import { delay, ok } from "./client";
+import { eventTicketWhen } from "./eventTickets";
 import { peekOrders } from "./orders";
 import { peekProducts } from "./products";
 import { peekTickets, ticketAdmits } from "./tickets";
@@ -115,7 +116,7 @@ function rowOf(t: Ticket, order: Order | undefined): IssuedTicket {
     bookingName: line?.productName ?? t.tierName,
     variantName: line?.tierName ?? t.tierName,
     startDate: line?.booking?.date ?? t.validFor,
-    startTime: line?.booking?.startTime,
+    startTime: line?.booking?.startTime ?? (line ? eventTicketWhen(line.productId, line.tierId)?.startTime : undefined),
     issuedAt: order?.createdAt ?? `${t.validFor}T00:00:00`,
   };
 }

@@ -106,7 +106,9 @@ export function generateSales({
   const pick = <T>(a: T[]): T => a[Math.floor(rand() * a.length)];
   const int = (lo: number, hi: number) => lo + Math.floor(rand() * (hi - lo + 1));
 
-  const sellable = products.filter((p) => p.status === "active" && p.tiers.some((t) => t.active));
+  // Events (BT-15) are catalogue items too, but generated orders never draw
+  // from them: the fixture is a function of the bookings alone, in this order.
+  const sellable = products.filter((p) => p.bookingType !== "BT-15" && p.status === "active" && p.tiers.some((t) => t.active));
   const activeLocations = locations.filter((l) => l.status !== "archived");
   const activeStaff = staff.filter((s) => s.status === "active");
 

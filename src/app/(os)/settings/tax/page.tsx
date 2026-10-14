@@ -78,7 +78,7 @@ export default function TaxPage() {
   // the field is the thing that makes someone stop before changing it.
   const usage = useMemo(() => {
     const count = { standard: 0, reduced: 0, exempt: 0 };
-    for (const p of prodQ.data?.data ?? []) if (p.status === "active") count[p.taxClass ?? "standard"] += 1;
+    for (const p of prodQ.data?.data ?? []) if (p.status === "active" && p.bookingType !== "BT-15") count[p.taxClass ?? "standard"] += 1;
     return count;
   }, [prodQ.data]);
 

@@ -11,11 +11,16 @@
 import { DEMO_NOW_MINUTES, DEMO_TODAY, dowOf, toMinutes } from "@/lib/schedule";
 import { getDailyRemaining, getSlots, isOpenOn, isResourceFreeFor } from "@/lib/api/slots";
 import { durationOptions } from "@/lib/duration";
-import type { BookingTypeCode, Product, ProductSchedule } from "@/lib/api/types";
+import type { BookingTypeCode, Minor, Product, ProductSchedule } from "@/lib/api/types";
+import { bundleSaving, dayFill, eventDays, tierDays } from "@/lib/api/eventModel";
+import type { EventDay, EventRecord, EventTier } from "@/lib/api/events";
 
-export type StorefrontPattern = "open" | "daily" | "sessions" | "resource";
+export type StorefrontPattern = "open" | "daily" | "sessions" | "resource" | "event";
 
 export function storefrontPattern(bt: BookingTypeCode): StorefrontPattern {
+  /* An event (BT-15) is sold by day and by ticket type, not by a time slot: it
+     reserves nothing, so it leaves no Booking and no hold behind. */
+  if (bt === "BT-15") return "event";
   if (bt === "BT-04" || bt === "BT-05") return "resource";
   if (bt === "BT-06") return "daily";
   if (bt === "BT-03" || bt === "BT-09") return "sessions";
@@ -163,7 +168,7 @@ export interface NextAvailable {
  *  no day to choose, so it has no "next"; a day with nothing left is skipped. */
 export function nextAvailable(product: Product, now: Date): NextAvailable | null {
   const pattern = storefrontPattern(product.bookingType);
-  if (pattern === "open") return null;
+  if (pattern === "open" || pattern === "event") return null;
   const days = nextBookableDays(product, now, 10);
   for (const date of days) {
     if (pattern === "daily") {
@@ -184,7 +189,7 @@ export function nextAvailable(product: Product, now: Date): NextAvailable | null
  *  bookable day. */
 export function firstUsableDate(product: Product, dates: string[]): string | null {
   const pattern = storefrontPattern(product.bookingType);
-  if (pattern === "open") return null;
+  if (pattern === "open" || pattern === "event") return null;
   const usable = dates.find((d) =>
     pattern === "daily"
       ? getDailyRemaining(product, d) > 0
@@ -201,4 +206,62 @@ export function isOneTap(product: Product): boolean {
   if (storefrontPattern(product.bookingType) !== "open") return false;
   if ((product.addOns ?? []).length > 0) return false;
   return product.tiers.filter((t) => t.active).length === 1;
+}
+
+/* ── Events (BT-15): a day, then tickets ──────────────────────────────────────
+ *
+ * An event is booked online by choosing a day when it runs on more than one,
+ * and then tickets. What can be chosen is decided here, once, so the picker
+ * and the template cannot disagree about whether a pass is still on sale.
+ */
+
+export type EventTicketBlock = "soldOut" | "ended" | null;
+
+export interface EventTicketState {
+  tier: EventTier;
+  /** The days this ticket admits (all of them when it names none). */
+  days: EventDay[];
+  /** How many can still be bought: its own capacity less what has sold, and
+   *  never more than any day it admits has room for. `Infinity` when neither
+   *  it nor its days have a cap. */
+  remaining: number;
+  /** Why it cannot be chosen, or null. Said in words by the picker. */
+  block: EventTicketBlock;
+  /** What a pass covering several days saves against buying them one by one. */
+  saving: Minor | null;
+}
+
+/** Has a ticket's sales window closed? `salesEnd` is a date or a date-time. */
+export function salesEnded(tier: Pick<EventTier, "salesEnd">, now: Date): boolean {
+  if (!tier.salesEnd) return false;
+  const at = Date.parse(tier.salesEnd.length <= 10 ? `${tier.salesEnd}T23:59:59` : tier.salesEnd);
+  return !Number.isNaN(at) && at <= now.getTime();
+}
+
+/** The tickets of an event, as the picker shows them: those admitting the
+ *  chosen day (every one, when no day is chosen), each with its remaining. */
+export function eventTicketStates(e: EventRecord, now: Date, dayId: string | null): EventTicketState[] {
+  const out: EventTicketState[] = [];
+  for (const tier of e.tiers) {
+    const days = tierDays(e, tier);
+    if (dayId && !days.some((d) => d.id === dayId)) continue;
+    /* min(its own room, the room of every day it admits). A weekend pass draws
+       down Saturday AND Sunday, so it stops when the fuller of the two does. */
+    let remaining = tier.quantity > 0 ? Math.max(0, tier.quantity - tier.sold) : Infinity;
+    for (const d of days) {
+      const f = dayFill(e, d.id);
+      if (f.cap > 0) remaining = Math.min(remaining, Math.max(0, f.cap - f.sold));
+    }
+    const block: EventTicketBlock = salesEnded(tier, now) ? "ended" : remaining <= 0 ? "soldOut" : null;
+    out.push({ tier, days, remaining, block, saving: bundleSaving(e, tier) });
+  }
+  return out;
+}
+
+/** The first day with something still on sale, so the picker never opens on a
+ *  day that is already full. */
+export function firstEventDay(e: EventRecord, now: Date): string | null {
+  const days = eventDays(e);
+  const open = days.find((d) => eventTicketStates(e, now, d.id).some((s) => !s.block));
+  return (open ?? days[0])?.id ?? null;
 }

@@ -1,6 +1,7 @@
 import { createResource, conflictError, fail, notFoundError, ok, validationError } from "./client";
 import { peekLocations } from "./locations";
-import { peekProducts } from "./products";
+import { peekProducts, productBySlug, slugOf } from "./products";
+import { isListed } from "@/lib/productPage";
 import type {
   ApiResult,
   ListParams,
@@ -167,7 +168,7 @@ export async function createStorefront(input: {
   const taken = resource.peek().map((s) => s.slug);
   const sellable = new Set(
     peekProducts()
-      .filter((p) => p.status === "active" && p.channels.includes("online") && p.locationIds.includes(input.locationId))
+      .filter((p) => isListedAt(p, input.locationId))
       .map((p) => p.id),
   );
   const ts = new Date().toISOString();
@@ -275,6 +276,18 @@ export async function setStorefrontPublished(id: string, published: boolean): Pr
   return resource.update(id, { published });
 }
 
+/** Is this item on a venue's storefront at all: active, sold online, listed
+ *  (not only by its link) and sold at that venue. Events (BT-15) count, since
+ *  an event is a catalogue item like any other. */
+export const isListedAt = (p: Product, locationId: string): boolean =>
+  p.status === "active" && isListed(p) && p.locationIds.includes(locationId);
+
+/** Items at a venue that are online and active but sold only by their link.
+ *  They are never listed, and a visitor who has the address can still open
+ *  their page here (though /b/<slug> is where they are meant to be sent). */
+export const unlistedAt = (p: Product, locationId: string): boolean =>
+  p.status === "active" && p.channels.includes("online") && !isListed(p) && p.locationIds.includes(locationId);
+
 /**
  * What appears on a page, in order.
  *
@@ -285,9 +298,7 @@ export async function setStorefrontPublished(id: string, published: boolean): Pr
  * advertise something the till would refuse.
  */
 export function storefrontProducts(sf: Storefront, all: Product[] = peekProducts()): Product[] {
-  const sellable = all.filter(
-    (p) => p.status === "active" && p.channels.includes("online") && p.locationIds.includes(sf.locationId),
-  );
+  const sellable = all.filter((p) => isListedAt(p, sf.locationId));
   if (!sf.featured.length) return sellable;
   const byId = new Map(sellable.map((p) => [p.id, p]));
   return sf.featured.map((id) => byId.get(id)).filter((p): p is Product => !!p);
@@ -310,7 +321,10 @@ export function productSlugs(products: Product[]): Map<string, string> {
 export interface StorefrontPage {
   storefront: Storefront;
   location: Location;
+  /** Listed items: what the venue page shows. */
   products: Product[];
+  /** Link-only items at this venue. Reachable by their address, never listed. */
+  unlisted: Product[];
   slugs: Record<string, string>;
 }
 
@@ -323,10 +337,68 @@ export async function getStorefrontPage(slug: string): Promise<ApiResult<Storefr
   const location = peekLocations().find((l) => l.id === sf.locationId);
   if (!location) return fail(notFoundError("Location"));
   const products = storefrontProducts(sf);
+  const unlisted = peekProducts().filter((p) => unlistedAt(p, sf.locationId));
   return ok({
     storefront: structuredClone(sf),
     location: structuredClone(location),
     products: structuredClone(products),
-    slugs: Object.fromEntries(productSlugs(products)),
+    unlisted: structuredClone(unlisted),
+    slugs: Object.fromEntries(productSlugs([...products, ...unlisted])),
+  });
+}
+
+export interface ItemPage {
+  product: Product;
+  location: Location;
+  /** The venue's storefront (for its colour, contact and links). May be a
+   *  stand-in when the venue has none; check `listedOn` before linking to it. */
+  storefront: Storefront;
+  /** The storefront address that lists this item, or null when it is sold
+   *  only by its link or the venue has no published page listing it. */
+  listedOn: string | null;
+  /** The item's own address: /b/<slug>. */
+  slug: string;
+}
+
+/**
+ * An item by its own link (`/b/<slug>`).
+ *
+ * Refused unless the item is active AND sold online, with one answer for every
+ * way of not being available — unknown, draft, archived, counter-only — so
+ * nothing leaks about what exists but is not for sale.
+ */
+export async function getItemPage(slug: string): Promise<ApiResult<ItemPage>> {
+  const p = productBySlug(slug);
+  if (!p || p.status !== "active" || !p.channels.includes("online")) return fail(notFoundError("Item"));
+  const locations = peekLocations();
+  const location = locations.find((l) => l.id === p.locationIds[0]) ?? locations[0];
+  if (!location) return fail(notFoundError("Location"));
+  /* Listed means a published page of this venue actually shows it. An item
+     marked "listed" whose venue has no live page is still reached by its link,
+     and must not offer a "More at" link into a page that does not exist. */
+  const live = resource
+    .peek()
+    .filter((s) => s.published && s.locationId === location.id && storefrontProducts(s).some((x) => x.id === p.id))
+    .sort(byAge(location.id))[0];
+  const own = peekStorefrontsFor(location.id)[0];
+  const ts = new Date().toISOString();
+  const storefront: Storefront = live ??
+    own ?? {
+      id: `sf_item_${location.id}`,
+      locationId: location.id,
+      slug: "",
+      published: false,
+      featured: [],
+      links: [],
+      accent: null,
+      createdAt: ts,
+      updatedAt: ts,
+    };
+  return ok({
+    product: structuredClone(p),
+    location: structuredClone(location),
+    storefront: structuredClone(storefront),
+    listedOn: isListed(p) && live ? live.slug : null,
+    slug: slugOf(p),
   });
 }

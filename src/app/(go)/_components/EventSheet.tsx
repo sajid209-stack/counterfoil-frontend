@@ -26,7 +26,6 @@ import { useTranslations } from "next-intl";
 import { Button, Sheet } from "@/components/ui";
 import { formatDay, formatMoney } from "@/lib/format";
 import { dayFill, eventDays, isBundleTier, tierDays, type EventRecord, type EventTier } from "@/lib/api";
-import { eventLineId } from "@/lib/api";
 import { dayName } from "@/lib/events/days";
 import { cn } from "@/lib/cn";
 import type { CartEntry } from "./ProductSheet";
@@ -88,9 +87,10 @@ export function EventSheet({
     onAdd(
       {
         id: `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`,
-        /* Prefixed, so a line resolves back to its event in reports and in the
-           settlement — the same trick an inventory line uses. */
-        productId: eventLineId(event.id),
+        /* An ordinary product line: the product's own id, with the ticket as its
+           tier. An event is a catalogue item (BT-15), so reports and the
+           settlement tell its lines apart by the product, not by a prefix. */
+        productId: event.id,
         productName: event.title,
         items: chosen.map((x) => ({ tierId: x.tier.id, tierName: x.tier.name, unitPrice: x.tier.price, qty: x.n })),
         slotDate: day?.date ?? event.startsAt.slice(0, 10),

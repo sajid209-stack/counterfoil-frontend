@@ -13,6 +13,9 @@
    - Every entity carries `createdAt`/`updatedAt` and a `status` lifecycle.
    ────────────────────────────────────────────────────────────────────────── */
 
+import type { CategoryId, SectionId } from "@/lib/events/catalog";
+import type { EventDay, EventHighlight, EventLineupEntry, EventOrganiser, EventSponsor, EventStat } from "./events";
+
 // ── Scalars ────────────────────────────────────────────────────────────────
 export type ID = string; // ULID/UUID
 export type Minor = number; // 1050 = ৳10.50, in Operator.currency
@@ -45,7 +48,8 @@ export type BookingTypeCode =
   | "BT-11" // waitlist (modifier)
   | "BT-12" // package / credits
   | "BT-13" // course / series
-  | "BT-14"; // field-issued pass
+  | "BT-14" // field-issued pass
+  | "BT-15"; // on a date: an event — one date or a run of days, tickets with their own numbers
 
 // ── Resources — first-class, shared across products ─────────────────────────
 // Availability is computed PER RESOURCE across every product attached to it,
@@ -200,6 +204,21 @@ export interface PriceTier {
   note?: string;
   donation?: boolean; // pay-what-you-want: the buyer/staff enters the amount (≥ price)
   active: boolean;
+  // ── BT-15 (events). Optional everywhere else, so every tier written before
+  //    events joined the catalogue reads exactly as it did. ──
+  /** How many of this ticket exist. Absent means the ticket has no cap of its own. */
+  capacity?: number;
+  /** What had sold before Counterfoil recorded sales (a venue that moves here
+   *  mid-season). Sales made here are replayed from orders and added on read. */
+  openingSold?: number;
+  /** Which of the item's days this ticket admits. Absent means all of them. A
+   *  both-days pass draws down every day it admits: the grouped capacity a
+   *  festival is run on. */
+  dayIds?: ID[];
+  /** An early-bird ticket stops selling on its own. */
+  salesEndsAt?: ISODateTime;
+  /** What it includes, listed — the line a buyer compares across tickets. */
+  perks?: string[];
 }
 
 // ── The duration engine (liquid time — flexible resource products) ──────────
@@ -356,8 +375,86 @@ export interface Product {
   addOns?: AddOn[]; // optional extras offered at POS
   policies?: ProductPolicies; // operational policies (sales window, cancellation…)
   layoutId?: ID | null; // BT-07 seated: the seat layout this product sells (M1)
+  /** BT-15: what makes an item an event — when it happens, over which days and
+   *  where. Absent on every other kind. See docs/catalog.md. */
+  event?: ProductEvent;
+  /** The item's own page: the page a customer reads before booking, on the
+   *  storefront and at the item's own link. Designed from the Catalog, never
+   *  from Storefront settings (those design only the venue's front page).
+   *  Absent means the default page for its kind. */
+  page?: ProductPage;
+  /** When the channels include "online": is it listed on the storefront, or
+   *  only bookable by its own link? Absent means listed, which is what every
+   *  item written before this did. Not online is simply no "online" channel. */
+  online?: OnlineListing;
+  /** The item's own link, /b/<slug>. Unique across the business. Absent until
+   *  it is first needed; minted from the name. */
+  slug?: string;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
+}
+
+/** Listed on the storefront (and at its own link), or only at its own link —
+ *  Shopify's Active and Unlisted, which are a different question from where it
+ *  is sold. */
+export type OnlineListing = "listed" | "link";
+
+/** BT-15. */
+export interface ProductEvent {
+  /** The kind of event: picks the default page look, sections and wording. */
+  kind: CategoryId;
+  /** The operator's word for it: "Concert", "Tournament", "Conference". */
+  subtype: string;
+  /** The first day's opening instant, with its offset. Everything that sorts,
+   *  counts down or states when it begins reads this. */
+  startsAt: ISODateTime;
+  endsAt?: ISODateTime;
+  /** The days it runs, in order, when it runs on more than one. Absent or a
+   *  single entry both mean one day. */
+  days?: EventDay[];
+  /** Where it happens, in the operator's words. Not a Location: an event at a
+   *  stadium across town is still sold at the fort's box office. */
+  venueName: string;
+  venueAddress?: string;
+}
+
+/** How the page looks. Events have six designed looks, one per kind; every
+ *  other item has the standard page. */
+export type PageLook = "standard" | CategoryId;
+
+/** A section of an item's page. The event sections, plus two only the
+ *  standard page draws: what each ticket includes, and the good-to-know list
+ *  built from the item's policies. */
+export type PageSectionId = SectionId | "included" | "know";
+
+/** An item's designed page: its look and the words in each section. */
+export interface ProductPage {
+  look: PageLook;
+  /** Hex. Absent means the look's own. */
+  accent?: string;
+  displayFont?: string;
+  bodyFont?: string;
+  /** The look's layout variant (events: poster, floodlit…). */
+  variant?: string;
+  /** The sections shown, in order. */
+  sections: PageSectionId[];
+  /** Absent means the item's first photo, then designed art. */
+  coverUrl?: string;
+  /** One line under the name. */
+  tagline?: string;
+  stats: EventStat[];
+  highlights: EventHighlight[];
+  /** The facts a buyer checks before committing, with the operator's labels. */
+  info: { id: string; label: string; value: string }[];
+  faq: { id: string; q: string; a: string }[];
+  /** The bill, the programme, the itinerary: people and sessions. */
+  lineup: EventLineupEntry[];
+  videoUrl?: string;
+  organiser?: EventOrganiser;
+  sponsors: EventSponsor[];
+  /** Sections still showing sample text the operator has not confirmed. A
+   *  page is never published with words nobody chose without saying so. */
+  samples?: PageSectionId[];
 }
 
 // ── Location ───────────────────────────────────────────────────────────────
@@ -1050,7 +1147,7 @@ export type ListingStatus = "draft" | "submitted" | "live" | "paused" | "rejecte
 export interface MarketplaceListing {
   id: ID;
   connectionId: ID;
-  /** The catalogue item being sold — a booking's id, or `evt_<id>`. */
+  /** The catalogue item being sold — a booking's or an event's product id. */
   productId: ID;
   /** Snapshot, so renaming a booking does not rewrite what was listed. */
   productName: string;

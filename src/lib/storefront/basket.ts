@@ -27,6 +27,11 @@ export interface BasketTier {
   qty: number;
   donation?: boolean;
   ageNote?: string;
+  /** An event ticket: the days it admits (ISO dates, in order) and when it starts. An event
+   *  reserves nothing, so the line has no booking date — this is what the basket shows instead
+   *  of leaving the guest to wonder (or to be told the day they bought it). */
+  days?: string[];
+  startTime?: string;
 }
 
 export interface BasketLine {

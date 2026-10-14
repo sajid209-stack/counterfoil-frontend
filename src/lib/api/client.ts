@@ -21,6 +21,7 @@ import type {
   LoyaltyProgram,
   ManualDiscountPolicy,
   Operator,
+  Product,
   TaxConfig,
 } from "./types";
 
@@ -138,7 +139,9 @@ export function patchManualDiscountPolicyState(patch: Partial<ManualDiscountPoli
 export function loadBusiness(name: string, currency: string, productIds: string[]): void {
   // Contact details belong to the seeded business; another demo prints none.
   operatorState = { ...structuredClone(seed.operator), name, currency, contactPhone: undefined, contactEmail: undefined, website: undefined };
-  (store as Record<string, unknown[]>).products = structuredClone(seed.products).filter((p) => productIds.includes(p.id));
+  // Events are catalogue items (BT-15) and stay whichever demo business is shown,
+  // as the separate events collection did before them.
+  (store as Record<string, unknown[]>).products = structuredClone(seed.products).filter((p) => productIds.includes(p.id) || p.bookingType === "BT-15");
   // Only the resources this business actually books on. Copying all of them
   // meant a turf owner opened Settings and found four bowling lanes, and a
   // museum found fields — a demo that shows someone else's kit is not a demo
@@ -185,7 +188,7 @@ const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
       S.storefronts = structuredClone(doers.doersStorefronts);
       S.inventoryItems = structuredClone(doers.doersInventoryItems);
       S.stockMovements = structuredClone(doers.doersStockMovements);
-      for (const k of ["resources", "events", "holds", "marketplaceConnections", "marketplaceListings", "ticketCredentials", "ticketScans", "refundRequests"]) S[k] = [];
+      for (const k of ["resources", "holds", "marketplaceConnections", "marketplaceListings", "ticketCredentials", "ticketScans", "refundRequests"]) S[k] = [];
       const sales = generateSales({ products: doers.doersProducts, locations: doers.doersLocations, staff: seed.staff, taxRatePct: operatorState.taxRatePct, reducedRatePct: operatorState.reducedRatePct, count: 40 });
       S.orders = sales.orders;
       S.tickets = sales.tickets;
@@ -194,6 +197,9 @@ const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
   },
 };
 export const isBundleDemo = (id: string) => id in BUNDLES;
+/** The catalogues of the whole-business demos, so a server that only holds the default seed can
+ *  still tell a demo's item link from a made-up one (see `demoItemAtSlug`). */
+export const bundleProductLists = (): Product[][] => [doers.doersProducts];
 /** Load a whole-business demo and remember it for this browser. */
 export function loadBundleDemo(id: string): void {
   BUNDLES[id]?.apply();

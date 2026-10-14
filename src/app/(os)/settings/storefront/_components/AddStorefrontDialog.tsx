@@ -4,7 +4,7 @@ import { useId, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button, Checkbox, Field, Modal, Radio, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { createStorefront, peekStorefronts, storefrontSlug, type Location, type Product, type Storefront } from "@/lib/api";
+import { createStorefront, isListedAt, peekStorefronts, storefrontSlug, type Location, type Product, type Storefront } from "@/lib/api";
 import { controlCls } from "../../_components/SettingsKit";
 
 /**
@@ -45,7 +45,7 @@ export function AddStorefrontDialog({
   const [errors, setErrors] = useState<{ name?: string; slug?: string; which?: string; general?: string }>({});
 
   const sellable = useMemo(
-    () => products.filter((p) => p.status === "active" && p.channels.includes("online") && p.locationIds.includes(location.id)),
+    () => products.filter((p) => isListedAt(p, location.id)),
     [products, location.id],
   );
 

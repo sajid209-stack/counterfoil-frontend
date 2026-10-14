@@ -7,7 +7,7 @@ import { Button, DateField, FormField, TimeInput } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { categoryById, type CategoryId } from "@/lib/events/catalog";
 import { DEMO_TODAY } from "@/lib/schedule";
-import type { EventContent } from "./EventArchitect";
+import type { EventContent } from "./eventContent";
 import { EventDays } from "./EventDays";
 
 /**
@@ -28,6 +28,7 @@ export function EventDetails({
   onUntieTickets,
   subtype,
   onSubtype,
+  show = ["what", "when", "where", "cover"],
 }: {
   categoryId: CategoryId;
   content: EventContent;
@@ -38,6 +39,9 @@ export function EventDetails({
   /** The kind of event within its category — a label only, so optional. */
   subtype?: string;
   onSubtype?: (s: string) => void;
+  /** Which groups to draw. All four by default; the add wizard draws the facts
+   *  across two steps (the name elsewhere, when and where, then the cover). */
+  show?: Array<"what" | "when" | "where" | "cover">;
 }) {
   const t = useTranslations("events");
   const td = useTranslations("catalog.eventDetails");
@@ -49,6 +53,7 @@ export function EventDetails({
 
   return (
     <div className="flex flex-col gap-major">
+      {show.includes("what") && (
       <Group title={td("what")}>
         <FormField
           label={t("field.title")}
@@ -79,7 +84,9 @@ export function EventDetails({
           />
         )}
       </Group>
+      )}
 
+      {show.includes("when") && (
       <Group title={td("when")}>
         <Labelled label={td("date")} required error={errors.date}>
           <DateField size="form" value={content.date || null} today={DEMO_TODAY} min={DEMO_TODAY} onChange={(v) => onContent({ date: v, endDate: content.endDate && content.endDate >= v ? content.endDate : v })} labels={dateLabels} placeholder={td("pickDate")} />
@@ -109,7 +116,9 @@ export function EventDetails({
           <EventDays content={content} onContent={onContent} t={tcv} dateLabels={dateLabels} error={errors.days} showTimes scopedTickets={scopedTickets} onUntieTickets={onUntieTickets} />
         </div>
       </Group>
+      )}
 
+      {show.includes("where") && (
       <Group title={td("where")}>
         <FormField
           label={t("field.venue")}
@@ -127,10 +136,13 @@ export function EventDetails({
           onChange={(e) => onContent({ venueAddress: e.target.value })}
         />
       </Group>
+      )}
 
+      {show.includes("cover") && (
       <Group title={td("cover")} help={td("coverHelp")}>
         <CoverUpload value={content.coverUrl} onChange={(url) => onContent({ coverUrl: url })} className="sm:col-span-2" />
       </Group>
+      )}
     </div>
   );
 }

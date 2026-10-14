@@ -2,6 +2,7 @@ import { cancelBooking, createBooking, peekBookings } from "./bookings";
 import { itemForAddOn, recordMovement, recordSale } from "./inventory";
 import { conflictError, createResource, delay, fail, ok } from "./client";
 import { seatsTaken } from "./layouts";
+import { eventTicketWhen } from "./eventTickets";
 import { issueTicket, redeemCredits, voidOrderTickets } from "./tickets";
 import { buildOrderLines, type LineInput } from "@/lib/orderMath";
 import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, OrderStatus, PaymentMethod, Ticket, WriteOffCategory } from "./types";
@@ -332,7 +333,9 @@ export async function checkout(
     for (let q = 0; q < line.quantity && t < 20; q++, t++) {
       const code = `${reference}-${String(t + 1).padStart(2, "0")}`;
       if (!firstTicketCode) firstTicketCode = code;
-      const issued = await issueTicket({ code, orderId: order.id, lineId: line.id, productId: line.productId, tierName: line.tierName, admits: line.admits, validFor: now.slice(0, 10) });
+      /* An event ticket is good for the event's day(s), never for the day it was bought. */
+      const validFor = eventTicketWhen(line.productId, line.tierId)?.days[0]?.date ?? now.slice(0, 10);
+      const issued = await issueTicket({ code, orderId: order.id, lineId: line.id, productId: line.productId, tierName: line.tierName, admits: line.admits, validFor });
       if (issued.ok) tickets.push(issued.data);
     }
   }

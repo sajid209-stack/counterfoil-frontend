@@ -94,6 +94,8 @@ export function EventTemplate({
   device = "desktop",
   labels,
   now,
+  onBook,
+  inert = false,
 }: {
   event: EventRecord;
   device?: Device;
@@ -101,6 +103,13 @@ export function EventTemplate({
   /** Passed in rather than read from the clock so the countdown is
    *  deterministic in a preview and cannot hydrate to a different number. */
   now: Date;
+  /** The live page's way to buy: every "Get tickets" and the ticket section
+   *  itself call it, so booking opens the same picker the storefront uses.
+   *  Absent, the page cannot sell (the designer's preview). */
+  onBook?: () => void;
+  /** A preview beside unsaved edits: no link leaves the page, nothing books and
+   *  nothing is written. In-page anchors still scroll, which moves nothing. */
+  inert?: boolean;
 }) {
   const cat = categoryById(event.categoryId);
   const t = cat.theme;
@@ -1052,8 +1061,36 @@ export function EventTemplate({
       ) : null,
   };
 
+  /* One handler for every link on the page, rather than one per anchor in six
+     templates: a click on a "#tickets" link books (when it can), any other "#"
+     link scrolls inside the document it was clicked in (an editor's preview is
+     an iframe, and a hash change there would move the editor's address), and in
+     a preview no link leaves the page at all. */
+  const onRootClick = (e: React.MouseEvent<HTMLElement>) => {
+    const target = e.target as HTMLElement;
+    const a = target.closest("a");
+    if (a && e.currentTarget.contains(a)) {
+      const href = a.getAttribute("href") ?? "";
+      if (href === "#tickets" && onBook && !inert) {
+        e.preventDefault();
+        onBook();
+        return;
+      }
+      if (href.startsWith("#")) {
+        e.preventDefault();
+        a.ownerDocument.getElementById(href.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      if (inert) e.preventDefault();
+      return;
+    }
+    // The ticket section is a picture of a picker; pressing it opens the real one.
+    if (onBook && !inert && target.closest("#tickets") && !target.closest("button, summary, input, select, textarea")) onBook();
+  };
+
   return (
     <div
+      onClick={onRootClick}
       style={{
         ...vars,
         background: "var(--e-bg)",
@@ -1329,7 +1366,7 @@ function Hero({
 
   const titleSize = narrow
     ? variant === "poster" || variant === "neon"
-      ? "clamp(34px, 12vw, 52px)"
+      ? "clamp(28px, 9vw, 52px)"
       : "clamp(27px, 8.5vw, 38px)"
     : variant === "poster" || variant === "neon"
       ? "clamp(56px, 8vw, 104px)"
@@ -1346,6 +1383,8 @@ function Hero({
         color: "var(--e-fg)",
         margin: 0,
         textWrap: "balance",
+        /* A long single word must break rather than push the page sideways. */
+        overflowWrap: "anywhere",
         textShadow: theme.glow ? "0 0 34px color-mix(in srgb, var(--e-accent) 40%, transparent)" : undefined,
       }}
     >
@@ -1569,6 +1608,7 @@ function Hero({
                 color: "var(--e-fg)",
                 margin: `${narrow ? 16 : 22}px 0 0`,
                 textWrap: "balance",
+                overflowWrap: "anywhere",
               }}
             >
               {event.title}

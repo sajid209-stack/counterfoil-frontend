@@ -25,7 +25,8 @@ import {
 import { StatusScreen } from "@/components/screens";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { formatDateTime, formatDay, formatMoney } from "@/lib/format";
+import { eventTicketWhen } from "@/lib/api/eventTickets";
+import { formatDateTime, formatDay, formatDayRange, formatMoney } from "@/lib/format";
 import {
   credentialsFor,
   getOperator,
@@ -134,6 +135,8 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
      one day beside a preview of the ticket stating another is a record nobody
      can act on. */
   const day = line?.booking?.date ?? ticket.validFor;
+  /* An event ticket is good for its ticket type's day(s), not the day it was bought. */
+  const eventWhen = line ? eventTicketWhen(line.productId, line.tierId) : null;
   const admits = ticketAdmits(ticket);
   const used = ticket.admitted ?? (ticket.status === "redeemed" ? admits : 0);
   const active = creds.find((c) => c.status === "active");
@@ -247,7 +250,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
        what the ticket was actually for. */
     { key: "type", label: t("fact.type"), value: `${bookingName} · ${ticket.tierName}` },
     { key: "holder", label: t("fact.holder"), value: order?.customerName },
-    { key: "validFor", label: t("fact.validFor"), value: formatDay(day, { weekday: true }) },
+    { key: "validFor", label: t("fact.validFor"), value: eventWhen ? formatDayRange(eventWhen.days.map((d) => d.date), { weekday: true }) : formatDay(day, { weekday: true }) },
     /* "0 of 4 used" rather than a status word: a family ticket three-quarters
        spent is neither issued nor redeemed, and the count is the only honest
        answer. */

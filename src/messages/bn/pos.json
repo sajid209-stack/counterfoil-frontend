@@ -471,8 +471,8 @@
     "left": "{count}টি বাকি",
     "runsDays": "{count} দিন চলবে",
     "pickTickets": "টিকিট বেছে নিন",
-    "summary": "{count}টি টিকিট",
-    "add": "{count}টি টিকিট যোগ করুন"
+    "summary": "{count, plural, one {#টি টিকিট} other {#টি টিকিট}}",
+    "add": "{count, plural, one {#টি টিকিট যোগ করুন} other {#টি টিকিট যোগ করুন}}"
   },
   "tillSettings": {
     "title": "স্ক্রিন ও ভাষা",

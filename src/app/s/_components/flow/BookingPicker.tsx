@@ -9,10 +9,14 @@ import { applyResourceRate } from "@/lib/api/slots";
 import { durationOptions, formatDuration, productDurationPrice } from "@/lib/duration";
 import { resolveProductPrice } from "@/lib/pricing";
 import { taxRateFor } from "@/lib/tax";
-import { formatClock, formatMoney, formatPriceShort } from "@/lib/format";
+import { formatClock, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
+import { eventDays, eventView, spansDays } from "@/lib/api/events";
+import { eventTicketWhen } from "@/lib/api/eventTickets";
 import {
   cheapestFreeResourceId,
   defaultDuration,
+  eventTicketStates,
+  firstEventDay,
   firstResourceTime,
   firstSessionTime,
   firstUsableDate,
@@ -24,7 +28,7 @@ import {
   getDailyRemaining,
 } from "@/lib/storefront/pattern";
 import { draftTotals, type BasketLine, type BasketTier } from "@/lib/storefront/basket";
-import { fromPrice } from "@/lib/storefront/facts";
+import { fromPriceOf } from "@/lib/price";
 import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
 import type { PriceTier, Product } from "@/lib/api/types";
 import { sfBtn } from "../sf";
@@ -58,13 +62,15 @@ export function BookingPicker({ product, sheet }: { product: Product; sheet?: Sh
      something to buy (today if it is open and not full); on the full page it
      opens on the first open day and leaves the rest to the guest. */
   const [date, setDate] = useState<string | null>(
-    pattern === "open" ? null : sheet ? firstUsableDate(product, dates) : (dates[0] ?? null),
+    pattern === "open" || pattern === "event" ? null : sheet ? firstUsableDate(product, dates) : (dates[0] ?? null),
   );
 
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", sheet && "h-full")}>
       {pattern === "resource" ? (
         <ResourceBooking product={product} date={date} setDate={setDate} dates={dates} sheet={sheet} />
+      ) : pattern === "event" ? (
+        <EventBooking product={product} sheet={sheet} />
       ) : (
         <TicketBooking product={product} pattern={pattern} date={date} setDate={setDate} dates={dates} sheet={sheet} />
       )}
@@ -348,11 +354,13 @@ function ResourceBooking({
     };
   };
   const addToBasket = () => {
+    if (flow.inert) return;
     if (sheet) return sheet.onAdd(buildLine());
     flow.addLine(buildLine());
     flow.goVenue();
   };
   const bookNow = () => {
+    if (flow.inert) return;
     if (sheet) return sheet.onBook(buildLine());
     flow.addLine(buildLine());
     flow.goCheckout();
@@ -551,11 +559,13 @@ function TicketBooking({
     return { productId: product.id, productName: product.name, taxClass: product.taxClass, date, startTime: time, endTime: null, resourceId: null, resourceName: null, tiers: tierLines };
   };
   const addToBasket = () => {
+    if (flow.inert) return;
     if (sheet) return sheet.onAdd(buildLine());
     flow.addLine(buildLine());
     flow.goVenue();
   };
   const bookNow = () => {
+    if (flow.inert) return;
     if (sheet) return sheet.onBook(buildLine());
     flow.addLine(buildLine());
     flow.goCheckout();
@@ -650,7 +660,211 @@ function TicketBooking({
 
         <ExtrasSection product={product} extras={extras} setExtras={setExtras} />
       </Body>
-      <Footer total={total} from={fromPrice(product.tiers)} missing={missing} onAdd={addToBasket} onBookNow={bookNow} inSheet={!!sheet} />
+      <Footer total={total} from={fromPriceOf(product)} missing={missing} onAdd={addToBasket} onBookNow={bookNow} inSheet={!!sheet} />
+    </>
+  );
+}
+
+/* ── An event (BT-15): a day when it has several, then tickets ─────────────
+ *
+ * An event reserves nothing — no slot, no hold, no Booking — so this asks only
+ * two things, in order: which day (when the event runs on more than one) and
+ * how many of each ticket. What is offered comes from eventTicketStates, which
+ * counts a pass against every day it admits, so a weekend pass can never be
+ * sold into a Saturday that has already filled. A ticket that cannot be bought
+ * is still shown, with the reason in words, so a guest sees the early-bird they
+ * missed rather than wondering where it went. */
+function EventBooking({ product, sheet }: { product: Product; sheet?: SheetHooks }) {
+  const t = useTranslations("storefront");
+  const flow = useStorefrontFlow();
+  const taxRate = taxRateFor(product, flow.operator) / 100;
+  const ev = useMemo(() => eventView(product), [product]);
+  const days = eventDays(ev);
+  const multi = spansDays(ev);
+  const [dayId, setDayId] = useState<string | null>(() => (multi ? firstEventDay(ev, flow.now) : null));
+  const states = useMemo(() => eventTicketStates(ev, flow.now, multi ? dayId : null), [ev, flow.now, multi, dayId]);
+
+  /* Tickets of this event already in the basket count against what is left. */
+  const inBasket = (tierId: string) =>
+    flow.basket
+      .filter((l) => l.productId === product.id)
+      .reduce((s, l) => s + l.tiers.filter((x) => x.tierId === tierId).reduce((a, x) => a + x.qty, 0), 0);
+  const capOf = (s: (typeof states)[number]): number => {
+    if (s.block) return 0;
+    const room = Math.max(0, s.remaining - inBasket(s.tier.id));
+    return Math.min(room, s.tier.maxPerOrder ?? FALLBACK_CAP);
+  };
+
+  const [qty, setQty] = useState<Record<string, number>>(() => {
+    if (!sheet) return {};
+    const first = states.find((s) => capOf(s) > 0);
+    return first ? { [first.tier.id]: 1 } : {};
+  });
+  const changeDay = (id: string) => {
+    setDayId(id);
+    const next = eventTicketStates(ev, flow.now, id);
+    setQty((q) =>
+      Object.fromEntries(
+        next
+          .filter((s) => (q[s.tier.id] ?? 0) > 0 && !s.block)
+          .map((s) => [s.tier.id, Math.min(q[s.tier.id], Math.max(0, s.remaining - inBasket(s.tier.id)), s.tier.maxPerOrder ?? FALLBACK_CAP)]),
+      ),
+    );
+  };
+
+  const dayWord = (i: number) => days[i]?.name || t("event.dayN", { n: i + 1 });
+  const dayDate = (d: (typeof days)[number]) => formatDay(d.date, { weekday: true });
+  const admitsText = (s: (typeof states)[number]) => {
+    if (!multi) return null;
+    if (s.days.length === days.length) return t("event.admitsAll", { count: days.length });
+    return t("event.admitsOn", { days: s.days.map((d) => dayDate(d)).join(", ") });
+  };
+
+  const basketTiers: BasketTier[] = states
+    .filter((s) => (qty[s.tier.id] ?? 0) > 0)
+    .map((s) => {
+      const base = product.tiers.find((x) => x.id === s.tier.id);
+      const when = eventTicketWhen(product.id, s.tier.id);
+      return {
+        tierId: s.tier.id,
+        tierName: s.tier.name,
+        price: s.tier.price,
+        admits: base?.admits ?? 1,
+        qty: qty[s.tier.id] ?? 0,
+        days: when?.days.map((d) => d.date),
+        startTime: when?.startTime,
+      };
+    });
+  const totals = draftTotals(basketTiers, taxRate);
+  const missing = basketTiers.length === 0 ? t("booking.missingTickets") : null;
+
+  const buildLine = (): Omit<BasketLine, "id"> => ({
+    productId: product.id,
+    productName: product.name,
+    taxClass: product.taxClass,
+    // No date, no time, no place: an event sells tickets, never a slot, so the
+    // order it becomes carries no booking snapshot and checkout holds nothing.
+    date: null,
+    startTime: null,
+    endTime: null,
+    resourceId: null,
+    resourceName: null,
+    tiers: basketTiers.map((x) => ({ ...x })),
+  });
+  const addToBasket = () => {
+    if (flow.inert) return;
+    if (sheet) return sheet.onAdd(buildLine());
+    flow.addLine(buildLine());
+    flow.goVenue();
+  };
+  const bookNow = () => {
+    if (flow.inert) return;
+    if (sheet) return sheet.onBook(buildLine());
+    flow.addLine(buildLine());
+    flow.goCheckout();
+  };
+
+  const from = states.filter((s) => !s.block).map((s) => s.tier.price);
+
+  return (
+    <>
+      <Body title={t("booking.chooseTitle")} inSheet={!!sheet}>
+        {multi && (
+          <Step label={t("event.dayLabel")}>
+            <div className="grid grid-cols-2 gap-tight">
+              {days.map((d, i) => {
+                const open = eventTicketStates(ev, flow.now, d.id).some((s) => !s.block);
+                return (
+                  <ChoiceCard
+                    key={d.id}
+                    selected={dayId === d.id}
+                    disabled={!open}
+                    hideCheck
+                    onClick={() => changeDay(d.id)}
+                    className={cn(CHOICE, "min-h-14 flex-col gap-0.5 py-inline")}
+                  >
+                    <span>{dayDate(d)}</span>
+                    <span className="text-xs font-normal text-muted">{open ? dayWord(i) : t("event.soldOut")}</span>
+                  </ChoiceCard>
+                );
+              })}
+            </div>
+          </Step>
+        )}
+
+        <Step label={t("booking.ticketsLabel")}>
+          {states.length === 0 ? (
+            <p className="text-base text-muted">{t("askAtTheDoor")}</p>
+          ) : (
+            <ul className="divide-y divide-hairline rounded-md border border-line">
+              {states.map((s) => {
+                const tr = s.tier;
+                const n = qty[tr.id] ?? 0;
+                const cap = capOf(s);
+                const status =
+                  s.block === "soldOut"
+                    ? t("event.soldOut")
+                    : s.block === "ended"
+                      ? t("event.salesEnded")
+                      : Number.isFinite(s.remaining) && s.remaining <= 10
+                        ? t("event.left", { count: s.remaining })
+                        : null;
+                const admits = admitsText(s);
+                return (
+                  <li key={tr.id} className={cn("flex items-center gap-comfortable p-comfortable", s.block && "bg-subtle")}>
+                    <div className="min-w-0 flex-1">
+                      <p className={cn("text-md font-semibold", s.block && "text-muted")}>{tr.name}</p>
+                      <p className={cn("tnum text-md font-semibold", s.block ? "text-muted line-through" : "text-brand-foreground")}>
+                        {tr.price === 0 ? t("free") : formatPriceShort(tr.price)}
+                      </p>
+                      {s.saving ? (
+                        <p className="mt-inline inline-flex rounded-full bg-ember-wash px-comfortable py-inline text-xs font-semibold text-brand-foreground">
+                          {t("event.saves", { amount: formatPriceShort(s.saving) })}
+                        </p>
+                      ) : null}
+                      {admits && <p className="mt-inline text-base text-muted">{admits}</p>}
+                      {tr.description && <p className="mt-inline text-base leading-snug text-muted">{tr.description}</p>}
+                      {tr.perks && tr.perks.length > 0 && (
+                        <p className="mt-inline text-base leading-snug text-muted">{tr.perks.slice(0, 3).join(" · ")}</p>
+                      )}
+                      {status && <p className={cn("mt-inline text-base font-medium", s.block ? "text-fg" : "text-warning")}>{status}</p>}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-tight">
+                      <button
+                        type="button"
+                        aria-label={t("booking.decreaseQty", { name: tr.name })}
+                        disabled={n <= 0}
+                        onClick={() => setQty((q) => ({ ...q, [tr.id]: Math.max(0, n - 1) }))}
+                        className="flex h-11 w-11 items-center justify-center rounded-full border border-strong bg-card text-fg transition-colors hover:border-fg disabled:border-line disabled:text-faint"
+                      >
+                        <Minus size={16} strokeWidth={2} aria-hidden />
+                      </button>
+                      <span className="tnum w-6 text-center text-md font-semibold">{n}</span>
+                      <button
+                        type="button"
+                        aria-label={t("booking.increaseQty", { name: tr.name })}
+                        disabled={n >= cap}
+                        onClick={() => setQty((q) => ({ ...q, [tr.id]: Math.min(cap, n + 1) }))}
+                        className="flex h-11 w-11 items-center justify-center rounded-full border border-strong bg-card text-fg transition-colors hover:border-fg disabled:border-line disabled:text-faint"
+                      >
+                        <Plus size={16} strokeWidth={2} aria-hidden />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Step>
+      </Body>
+      <Footer
+        total={totals.total}
+        from={from.length ? Math.min(...from) : null}
+        missing={missing}
+        onAdd={addToBasket}
+        onBookNow={bookNow}
+        inSheet={!!sheet}
+      />
     </>
   );
 }

@@ -62,7 +62,9 @@ export default function CounterPage() {
         mode="edit"
         counter={counter}
         locations={locations}
-        products={productsQ.data?.data ?? []}
+        /* Events (BT-15) are sold at a counter by their own venues, not by a
+           counter's list of bookings. */
+        products={(productsQ.data?.data ?? []).filter((p) => p.bookingType !== "BT-15")}
         devices={(devicesQ.data?.data ?? []).filter((d) => d.status !== "archived")}
         liveAccount={(accountsQ.data?.data ?? []).some((a) => a.status === "active" && a.chargesEnabled)}
         onSaved={setLatest}

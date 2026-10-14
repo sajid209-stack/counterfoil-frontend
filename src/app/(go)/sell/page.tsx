@@ -137,7 +137,8 @@ export default function SellPage() {
 
   const operator = opQ.data;
   const currency = operator?.currency ?? "BDT";
-  const products = useMemo(() => productsQ.data?.data ?? [], [productsQ.data]);
+  // Events (BT-15) are not part of this wall: a booking sheet cannot sell one.
+  const products = useMemo(() => (productsQ.data?.data ?? []).filter((p) => p.bookingType !== "BT-15"), [productsQ.data]);
   const resources = useMemo(() => resourcesQ.data?.data ?? [], [resourcesQ.data]);
   const team = useMemo(() => teamQ.data?.data ?? [], [teamQ.data]);
   const productById = (id: string) => products.find((p) => p.id === id);

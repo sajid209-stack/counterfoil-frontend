@@ -36,6 +36,8 @@ import type {
   MarketplaceListing,
 } from "@/lib/api/types";
 import { generateSales } from "./generate";
+import { events } from "./events";
+import { productRecordFromEvent } from "@/lib/api/eventModel";
 import { demoDay } from "@/lib/schedule";
 import { buildOrderLines } from "@/lib/orderMath";
 import type { Order } from "@/lib/api/types";
@@ -217,7 +219,8 @@ export const locations: Location[] = [
   },
 ];
 
-export const products: Product[] = [
+/* The bookings. Events join them below as BT-15 products (see `products`). */
+const bookingProducts: Product[] = [
   {
     id: "prd_admission",
     name: "General Admission",
@@ -554,6 +557,25 @@ export const products: Product[] = [
   },
 ];
 
+/* Events are catalogue items now: the event-shaped builders in ./events are
+   mapped through `productRecordFromEvent`, keeping their ids and slugs, and
+   join the booking products. They go AFTER them and the sales generator is
+   handed only the bookings (and itself skips BT-15), so the generated orders —
+   which pick products by their order in this list — are exactly what they were. */
+/* Three seeded facts that show the catalogue's three ways to sell (docs/catalog.md §2):
+   the exhibition is sold at the museum's counter and listed on its page as well as the
+   fort's; the club night is sold online ONLY by its link — never listed — the way a
+   venue sells a night whose location is released hours before. */
+const SEED_EVENT_TWEAKS: Record<string, Partial<Product>> = {
+  evt_exhibition: { locationIds: ["loc_fort", "loc_museum"] },
+  evt_underground: { online: "link" },
+};
+
+export const products: Product[] = [
+  ...bookingProducts,
+  ...events.map(productRecordFromEvent).map((p) => ({ ...p, ...SEED_EVENT_TWEAKS[p.id] })),
+];
+
 export const counters: Counter[] = [
   {
     id: "cnt_fort_main",
@@ -764,7 +786,7 @@ export const resources: Resource[] = [
 
 // Transactional data — generated deterministically (see generate.ts).
 const sales = generateSales({
-  products,
+  products: bookingProducts,
   locations,
   staff,
   counters,
@@ -1321,7 +1343,7 @@ export const storefronts: Storefront[] = [
     headline: "Four hundred years of Dhaka, open most days",
     intro:
       "An unfinished Mughal fort in the middle of the old city: a garden, a hammam, a mosque and the tomb of Pari Bibi. Come for an hour or spend the afternoon — the grounds, the courts and the lanes are all booked from here.",
-    featured: ["prd_admission", "prd_tour", "prd_futsal", "prd_bowling", "prd_yoga"],
+    featured: ["prd_admission", "evt_megaconcert", "evt_turfcup", "evt_techsummit", "prd_tour", "prd_futsal", "prd_bowling", "prd_yoga"],
     contactPhone: "+8801711000000",
     contactEmail: "visit@lalbagh.example",
     links: [
@@ -1453,7 +1475,8 @@ export const stockMovements: StockMovement[] = [
   { id: "mv_111", itemId: "inv_bibs", locationId: "loc_fort", kind: "stocktake", quantity: -1, reason: "Counted 5, one set missing", by: "Rahim Uddin", at: stockAt(-1) },
 ];
 
-/** Event fixtures live in their own file — see the note there. */
+/** Event fixtures live in their own file — see the note there. They are not a
+ *  collection any more: they entered the store as products (`products`). */
 export { events } from "./events";
 
 /**

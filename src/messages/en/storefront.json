@@ -172,7 +172,8 @@
     "entry": "Entry tickets",
     "timed": "Tours, shows and classes",
     "space": "Courts and fields",
-    "packs": "Passes and bundles"
+    "packs": "Passes and bundles",
+    "events": "Events"
   },
   "know": {
     "title": "Good to know",
@@ -222,5 +223,30 @@
     "counterfoilLine": "Bookings for {venue} are made with Counterfoil.",
     "counterfoilPrivacy": "Counterfoil privacy policy",
     "counterfoilTerms": "Counterfoil terms"
-  }
+  },
+  "backToItem": "Back to {name}",
+  "moreAt": "More at {venue}",
+  "itemMissingTitle": "This page isn't available",
+  "itemMissingBody": "The link may have changed, or this isn't on sale right now.",
+  "event": {
+    "dayLabel": "Choose a day",
+    "dayN": "Day {n}",
+    "admitsAll": "Gets you in on all {count} days",
+    "admitsOn": "Gets you in on {days}",
+    "saves": "Saves {amount}",
+    "soldOut": "Sold out",
+    "salesEnded": "Sales have ended",
+    "left": "{count} left"
+  },
+  "page": {
+    "highlights": "Highlights",
+    "included": "What each ticket includes",
+    "gallery": "Photos",
+    "video": "Watch",
+    "playVideo": "Play video",
+    "faq": "Questions and answers",
+    "getTickets": "Get tickets",
+    "photoOf": "Photo {n} of {total}"
+  },
+  "editorLinkOnlyNote": "Items sold only by their link are not shown on this page."
 }

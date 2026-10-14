@@ -15,6 +15,7 @@ import { useApiQuery } from "@/lib/useApi";
 import {
   getStorefront,
   getStorefrontFor,
+  isListedAt,
   listLocations,
   listProducts,
   listResources,
@@ -144,12 +145,12 @@ export default function StorefrontEditorPage() {
   const venueId = record?.locationId ?? "";
   const location = (locationsQ.data?.data ?? []).find((l) => l.id === venueId);
   const products = useMemo(() => (productsQ.data?.data ?? []) as Product[], [productsQ.data]);
-  /** Everything this venue COULD show, which is what the chooser offers. */
+  /** Everything this venue COULD show, which is what the chooser offers: items
+   *  that are on sale, sold online, LISTED and sold at this venue. An item sold
+   *  only by its link is never offered here — it has its own link, not a place
+   *  on the page — and events are items like any other. */
   const sellable = useMemo(
-    () =>
-      products.filter(
-        (p) => p.status === "active" && p.channels.includes("online") && p.locationIds.includes(venueId),
-      ),
+    () => products.filter((p) => isListedAt(p, venueId)),
     [products, venueId],
   );
 
@@ -610,9 +611,10 @@ export default function StorefrontEditorPage() {
                 })}
               </ol>
             )}
-            <p className="px-card py-comfortable text-sm text-muted">
+            <p className="px-card pb-tight pt-comfortable text-sm text-muted">
               {t("storefront.showingCount", { count: showing.length })}
             </p>
+            <p className="px-card pb-comfortable text-sm text-muted">{ts("editorLinkOnlyNote")}</p>
           </SettingsSection>
 
           <SaveBar dirty={dirty} saving={saving} invalid={!!slugErr || !!nameErr || linksInvalid} onSave={save} onDiscard={() => setDraft(null)} />

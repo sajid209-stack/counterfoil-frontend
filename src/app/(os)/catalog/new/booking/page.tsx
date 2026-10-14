@@ -1,47 +1,20 @@
-"use client";
+import { redirect } from "next/navigation";
+import { NewItemPage } from "../../_components/wizard/NewItemPage";
+import { isRouteKind } from "../../_components/wizard/kinds";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { PageShell, Skeleton } from "@/components/ui";
-import { useApiQuery } from "@/lib/useApi";
-import { getOperator, listLocations, listProducts, listResources, listStaff } from "@/lib/api";
-import { BOOKING_KINDS, type BookingKind } from "@/lib/catalog";
-import { ProductWizard } from "../../_components/booking/ProductWizard";
+type Search = Record<string, string | string[] | undefined>;
+const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
-export default function NewBookingPage() {
-  return (
-    <Suspense>
-      <NewBooking />
-    </Suspense>
-  );
-}
-
-function NewBooking() {
-  const t = useTranslations("catalog.wizard");
-  const kindParam = useSearchParams().get("kind");
-  const kind = (BOOKING_KINDS as string[]).includes(kindParam ?? "") ? (kindParam as BookingKind) : null;
-  const locs = useApiQuery(() => listLocations({ pageSize: 100 }), []);
-  const team = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
-  const resources = useApiQuery(() => listResources({ pageSize: 100, filters: { status: "active" } }), []);
-  const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
-  const op = useApiQuery(() => getOperator(), []);
-  const loading = locs.loading || team.loading || resources.loading || productsQ.loading || op.loading;
-
-  return (
-    <PageShell title={t("pageTitle")} description={t("pageDescription")}>
-      {loading ? (
-        <div aria-busy="true" className="flex flex-col gap-tight"><Skeleton h={16} w="33%" /><Skeleton h={16} w="66%" /><Skeleton h={16} w="50%" /></div>
-      ) : (
-        <ProductWizard
-          locations={locs.data?.data ?? []}
-          team={team.data?.data ?? []}
-          resources={resources.data?.data ?? []}
-          products={productsQ.data?.data ?? []}
-          currency={op.data?.currency ?? "BDT"}
-          kind={kind}
-        />
-      )}
-    </PageShell>
-  );
+/**
+ * The old booking address. `?kind=timed` moves to `/catalog/new/timed`.
+ *
+ * With no kind this is the "Not sure?" door: the wizard opens on the whole
+ * question tree ("How do people book it?") instead of on a chooser card's
+ * answer, so it stays a page of its own rather than a redirect.
+ */
+export default async function NewBooking({ searchParams }: { searchParams: Promise<Search> }) {
+  const kind = one((await searchParams).kind);
+  if (isRouteKind(kind)) redirect(`/catalog/new/${kind}`);
+  if (kind === "events" || kind === "bookings") redirect(`/catalog/new?kind=${kind}`);
+  return <NewItemPage kind="booking" />;
 }

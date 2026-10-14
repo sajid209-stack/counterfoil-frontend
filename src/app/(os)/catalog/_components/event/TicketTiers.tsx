@@ -21,6 +21,10 @@ export interface FormTier {
   /** Which days it admits. Empty means every day, which is what every ticket
    *  on a one-day event means and what every ticket meant before days. */
   dayIds: string[];
+  /** What it includes, one line each. Optional so every row built before this
+   *  field existed still type-checks; a row without it leaves the ticket's
+   *  perks alone. */
+  perks?: string;
 }
 
 export const emptyTier = (name = ""): FormTier => ({
@@ -43,6 +47,20 @@ export const toTiers = (rows: FormTier[]): EventTier[] =>
     description: r.description.trim() || undefined,
     salesEnd: r.salesEnd ? `${r.salesEnd}T23:59:00+06:00` : undefined,
     dayIds: r.dayIds.length ? r.dayIds : undefined,
+    ...(r.perks !== undefined ? { perks: r.perks.split(/\r?\n/).map((x) => x.trim()).filter(Boolean) } : {}),
+  }));
+
+/** The form rows for tickets already saved, perks included. */
+export const tiersToForm = (tiers: EventTier[]): FormTier[] =>
+  tiers.map((x) => ({
+    id: x.id,
+    name: x.name,
+    price: String(x.price / 100),
+    quantity: String(x.quantity),
+    description: x.description ?? "",
+    salesEnd: x.salesEnd ? x.salesEnd.slice(0, 10) : "",
+    dayIds: x.dayIds ?? [],
+    perks: (x.perks ?? []).join("\n"),
   }));
 
 /**
@@ -273,6 +291,14 @@ export function TicketTiers({
                   />
                   <span className="text-xs text-muted">{t("tickets.salesEndHelp")}</span>
                 </div>
+                <FormField
+                  label={t("tickets.perks")}
+                  variant="textarea"
+                  placeholder={t("tickets.perksPlaceholder")}
+                  help={t("tickets.perksHelp")}
+                  value={r.perks ?? ""}
+                  onChange={(e) => patch(r.id, { perks: e.target.value })}
+                />
                 <FormField
                   label={t("tickets.description")}
                   placeholder={t("tickets.descriptionPlaceholder")}

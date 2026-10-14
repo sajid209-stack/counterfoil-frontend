@@ -31,6 +31,7 @@ export * from "./loyalty";
 export * from "./holds";
 export * from "./inventory";
 export * from "./events";
+export * from "./eventTickets";
 export * from "./notifications";
 export * from "./accessPolicy";
 export * from "./paymentSettings";

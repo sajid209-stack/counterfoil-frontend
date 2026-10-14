@@ -35,8 +35,12 @@ export function QuickAddSheet({
   product,
   onClose,
   onAdded,
+  hideDetails = false,
 }: {
   product: Product;
+  /** Drop the "See details" link: used where the sheet opens ON the item's own
+   *  page, where the link would lead back to where the guest already is. */
+  hideDetails?: boolean;
   /** Closing without adding. */
   onClose: () => void;
   /** An add from the sheet: the parent closes it and confirms. */
@@ -194,17 +198,20 @@ export function QuickAddSheet({
               <X size={20} strokeWidth={1.75} aria-hidden />
             </button>
           </div>
-          <div className="px-section pb-inline">
-            {flow.mode === "preview" ? (
-              <button type="button" onClick={() => flow.goProduct(product.id)} className={detailsCls}>
-                {detailsInner}
-              </button>
-            ) : (
-              <Link href={`/s/${flow.storefront.slug}/${flow.slugs[product.id]}`} className={detailsCls}>
-                {detailsInner}
-              </Link>
-            )}
-          </div>
+          {!hideDetails && (
+            <div className="px-section pb-inline">
+              {flow.mode === "preview" ? (
+                <button type="button" onClick={() => flow.goProduct(product.id)} className={detailsCls}>
+                  {detailsInner}
+                </button>
+              ) : (
+                <Link href={`/s/${flow.storefront.slug}/${flow.slugs[product.id]}`} className={detailsCls}>
+                  {detailsInner}
+                </Link>
+              )}
+            </div>
+          )}
+          {hideDetails && <div className="pb-tight" />}
         </div>
 
         <BookingPicker product={product} sheet={hooks} />

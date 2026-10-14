@@ -172,7 +172,8 @@
     "entry": "প্রবেশের টিকিট",
     "timed": "ট্যুর, শো ও ক্লাস",
     "space": "কোর্ট ও মাঠ",
-    "packs": "পাস ও বান্ডেল"
+    "packs": "পাস ও বান্ডেল",
+    "events": "ইভেন্ট"
   },
   "know": {
     "title": "জেনে রাখুন",
@@ -222,5 +223,30 @@
     "counterfoilLine": "{venue}-এর বুকিং কাউন্টারফয়েল দিয়ে হয়।",
     "counterfoilPrivacy": "কাউন্টারফয়েলের গোপনীয়তা নীতি",
     "counterfoilTerms": "কাউন্টারফয়েলের শর্ত"
-  }
+  },
+  "backToItem": "{name}-এ ফিরে যান",
+  "moreAt": "{venue}-এ আরও দেখুন",
+  "itemMissingTitle": "এই পেজটি পাওয়া যাচ্ছে না",
+  "itemMissingBody": "লিংকটি বদলে যেতে পারে, অথবা এটি এখন বিক্রি হচ্ছে না।",
+  "event": {
+    "dayLabel": "দিন বেছে নিন",
+    "dayN": "দিন {n}",
+    "admitsAll": "সব {count} দিনই ঢোকা যাবে",
+    "admitsOn": "{days} ঢোকা যাবে",
+    "saves": "{amount} সাশ্রয়",
+    "soldOut": "বিক্রি শেষ",
+    "salesEnded": "বিক্রি বন্ধ হয়ে গেছে",
+    "left": "আর {count}টি আছে"
+  },
+  "page": {
+    "highlights": "মূল আকর্ষণ",
+    "included": "প্রতিটি টিকিটে কী কী আছে",
+    "gallery": "ছবি",
+    "video": "ভিডিও",
+    "playVideo": "ভিডিও চালান",
+    "faq": "প্রশ্ন ও উত্তর",
+    "getTickets": "টিকিট নিন",
+    "photoOf": "ছবি {n}/{total}"
+  },
+  "editorLinkOnlyNote": "যেসব আইটেম শুধু নিজের লিংকে বিক্রি হয়, সেগুলো এই পেজে দেখানো হয় না।"
 }

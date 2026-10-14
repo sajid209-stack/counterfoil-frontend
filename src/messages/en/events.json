@@ -177,7 +177,10 @@
       "saves": "Save {amount}",
       "dayNamed": "{name} — {day}"
     },
-    "potentialNoCapacity": "Add how many to sell to see how much you could earn"
+    "potentialNoCapacity": "Add how many to sell to see how much you could earn",
+    "perks": "What it includes",
+    "perksPlaceholder": "One on each line, for example: Front rows",
+    "perksHelp": "Shown on the page under the ticket. Write one thing on each line."
   },
   "error": {
     "title": "Enter a name for the event.",

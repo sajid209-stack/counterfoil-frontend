@@ -471,8 +471,8 @@
     "left": "{count} left",
     "runsDays": "runs {count} days",
     "pickTickets": "Choose tickets",
-    "summary": "{count} tickets",
-    "add": "Add {count} tickets"
+    "summary": "{count, plural, one {# ticket} other {# tickets}}",
+    "add": "{count, plural, one {Add # ticket} other {Add # tickets}}"
   },
   "tillSettings": {
     "title": "Display & language",
