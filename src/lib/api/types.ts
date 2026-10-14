@@ -465,12 +465,21 @@ export interface Counter {
 // ── Role ───────────────────────────────────────────────────────────────────
 export type Permission = string; // tighten to a union at the Roles screen
 
+/** A counter action's access: hidden, asked of a manager, or done on the spot
+ *  (a refund still stops at the role's refundLimit and becomes a request). */
+export type CounterActionMode = "off" | "request" | "direct";
+
 export interface Role {
   id: ID;
   name: string;
   permissions: Permission[];
   refundLimit: Minor | null; // null = unlimited
   discountLimitPct: number | null; // integer percent 0–100; null = unlimited
+  /** What this role may do at the counter (POS) when a guest wants their money
+   *  back, or a booking moved. Absent reads as the behaviour before these
+   *  existed — see `counterAction` in lib/permissions. */
+  counterRefund?: CounterActionMode;
+  counterReschedule?: CounterActionMode;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }

@@ -184,22 +184,25 @@ const SPEC: SpecGroup[] = [
     title: "Interaction",
     note: "The fills and states of controls. States come from the family's own scale: a deeper step in light, a brighter one in dark. Nothing is a faded opacity.",
     rows: [
-      row("primary", "ember-solid", "bg-ember-solid", "brand-500", "brand-400", "The primary fill. One per screen."),
-      row("primary-foreground", "on-solid", "text-on-solid", "white", "neutral-950", "Text on a primary, destructive, success or marketplace fill."),
-      row("primary-hover", "ember-hover", "bg-ember-hover", "brand-600", "brand-300", "Primary, pointer over."),
-      row("primary-active", "ember-active", "bg-ember-active", "brand-700", "brand-500", "Primary, pressed."),
+      row("primary", "ember-solid", "bg-ember-solid", "brand-500", "brand-500", "The primary fill. One per screen. The same orange in both modes."),
+      row("primary-foreground", "on-solid", "text-on-solid", "white", "white", "Text on every filled button, badge and mark: white in light and in dark."),
+      row("primary-hover", "ember-hover", "bg-ember-hover", "brand-600", "brand-600", "Primary, pointer over."),
+      row("primary-active", "ember-active", "bg-ember-active", "brand-700", "brand-700", "Primary, pressed."),
       row("primary-disabled", "ember-disabled", "bg-ember-disabled", "brand-100 @ 60%", "brand-900 @ 40%", "Primary, not available. Text is text-faint."), // ds-exception: documents the faint token, a name in a table and a labelled sample, not live text
-      row("secondary", "subtle", "bg-subtle", "neutral-100", "neutral-900", "A secondary button fill. Text is secondary-foreground."),
-      row("secondary-hover", "secondary-hover", "bg-secondary-hover", "neutral-200", "neutral-800", "Secondary, pointer over."),
-      row("secondary-active", "secondary-active", "bg-secondary-active", "neutral-300", "neutral-700", "Secondary, pressed."),
-      row("destructive", "danger-solid", "bg-danger-solid", "red-600", "red-500", "The destructive fill: delete, refund, cancel."),
-      row("destructive-hover", "danger-hover", "bg-danger-hover", "red-700", "red-400", "Destructive, pointer over."),
-      row("destructive-active", "danger-active", "bg-danger-active", "red-800", "red-600", "Destructive, pressed."),
-      row("destructive-disabled", "danger-disabled", "bg-danger-disabled", "red-100 @ 60%", "red-900 @ 40%", "Destructive, not available."),
+      row("secondary", "btn-secondary", "bg-btn-secondary", "white", "neutral-800", "The secondary button: a white control. Text is foreground; the edge is secondary-line; it carries shadow-sm."),
+      row("secondary-line", "btn-secondary-line", "border-btn-secondary-line", "neutral-300", "neutral-700", "The firm edge of a secondary button."),
+      row("secondary-hover", "btn-secondary-hover", "bg-btn-secondary-hover", "neutral-100", "neutral-700", "Secondary, pointer over."),
+      row("secondary-active", "btn-secondary-active", "bg-btn-secondary-active", "neutral-200", "neutral-600", "Secondary, pressed."),
+      row("destructive", "danger-soft", "bg-danger-soft", "red-50", "red-950", "The destructive button: a soft red, with text-danger-soft-fg (red-800 / red-200) and border-danger-line. Delete, refund, cancel."),
+      row("destructive-hover", "danger-soft-hover", "bg-danger-soft-hover", "red-100", "red-900", "Destructive, pointer over."),
+      row("destructive-active", "danger-soft-active", "bg-danger-soft-active", "red-200", "red-800", "Destructive, pressed."),
+      row("solid red (mark)", "danger-solid", "bg-danger-solid", "red-600", "red-600", "A loud red mark with text-on-solid: a verdict, a badge, a closed session. Not a button."),
+      row("solid red hover", "danger-hover", "bg-danger-hover", "red-700", "red-700", "Hover of a solid red mark (pressed is danger-active, red-800)."),
+      row("solid red disabled", "danger-disabled", "bg-danger-disabled", "red-100 @ 60%", "red-900 @ 40%", "A disabled solid-red mark. The destructive button itself fades to half strength."),
       row("accent", "ember-wash", "bg-ember-wash", "brand-50", "brand-950", "The accent fill, with text-brand-foreground on it."),
       row("ring, focus-ring", "ring", "ring-ring", "brand-500", "brand-400", "The focus ring, one for every control in both products."),
-      row("success (solid)", "success-solid", "bg-success-solid", "green-700", "green-500", "A confirmed fill, with text-on-solid on it."),
-      row("marketplace (solid)", "market-solid", "bg-market-solid", "blue-700", "blue-500", "The marketplace badge, with text-on-solid on it."),
+      row("success (solid)", "success-solid", "bg-success-solid", "green-700", "green-700", "A confirmed fill, with white text-on-solid on it."),
+      row("marketplace (solid)", "market-solid", "bg-market-solid", "blue-700", "blue-700", "The marketplace badge, with white text-on-solid on it."),
     ],
   },
   {
@@ -313,34 +316,35 @@ interface Family {
 const FAMILIES: Family[] = [
   {
     name: "Primary",
-    note: "The brand fill. White on it is 3.50:1 in light: AA Large / UI, accepted for controls and never for body text. In dark the fill lifts to brand-400 and the text turns to neutral-950.",
+    note: "The brand fill. White on it is 3.50:1 in both modes: AA Large / UI, accepted for controls and never for body text. Dark keeps the same orange and the same white text; hover and pressed darken to brand-600 and brand-700.",
     states: [
-      { state: "Default", token: "--color-ember-solid", l: "brand-500", d: "brand-400", text: "--color-on-solid" },
-      { state: "Hover", token: "--color-ember-hover", l: "brand-600", d: "brand-300", text: "--color-on-solid" },
-      { state: "Active", token: "--color-ember-active", l: "brand-700", d: "brand-500", text: "--color-on-solid" },
+      { state: "Default", token: "--color-ember-solid", l: "brand-500", d: "brand-500", text: "--color-on-solid" },
+      { state: "Hover", token: "--color-ember-hover", l: "brand-600", d: "brand-600", text: "--color-on-solid" },
+      { state: "Active", token: "--color-ember-active", l: "brand-700", d: "brand-700", text: "--color-on-solid" },
       { state: "Disabled", token: "--color-ember-disabled", l: "brand-100 @ 60%", d: "brand-900 @ 40%", text: "--color-faint" },
       { state: "Focus ring", token: "--color-ring", l: "brand-500", d: "brand-400", ring: true },
     ],
   },
   {
     name: "Secondary",
-    note: "A neutral-100 fill with secondary-foreground text. No opacity hover: each state is its own step. Disabled keeps the fill and fades the whole control to half strength.",
+    note: "A white control with a firm neutral-300 edge and a small shadow, so it stands off the warm page and off a white card. Text is foreground (16.09:1 on white). In dark it is neutral-800 with a neutral-700 edge. Each state is its own step.",
     states: [
-      { state: "Default", token: "--color-subtle", l: "neutral-100", d: "neutral-900", text: "--color-fg-secondary" },
-      { state: "Hover", token: "--color-secondary-hover", l: "neutral-200", d: "neutral-800", text: "--color-fg" },
-      { state: "Active", token: "--color-secondary-active", l: "neutral-300", d: "neutral-700", text: "--color-fg" },
-      { state: "Disabled", token: "--color-subtle", l: "neutral-100", d: "neutral-900", text: "--color-fg-secondary", opacity: 0.5 },
+      { state: "Default", token: "--color-btn-secondary", l: "white", d: "neutral-800", text: "--color-fg" },
+      { state: "Edge", token: "--color-btn-secondary-line", l: "neutral-300", d: "neutral-700", text: "--color-fg" },
+      { state: "Hover", token: "--color-btn-secondary-hover", l: "neutral-100", d: "neutral-700", text: "--color-fg" },
+      { state: "Active", token: "--color-btn-secondary-active", l: "neutral-200", d: "neutral-600", text: "--color-fg" },
       { state: "Focus ring", token: "--color-ring", l: "brand-500", d: "brand-400", ring: true },
     ],
   },
   {
     name: "Destructive",
-    note: "red-600 with white text in light, red-500 with neutral-950 in dark. The focus ring is the same ember ring as every other control.",
+    note: "A soft red, never a solid one that could pass for the orange primary: red-50 with red-800 text and a red-200 edge in light; red-950 with red-200 text and a red-900 edge in dark. Disabled fades the whole control to half strength.",
     states: [
-      { state: "Default", token: "--color-danger-solid", l: "red-600", d: "red-500", text: "--color-on-solid" },
-      { state: "Hover", token: "--color-danger-hover", l: "red-700", d: "red-400", text: "--color-on-solid" },
-      { state: "Active", token: "--color-danger-active", l: "red-800", d: "red-600", text: "--color-on-solid" },
-      { state: "Disabled", token: "--color-danger-disabled", l: "red-100 @ 60%", d: "red-900 @ 40%", text: "--color-faint" },
+      { state: "Default", token: "--color-danger-soft", l: "red-50", d: "red-950", text: "--color-danger-soft-fg" },
+      { state: "Edge", token: "--color-danger-line", l: "red-200", d: "red-900", text: "--color-danger" },
+      { state: "Hover", token: "--color-danger-soft-hover", l: "red-100", d: "red-900", text: "--color-danger-soft-fg" },
+      { state: "Active", token: "--color-danger-soft-active", l: "red-200", d: "red-800", text: "--color-danger-soft-fg" },
+      { state: "Disabled", token: "--color-danger-soft", l: "red-50", d: "red-950", text: "--color-danger-soft-fg", opacity: 0.5 },
       { state: "Focus ring", token: "--color-ring", l: "brand-500", d: "brand-400", ring: true },
     ],
   },
@@ -555,9 +559,10 @@ const CONTENT_PAIRS: PairDef[] = [
 ];
 
 const COMPONENT_PAIRS: PairDef[] = [
-  { label: "primary-foreground on primary", fg: "--color-on-solid", bg: "--color-ember-solid", note: `White on ${ACCENT_HEX} is 3.50:1 in light: AA Large / UI. Accepted for UI controls only, never for body text.` },
-  { label: "secondary-foreground on secondary", fg: "--color-fg-secondary", bg: "--color-subtle" },
-  { label: "destructive-foreground on destructive", fg: "--color-on-solid", bg: "--color-danger-solid" },
+  { label: "primary-foreground on primary", fg: "--color-on-solid", bg: "--color-ember-solid", note: `White on ${ACCENT_HEX} is 3.50:1 in both modes: AA Large / UI. Accepted for UI controls only, never for body text.` },
+  { label: "foreground on secondary button", fg: "--color-fg", bg: "--color-btn-secondary" },
+  { label: "destructive-foreground on destructive button", fg: "--color-danger-soft-fg", bg: "--color-danger-soft" },
+  { label: "on-solid on solid red (mark)", fg: "--color-on-solid", bg: "--color-danger-solid" },
   { label: "accent-foreground on accent", fg: "--color-brand-foreground", bg: "--color-ember-wash" },
   { label: "on-solid on success", fg: "--color-on-solid", bg: "--color-success-solid" },
   { label: "on-solid on marketplace", fg: "--color-on-solid", bg: "--color-market-solid" },
@@ -650,7 +655,7 @@ export function ColourSection() {
       </DocSection>
 
       <DocSection id="states" title="Component state tokens">
-        <P>Primary, secondary and destructive, each through default, hover, active, disabled and the focus ring, in light and dark. A state is the next step of the same scale: it never fades the fill with opacity.</P>
+        <P>Primary, secondary and destructive, each through default, hover, active, disabled and the focus ring, in light and dark. Primary is white on orange, secondary a white control with an edge, destructive a soft red. A state is the next step of the same scale: it never fades the fill with opacity.</P>
         {FAMILIES.map((f) => (
           <StateFamily key={f.name} f={f} />
         ))}

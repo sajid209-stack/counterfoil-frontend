@@ -153,7 +153,7 @@ export default function MyProfilePage() {
             {() => (
               <Link
                 href="/settings/security"
-                className="inline-flex min-h-11 items-center gap-tight rounded-control border border-line px-comfortable text-sm font-medium transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
+                className="inline-flex min-h-11 items-center gap-tight rounded-control px-comfortable text-sm font-medium transition-colors duration-quick md:min-h-9 border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active"
               >
                 <ShieldCheck size={14} strokeWidth={1.5} aria-hidden />
                 {t("profile.openSecurity")}

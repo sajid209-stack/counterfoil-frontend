@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Mail, MapPin, Phone, ShoppingBag } from "lucide-react";
 import { LogoMark } from "@/components/ui";
+import { useApiQuery } from "@/lib/useApi";
+import { getPrivacySettings } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import type { AccentColor, Location, Storefront } from "@/lib/api";
 import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
@@ -74,6 +76,9 @@ export function StorefrontChrome({
   const flow = useStorefrontFlow();
   const preview = flow.mode === "preview";
   const slug = storefront.slug;
+  const privacyQ = useApiQuery(() => getPrivacySettings(), []);
+  // The owner switches this link on in Settings → Privacy policy.
+  const showPrivacy = !!privacyQ.data?.showInFooter;
   const mark = initials(location.name);
 
   const brand = (
@@ -217,6 +222,19 @@ export function StorefrontChrome({
           <div className={cn(WRAP, "flex items-center gap-tight py-section text-xs text-muted")}>
             <LogoMark size={16} />
             {poweredBy}
+            {showPrivacy &&
+              (preview ? (
+                <span className="ml-auto inline-flex min-h-11 items-center text-brand-foreground underline underline-offset-4 sm:min-h-0">
+                  {t("footer.privacy")}
+                </span>
+              ) : (
+                <Link
+                  href={`/s/${slug}/privacy`}
+                  className="ml-auto inline-flex min-h-11 items-center text-brand-foreground underline-offset-4 hover:underline sm:min-h-0"
+                >
+                  {t("footer.privacy")}
+                </Link>
+              ))}
           </div>
         </div>
       </footer>

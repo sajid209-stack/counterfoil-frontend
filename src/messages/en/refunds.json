@@ -1,6 +1,6 @@
 {
-  "title": "{count, plural, one {# refund request from the counter} other {# refund requests from the counter}}",
-  "lead": "Check each one. Refunding gives the money back and puts the slot back on sale.",
+  "title": "{count, plural, one {# request from the counter} other {# requests from the counter}}",
+  "lead": "Check each one. A refund gives the money back and puts the slot back on sale. A move changes the day or time.",
   "walkIn": "Walk-in",
   "reasons": {
     "customer_cancelled": "Guest cancelled",
@@ -22,5 +22,26 @@
   "declineNoteRequired": "Say why, so the counter can tell the guest.",
   "declined": "Refund declined. The counter can see why.",
   "cancel": "Cancel",
-  "manager": "Manager"
+  "manager": "Manager",
+  "kindRefund": "Refund",
+  "kindMove": "Move",
+  "moveFrom": "Now",
+  "moveTo": "Wants",
+  "moveWhen": "{day} · {time}",
+  "approveMove": "Move it",
+  "approveMoveTitle": "Move this booking?",
+  "approveMoveBody": "{what} goes from {from} to {to}. We check the place is still free first.",
+  "movedOk": "Moved to {to}.",
+  "moveDeclineTitle": "Don't move this booking?",
+  "moveDeclined": "Move refused. The counter can see why.",
+  "moveWaiting": "No reason given",
+  "people": "{count, plural, one {# person} other {# people}}",
+  "moveReasons": {
+    "customer_asked": "Guest asked",
+    "weather": "Bad weather",
+    "venue_problem": "Problem at our venue",
+    "double_booked": "Booked twice",
+    "other": "Something else"
+  },
+  "moveDeclinePlaceholder": "e.g. That lane is booked for an event"
 }

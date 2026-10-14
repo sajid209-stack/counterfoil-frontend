@@ -162,7 +162,7 @@ export function CounterPicker({ saleCount }: { saleCount: number }) {
         title={t("counterBusyTitle")}
         footer={
           <>
-            <button type="button" onClick={() => setBlocked(null)} className="flex h-12 items-center rounded-full border-2 border-line bg-card px-comfortable text-md font-semibold text-fg">
+            <button type="button" onClick={() => setBlocked(null)} className="flex h-12 items-center rounded-full px-comfortable text-md font-semibold border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active">
               {t("close")}
             </button>
             <button type="button" onClick={() => { setBlocked(null); router.push("/pos/cart"); }} className="flex h-12 items-center rounded-full bg-ember-solid px-comfortable text-md font-semibold text-on-solid">

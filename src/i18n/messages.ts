@@ -8,7 +8,7 @@ export const NAMESPACES = [
   "common", "nav", "enums", "errors",
   "auth", "dashboard", "calendar", "customers",
   "orders", "analytics", "products", "resources",
-  "settings", "profile", "pos", "sell", "scan", "checkin", "shift", "quickpass", "schedule",
+  "settings", "profile", "pos", "sell", "scan", "mysales", "checkin", "shift", "quickpass", "schedule",
   "moneysetup", "seatmaps", "promotions", "ticket", "tickets", "pricing", "bookingRules",
   "activity", "memberships", "loyalty", "holds", "events", "eventPage", "storefront", "catalog", "inventory", "marketplaces", "behaviour", "finances", "money", "refunds", "expenses",
 ] as const;

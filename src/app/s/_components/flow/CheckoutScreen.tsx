@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Lock } from "lucide-react";
 import { Checkbox, Notice, Radio } from "@/components/ui";
+import { useApiQuery } from "@/lib/useApi";
 import { cn } from "@/lib/cn";
-import { checkout as apiCheckout, type Order, type PaymentMethod, type Ticket } from "@/lib/api";
+import { checkout as apiCheckout, getPrivacySettings, type Order, type PaymentMethod, type Ticket } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { peekPaymentSettings } from "@/lib/api/paymentSettings";
 import { formatClock, formatDay, formatMoney } from "@/lib/format";
@@ -54,6 +55,8 @@ export function CheckoutScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [paying, setPaying] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const privacyQ = useApiQuery(() => getPrivacySettings(), []);
+  const showPrivacyLine = !!privacyQ.data?.showAtCheckout;
 
   const onlineMethods = peekPaymentSettings()
     .methods.filter((m) => m.enabled && (m.method === "bkash" || m.method === "bangla_qr" || m.method === "card_terminal"))
@@ -255,6 +258,25 @@ export function CheckoutScreen() {
           <section className={card}>
             <Checkbox checked={agreed} onCheckedChange={setAgreed} label={t("checkout.terms")} />
             {errors.terms && <p className="mt-tight text-base font-medium text-danger">{errors.terms}</p>}
+            {showPrivacyLine && (
+              <p className="mt-section text-base text-muted">
+                {t.rich("checkout.privacyLine", {
+                  link: (chunks) =>
+                    flow.mode === "live" ? (
+                      <a
+                        href={`/s/${flow.storefront.slug}/privacy`}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="text-brand-foreground underline underline-offset-4"
+                      >
+                        {chunks}
+                      </a>
+                    ) : (
+                      <span className="text-brand-foreground underline underline-offset-4">{chunks}</span>
+                    ),
+                })}
+              </p>
+            )}
           </section>
         </div>
 

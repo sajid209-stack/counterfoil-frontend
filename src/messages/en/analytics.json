@@ -154,7 +154,8 @@
     "sales": "Sales",
     "visitors": "Visitors",
     "timing": "Timing",
-    "vat": "VAT"
+    "vat": "VAT",
+    "split": "Sales by channel"
   },
   "info": {
     "label": "What {title} counts",
@@ -163,7 +164,6 @@
     "tickets": "Revenue by ticket type: the price tier a ticket was sold under, such as Adult or Child, shown as booking · tier. After discounts and refunds.\nThe top 10 are listed. Everything else, including shop items and add-ons, is in Other. Tickets sold are net of refunds.",
     "channels": "Revenue by where the order came from: at the counter, online on your own site, or through a marketplace. After discounts and refunds.\nOver time shows each one on its own small chart, all on the same scale.",
     "pay": "Money taken, by how the guest paid, on the day it was paid. Failed payments are not counted. This is money in, so it includes VAT and does not take refunds off; it can differ from revenue.\nOver time shows each method on its own small chart, all on the same scale.",
-    "counters": "Revenue by the counter that rang up the sale. Online and marketplace sales have no counter, so they get their own rows. A counter sale where no counter was recorded is shown as Counter, not recorded.",
     "visitors": "Guests who were booked to come, by the day and hour of their time slot. Every guest in a booking's party counts. Tickets that need no booking are not counted. The total is the Guests figure at the top.",
     "checkins": "Guests checked in, placed on the day and hour of the time slot they booked, because a booking records how many arrived, not when.\n\"Came\" is checked-in guests out of guests who were due: those whose time has started, or who have already arrived. A party of 4 with 3 checked in counts as 3.",
     "customers": "Customers with a name on their order, each counted once, on the day of the first order they made in these dates. New means that was their first order here. Returning means they had ordered before these dates.\nSales with no name are not counted.",
@@ -171,7 +171,10 @@
     "busy": "Guests booked to come, by weekday and hour of their time slot, added up over these dates. It shows this period only, not the comparison.",
     "timeslots": "Each row is a booking that sells time slots, such as a show, tour, field or lane. Each column is a start time someone booked. The colour is guests booked, added up over these dates; empty means none.\nThe tooltip says how full that time was: places taken out of places offered. A field or lane counts as one place per start time. Times nobody booked have no column.",
     "lead": "How many days before the visit the order was made, for orders that include a booking. The dashed outline is the same bucket in the comparison dates.",
-    "full": "Places sold out of places on offer, for each booking that has a schedule, over these dates. The tick is the same booking in the comparison dates."
+    "full": "Places sold out of places on offer, for each booking that has a schedule, over these dates. The tick is the same booking in the comparison dates.",
+    "splitCounters": "Sales rung up at each physical counter. Each bar is that counter's share of all counter sales. A sale with no counter recorded shows as Counter, not recorded.",
+    "splitOnline": "Sales made on your online storefront, not through a marketplace. Orders don't record which storefront page was used, so this shows the top 3 bookings sold online.",
+    "splitMarket": "Sales from marketplaces such as Viator or Klook. Commission is what each marketplace took, as saved on the order when it was sold. You keep is sales less commission."
   },
   "tickets": {
     "title": "Which ticket types sell?",
@@ -179,12 +182,8 @@
     "empty": "No tickets sold in these dates."
   },
   "counters": {
-    "title": "Which counters sell most?",
-    "online": "Online",
-    "marketplace": "Marketplaces",
     "unassigned": "Counter, not recorded",
-    "noSales": "No sales",
-    "empty": "No sales in these dates."
+    "noSales": "No sales"
   },
   "visitors": {
     "title": "Visitors over time",
@@ -238,5 +237,16 @@
   "card": {
     "show": "Show",
     "hide": "Hide"
+  },
+  "split": {
+    "counters": "Counters",
+    "online": "Online storefront",
+    "market": "Marketplaces",
+    "average": "{amount} per order",
+    "none": "No sales in this period",
+    "empty": "Nothing to show yet.",
+    "topBookings": "Top 3 bookings sold online",
+    "cut": "{orders} · Commission {commission} · You keep {kept}",
+    "cutTotal": "Commission {commission} · You keep {kept}"
   }
 }

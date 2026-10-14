@@ -3,20 +3,15 @@
  * rail, its nested rows, the phone's menu sheet, the Settings column and the
  * till's tab bar and rail.
  *
- * The accent surface alone (brand-50 on a white rail) is about 1.03:1 against
- * the rail — a tint you have to look for, which is the complaint it answers. So
- * the current page is said three ways at once, every one of them a token:
- *  - the accent surface (`ember-wash`) with a 1px `ember-line` edge, so the row
- *    has a shape even where the fill is faint;
- *  - its label in `brand-foreground` at 600, so it reads by weight as well as
- *    colour (6.2:1 light, 9.6:1 dark);
- *  - its icon in the brand orange itself.
- * Hover stays a neutral fill, so hovering a row never looks like choosing it.
+ * Shopify's quiet recipe, all neutral: a grey fill one step darker than the
+ * hover wash (`secondary-hover`), the label in full ink at 600 and the icon in
+ * full ink. No brand colour and no edge — the weight and the darker fill say
+ * "here" without pulling the eye off the page.
  */
-export const NAV_SELECTED = "bg-ember-wash text-brand-foreground font-semibold ring-1 ring-inset ring-ember-line";
+export const NAV_SELECTED = "bg-secondary-hover text-fg font-semibold";
 
 /** The icon on the selected row. */
-export const NAV_SELECTED_ICON = "text-ember";
+export const NAV_SELECTED_ICON = "text-fg";
 
 /** A row that is not the page you are on. */
 export const NAV_IDLE = "text-muted hover:bg-muted-wash hover:text-fg";

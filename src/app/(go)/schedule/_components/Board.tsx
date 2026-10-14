@@ -2,9 +2,10 @@
 
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Lock, Plus, RotateCcw, Wrench } from "lucide-react";
+import { CalendarClock, Check, Lock, Plus, RotateCcw, Wrench } from "lucide-react";
 import { MarketBadge } from "@/components/ui";
 import { pendingRefundFor } from "@/lib/api/refundRequests";
+import { pendingRescheduleFor, useRescheduleVersion } from "@/lib/api/rescheduleRequests";
 import { cn } from "@/lib/cn";
 import { formatClock, formatClockMin, formatPriceShort } from "@/lib/format";
 import { type Block, type Column, type Group } from "../_lib/board";
@@ -410,6 +411,8 @@ function BlockView({
   const t = useTranslations("schedule");
   const place = column.kind === "unassigned" ? t("board.noPlace") : column.name;
   const tall = height >= 52;
+  // Re-draws the "Move asked" mark when a request is made, answered or taken back.
+  useRescheduleVersion();
   /* A small inset so two bookings back to back read as two, and a small
      corner — a calendar block, not a card. */
   // ds-exception: in-column layer z-3 (booked blocks) under the z-10 sticky gutter
@@ -421,13 +424,18 @@ function BlockView({
     /* A refund waiting for a manager is marked on the block, so whoever is on
        the counter next sees it before selling the hour on. */
     const refunding = !!pendingRefundFor(b.booking.id);
+    /* Likewise a move that has been asked for: the booking has not moved yet,
+       and the next person at the counter should know before they promise its
+       hour to somebody else. */
+    const moving = !refunding && !!pendingRescheduleFor(b.booking.id);
+    const asked = refunding ? t("refund.boardBadge") : moving ? t("refund.moveBoardBadge") : "";
     const src = b.source;
     const sold = src ? (src.reference ? t("board.bookedOnRef", { name: src.marketplaceName, reference: src.reference }) : t("board.bookedOn", { name: src.marketplaceName })) : "";
     return (
       <button
         type="button"
         onClick={() => onBooking(column, b)}
-        aria-label={`${t("board.bookedAria", { place, time: formatClockMin(b.start), who })}${src ? `, ${t("board.bookedOn", { name: src.marketplaceName })}` : ""}${refunding ? ` · ${t("refund.boardBadge")}` : ""}`}
+        aria-label={`${t("board.bookedAria", { place, time: formatClockMin(b.start), who })}${src ? `, ${t("board.bookedOn", { name: src.marketplaceName })}` : ""}${asked ? ` · ${asked}` : ""}`}
         title={sold || undefined}
         className={cn(
           /* The frame is its own container, so the badge can ask how wide the
@@ -457,11 +465,12 @@ function BlockView({
           )}
           {b.arrived && <Check size={13} strokeWidth={2.5} className="shrink-0 text-success" aria-hidden />}
           {refunding && <RotateCcw size={13} strokeWidth={2.5} className="shrink-0 text-warning" aria-hidden />}
+          {moving && <CalendarClock size={13} strokeWidth={2.5} className="shrink-0 text-warning" aria-hidden />}
           <span className="truncate">{who}</span>
         </span>
         {tall && (
-          refunding
-            ? <span className="block truncate text-sm font-semibold leading-tight text-warning">{t("refund.boardBadge")}</span>
+          asked
+            ? <span className="block truncate text-sm font-semibold leading-tight text-warning">{asked}</span>
             : <span className="block truncate text-sm leading-tight opacity-80">{b.product?.name ?? ""}</span>
         )}
       </button>

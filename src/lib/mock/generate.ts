@@ -90,11 +90,14 @@ const STATUS_WEIGHTS: [OrderStatus, number][] = [
 ];
 
 export function generateSales({
-  products, locations, staff, taxRatePct, reducedRatePct = 7.5, count = 150,
+  products, locations, staff, counters = [], taxRatePct, reducedRatePct = 7.5, count = 150,
 }: {
   products: Product[];
   locations: Location[];
   staff: Staff[];
+  /** Counters, so a counter sale says which desk took it. Chosen from the
+   *  order's number, never from `rand()`, so nothing else in the fixture moves. */
+  counters?: { id: string; locationId: string; status?: string }[];
   taxRatePct: number;
   reducedRatePct?: number;
   count?: number;
@@ -327,7 +330,16 @@ export function generateSales({
     orders.push({
       id: `ord_${seq}`, reference, status, channel,
       ...(source ? { source } : {}),
-      locationId: location.id, counterId: null, staffId: seller?.id ?? null,
+      locationId: location.id,
+      counterId: (() => {
+        if (channel !== "counter") return null;
+        const here = counters.filter((c) => c.locationId === location.id && c.status !== "archived");
+        if (!here.length) return null;
+        const own = seller ? here.filter((c) => seller.counterIds?.includes(c.id)) : [];
+        const pool = own.length ? own : here;
+        return pool[i % pool.length].id;
+      })(),
+      staffId: seller?.id ?? null,
       // Online sales always identify the buyer; at the counter most people
       // stay anonymous unless staff attached them (the POS customer chip).
       ...(() => {

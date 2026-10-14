@@ -24,8 +24,8 @@ export interface SegmentedOption {
  * The ARIA radio-group pattern: `role="radiogroup"` of `role="radio"` buttons,
  * roving tabindex (one tab stop; Tab leaves), and the arrow keys move AND
  * select, wrapping, with Home/End. The track is the sunken `subtle` fill and
- * the selected tile lifts to `card` with a shadow, so selection reads by
- * surface and weight rather than by colour alone.
+ * the selected option is the primary fill (#F94A00, white text) — it reads by
+ * fill as well as by aria-checked.
  */
 export function SegmentedControl({
   options,
@@ -105,7 +105,7 @@ export function SegmentedControl({
               // The option is the target, not the track: 44px on touch, denser from md.
               size === "sm" ? "h-11 text-sm md:h-8" : "h-11 text-base md:h-10",
               fullWidth && "flex-1",
-              on ? "bg-card text-fg shadow-sm ring-1 ring-inset ring-strong" : "text-muted hover:bg-secondary-hover hover:text-fg",
+              on ? "bg-ember-solid text-on-solid shadow-sm" : "text-fg-secondary hover:bg-secondary-hover hover:text-fg",
               "disabled:cursor-not-allowed disabled:opacity-50",
             )}
           >

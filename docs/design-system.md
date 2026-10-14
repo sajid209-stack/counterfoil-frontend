@@ -85,19 +85,23 @@ the fill.
 
 | Spec name | Token | Light | Dark |
 |---|---|---|---|
-| primary | `ember-solid` | brand-500 `#f94a00` | brand-400 |
-| primary-foreground | `on-solid` | white | neutral-950 |
-| primary-hover · active | `ember-hover` · `ember-active` | brand-600 · brand-700 | brand-300 · brand-500 |
+| primary | `ember-solid` | brand-500 `#f94a00` | brand-500 `#f94a00` |
+| primary-foreground | `on-solid` | white | white |
+| primary-hover · active | `ember-hover` · `ember-active` | brand-600 · brand-700 | brand-600 · brand-700 |
 | primary-disabled | `ember-disabled` | brand-100 at 60% | brand-900 at 40% |
-| secondary | `subtle`, with `fg-secondary` text | neutral-100 | neutral-900 |
-| secondary-hover · active | `secondary-hover` · `secondary-active` | neutral-200 · neutral-300 | neutral-800 · neutral-700 |
-| destructive | `danger-solid` | red-600 | red-500 |
-| destructive-hover · active | `danger-hover` · `danger-active` | red-700 · red-800 | red-400 · red-600 |
-| destructive-disabled | `danger-disabled` | red-100 at 60% | red-900 at 40% |
+| secondary (button) | `btn-secondary`, with `fg` text, `btn-secondary-line` edge, `shadow-sm` | white | neutral-800 |
+| secondary line | `btn-secondary-line` | neutral-300 | neutral-700 |
+| secondary-hover · active | `btn-secondary-hover` · `btn-secondary-active` | neutral-100 · neutral-200 | neutral-700 · neutral-600 |
+| secondary-hover · active (neutral fills: nav selected, segmented hover) | `secondary-hover` · `secondary-active` | neutral-200 · neutral-300 | neutral-800 · neutral-700 |
+| destructive (button) | `danger-soft`, with `danger` text and `danger-line` edge | red-50 | red-950 |
+| destructive-hover · active | `danger-soft-hover` · `danger-soft-active` | red-100 · red-200 | red-900 · red-800 |
+| solid red (marks only: verdicts, badges, closed sessions) | `danger-solid` | red-600 | red-600 |
+| solid red hover · active | `danger-hover` · `danger-active` | red-700 · red-800 | red-700 · red-800 |
+| solid red disabled | `danger-disabled` | red-100 at 60% | red-900 at 40% |
 | accent | `ember-wash`, with `brand-foreground` text | brand-50 | brand-950 |
 | ring, focus-ring | `ring` (= `ember`) | brand-500 | brand-400 |
-| confirmed fill | `success-solid` | green-700 | green-500 |
-| marketplace fill | `market-solid` | blue-700 | blue-500 |
+| confirmed fill | `success-solid` | green-700 | green-700 |
+| marketplace fill | `market-solid` | blue-700 | blue-700 |
 
 The accent mark `ember` (`bg-ember`, `text-ember`) is brand-500 in light and
 brand-400 in dark: marks, dots, stripes and the focus ring. A solid fill that
@@ -118,9 +122,14 @@ family, so every hue on a screen is a step of one of the six scales. Chart colou
 **Contrast is measured, not assumed.** Body text needs 4.5:1, large text (at
 least 18.66px bold, or 24px) 3:1, and UI marks and focus 3:1, in both modes. The
 WCAG level for a pair is AAA from 7:1, AA from 4.5:1, and AA Large / UI from
-3:1. White on `ember-solid` (`#f94a00`) is **3.50:1** in light: AA Large / UI,
-accepted for UI controls (buttons, chips, badges) and never for body text. In
-dark the fill is brand-400 with neutral-950 text, 7.1:1. Brand-coloured text at
+3:1. Text inside every filled button is white in both modes (owner decision,
+2026-10-13). White on `ember-solid` (`#f94a00`) is **3.50:1** in light and in
+dark: AA Large / UI, accepted for UI controls (buttons, chips, badges) and
+never for body text; hover (brand-600) is 4.64:1 and pressed (brand-700)
+6.71:1. A secondary button is `fg` on white, 16.09:1 (13.64:1 on hover). A
+destructive button's text is `danger-soft-fg`: red-800 on red-50 / 100 / 200
+(7.6 / 6.8 / 5.7:1) in light and red-200 on red-950 / 900 / 800 (11.2 / 6.9 /
+5.7:1) in dark, so every state clears 4.5:1. Solid red as a mark takes white at 4.83:1. Brand-coloured text at
 body size is `brand-foreground`, never `ember`. `faint` is only for disabled
 controls and placeholders, never content. The live matrix is at
 `/design-system/colour`.
@@ -266,8 +275,10 @@ own hover, focus-visible, pressed, disabled, loading, selected and invalid
 states. A page never restyles one with `className` for a different look; it
 picks a variant.
 
-- **Button** — `primary` (one per screen, `ember-solid`), `secondary` (neutral-100 fill,
-  `line` edge), `tertiary` (no fill), `destructive` (`danger-solid`), `link`.
+- **Button** — `primary` (one per screen, `ember-solid`), `secondary` (a white control: `fg`
+  text, `btn-secondary-line` edge, `shadow-sm`), `tertiary` (no fill),
+  `destructive` (a soft red: `danger-soft` fill, `danger` text, `danger-line`
+  edge), `link`.
   Sizes `sm` 36 / `md` 44 / `lg` 48, and `icon` (square). Radius is
   `rounded-control`, so it is a pill in Go without a per-call prop. Loading
   keeps the width and shows a spinner; disabled says why nearby.
@@ -276,13 +287,13 @@ picks a variant.
   a phone, 36px dense on a desktop; `line` edge, `ring` focus, `danger` edge and
   a sentence below when invalid; label above, help under, error replaces help.
 - **Checkbox / Radio / Switch** — one each. 44px target, 20px mark.
-- **SegmentedControl** — mutually exclusive views or modes (Today / This week).
+- **SegmentedControl** — mutually exclusive views or modes (Today / This week);
+  the selected option is the primary fill (`ember-solid`, white text).
 - **Tabs** — navigation between related content in one page.
 - **Navigation rows** (rail, Settings column, phone menu sheet, Go tab bar) — one
   definition in `components/ui/navStyles`. The current page is `NAV_SELECTED`:
-  `ember-wash` fill + 1px inset `ember-line` ring + semibold `brand-foreground`
-  label + `NAV_SELECTED_ICON` (`text-ember`); the fill alone is ~1.03:1 on a white
-  rail, so the ring and weight carry it. Other rows are `NAV_IDLE` (muted,
+  a neutral `secondary-hover` fill, semibold `fg` label and `NAV_SELECTED_ICON`
+  (`text-fg`), with no ring and no brand colour (Shopify's quiet recipe). Other rows are `NAV_IDLE` (muted,
   `muted-wash` hover).
   *Nested groups:* a parent with children shows them indented, label only, and only
   while you are inside that group. The current page carries the selected surface;
@@ -298,6 +309,14 @@ picks a variant.
 - **StatusPill** — sentence case on a soft tint, no dot, no border; the word
   carries the meaning.
 - **Card** — the one surface (`card-surface` = `rounded-card shadow-card`).
+- **DetailCard / FactGrid / TimelineCard** — the record page's cards. `DetailCard` is a
+  titled card (`text-md font-semibold`, optional actions, optional phone fold).
+  `FactGrid` is a label (`text-sm text-muted`) over value grid: `primary` values
+  `text-md font-semibold` for the few facts a page is opened for, `secondary`
+  `text-base`; an empty value reads "Not recorded"; mono only for identifiers.
+  `TimelineCard` / `ActivityList` is dated events (what happened, status, moment,
+  who or why). The ticket the guest holds is `TicketCard`, shared with the print
+  pages. See the Cards section of `/design-system`.
 - **DataTable** — 13px headers, 14px cells, 48px rows, `hairline` rows, sticky
   header, `aria-sort`, a two-line list on a phone.
 - **Modal / Sheet / ActionMenu / popovers** — `rounded-sheet` / `rounded-card`,
@@ -341,12 +360,12 @@ A one-off exception elsewhere is marked on its own line with
 `// ds-exception: <reason>`; a marker without a reason is itself an error.
 
 White on the primary fill is the Color System’s own position, not a leak:
-`ember-solid` is `#f94a00` (brand-500) and white on it is **3.50:1** in light:
+`ember-solid` is `#f94a00` (brand-500) and white on it is **3.50:1** in both modes:
 AA Large / UI (WCAG 1.4.11). It is accepted for UI controls (buttons, chips,
 badges, the selected state of a choice) and **never for body text**; text at
 body size in the brand colour is `brand-foreground` (brand-700, brand-300 in
-dark). In dark the fill is brand-400 and its text is neutral-950, 7.1:1, so the
-exception exists only in light. A label that has to be read at length is never
+dark). Dark keeps the same fill and the same white text, so the exception is
+the same in both modes. A label that has to be read at length is never
 put on the primary fill.
 
 ## 13. Enforcement

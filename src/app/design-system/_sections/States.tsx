@@ -177,7 +177,7 @@ function SegmentedStates() {
   const [b, setB] = useState("day");
   const opts = [{ value: "day", label: "Day" }, { value: "week", label: "Week" }, { value: "month", label: "Month" }];
   return (
-    <Block title="SegmentedControl option" note="One tab stop; arrow keys move and select. Selected is a raised card tile." cols="lg:grid-cols-4">
+    <Block title="SegmentedControl option" note="One tab stop; arrow keys move and select. Selected is the primary fill: ember-solid with white on-solid text." cols="lg:grid-cols-4">
       <Cell label="Rest + selected">
         <SegmentedControl aria-label="Rest" value={a} onChange={setA} options={opts} />
       </Cell>
@@ -251,11 +251,11 @@ function RailItem({ current, className, children }: { current?: boolean; classNa
       aria-current={current ? "page" : undefined}
       className={cn(
         "flex h-9 w-full items-center gap-comfortable rounded-control px-comfortable text-base font-medium transition-colors duration-quick",
-        current ? "bg-ember-wash text-brand-foreground" : "text-muted hover:bg-muted-wash hover:text-fg",
+        current ? "bg-secondary-hover font-semibold text-fg" : "text-muted hover:bg-muted-wash hover:text-fg",
         className,
       )}
     >
-      <ReceiptText size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", current && "text-ember")} />
+      <ReceiptText size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", current && "text-fg")} />
       {children}
     </button>
   );
@@ -263,7 +263,7 @@ function RailItem({ current, className, children }: { current?: boolean; classNa
 
 function RailStates() {
   return (
-    <Block title="Rail / nav item" note="The OS rail's row, drawn from the Sidebar's recipe. Current is the accent: an ember-wash fill, brand-foreground text and an ember icon — no border, no shadow. Hover is muted-wash." cols="lg:grid-cols-4">
+    <Block title="Rail / nav item" note="The OS rail's row, drawn from the Sidebar's recipe. Current is neutral, Shopify-style: a secondary-hover fill, semibold fg text and an fg icon — no ring, no brand colour. Hover is muted-wash." cols="lg:grid-cols-4">
       <Cell label="Rest">
         <RailItem>Orders</RailItem>
       </Cell>
@@ -376,7 +376,7 @@ const CHANGES: Array<{ state: string; what: React.ReactNode }> = [
     state: "Selected",
     what: (
       <>
-        Chip: <Code>ember-solid</Code> fill, <Code>on-solid</Code> text (white in light, neutral-950 in dark) and a check. SegmentedControl: a raised <Code>card</Code> tile with <Code>shadow-sm</Code>. ChoiceCard: a 2px ember ring and a check. Toggle button: a firmer edge or <Code>muted-wash</Code> fill with <Code>aria-pressed</Code>. Table row and rail row: the accent, <Code>ember-wash</Code> with <Code>brand-foreground</Code> text. Selection is never colour alone.
+        Chip: <Code>ember-solid</Code> fill, <Code>on-solid</Code> text (white in both modes) and a check. SegmentedControl: the primary fill, <Code>ember-solid</Code> with white <Code>on-solid</Code> text. Navigation item: a neutral <Code>secondary-hover</Code> fill with <Code>fg</Code> text in semibold. ChoiceCard: a 2px ember ring and a check. Toggle button: a firmer edge or <Code>muted-wash</Code> fill with <Code>aria-pressed</Code>. Table row: the accent, <Code>ember-wash</Code> with <Code>brand-foreground</Code> text. Selection is never colour alone.
       </>
     ),
   },

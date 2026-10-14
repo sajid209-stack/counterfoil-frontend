@@ -60,7 +60,7 @@ export function useOrderColumns(dir: Directory, labels: SalesLabels): Column<Ord
         /* Truncated, not wrapped: a long name stacked to four lines and set the
            height of every row beside it. The whole name is on hover and on the
            order itself. */
-        <span className={cn("block max-w-[11rem] truncate", !o.customerName && "text-muted")} title={o.customerName ?? undefined}>
+        <span className={cn("block max-w-[8rem] truncate", !o.customerName && "text-muted")} title={o.customerName ?? undefined}>
           {o.customerName ?? t("walkIn")}
         </span>
       ),
@@ -75,7 +75,7 @@ export function useOrderColumns(dir: Directory, labels: SalesLabels): Column<Ord
       render: (o) => {
         const where = o.source ? o.source.marketplaceName : labels.soldAt(o);
         return (
-          <span className="flex max-w-[11.5rem] items-center gap-inline whitespace-nowrap text-sm" title={where}>
+          <span className="flex max-w-[6.5rem] items-center gap-inline whitespace-nowrap text-sm" title={where}>
             {o.source && <MarketBadge id={o.source.marketplaceId} />}
             <span className="min-w-0 truncate">{where}</span>
           </span>
@@ -92,7 +92,7 @@ export function useOrderColumns(dir: Directory, labels: SalesLabels): Column<Ord
       key: "staff",
       header: t("colStaff"),
       sortable: true,
-      render: (o) => (o.staffId ? <span className="block max-w-[9rem] truncate text-sm" title={dir.staffName(o.staffId)}>{dir.staffName(o.staffId)}</span> : dash),
+      render: (o) => (o.staffId ? <span className="block max-w-[7.5rem] truncate text-sm" title={dir.staffName(o.staffId)}>{dir.staffName(o.staffId)}</span> : dash),
     },
     { key: "total", header: t("colTotal"), sortable: true, align: "right", mono: false, render: (o) => money(o, o.total) },
     { key: "tax", header: t("colTax"), sortable: true, align: "right", mono: false, render: (o) => money(o, o.taxTotal ?? 0) },

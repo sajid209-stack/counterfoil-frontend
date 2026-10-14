@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Check, Minus } from "lucide-react";
 import type { Role } from "@/lib/api";
 import { formatPriceShort } from "@/lib/format";
-import { PERMISSION_GROUPS, permissionKey } from "@/lib/permissions";
+import { PERMISSION_GROUPS, counterAction, permissionKey, type CounterAction } from "@/lib/permissions";
 import { SettingsSection } from "../../_components/SettingsKit";
 
 /** A permission the role does not have, or a limit on something it cannot do. */
@@ -56,6 +56,9 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
     ) : (
       formatPriceShort(r.refundLimit)
     );
+
+  /** At the counter, in the words the editor uses: what the role does, not a code. */
+  const atCounter = (r: Role, action: CounterAction) => t(`roles.compareMode_${counterAction(r, action)}`);
 
   return (
     <SettingsSection title={t("roles.compareTitle")} description={t("roles.compareDesc")}>
@@ -134,6 +137,29 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
               )}
             </tbody>
           ))}
+          <tbody>
+            <tr>
+              <th
+                scope="rowgroup"
+                colSpan={roles.length + 1}
+                className="px-card pb-inline pt-section text-left text-sm font-medium text-muted"
+              >
+                <span className={pinned}>{t("roles.counterTitle")}</span>
+              </th>
+            </tr>
+            {(["refund", "reschedule"] as const).map((action) => (
+              <tr key={action}>
+                <th scope="row" className={`px-card py-tight text-left font-normal text-fg ${pinned}`}>
+                  {t(action === "refund" ? "roles.counterRefundLabel" : "roles.counterMoveLabel")}
+                </th>
+                {roles.map((r) => (
+                  <td key={r.id} className="px-section py-tight text-center text-sm text-fg">
+                    {atCounter(r, action)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
     </SettingsSection>

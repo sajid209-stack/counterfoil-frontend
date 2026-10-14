@@ -31,7 +31,7 @@ export function LocaleToggle({ className }: { className?: string }) {
       onClick={() => setLocale(next)}
       title={`Switch to ${LOCALE_LABELS[next]}`}
       aria-label={`Switch to ${LOCALE_LABELS[next]}`}
-      className={`flex h-11 items-center gap-inline rounded-control border border-line bg-card px-comfortable text-sm text-muted transition-colors duration-quick hover:border-ember-line hover:text-fg active:bg-ember-wash ${className ?? ""}`}
+      className={`flex h-11 items-center gap-inline rounded-control border border-btn-secondary-line bg-btn-secondary px-comfortable text-sm text-fg shadow-sm transition-colors duration-quick hover:bg-btn-secondary-hover active:bg-btn-secondary-active ${className ?? ""}`}
     >
       <Languages size={16} strokeWidth={1.5} />
       <span className="font-medium">{LOCALE_LABELS[next]}</span>

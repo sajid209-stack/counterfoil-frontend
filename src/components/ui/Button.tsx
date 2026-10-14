@@ -44,29 +44,30 @@ const VARIANTS: Record<ButtonVariant, string> = {
   /* A neutral-100 fill with secondary-foreground text. The 1px line keeps it
      findable where the fill meets a fill of the same step (a dark card). */
   secondary:
-    "bg-subtle text-fg-secondary border border-line enabled:hover:bg-secondary-hover enabled:hover:text-fg enabled:active:bg-secondary-active",
+    "bg-btn-secondary text-fg border border-btn-secondary-line shadow-sm enabled:hover:bg-btn-secondary-hover enabled:active:bg-btn-secondary-active",
   tertiary:
     "bg-transparent text-fg enabled:hover:bg-muted-wash enabled:active:bg-secondary-hover",
   link: "bg-transparent text-brand-foreground underline underline-offset-2 enabled:hover:text-ember-hover",
+  /* A soft red: red-50 fill, red-700 text and a red-200 edge. A solid red
+     sat too close to the orange primary to read as a different action. */
   destructive:
-    "bg-danger-solid text-on-solid enabled:hover:bg-danger-hover enabled:active:bg-danger-active",
+    "bg-danger-soft text-danger-soft-fg border border-danger-line enabled:hover:bg-danger-soft-hover enabled:active:bg-danger-soft-active",
 };
 
 /* One disabled treatment per family. A solid becomes its own family's
    disabled tint (brand-100 at 60% / brand-900 at 40%, the same on red) with
    disabled-foreground text; everything else fades to half strength. In both
    cases the cursor says "not allowed" and the press feedback is gone. */
-const SOLID = new Set<ButtonVariant>(["primary", "destructive"]);
+const SOLID = new Set<ButtonVariant>(["primary"]);
 const DISABLED: Partial<Record<ButtonVariant, string>> = {
   primary: "disabled:bg-ember-disabled disabled:text-faint",
-  destructive: "disabled:bg-danger-disabled disabled:text-faint",
 };
 const DISABLED_SOFT = "disabled:opacity-50";
 
 /* A toggle button that is on. aria-pressed says it to assistive tech; this
    says it to the eye without relying on colour alone (a firmer edge/fill). */
 const SELECTED: Partial<Record<ButtonVariant, string>> = {
-  secondary: "border-strong bg-secondary-hover text-fg",
+  secondary: "border-strong bg-btn-secondary-hover text-fg",
   tertiary: "bg-muted-wash",
 };
 

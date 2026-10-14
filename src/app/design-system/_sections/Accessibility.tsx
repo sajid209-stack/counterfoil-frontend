@@ -65,9 +65,10 @@ export function AccessibilitySection() {
             { fg: "--color-fg", bg: "--color-card", label: "Body text", need: 4.5 },
             { fg: "--color-muted", bg: "--color-card", label: "Supporting text", need: 4.5 },
             { fg: "--color-brand-foreground", bg: "--color-card", label: "Links and brand text", need: 4.5 },
-            { fg: "--color-fg-secondary", bg: "--color-subtle", label: "Secondary button text", need: 4.5 },
-            { fg: "--color-on-solid", bg: "--color-ember-solid", label: "The primary button", need: 3, note: `White on ${ACCENT_HEX} is 3.50:1 in light: AA Large / UI, accepted for UI controls only and never for body text. In dark, neutral-950 on brand-400 is 7.1:1.` },
-            { fg: "--color-on-solid", bg: "--color-danger-solid", label: "The destructive button", need: 4.5 },
+            { fg: "--color-fg", bg: "--color-btn-secondary", label: "The secondary button (foreground on white)", need: 4.5, note: "16.09:1 on white in light; 10.22:1 on neutral-800 in dark. Hover (neutral-100) is 13.64:1." },
+            { fg: "--color-on-solid", bg: "--color-ember-solid", label: "The primary button", need: 3, note: `White on ${ACCENT_HEX} is 3.50:1 in light and in dark: AA Large / UI, accepted for UI controls only and never for body text. Hover (brand-600) is 4.64:1 and pressed (brand-700) 6.71:1.` },
+            { fg: "--color-danger-soft-fg", bg: "--color-danger-soft", label: "The destructive button (soft red)", need: 4.5, note: "Its text is danger-soft-fg: red-800 in light (7.6:1 at rest, 6.8 on hover, 5.7 pressed) and red-200 in dark (11.2, 6.9, 5.7). Every state clears 4.5:1." },
+            { fg: "--color-on-solid", bg: "--color-danger-solid", label: "A solid red mark (verdict, badge)", need: 4.5, note: "White on red-600 is 4.83:1. A mark, not a button." },
             { fg: "--color-ring", bg: "--color-card", label: "The focus ring", need: 3 },
           ]}
         />
@@ -94,11 +95,11 @@ export function AccessibilitySection() {
 
       <DocSection id="house-exceptions" title="House exceptions to the floors">
         <P>
-          The primary fill is <Code>ember-solid</Code>: {ACCENT_HEX} (brand-500) in light, brand-400 in dark. White on {ACCENT_HEX} is <strong className="font-semibold">3.50:1</strong>, which the Color System accepts for UI controls — buttons, chips and badges — as AA Large / UI (WCAG 1.4.11), and never for body text. In dark the fill lifts and its text turns to neutral-950, 7.1:1. Brand-coloured text at body size is <Code>brand-foreground</Code> (brand-700, brand-300 in dark), 4.5:1 or better on the card and on the accent surface.
+          The primary fill is <Code>ember-solid</Code>: {ACCENT_HEX} (brand-500) in light and in dark. White on {ACCENT_HEX} is <strong className="font-semibold">3.50:1</strong>, which the Color System accepts for UI controls — buttons, chips and badges — as AA Large / UI (WCAG 1.4.11), and never for body text. Text inside every filled button is white in both modes (owner decision, 2026-10-13); the success and marketplace fills keep green-700 (5.02:1) and blue-700 (6.70:1). Brand-coloured text at body size is <Code>brand-foreground</Code> (brand-700, brand-300 in dark), 4.5:1 or better on the card and on the accent surface.
         </P>
         <P>What is left is short, and each has a reason:</P>
         <ul className="flex max-w-prose list-disc flex-col gap-tight pl-major text-base text-fg marker:text-muted">
-          <li><strong className="font-semibold">White on {ACCENT_HEX} in light (3.50:1)</strong>: UI controls only, as above.</li>
+          <li><strong className="font-semibold">White on {ACCENT_HEX} in light and dark (3.50:1)</strong>: UI controls only, as above.</li>
           <li><strong className="font-semibold">The 11px POS tab labels</strong> (<Code>text-2xs</Code>): five labelled tabs do not fit across a 390px phone at 14px, and every tab also carries an icon.</li>
           <li><strong className="font-semibold">The 9px seat labels</strong> on a seat plan: each seat carries its full name as an accessible name and a title.</li>
           <li><strong className="font-semibold">The scopes below</strong> — the deck, event templates, the storefront accent, print pages, charts and fluid till figures — which use raw values for their own reasons.</li>

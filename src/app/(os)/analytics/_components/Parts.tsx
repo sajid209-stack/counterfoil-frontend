@@ -42,6 +42,12 @@ export function Grid({ children }: { children: React.ReactNode }) {
   return wide ? <div className="grid gap-section lg:grid-cols-2">{children}</div> : <>{children}</>;
 }
 
+/** Three cards side by side from lg (stacked below). On a phone each is a row. */
+export function Grid3({ children }: { children: React.ReactNode }) {
+  const wide = useMediaQuery(MD);
+  return wide ? <div className="grid items-start gap-section lg:grid-cols-3">{children}</div> : <>{children}</>;
+}
+
 /** A column of cards: the last one takes the height that is left, so the
  *  bottoms of two neighbouring columns meet. */
 export function Col({ children }: { children: React.ReactNode }) {
@@ -375,6 +381,43 @@ export function BarList({ rows }: { rows: BarRow[] }) {
               />
             )}
           </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export interface ChannelListRow {
+  key: string;
+  label: string;
+  /** Revenue length of the bar. */
+  value: number;
+  figure: React.ReactNode;
+  change?: React.ReactNode;
+  /** The quiet line under the bar: orders and share, or commission and what is kept. */
+  detail: React.ReactNode;
+  muted?: boolean;
+}
+
+/** Rows of one sales channel: name and money on one line, a thin share bar,
+ *  and one quiet line of detail. The name wraps rather than being cut. */
+export function ChannelList({ rows }: { rows: ChannelListRow[] }) {
+  const max = Math.max(...rows.map((r) => r.value), 0);
+  return (
+    <ul className="flex flex-col gap-comfortable">
+      {rows.map((r) => (
+        <li key={r.key}>
+          <div className="flex items-baseline justify-between gap-tight text-sm">
+            <span className={cn("min-w-0 flex-1 break-words", r.muted && "text-muted")}>{r.label}</span>
+            <span className="shrink-0 whitespace-nowrap text-right">
+              <span className="font-medium">{r.figure}</span>
+              {r.change}
+            </span>
+          </div>
+          <div className="mt-inline h-1.5 rounded-full bg-line" aria-hidden>
+            <div className="h-full rounded-full bg-ember" style={{ width: `${max > 0 && r.value > 0 ? Math.max(2, (r.value / max) * 100) : 0}%` }} />
+          </div>
+          <p className="mt-inline text-xs text-muted">{r.detail}</p>
         </li>
       ))}
     </ul>

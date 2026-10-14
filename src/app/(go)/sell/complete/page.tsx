@@ -173,7 +173,7 @@ export default function SellCompletePage() {
               type="button"
               disabled={!info.orderId}
               onClick={() => router.push(`/print/tickets/${info.orderId}`)}
-              className="flex h-12 flex-1 items-center justify-center gap-inline rounded-full border border-line bg-card text-base text-muted active:bg-muted-wash disabled:opacity-40"
+              className="flex h-12 flex-1 items-center justify-center gap-inline rounded-full text-base border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active disabled:opacity-40"
             >
               <TicketIcon size={16} strokeWidth={1.5} /> {tk("printTickets")}
             </button>
@@ -181,14 +181,14 @@ export default function SellCompletePage() {
               type="button"
               disabled={!info.orderId}
               onClick={() => router.push(`/print/receipt/${info.orderId}`)}
-              className="flex h-12 flex-1 items-center justify-center gap-inline rounded-full border border-line bg-card text-base text-muted active:bg-muted-wash disabled:opacity-40"
+              className="flex h-12 flex-1 items-center justify-center gap-inline rounded-full text-base border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active disabled:opacity-40"
             >
               <Printer size={16} strokeWidth={1.5} /> {tk("printReceipt")}
             </button>
             <button
               type="button"
               onClick={() => setSmsOpen(true)}
-              className="flex h-12 flex-1 items-center justify-center gap-inline rounded-full border border-line bg-card text-base text-muted active:bg-muted-wash"
+              className="flex h-12 flex-1 items-center justify-center gap-inline rounded-full text-base border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active"
             >
               <MessageSquare size={16} strokeWidth={1.5} /> {t("complete.sendSms")}
             </button>

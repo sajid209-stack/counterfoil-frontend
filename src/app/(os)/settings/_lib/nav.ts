@@ -11,6 +11,8 @@ import {
   MessageSquare,
   MonitorSmartphone,
   Percent,
+  ReceiptText,
+  ScrollText,
   ShieldCheck,
   SlidersHorizontal,
   Store,
@@ -33,6 +35,8 @@ export type SettingsItemKey =
   | "tickets"
   | "payments"
   | "tax"
+  | "vat"
+  | "privacy"
   | "memberships"
   | "loyalty"
   | "team"
@@ -83,6 +87,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { key: "resources", href: "/settings/resources", icon: LandPlot },
       { key: "storefront", href: "/settings/storefront", icon: Globe },
       { key: "tickets", href: "/settings/tickets", icon: ScanLine },
+      { key: "privacy", href: "/settings/privacy", icon: ScrollText },
     ],
   },
   {
@@ -90,6 +95,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     items: [
       { key: "payments", href: "/settings/payments", icon: CreditCard },
       { key: "tax", href: "/settings/tax", icon: Percent },
+      { key: "vat", href: "/settings/vat", icon: ReceiptText },
       ...(FEATURES.memberships ? [{ key: "memberships" as const, href: "/settings/memberships", icon: BadgeCheck }] : []),
       ...(FEATURES.loyalty ? [{ key: "loyalty" as const, href: "/settings/loyalty", icon: Gift }] : []),
     ],

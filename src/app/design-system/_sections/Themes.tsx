@@ -94,7 +94,7 @@ export function ThemesSection() {
                   ["Floating", "level 2", "POS float"],
                   ["Minimum target", "44 phone, 36 desktop", "44 everywhere"],
                   ["Text floor", "12", "13"],
-                  ["Primary fill", `brand-500 ${ACCENT_HEX} (brand-400 in dark)`, "the same, in both products"],
+                  ["Primary fill", `brand-500 ${ACCENT_HEX} in both modes`, "the same, in both products"],
                   ["Accent", "ember", "ember (the same brand)"],
                 ].map(([k, os, go]) => (
                   <tr key={k} className="border-b border-hairline last:border-0">

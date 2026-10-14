@@ -40,7 +40,7 @@ export function Pagination({
   const to = Math.min(page * pageSize, total);
 
   const btn =
-    "flex h-11 w-11 items-center justify-center rounded-control border border-line text-fg transition-colors duration-quick enabled:hover:border-strong enabled:hover:bg-muted-wash disabled:cursor-not-allowed disabled:text-faint md:h-9 md:w-9";
+    "flex h-11 w-11 items-center justify-center rounded-control border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm transition-colors duration-quick enabled:hover:bg-btn-secondary-hover enabled:active:bg-btn-secondary-active disabled:cursor-not-allowed disabled:text-faint md:h-9 md:w-9";
 
   return (
     <nav

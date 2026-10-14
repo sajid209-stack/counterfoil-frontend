@@ -13,7 +13,8 @@
     "faceValue": "Price",
     "channel": "Where sold",
     "issued": "Issued",
-    "holder": "Ticket holder"
+    "holder": "Ticket holder",
+    "status": "Status"
   },
   "channel": {
     "counter": "At the counter",
@@ -156,5 +157,6 @@
       "issued": "Issued",
       "order": "Order"
     }
-  }
+  },
+  "detailsTitle": "Ticket details"
 }

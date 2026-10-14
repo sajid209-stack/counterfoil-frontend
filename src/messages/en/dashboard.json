@@ -70,5 +70,6 @@
   "activityTitle": "Activity",
   "metrics": "Key figures",
   "showMore": "Show more",
-  "showLess": "Show less"
+  "showLess": "Show less",
+  "floatAmount": "{amount} float"
 }

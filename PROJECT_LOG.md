@@ -17216,3 +17216,82 @@ appears only while something scrolls.
 - Headless screenshots do not draw scrollbars, so the scrollbar was checked
   through its computed `scrollbar-color`, not by looking at it.
 - The Bangla strings for the flyout and Other apps are drafts.
+
+## Fifteen owner items: colours, ticket cards, VAT, privacy, counter permissions, check-in, scan and My sales (2026-10-13)
+
+Owner, with seven screenshots and fifteen points. Planned, the shared contracts written, and every result reviewed on Opus; built by five Sonnet sub-agents with separate file ownership, at most three at once.
+
+### Colours and controls (items 1, 4, 5, and the earlier nav ask)
+- **The selected nav item is Shopify-style neutral**: a neutral-200 fill, semibold ink text and an ink icon, with no orange (`navStyles.ts`).
+- **SegmentedControl's selected option is the primary fill**: #F94A00 with white text, everywhere. The dashboard's Today / This week sits in a fixed 240px control, so its empty tail is gone.
+- **Text in filled buttons is white in both modes.** Dark mode keeps #F94A00 (3.50:1, AA large / UI, the same as light). Hover is brand-600 and pressed is brand-700. Dark success and marketplace fills keep their light steps, so white stays readable on them.
+- **Destructive buttons are a soft red**, so they can't be mistaken for the orange primary: red-50 fill, a red-200 edge and `danger-soft-fg` text (red-800 in light, red-200 in dark). Every state clears 4.5:1; the lowest is 5.7. New tokens: `danger-soft`, `-hover`, `-active` and `-fg`. `danger-solid` stays for marks only.
+- **Secondary buttons are a white control** with a neutral-300 edge and a small shadow, so they stand off both the warm page and a white card. New tokens: `btn-secondary`, `-line`, `-hover` and `-active`. Hand-built secondary buttons across OS, POS and the storefront moved onto them.
+- The design-system pages (Buttons, Colour, States, Accessibility, Themes) and `docs/design-system.md` match, with computed contrast.
+
+### Ticket cards (item 2)
+- New kit components `DetailCard`/`FactGrid` and `ActivityList`/`TimelineCard`, documented in Cards & surfaces with the shared `TicketCard` stub.
+- The ticket record (`/tickets/[id]`) is rebuilt on them:
+  - the primary facts come first (ticket type, holder, valid for, used), then a second row;
+  - codes and gate history are timelines.
+
+### Calendar booking panel (item 3)
+- No lock control. "Sold on" now reads "Booked on" (marketplace bookings only), and the Fee row is gone.
+- In place of the long details line, short rows: Guest (with a `tel:` link), Party ("2 of 4 in"), Place, and "Still owes ৳X" when money is owed.
+
+### Dashboard activity (item 6)
+- Each event is one row: a tinted icon, a one-line title (the person in bold), a one-line subject and the time.
+- Severity is shown by the icon tint and a screen-reader word, not a pill. Every row links to /activity.
+
+### VAT (item 7) and privacy policy (item 8)
+- **Settings → VAT**:
+  - registration: a BIN refused in words, legal name, address and date;
+  - Mushak-6.3 receipts: whether VAT shows on receipts, and an invoice prefix with the next number;
+  - filing: a monthly or every-3-months return period with its next due date.
+
+  Tax keeps only the rates. `vatSettings.ts` mirrors the BIN and the receipt setting into `taxConfig`, so receipts are unchanged.
+- **Settings → Privacy policy**: a default plain-language policy that can be edited, a privacy contact, and where it shows (storefront footer, checkout line), with a preview.
+  - Public page: `/s/[slug]/privacy`.
+  - Counterfoil's own privacy policy and terms are linked.
+
+### Counter permissions (item 13), requests (item 12) and the after-match discount (item 14)
+- **Contract.** `Role.counterRefund` / `counterReschedule` are `off | request | direct`, read through `counterAction()`. A role that sets neither keeps what it did before. The seeded Cashier asks a manager for both.
+- **Settings → Roles** has an "At the counter" section and rows in Compare roles.
+- **`rescheduleRequests.ts` (new)** mirrors refund requests:
+  - one open request per booking;
+  - availability is checked when the move is asked for and again when it is approved.
+- **On the till**, the Schedule's booked-slot sheet and Check-in's menu follow the role: "Ask to refund / Ask to move", direct, or hidden. A refund above the role's limit still becomes a request.
+- **Orders' queue** shows refund and move requests together.
+- **`AfterMatchDiscount`** is shared by the Schedule's balance sheet and Check-in, and states the sum ("Owed ৳862.50 − discount ৳100.00 = Take ৳762.50").
+
+### POS check-in (item 9), scan (item 10) and My sales (item 11)
+- **Check-in**:
+  - layout: search by name, code or phone, then the day, then All · Due · Not in yet · In with counts;
+  - rows: the name never truncated, and one orange action per party (Take ৳X, Check in or +1);
+  - the Due view leads with what is still to collect;
+  - one payment sheet, which takes the money and checks the party in.
+- **Scan** leads with a dedicated camera viewport: an orange reticle, a dimmed surround and a scan line (off under reduced motion). It is drawn even where there is no camera or no BarcodeDetector, so the layout never jumps. The wedge-scanner field and all verdicts are kept.
+- **My sales** is a page (`/my-sales`), not a stub modal:
+  - what you sold today, against yesterday;
+  - the cash drawer sum;
+  - payment-method shares, best sellers and recent sales;
+  - a printable summary.
+
+### Analytics (item 15)
+- "Sales by channel": Counters, Online storefront and Marketplaces cards. Marketplaces shows commission and what the venue keeps.
+- The old counters card is folded in, and the CSV has three new sections.
+- **Seed:** generated counter sales now carry a counter, chosen from the order's number rather than the random sequence, so no other generated figure moves.
+
+### Open
+- Nothing records which storefront page an online order came through, so the storefront card is the venue's online total plus its top bookings.
+- The privacy policy is one per business, not per venue.
+- The live camera decode can't be verified headlessly.
+- The VAT invoice prefix has no reader yet.
+- My sales has no "this shift" view, because orders carry no shift id.
+- Reschedule requests are not in the activity log.
+- The Bangla strings are drafts.
+
+### Fixed after the regression run
+- **Orders table at 1440.** Now that the seed names counters, the Channel cell grew and the table scrolled sideways inside its card. The channel, customer and staff cells truncate a little sooner (6.5rem, 8rem, 7.5rem), with the full text on hover.
+- **Check-in.** A booking whose order doesn't exist was titled with its internal order id. It now reads "Walk-in".
+- **Regression** against a production build: all suites pass once the tests that asserted the old design were updated: the calendar fee, the analytics cards and CSV sections, the checkout's inline privacy link, the orders counter and orange-selection checks, the activity rows, and the check-in and booked-slot layouts. `rf2`, `disc`, `checkin2` and `sn/verify` are retired in favour of the new check-in and schedule scripts.

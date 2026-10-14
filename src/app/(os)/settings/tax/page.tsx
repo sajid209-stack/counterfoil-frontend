@@ -1,20 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { ArrowRight } from "lucide-react";
 import { PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getTaxConfig, listProducts, updateOperator, updateTaxConfig } from "@/lib/api";
 import type { Operator, TaxConfig } from "@/lib/api";
 import { formatMoney, formatPriceShort } from "@/lib/format";
-import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, SuffixInput, Switch, controlCls } from "../_components/SettingsKit";
+import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, SuffixInput, controlCls } from "../_components/SettingsKit";
 
 interface Draft {
   standard: string;
   reduced: string;
   name: string;
-  reg: string;
-  onReceipts: boolean;
 }
 
 /** ৳1,000 in minor units — a round sale the operator can check in their head. */
@@ -32,8 +32,6 @@ const toDraft = (op: Operator, tax: TaxConfig): Draft => ({
   standard: String(op.taxRatePct),
   reduced: String(op.reducedRatePct ?? 0),
   name: tax.taxName,
-  reg: tax.registrationNumber ?? "",
-  onReceipts: !!tax.showOnReceipts,
 });
 
 /**
@@ -52,13 +50,12 @@ const toDraft = (op: Operator, tax: TaxConfig): Draft => ({
  * always, and a control offering the other behaviour would be a promise it
  * cannot keep.
  *
- * The registration number now does something too: where a business is required
- * to show it, the receipt prints it under the business name.
+ * Registration (the BIN), tax-invoice numbering and filing live in Settings →
+ * VAT. This page keeps the rates and what the tax is called.
  */
 export default function TaxPage() {
   const t = useTranslations("settings");
-  const tt = useTranslations("ticket");
-  const toast = useToast();
+    const toast = useToast();
   const opQ = useApiQuery(() => getOperator(), []);
   const taxQ = useApiQuery(() => getTaxConfig(), []);
   const prodQ = useApiQuery(() => listProducts({ pageSize: 500 }), []);
@@ -90,8 +87,6 @@ export default function TaxPage() {
   const standardErr = form && standard === null ? t("tax.rateInvalid") : undefined;
   const reducedErr = form && reduced === null ? t("tax.rateInvalid") : undefined;
   const currency = opQ.data?.currency ?? "BDT";
-  // Printing needs a number to print; without one the switch waits, off.
-  const hasReg = !!form?.reg.trim();
 
   const save = async () => {
     if (!form || standard === null || reduced === null) return;
@@ -101,8 +96,6 @@ export default function TaxPage() {
       updateTaxConfig({
         rateBasisPoints: Math.round(standard * 100),
         taxName: form.name.trim(),
-        registrationNumber: form.reg.trim() || undefined,
-        showOnReceipts: form.onReceipts && hasReg,
       }),
     ]);
     setSaving(false);
@@ -181,35 +174,21 @@ export default function TaxPage() {
             </div>
           </SettingsSection>
 
-          <SettingsSection title={t("tax.registrationTitle")} description={t("tax.registrationDesc")}>
+          <SettingsSection title={t("tax.nameTitle")} description={t("tax.nameSectionDesc")}>
             <SettingRow label={t("tax.name")} description={t("tax.nameDesc")}>
               {({ id, describedBy }) => (
                 <input id={id} value={form.name} onChange={(e) => set("name", e.target.value)} aria-describedby={describedBy} className={controlCls()} />
               )}
             </SettingRow>
-            <SettingRow label={t("tax.regNumber")} description={t("tax.regNumberDesc")}>
-              {({ id, describedBy }) => (
-                <input id={id} value={form.reg} onChange={(e) => set("reg", e.target.value)} placeholder={t("tax.regPlaceholder")} aria-describedby={describedBy} className={controlCls()} />
-              )}
-            </SettingRow>
-            <SettingRow
-              label={t("tax.onReceipts")}
-              description={
-                hasReg
-                  ? t("tax.onReceiptsDesc", { line: tt("taxReg", { name: form.name.trim() || "VAT", number: form.reg.trim() }) })
-                  : t("tax.onReceiptsNeedsNumber")
-              }
-              labelFor={false}
-              trailing
-            >
-              {({ labelId, describedBy }) => (
-                <Switch
-                  checked={form.onReceipts && hasReg}
-                  disabled={!hasReg}
-                  onChange={(on) => set("onReceipts", on)}
-                  labelledBy={labelId}
-                  describedBy={describedBy}
-                />
+            <SettingRow label={t("tax.vatLinkLabel")} description={t("tax.vatLinkDesc")} labelFor={false}>
+              {() => (
+                <Link
+                  href="/settings/vat"
+                  className="inline-flex min-h-11 items-center gap-tight text-base font-medium text-brand-foreground underline-offset-4 hover:underline md:min-h-9"
+                >
+                  {t("tax.vatLink")}
+                  <ArrowRight size={16} strokeWidth={1.75} aria-hidden />
+                </Link>
               )}
             </SettingRow>
           </SettingsSection>

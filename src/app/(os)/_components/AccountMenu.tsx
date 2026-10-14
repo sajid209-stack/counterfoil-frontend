@@ -107,7 +107,7 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
           <Link
             href="/settings/profile"
             onClick={() => setOpen(false)}
-            className="mt-section flex h-11 items-center gap-comfortable rounded-control border border-line px-comfortable text-base font-medium text-fg transition-colors duration-quick hover:border-ember-line hover:bg-muted-wash"
+            className="mt-section flex h-11 items-center gap-comfortable rounded-control px-comfortable text-base font-medium transition-colors duration-quick border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active"
           >
             <UserRound size={16} strokeWidth={1.5} className="text-muted" aria-hidden />
             {t("myProfile")}
@@ -115,7 +115,7 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
           <Link
             href="/settings/business"
             onClick={() => setOpen(false)}
-            className="mt-tight flex h-11 items-center gap-comfortable rounded-control border border-line px-comfortable text-base font-medium text-fg transition-colors duration-quick hover:border-ember-line hover:bg-muted-wash"
+            className="mt-tight flex h-11 items-center gap-comfortable rounded-control px-comfortable text-base font-medium transition-colors duration-quick border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active"
           >
             <SettingsIcon size={16} strokeWidth={1.5} className="text-muted" aria-hidden />
             {t("settings")}

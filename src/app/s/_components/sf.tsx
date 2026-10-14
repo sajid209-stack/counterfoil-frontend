@@ -56,7 +56,7 @@ export const sfBtn = {
   ),
   secondary: cn(
     BTN_BASE,
-    "border border-strong bg-card text-fg hover:border-fg disabled:border-line disabled:text-muted",
+    "border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover disabled:border-line disabled:text-muted",
   ),
   /** A quiet text link-button: 44px target, accent ink. */
   link: "inline-flex min-h-11 items-center gap-inline text-base font-semibold text-brand-foreground underline-offset-4 hover:underline",

@@ -642,6 +642,8 @@ export const roles: Role[] = [
     permissions: ["pos.sell", "scan.validate"],
     refundLimit: 0,
     discountLimitPct: 10,
+    counterRefund: "request",
+    counterReschedule: "request",
     createdAt: T,
     updatedAt: T,
   },
@@ -765,6 +767,7 @@ const sales = generateSales({
   products,
   locations,
   staff,
+  counters,
   taxRatePct: operator.taxRatePct,
   reducedRatePct: operator.reducedRatePct,
 });

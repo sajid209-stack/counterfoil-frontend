@@ -46,7 +46,6 @@ import { applyTillText, usePrefs } from "@/lib/prefs";
  */
 const BAR_CLEAR = "12px + 62px + env(safe-area-inset-bottom)";
 import { cn } from "@/lib/cn";
-import { formatMoney } from "@/lib/format";
 import { NAV_IDLE, NAV_SELECTED, NAV_SELECTED_ICON } from "@/components/ui/navStyles";
 
 // F10 — nav is responsive by form factor, not fixed. Phone + tablet portrait
@@ -67,7 +66,7 @@ const MORE_ITEMS = [
   /* The design system's reference, opened on the Go configuration. */
   { key: "designSystem", icon: Palette, href: "/design-system?product=go" },
   { key: "shift", icon: Clock, href: "/shift/close" },
-  { key: "mySales", icon: Banknote, action: "sales" },
+  { key: "mySales", icon: Banknote, href: "/my-sales" },
   { key: "quickPass", icon: Ticket, href: "/quick-pass" },
   { key: "myProfile", icon: UserRound, href: "/profile" },
   { key: "switchUser", icon: Users, href: "/login" },
@@ -135,7 +134,6 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
   const { counter: activeCounter } = useActiveCounter(countersQ.data?.data ?? peekCounters());
   const [moreOpen, setMoreOpen] = useState(false);
-  const [salesOpen, setSalesOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   /* Who is signed in and whose business this is, read from the records rather
      than typed here: a hard-coded name is a name that is wrong for every other
@@ -192,7 +190,6 @@ export function GoShell({ children }: { children: React.ReactNode }) {
 
   const runItem = (item: (typeof MORE_ITEMS)[number]) => {
     setMoreOpen(false);
-    if ("action" in item && item.action === "sales") setSalesOpen(true);
     if ("action" in item && item.action === "help") setHelpOpen(true);
   };
 
@@ -351,15 +348,6 @@ export function GoShell({ children }: { children: React.ReactNode }) {
               the Settings tile opens — one control, one place. */}
         </div>
       </Sheet>
-
-      <Modal open={salesOpen} onClose={() => setSalesOpen(false)} title={tp("shell.salesTitle")}>
-        <div className="flex flex-col gap-tight text-base tabular-nums">
-          <div className="flex justify-between border-b border-line pb-tight"><span className="text-muted">{tp("shell.takings")}</span><span>{formatMoney(1245000)}</span></div>
-          <div className="flex justify-between border-b border-line pb-tight"><span className="text-muted">{tp("shell.sales")}</span><span>9</span></div>
-          <div className="flex justify-between"><span className="text-muted">{tp("shell.cashInDrawer")}</span><span>{formatMoney(485000)}</span></div>
-        </div>
-        <p className="mt-section text-sm text-muted">{tp("shell.salesNote")}</p>
-      </Modal>
 
       <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title={tp("shell.helpTitle")}>
         <p className="text-base text-muted">{tp.rich("shell.helpBody", { phone: (c) => <span className="font-mono text-fg">{c}</span> })}</p>

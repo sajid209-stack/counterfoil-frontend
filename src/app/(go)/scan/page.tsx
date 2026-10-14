@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Camera, Check, Wallet, X } from "lucide-react";
+import { Check, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useActiveCounterNow } from "@/lib/activeCounter";
@@ -35,7 +35,7 @@ const REFUSAL: Record<RefuseReason, ScanRefusal | undefined> = {
   replaced: "replaced",
   terminated: "terminated",
 };
-import { CameraScanner, useCameraSupport } from "./_components/CameraScanner";
+import { CameraView } from "./_components/CameraScanner";
 import { Verdict } from "./_components/Verdict";
 
 /* A hardware scanner is a keyboard: it types the code fast and presses Enter.
@@ -70,7 +70,6 @@ export default function ScanPage() {
   const [busy, setBusy] = useState(false);
   const [admitted, setAdmitted] = useState(0);
   const [method, setMethod] = useState<PaymentMethod>("cash");
-  const [camOpen, setCamOpen] = useState(false);
   /* A screen button SHOWS a screen; it does not put a guest through a gate.
      Without this the first press admitted a real ticket and every press after
      it got "already redeemed" — the one screen the button exists to show was
@@ -82,7 +81,6 @@ export default function ScanPage() {
   const opQ = useApiQuery(() => getOperator(), []);
   const ticketsQ = useApiQuery(() => listTickets({ pageSize: 2000 }), []);
   const currency = opQ.data?.currency ?? "BDT";
-  const cameraReady = useCameraSupport();
   const methods = useMemo(() => tillMethods(canTakeNonCash()), []);
 
   const submit = useCallback(
@@ -145,7 +143,7 @@ export default function ScanPage() {
     /* Left armed while a plain verdict is up, so a steward can keep scanning
        without touching the screen — the next scan replaces the last one. A
        verdict that is waiting on a decision does hold the gate. */
-    if (decisionOpen || camOpen) return;
+    if (decisionOpen) return;
     let buffer = "";
     let last = 0;
     const onKey = (e: KeyboardEvent) => {
@@ -167,7 +165,7 @@ export default function ScanPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [decisionOpen, camOpen, submit]);
+  }, [decisionOpen, submit]);
 
   const settle = async () => {
     if (!outcome?.balance || busy) return;
@@ -267,8 +265,22 @@ export default function ScanPage() {
     previewNote: t("previewNote"),
   };
 
+  const camLabels = {
+    viewfinder: t("viewfinder"),
+    aim: t("aimInstruction"),
+    start: t("startCamera"),
+    stop: t("stopCamera"),
+    starting: t("startingCamera"),
+    none: t("noCameraHere"),
+    torch: t("cameraTorch"),
+    switchCamera: t("switchCamera"),
+    denied: t("cameraDenied"),
+    deniedHint: t("cameraDeniedHint"),
+    retry: t("cameraRetry"),
+  };
+
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col px-section py-section lg:min-h-[calc(100dvh-64px)] lg:justify-center">
+    <main className="mx-auto flex w-full max-w-5xl flex-col px-section py-section pb-28 lg:pb-section">
       <div className="flex w-full flex-col gap-section lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
         <div className="flex min-w-0 flex-col gap-section">
           <div>
@@ -276,91 +288,63 @@ export default function ScanPage() {
             <p className="text-sm text-muted">{t("subtitle")}</p>
           </div>
 
-          {/* One object: the state of the gate, the field a scanner types
-              into, and the two ways to send a code. */}
+          {/* The camera view is always here, so the scanning area never moves. */}
+          <CameraView onCode={(value) => void submit(value)} labels={camLabels} />
+
+          {/* The field a hardware scanner types into: always armed. */}
           <section className="flex flex-col gap-comfortable p-section card-surface">
             <p className="flex items-center gap-tight">
               <span aria-hidden className={cn("h-2 w-2 shrink-0 rounded-full", busy ? "bg-muted" : "bg-ember-solid")} />
               <span className="text-sm font-semibold text-brand-foreground">{busy ? t("checking") : t("armed")}</span>
             </p>
-            <span data-focus-host className="block">
-              <input
-              ref={input}
-              autoFocus
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void submit(code);
-              }}
-              aria-label={t("codeLabel")}
-              placeholder={t("codePlaceholder")}
-              inputMode="text"
-              autoComplete="off"
-              spellCheck={false}
-              className="h-16 w-full min-w-0 rounded-card border-2 border-line bg-card px-section font-mono text-lg tracking-wide transition-colors duration-quick focus:border-ember-solid lg:h-20 lg:text-xl"
-              />
-            </span>
+            <label htmlFor="scan-code" className="text-sm font-semibold">{t("codeFieldLabel")}</label>
             <div className="flex gap-tight">
-              <Button size="lg" fullWidth className="h-13 text-md font-semibold" disabled={!code.trim() || busy} onClick={() => void submit(code)}>
+              <span data-focus-host className="block min-w-0 flex-1">
+                <input
+                  id="scan-code"
+                  ref={input}
+                  autoFocus
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void submit(code);
+                  }}
+                  placeholder={t("codePlaceholder")}
+                  inputMode="text"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="h-14 w-full min-w-0 rounded-card border-2 border-line bg-card px-section font-mono text-lg tracking-wide transition-colors duration-quick focus:border-ember-solid"
+                />
+              </span>
+              <Button size="lg" className="h-14 shrink-0 text-md font-semibold" disabled={!code.trim() || busy} onClick={() => void submit(code)}>
                 {t("check")}
               </Button>
-              {cameraReady && (
-                <Button size="lg" variant="secondary" className="h-13 shrink-0 text-md font-semibold" onClick={() => setCamOpen(true)}>
-                  <Camera size={18} strokeWidth={1.5} aria-hidden />
-                  {t("camera")}
-                </Button>
-              )}
             </div>
-            <p className="text-sm text-muted">{t("armedHint")}</p>
+            <p className="text-sm text-muted">{t("fieldHint")}</p>
           </section>
-
-          {screens.length > 0 && (
-            <section className="flex flex-col gap-tight">
-              <h2 className="text-sm font-semibold text-muted">{t("screensTitle")}</h2>
-              {/* Each button wears the treatment of the screen it opens — ink
-                  for an admission, hatched danger for a refusal, amber for
-                  money owing — so the row doubles as the key to the three. */}
-              <div className="flex flex-wrap gap-tight">
-                {screens.map((sc) => (
-                  <button
-                    key={sc.key}
-                    type="button"
-                    onClick={() => void submit(sc.code, { preview: true })}
-                    className="flex min-h-12 items-center gap-tight rounded-full border border-line bg-card py-inline pl-inline pr-comfortable text-base font-medium active:bg-muted-wash"
-                  >
-                    <span aria-hidden className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", sc.tone)}>
-                      <sc.Icon size={16} strokeWidth={2.5} />
-                    </span>
-                    {sc.label}
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
         </div>
 
-        {/* What this device has done since the screen was opened. A gate with
-            no record of its own scans cannot answer the one question a guest
-            asks when they are refused. */}
+        {/* What this device has done since the screen was opened, then the
+            example screens. */}
         <aside className="flex flex-col gap-section">
           <section className="flex flex-col gap-comfortable p-section card-surface">
             <h2 className="text-base font-semibold">{t("sessionTitle")}</h2>
             {log.length > 0 && (
-            <div className="grid grid-cols-3 gap-tight text-center">
-              {(
-                [
-                  ["admit", tally.admit, Check],
-                  ["refuse", tally.refuse, X],
-                  ["balance", tally.balance, Wallet],
-                ] as const
-              ).map(([key, value, Icon]) => (
-                <div key={key} className="flex flex-col items-center gap-inline rounded-inner border border-line py-comfortable">
-                  <Icon size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
-                  <span className="text-xl font-semibold tabular-nums">{value}</span>
-                  <span className="text-sm text-muted">{t(`tally_${key}`)}</span>
-                </div>
-              ))}
-            </div>
+              <div className="grid grid-cols-3 gap-tight text-center">
+                {(
+                  [
+                    ["admit", tally.admit, Check],
+                    ["refuse", tally.refuse, X],
+                    ["balance", tally.balance, Wallet],
+                  ] as const
+                ).map(([key, value, Icon]) => (
+                  <div key={key} className="flex flex-col items-center gap-inline rounded-inner border border-line py-comfortable">
+                    <Icon size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
+                    <span className="text-xl font-semibold tabular-nums">{value}</span>
+                    <span className="text-sm text-muted">{t(`tally_${key}`)}</span>
+                  </div>
+                ))}
+              </div>
             )}
 
             {log.length > 0 && <h3 className="text-sm font-semibold text-muted">{t("recentTitle")}</h3>}
@@ -389,27 +373,31 @@ export default function ScanPage() {
               </ul>
             )}
           </section>
+
+          {screens.length > 0 && (
+            <section className="flex flex-col gap-tight">
+              <h2 className="text-sm font-semibold text-muted">{t("screensTitle")}</h2>
+              {/* Each button wears the treatment of the screen it opens, so the
+                  row doubles as the key to the three. */}
+              <div className="flex flex-wrap gap-tight">
+                {screens.map((sc) => (
+                  <button
+                    key={sc.key}
+                    type="button"
+                    onClick={() => void submit(sc.code, { preview: true })}
+                    className="flex min-h-12 items-center gap-tight rounded-full border border-line bg-card py-inline pl-inline pr-comfortable text-base font-medium active:bg-muted-wash"
+                  >
+                    <span aria-hidden className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", sc.tone)}>
+                      <sc.Icon size={16} strokeWidth={2.5} />
+                    </span>
+                    {sc.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
         </aside>
       </div>
-
-      {camOpen && (
-        <CameraScanner
-          onClose={() => setCamOpen(false)}
-          onCode={(value) => {
-            setCamOpen(false);
-            void submit(value);
-          }}
-          labels={{
-            title: t("cameraTitle"),
-            aim: t("cameraAim"),
-            close: t("cameraClose"),
-            torch: t("cameraTorch"),
-            denied: t("cameraDenied"),
-            deniedHint: t("cameraDeniedHint"),
-            retry: t("cameraRetry"),
-          }}
-        />
-      )}
 
       {outcome && verdictLabels && (
         <Verdict

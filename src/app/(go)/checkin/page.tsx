@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowUpCircle, Ban, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, PlusCircle, RotateCcw, Search, Timer, UserPlus } from "lucide-react";
-import { ActionMenu, Button, DateField, EmptyState, FormField, Modal, Notice, Skeleton, useToast, type ActionMenuItem } from "@/components/ui";
+import { ArrowUpCircle, Ban, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, PlusCircle, RotateCcw, Search, Timer, UserCheck, UserPlus } from "lucide-react";
+import { Button, DateField, EmptyState, FormField, Modal, Skeleton, useToast, type ActionMenuItem } from "@/components/ui";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay } from "@/lib/schedule";
 import { cn } from "@/lib/cn";
 import { useEnumLabels } from "@/lib/labels";
@@ -12,9 +12,10 @@ import { useActiveCounterNow } from "@/lib/activeCounter";
 import {
   addOrderLines,
   addOrderPayment,
-  bookingEditable,
+  canTakeNonCash,
   checkInBooking,
   checkout,
+  bookingEditable,
   discountOrderBalance,
   extendBooking,
   isResourceFreeFor,
@@ -24,20 +25,27 @@ import {
   listResources,
   logOrderAction,
   markNoShow,
+  orderOutstanding,
+  peekCustomers,
+  peekOrders,
   rescheduleBooking,
+  tillMethods,
   type Booking,
-  type Order,
-  type PaymentMethod,
   type Product,
 } from "@/lib/api";
 import { toMinutes, toTime } from "@/lib/schedule";
 import { formatClock, formatDay, formatMoney } from "@/lib/format";
-import { type RefundReason } from "@/lib/api/refundRequests";
-import { pendingRefundFor, refundableFor } from "@/lib/api/refundRequests";
+import { pendingRefundFor, refundableFor, withdrawRefundRequest, type RefundReason } from "@/lib/api/refundRequests";
+import { pendingRescheduleFor, useRescheduleVersion, withdrawRescheduleRequest } from "@/lib/api/rescheduleRequests";
 import { Stepper } from "../_components/Stepper";
 import { useActor, canRefundDirectly } from "../schedule/_lib/actor";
 import { sendOrApproveRefund } from "../schedule/_lib/refundFlow";
-import { DiscountFields, discountFromState, discountReasonText, emptyDiscount, MoveSheet, RefundSheet, type DiscountState } from "../schedule/_components/Sheets";
+import { MoveSheet, RefundSheet } from "../schedule/_components/Sheets";
+import { PaymentSheet, type PaymentResult } from "../schedule/_components/PaymentSheet";
+import { DaySummary } from "./_components/DaySummary";
+import { FilterCells } from "./_components/FilterCells";
+import { PartyRow } from "./_components/PartyRow";
+import { buildParties, countByFilter, groupBySession, inFilter, matchesSearch, totalDue, type CheckInFilter, type Party } from "./_lib/parties";
 
 /* The app's one date, not a private copy of it — the token's own doc
    comment warns that two components each holding their own is how a hold
@@ -45,7 +53,6 @@ import { DiscountFields, discountFromState, discountReasonText, emptyDiscount, M
 const TODAY = DEMO_TODAY;
 const TOMORROW = demoDay(1);
 const time = (iso: string) => iso.slice(11, 16);
-const METHODS: PaymentMethod[] = ["cash", "bkash", "bangla_qr", "card_terminal"];
 
 /** How long a booking runs, in minutes — from its own end time if it has
  *  one, else the product's default session length. Needed to keep a moved
@@ -58,13 +65,11 @@ const durationOf = (b: Booking, product?: Product): number => {
 export default function CheckInPage() {
   const t = useTranslations("checkin");
   const tc = useTranslations("common");
-  /* Refund, Move and the discount row are the same sheet and the same words
-     the Schedule board uses — a cashier reads the same screen whichever door
-     they came through. */
-  const ts = useTranslations("schedule");
   const enumL = useEnumLabels();
   const toast = useToast();
   const actor = useActor();
+  // A move asked for, answered or taken back changes a row's tag.
+  useRescheduleVersion();
   const [date, setDate] = useState(TODAY);
   /* Who is at the door is the venue this counter stands in. */
   const activeCounter = useActiveCounterNow();
@@ -73,18 +78,18 @@ export default function CheckInPage() {
   const [pending, setPending] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<CheckInFilter>("all");
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), []);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100 }), []);
   const ordersQ = useApiQuery(() => listOrders({ pageSize: 1000 }), []);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 200 }), []);
   const productName = (id: string) => productsQ.data?.data.find((p) => p.id === id)?.name ?? "—";
+  const productOf = (id: string) => productsQ.data?.data.find((p) => p.id === id);
   const resourceName = (id?: string | null) => (id ? resourcesQ.data?.data.find((r) => r.id === id)?.name ?? null : null);
-  const orderOf = (b: Booking): Order | undefined => ordersQ.data?.data.find((o) => o.id === b.orderId);
-  const outstanding = (o?: Order) => (o ? Math.max(0, o.total - o.payments.reduce((s, p) => s + p.amount, 0)) : 0);
-  const guestName = (b: Booking) => orderOf(b)?.customerName?.trim() || orderOf(b)?.reference || b.orderId;
   const whenFor = (b: Booking) => `${resourceName(b.resourceId) ?? productName(b.productId)} · ${formatClock(time(b.slotStart))}`;
+  const payMethods = useMemo(() => tillMethods(canTakeNonCash()), []);
 
-  // Counter workflows on an expanded booking.
+  // Counter workflows on a party's menu.
   const [payFor, setPayFor] = useState<Booking | null>(null);
   const [extraFor, setExtraFor] = useState<Booking | null>(null);
   const [upgradeFor, setUpgradeFor] = useState<Booking | null>(null);
@@ -92,7 +97,6 @@ export default function CheckInPage() {
   const [noShowReason, setNoShowReason] = useState("");
   const [refundFor, setRefundFor] = useState<Booking | null>(null);
   const [moveFor, setMoveFor] = useState<Booking | null>(null);
-  const [discount, setDiscount] = useState<DiscountState>(emptyDiscount());
   const [walkInOpen, setWalkInOpen] = useState(false);
   const [walkInProduct, setWalkInProduct] = useState("");
   const [walkInParty, setWalkInParty] = useState(2);
@@ -100,76 +104,53 @@ export default function CheckInPage() {
 
   const reload = () => { bookingsQ.reload(); ordersQ.reload(); };
 
-  const groups = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const orders = ordersQ.data?.data ?? [];
-    const day = (bookingsQ.data?.data ?? []).filter((b) => {
-      if (b.status !== "confirmed" || b.slotStart.slice(0, 10) !== date) return false;
-      if (venueId && b.locationId !== venueId) return false;
-      if (!q) return true;
-      const o = orders.find((x) => x.id === b.orderId);
-      return (
-        b.orderId.toLowerCase().includes(q) ||
-        (o?.reference.toLowerCase().includes(q) ?? false) ||
-        (o?.customerName?.toLowerCase().includes(q) ?? false)
-      );
-    });
-    const map = new Map<string, Booking[]>();
-    day.forEach((b) => {
-      const key = `${b.productId}|${b.slotStart}`;
-      map.set(key, [...(map.get(key) ?? []), b]);
-    });
-    return [...map.entries()].sort((a, b) => a[0].split("|")[1].localeCompare(b[0].split("|")[1]));
-  }, [bookingsQ.data, ordersQ.data, date, search, venueId]);
+  /* The whole day at this venue, as parties. Everything that speaks about the
+     DAY — the summary, each session's progress, what is still to collect —
+     reads this, never the searched list: a search is a lookup, not a claim
+     about the day. Typing one guest's name used to rewrite "at the door today"
+     as that guest's own two tickets. */
+  const dayParties = useMemo(() => {
+    const day = (bookingsQ.data?.data ?? []).filter((b) => b.status === "confirmed" && b.slotStart.slice(0, 10) === date && (!venueId || b.locationId === venueId));
+    return buildParties({ bookings: day, orders: ordersQ.data?.data ?? [], customers: peekCustomers(), outstanding: orderOutstanding });
+  }, [bookingsQ.data, ordersQ.data, date, venueId]);
 
-  /* The day, and every session's progress, read from the WHOLE day rather
-     than from whatever the search box has narrowed it to. Taken off the
-     filtered list, looking one guest up rewrote "at the door today" as that
-     guest's own two tickets, and a session of three read "2 of 2 in". A search
-     is a lookup, not a claim about the day. */
-  const dayBookings = useMemo(
-    () => (bookingsQ.data?.data ?? []).filter((b) => b.status === "confirmed" && b.slotStart.slice(0, 10) === date && (!venueId || b.locationId === venueId)),
-    [bookingsQ.data, date, venueId],
-  );
+  const searched = useMemo(() => dayParties.filter((p) => matchesSearch(p, search)), [dayParties, search]);
+  // The counts follow the search: they say what each cell would show.
+  const counts = useMemo(() => countByFilter(searched), [searched]);
+  const visible = useMemo(() => searched.filter((p) => inFilter(p, filter)), [searched, filter]);
+  const groups = useMemo(() => groupBySession(visible, productName), [visible, productsQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sessionTotals = useMemo(() => {
     const m = new Map<string, { expected: number; inCount: number }>();
-    for (const b of dayBookings) {
-      const k = `${b.productId}|${b.slotStart}`;
-      const cur = m.get(k) ?? { expected: 0, inCount: 0 };
-      m.set(k, { expected: cur.expected + b.partySize, inCount: cur.inCount + (b.checkedIn ?? 0) });
+    for (const p of dayParties) {
+      const cur = m.get(p.sessionKey) ?? { expected: 0, inCount: 0 };
+      m.set(p.sessionKey, { expected: cur.expected + p.size, inCount: cur.inCount + p.arrived });
     }
     return m;
-  }, [dayBookings]);
+  }, [dayParties]);
 
   const day = useMemo(() => {
-    const items = dayBookings;
-    const seen = new Set<string>();
-    let owed = 0;
-    for (const b of items) {
-      if (seen.has(b.orderId)) continue;
-      seen.add(b.orderId);
-      owed += outstanding(orderOf(b));
-    }
-    const expected = items.reduce((sum, b) => sum + b.partySize, 0);
-    const arrived = items.reduce((sum, b) => sum + (b.checkedIn ?? 0), 0);
-    return { expected, arrived, owed, parties: items.length };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dayBookings, ordersQ.data]);
+    const due = totalDue(dayParties);
+    return {
+      expected: dayParties.reduce((s, p) => s + p.size, 0),
+      arrived: dayParties.reduce((s, p) => s + p.arrived, 0),
+      owed: due.amount,
+      owingParties: due.parties,
+    };
+  }, [dayParties]);
+  // The Due filter's headline: what is still to collect across what it lists.
+  const dueNow = useMemo(() => totalDue(visible), [visible]);
 
   /* The session a door is standing in. Everything used to open shut, so the
      first thing a steward did on every arrival was tap a row open — and the
      names, which are the whole point of the screen, were behind that tap. */
   const nowKey = useMemo(() => {
-    if (groups.length === 0) return null;
-    if (date !== TODAY) return groups[0][0];
-    const minutes = (key: string) => {
-      const hhmm = key.split("|")[1].slice(11, 16);
-      return Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
-    };
-    const started = groups.filter(([k]) => minutes(k) <= DEMO_NOW_MINUTES);
-    return (started[started.length - 1] ?? groups[0])[0];
-  }, [groups, date]);
+    const all = groupBySession(dayParties, productName);
+    if (all.length === 0) return null;
+    if (date !== TODAY) return all[0].key;
+    const started = all.filter((g) => toMinutes(time(g.start)) <= DEMO_NOW_MINUTES);
+    return (started[started.length - 1] ?? all[0]).key;
+  }, [dayParties, date, productsQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkIn = async (b: Booking, count: number) => {
     setPending(b.id);
@@ -181,7 +162,7 @@ export default function CheckInPage() {
   // Post-sale extend: one increment, only when the lane is free right behind.
   const extendOf = (b: Booking) => {
     if (!b.resourceId || !b.slotEnd) return null;
-    const p = productsQ.data?.data.find((x) => x.id === b.productId);
+    const p = productOf(b.productId);
     const cfg = p?.durationConfig;
     if (!p || !cfg) return null;
     const endTime = b.slotEnd.slice(11, 16);
@@ -205,65 +186,45 @@ export default function CheckInPage() {
     else toast.error(res.error.message);
   };
 
-  /** How much of the balance is being taken right now. Defaults to all of it
-   *  (after any after-game discount), because that is the common case — but a
-   *  party settling ৳2,000 as ৳1,200 on one phone and ৳800 on another is just
-   *  as normal, and each tender is its own payment on the order rather than
-   *  one rolled-up figure. */
-  const [payAmount, setPayAmount] = useState<number | null>(null);
-  const payOrder = payFor ? orderOf(payFor) : undefined;
-  const payDue = outstanding(payOrder);
-  const discountCalc = discountFromState(discount, payOrder?.total ?? 0, payDue, actor.discountLimitPct);
-  const payDiscounted = Math.max(0, payDue - discountCalc.minor);
-  const payNow = payAmount == null ? payDiscounted : Math.max(0, Math.min(payDiscounted, payAmount));
-  const closePay = () => { setPayFor(null); setPayAmount(null); setDiscount(emptyDiscount()); };
+  // ── taking what is owed, with an after-match discount, and checking in ──
+  const payOrder = payFor ? peekOrders().find((o) => o.id === payFor.orderId) : undefined;
+  const payOwed = payOrder ? orderOutstanding(payOrder) : 0;
+  const payParty = payFor ? dayParties.find((p) => p.booking.id === payFor.id) : undefined;
 
-  const giveDiscount = async (o: Order) => {
-    const res = await discountOrderBalance(o.id, discountCalc.minor, discountReasonText(discount, (k) => ts(`discount.reasons.${k}`)), actor.name);
-    if (!res.ok) toast.error(res.error.message);
-    return res.ok;
-  };
-
-  /** The discount alone settles the order — nothing left to tender. */
-  const applyDiscountOnly = async () => {
-    if (!payFor || !payOrder || !discountCalc.valid || !discountCalc.hasAmount) return;
+  const takePayment = async (r: PaymentResult) => {
+    if (!payFor || !payOrder) return;
     setBusy(true);
-    const ok = await giveDiscount(payOrder);
-    setBusy(false);
-    if (!ok) return;
-    toast.success(t("discountApplied", { amount: formatMoney(discountCalc.minor) }));
-    closePay();
-    reload();
-  };
-
-  const takeBalance = async (method: PaymentMethod) => {
-    if (!payFor || !payOrder || payNow <= 0 || !discountCalc.valid) return;
-    setBusy(true);
-    if (discountCalc.hasAmount) {
-      const ok = await giveDiscount(payOrder);
-      if (!ok) { setBusy(false); return; }
+    if (r.discountMinor > 0) {
+      const d = await discountOrderBalance(payOrder.id, r.discountMinor, r.reasonText, actor.name);
+      if (!d.ok) { setBusy(false); toast.error(d.error.message); return; }
     }
-    const res = await addOrderPayment(payOrder.id, method, payNow, actor.name);
+    if (r.payAmount > 0 && r.method) {
+      const res = await addOrderPayment(payOrder.id, r.method, r.payAmount, actor.name);
+      if (!res.ok) { setBusy(false); toast.error(res.error.message); return; }
+    }
+    const fresh = peekOrders().find((o) => o.id === payOrder.id);
+    const left = fresh ? orderOutstanding(fresh) : 0;
+    // Paid in full and the guest is here: the same step lets them in.
+    const letIn = r.checkIn && left === 0;
+    if (letIn) await checkInBooking(payFor.id, payFor.partySize);
     setBusy(false);
-    if (res.ok) {
-      const left = outstanding(payOrder) - discountCalc.minor - payNow;
-      toast.success(
-        left > 0
-          ? t("partTaken", { amount: formatMoney(payNow), method: enumL.method(method), left: formatMoney(left) })
-          : t("balanceTaken", { amount: formatMoney(payNow), method: enumL.method(method) }),
-      );
-      // Stay open while money is still owed: the second tender is usually
-      // handed over in the same breath as the first.
-      if (left > 0) { setPayAmount(null); setDiscount(emptyDiscount()); } else closePay();
+    const name = payParty?.name || t("walkInDefaultName");
+    if (r.payAmount > 0 && r.method) {
+      if (left > 0) toast.success(t("partTaken", { amount: formatMoney(r.payAmount), method: enumL.method(r.method), left: formatMoney(left) }));
+      else if (letIn) toast.success(t("paidAndIn", { amount: formatMoney(r.payAmount), method: enumL.method(r.method), name }));
+      else toast.success(t("balanceTaken", { amount: formatMoney(r.payAmount), method: enumL.method(r.method) }));
     } else {
-      toast.error(res.error.message);
+      toast.success(letIn ? t("discountAppliedIn", { amount: formatMoney(r.discountMinor), name }) : t("discountApplied", { amount: formatMoney(r.discountMinor) }));
     }
+    // Stay open while money is still owed: the second tender is usually
+    // handed over in the same breath as the first.
+    if (left === 0) setPayFor(null);
     reload();
   };
 
   const addExtra = async (addOnId: string) => {
     if (!extraFor) return;
-    const p = productsQ.data?.data.find((x) => x.id === extraFor.productId);
+    const p = productOf(extraFor.productId);
     const a = p?.addOns?.find((x) => x.id === addOnId);
     if (!p || !a) return;
     await addOrderLines(extraFor.orderId, [{ productId: `addon_${a.id}`, productName: a.name, tierName: a.perPerson ? t("perPerson") : t("each"), admits: 0, quantity: 1, unitPrice: a.price }]);
@@ -274,9 +235,9 @@ export default function CheckInPage() {
 
   const upgrade = async (tierId: string) => {
     if (!upgradeFor) return;
-    const p = productsQ.data?.data.find((x) => x.id === upgradeFor.productId);
-    const o = orderOf(upgradeFor);
-    const target = p?.tiers.find((t) => t.id === tierId);
+    const p = productOf(upgradeFor.productId);
+    const o = peekOrders().find((x) => x.id === upgradeFor.orderId);
+    const target = p?.tiers.find((tier) => tier.id === tierId);
     if (!p || !o || !target) return;
     const currentLine = o.lines.filter((l) => l.productId === p.id && l.unitPrice > 0).sort((a, b) => a.unitPrice - b.unitPrice)[0];
     const diff = target.price - (currentLine?.unitPrice ?? 0);
@@ -297,9 +258,8 @@ export default function CheckInPage() {
 
   // ── refund and move, the same sheets the Schedule board offers ──────────
   const refundInfoFor = (b: Booking) => {
-    const pending = pendingRefundFor(b.id);
     const found = refundableFor(b.id);
-    return { pending, refundable: !!found && found.amount > 0, amount: found?.amount ?? 0, order: found?.order };
+    return { pending: pendingRefundFor(b.id), refundable: !!found && found.amount > 0, amount: found?.amount ?? 0, order: found?.order };
   };
 
   const sendRefund = async (reason: RefundReason, note: string) => {
@@ -309,7 +269,7 @@ export default function CheckInPage() {
     setBusy(true);
     const res = await sendOrApproveRefund({ bookingId: refundFor.id, reason, note, requestedBy: actor.name, place: resourceName(refundFor.resourceId), direct });
     setBusy(false);
-    if (!res.ok) { toast.error(t("refundFailed")); return; }
+    if (!res.ok) { toast.error(res.error.message || t("refundFailed")); return; }
     setRefundFor(null);
     if (res.data.status === "approved") {
       const method = info.order?.payments[0]?.method ?? "cash";
@@ -320,15 +280,32 @@ export default function CheckInPage() {
     reload();
   };
 
+  const withdrawRefund = async (b: Booking) => {
+    const req = pendingRefundFor(b.id);
+    if (!req) return;
+    await withdrawRefundRequest(req.id);
+    toast.success(t("refundWithdrawn"));
+    reload();
+  };
+
+  const withdrawMove = async (b: Booking) => {
+    const req = pendingRescheduleFor(b.id);
+    if (!req) return;
+    await withdrawRescheduleRequest(req.id);
+    toast.success(t("moveWithdrawn"));
+  };
+
   const openMove = (b: Booking) => {
     const edit = bookingEditable(b.id, actor.name);
     if (!edit.editable) { toast.error(edit.reason); return; }
     setMoveFor(b);
   };
 
+  /* Only reached when this role may move on the spot ("direct"): a role set to
+     "request" sends the move to a manager from inside the sheet. */
   const doMove = async (newDate: string, newTime: string) => {
     if (!moveFor) return;
-    const product = productsQ.data?.data.find((p) => p.id === moveFor.productId);
+    const product = productOf(moveFor.productId);
     if (!product) return;
     const duration = durationOf(moveFor, product);
     setBusy(true);
@@ -342,8 +319,8 @@ export default function CheckInPage() {
   };
 
   const addWalkIn = async () => {
-    const p = productsQ.data?.data.find((x) => x.id === walkInProduct);
-    const tier = p?.tiers.find((t) => t.active);
+    const p = productOf(walkInProduct);
+    const tier = p?.tiers.find((x) => x.active);
     if (!p || !tier) return;
     const res = await checkout({
       channel: "counter", locationId: venueId || (p.locationIds[0] ?? "loc_fort"), counterId: activeCounter.counter?.id ?? null, staffId: null,
@@ -364,6 +341,52 @@ export default function CheckInPage() {
 
   const dayLabel = date === TODAY ? t("today") : date === TOMORROW ? t("tomorrow") : "";
 
+  /* One overflow per party: everything that is not the one thing a steward came
+     for. What is offered follows the role — "off" hides a button, "request" asks
+     a manager, "direct" does it on the spot. */
+  const menuFor = (p: Party): ActionMenuItem[] => {
+    const b = p.booking;
+    const prod = productOf(b.productId);
+    const items: ActionMenuItem[] = [];
+    const icon = (I: typeof PlusCircle) => <I size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />;
+    const noShow = p.state === "noshow";
+    if (!noShow && p.state === "partial") {
+      items.push({ key: "rest", label: t("checkInRest", { count: p.size - p.arrived }), icon: icon(UserCheck), onSelect: () => void checkIn(b, p.size) });
+    }
+    if (!noShow && p.state === "notin" && p.size > 1 && p.due === 0) {
+      items.push({ key: "some", label: t("checkInSome"), icon: icon(UserCheck), onSelect: () => void checkIn(b, 1) });
+    }
+    if (!noShow && (prod?.addOns?.length ?? 0) > 0) items.push({ key: "extra", label: t("addExtraBtn"), icon: icon(PlusCircle), onSelect: () => setExtraFor(b) });
+    if (!noShow && (prod?.tiers.filter((tier) => tier.active).length ?? 0) > 1) items.push({ key: "upgrade", label: t("upgradeBtn"), icon: icon(ArrowUpCircle), onSelect: () => setUpgradeFor(b) });
+    const ext = noShow ? null : extendOf(b);
+    if (ext) items.push({ key: "extend", label: t("extendBtn", { minutes: ext.cfg.incrementMinutes }), icon: icon(Timer), onSelect: () => void extend(b) });
+
+    // Move — "off" hides it; "request" asks a manager; "direct" moves it now.
+    if (!noShow && !actor.loading && prod?.schedule && actor.rescheduleMode !== "off") {
+      if (pendingRescheduleFor(b.id)) {
+        items.push({ key: "move-back", label: t("moveWithdrawBtn"), icon: icon(CalendarClock), separated: items.length > 0, onSelect: () => void withdrawMove(b) });
+      } else {
+        items.push({ key: "move", label: actor.rescheduleMode === "direct" ? t("moveBtn") : t("moveAskBtn"), icon: icon(CalendarClock), separated: items.length > 0, onSelect: () => openMove(b) });
+      }
+    }
+    // Refund — the same three modes, and a request already waiting can be taken back.
+    if (!noShow && !actor.loading && actor.refundMode !== "off") {
+      const info = refundInfoFor(b);
+      if (info.pending) {
+        items.push({ key: "refund-back", label: t("refundWithdrawBtn"), icon: icon(RotateCcw), onSelect: () => void withdrawRefund(b) });
+      } else if (info.refundable) {
+        items.push({ key: "refund", label: canRefundDirectly(actor, info.amount) ? t("refundBtn") : t("refundAskBtn"), icon: icon(RotateCcw), onSelect: () => setRefundFor(b) });
+      }
+    }
+    if (!noShow && p.state === "notin") {
+      items.push({ key: "noshow", label: t("noShowBtn"), icon: icon(Ban), separated: items.length > 0, onSelect: () => { setNoShowFor(b); setNoShowReason(""); } });
+    }
+    return items;
+  };
+
+  const filterLabels = { all: t("filterAll"), due: t("filterDue"), notin: t("filterNotIn"), in: t("filterIn") };
+  const emptyFor: Record<CheckInFilter, string> = { all: t("noBookingsSearch"), due: t("emptyDue"), notin: t("emptyNotIn"), in: t("emptyIn") };
+
   return (
     <main className="mx-auto w-full max-w-5xl px-section py-section">
       <div className="flex flex-col gap-section lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
@@ -378,8 +401,14 @@ export default function CheckInPage() {
             </Button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-tight">
-            <button type="button" onClick={() => step(-1)} aria-label={t("prevDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted active:bg-muted-wash">
+          {/* Search leads: it is the first thing done when a guest walks up. */}
+          <div data-focus-host className="flex h-12 items-center gap-tight rounded-full border border-line bg-card px-comfortable focus-within:border-ember-solid">
+            <Search size={18} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("searchPlaceholder")} placeholder={t("searchPlaceholder")} className="h-full w-full min-w-0 bg-transparent text-base" />
+          </div>
+
+          <div className="flex items-center gap-tight">
+            <button type="button" onClick={() => step(-1)} aria-label={t("prevDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted hover:bg-muted-wash active:bg-muted-wash">
               <ChevronLeft size={18} strokeWidth={1.5} />
             </button>
             <DateField
@@ -388,18 +417,23 @@ export default function CheckInPage() {
               onChange={setDate}
               shape="go"
               labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
-              className="w-[150px] shrink-0"
+              className="min-w-0 flex-1 sm:w-[170px] sm:flex-none"
             />
-            <button type="button" onClick={() => step(1)} aria-label={t("nextDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted active:bg-muted-wash">
+            <button type="button" onClick={() => step(1)} aria-label={t("nextDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted hover:bg-muted-wash active:bg-muted-wash">
               <ChevronRight size={18} strokeWidth={1.5} />
             </button>
-            {/* Touch at every width: this is a door device, so the `md:` shrink
-                that suits the admin app put a 38px field on a counter. */}
-            <div data-focus-host className="flex h-11 min-w-40 flex-1 items-center gap-tight rounded-full border border-line bg-card px-comfortable focus-within:border-ember-solid">
-              <Search size={16} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("searchPlaceholder")} placeholder={t("searchPlaceholder")} className="h-full w-full bg-transparent text-base" />
-            </div>
           </div>
+
+          <FilterCells value={filter} onChange={setFilter} counts={counts} labels={filterLabels} label={t("filterLabel")} />
+
+          {/* The Due view opens on the one number a steward collecting is
+              working toward: everything still to take, and from how many. */}
+          {filter === "due" && dueNow.parties > 0 && (
+            <div data-due-banner className="flex flex-wrap items-baseline justify-between gap-x-comfortable gap-y-inline rounded-card border border-warning-line bg-warning-wash p-card">
+              <p className="text-2xl font-bold tabular-nums text-fg">{t("dueBannerAmount", { amount: formatMoney(dueNow.amount) })}</p>
+              <p className="text-md font-semibold text-fg-secondary">{t("dueBannerCount", { count: dueNow.parties })}</p>
+            </div>
+          )}
 
           {bookingsQ.loading ? (
             <div aria-busy="true" className="flex flex-col gap-tight">
@@ -407,130 +441,58 @@ export default function CheckInPage() {
               <Skeleton h={64} className="rounded-card" />
               <Skeleton h={64} className="rounded-card" />
             </div>
+          ) : dayParties.length === 0 ? (
+            <EmptyState title={t("noBookingsTitle")} message={t("noBookingsDay")} />
           ) : groups.length === 0 ? (
-            <EmptyState title={t("noBookingsTitle")} message={search ? t("noBookingsSearch") : t("noBookingsDay")} />
+            <EmptyState title={filter === "all" ? t("noBookingsTitle") : filterLabels[filter]} message={search && filter === "all" ? t("noBookingsSearch") : emptyFor[filter]} />
           ) : (
             <div className="flex flex-col gap-comfortable">
-              {groups.map(([key, items]) => {
-                const totals = sessionTotals.get(key) ?? { expected: 0, inCount: 0 };
-                const expected = totals.expected;
-                const inCount = totals.inCount;
-                const [pid, iso] = key.split("|");
+              {groups.map((g) => {
+                const totals = sessionTotals.get(g.key) ?? { expected: 0, inCount: 0 };
+                const full = totals.inCount >= totals.expected;
                 /* Open where the door is standing, and open everything while a
-                   search is running — a match hidden inside a shut row is a
-                   match nobody finds. */
-                const isOpen = search ? true : (open[key] ?? key === nowKey);
-                const full = inCount >= expected;
+                   search or a filter is running — a match hidden inside a shut
+                   row is a match nobody finds. */
+                const isOpen = search || filter !== "all" ? true : (open[g.key] ?? g.key === nowKey);
                 return (
-                  <section key={key} data-group className="card-surface">
+                  <section key={g.key} data-group className="card-surface">
                     <button
                       type="button"
-                      onClick={() => setOpen((o) => ({ ...o, [key]: !isOpen }))}
+                      onClick={() => setOpen((o) => ({ ...o, [g.key]: !isOpen }))}
                       aria-expanded={isOpen}
-                      className="flex min-h-14 w-full items-center gap-comfortable px-section py-tight text-left"
+                      className="flex min-h-14 w-full items-center gap-comfortable px-card py-tight text-left"
                     >
                       {isOpen ? <ChevronDown size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" /> : <ChevronRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
                       <span className="min-w-0 flex-1">
                         <span className="flex items-baseline gap-tight">
-                          <span className="shrink-0 whitespace-nowrap text-md font-semibold">{formatClock(time(iso))}</span>
-                          <span className="min-w-0 truncate text-base">{productName(pid)}</span>
+                          <span className="shrink-0 whitespace-nowrap text-md font-semibold tabular-nums">{formatClock(time(g.start))}</span>
+                          <span className="min-w-0 break-words text-base">{productName(g.productId)}</span>
                         </span>
                         <span className="mt-inline flex items-center gap-tight">
                           <span aria-hidden className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-line">
-                            <span className={cn("block h-full rounded-full", full ? "bg-success" : "bg-inverse/40")} style={{ width: `${expected ? Math.round((inCount / expected) * 100) : 0}%` }} />
+                            <span className={cn("block h-full rounded-full", full ? "bg-success" : "bg-inverse/40")} style={{ width: `${totals.expected ? Math.round((totals.inCount / totals.expected) * 100) : 0}%` }} />
                           </span>
-                          <span className={cn("text-sm", full ? "font-semibold text-success" : "text-muted")}>{t("inOfTotal", { done: inCount, total: expected })}</span>
+                          <span className={cn("text-sm", full ? "font-semibold text-success" : "text-muted")}>{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
                         </span>
                       </span>
                     </button>
 
                     {isOpen && (
-                      /* The parties as rows on the session's own card,
-                         divided by hairlines — no box inside a box. */
-                      <div className="flex flex-col divide-y divide-line border-t border-line">
-                        {items.map((b) => {
-                          const o = orderOf(b);
-                          const due = outstanding(o);
-                          const done = (b.checkedIn ?? 0) >= b.partySize;
-                          const prod = productsQ.data?.data.find((x) => x.id === b.productId);
-                          const extendable = extendOf(b);
-                          /* One primary action; everything else behind the
-                             overflow. Seven equal pills stated no opinion about
-                             which one a steward came for. */
-                          const menu: ActionMenuItem[] = [];
-                          if (!b.noShow && (prod?.addOns?.length ?? 0) > 0) {
-                            menu.push({ key: "extra", label: t("addExtraBtn"), icon: <PlusCircle size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, onSelect: () => setExtraFor(b) });
-                          }
-                          if (!b.noShow && (prod?.tiers.filter((tier) => tier.active).length ?? 0) > 1) {
-                            menu.push({ key: "upgrade", label: t("upgradeBtn"), icon: <ArrowUpCircle size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, onSelect: () => setUpgradeFor(b) });
-                          }
-                          if (!b.noShow && extendable) {
-                            menu.push({ key: "extend", label: t("extendBtn", { minutes: extendable.cfg.incrementMinutes }), icon: <Timer size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, onSelect: () => extend(b) });
-                          }
-                          if (!b.noShow && prod?.schedule) {
-                            menu.push({ key: "move", label: t("moveBtn"), icon: <CalendarClock size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, separated: menu.length > 0, onSelect: () => openMove(b) });
-                          }
-                          const refundInfo = b.noShow ? null : refundInfoFor(b);
-                          if (refundInfo?.refundable && !refundInfo.pending) {
-                            menu.push({ key: "refund", label: t("refundBtn"), icon: <RotateCcw size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, onSelect: () => setRefundFor(b) });
-                          }
-                          if (!b.noShow && !done && (b.checkedIn ?? 0) === 0) {
-                            menu.push({ key: "noshow", label: t("noShowBtn"), icon: <Ban size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, separated: menu.length > 0, onSelect: () => { setNoShowFor(b); setNoShowReason(""); } });
-                          }
-                          const name = o?.customerName?.trim();
-                          return (
-                            <div key={b.id} data-party className="flex items-center gap-comfortable px-section py-comfortable">
-                              <span className="min-w-0 flex-1">
-                                {/* The name is what a steward matches against
-                                    the person in front of them, so it leads and
-                                    it WRAPS — it used to be third in a muted
-                                    mono run-on, cut off with an ellipsis. */}
-                                <span className={cn("block break-words text-md font-semibold", !name && "font-mono text-base")}>{name || o?.reference || b.orderId}</span>
-                                <span className="mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline text-sm text-muted">
-                                  <span>{t("guests", { count: b.partySize })}</span>
-                                  {(b.checkedIn ?? 0) > 0 && !done && <span>· {t("inOfTotal", { done: b.checkedIn ?? 0, total: b.partySize })}</span>}
-                                </span>
-                                {/* The code on its own line: it is what a guest
-                                    reads off their phone, and after a "·" it
-                                    wrapped to a line that began with a dot. */}
-                                {name && <span className="mt-inline block break-all font-mono text-sm text-muted">{o?.reference ?? b.orderId}</span>}
-                              </span>
-
-                              {/* The row's one action is the right-most thing in
-                                  it, orange, on every row — the till's pattern:
-                                  the button that moves things on is always
-                                  bottom-right. Anything else sits behind ⋯ to
-                                  its left. */}
-                              <span className="flex shrink-0 flex-wrap items-center justify-end gap-tight">
-                                {menu.length > 0 ? (
-                                  <ActionMenu shape="go" items={menu} label={t("rowMenu", { name: name || (o?.reference ?? b.orderId) })} />
-                                ) : null}
-                                {b.noShow ? (
-                                  <span className="rounded-full bg-danger-solid px-comfortable py-inline text-sm font-medium text-on-solid">
-                                    {b.noShowReason ? t("noShowTagReason", { reason: b.noShowReason }) : t("noShowTag")}
-                                  </span>
-                                ) : due > 0 ? (
-                                  <>
-                                    <span className="rounded-full border border-warning-line bg-warning-wash px-comfortable py-inline text-sm font-semibold tabular-nums text-fg">{t("owes", { amount: formatMoney(due) })}</span>
-                                    <Button onClick={() => setPayFor(b)}>{t("takeBalanceBtn")}</Button>
-                                  </>
-                                ) : done ? (
-                                  <span className="rounded-full bg-success-wash px-comfortable py-inline text-sm font-semibold text-fg">{t("allIn")}</span>
-                                ) : (
-                                  <>
-                                    {b.partySize > 1 && (b.checkedIn ?? 0) < b.partySize - 1 && (
-                                      <Button variant="secondary" loading={pending === b.id} aria-label={t("plusOneLabel")} onClick={() => checkIn(b, (b.checkedIn ?? 0) + 1)}>{t("plusOne")}</Button>
-                                    )}
-                                    <Button loading={pending === b.id} onClick={() => checkIn(b, b.partySize)}>
-                                      {b.partySize > 1 ? t("checkInCount", { count: b.partySize - (b.checkedIn ?? 0) }) : t("checkIn")}
-                                    </Button>
-                                  </>
-                                )}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      <ul className="flex flex-col divide-y divide-line border-t border-line">
+                        {g.parties.map((p) => (
+                          <PartyRow
+                            key={p.booking.id}
+                            party={p}
+                            pending={pending === p.booking.id}
+                            refundAsked={!!pendingRefundFor(p.booking.id)}
+                            moveAsked={!!pendingRescheduleFor(p.booking.id)}
+                            menu={menuFor(p)}
+                            menuLabel={t("rowMenu", { name: p.name || t("walkInDefaultName") })}
+                            onTake={() => setPayFor(p.booking)}
+                            onCheckIn={(count) => void checkIn(p.booking, count)}
+                          />
+                        ))}
+                      </ul>
                     )}
                   </section>
                 );
@@ -539,83 +501,35 @@ export default function CheckInPage() {
           )}
         </div>
 
-        {/* The day, before anyone turns up. */}
         <aside className="flex flex-col gap-section">
-          <section className="flex flex-col gap-comfortable p-section card-surface">
-            <h2 className="text-base font-semibold">{t("summaryTitle")}</h2>
-            <div className="grid grid-cols-3 divide-x divide-line overflow-hidden rounded-inner border border-line text-center">
-              {(
-                [
-                  ["expected", day.expected],
-                  ["arrived", day.arrived],
-                  ["toCome", Math.max(0, day.expected - day.arrived)],
-                ] as const
-              ).map(([key, value]) => (
-                <div key={key} className="flex flex-col items-center gap-inline py-comfortable">
-                  <span className="text-xl font-semibold tabular-nums">{value}</span>
-                  <span className="text-sm text-muted">{t(`stat_${key}`)}</span>
-                </div>
-              ))}
-            </div>
-            {day.owed > 0 && (
-              <Notice tone="warning" size="sm" title={t("owedAcrossDay", { amount: formatMoney(day.owed) })} />
-            )}
-          </section>
+          <DaySummary expected={day.expected} arrived={day.arrived} owed={day.owed} owingParties={day.owingParties} onShowDue={() => { setFilter("due"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
         </aside>
       </div>
 
-      {/* Take the outstanding balance — any configured method works. */}
-      <Modal open={!!payFor} onClose={closePay} title={payFor ? t("takeAmount", { amount: formatMoney(payDiscounted) }) : t("takeBalanceTitle")}>
-        <div className="mb-section flex items-baseline justify-between gap-comfortable">
-          <span className="text-sm text-muted">{ts("sheet.owed")}</span>
-          <span className="text-lg font-semibold tabular-nums">{formatMoney(payDue)}</span>
-        </div>
-
-        <div className="mb-section">
-          <DiscountFields state={discount} setState={setDiscount} orderTotal={payOrder?.total ?? 0} owed={payDue} limitPct={actor.discountLimitPct} />
-        </div>
-
-        {payDiscounted > 0 && (
-          <>
-            <div className="mb-section flex flex-col gap-tight">
-              <label className="text-sm font-medium text-muted" htmlFor="ci-amount">{t("amountLabel")}</label>
-              <div className="flex items-center gap-tight">
-                <input
-                  id="ci-amount"
-                  inputMode="decimal"
-                  value={payAmount == null ? String(payDiscounted / 100) : String(payAmount / 100)}
-                  onChange={(e) => {
-                    const n = parseFloat(e.target.value.trim());
-                    setPayAmount(Number.isFinite(n) ? Math.max(0, Math.round(n * 100)) : 0);
-                  }}
-                  className="h-12 min-w-0 flex-1 rounded-inner border border-line bg-card px-comfortable text-right text-base tabular-nums"
-                />
-                <button type="button" onClick={() => setPayAmount(null)} className="h-12 shrink-0 rounded-full border border-line px-comfortable text-sm">
-                  {t("amountAll")}
-                </button>
-              </div>
-              {payNow < payDiscounted && payNow > 0 && (
-                <p className="text-sm text-muted">{t("partRemaining", { left: formatMoney(payDiscounted - payNow) })}</p>
-              )}
-            </div>
-            <p className="mb-section text-sm text-muted">{t("receiptNote")}</p>
-            <div className="grid grid-cols-2 gap-tight">
-              {METHODS.map((m) => <Button key={m} variant="secondary" className="h-12" loading={busy} disabled={payNow <= 0 || !discountCalc.valid} onClick={() => takeBalance(m)}>{enumL.method(m)}</Button>)}
-            </div>
-          </>
-        )}
-
-        {payDiscounted <= 0 && discountCalc.hasAmount && (
-          <Button className="w-full" loading={busy} disabled={!discountCalc.valid} onClick={applyDiscountOnly}>
-            {ts("discount.applyOnly")}
-          </Button>
-        )}
-      </Modal>
+      {/* Take the balance — one sheet, drawn like the till's own payment step:
+          the amount, an after-match discount, how they pay, cash received. It
+          checks the party in as part of the same step. */}
+      {payFor && payOrder && (
+        <PaymentSheet
+          open
+          onClose={() => setPayFor(null)}
+          title={payParty?.name ?? ""}
+          when={whenFor(payFor)}
+          orderTotal={payOrder.total}
+          owed={payOwed}
+          limitPct={actor.discountLimitPct}
+          methods={payMethods}
+          checkIn={!(payParty?.state === "in")}
+          allowPart
+          onConfirm={(r) => void takePayment(r)}
+          busy={busy}
+        />
+      )}
 
       <Modal open={!!extraFor} onClose={() => setExtraFor(null)} title={t("addExtraTitle")}>
         <div className="flex flex-col gap-tight">
-          {(productsQ.data?.data.find((x) => x.id === extraFor?.productId)?.addOns ?? []).map((a) => (
-            <Button key={a.id} variant="secondary" className="justify-between" onClick={() => addExtra(a.id)}>
+          {(productOf(extraFor?.productId ?? "")?.addOns ?? []).map((a) => (
+            <Button key={a.id} variant="secondary" className="justify-between" onClick={() => void addExtra(a.id)}>
               <span>{a.name}</span><span className="tabular-nums">{formatMoney(a.price)}{a.perPerson ? t("perHead") : ""}</span>
             </Button>
           ))}
@@ -625,19 +539,19 @@ export default function CheckInPage() {
       <Modal open={!!upgradeFor} onClose={() => setUpgradeFor(null)} title={t("upgradeTitle")}>
         <p className="mb-section text-sm text-muted">{t("upgradeNote")}</p>
         <div className="flex flex-col gap-tight">
-          {(productsQ.data?.data.find((x) => x.id === upgradeFor?.productId)?.tiers.filter((tier) => tier.active) ?? []).map((tier) => (
-            <Button key={tier.id} variant="secondary" className="justify-between" onClick={() => upgrade(tier.id)}>
+          {(productOf(upgradeFor?.productId ?? "")?.tiers.filter((tier) => tier.active) ?? []).map((tier) => (
+            <Button key={tier.id} variant="secondary" className="justify-between" onClick={() => void upgrade(tier.id)}>
               <span>{tier.name}</span><span className="tabular-nums">{formatMoney(tier.price)}</span>
             </Button>
           ))}
         </div>
       </Modal>
 
-      <Modal open={!!noShowFor} onClose={() => setNoShowFor(null)} title={t("recordNoShowTitle")} footer={<><Button variant="secondary" onClick={() => setNoShowFor(null)}>{t("cancel")}</Button><Button onClick={recordNoShow}>{t("recordNoShowBtn")}</Button></>}>
+      <Modal open={!!noShowFor} onClose={() => setNoShowFor(null)} title={t("recordNoShowTitle")} footer={<><Button variant="secondary" onClick={() => setNoShowFor(null)}>{t("cancel")}</Button><Button onClick={() => void recordNoShow()}>{t("recordNoShowBtn")}</Button></>}>
         <FormField label={t("reasonLabel")} placeholder={t("reasonPlaceholder")} value={noShowReason} onChange={(e) => setNoShowReason(e.target.value)} />
       </Modal>
 
-      <Modal open={walkInOpen} onClose={() => setWalkInOpen(false)} title={t("walkInTitle")} footer={<><Button variant="secondary" onClick={() => setWalkInOpen(false)}>{t("cancel")}</Button><Button disabled={!walkInProduct} onClick={addWalkIn}>{t("sellAndAdd")}</Button></>}>
+      <Modal open={walkInOpen} onClose={() => setWalkInOpen(false)} title={t("walkInTitle")} footer={<><Button variant="secondary" onClick={() => setWalkInOpen(false)}>{t("cancel")}</Button><Button disabled={!walkInProduct} onClick={() => void addWalkIn()}>{t("sellAndAdd")}</Button></>}>
         <div className="flex flex-col gap-section">
           <FormField label={t("productLabel")} variant="select" value={walkInProduct} onChange={(e) => setWalkInProduct(e.target.value)} options={(productsQ.data?.data ?? []).filter((p) => p.status === "active" && (p.bookingType === "BT-01" || p.bookingType === "BT-06")).map((p) => ({ value: p.id, label: p.name }))} />
           <FormField label={t("nameLabel")} placeholder={t("walkInDefaultName")} value={walkInName} onChange={(e) => setWalkInName(e.target.value)} />
@@ -653,23 +567,23 @@ export default function CheckInPage() {
         <RefundSheet
           open={!!refundFor}
           onClose={() => setRefundFor(null)}
-          title={guestName(refundFor)}
+          title={dayParties.find((p) => p.booking.id === refundFor.id)?.name ?? ""}
           when={whenFor(refundFor)}
           amount={refundInfoFor(refundFor).amount}
           direct={canRefundDirectly(actor, refundInfoFor(refundFor).amount)}
-          onSend={sendRefund}
+          onSend={(reason, note) => void sendRefund(reason, note)}
           busy={busy}
         />
       )}
 
       {moveFor && (() => {
-        const product = productsQ.data?.data.find((p) => p.id === moveFor.productId);
+        const product = productOf(moveFor.productId);
         if (!product) return null;
         return (
           <MoveSheet
             open={!!moveFor}
             onClose={() => setMoveFor(null)}
-            title={guestName(moveFor)}
+            title={dayParties.find((p) => p.booking.id === moveFor.id)?.name ?? ""}
             product={product}
             resourceId={moveFor.resourceId ?? null}
             placeName={resourceName(moveFor.resourceId) ?? product.name}
@@ -679,7 +593,7 @@ export default function CheckInPage() {
             bufferMinutes={product.bufferMinutes ?? 0}
             partySize={moveFor.partySize}
             bookingId={moveFor.id}
-            onConfirm={doMove}
+            onConfirm={(d, tm) => void doMove(d, tm)}
             busy={busy}
           />
         );

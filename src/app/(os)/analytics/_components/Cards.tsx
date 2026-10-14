@@ -14,11 +14,14 @@ import {
   BarList,
   CardSkeleton,
   Change,
+  ChannelList,
+  type ChannelListRow,
   Col,
   ColumnBars,
   Empty,
   Figure,
   Grid,
+  Grid3,
   Group,
   GroupHeading,
   MiniMultiples,
@@ -239,27 +242,76 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
   }));
   const payPanels = o.paymentSeries.map((m, i) => miniPanel(m.method, enumL.method(m.method), o.payments[i].amount, o.payments[i].previousAmount, m.series));
 
-  // ── counters ──
-  const counterLabel = (c: AnalyticsOverview["counters"][number]) =>
-    c.kind === "counter" ? c.name : c.kind === "other" ? t("sells.other") : t(`counters.${c.kind}` as never);
-  const counters: PairRow[] = o.counters.map((c) => {
-    const prev = showCompare ? c.previousRevenue : undefined;
-    return {
-      key: c.key,
-      label: counterLabel(c),
-      meta: ordersText(c.orders),
-      value: c.revenue,
-      previous: prev,
-      figure: formatMoney(c.revenue),
-      previousFigure: prev === undefined ? undefined : formatMoney(prev),
-      change: change(c.revenue, c.previousRevenue),
-      muted: c.kind === "other",
-      quiet: c.orders === 0 && (c.previousOrders ?? 0) === 0 ? t("counters.noSales") : undefined,
-      now: `${formatMoney(c.revenue)} · ${ordersText(c.orders)}`,
-      then: prev === undefined ? undefined : `${formatMoney(prev)} · ${ordersText(c.previousOrders ?? 0)}`,
-      changeText: changeSentence(c.revenue, c.previousRevenue),
-    };
-  });
+  // ── each sales channel on its own ──
+  const bd = o.channelBreakdown;
+  const channelCard = (
+    id: string,
+    title: string,
+    info: string,
+    c: AnalyticsOverview["channelBreakdown"]["counters"],
+    rowLabel: (r: AnalyticsOverview["channelBreakdown"]["counters"]["rows"][number]) => string,
+    detail: (r: AnalyticsOverview["channelBreakdown"]["counters"]["rows"][number]) => React.ReactNode,
+    lead?: React.ReactNode,
+    foot?: React.ReactNode,
+  ) => {
+    const rows: ChannelListRow[] = c.rows.map((r) => ({
+      key: r.key,
+      label: rowLabel(r),
+      value: r.revenue,
+      figure: formatMoney(r.revenue),
+      change: change(r.revenue, r.previousRevenue),
+      detail: r.orders === 0 && (r.previousOrders ?? 0) === 0 ? t("counters.noSales") : detail(r),
+    }));
+    return (
+      <Section id={id} title={title} summary={c.revenue > 0 ? `${formatMoney(c.revenue)} · ${ordersText(c.orders)}` : undefined} info={info} view={{ href: "/orders", where: tn("orders") }}>
+        <Headline
+          value={formatMoney(c.revenue)}
+          change={change(c.revenue, c.previousRevenue)}
+          label={c.orders > 0 ? `${ordersText(c.orders)} · ${t("split.average", { amount: formatMoney(c.averageOrder) })}` : t("split.none")}
+          was={showCompare && c.previousRevenue !== undefined ? t("vsValue", { value: formatMoney(c.previousRevenue) }) : undefined}
+        />
+        {rows.length > 0 && lead}
+        {rows.length === 0 ? <Empty>{t("split.empty")}</Empty> : <ChannelList rows={rows} />}
+        {foot}
+      </Section>
+    );
+  };
+  const pctText = (f: number) => percent(f);
+  const splitCards = (
+    <>
+      {channelCard(
+        "split-counters",
+        t("split.counters"),
+        t("info.splitCounters"),
+        bd.counters,
+        (r) => (r.kind === "unassigned" ? t("counters.unassigned") : r.name),
+        (r) => `${ordersText(r.orders)} · ${pctText(r.share)}`,
+      )}
+      {channelCard(
+        "split-online",
+        t("split.online"),
+        t("info.splitOnline"),
+        bd.storefront,
+        (r) => r.name,
+        (r) => `${ordersText(r.orders)} · ${pctText(r.share)}`,
+        <p className="mb-comfortable text-xs font-medium text-muted">{t("split.topBookings")}</p>,
+      )}
+      {channelCard(
+        "split-market",
+        t("split.market"),
+        t("info.splitMarket"),
+        bd.marketplaces,
+        (r) => r.name,
+        (r) => t("split.cut", { orders: ordersText(r.orders), commission: formatMoney(r.commission ?? 0), kept: formatMoney(r.kept ?? 0) }),
+        undefined,
+        bd.marketplaces.rows.length > 1 ? (
+          <p className="mt-comfortable text-xs text-muted">
+            {t("split.cutTotal", { commission: formatMoney(bd.marketplaces.commission ?? 0), kept: formatMoney(bd.marketplaces.kept ?? 0) })}
+          </p>
+        ) : undefined,
+      )}
+    </>
+  );
 
   // ── visitors and check-ins ──
   const v = o.visitors;
@@ -341,7 +393,6 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
 
   // ── the one figure a phone shows for a folded card ──
   const topChannel = [...o.channels].sort((a, b) => b.revenue - a.revenue)[0];
-  const topCounter = [...o.counters].sort((a, b) => b.revenue - a.revenue)[0];
   const topPay = [...o.payments].sort((a, b) => b.amount - a.amount)[0];
   const topLead = [...lead].sort((a, b) => b.value - a.value)[0];
   const topTicket = [...tickets].sort((a, b) => b.value - a.value)[0];
@@ -349,7 +400,6 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
     sells: sells[0] ? `${sells[0].label} · ${formatMoney(sells[0].value)}` : undefined,
     tickets: topTicket && topTicket.value > 0 ? `${topTicket.label} · ${topTicket.figure}` : undefined,
     channels: topChannel && topChannel.revenue > 0 ? `${t(`channels.${topChannel.channel}` as never)} · ${percent(topChannel.share)}` : undefined,
-    counters: topCounter && topCounter.revenue > 0 ? `${counterLabel(topCounter)} · ${formatMoney(topCounter.revenue)}` : undefined,
     pay: topPay ? `${enumL.method(topPay.method)} · ${percent(topPay.share)}` : undefined,
     visitors: v.total > 0 ? guestsText(v.total) : undefined,
     checkins:
@@ -445,15 +495,6 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
               </>
             )}
           </Section>
-          <Section id="counters" title={t("counters.title")} summary={sum.counters} info={t("info.counters")} view={{ href: "/orders", where: tn("orders") }}>
-            {empty ? <Empty>{t("counters.empty")}</Empty> : <PairedBars rows={counters} nowLabel={nowText} thenLabel={rangeText} />}
-          </Section>
-        </Col>
-
-        <Col>
-          <Section id="tickets" title={t("tickets.title")} summary={sum.tickets} info={t("info.tickets")} view={{ href: "/catalog", where: tn("catalog") }}>
-            {tickets.length === 0 ? <Empty>{t("tickets.empty")}</Empty> : <PairedBars rows={tickets} nowLabel={nowText} thenLabel={rangeText} />}
-          </Section>
 
           <Section id="pay" title={t("pay.title")} summary={sum.pay} info={t("info.pay")} view={{ href: "/finances", where: tn("finances") }}>
             {pay.length === 0 ? (
@@ -485,7 +526,19 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
             )}
           </Section>
         </Col>
+
+        <Col>
+          <Section id="tickets" title={t("tickets.title")} summary={sum.tickets} info={t("info.tickets")} view={{ href: "/catalog", where: tn("catalog") }}>
+            {tickets.length === 0 ? <Empty>{t("tickets.empty")}</Empty> : <PairedBars rows={tickets} nowLabel={nowText} thenLabel={rangeText} />}
+          </Section>
+        </Col>
       </Grid>
+      </Group>
+
+      <GroupHeading id="split">{t("sections.split")}</GroupHeading>
+
+      <Group>
+        <Grid3>{splitCards}</Grid3>
       </Group>
 
       <GroupHeading id="visitors">{t("sections.visitors")}</GroupHeading>
@@ -797,6 +850,14 @@ export function Skeletons() {
       <div className="grid gap-section lg:grid-cols-2">
         <CardSkeleton />
         <CardSkeleton tall={300} />
+        <CardSkeleton rows={4} />
+        <CardSkeleton rows={4} />
+      </div>
+      <div className="pt-tight" aria-hidden>
+        <Pulse className="h-3 w-16" />
+      </div>
+      <div className="grid gap-section lg:grid-cols-3">
+        <CardSkeleton rows={4} />
         <CardSkeleton rows={4} />
         <CardSkeleton rows={4} />
       </div>

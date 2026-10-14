@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Lock, LockOpen, UserCheck } from "lucide-react";
-import { Button, MarketBadge, Modal, StatusPill, controlClass, type PillTone } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { Button, MarketBadge, Modal, StatusPill, type PillTone } from "@/components/ui";
+import { orderOutstanding, peekCustomers, peekOrders } from "@/lib/api";
+import { formatMoney } from "@/lib/format";
 import { clockRangeOf, type CalEvent, type EventTone } from "./model";
-import { commissionLine } from "./sourceText";
 
 /** Status is a word here, never only a colour — a block on the grid can get
  *  away with a coloured bar because this panel is what names it. */
@@ -46,7 +46,6 @@ export function EventDetail({
   canOpen,
   dayLabel,
   t,
-  onLock,
   onComplete,
   onRelease,
   blockedReason,
@@ -61,9 +60,8 @@ export function EventDetail({
   /** The page owns date formatting, as it does for the grids. */
   dayLabel: (d: Date) => string;
   t: (key: string, values?: Record<string, string | number>) => string;
-  /** Lock and unlock are one call: which one it is follows from the booking.
-   *  A reason is required either way — an unexplained lock is indistinguishable
-   *  from a bug six weeks later, which is the rule holds already follow. */
+  /** No longer used: locking is not offered from this panel (the lock API is
+   *  unchanged). Kept optional so the page need not change in the same pass. */
   onLock?: (event: CalEvent, lock: boolean, reason: string) => void;
   /** Everyone in the party is here. */
   onComplete?: (event: CalEvent) => void;
@@ -76,8 +74,7 @@ export function EventDetail({
   blockedReason?: string | null;
   busy?: boolean;
 }) {
-  const [asking, setAsking] = useState<null | "lock" | "unlock" | "release">(null);
-  const [reason, setReason] = useState("");
+  const [asking, setAsking] = useState<null | "release">(null);
 
   if (!event) return null;
 
@@ -88,9 +85,17 @@ export function EventDetail({
      next to the capacity it is holding back. */
   const isBooking = event.kind === "booking";
   const canComplete = isBooking && event.tone === "booked" && !blockedReason;
+  /* What a desk needs at a glance, read off the order: a phone to ring and
+     whether money is still owed. Read here, not carried on the event. */
+  const order = isBooking && event.orderId ? peekOrders().find((o) => o.id === event.orderId) : undefined;
+  const phone = order?.customerId ? peekCustomers().find((c) => c.id === order.customerId)?.phone ?? null : null;
+  const owed = order && order.status !== "cancelled" && order.status !== "refunded" ? orderOutstanding(order) : 0;
+  const total = event.partySize ?? 0;
+  const partyText = (event.checkedIn ?? 0) > 0 && total > 0 ? t("partyIn", { in: event.checkedIn ?? 0, total }) : event.party ?? "";
+  /* The subtitle is "guest · party · place": the place is whatever is left. */
+  const place = (event.subtitle ?? "").split(" · ").filter((x) => x && x !== event.guest && x !== event.party).join(" · ");
   const close = () => {
     setAsking(null);
-    setReason("");
     onClose();
   };
 
@@ -141,25 +146,52 @@ export function EventDetail({
               <span className="text-muted"> · {dayLabel(event.start)}</span>
             </dd>
           </div>
-          {/* Who sold it. The marketplace prepaid it, has its own reference
-              to quote and a voucher to check, and keeps a cut — which is the
-              number a manager asks for next. Both come off the order's own
-              snapshot. */}
+          {isBooking && event.guest && (
+            <div className="flex flex-wrap items-baseline gap-tight">
+              <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailGuest")}</dt>
+              <dd className="min-w-0 break-words text-sm">
+                {event.guest}
+                {phone && (
+                  <>
+                    <span className="text-muted"> · </span>
+                    <a href={`tel:${phone.replace(/[^d+]/g, "")}`} className="font-medium underline decoration-line underline-offset-2 hover:decoration-fg">
+                      {phone}
+                    </a>
+                  </>
+                )}
+              </dd>
+            </div>
+          )}
+          {isBooking && partyText && (
+            <div className="flex flex-wrap items-baseline gap-tight">
+              <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailParty")}</dt>
+              <dd className="min-w-0 text-sm">{partyText}</dd>
+            </div>
+          )}
+          {isBooking && place && (
+            <div className="flex flex-wrap items-baseline gap-tight">
+              <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailPlace")}</dt>
+              <dd className="min-w-0 break-words text-sm">{place}</dd>
+            </div>
+          )}
+          {isBooking && owed > 0 && (
+            <div className="flex flex-wrap items-baseline gap-tight">
+              <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailPayment")}</dt>
+              <dd className="min-w-0 text-sm">
+                <StatusPill tone="warning">{t("stillOwes", { amount: formatMoney(owed) })}</StatusPill>
+              </dd>
+            </div>
+          )}
+          {/* Where it was booked, with the marketplace's own reference - the
+              one thing a desk is asked for when a guest quotes a voucher. */}
           {event.source && (
-            <>
-              <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailSource")}</dt>
-                <dd className="flex min-w-0 items-start gap-tight text-sm">
-                  <MarketBadge id={event.source.id} className="mt-0.5" />
-                  {/* The row is already labelled "Sold on", so the line is just who and their reference. */}
-                  <span className="min-w-0 break-words">{event.source.reference ? `${event.source.name} · ${event.source.reference}` : event.source.name}</span>
-                </dd>
-              </div>
-              <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailCommission")}</dt>
-                <dd className="min-w-0 break-words text-sm">{commissionLine(t, event.source)}</dd>
-              </div>
-            </>
+            <div className="flex flex-wrap items-baseline gap-tight">
+              <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailSource")}</dt>
+              <dd className="flex min-w-0 items-start gap-tight text-sm">
+                <MarketBadge id={event.source.id} className="mt-0.5" />
+                <span className="min-w-0 break-words">{event.source.reference ? `${event.source.name} · ${event.source.reference}` : event.source.name}</span>
+              </dd>
+            </div>
           )}
           {event.hold && (
             <>
@@ -181,16 +213,6 @@ export function EventDetail({
               </div>
             </>
           )}
-          {/* A hold's subtitle is "<what> · <product>", and both of those now
-              have rows of their own — printing it again said Lane 3 twice. */}
-          {event.subtitle && !event.hold && (
-            <div className="flex flex-wrap items-baseline gap-tight">
-              <dt className="w-16 shrink-0 text-xs font-medium text-muted">{t("detailWhat")}</dt>
-              {/* break-words, not truncate: this panel is the one place the
-                  name is allowed all the room it needs. */}
-              <dd className="min-w-0 break-words text-sm">{event.subtitle}</dd>
-            </div>
-          )}
         </dl>
         {/* The three things a manager does to a booking they have just found
             on the grid. They were only ever on the order page, which meant
@@ -210,57 +232,17 @@ export function EventDetail({
           </div>
         )}
 
-        {isBooking && (onLock || onComplete) && (
+        {isBooking && onComplete && (canComplete || (blockedReason && !event.locked)) && (
           <div className="flex flex-col gap-tight border-t border-hairline pt-comfortable">
             {blockedReason && !event.locked && (
               <p role="status" className="text-sm text-muted">{blockedReason}</p>
             )}
-            {asking === null ? (
+            {canComplete && (
               <div className="flex flex-wrap gap-tight">
-                {canComplete && onComplete && (
-                  <Button variant="secondary" size="sm" loading={busy} onClick={() => onComplete(event)}>
-                    <UserCheck size={14} strokeWidth={1.5} aria-hidden />
-                    {t("markArrived")}
-                  </Button>
-                )}
-                {onLock && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => { setReason(""); setAsking(event.locked ? "unlock" : "lock"); }}
-                  >
-                    {event.locked
-                      ? <><LockOpen size={14} strokeWidth={1.5} aria-hidden />{t("unlockBooking")}</>
-                      : <><Lock size={14} strokeWidth={1.5} aria-hidden />{t("lockBooking")}</>}
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-tight">
-                <label className="text-xs font-medium text-muted" htmlFor="cal-lock-reason">
-                  {t(asking === "lock" ? "lockReason" : "unlockReason")}
-                </label>
-                <input
-                  id="cal-lock-reason"
-                  value={reason}
-                  placeholder={t(asking === "lock" ? "lockReasonPlaceholder" : "unlockReasonPlaceholder")}
-                  autoFocus
-                  onChange={(e) => setReason(e.target.value)}
-                  className={cn(controlClass(), "md:h-9")}
-                />
-                <div className="flex flex-wrap gap-tight">
-                  <Button
-                    size="sm"
-                    loading={busy}
-                    disabled={!reason.trim()}
-                    onClick={() => { onLock?.(event, asking === "lock", reason.trim()); setAsking(null); setReason(""); }}
-                  >
-                    {t(asking === "lock" ? "lockBooking" : "unlockBooking")}
-                  </Button>
-                  <Button variant="secondary" size="sm" onClick={() => { setAsking(null); setReason(""); }}>
-                    {t("cancel")}
-                  </Button>
-                </div>
+                <Button variant="secondary" size="sm" loading={busy} onClick={() => onComplete(event)}>
+                  <UserCheck size={14} strokeWidth={1.5} aria-hidden />
+                  {t("markArrived")}
+                </Button>
               </div>
             )}
           </div>

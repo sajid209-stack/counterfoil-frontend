@@ -57,7 +57,7 @@ export const SECTIONS: readonly SectionMeta[] = [
   { slug: "navigation", number: 15, title: "Navigation", group: "Components", status: "done",
     summary: "Tabs, ActionMenu, Pagination and the OS rail." },
   { slug: "cards", number: 16, title: "Cards & surfaces", group: "Components", status: "done",
-    summary: "Card anatomy, the stack of surfaces from page to sheet, variants, nested corners, and OS against POS." },
+    summary: "Card anatomy, the stack of surfaces, variants, nested corners, record cards (DetailCard, FactGrid, TimelineCard, the ticket stub), and OS against POS." },
   { slug: "data-display", number: 17, title: "Data display", group: "Components", status: "done",
     summary: "DataTable, StatusPill, StatStrip, Card, EmptyState, MarketBadge and Avatar." },
   { slug: "feedback", number: 18, title: "Feedback", group: "Components", status: "done",

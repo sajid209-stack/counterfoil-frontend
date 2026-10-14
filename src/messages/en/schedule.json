@@ -102,7 +102,15 @@
     "takeTitle": "Take payment",
     "takeAmount": "Take {amount}",
     "owed": "Owed",
-    "payBy": "Pay by"
+    "payBy": "Pay by",
+    "moveAsk": "Ask to move",
+    "moveAskTitle": "Ask to move",
+    "moveAskButton": "Ask a manager to move it",
+    "moveAsked": "Move request sent to a manager",
+    "moveAskNote": "A manager checks the place is free, then moves it. Same price.",
+    "moveWhy": "Why? (optional)",
+    "moveNoteLabel": "Note for the manager (optional)",
+    "moveNoteRequired": "Say why, so the manager can decide."
   },
   "toast": {
     "held": "On hold for {name}",
@@ -155,7 +163,22 @@
     "withdraw": "Take back the request",
     "withdrawn": "Refund request taken back",
     "declined": "Refund refused: {note}",
-    "boardBadge": "Refund asked"
+    "boardBadge": "Refund asked",
+    "ask": "Ask to refund",
+    "titleDirect": "Refund this booking",
+    "moveBoardBadge": "Move asked",
+    "movePending": "Move asked · {when} · waiting for a manager",
+    "moveWithdraw": "Take back the request",
+    "moveWithdrawn": "Move request taken back",
+    "moveWaiting": "A manager will check the place is free.",
+    "moveDeclined": "Move refused: {note}",
+    "moveReasons": {
+      "customer_asked": "Guest asked",
+      "weather": "Bad weather",
+      "venue_problem": "Problem at our venue",
+      "double_booked": "Booked twice",
+      "other": "Something else"
+    }
   },
   "discount": {
     "give": "Give a discount",
@@ -174,6 +197,24 @@
     "overLimit": "Over your limit of {pct}% — ask a manager",
     "overOwed": "A discount cannot be more than what is still owed.",
     "mathsLine": "Owed {owed} − discount {discount} = Take {take}",
-    "applyOnly": "Apply the discount"
+    "applyOnly": "Apply the discount",
+    "title": "After-match discount",
+    "help": "For when the game ran short or something went wrong. It comes off what is still owed.",
+    "modeLabel": "Discount in",
+    "modeAmount": "Taka",
+    "modePercent": "Percent"
+  },
+  "pay": {
+    "toTake": "To take now",
+    "partNow": "Taking now",
+    "stillOwed": "{amount} will still be owed",
+    "owedWas": "Owed {amount} before the discount",
+    "payPart": "Pay only part of it",
+    "partLabel": "Amount to take now",
+    "partAll": "All of it",
+    "notEnough": "Not enough",
+    "takeAndCheckIn": "Take {amount} and check in",
+    "applyAndCheckIn": "Apply the discount and check in",
+    "takeOnly": "Take {amount} only. They are not here yet."
   }
 }

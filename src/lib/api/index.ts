@@ -20,6 +20,8 @@ export * from "./reports";
 export * from "./operator";
 export * from "./paymentAccounts";
 export * from "./taxConfig";
+export * from "./vatSettings";
+export * from "./privacy";
 export * from "./advancePolicy";
 export * from "./layouts";
 export * from "./promotions";
@@ -42,5 +44,6 @@ export * from "./expenses";
 export * from "./issuedTickets";
 export * from "./analytics";
 export * from "./activity";
+export * from "./rescheduleRequests";
 // reports.ts has an older, series-based AnalyticsQuery; the page contract wins here.
 export type { AnalyticsQuery } from "./analytics";

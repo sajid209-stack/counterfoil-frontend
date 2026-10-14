@@ -8,26 +8,30 @@ import {
   Check,
   ChevronLeft,
   Clock,
-  CreditCard,
   Lock,
-  Percent,
-  QrCode,
   RotateCcw,
   Send,
   ShoppingBag,
   Unlock,
   UserCheck,
-  X,
 } from "lucide-react";
-import { DateStrip, MarketBadge, Notice, Sheet } from "@/components/ui";
+import { DateStrip, MarketBadge, Notice, Sheet, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClock, formatClockOf, formatClockRange, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
-import { useEnumLabels } from "@/lib/labels";
-import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay, toMinutes, toTime } from "@/lib/schedule";
+import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { isOpenOn, type Minor, type PaymentMethod, type Product } from "@/lib/api";
 import { REFUND_REASONS, type RefundReason, type RefundRequest } from "@/lib/api/refundRequests";
-import { discountMinorFrom, withinDiscountLimit, type DiscountMode } from "../_lib/discount";
+import {
+  pendingRescheduleFor,
+  requestReschedule,
+  rescheduleRequestsForOrder,
+  useRescheduleVersion,
+  withdrawRescheduleRequest,
+  type RescheduleReason,
+} from "@/lib/api/rescheduleRequests";
+import { canRefundDirectly, useActor } from "../_lib/actor";
 import { resourceMoveTimes, sessionMoveTimes, type MoveTime } from "../_lib/moveOptions";
+import { PaymentSheet } from "./PaymentSheet";
 import { type Block, type Column } from "../_lib/board";
 import { ClockCell } from "../../_components/Clock";
 import { Stepper } from "../../_components/Stepper";
@@ -38,6 +42,9 @@ import { Stepper } from "../../_components/Stepper";
    again — and it is the same pair, in the same order, as the bar under the
    board. */
 const BASE = "inline-flex min-w-0 items-center justify-center gap-tight rounded-full px-comfortable text-md font-semibold transition-transform duration-quick active:scale-[0.98] disabled:opacity-50";
+/** On a counter tablet a bottom sheet stretched the whole screen; the till’s own
+ *  sheets stop at about 560px, centred, and these do too. */
+export const SHEET_WIDTH = "mx-auto max-w-xl";
 /** The two buttons, at a height. Built here rather than overridden at the
  *  call site: `cn` does not merge conflicting utilities, so "h-14 h-13" is
  *  decided by stylesheet order, not by intent. */
@@ -164,6 +171,7 @@ export function HoldSheet({
       onClose={onClose}
       title={title}
       closeLabel={tc("close")}
+      className={SHEET_WIDTH}
       footer={
         <div className="flex w-full gap-tight">
           <button type="button" className={SECONDARY} onClick={onClose}>{t("sheet.back")}</button>
@@ -255,6 +263,7 @@ export function SessionSheet({
       onClose={onClose}
       title={title}
       closeLabel={tc("close")}
+      className={SHEET_WIDTH}
       footer={
         mode === "tickets" ? (
           <div className="flex w-full gap-tight">
@@ -363,7 +372,7 @@ export function BlockSheet({
   onSellHold: () => void;
   /** Where this booking stands on a refund: one waiting for a manager, the
    *  last one decided, and whether there is any money on it to give back. */
-  refund?: { pending: RefundRequest | null; last: RefundRequest | null; refundable: boolean };
+  refund?: { pending: RefundRequest | null; last: RefundRequest | null; refundable: boolean; amount?: Minor };
   onRefund?: () => void;
   onWithdrawRefund?: () => void;
   canMove?: boolean;
@@ -374,6 +383,13 @@ export function BlockSheet({
 }) {
   const t = useTranslations("schedule");
   const tc = useTranslations("common");
+  const toast = useToast();
+  /* What this role may do at the counter — Settings → Roles. "Off" hides the
+     button, "request" asks a manager, "direct" does it on the spot. */
+  const actor = useActor();
+  // A move request is made and answered elsewhere; re-read it when it changes.
+  useRescheduleVersion();
+  const [withdrawing, setWithdrawing] = useState(false);
   if (!block || !column) return null;
   const place = column.kind === "unassigned" ? t("board.noPlace") : column.name;
   const when = `${place} · ${formatClockRange(block.start, block.end)}`;
@@ -387,6 +403,7 @@ export function BlockSheet({
         onClose={onClose}
         title={h.heldFor}
         closeLabel={tc("close")}
+      className={SHEET_WIDTH}
         lead={<p className="flex items-center gap-1 text-base font-medium text-muted"><Lock size={14} aria-hidden />{t("board.onHold")}</p>}
         footer={
           <div className="flex w-full gap-tight">
@@ -417,12 +434,28 @@ export function BlockSheet({
   const b = block.booking;
   const who = block.guest ?? t("board.walkIn");
   const allIn = (b.checkedIn ?? 0) >= b.partySize;
+  const pendingMove = pendingRescheduleFor(b.id);
+  const lastMove = pendingMove ? null : rescheduleRequestsForOrder(b.orderId).find((r) => r.bookingId === b.id) ?? null;
+  const withdrawMove = async () => {
+    if (!pendingMove) return;
+    setWithdrawing(true);
+    await withdrawRescheduleRequest(pendingMove.id);
+    setWithdrawing(false);
+    toast.success(t("refund.moveWithdrawn"));
+  };
+  /* Roles are read once at the start; until they have arrived there is no
+     honest answer to "may this person refund", so neither button is drawn
+     rather than drawn with the wrong words and then changed. */
+  const refundAllowed = !actor.loading && actor.refundMode !== "off";
+  const moveAllowed = !actor.loading && actor.rescheduleMode !== "off";
+  const refundDirect = canRefundDirectly(actor, refund?.amount ?? 0);
   return (
     <Sheet
       open={open}
       onClose={onClose}
       title={who}
       closeLabel={tc("close")}
+      className={SHEET_WIDTH}
       lead={
         <>
           <p className="text-base font-medium text-muted">{block.product?.name ?? ""}</p>
@@ -447,35 +480,46 @@ export function BlockSheet({
            refund is waiting, Refund is not offered again — the sheet says
            what is waiting. Owing money comes before the door, the same order
            Check-in itself keeps. */
-        const canRefund = !!onRefund && !!refund?.refundable && !refund.pending;
-        const move = !!onMove && !!canMove;
+        const canRefund = !!onRefund && refundAllowed && !!refund?.refundable && !refund.pending;
+        const move = !!onMove && !!canMove && moveAllowed && !pendingMove;
         const take = !!onTake && (owed ?? 0) > 0;
         const canCheckIn = !take && isToday && !allIn && !block.noShow;
         const secondaries: { key: string; icon: ReactNode; label: string; onClick: () => void }[] = [
-          ...(canRefund ? [{ key: "refund", icon: <RotateCcw size={20} strokeWidth={2} aria-hidden />, label: t("refund.action"), onClick: onRefund as () => void }] : []),
-          ...(move ? [{ key: "move", icon: <CalendarClock size={20} strokeWidth={2} aria-hidden />, label: t("sheet.move"), onClick: onMove as () => void }] : []),
+          ...(canRefund ? [{ key: "refund", icon: <RotateCcw size={20} strokeWidth={2} aria-hidden />, label: refundDirect ? t("refund.action") : t("refund.ask"), onClick: onRefund as () => void }] : []),
+          ...(move ? [{ key: "move", icon: <CalendarClock size={20} strokeWidth={2} aria-hidden />, label: actor.rescheduleMode === "direct" ? t("sheet.move") : t("sheet.moveAsk"), onClick: onMove as () => void }] : []),
         ];
         if (!secondaries.length && !take && !canCheckIn) return undefined;
+        /* Three buttons do not fit one row on a phone once the first two read
+           "Ask to refund" and "Ask to move". Two secondaries share a row of
+           their own and the orange button takes the row under it, full width —
+           still the last thing, at the bottom, that moves the booking on.
+           Labels wrap to a second line rather than being cut. */
+        const stack = secondaries.length >= 2 && (take || canCheckIn);
+        const lead = secondaries.map((s) => (
+          <button key={s.key} type="button" className={secondary("min-h-13 py-2", "flex-1")} onClick={s.onClick} disabled={busy}>
+            {s.icon}
+            <span className="text-center leading-tight">{s.label}</span>
+          </button>
+        ));
+        const grow = secondaries.length && !stack ? "flex-[1.3]" : "flex-1";
         return (
-          <div className="flex w-full gap-tight">
-            {secondaries.map((s) => (
-              <button key={s.key} type="button" className={secondary("h-13", "flex-1")} onClick={s.onClick} disabled={busy}>
-                {s.icon}
-                <span className="truncate">{s.label}</span>
-              </button>
-            ))}
-            {take && (
-              <button type="button" className={secondaries.length ? primary("h-13", "flex-[1.3]") : PRIMARY} onClick={onTake} disabled={busy}>
-                <Banknote size={20} strokeWidth={2} aria-hidden />
-                <span className="truncate">{t("sheet.takeAmount", { amount: formatMoney(owed ?? 0) })}</span>
-              </button>
-            )}
-            {!take && canCheckIn && (
-              <button type="button" className={secondaries.length ? primary("h-13", "flex-[1.3]") : PRIMARY} onClick={onCheckIn} disabled={busy}>
-                <UserCheck size={20} strokeWidth={2} aria-hidden />
-                <span className="truncate">{t("sheet.checkIn", { count: b.partySize })}</span>
-              </button>
-            )}
+          <div className="flex w-full flex-col gap-tight">
+            {stack && <div className="flex gap-tight">{lead}</div>}
+            <div className="flex gap-tight">
+              {!stack && lead}
+              {take && (
+                <button type="button" data-block-primary className={primary("min-h-13 py-2", grow)} onClick={onTake} disabled={busy}>
+                  <Banknote size={20} strokeWidth={2} aria-hidden />
+                  <span className="text-center leading-tight">{t("sheet.takeAmount", { amount: formatMoney(owed ?? 0) })}</span>
+                </button>
+              )}
+              {!take && canCheckIn && (
+                <button type="button" data-block-primary className={primary("min-h-13 py-2", grow)} onClick={onCheckIn} disabled={busy}>
+                  <UserCheck size={20} strokeWidth={2} aria-hidden />
+                  <span className="text-center leading-tight">{t("sheet.checkIn", { count: b.partySize })}</span>
+                </button>
+              )}
+            </div>
           </div>
         );
       })()}
@@ -491,9 +535,25 @@ export function BlockSheet({
           {t(`refund.reasons.${refund.pending.reason}`)}{refund.pending.note ? ` · ${refund.pending.note}` : ""}
         </Notice>
       )}
-      {!refund?.pending && refund?.last?.status === "declined" && refund.last.decisionNote && (
+      {!refund?.pending && refund?.last?.status === "declined" && refund.last.decisionNote && refund.last.decidedBy !== refund.last.requestedBy && (
         <Notice tone="neutral" className="mx-card mt-card">
           {t("refund.declined", { note: refund.last.decisionNote })}
+        </Notice>
+      )}
+      {pendingMove && (
+        <Notice
+          tone="warning"
+          icon={<CalendarClock size={18} strokeWidth={1.75} />}
+          title={t("refund.movePending", { when: `${formatDay(pendingMove.toStart.slice(0, 10), { weekday: true })}, ${formatClock(pendingMove.toStart.slice(11, 16))}` })}
+          action={{ label: t("refund.moveWithdraw"), onClick: () => { if (!busy && !withdrawing) void withdrawMove(); }, busy: withdrawing }}
+          className="mx-card mt-card"
+        >
+          {pendingMove.reason ? t(`refund.moveReasons.${pendingMove.reason}`) : t("refund.moveWaiting")}{pendingMove.note ? ` · ${pendingMove.note}` : ""}
+        </Notice>
+      )}
+      {!pendingMove && lastMove?.status === "declined" && lastMove.decisionNote && lastMove.decidedBy !== lastMove.requestedBy && (
+        <Notice tone="neutral" className="mx-card mt-card">
+          {t("refund.moveDeclined", { note: lastMove.decisionNote })}
         </Notice>
       )}
       <dl className="flex flex-col gap-tight p-card text-md">
@@ -558,8 +618,9 @@ export function RefundSheet({
     <Sheet
       open={open}
       onClose={onClose}
-      title={t("refund.title")}
+      title={direct ? t("refund.titleDirect") : t("refund.title")}
       closeLabel={tc("close")}
+      className={SHEET_WIDTH}
       lead={<p className="text-base font-medium text-muted">{title} · {when}</p>}
       footer={
         <div className="flex w-full gap-tight">
@@ -567,9 +628,9 @@ export function RefundSheet({
             <ChevronLeft size={20} strokeWidth={2} aria-hidden />
             {t("refund.back")}
           </button>
-          <button type="button" className={PRIMARY_WIDE} onClick={send} disabled={busy}>
+          <button type="button" className={primary("min-h-13 py-2", "flex-[1.4]")} onClick={send} disabled={busy}>
             <RotateCcw size={20} strokeWidth={2} aria-hidden />
-            <span className="truncate">{direct ? t("refund.sendNow", { amount: formatMoney(amount) }) : t("refund.send")}</span>
+            <span className="text-center leading-tight">{direct ? t("refund.sendNow", { amount: formatMoney(amount) }) : t("refund.send")}</span>
           </button>
         </div>
       }
@@ -651,6 +712,7 @@ export function MoveSheet({
   partySize,
   bookingId,
   onConfirm,
+  onRequested,
   busy,
 }: {
   open: boolean;
@@ -666,13 +728,27 @@ export function MoveSheet({
   bufferMinutes: number;
   partySize: number;
   bookingId: string;
+  /** Moves the booking on the spot. Only called when this role may do that
+   *  (`direct`); a role set to "request" sends the move to a manager from
+   *  here and never reaches this. */
   onConfirm: (date: string, time: string) => void;
+  /** A move was asked for — the caller may want to reload or close more. */
+  onRequested?: () => void;
   busy: boolean;
 }) {
   const t = useTranslations("schedule");
   const tc = useTranslations("common");
+  const toast = useToast();
+  const actor = useActor();
+  /* "request": the cashier asks, a manager decides. Everything about choosing
+     where to go is the same; only the last button and what it does differ. */
+  const asking = actor.rescheduleMode !== "direct";
   const [selDate, setSelDate] = useState(date);
   const [selTime, setSelTime] = useState<string | null>(null);
+  const [reason, setReason] = useState<RescheduleReason | null>(null);
+  const [note, setNote] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
 
   const dates = useMemo(() => {
     const out: string[] = [];
@@ -696,27 +772,61 @@ export function MoveSheet({
   // Short, so the button fits a phone: "Today", "Tomorrow", or "Fri 31 Jul".
   const dayLabel = selDate === DEMO_TODAY ? tc("today") : selDate === demoDay(1) ? t("sheet.moveTomorrow") : formatDay(selDate, { weekday: true });
 
-  const confirm = () => {
+  const confirm = async () => {
     if (!changed || !selTime) return;
-    onConfirm(selDate, selTime);
+    if (!asking) {
+      onConfirm(selDate, selTime);
+      return;
+    }
+    if (reason === "other" && !note.trim()) {
+      setErr(t("sheet.moveNoteRequired"));
+      document.getElementById("move-note")?.focus();
+      return;
+    }
+    setErr(null);
+    setSending(true);
+    const res = await requestReschedule({
+      bookingId,
+      toStart: slotISO(selDate, selTime),
+      toEnd: slotISO(selDate, toTime(toMinutes(selTime) + durationMinutes)),
+      reason,
+      note: note.trim(),
+      requestedBy: actor.name,
+      place: resourceId ? placeName : null,
+    });
+    setSending(false);
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    toast.success(t("sheet.moveAsked"));
+    onRequested?.();
+    onClose();
   };
 
   return (
     <Sheet
       open={open}
       onClose={onClose}
-      title={t("sheet.moveTitle")}
+      title={asking ? t("sheet.moveAskTitle") : t("sheet.moveTitle")}
       closeLabel={tc("close")}
+      className={SHEET_WIDTH}
       lead={<p className="text-base font-medium text-muted">{title} · {placeName} · {formatClockRange(time, toTime(toMinutes(time) + durationMinutes))}</p>}
       footer={
         <div className="flex w-full gap-tight">
-          <button type="button" className={SECONDARY} onClick={onClose} disabled={busy}>
+          <button type="button" className={SECONDARY} onClick={onClose} disabled={busy || sending}>
             <ChevronLeft size={20} strokeWidth={2} aria-hidden />
             {t("sheet.back")}
           </button>
-          <button type="button" className={PRIMARY_WIDE} onClick={confirm} disabled={busy || !changed}>
-            <CalendarClock size={20} strokeWidth={2} aria-hidden />
-            <span className="truncate">{changed && selTime ? t("sheet.moveTo", { day: dayLabel, time: formatClock(selTime, { short: true }) }) : t("sheet.moveTitle")}</span>
+          <button type="button" className={primary("min-h-13 py-2", "flex-[1.4]")} onClick={() => void confirm()} disabled={busy || sending || !changed}>
+            {asking ? <Send size={20} strokeWidth={2} aria-hidden /> : <CalendarClock size={20} strokeWidth={2} aria-hidden />}
+            <span className="text-center leading-tight">
+              {asking
+                ? t("sheet.moveAskButton")
+                : changed && selTime
+                  ? t("sheet.moveTo", { day: dayLabel, time: formatClock(selTime, { short: true }) })
+                  : t("sheet.moveTitle")}
+            </span>
           </button>
         </div>
       }
@@ -776,188 +886,54 @@ export function MoveSheet({
           </div>
         )}
 
-        <p className="text-sm text-muted">{t("sheet.movePriceNote")}</p>
+        {asking && changed && (
+          <div className="flex flex-col gap-tight">
+            <p className="text-md font-semibold text-fg">{t("sheet.moveWhy")}</p>
+            <div role="radiogroup" aria-label={t("sheet.moveWhy")} className="grid grid-cols-2 gap-tight">
+              {(["customer_asked", "weather", "venue_problem", "other"] as RescheduleReason[]).map((r) => {
+                const on = reason === r;
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => { setReason(on ? null : r); setErr(null); }}
+                    className={cn(
+                      "flex min-h-11 items-center justify-center rounded-inner border-2 px-tight text-center text-base font-semibold",
+                      on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg",
+                    )}
+                  >
+                    {on && <Check size={14} strokeWidth={3} className="mr-1 shrink-0" aria-hidden />}
+                    {t(`refund.moveReasons.${r}`)}
+                  </button>
+                );
+              })}
+            </div>
+            <input
+              id="move-note"
+              value={note}
+              onChange={(e) => { setNote(e.target.value); setErr(null); }}
+              aria-label={reason === "other" ? t("sheet.moveNoteRequired") : t("sheet.moveNoteLabel")}
+              aria-invalid={!!err}
+              placeholder={reason === "other" ? t("sheet.moveNoteRequired") : t("sheet.moveNoteLabel")}
+              className={cn("h-11 rounded-inner border bg-card px-comfortable text-md", err ? "border-danger" : "border-line")}
+            />
+            {err && <p role="alert" className="text-base font-medium text-danger">{err}</p>}
+          </div>
+        )}
+
+        <p className="text-sm text-muted">{asking ? t("sheet.moveAskNote") : t("sheet.movePriceNote")}</p>
       </div>
     </Sheet>
   );
 }
 
-// ── the after-game discount, given while the till takes what is still owed ──
-
-export type DiscountReasonKey = "gameShort" | "facilityProblem" | "regularCustomer" | "other";
-export const DISCOUNT_REASONS: DiscountReasonKey[] = ["gameShort", "facilityProblem", "regularCustomer", "other"];
-
-export interface DiscountState {
-  open: boolean;
-  mode: DiscountMode;
-  raw: string;
-  reasonKey: DiscountReasonKey;
-  note: string;
-}
-
-export const emptyDiscount = (): DiscountState => ({ open: false, mode: "amount", raw: "", reasonKey: "gameShort", note: "" });
-
-export interface DiscountCalc {
-  /** Minor units to take off — zero when no discount is in play. */
-  minor: Minor;
-  /** Something was typed, so an error (if any) is worth showing. */
-  hasAmount: boolean;
-  overLimit: boolean;
-  overOwed: boolean;
-  needsNote: boolean;
-  valid: boolean;
-}
-
-/** What a discount's own fields add up to, checked against the role's cap and
- *  what is actually owed — pure, so the sheet and the page agree on whether
- *  Confirm is allowed without either of them recomputing it differently. */
-export function discountFromState(state: DiscountState, orderTotal: Minor, owed: Minor, limitPct: number | null): DiscountCalc {
-  if (!state.open) return { minor: 0, hasAmount: false, overLimit: false, overOwed: false, needsNote: false, valid: true };
-  const minor = discountMinorFrom(state.mode, parseFloat(state.raw) || 0, orderTotal);
-  const hasAmount = minor > 0;
-  const overLimit = hasAmount && !withinDiscountLimit(minor, orderTotal, limitPct);
-  const overOwed = hasAmount && minor > owed;
-  const needsNote = hasAmount && state.reasonKey === "other" && !state.note.trim();
-  return { minor: hasAmount ? minor : 0, hasAmount, overLimit, overOwed, needsNote, valid: !hasAmount || (!overLimit && !overOwed && !needsNote) };
-}
-
-/** The reason text `discountOrderBalance` records — the chip's own words, or
- *  the note typed for "Something else". */
-export function discountReasonText(state: DiscountState, label: (key: DiscountReasonKey) => string): string {
-  return state.reasonKey === "other" ? state.note.trim() : label(state.reasonKey);
-}
-
 /**
- * The discount row every balance-taking screen offers before the payment
- * method: closed to a single "Give a discount" button until tapped, then an
- * amount (taka or percent), a reason as four large chips, and the one sum a
- * cashier needs to read back to the guest.
- *
- * Fully controlled — no state of its own — so Check-in's own balance dialog
- * can hold exactly this inside its own `Modal` rather than a second copy of
- * the same logic drifting from this one.
- */
-export function DiscountFields({
-  state,
-  setState,
-  orderTotal,
-  owed,
-  limitPct,
-}: {
-  state: DiscountState;
-  setState: (next: DiscountState) => void;
-  orderTotal: Minor;
-  owed: Minor;
-  limitPct: number | null;
-}) {
-  const t = useTranslations("schedule");
-  const calc = discountFromState(state, orderTotal, owed, limitPct);
-
-  if (!state.open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setState({ ...state, open: true })}
-        className="flex min-h-11 w-full items-center justify-center gap-tight rounded-card border-2 border-dashed border-line text-md font-semibold text-fg active:bg-muted-wash"
-      >
-        <Percent size={18} strokeWidth={2} aria-hidden />
-        {t("discount.give")}
-      </button>
-    );
-  }
-
-  const take = Math.max(0, owed - calc.minor);
-
-  return (
-    <div className="flex flex-col gap-tight rounded-card border border-line bg-surface p-comfortable">
-      <div className="flex items-center justify-between gap-tight">
-        <span className="text-md font-semibold text-fg">{t("discount.give")}</span>
-        <button type="button" aria-label={t("discount.remove")} onClick={() => setState(emptyDiscount())} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-muted hover:bg-muted-wash">
-          <X size={16} strokeWidth={2} aria-hidden />
-        </button>
-      </div>
-
-      <div className="flex items-stretch gap-tight">
-        <div role="radiogroup" aria-label={t("discount.amountLabel")} className="flex shrink-0 overflow-hidden rounded-inner border border-line">
-          {(["amount", "percent"] as DiscountMode[]).map((m) => (
-            <button
-              key={m}
-              type="button"
-              role="radio"
-              aria-checked={state.mode === m}
-              onClick={() => setState({ ...state, mode: m })}
-              className={cn("flex h-11 w-11 items-center justify-center text-md font-semibold", state.mode === m ? "bg-ember-solid text-on-solid" : "bg-card text-fg")}
-            >
-              {m === "amount" ? "৳" : "%"}
-            </button>
-          ))}
-        </div>
-        <input
-          inputMode="decimal"
-          aria-label={t("discount.amountLabel")}
-          value={state.raw}
-          onChange={(e) => setState({ ...state, raw: e.target.value })}
-          placeholder="0"
-          className="h-11 min-w-0 flex-1 rounded-inner border border-line bg-card px-comfortable text-md"
-        />
-      </div>
-
-      <div role="radiogroup" aria-label={t("discount.reasonLabel")} className="grid grid-cols-2 gap-tight">
-        {DISCOUNT_REASONS.map((r) => {
-          const on = state.reasonKey === r;
-          return (
-            <button
-              key={r}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              onClick={() => setState({ ...state, reasonKey: r })}
-              className={cn(
-                "flex min-h-11 items-center justify-center rounded-inner border-2 px-tight text-center text-base font-semibold",
-                on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg",
-              )}
-            >
-              {on && <Check size={14} strokeWidth={3} className="mr-1 shrink-0" aria-hidden />}
-              {t(`discount.reasons.${r}`)}
-            </button>
-          );
-        })}
-      </div>
-
-      {state.reasonKey === "other" && (
-        <input
-          aria-label={t("discount.noteLabelRequired")}
-          value={state.note}
-          onChange={(e) => setState({ ...state, note: e.target.value })}
-          placeholder={t("discount.notePlaceholder")}
-          className="h-11 rounded-inner border border-line bg-card px-comfortable text-md"
-        />
-      )}
-
-      {calc.overOwed && <Notice tone="danger" size="sm">{t("discount.overOwed")}</Notice>}
-      {calc.overLimit && <Notice tone="danger" size="sm">{t("discount.overLimit", { pct: limitPct ?? 0 })}</Notice>}
-      {calc.needsNote && <Notice tone="danger" size="sm">{t("discount.noteRequired")}</Notice>}
-
-      {calc.valid && calc.hasAmount && (
-        <p className="text-md font-semibold tabular-nums text-fg">
-          {t("discount.mathsLine", { owed: formatMoney(owed), discount: formatMoney(calc.minor), take: formatMoney(take) })}
-        </p>
-      )}
-    </div>
-  );
-}
-
-const METHOD_ICON: Partial<Record<PaymentMethod, typeof Banknote>> = {
-  cash: Banknote,
-  bkash: Send,
-  bangla_qr: QrCode,
-  card_terminal: CreditCard,
-};
-
-/**
- * Take what a booking's order still owes — with the after-game discount
- * folded in, so the cashier sees exactly one number by the end: what the
- * guest hands over.
+ * Take what a booking's order still owes — with the after-match discount
+ * folded in, so the cashier sees exactly one number by the end: what the guest
+ * hands over. It is the same payment sheet Check-in uses (PaymentSheet), so the
+ * two screens read, and behave, as one.
  */
 export function TakeBalanceSheet({
   open,
@@ -982,85 +958,19 @@ export function TakeBalanceSheet({
   onConfirm: (opts: { discountMinor: Minor; reasonText: string; method: PaymentMethod | null; payAmount: Minor }) => void;
   busy: boolean;
 }) {
-  const t = useTranslations("schedule");
-  const tc = useTranslations("common");
-  const enumL = useEnumLabels();
-  const [discount, setDiscount] = useState<DiscountState>(emptyDiscount());
-  // Opens on the first method the till offers (cash), as the till's own
-  // payment sheet does — so Take works at once, and changing it is one tap.
-  const [picked, setMethod] = useState<PaymentMethod | null>(null);
-  const method = picked ?? methods[0] ?? null;
-
-  const calc = discountFromState(discount, orderTotal, owed, limitPct);
-  const take = Math.max(0, owed - calc.minor);
-  const ready = calc.valid && (take === 0 || !!method);
-
-  const confirm = () => {
-    if (!ready) return;
-    onConfirm({
-      discountMinor: calc.minor,
-      reasonText: discountReasonText(discount, (k) => t(`discount.reasons.${k}`)),
-      method,
-      payAmount: take,
-    });
-  };
-
   return (
-    <Sheet
+    <PaymentSheet
       open={open}
       onClose={onClose}
-      title={t("sheet.takeTitle")}
-      closeLabel={tc("close")}
-      lead={<p className="text-base font-medium text-muted">{title} · {when}</p>}
-      footer={
-        <div className="flex w-full gap-tight">
-          <button type="button" className={SECONDARY} onClick={onClose} disabled={busy}>
-            <ChevronLeft size={20} strokeWidth={2} aria-hidden />
-            {t("sheet.back")}
-          </button>
-          <button type="button" className={PRIMARY_WIDE} onClick={confirm} disabled={busy || !ready}>
-            <Banknote size={20} strokeWidth={2} aria-hidden />
-            <span className="truncate">{take > 0 ? t("sheet.takeAmount", { amount: formatMoney(take) }) : t("discount.applyOnly")}</span>
-          </button>
-        </div>
-      }
-    >
-      <div className="flex flex-col gap-section p-card">
-        <div className="flex items-baseline justify-between gap-comfortable">
-          <span className="text-base text-muted">{t("sheet.owed")}</span>
-          <span className="text-xl font-bold tabular-nums text-fg">{formatMoney(owed)}</span>
-        </div>
-
-        <DiscountFields state={discount} setState={setDiscount} orderTotal={orderTotal} owed={owed} limitPct={limitPct} />
-
-        {take > 0 && (
-          <div className="flex flex-col gap-tight">
-            <span className="text-base font-semibold text-fg">{t("sheet.payBy")}</span>
-            <div className="grid grid-cols-2 gap-tight">
-              {methods.map((m) => {
-                const Icon = METHOD_ICON[m] ?? Banknote;
-                const on = method === m;
-                return (
-                  <button
-                    key={m}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => setMethod(m)}
-                    className={cn(
-                      "flex min-h-14 items-center justify-center gap-tight rounded-card border-2 px-comfortable text-md font-semibold",
-                      on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg",
-                    )}
-                  >
-                    <Icon size={18} strokeWidth={2} aria-hidden />
-                    <span className="truncate">{enumL.method(m)}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    </Sheet>
+      title={title}
+      when={when}
+      orderTotal={orderTotal}
+      owed={owed}
+      limitPct={limitPct}
+      methods={methods}
+      onConfirm={({ discountMinor, reasonText, method, payAmount }) => onConfirm({ discountMinor, reasonText, method, payAmount })}
+      busy={busy}
+    />
   );
 }
 

@@ -55,6 +55,7 @@
     "times": "সময়",
     "none": "নেই",
     "amountOff": "= {amount} ছাড়",
-    "percentOff": "= {pct}% ছাড়"
+    "percentOff": "= {pct}% ছাড়",
+    "notRecorded": "রেকর্ড করা হয়নি"
   }
 }

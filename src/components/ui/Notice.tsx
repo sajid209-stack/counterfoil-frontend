@@ -77,7 +77,7 @@ export function Notice({
 
   const actionClass =
     action?.variant === "button"
-      ? "inline-flex min-h-11 w-fit items-center rounded-control border border-strong bg-card px-comfortable text-sm font-semibold text-fg transition-colors duration-quick active:bg-muted-wash"
+      ? "inline-flex min-h-11 w-fit items-center rounded-control px-comfortable text-sm font-semibold transition-colors duration-quick border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active"
       : "inline-flex min-h-11 w-fit items-center text-sm font-medium text-fg underline underline-offset-4 transition-colors duration-quick hover:no-underline md:min-h-0";
 
   return (

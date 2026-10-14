@@ -1,24 +1,28 @@
 "use client";
 
-import { use, useMemo, useState, type ReactNode } from "react";
-import Link from "next/link";
+import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Check, ChevronDown, KeyRound, ShieldOff, X } from "lucide-react";
 import {
   ActionMenu,
   Button,
+  DetailCard,
   EmptyState,
+  FactGrid,
   FormField,
   Modal,
   Notice,
   PageShell,
   SkeletonText,
   StatusPill,
+  TicketCard,
+  TimelineCard,
   useToast,
   type ActionMenuItem,
+  type ActivityItem,
+  type Fact,
 } from "@/components/ui";
-import { TicketCard } from "@/components/ui/TicketCard";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { formatDateTime, formatDay, formatMoney } from "@/lib/format";
@@ -55,7 +59,9 @@ import { MD, useMediaQuery } from "@/lib/useMedia";
  * The facts lead and the controls are in the header, which is the shape a
  * record wants — the settings pages learned the other way round, where a page
  * built entirely of controls could only state a fact inside the description of
- * a button.
+ * a button. The page itself is composed from the kit's record cards:
+ * `DetailCard` + `FactGrid` for the facts, `TimelineCard` for the codes and
+ * the gate history, and `TicketCard` for the stub the guest is holding.
  */
 export default function TicketPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -181,66 +187,78 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
 
   /** One credential. The code leads, because it is the thing somebody reads out
    *  or types in; the state and the reason sit under it. */
-  const credRow = (c: TicketCredential, index: number) => (
-    <li key={c.id} className="flex flex-wrap items-baseline gap-x-tight gap-y-inline border-b border-hairline py-comfortable last:border-0">
-      <span
-        className={cn(
-          "min-w-0 flex-1 break-all font-mono text-sm font-medium",
-          c.status !== "active" && "text-muted line-through",
-        )}
-      >
-        {c.code}
-      </span>
+  const credItems: ActivityItem[] = creds.map((c, index) => ({
+    id: c.id,
+    title: c.code,
+    mono: true,
+    struck: c.status !== "active",
+    status: (
       <StatusPill tone={c.status === "active" ? "success" : c.status === "revoked" ? "danger" : "neutral"}>
         {t(`credStatus.${c.status}`)}
       </StatusPill>
-      <span className="w-full text-xs text-muted">
-        {[
-          t(`credReason.${c.reason}`),
-          t(`credKind.${c.kind}`),
-          formatDateTime(c.createdAt),
-          c.issuedBy,
-          /* Issue number, so a run of replacements reads in order rather than
-             as a pile of codes. */
-          creds.length > 1 ? t("issueNo", { n: index + 1 }) : null,
-        ]
-          .filter(Boolean)
-          .join(" · ")}
-      </span>
-      {/* Why it was replaced, in the operator's own words. Never blank on a
-          reissue — the api refuses one without a reason. */}
-      {c.note && <p className="w-full text-sm">{c.note}</p>}
-    </li>
-  );
+    ),
+    detail: [
+      t(`credReason.${c.reason}`),
+      t(`credKind.${c.kind}`),
+      formatDateTime(c.createdAt),
+      c.issuedBy,
+      /* Issue number, so a run of replacements reads in order rather than
+         as a pile of codes. */
+      creds.length > 1 ? t("issueNo", { n: index + 1 }) : null,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+    /* Why it was replaced, in the operator's own words. Never blank on a
+       reissue — the api refuses one without a reason. */
+    note: c.note,
+  }));
 
   /** One presentation at the gate. Admitted or refused, both recorded. */
-  const scanRow = (e: TicketEvent) => (
-    <li key={e.id} className="flex flex-wrap items-baseline gap-x-tight gap-y-inline border-b border-hairline py-comfortable last:border-0">
-      <span className={cn("flex shrink-0 items-center gap-inline text-sm font-medium", e.outcome === "admitted" ? "text-success" : "text-danger")}>
-        {e.outcome === "admitted" ? <Check size={15} strokeWidth={2.5} aria-hidden /> : <X size={15} strokeWidth={2.5} aria-hidden />}
-        {e.outcome === "admitted" ? t("scan.admitted") : t("scan.refused")}
-      </span>
-      <span className="min-w-0 flex-1 text-sm text-muted">
-        {[
-          e.refusal ? t(`refusal.${e.refusal}`) : null,
-          e.admitted && admits > 1 ? t("scan.people", { count: e.admitted }) : null,
-          /* Which token was presented. On a refused scan of a replaced code
-             this is the whole story, and without it the row says a ticket was
-             turned away and not why anyone thought it was valid. */
-          e.credentialId ? credCodeOf(e.credentialId, creds) : null,
-        ]
-          .filter(Boolean)
-          .join(" · ")}
-      </span>
-      <span className="shrink-0 text-xs text-muted">
-        {formatDateTime(e.at)}
-        {e.by ? ` · ${e.by}` : ""}
-        {/* A redemption recorded before the gate kept a log is stated as what it
-            is, rather than drawn as a scan nobody wrote down. */}
-        {e.source === "record" ? ` · ${t("scan.fromRecord")}` : ""}
-      </span>
-    </li>
-  );
+  const scanItems: ActivityItem[] = timeline.map((e: TicketEvent) => ({
+    id: e.id,
+    title: e.outcome === "admitted" ? t("scan.admitted") : t("scan.refused"),
+    tone: e.outcome === "admitted" ? "success" : "danger",
+    icon: e.outcome === "admitted" ? <Check size={15} strokeWidth={2.5} aria-hidden /> : <X size={15} strokeWidth={2.5} aria-hidden />,
+    time: [
+      formatDateTime(e.at),
+      e.by,
+      /* A redemption recorded before the gate kept a log is stated as what it
+         is, rather than drawn as a scan nobody wrote down. */
+      e.source === "record" ? t("scan.fromRecord") : null,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+    detail: [
+      e.refusal ? t(`refusal.${e.refusal}`) : null,
+      e.admitted && admits > 1 ? t("scan.people", { count: e.admitted }) : null,
+      /* Which token was presented. On a refused scan of a replaced code
+         this is the whole story, and without it the row says a ticket was
+         turned away and not why anyone thought it was valid. */
+      e.credentialId ? credCodeOf(e.credentialId, creds) : null,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  }));
+
+  /* The few facts a person opens this page for, then the rest. */
+  const primaryFacts: Fact[] = [
+    /* What it is. The bar carries the code and the description is
+       screen-reader-only app-wide, so without this the page never said in ink
+       what the ticket was actually for. */
+    { key: "type", label: t("fact.type"), value: `${bookingName} · ${ticket.tierName}` },
+    { key: "holder", label: t("fact.holder"), value: order?.customerName },
+    { key: "validFor", label: t("fact.validFor"), value: formatDay(day, { weekday: true }) },
+    /* "0 of 4 used" rather than a status word: a family ticket three-quarters
+       spent is neither issued nor redeemed, and the count is the only honest
+       answer. */
+    { key: "used", label: t("fact.used"), value: t("usedOf", { used, total: admits }) },
+  ];
+  const secondaryFacts: Fact[] = [
+    order ? { key: "order", label: tr("record.order"), value: order.reference, href: `/orders/${order.id}`, mono: true } : null,
+    { key: "faceValue", label: t("fact.faceValue"), value: line ? formatMoney(line.unitPrice) : undefined },
+    { key: "channel", label: t("fact.channel"), value: order ? t(`channel.${order.channel}`) : undefined },
+    { key: "issued", label: t("fact.issued"), value: order ? formatDateTime(order.createdAt) : undefined },
+  ].filter(Boolean) as Fact[];
 
   return (
     <PageShell
@@ -278,88 +296,56 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             {/* What was bought. The facts a person reads this page for come
                 first and always show; price, channel and issue time fold on a
                 phone. */}
-            <section className="card-surface p-card">
-              <dl className="grid grid-cols-2 gap-x-section gap-y-comfortable sm:gap-y-section xl:grid-cols-3">
-                {([
-                  /* What it is. The bar carries the code and the description is
-                     screen-reader-only app-wide, so without this the page never
-                     said in ink what the ticket was actually for. */
-                  { k: "type", v: `${bookingName} · ${ticket.tierName}` },
-                  order?.customerName ? { k: "holder", v: order.customerName } : null,
-                  { k: "validFor", v: formatDay(day, { weekday: true }) },
-                  /* "0 of 4 used" rather than a status word: a family ticket
-                     three-quarters spent is neither issued nor redeemed, and
-                     the count is the only honest answer. */
-                  { k: "used", v: t("usedOf", { used, total: admits }) },
-                  order
-                    ? {
-                        k: "order",
-                        v: (
-                          <Link href={`/orders/${order.id}`} className="inline-flex min-h-11 items-center font-mono text-base font-medium text-brand-foreground hover:underline sm:min-h-0">
-                            {order.reference}
-                          </Link>
-                        ),
-                      }
-                    : null,
-                  ...(wide || moreOpen
-                    ? [
-                        line ? { k: "faceValue", v: formatMoney(line.unitPrice) } : null,
-                        order ? { k: "channel", v: t(`channel.${order.channel}`) } : null,
-                        order ? { k: "issued", v: formatDateTime(order.createdAt) } : null,
-                      ]
-                    : []),
-                ] as ({ k: string; v: ReactNode } | null)[])
-                  .filter((f): f is { k: string; v: ReactNode } => !!f)
-                  .map((f) => (
-                    <div key={f.k} className={cn("flex min-w-0 flex-col gap-inline", f.k === "type" && "col-span-2 sm:col-span-1")}>
-                      <dt className="text-xs font-medium text-muted">{f.k === "order" ? tr("record.order") : t(`fact.${f.k}`)}</dt>
-                      <dd className="break-words text-md font-semibold leading-snug">{f.v}</dd>
-                    </div>
-                  ))}
-              </dl>
-              {!wide && (
-                <button
-                  type="button"
-                  aria-expanded={moreOpen}
-                  onClick={() => setMoreOpen((v) => !v)}
-                  className="mt-comfortable flex min-h-11 items-center gap-inline text-sm font-medium text-brand-foreground"
-                >
-                  {moreOpen ? tr("record.fewerDetails") : tr("record.moreDetails")}
-                  <ChevronDown size={16} strokeWidth={1.5} aria-hidden className={cn("transition-transform", moreOpen && "rotate-180")} />
-                </button>
-              )}
-            </section>
+            <DetailCard title={t("detailsTitle")} id="tk-facts">
+              <FactGrid facts={primaryFacts} tone="primary" />
+              <div className="mt-section border-t border-hairline pt-section">
+                {(wide || moreOpen) && <FactGrid facts={secondaryFacts} />}
+                {!wide && (
+                  <button
+                    type="button"
+                    aria-expanded={moreOpen}
+                    onClick={() => setMoreOpen((v) => !v)}
+                    className={cn(
+                      "flex min-h-11 items-center gap-inline text-sm font-medium text-brand-foreground",
+                      moreOpen && "mt-comfortable",
+                    )}
+                  >
+                    {moreOpen ? tr("record.fewerDetails") : tr("record.moreDetails")}
+                    <ChevronDown size={16} strokeWidth={1.5} aria-hidden className={cn("transition-transform", moreOpen && "rotate-180")} />
+                  </button>
+                )}
+              </div>
+            </DetailCard>
 
             {/* The tokens. */}
-            <section className="card-surface p-card" aria-labelledby="tk-codes">
-              <h2 id="tk-codes" className="text-md font-semibold">{t("credentials")}</h2>
-              <p className="mt-inline text-xs text-muted">{t("credentialsNote")}</p>
-              <ul className="mt-comfortable flex flex-col">{creds.map(credRow)}</ul>
-            </section>
+            <TimelineCard
+              id="tk-codes"
+              title={t("credentials")}
+              description={t("credentialsNote")}
+              items={credItems}
+              empty={t("neverScanned")}
+            />
 
             {/* What happened at a gate. Folds on a phone: a count says whether
                 there is anything to open. */}
-            <FoldCard
+            <TimelineCard
               id="tk-history"
               title={t("history")}
+              items={scanItems}
+              empty={t("neverScanned")}
+              fold
               summary={tr("record.scanCount", { count: timeline.length })}
-              wide={wide}
-            >
-              {timeline.length === 0 ? (
-                <p className="text-sm text-muted">{t("neverScanned")}</p>
-              ) : (
-                <ul className="flex flex-col">{timeline.map(scanRow)}</ul>
-              )}
-            </FoldCard>
+            />
           </div>
 
-          {/* What the guest is holding. A heading and the stub on a computer; a
-              fold on a phone, where the stub is a long card at the foot. */}
+          {/* What the guest is holding: the same TicketCard the print pages
+              draw. A heading and the stub on a computer; a fold on a phone,
+              where the stub is a long card at the foot. */}
           <aside className="flex min-w-0 flex-col gap-comfortable">
-            <FoldCard id="tk-preview" title={t("preview")} summary={active?.code ?? ticket.code} wide={wide} bare>
+            <DetailCard id="tk-preview" title={t("preview")} summary={active?.code ?? ticket.code} fold bare>
               {card ? <TicketCard data={{ ...card.data, code: active?.code ?? ticket.code }} /> : null}
-              <p className="mt-comfortable text-xs text-muted">{t("previewNote")}</p>
-            </FoldCard>
+              <p className="mt-comfortable text-sm text-muted">{t("previewNote")}</p>
+            </DetailCard>
           </aside>
         </div>
       </div>
@@ -402,73 +388,4 @@ const never = <T,>() => Promise.resolve({ ok: false as const, error: { code: "no
 /** The code a scan was made against, for the history row. */
 function credCodeOf(credentialId: string, creds: TicketCredential[]): string | null {
   return creds.find((c) => c.id === credentialId)?.code ?? null;
-}
-
-/**
- * A section that is a card on a computer and a labelled fold on a phone.
- *
- * `bare` is for content that draws its own surface (the ticket stub): on a
- * computer it sits under a plain heading, on a phone the fold is the card and
- * the stub opens beneath it rather than inside it.
- */
-function FoldCard({
-  id,
-  title,
-  summary,
-  wide,
-  bare = false,
-  children,
-}: {
-  id: string;
-  title: string;
-  summary?: string;
-  wide: boolean;
-  bare?: boolean;
-  children: ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  if (wide) {
-    return bare ? (
-      <section aria-labelledby={id}>
-        <h2 id={id} className="mb-comfortable text-md font-semibold">{title}</h2>
-        {children}
-      </section>
-    ) : (
-      <section className="card-surface p-card" aria-labelledby={id}>
-        <h2 id={id} className="text-md font-semibold">{title}</h2>
-        <div className="mt-comfortable">{children}</div>
-      </section>
-    );
-  }
-  const head = (
-    <h2 id={id}>
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={`${id}-body`}
-        onClick={() => setOpen((v) => !v)}
-        className="flex min-h-14 w-full items-center gap-tight px-card py-comfortable text-left"
-      >
-        <span className="min-w-0 flex-1">
-          <span className="block text-md font-semibold">{title}</span>
-          {summary && <span className="block break-all text-sm font-normal text-muted">{summary}</span>}
-        </span>
-        <ChevronDown size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0 text-muted transition-transform", open && "rotate-180")} />
-      </button>
-    </h2>
-  );
-  if (bare) {
-    return (
-      <section>
-        <div className="card-surface">{head}</div>
-        {open && <div id={`${id}-body`} className="mt-tight">{children}</div>}
-      </section>
-    );
-  }
-  return (
-    <section className="card-surface" aria-labelledby={id}>
-      {head}
-      {open && <div id={`${id}-body`} className="border-t border-hairline p-card">{children}</div>}
-    </section>
-  );
 }

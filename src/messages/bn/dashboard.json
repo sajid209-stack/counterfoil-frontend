@@ -70,5 +70,6 @@
   "activityTitle": "কাজের তালিকা",
   "metrics": "প্রধান সংখ্যা",
   "showMore": "আরও দেখান",
-  "showLess": "কম দেখান"
+  "showLess": "কম দেখান",
+  "floatAmount": "{amount} ফ্লোট"
 }

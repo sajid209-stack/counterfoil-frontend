@@ -1,7 +1,7 @@
 "use client";
 
-import { listRoles, listStaff, type Role } from "@/lib/api";
-import { roleCan } from "@/lib/permissions";
+import { listRoles, listStaff, type CounterActionMode, type Role } from "@/lib/api";
+import { counterAction, roleCan } from "@/lib/permissions";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { useApiQuery } from "@/lib/useApi";
 
@@ -24,6 +24,11 @@ export interface Actor {
   refundLimit: number | null;
   /** Integer percent of an order's total; null = unlimited. */
   discountLimitPct: number | null;
+  /** What this role may do at the counter, set in Settings → Roles:
+   *  "off" hides the button, "request" asks a manager, "direct" does it on the
+   *  spot. See `counterAction` in lib/permissions. */
+  refundMode: CounterActionMode;
+  rescheduleMode: CounterActionMode;
 }
 
 export function useActor(): Actor {
@@ -38,11 +43,19 @@ export function useActor(): Actor {
     canRefund: role ? roleCan(role, "orders.refund") : false,
     refundLimit: role?.refundLimit ?? null,
     discountLimitPct: role?.discountLimitPct ?? null,
+    refundMode: counterAction(role, "refund"),
+    rescheduleMode: counterAction(role, "reschedule"),
   };
 }
 
-/** Can this actor refund this amount themselves, with nobody else asked? */
-export function canRefundDirectly(actor: Pick<Actor, "canRefund" | "refundLimit">, amount: number): boolean {
-  if (!actor.canRefund) return false;
+/**
+ * Can this actor refund this amount themselves, with nobody else asked?
+ *
+ * Only when the role is set to "direct" — and even then a refund above the
+ * role's own limit still becomes a request. "request" and "off" never refund
+ * on the spot, whatever the limit says.
+ */
+export function canRefundDirectly(actor: Pick<Actor, "refundMode" | "refundLimit">, amount: number): boolean {
+  if (actor.refundMode !== "direct") return false;
   return actor.refundLimit == null || amount <= actor.refundLimit;
 }

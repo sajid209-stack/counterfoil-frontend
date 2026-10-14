@@ -210,6 +210,49 @@ export interface CounterRow {
   previousOrders?: number;
 }
 
+/** One row of a channel's own breakdown: a counter, a booking sold online, or a
+ *  marketplace. `share` is of that channel's revenue, not the venue's. */
+export interface ChannelRow {
+  key: string;
+  /** The counter, booking or marketplace's name; empty for "no counter recorded". */
+  name: string;
+  /** "unassigned" for counter sales that never recorded their counter. */
+  kind?: "unassigned";
+  revenue: Minor;
+  orders: number;
+  share: number;
+  /** Marketplaces only: what the marketplace took, from each order's own snapshot. */
+  commission?: Minor;
+  /** Marketplaces only: revenue less commission - what the venue keeps. */
+  kept?: Minor;
+  previousRevenue?: Minor;
+  previousOrders?: number;
+}
+
+/** One channel's total and the rows under it. */
+export interface ChannelBreakdownCard {
+  revenue: Minor;
+  orders: number;
+  averageOrder: Minor;
+  /** Marketplaces only. */
+  commission?: Minor;
+  kept?: Minor;
+  previousRevenue?: Minor;
+  previousOrders?: number;
+  rows: ChannelRow[];
+  /** Rows beyond the ones listed (counters: none; storefront: other bookings). */
+  moreRevenue?: Minor;
+}
+
+export interface ChannelBreakdown {
+  counters: ChannelBreakdownCard;
+  /** Online orders with no marketplace source. Orders do not record which
+   *  storefront page they came through, so the rows are the top three bookings
+   *  sold online rather than pages. */
+  storefront: ChannelBreakdownCard;
+  marketplaces: ChannelBreakdownCard;
+}
+
 /** Named customers per point, each counted once: on the point of the first
  *  order they made in these dates. "New" means that order was their first ever
  *  at this venue; "returning" means they had bought before these dates. So the
@@ -287,6 +330,8 @@ export interface AnalyticsOverview {
   ticketTypes: TicketTypeRow[];
   /** Sales by counter, online and marketplace; the rows sum to revenue. */
   counters: CounterRow[];
+  /** Each sales channel on its own: counters, online storefront, marketplaces. */
+  channelBreakdown: ChannelBreakdown;
   /** New and returning customers per point; sums to `guests`' new and returning. */
   customers: CustomerPoint[];
   /** Revenue per point for each channel, in the order of `channels`. At every
@@ -960,6 +1005,89 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
     });
   }
 
+  // Each channel on its own ---------------------------------------------------
+  const chOrders = (m: Measure, ch: SalesChannel) => m.orders.filter((o) => channelOf(o) === ch);
+  const chSum = (os: Order[]) => os.reduce((a, o) => a + orderRevenue(o), 0);
+  /** Group a channel's orders by a key; revenue, orders, and the marketplace cut. */
+  const groupBy = (os: Order[], keyOf: (o: Order) => { key: string; name: string }[]) => {
+    const by = new Map<string, { name: string; revenue: number; orders: number; commission: number }>();
+    for (const o of os) {
+      for (const { key, name } of keyOf(o)) {
+        const e = by.get(key) ?? { name, revenue: 0, orders: 0, commission: 0 };
+        e.revenue += key.startsWith("sf:") ? bookingRevenueOf(o, key.slice(3)) : orderRevenue(o);
+        e.orders += 1;
+        e.commission += o.source?.commissionAmount ?? 0;
+        by.set(key, e);
+      }
+    }
+    return by;
+  };
+  function bookingRevenueOf(o: Order, productId: string) {
+    return o.lines.filter((l) => isBookingLine(l) && l.productId === productId).reduce((a, l) => a + lineRevenue(l), 0);
+  }
+  const bookingKeys = (o: Order) => {
+    const seen = new Map<string, string>();
+    for (const l of o.lines) if (isBookingLine(l) && !seen.has(l.productId)) seen.set(l.productId, l.productName);
+    return [...seen].map(([id, name]) => ({ key: `sf:${id}`, name }));
+  };
+  const card = (
+    ch: SalesChannel,
+    keyOf: (o: Order) => { key: string; name: string }[],
+    limit: number,
+    nameOf?: (key: string, fallback: string) => string,
+  ): ChannelBreakdownCard => {
+    const os = chOrders(cur, ch);
+    const total = chSum(os);
+    const pos = prev ? chOrders(prev, ch) : null;
+    const curBy = groupBy(os, keyOf);
+    const prevBy = pos ? groupBy(pos, keyOf) : null;
+    const keys = [...new Set([...curBy.keys(), ...(prevBy?.keys() ?? [])])];
+    const all = keys
+      .map((key): ChannelRow => {
+        const c = curBy.get(key);
+        const pv = prevBy?.get(key);
+        const commission = ch === "marketplace" ? (c?.commission ?? 0) : undefined;
+        return {
+          key,
+          name: nameOf ? nameOf(key, c?.name ?? pv?.name ?? "") : (c?.name ?? pv?.name ?? ""),
+          revenue: c?.revenue ?? 0,
+          orders: c?.orders ?? 0,
+          share: share(c?.revenue ?? 0, total),
+          ...(commission !== undefined ? { commission, kept: Math.max(0, (c?.revenue ?? 0) - commission) } : {}),
+          ...(prevBy ? { previousRevenue: pv?.revenue ?? 0, previousOrders: pv?.orders ?? 0 } : {}),
+        };
+      })
+      .sort((a, b) => b.revenue - a.revenue || (b.previousRevenue ?? 0) - (a.previousRevenue ?? 0) || a.name.localeCompare(b.name));
+    const rows = all.slice(0, limit);
+    const commission = ch === "marketplace" ? os.reduce((a, o) => a + (o.source?.commissionAmount ?? 0), 0) : undefined;
+    return {
+      revenue: total,
+      orders: os.length,
+      averageOrder: os.length ? Math.round(total / os.length) : 0,
+      ...(commission !== undefined ? { commission, kept: Math.max(0, total - commission) } : {}),
+      ...(pos ? { previousRevenue: chSum(pos), previousOrders: pos.length } : {}),
+      rows,
+      ...(all.length > limit ? { moreRevenue: all.slice(limit).reduce((a, r) => a + r.revenue, 0) } : {}),
+    };
+  };
+  const counterCard = card(
+    "counter",
+    (o) => [{ key: o.counterId ? `counter:${o.counterId}` : "unassigned", name: o.counterId ? (counterNames.get(o.counterId) ?? o.counterId) : "" }],
+    8,
+  );
+  // Every active counter of the venue is listed, even with no sales in range.
+  for (const c of peekCounters().filter((x) => x.locationId === q.locationId && x.status === "active")) {
+    if (!counterCard.rows.some((r) => r.key === `counter:${c.id}`) && counterCard.rows.length < 8) {
+      counterCard.rows.push({ key: `counter:${c.id}`, name: c.name, revenue: 0, orders: 0, share: 0, ...(prev ? { previousRevenue: 0, previousOrders: 0 } : {}) });
+    }
+  }
+  for (const r of counterCard.rows) if (r.key === "unassigned") r.kind = "unassigned";
+  const channelBreakdown: ChannelBreakdown = {
+    counters: counterCard,
+    storefront: card("online", bookingKeys, 3),
+    marketplaces: card("marketplace", (o) => (o.source ? [{ key: o.source.marketplaceId, name: o.source.marketplaceName }] : []), 6),
+  };
+
   // Time slots --------------------------------------------------------------
   // Bookings that sell a time slot (sessions, fields, lanes, tours), by start
   // time. Only the start times someone booked get a column, so no row or column
@@ -1039,6 +1167,7 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
     checkins,
     ticketTypes,
     counters,
+    channelBreakdown,
     customers,
     channelSeries,
     paymentSeries,
@@ -1106,6 +1235,15 @@ export function analyticsCsv(o: AnalyticsOverview): string {
     ["Counter", "Kind", "Revenue", "Share %", "Orders", "Comparison revenue", "Comparison orders"],
     ...o.counters.map((c) => [c.name || c.kind, c.kind, money(c.revenue), pct(c.share), String(c.orders), opt(c.previousRevenue, money), opt(c.previousOrders, String)]),
   ]);
+  const bd = o.channelBreakdown;
+  const bdRows = (label: string, c: ChannelBreakdown["counters"]) => [
+    [label, "Revenue", "Orders", "Share %", "Commission", "Venue keeps", "Comparison revenue", "Comparison orders"],
+    ["Total", money(c.revenue), String(c.orders), "", opt(c.commission, money), opt(c.kept, money), opt(c.previousRevenue, money), opt(c.previousOrders, String)],
+    ...c.rows.map((r) => [r.name || r.kind || "", money(r.revenue), String(r.orders), pct(r.share), opt(r.commission, money), opt(r.kept, money), opt(r.previousRevenue, money), opt(r.previousOrders, String)]),
+  ];
+  sections.push(bdRows("Counter sales", bd.counters));
+  sections.push(bdRows("Online storefront (top bookings)", bd.storefront));
+  sections.push(bdRows("Marketplace", bd.marketplaces));
   sections.push([
     ["Payment method", "Amount", "Share %", "Payments", "Comparison amount"],
     ...o.payments.map((p) => [p.method, money(p.amount), pct(p.share), String(p.count), opt(p.previousAmount, money)]),

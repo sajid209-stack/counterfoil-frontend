@@ -1,4 +1,4 @@
-import type { Permission, Role } from "@/lib/api";
+import type { CounterActionMode, Permission, Role } from "@/lib/api";
 
 /**
  * What a role can be allowed to do, grouped by the part of the business it
@@ -31,3 +31,24 @@ export const ALL_PERMISSIONS: Permission[] = PERMISSION_GROUPS.flatMap((g) => g.
 export const permissionKey = (p: Permission): string => p.replace(/\.(\w)/g, (_, c: string) => c.toUpperCase());
 
 export const roleCan = (role: Pick<Role, "permissions">, p: Permission): boolean => role.permissions.includes(p);
+
+export type CounterAction = "refund" | "reschedule";
+
+/**
+ * What a role may do at the counter for a refund or a move.
+ *
+ * Set in Settings → Roles. A role written before these settings existed keeps
+ * what it already did: a refund is done on the spot by anyone who may refund
+ * orders (up to their refundLimit) and asked of a manager by everyone else; a
+ * move was always done on the spot.
+ */
+export function counterAction(
+  role: Pick<Role, "permissions" | "counterRefund" | "counterReschedule"> | null | undefined,
+  action: CounterAction,
+): CounterActionMode {
+  if (!role) return "request";
+  if (action === "refund") return role.counterRefund ?? (roleCan(role, "orders.refund") ? "direct" : "request");
+  return role.counterReschedule ?? "direct";
+}
+
+export const COUNTER_ACTION_MODES: CounterActionMode[] = ["off", "request", "direct"];

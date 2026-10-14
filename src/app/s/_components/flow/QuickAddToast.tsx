@@ -48,7 +48,7 @@ export function QuickAddToast({ name, onDismiss }: { name: string; onDismiss: ()
         </button>
       </div>
       <div className="mt-tight grid grid-cols-2 gap-tight">
-        <button type="button" onClick={flow.goBasket} className={`${btn} border border-strong bg-card text-fg hover:border-fg`}>
+        <button type="button" onClick={flow.goBasket} className={`${btn} border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover`}>
           {t("basket.viewBasket")}
         </button>
         <button type="button" onClick={flow.goCheckout} className={`${btn} bg-ember-solid text-on-solid hover:brightness-90`}>

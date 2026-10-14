@@ -4,9 +4,9 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Avatar, Notice, useToast } from "@/components/ui";
-import { createRole, updateRole, type Role, type RoleInput, type Staff } from "@/lib/api";
-import { ALL_PERMISSIONS, PERMISSION_GROUPS, permissionKey } from "@/lib/permissions";
+import { Avatar, Notice, RadioGroup, useToast } from "@/components/ui";
+import { createRole, updateRole, type CounterActionMode, type Role, type RoleInput, type Staff } from "@/lib/api";
+import { ALL_PERMISSIONS, COUNTER_ACTION_MODES, PERMISSION_GROUPS, counterAction, permissionKey, type CounterAction } from "@/lib/permissions";
 import { CreateBar, SaveBar, SettingRow, SettingsSection, SuffixInput, Switch, controlCls } from "../../_components/SettingsKit";
 
 interface Draft {
@@ -16,6 +16,9 @@ interface Draft {
   discount: string;
   /** Major units as typed; empty is no limit. */
   refund: string;
+  /** What this role does at the counter. Null means it follows the default for the role. */
+  counterRefund: CounterActionMode | null;
+  counterReschedule: CounterActionMode | null;
 }
 
 /** Permissions in registry order, so a toggle off and on again is not a change. */
@@ -26,9 +29,11 @@ const fromRole = (r: Role): Draft => ({
   permissions: ordered(r.permissions),
   discount: r.discountLimitPct == null ? "" : String(r.discountLimitPct),
   refund: r.refundLimit == null ? "" : String(r.refundLimit / 100),
+  counterRefund: r.counterRefund ?? null,
+  counterReschedule: r.counterReschedule ?? null,
 });
 
-const BLANK: Draft = { name: "", permissions: [], discount: "", refund: "" };
+const BLANK: Draft = { name: "", permissions: [], discount: "", refund: "", counterRefund: null, counterReschedule: null };
 const PCT = /^\d{1,3}$/;
 const AMOUNT = /^\d{1,7}(\.\d{1,2})?$/;
 
@@ -70,6 +75,12 @@ export function RoleEditor({
   const dirty = !!draft && JSON.stringify(draft) !== JSON.stringify(saved);
   const set = (patch: Partial<Draft>) => setDraft({ ...form, ...patch });
   const has = (p: string) => form.permissions.includes(p);
+  /** What the role does now: its own choice, or the default its permissions give it. */
+  const effective = (action: CounterAction): CounterActionMode =>
+    counterAction(
+      { permissions: form.permissions, counterRefund: form.counterRefund ?? undefined, counterReschedule: form.counterReschedule ?? undefined },
+      action,
+    );
   const toggle = (p: string, on: boolean) =>
     set({ permissions: ordered(on ? [...form.permissions, p] : form.permissions.filter((x) => x !== p)) });
 
@@ -86,6 +97,9 @@ export function RoleEditor({
       permissions: form.permissions,
       discountLimitPct: form.discount === "" ? null : Number(form.discount),
       refundLimit: form.refund === "" ? null : Math.round(Number(form.refund) * 100),
+      // Only a choice somebody made is stored; the rest keeps following the role.
+      ...(form.counterRefund ? { counterRefund: form.counterRefund } : {}),
+      ...(form.counterReschedule ? { counterReschedule: form.counterReschedule } : {}),
     };
     const res = mode === "create" ? await createRole(input) : await updateRole(role!.id, input);
     setSaving(false);
@@ -209,6 +223,64 @@ export function RoleEditor({
           })}
         </SettingsSection>
       ))}
+
+      <SettingsSection title={t("roles.counterTitle")} description={t("roles.counterDesc")}>
+        <SettingRow label={t("roles.counterRefundLabel")} description={form.counterRefund ? t("roles.counterRefundDesc") : t("roles.counterDefault")} layout="stack" labelFor={false}>
+          {({ labelId }) => (
+            <div className="flex flex-col gap-tight">
+              <RadioGroup
+                aria-labelledby={labelId}
+                value={effective("refund")}
+                onChange={(v) => set({ counterRefund: v as CounterActionMode })}
+                options={COUNTER_ACTION_MODES.map((m) => ({
+                  value: m,
+                  label: t(`roles.refund_${m}`),
+                  description: t(`roles.refund_${m}_desc`),
+                }))}
+              />
+              {/* The limit belongs to the on-the-spot choice, so it sits under it while that is chosen. */}
+              {effective("refund") === "direct" && (
+                <div className="rounded-inner bg-subtle p-card">
+                  <label htmlFor="counter-refund-limit" className="text-base font-medium text-fg">
+                    {t("roles.counterLimitLabel")}
+                  </label>
+                  <p className="mt-inline text-sm text-muted">{t("roles.counterLimitDesc")}</p>
+                  <div className="mt-tight max-w-xs">
+                    <SuffixInput
+                      id="counter-refund-limit"
+                      value={form.refund}
+                      onChange={(v) => set({ refund: v })}
+                      suffix="৳"
+                      placeholder={t("roles.noLimit")}
+                      invalid={!!refundErr}
+                      describedBy={refundErr ? "counter-refund-limit-err" : undefined}
+                    />
+                  </div>
+                  {refundErr && (
+                    <p id="counter-refund-limit-err" className="mt-tight text-sm text-danger">
+                      {refundErr}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </SettingRow>
+        <SettingRow label={t("roles.counterMoveLabel")} description={form.counterReschedule ? t("roles.counterMoveDesc") : t("roles.counterDefault")} layout="stack" labelFor={false}>
+          {({ labelId }) => (
+            <RadioGroup
+              aria-labelledby={labelId}
+              value={effective("reschedule")}
+              onChange={(v) => set({ counterReschedule: v as CounterActionMode })}
+              options={COUNTER_ACTION_MODES.map((m) => ({
+                value: m,
+                label: t(`roles.move_${m}`),
+                description: t(`roles.move_${m}_desc`),
+              }))}
+            />
+          )}
+        </SettingRow>
+      </SettingsSection>
 
       {mode === "create" ? (
         <CreateBar

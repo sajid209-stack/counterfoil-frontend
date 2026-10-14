@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Check, ListFilter } from "lucide-react";
@@ -67,33 +68,34 @@ const paidish = (o: Order) => o.status === "paid" || o.status === "partial";
 type ActivityFilter = "all" | ActivityGroup;
 /** How many events the card shows on a desktop. It exists to balance the rail
  *  against the column beside it - the reference's two columns finish level,
- *  which is most of why its page reads as settled rather than ragged. An event
- *  is a sentence that often wraps to two lines, so it is taller than the old
- *  one-line order rows. Re-measure if this card's anatomy changes. A phone has
- *  no column beside it and shows five: it is a glance, and the full log is one
- *  press away. */
+ *  which is most of why its page reads as settled rather than ragged. A row is
+ *  now two short lines (about 52px), so 11 of them finish level with the left
+ *  column at 1440 (measured: the two columns end on the same pixel). Re-measure
+ *  if this card's anatomy changes. A phone has no column beside it and shows
+ *  five: it is a glance, and the full log is one press away. */
 const ACTIVITY_ROWS = 11;
 const ACTIVITY_ROWS_PHONE = 5;
 /** Recent orders on a phone: a short list, not a table. */
 const ORDER_ROWS_PHONE = 5;
 
-/** The soft disc an activity row leads with. One glyph per kind, so a row never
- *  depends on colour alone — but no outline: the disc is a tint, not a box. */
-function Marker({ kind, severity }: { kind: ActivityEvent["kind"]; severity: ActivityEvent["severity"] }) {
+/** Events that are about a person: their name leads the row. */
+const PERSON_KINDS = new Set<ActivityEvent["kind"]>(["staff.signed_in", "staff.signed_out", "staff.wrong_pin", "staff.locked_out", "shift.opened", "shift.closed"]);
+
+/** The soft disc an activity row leads with. One glyph per kind; a warning or
+ *  serious event also tints the disc, and says so in words for a screen reader
+ *  (`word`) - there is no separate pill. */
+function Marker({ kind, severity, word }: { kind: ActivityEvent["kind"]; severity: ActivityEvent["severity"]; word?: string }) {
   const Icon = ACTIVITY_ICON[kind];
   return (
-    <span aria-hidden className={cn("mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted-wash", SEVERITY_ICON_CLASS[severity])}>
-      <Icon size={15} strokeWidth={1.5} />
-    </span>
-  );
-}
-
-/** "Warning" in words, for an event somebody should look at. Quiet otherwise. */
-function Importance({ severity, label }: { severity: ActivityEvent["severity"]; label: string }) {
-  if (severity === "info") return null;
-  return (
-    <span className={cn("inline-flex shrink-0 items-center rounded-full px-tight py-px text-xs font-medium", severity === "critical" ? "bg-danger-wash text-fg" : "bg-warning-wash text-fg")}>
-      {label}
+    <span
+      className={cn(
+        "grid h-8 w-8 shrink-0 place-items-center rounded-full",
+        severity === "critical" ? "bg-danger-wash" : severity === "warning" ? "bg-warning-wash" : "bg-muted-wash",
+        SEVERITY_ICON_CLASS[severity],
+      )}
+    >
+      <Icon size={15} strokeWidth={1.5} aria-hidden />
+      {word && <span className="sr-only">{word}</span>}
     </span>
   );
 }
@@ -560,6 +562,14 @@ export default function DashboardPage() {
     </div>
   );
 
+  /* The key subject of an event, short: a code and where, or where and the float. */
+  const activityMeta = (a: ActivityEvent): string => {
+    const where = a.counter ?? a.venue ?? a.device ?? "";
+    if (a.kind === "shift.opened" && typeof a.data.float === "number") return [where, t("floatAmount", { amount: formatMoney(a.data.float) })].filter(Boolean).join(" · ");
+    const subject = a.subject && a.subject.type !== "setting" && a.subject.type !== "staff" ? a.subject.label : "";
+    return [subject, where].filter(Boolean).join(" · ");
+  };
+
   const activityCard = (
     <div className={card}>
       <div className="flex items-baseline justify-between gap-tight px-card pb-tight pt-card">
@@ -598,23 +608,23 @@ export default function DashboardPage() {
         </div>
       ) : activity.length === 0 ? (
         <p className="px-card pb-comfortable text-sm text-muted">{t("noActivity")}</p>
-      ) : activity.map((a) => (
-        <div key={a.id} className="flex items-start gap-section px-card py-comfortable">
-          <Marker kind={a.kind} severity={a.severity} />
-          <div className="min-w-0 flex-1">
-            <p className={cn("break-words text-sm leading-snug", !wide && "line-clamp-2")}>{ax.sentence(a)}</p>
-            {/* Time beside the sentence on a desktop, under it on a phone,
-                where a right-hand column would take a third of the width. */}
-            {(!wide || a.severity !== "info") && (
-              <p className="mt-0.5 flex flex-wrap items-center gap-x-tight gap-y-0.5 text-xs text-muted">
-                {!wide && <span className="whitespace-nowrap">{ax.ago(a.at)}</span>}
-                <Importance severity={a.severity} label={ax.severityLabel(a.severity)} />
+      ) : activity.map((a) => {
+        const person = PERSON_KINDS.has(a.kind) && a.actor ? a.actor.name : null;
+        const meta = activityMeta(a);
+        return (
+          <Link key={a.id} href="/activity" className="flex min-h-11 items-center gap-section px-card py-tight hover:bg-subtle focus-visible:bg-subtle">
+            <Marker kind={a.kind} severity={a.severity} word={a.severity === "info" ? undefined : ax.severityLabel(a.severity)} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm leading-snug">
+                {person && <b className="font-semibold">{person} · </b>}
+                {ax.kindLabel(a)}
               </p>
-            )}
-          </div>
-          {wide && <span className="shrink-0 whitespace-nowrap pt-0.5 text-xs text-muted">{ax.ago(a.at)}</span>}
-        </div>
-      ))}
+              {meta && <p className="truncate text-xs text-muted">{meta}</p>}
+            </div>
+            <span className="shrink-0 whitespace-nowrap text-xs text-muted">{ax.ago(a.at)}</span>
+          </Link>
+        );
+      })}
       <button type="button" onClick={() => router.push("/activity")} className={linkRow}>
         <span className="min-w-0 flex-1 truncate">{t("viewAllActivity")}</span>
         <ArrowRight size={13} strokeWidth={1.75} className="shrink-0" aria-hidden />
@@ -790,18 +800,19 @@ export default function DashboardPage() {
           </p>
         )}
         {/* Scope, not actions — a dashboard is a place to look. */}
-        <SegmentedControl
-          size="sm"
-          fullWidth={!wide}
-          className={wide ? "w-60" : undefined}
-          value={scope}
-          onChange={(v) => setScope(v as "today" | "week")}
-          aria-label={t("scopeLabel")}
-          options={[
-            { value: "today", label: t("today") },
-            { value: "week", label: t("thisWeek") },
-          ]}
-        />
+        <div className={cn("min-w-0", wide ? "w-60 shrink-0" : "w-full")}>
+          <SegmentedControl
+            size="sm"
+            fullWidth
+            value={scope}
+            onChange={(v) => setScope(v as "today" | "week")}
+            aria-label={t("scopeLabel")}
+            options={[
+              { value: "today", label: t("today") },
+              { value: "week", label: t("thisWeek") },
+            ]}
+          />
+        </div>
       </div>
 
       {loading ? (

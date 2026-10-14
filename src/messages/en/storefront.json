@@ -91,7 +91,8 @@
       "card_terminal": "Visa or Mastercard.",
       "bangla_qr": "Scan with any bank app."
     },
-    "secure": "You confirm your payment on the next step."
+    "secure": "You confirm your payment on the next step.",
+    "privacyLine": "By booking you agree to our <link>privacy policy</link>."
   },
   "pay": {
     "changeMethod": "Change payment method",
@@ -142,7 +143,8 @@
   "footer": {
     "contact": "Contact",
     "links": "Links",
-    "noContact": "No contact details yet."
+    "noContact": "No contact details yet.",
+    "privacy": "Privacy policy"
   },
   "status": {
     "open": "Open now · until {time}",
@@ -210,5 +212,15 @@
     "added": "Added to basket",
     "checkout": "Checkout",
     "dismiss": "Dismiss"
+  },
+  "privacy": {
+    "title": "Privacy policy",
+    "updated": "Last updated {date}",
+    "empty": "{venue} has not published a privacy policy yet.",
+    "contactTitle": "Questions about your details?",
+    "contactBody": "To see, change or delete your details, contact {venue}.",
+    "counterfoilLine": "Bookings for {venue} are made with Counterfoil.",
+    "counterfoilPrivacy": "Counterfoil privacy policy",
+    "counterfoilTerms": "Counterfoil terms"
   }
 }

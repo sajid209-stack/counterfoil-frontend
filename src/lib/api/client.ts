@@ -66,6 +66,8 @@ const store: Record<string, Row[]> = {
   ticketScans: [],
   // Refund requests start empty — a counter makes them, a manager decides.
   refundRequests: [],
+  // Move requests work the same way (lib/api/rescheduleRequests).
+  rescheduleRequests: [],
   // Withdrawals and deposits made this session (see lib/api/finances) — the
   // only finance lines that are written; every other line is derived.
   financeLines: [],
@@ -146,7 +148,7 @@ export function loadBusiness(name: string, currency: string, productIds: string[
   (store as Record<string, unknown[]>).resources = structuredClone(seed.resources).filter((r) =>
     usedResourceIds.has(r.id),
   );
-  const sales = generateSales({ products: store.products as never, locations: seed.locations, staff: seed.staff, taxRatePct: operatorState.taxRatePct, reducedRatePct: operatorState.reducedRatePct });
+  const sales = generateSales({ products: store.products as never, locations: seed.locations, staff: seed.staff, counters: seed.counters, taxRatePct: operatorState.taxRatePct, reducedRatePct: operatorState.reducedRatePct });
   // Keep the hand-authored seed rows that belong to this business: the demo
   // credits pass and the explicit turf/guide bookings (the sharing proofs).
   const keepTickets = structuredClone(seed.tickets).filter((t) => t.creditsUsed != null && productIds.includes(t.productId));
@@ -157,6 +159,7 @@ export function loadBusiness(name: string, currency: string, productIds: string[
   (store as Record<string, unknown[]>).ticketCredentials = [];
   (store as Record<string, unknown[]>).ticketScans = [];
   (store as Record<string, unknown[]>).refundRequests = [];
+  (store as Record<string, unknown[]>).rescheduleRequests = [];
   (store as Record<string, unknown[]>).financeLines = [];
   (store as Record<string, unknown[]>).bookings = [...sales.bookings, ...keepBookings];
 }

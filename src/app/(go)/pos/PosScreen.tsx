@@ -1313,7 +1313,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
       <div className={`${cartOpen ? "fixed inset-0 z-50 flex pb-[env(safe-area-inset-bottom)] lg:inset-auto lg:pb-0" : "hidden"} min-h-0 flex-col bg-surface lg:z-auto lg:flex lg:rounded-card lg:pb-0 lg:shadow-card lg:sticky lg:top-comfortable lg:h-[calc(100dvh-88px)] lg:max-h-none lg:self-start`}>
         <div className="flex items-center gap-tight border-b border-line p-comfortable">
           {cartOpen && (
-            <button type="button" onClick={closeCart} className="flex h-11 shrink-0 items-center gap-inline rounded-full bg-subtle pl-tight pr-comfortable text-base font-medium text-fg dark:border dark:border-line dark:bg-transparent lg:hidden">
+            <button type="button" onClick={closeCart} className="flex h-11 shrink-0 items-center gap-inline rounded-full pl-tight pr-comfortable text-base font-medium border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active lg:hidden">
               <ChevronLeft size={18} strokeWidth={2} />{t("cart.back")}
             </button>
           )}

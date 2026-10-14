@@ -55,6 +55,7 @@
     "times": "Times",
     "none": "None",
     "amountOff": "= {amount} off",
-    "percentOff": "= {pct}% off"
+    "percentOff": "= {pct}% off",
+    "notRecorded": "Not recorded"
   }
 }

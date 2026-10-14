@@ -54,5 +54,14 @@
   "screenOwing": "Still to pay",
   "paidOf": "Paid {paid} of {total}",
   "previewNote": "Example only. Nothing was saved.",
-  "plusOneLabel": "Let 1 person in"
+  "plusOneLabel": "Let 1 person in",
+  "viewfinder": "Camera view",
+  "aimInstruction": "Hold the ticket's QR code inside the square",
+  "startCamera": "Start camera",
+  "stopCamera": "Stop camera",
+  "switchCamera": "Switch camera",
+  "startingCamera": "Starting the camera…",
+  "noCameraHere": "Camera scanning isn't available on this device. Use a scanner or type the code below.",
+  "codeFieldLabel": "Type or scan a code",
+  "fieldHint": "A scanner types into this box. You can also type the code."
 }
