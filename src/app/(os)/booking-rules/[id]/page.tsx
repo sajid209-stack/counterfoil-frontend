@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, Card, Chip, EmptyState, FormField, PageShell, useToast } from "@/components/ui";
+import { StatusScreen } from "@/components/screens";
+import { Button, Card, Chip, FormField, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   archiveBookingRule,
@@ -45,7 +46,7 @@ export default function BookingRuleEditorPage() {
   if (!isNew && !ruleQ.loading && !ruleQ.data) {
     return (
       <PageShell title={t("editRule")} back={{ href: "/booking-rules", label: t("back") }}>
-        <EmptyState title={t("notFound")} action={<Button onClick={() => router.push("/booking-rules")}>{t("back")}</Button>} />
+        <StatusScreen variant="notFound" framed homeHref="/booking-rules" homeLabel={t("back")} title={t("notFound")} />
       </PageShell>
     );
   }

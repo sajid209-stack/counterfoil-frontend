@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { StatusScreen } from "@/components/screens";
 import { Archive, Copy } from "lucide-react";
 import {
   ActionMenu,
-  Button,
   ConfirmDialog,
-  EmptyState,
   PageShell,
   Skeleton,
   StatusPill,
@@ -84,11 +83,7 @@ export default function ProductDetailPage() {
   if (!loading && (prod.error || !prod.data)) {
     return (
       <PageShell title={t("fallbackTitle")}>
-        <EmptyState
-          title={t("notFound")}
-          message={t("notFoundBody")}
-          action={<Button onClick={() => router.push("/catalog?kind=bookings")}>{t("backButton")}</Button>}
-        />
+        <StatusScreen variant="notFound" framed homeHref="/catalog?kind=bookings" homeLabel={t("backButton")} title={t("notFound")} body={t("notFoundBody")} />
       </PageShell>
     );
   }

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, EmptyState, PageShell, StatusPill } from "@/components/ui";
+import { StatusScreen } from "@/components/screens";
+import { PageShell, StatusPill } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getLocation, listCounters, listResources, listStaff, type Location } from "@/lib/api";
 import { SectionSkeleton } from "../../_components/SettingsKit";
@@ -11,7 +12,6 @@ import { LocationEditor } from "../_components/LocationEditor";
 
 export default function LocationPage() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
   const t = useTranslations("settings");
   const locationQ = useApiQuery(() => getLocation(params.id), [params.id]);
   const countersQ = useApiQuery(() => listCounters({ pageSize: 200, filters: { locationId: params.id } }), [params.id]);
@@ -23,10 +23,7 @@ export default function LocationPage() {
   if (!locationQ.loading && (locationQ.error || !locationQ.data)) {
     return (
       <PageShell title={t("locations.singular")}>
-        <EmptyState
-          title={t("locations.notFound")}
-          action={<Button onClick={() => router.push("/settings/locations")}>{t("locations.backToList")}</Button>}
-        />
+        <StatusScreen variant="notFound" framed homeHref="/settings/locations" homeLabel={t("locations.backToList")} title={t("locations.notFound")} />
       </PageShell>
     );
   }

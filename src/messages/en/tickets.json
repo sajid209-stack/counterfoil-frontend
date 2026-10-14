@@ -1,7 +1,7 @@
 {
   "fallbackTitle": "Ticket",
   "loading": "Loading the ticket…",
-  "notFound": "That ticket could not be found.",
+  "notFound": "We can't find this ticket",
   "backToOrder": "Back to the order",
   "rowActions": "More actions",
   "openOrder": "Open the order",
@@ -158,5 +158,6 @@
       "order": "Order"
     }
   },
-  "detailsTitle": "Ticket details"
+  "detailsTitle": "Ticket details",
+  "backToIssued": "Back to issued orders"
 }

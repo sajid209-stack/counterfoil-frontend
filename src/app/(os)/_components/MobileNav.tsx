@@ -13,6 +13,7 @@ import { getStaff, listRoles } from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { cn } from "@/lib/cn";
 import { NAV_IDLE, NAV_PARENT_OF_SELECTED, NAV_SELECTED, NAV_SELECTED_ICON } from "@/components/ui/navStyles";
+import { PageStatePicker } from "@/components/screens";
 import { LocationSwitcher } from "./LocationSwitcher";
 import { NAV_MAIN, NAV_OPEN, NAV_SETTINGS, isAt, type NavDestination } from "./nav";
 
@@ -170,6 +171,10 @@ function MenuBody({ onClose }: { onClose: () => void }) {
           nothing for an operator with one venue. */}
       <div className="px-comfortable empty:hidden">
         <LocationSwitcher full />
+      </div>
+      {/* The page-state preview, next to the venue: a lens on the whole shell. */}
+      <div className="mt-2 px-comfortable">
+        <PageStatePicker full />
       </div>
 
       <nav aria-label={t("main")} className="mt-2">

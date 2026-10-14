@@ -22,9 +22,6 @@
   "nextWeek": "পরের সপ্তাহ",
   "board": {
     "whatLabel": "কী দেখাবে",
-    "viewLabel": "যেভাবে দেখাবে",
-    "viewGrid": "গ্রিড",
-    "viewList": "তালিকা",
     "shows": "শো ও ট্যুর",
     "places": "জায়গা",
     "noPlace": "জায়গা ঠিক হয়নি",
@@ -49,8 +46,6 @@
     "keyClosed": "বুক করা যাবে না",
     "emptyTitle": "এখানে বুক করার কিছু নেই",
     "emptyMessage": "এই কাউন্টারে বুক করার মতো মাঠ, লেন, কোর্ট বা শো নেই।",
-    "listEmptyTitle": "এই দিনে কোনো বুকিং নেই",
-    "listEmptyMessage": "খালি সময় বিক্রি বা হোল্ড করতে গ্রিডে যান।",
     "groupAria": "{name}, {count}টি খালি",
     "noPlaceShort": "জায়গা ঠিক হয়নি",
     "noPlaceMore": "আরও {count}টি",
@@ -216,5 +211,10 @@
     "takeAndCheckIn": "{amount} নিন ও চেক ইন করুন",
     "applyAndCheckIn": "ছাড় দিন ও চেক ইন করুন",
     "takeOnly": "শুধু {amount} নিন। এখনো আসেননি।"
-  }
+  },
+  "chooseDate": "তারিখ বাছুন",
+  "daysLabel": "দিনগুলো",
+  "previousMonth": "আগের মাস",
+  "nextMonth": "পরের মাস",
+  "close": "বন্ধ করুন"
 }

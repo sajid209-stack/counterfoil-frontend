@@ -26,7 +26,7 @@
  *     chairs round a fixture would make "what did they buy" ambiguous.
  */
 import { useMemo, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import {
   Armchair,
   Copy,
@@ -48,7 +48,8 @@ import {
   Wine,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button, Card, Checkbox, ConfirmDialog, EmptyState, FormField, PageShell, PlanView, Skeleton, useToast, seatToElement } from "@/components/ui";
+import { StatusScreen } from "@/components/screens";
+import { Button, Card, Checkbox, ConfirmDialog, FormField, PageShell, PlanView, Skeleton, useToast, seatToElement } from "@/components/ui";
 import type { PlanElement } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getSeatLayout, saveLayoutPlan, updateSeatLayout } from "@/lib/api";
@@ -81,7 +82,6 @@ const PALETTE_COLORS = ["#F94A00", "#2563EB", "#16A34A", "#7C3AED", "#D97706", "
 export default function SeatLayoutEditorPage() {
   const t = useTranslations("seatmaps");
   const params = useParams<{ id: string }>();
-  const router = useRouter();
   const q = useApiQuery(() => getSeatLayout(params.id), [params.id]);
 
   /* Loading and not-found keep the page's own h1 and a link back: the list's
@@ -97,7 +97,7 @@ export default function SeatLayoutEditorPage() {
   if (q.error || !q.data) {
     return (
       <PageShell title={t("editor.title")} back={back}>
-        <EmptyState title={t("editor.notFound")} action={<Button onClick={() => router.push("/catalog/layouts")}>{t("editor.backToList")}</Button>} />
+        <StatusScreen variant="notFound" framed homeHref="/catalog/layouts" homeLabel={t("editor.backToList")} title={t("editor.notFound")} />
       </PageShell>
     );
   }

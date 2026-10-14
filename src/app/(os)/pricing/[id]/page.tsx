@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, Card, EmptyState, FormField, PageShell, useToast } from "@/components/ui";
+import { StatusScreen } from "@/components/screens";
+import { Button, Card, FormField, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   archivePriceRule,
@@ -44,7 +45,7 @@ export default function PriceRuleEditorPage() {
   if (!isNew && !ruleQ.loading && !ruleQ.data) {
     return (
       <PageShell title={t("editRule")} back={{ href: "/pricing", label: t("back") }}>
-        <EmptyState title={t("notFound")} action={<Button onClick={() => router.push("/pricing")}>{t("back")}</Button>} />
+        <StatusScreen variant="notFound" framed homeHref="/pricing" homeLabel={t("back")} title={t("notFound")} />
       </PageShell>
     );
   }

@@ -17331,3 +17331,83 @@ and i18n clean.
 
 Open: no photographs — their own would make it; addresses, prices, times and
 seat counts are placeholders to set with the owner.
+
+## A calendar button on the till's Schedule, and every page's other faces (2026-10-14)
+
+Owner, with a screenshot of the till's Schedule:
+1. *"need a full calendar filter button instead of list and grid, grid is final, and the date can be scrolled horizontally"*;
+2. *"need loading screens (as minimal skeleton view), not found page, session expired, error page and empty pages … loading screens, empty pages need for OS and POS all pages"*;
+3. *"add a drop down like Locations dropdown in top nav bar … for page screens status like empty, errors and others, so developers can get to see preview for all types of pages easily."*
+
+Planned, the shared contract (`src/lib/screenState.ts`) written, and every result reviewed on Opus. Built by four Sonnet sub-agents with separate files: the Schedule, the screens kit with OS coverage, POS coverage, and record pages.
+
+### 1. The Schedule: a calendar button and a day strip
+
+The research was Square Appointments, Fresha, and Google Calendar on a phone. All three use a strip of days you can flick sideways, plus a calendar button for a long jump.
+
+- **The list view and the grid/list toggle are gone.** The grid is the Schedule.
+- **`DayStrip`** (`schedule/_components/DayStrip.tsx`):
+  - **The strip.** It runs from a week back to two months ahead, and grows if the calendar sends it further. Each day is a 48px cell. The chosen day is solid orange and today has a ring. The first of each month carries the month's name. Dots under a day count its bookings. The month above the strip follows its left edge.
+  - **Moving.** ‹ and › move the selection by a week. Arrow keys walk the days, and the strip has one tab stop.
+  - **No sliding under your thumb.** Tapping a day you can already see does not slide the row. The strip only moves when the day was chosen some other way: the calendar, the arrows, or Today.
+  - **The calendar button** opens the till's date picker: a sheet on a phone, a popover from md up. When the chosen day has scrolled out of view, the button shows the date beside its icon.
+- **Fixed on the way:** Node and Chromium abbreviate some Bangla months differently ("সেপ্ট" against "সেপ্টেম্বর"). That broke hydration on every Bangla load. Only those month spans opt out of the hydration check.
+
+### 2. Screen states for every page
+
+**The kit** (`src/components/screens/`) holds:
+- `PageSkeleton`: twelve shapes. Seven are OS (dashboard, list, cards, detail, form, calendar, settings); five are POS (wall, board, list, form, scan). Each mirrors its page's real layout, so nothing jumps when data arrives. The phone dashboard is one card of rows, as the real one is. The region is `role="status"` with `aria-busy`.
+- `EmptyScreen`: what is missing, one sentence, one action.
+- `StatusScreen`: error (with a code to quote and copy), not found, and session expired. It can be framed inside the shell or stand as a whole page.
+- `ScreenArt`: one drawing for all of them, a ticket torn at its perforation. The outline is quiet and only the icon takes a tone.
+- `ScreenPreview` and `registry.ts`: these map every route to its skeleton shape and its empty copy. There are 66 OS entries in `registry.os.ts` and 19 POS entries in `registry.go.ts`. A route with no entry falls back to a generic skeleton and empty page, so a new screen is never blank.
+
+**The real pages:**
+- `app/not-found.tsx`, `error.tsx`, `global-error.tsx` and `session-expired/page.tsx`.
+- `(os)/not-found.tsx`, `(os)/error.tsx` and `(os)/loading.tsx`, so a missing OS page keeps its frame.
+- `(go)/loading.tsx`.
+- The nine record pages (order, stock item, ticket, booking, seat map, booking rule, price rule, promotion, venue) now show the shared not-found screen inside their own shell. Each names what is missing and links back to its list. `StatusScreen` gained `homeLabel`, `title` and `body` for this.
+
+**The copy:** a new `screens` namespace in en and bn, written in plain words. The Bangla is a draft.
+
+### 3. The page-state dropdown
+
+`useScreenState()` and `setScreenState()` keep the chosen state per browser (`cf_screen_state`, default `live`). Server and first render are always live, so a preview never causes a hydration mismatch.
+
+**In OS:**
+- A **Page state** dropdown sits beside the venue picker on every page, Settings included. Its trigger icon changes with the state.
+- On a phone it lives in the menu sheet under the venue switcher. While a preview runs, a chip in the top bar names the state and exits in one tap.
+
+**In POS:**
+- From 640px the dropdown sits beside the counter picker.
+- Below that it is in the More sheet, and the header shows a compact chip (icon and ✕; the state is its accessible name) while a preview runs.
+
+**Every shell draws the chosen face in place of the page**, so a developer can walk every page in every state without faking data. "Live" puts the real page back.
+
+**The Design System** has a new section, **Screen states**, with a live table of route coverage. `docs/design-system.md` adds §10a.
+
+### Small fixes from review
+- The error screen's Copy code button is 44px on the till, where every width is touch.
+- The page-state label in the POS More sheet now meets the 13px reading floor.
+- The status pills on My sales and Reservations use the 13px size.
+- "Back to What you sell" on a missing booking now reads "Back to catalog".
+- The missing-item and missing-ticket titles now read "We can't find this item / ticket".
+
+### Verified
+- Schedule: 31/31 at 390 and at 1440, plus 4/4. The calendar was driven at 390 in Bangla and at 1280 in English: picking 19 August selects it and scrolls it into view, with no hydration errors and no page x-scroll.
+- OS states, checked by screenshot:
+  - orders (loading, empty), catalog (error), customers at 390 (empty), team in dark (session expired), dashboard at 390 (loading);
+  - the real 404, session-expired, and a missing order at 390.
+  - No console errors and no sideways scroll.
+- POS states:
+  - /pos, /schedule, /checkin, /scan and /my-sales at 390 and 1280, in light, dark and Bangla. Nothing under the 13px floor except the declared 11px tab labels, nothing under 44px, and no console errors.
+  - The sub-agents ran 29 scripted checks on the page-state flow.
+- `tsc` clean, `lint:tokens` 0 errors, i18n 0 missing / 0 extra. `eslint` on every changed file reports only the documented baseline (OsShell, booking-rules/[id], pricing/[id], promotions/[id]).
+- Production build passes. **Regression against it: 105 runs, all passing** after four harnesses were brought up to the new design: mk (the Schedule has no list view), bar and dd1 (the page-state menu is an expected bar control and is not one of a page's filters), and ci4 (now waits for the counts instead of a fixed 1.2s, which the mock's latency could exceed). tk1 and ci4 at 390 failed once in the batch and pass alone. The 59-route sweeps are clean at 390 en, 390 bn dark and 1440, and the phone audit shows hidden 0 · under-44 0 · clipped 0 · errors 0.
+
+### Open
+- The dropdown's options carry no icons; the kit's `Select` options have none.
+- The classic till's own shell does not draw previews.
+- `/pos/payment` and `/pair` only redirect, so they have no entries.
+- `global-error` was not screenshotted; it renders only when the root layout throws.
+- The page-state dropdown is shown to everyone. It was asked for as a developer tool. If it should be hidden in production or behind a role, that is one condition in each shell.

@@ -15,6 +15,7 @@ import {
   useToast,
   type ActionMenuItem,
 } from "@/components/ui";
+import { StatusScreen } from "@/components/screens";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { formatClock, formatDate, formatMoney } from "@/lib/format";
@@ -84,7 +85,7 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
         {itemQ.loading ? (
           <div aria-busy="true"><Skeleton h={160} /></div>
         ) : (
-          <p className="text-sm text-muted">{t("notFound")}</p>
+          <StatusScreen variant="notFound" framed homeHref="/inventory" homeLabel={t("backToList")} title={t("notFound")} />
         )}
       </PageShell>
     );

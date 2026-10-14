@@ -24,6 +24,9 @@ import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
 import { LocaleToggle } from "@/components/LocaleProvider";
 import { Modal, Sheet } from "@/components/ui";
+import { PageStatePicker, PreviewChip, ScreenPreview } from "@/components/screens";
+import { useScreenState } from "@/lib/screenState";
+import { useMediaQuery } from "@/lib/useMedia";
 import { TillSwitcher } from "./TillSwitcher";
 import { CounterPicker } from "./CounterPicker";
 import { useActiveCounter } from "@/lib/activeCounter";
@@ -47,6 +50,9 @@ import { applyTillText, usePrefs } from "@/lib/prefs";
 const BAR_CLEAR = "12px + 62px + env(safe-area-inset-bottom)";
 import { cn } from "@/lib/cn";
 import { NAV_IDLE, NAV_SELECTED, NAV_SELECTED_ICON } from "@/components/ui/navStyles";
+
+/** Tailwind's sm: where the header has room for the page-state picker. */
+const SM = "(min-width: 40rem)";
 
 // F10 — nav is responsive by form factor, not fixed. Phone + tablet portrait
 // get a bottom tab bar (thumb zone); a tablet held in landscape gets an 88px
@@ -112,6 +118,19 @@ export function GoShell({ children }: { children: React.ReactNode }) {
      initial in the corner. With the tab bar on the PIN screen, anyone could
      walk past sign-in with one tap on Sell. */
   const bare = path === "/login" || path.startsWith("/login/");
+
+  /* The developer's page-state preview, as in the admin shell: anything but Live
+     replaces the page with the face of the chosen state (skeleton, empty page,
+     error…) and the chrome stays exactly where it is. */
+  const screenState = useScreenState();
+  const face = screenState === "live" ? null : <ScreenPreview state={screenState} pathname={pathname} />;
+  /* The picker is rendered in exactly ONE place. Below sm the header has no
+     room beside the counter, so it lives in the More sheet and the header
+     carries only the chip that exits a preview; from sm up it sits in the
+     header. Two copies behind `hidden` would put two "Page state" comboboxes
+     in the DOM, the invisible one first — the trap the admin shell avoids the
+     same way. */
+  const roomy = useMediaQuery(SM);
 
   const prefs = usePrefs();
   useEffect(() => {
@@ -208,6 +227,8 @@ export function GoShell({ children }: { children: React.ReactNode }) {
           (8px) instead, because that is the column it sits above. */}
       <header className={cn("flex items-center gap-tight py-inline rail:px-tight", onATill ? "px-comfortable" : "px-section")}>
         {bare ? <span className="flex-1" /> : <CounterPicker saleCount={liveCount} />}
+        {/* Beside the counter, 48px like every other control on the till. */}
+        {roomy ? <PageStatePicker size="lg" /> : <PreviewChip compact />}
         {!bare && (
           <span className="hidden shrink-0 text-sm tabular-nums text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
         )}
@@ -232,7 +253,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
         {/* Content clears the bottom bar (+ home indicator) except in rail mode */}
         {/* BAR_CLEAR + 22px of breathing room. Kept as a class so `rail:pb-0`
             can still reset it — an inline style would beat the variant. */}
-        <div className={cn("min-w-0 flex-1", bare ? "pb-section" : "pb-[calc(96px+env(safe-area-inset-bottom))] rail:pb-0")}>{children}</div>
+        <div className={cn("min-w-0 flex-1", bare ? "pb-section" : "pb-[calc(96px+env(safe-area-inset-bottom))] rail:pb-0")}>{face ?? children}</div>
       </div>
 
       {/* Bottom tab bar — phone + tablet portrait */}
@@ -344,6 +365,8 @@ export function GoShell({ children }: { children: React.ReactNode }) {
               })}
             </div>
           </div>
+          {/* The page-state preview, for phones: the header has no room for it. */}
+          {!roomy && <div className="mt-section"><PageStatePicker size="lg" full /></div>}
           {/* Appearance and text size live on the till settings page, which is what
               the Settings tile opens — one control, one place. */}
         </div>

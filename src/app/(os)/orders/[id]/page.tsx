@@ -9,7 +9,6 @@ import {
   Button,
   Checkbox,
   ChoiceCard,
-  EmptyState,
   FormField,
   MarketBadge,
   Modal,
@@ -19,6 +18,7 @@ import {
   useToast,
   type ActionMenuItem,
 } from "@/components/ui";
+import { StatusScreen } from "@/components/screens";
 import { useApiQuery } from "@/lib/useApi";
 import { MD, XL, useMediaQuery } from "@/lib/useMedia";
 import {
@@ -155,7 +155,7 @@ export default function OrderDetailPage() {
   if (!order.loading && (order.error || !order.data)) {
     return (
       <PageShell title={t("order")}>
-        <EmptyState title={t("orderNotFound")} action={<Button onClick={() => router.push("/orders")}>{t("backToOrders")}</Button>} />
+        <StatusScreen variant="notFound" framed homeHref="/orders" homeLabel={t("backToOrders")} title={t("orderNotFound")} />
       </PageShell>
     );
   }

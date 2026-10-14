@@ -168,7 +168,7 @@ export default function MySalesPage() {
                     </span>
                     <span className="flex shrink-0 flex-col items-end gap-inline">
                       <span className="text-base font-semibold tabular-nums">{money(o.total)}</span>
-                      <StatusPill status={o.status} />
+                      <StatusPill status={o.status} size="md" />
                     </span>
                   </li>
                 );

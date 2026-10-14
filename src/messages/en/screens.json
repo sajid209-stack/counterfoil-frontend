@@ -1,0 +1,470 @@
+{
+  "loading": "Loading…",
+  "home": "Go to dashboard",
+  "homeGo": "Back to selling",
+  "states": {
+    "label": "Page state",
+    "live": "Live",
+    "loading": "Loading",
+    "empty": "Empty",
+    "error": "Error",
+    "notFound": "Not found",
+    "sessionExpired": "Session expired",
+    "exit": "Leaving the {state} preview"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "body": "This is a fault on our side, not yours. Try again. If it keeps happening, tell us the code below.",
+    "retry": "Try again",
+    "help": "Quote this code if you ask for help",
+    "reference": "Reference code",
+    "copy": "Copy code",
+    "copied": "Copied"
+  },
+  "notFound": {
+    "title": "We can't find that page",
+    "body": "The link may be old, or the page may have moved.",
+    "back": "Go back",
+    "search": "Search pages"
+  },
+  "sessionExpired": {
+    "title": "You've been signed out",
+    "body": "For your safety, we sign you out after a while. Sign in again to carry on.",
+    "signIn": "Sign in again",
+    "note": "Anything you saved is still here."
+  },
+  "empty": {
+    "dashboard": {
+      "title": "Nothing sold yet today",
+      "body": "Sales from your counter and website show up here.",
+      "action": "Open the counter",
+      "secondary": "Add something to sell"
+    },
+    "activity": {
+      "title": "No activity yet",
+      "body": "Sign-ins, scans, refunds and changes are listed here.",
+      "action": "Open the counter"
+    },
+    "calendar": {
+      "title": "No bookings on this day",
+      "body": "Bookings from the counter and website appear on the calendar.",
+      "action": "Open the counter",
+      "secondary": "Add something to sell"
+    },
+    "orders": {
+      "title": "No orders yet",
+      "body": "Sales from the counter and your website appear here.",
+      "action": "Open the counter"
+    },
+    "orders-detail": {
+      "title": "Nothing to show for this order",
+      "body": "No items or payments are recorded on it yet.",
+      "action": "Back to orders"
+    },
+    "issued-orders": {
+      "title": "No tickets issued yet",
+      "body": "Every ticket you sell is listed here with its code and status.",
+      "action": "Open the counter"
+    },
+    "ticket-detail": {
+      "title": "This ticket hasn't been used",
+      "body": "Gate scans and code changes will show here.",
+      "action": "Back to issued orders"
+    },
+    "customers": {
+      "title": "No customers yet",
+      "body": "Add a name and phone to a sale and the customer is saved here.",
+      "action": "Open the counter"
+    },
+    "customers-detail": {
+      "title": "No bookings yet",
+      "body": "This customer's bookings and notes will show here.",
+      "action": "Back to customers"
+    },
+    "catalog": {
+      "title": "Nothing for sale yet",
+      "body": "Add a ticket, tour, court or event. It shows at the counter once it's on sale.",
+      "action": "Add something to sell"
+    },
+    "catalog-new": {
+      "title": "Nothing matches that",
+      "body": "Try another word, like tour, court or concert.",
+      "action": "Back to catalog"
+    },
+    "catalog-new-booking": {
+      "title": "Start your booking",
+      "body": "A name and a price are enough. You can change the rest later.",
+      "action": "Start"
+    },
+    "catalog-new-event": {
+      "title": "Start your event",
+      "body": "Add a name, a date and a ticket price to put it on sale.",
+      "action": "Start"
+    },
+    "catalog-booking": {
+      "title": "No sales yet",
+      "body": "Sales and bookings for this item will show here.",
+      "action": "Back to catalog"
+    },
+    "catalog-event": {
+      "title": "No tickets sold yet",
+      "body": "Ticket sales for this event show here once it's on sale.",
+      "action": "Back to catalog"
+    },
+    "catalog-event-edit": {
+      "title": "Add the basics first",
+      "body": "A name, a date and a ticket price are enough to start.",
+      "action": "Back to catalog"
+    },
+    "catalog-layouts": {
+      "title": "No seat maps yet",
+      "body": "Draw a hall or dining room once, then sell seats or tables from it.",
+      "action": "Draw a seat map"
+    },
+    "catalog-layout": {
+      "title": "This seat map is empty",
+      "body": "Pick seats or tables on the left, then tap the plan to place them.",
+      "action": "Back to seat maps"
+    },
+    "inventory": {
+      "title": "No stock yet",
+      "body": "Add things you hand over or sell, like bottles, bags or hire shoes.",
+      "action": "Add a stock item"
+    },
+    "inventory-new": {
+      "title": "Add your first stock item",
+      "body": "Give it a name and a price. You can count it in after.",
+      "action": "Start"
+    },
+    "inventory-detail": {
+      "title": "No stock changes yet",
+      "body": "Deliveries, sales and counts are listed here.",
+      "action": "Back to stock"
+    },
+    "marketplaces": {
+      "title": "No other sites connected",
+      "body": "List your tickets on other websites and see every booking in one place.",
+      "action": "Connect a site"
+    },
+    "marketplace-detail": {
+      "title": "Nothing listed here yet",
+      "body": "Choose which bookings to show on this site.",
+      "action": "Back to marketplaces"
+    },
+    "analytics": {
+      "title": "No sales in this period",
+      "body": "Pick a longer date range, or open the counter to make a sale.",
+      "action": "Open the counter"
+    },
+    "finances": {
+      "title": "No money moved yet",
+      "body": "Payments, fees and payouts show here once you start selling.",
+      "action": "Open the counter"
+    },
+    "expenses": {
+      "title": "No expenses yet",
+      "body": "Write down what you spend, like supplies or repairs.",
+      "action": "Add an expense"
+    },
+    "memberships": {
+      "title": "No members yet",
+      "body": "Sell a membership and your members will be listed here.",
+      "action": "Open the counter"
+    },
+    "pricing": {
+      "title": "No price rules yet",
+      "body": "Set a different price for busy days or times.",
+      "action": "Add a price rule"
+    },
+    "pricing-detail": {
+      "title": "Set up this price rule",
+      "body": "Choose the bookings, the days and the new price.",
+      "action": "Back to price rules"
+    },
+    "promotions": {
+      "title": "No promotions yet",
+      "body": "Create a discount or code to bring customers back.",
+      "action": "Add a promotion"
+    },
+    "promotion-detail": {
+      "title": "Set up this promotion",
+      "body": "Choose the discount and who can use it.",
+      "action": "Back to promotions"
+    },
+    "booking-rules": {
+      "title": "No booking rules yet",
+      "body": "Add rules for how far ahead, how late and how many.",
+      "action": "Add a booking rule"
+    },
+    "booking-rule-detail": {
+      "title": "Set up this rule",
+      "body": "Choose which bookings it covers and the limit.",
+      "action": "Back to booking rules"
+    },
+    "settings-business": {
+      "title": "Tell us about your business",
+      "body": "Add your name, currency and time zone to get started.",
+      "action": "Add details"
+    },
+    "settings-counters": {
+      "title": "No counters yet",
+      "body": "A counter is a place where you sell, like a front desk or gate.",
+      "action": "Add a counter"
+    },
+    "settings-counter-new": {
+      "title": "Add your first counter",
+      "body": "Give it a name and say which venue it belongs to.",
+      "action": "Start"
+    },
+    "settings-counter": {
+      "title": "This counter isn't set up",
+      "body": "Choose what it sells and how it takes payment.",
+      "action": "Back to counters"
+    },
+    "settings-devices": {
+      "title": "No tablets paired yet",
+      "body": "Pair a tablet and choose who can sign in on it.",
+      "action": "Add a device"
+    },
+    "settings-device-new": {
+      "title": "Pair your first tablet",
+      "body": "You'll get a short code to type on the tablet.",
+      "action": "Start"
+    },
+    "settings-device": {
+      "title": "This device isn't set up",
+      "body": "Pick its counter and the people who can use it.",
+      "action": "Back to devices"
+    },
+    "settings-locations": {
+      "title": "No venues yet",
+      "body": "Add the place where you sell, with its address and hours.",
+      "action": "Add a venue"
+    },
+    "settings-location-new": {
+      "title": "Add your first venue",
+      "body": "Start with a name and an address.",
+      "action": "Start"
+    },
+    "settings-location": {
+      "title": "This venue isn't set up",
+      "body": "Add its address and opening hours.",
+      "action": "Back to venues"
+    },
+    "settings-loyalty": {
+      "title": "Points are switched off",
+      "body": "Turn on points so customers earn rewards when they buy.",
+      "action": "Set up points"
+    },
+    "settings-memberships": {
+      "title": "No membership plans yet",
+      "body": "Create a plan, like monthly or yearly, with a price and perks.",
+      "action": "Add a plan"
+    },
+    "settings-notifications": {
+      "title": "No messages set up",
+      "body": "Choose which messages customers and staff receive.",
+      "action": "Set up messages"
+    },
+    "settings-payments": {
+      "title": "No payment accounts yet",
+      "body": "Connect bKash or a card account to take payments online.",
+      "action": "Connect an account"
+    },
+    "settings-preferences": {
+      "title": "Nothing chosen yet",
+      "body": "Pick how it looks and which language to use in this browser.",
+      "action": "Choose"
+    },
+    "settings-privacy": {
+      "title": "No privacy policy yet",
+      "body": "Add one so customers know how you use their details.",
+      "action": "Write a policy"
+    },
+    "settings-profile": {
+      "title": "Your profile is empty",
+      "body": "Add your name and phone so your team knows who you are.",
+      "action": "Add details"
+    },
+    "settings-resources": {
+      "title": "No courts, lanes or rooms yet",
+      "body": "Add what customers book, like a court, a lane or a room.",
+      "action": "Add one"
+    },
+    "settings-resource-new": {
+      "title": "Add your first one",
+      "body": "Give it a name and a price per hour.",
+      "action": "Start"
+    },
+    "settings-resource": {
+      "title": "This one isn't set up",
+      "body": "Add its name, its price and when it is free.",
+      "action": "Back to courts, lanes & rooms"
+    },
+    "settings-roles": {
+      "title": "No roles yet",
+      "body": "A role says what a team member can do.",
+      "action": "Add a role"
+    },
+    "settings-role-new": {
+      "title": "Create your first role",
+      "body": "Name it, then tick what people in this role can do.",
+      "action": "Start"
+    },
+    "settings-role": {
+      "title": "This role isn't set up",
+      "body": "Tick what people in this role can do.",
+      "action": "Back to roles"
+    },
+    "settings-security": {
+      "title": "Your account isn't protected yet",
+      "body": "Add a strong password and turn on two-step sign-in.",
+      "action": "Review security"
+    },
+    "settings-sign-in": {
+      "title": "No sign-in rules yet",
+      "body": "Choose how long people stay signed in and when the counter locks.",
+      "action": "Set rules"
+    },
+    "settings-storefront": {
+      "title": "No web pages yet",
+      "body": "A web page lets customers see and book your tickets online.",
+      "action": "Add a web page"
+    },
+    "settings-storefront-detail": {
+      "title": "This page isn't set up",
+      "body": "Add a headline, a colour and what to show.",
+      "action": "Back to web pages"
+    },
+    "settings-tax": {
+      "title": "No tax rates yet",
+      "body": "Set your VAT rate so prices and receipts add up.",
+      "action": "Set tax rates"
+    },
+    "settings-team": {
+      "title": "No team members yet",
+      "body": "Invite your staff so they can sign in and sell.",
+      "action": "Invite someone"
+    },
+    "settings-team-new": {
+      "title": "Invite your first team member",
+      "body": "Add their name and choose what they can do.",
+      "action": "Start"
+    },
+    "settings-team-member": {
+      "title": "This person isn't set up",
+      "body": "Choose their role, their venues and a counter PIN.",
+      "action": "Back to team"
+    },
+    "settings-tickets": {
+      "title": "No ticket code settings",
+      "body": "Choose how tickets are scanned and what is printed.",
+      "action": "Set up tickets"
+    },
+    "settings-vat": {
+      "title": "VAT isn't set up",
+      "body": "Add your VAT number and how often you file returns.",
+      "action": "Add VAT details"
+    },
+    "generic": {
+      "title": "Nothing here yet",
+      "body": "When there is something to show, it will appear here.",
+      "action": "Go to dashboard"
+    },
+    "go-sell": {
+      "title": "Nothing to sell yet",
+      "body": "Things for sale at this counter will show here.",
+      "action": "Look again"
+    },
+    "go-sell-scroll": {
+      "title": "Nothing to sell yet",
+      "body": "Things for sale at this counter will show here.",
+      "action": "Look again"
+    },
+    "go-classic": {
+      "title": "Nothing to sell yet",
+      "body": "Things for sale at this counter will show here.",
+      "action": "Look again"
+    },
+    "go-cart": {
+      "title": "The sale is empty",
+      "body": "Pick something on the Sell screen to add it here.",
+      "action": "Add something"
+    },
+    "go-complete": {
+      "title": "No sale to show",
+      "body": "When a sale is done, its tickets show here.",
+      "action": "Start a sale"
+    },
+    "go-sell-complete": {
+      "title": "No sale to show",
+      "body": "When a sale is done, its tickets show here.",
+      "action": "Start a sale"
+    },
+    "go-classic-complete": {
+      "title": "No sale to show",
+      "body": "When a sale is done, its tickets show here.",
+      "action": "Start a sale"
+    },
+    "go-schedule": {
+      "title": "Nothing booked yet",
+      "body": "Bookings for this day will show here.",
+      "action": "Start a sale"
+    },
+    "go-checkin": {
+      "title": "No guests to check in",
+      "body": "Guests with a booking for this day will show here.",
+      "action": "See the schedule"
+    },
+    "go-reservations": {
+      "title": "No bookings yet",
+      "body": "Bookings made at the counter will show here.",
+      "action": "Start a sale"
+    },
+    "go-my-sales": {
+      "title": "No sales yet",
+      "body": "Your sales for today will show here.",
+      "action": "Start a sale"
+    },
+    "go-scan": {
+      "title": "Ready to scan",
+      "body": "Scan a ticket and the answer will show here.",
+      "action": "Start scanning"
+    },
+    "go-quick-pass": {
+      "title": "No passes to give",
+      "body": "Ask your manager to set up a pass first.",
+      "action": "Go to Sell"
+    },
+    "go-profile": {
+      "title": "No profile to show",
+      "body": "Sign in to see your details.",
+      "action": "Sign in"
+    },
+    "go-till-settings": {
+      "title": "No settings here yet",
+      "body": "Settings for this device will show here.",
+      "action": "Go to Sell"
+    },
+    "go-shift-open": {
+      "title": "Start your shift",
+      "body": "Count the cash in the drawer, then press start.",
+      "action": "Count the cash"
+    },
+    "go-shift-close": {
+      "title": "Close your shift",
+      "body": "Count the cash in the drawer to finish for today.",
+      "action": "Count the cash"
+    },
+    "go-login": {
+      "title": "No one to sign in",
+      "body": "Ask your manager to add you to this counter.",
+      "action": "Pair this tablet"
+    },
+    "go-pair": {
+      "title": "No tablet paired yet",
+      "body": "Type the code your manager gave you.",
+      "action": "Type the code"
+    }
+  }
+}

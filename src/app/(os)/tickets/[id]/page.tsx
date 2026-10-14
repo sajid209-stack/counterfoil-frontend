@@ -8,7 +8,6 @@ import {
   ActionMenu,
   Button,
   DetailCard,
-  EmptyState,
   FactGrid,
   FormField,
   Modal,
@@ -23,6 +22,7 @@ import {
   type ActivityItem,
   type Fact,
 } from "@/components/ui";
+import { StatusScreen } from "@/components/screens";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { formatDateTime, formatDay, formatMoney } from "@/lib/format";
@@ -120,7 +120,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             <SkeletonText lines={3} />
           </div>
         ) : (
-          <EmptyState title={t("notFound")} />
+          <StatusScreen variant="notFound" framed homeHref="/issued-orders" homeLabel={t("backToIssued")} title={t("notFound")} />
         )}
       </PageShell>
     );

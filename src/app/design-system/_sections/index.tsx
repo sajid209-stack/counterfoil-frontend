@@ -20,6 +20,7 @@ import { FeedbackSection } from "./Feedback";
 import { OverlaysSection } from "./Overlays";
 import { OsPatternsSection } from "./OsPatterns";
 import { GoPatternsSection } from "./GoPatterns";
+import { ScreenStatesSection } from "./ScreenStates";
 import { AccessibilitySection } from "./Accessibility";
 
 export const SECTION_COMPONENTS: Record<string, () => React.ReactNode> = {
@@ -44,5 +45,6 @@ export const SECTION_COMPONENTS: Record<string, () => React.ReactNode> = {
   "overlays": OverlaysSection,
   "os-patterns": OsPatternsSection,
   "go-patterns": GoPatternsSection,
+  "screen-states": ScreenStatesSection,
   "accessibility": AccessibilitySection,
 };

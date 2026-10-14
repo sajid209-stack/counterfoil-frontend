@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, Card, Chip, EmptyState, FormField, Notice, PageShell, Skeleton, useToast } from "@/components/ui";
+import { StatusScreen } from "@/components/screens";
+import { Button, Card, Chip, FormField, Notice, PageShell, Skeleton, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getPromotion, listCoupons, updatePromotion } from "@/lib/api";
 import type { Channel, Promotion, PromotionKind } from "@/lib/api";
@@ -13,7 +14,6 @@ const KINDS: PromotionKind[] = ["percentage_off", "fixed_amount_off", "fixed_pri
 export default function PromotionEditorPage() {
   const t = useTranslations("promotions");
   const params = useParams<{ id: string }>();
-  const router = useRouter();
   const toast = useToast();
   const q = useApiQuery(() => getPromotion(params.id), [params.id]);
   const couponsQ = useApiQuery(() => listCoupons({ pageSize: 100 }), []);
@@ -29,7 +29,7 @@ export default function PromotionEditorPage() {
   if (!q.loading && (q.error || !q.data)) {
     return (
       <PageShell title={t("editor.title")} back={back}>
-        <EmptyState title={t("editor.notFound")} action={<Button onClick={() => router.push("/promotions")}>{t("editor.back")}</Button>} />
+        <StatusScreen variant="notFound" framed homeHref="/promotions" homeLabel={t("editor.back")} title={t("editor.notFound")} />
       </PageShell>
     );
   }

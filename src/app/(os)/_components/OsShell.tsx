@@ -9,6 +9,8 @@ import { getOperator } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { BarTitleContext } from "@/lib/barTitle";
+import { useScreenState } from "@/lib/screenState";
+import { PageStatePicker, PreviewChip, ScreenPreview } from "@/components/screens";
 import { AccountMenu } from "./AccountMenu";
 import { LocationSwitcher } from "./LocationSwitcher";
 import { CommandPalette } from "./CommandPalette";
@@ -186,6 +188,12 @@ export function OsShell({ children }: { children: React.ReactNode }) {
      the venue lives in the menu sheet instead.) */
   const wide = useMediaQuery(MD);
 
+  /* The developer's page-state preview: when it is anything but Live, the page
+     is replaced by the face of the chosen state (loading skeleton, empty page,
+     error…) and the chrome stays exactly where it is. */
+  const screenState = useScreenState();
+  const face = screenState === "live" ? null : <ScreenPreview state={screenState} pathname={pathname} />;
+
   return (
     /* What the bar is calling this page, published so a page's own heading can
        stand down where it would only say it again — see `lib/barTitle`. */
@@ -237,6 +245,8 @@ export function OsShell({ children }: { children: React.ReactNode }) {
               <PageIcon size={20} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted peer-[:not(:empty)]:hidden" />
             )}
             <p className="min-w-0 flex-1 truncate text-md font-semibold text-fg">{pageName}</p>
+            {/* A phone has no picker in the bar: this says a preview is running, and ends it. */}
+            <PreviewChip />
             <div id="os-page-actions-mobile" className="flex shrink-0 items-center gap-0.5 empty:hidden" />
           </div>
 
@@ -254,12 +264,19 @@ export function OsShell({ children }: { children: React.ReactNode }) {
               page's own buttons, status and back link render in the page
               (PageShell), never up here. */}
           <div data-os-bar="desktop" className="glass-navbar hidden min-h-14 shrink-0 items-center justify-between gap-major bg-chrome px-gutter py-1.5 md:flex">
-            <div id="os-page-header" className="min-w-0 flex-1" />
+            <div className="min-w-0 flex-1">
+              <div id="os-page-header" />
+              {/* While previewing there is no PageShell to portal its title in. */}
+              {face && <h1 className="type-h1 break-words text-2xl sm:text-3xl">{pageName}</h1>}
+            </div>
             <div className="flex shrink-0 items-center justify-end gap-tight">
               {/* The venue first: it qualifies everything to its left, so it
                   reads as part of where you are rather than as one more of the
                   page's controls. */}
               {venueScoped && wide && <LocationSwitcher />}
+              {/* Next to it, and on Settings too: the page state is a lens on the
+                  whole shell, not on one venue. */}
+              {wide && <PageStatePicker />}
               <AccountMenu name={operatorQ.data?.name} />
             </div>
           </div>
@@ -282,7 +299,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
                 focused ? "pb-0" : "pb-[var(--os-fab-clear)]",
               )}
             >
-              {children}
+              {face ?? children}
             </div>
             <div aria-hidden data-more={more} className="os-frame-fade" />
           </div>

@@ -110,7 +110,7 @@
   "newTitle": "Add an item",
   "newDescription": "Something you hand over and want to count. You add how many you have next.",
   "backToList": "All stock",
-  "notFound": "No item at that address.",
+  "notFound": "We can't find this item",
   "soldAtTill": "Sold at the counter",
   "untrackedNote": "We don't count this item, so it has no stock history. Turn on counting in Details to count it.",
   "byVenue": "Where it is",

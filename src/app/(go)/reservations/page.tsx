@@ -59,7 +59,7 @@ export default function GoBookingsPage() {
                 <div className="truncate text-base font-medium">{productName(b.productId)}</div>
                 <div className="text-sm tabular-nums text-muted">{t("partyOf", { size: b.partySize })}</div>
               </div>
-              <StatusPill status="confirmed" />
+              <StatusPill status="confirmed" size="md" />
             </div>
           ))}
         </div>

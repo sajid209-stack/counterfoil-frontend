@@ -14,7 +14,7 @@ export type SectionStatus = "done" | "partial" | "placeholder";
 
 export interface SectionMeta {
   slug: string;
-  /** 1–20, as printed in the nav and above each title. */
+  /** 1–23, as printed in the nav and above each title. */
   number: number;
   title: string;
   group: SectionGroup;
@@ -68,7 +68,9 @@ export const SECTIONS: readonly SectionMeta[] = [
     summary: "The page shell, the toolbar, list to record, the filter bar and settings rows." },
   { slug: "go-patterns", number: 21, title: "POS patterns", group: "Patterns & rules", status: "done",
     summary: "The sell tile, the action bar pair, sheets, scan verdicts and the touch and reading floors. The till, called Counterfoil GO in code." },
-  { slug: "accessibility", number: 22, title: "Accessibility & standards", group: "Patterns & rules", status: "done",
+  { slug: "screen-states", number: 22, title: "Screen states", group: "Patterns & rules", status: "done",
+    summary: "Loading skeletons shaped like their pages, empty pages with one action, error, not found and signed out, and the page-state menu that previews all of them." },
+  { slug: "accessibility", number: 23, title: "Accessibility & standards", group: "Patterns & rules", status: "done",
     summary: "WCAG 2.2 AA as a property of the components, the house exceptions, and the checks that keep it true." },
 ];
 

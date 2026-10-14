@@ -326,6 +326,17 @@ picks a variant.
   optional action. **Toast** — transient, `role=status`, errors `role=alert`.
 - **EmptyState, Skeleton, Pagination** — one each.
 
+## 10a. Screen states
+
+Every OS and POS screen has six faces: live, loading, empty, error, not found and signed out. All six are built from `src/components/screens` and chosen by one registry (`registry.ts`, with the till's routes in `registry.go.ts`).
+
+- **Loading**: `PageSkeleton`, drawn as the page's own shape (dashboard, list, cards, detail, form, calendar, analytics; pos-wall, pos-board, pos-list, pos-form, pos-scan). `role="status"`, `aria-busy`, one hidden "Loading…", blocks `aria-hidden`; the pulse stills under reduced motion.
+- **Empty**: `EmptyScreen`. A drawing, one headline saying what is missing, one line of why, ONE primary action, an optional quiet link. Copy is per page (`screens.empty.<id>.*`).
+- **Error, not found, signed out**: `StatusScreen` (framed or whole page). What happened, what to do, one primary action; an error carries a reference code. `app/global-error.tsx` is self-contained (own copy, no providers).
+- **Preview**: the Page state menu beside the venue or counter picker (and in the phone menu sheet) draws any face in place of the page via `ScreenPreview`. State lives in `lib/screenState`.
+
+Adding a route: one registry entry and four strings (en and bn). Live examples: /design-system/screen-states.
+
 ## 11. Product rules
 
 **OS** — admin and monitoring. Page header (title left, one primary action

@@ -22,9 +22,6 @@
   "nextWeek": "Next week",
   "board": {
     "whatLabel": "What to show",
-    "viewLabel": "Show as",
-    "viewGrid": "Grid",
-    "viewList": "List",
     "shows": "Shows & tours",
     "places": "Places",
     "noPlace": "No place set",
@@ -49,8 +46,6 @@
     "keyClosed": "Can't book",
     "emptyTitle": "Nothing to book here",
     "emptyMessage": "This counter has no fields, lanes, courts or shows to book.",
-    "listEmptyTitle": "No bookings on this day",
-    "listEmptyMessage": "Switch to Grid to sell or hold a free time.",
     "groupAria": "{name}, {count} free",
     "noPlaceShort": "No place set",
     "noPlaceMore": "+{count} more",
@@ -216,5 +211,10 @@
     "takeAndCheckIn": "Take {amount} and check in",
     "applyAndCheckIn": "Apply the discount and check in",
     "takeOnly": "Take {amount} only. They are not here yet."
-  }
+  },
+  "chooseDate": "Choose a date",
+  "daysLabel": "Days",
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "close": "Close"
 }

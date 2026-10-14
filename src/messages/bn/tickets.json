@@ -1,7 +1,7 @@
 {
   "fallbackTitle": "টিকিট",
   "loading": "টিকিট খোলা হচ্ছে…",
-  "notFound": "এই টিকিট খুঁজে পাওয়া যায়নি।",
+  "notFound": "এই টিকিটটি খুঁজে পাচ্ছি না",
   "backToOrder": "অর্ডারে ফিরুন",
   "rowActions": "আরও কাজ",
   "openOrder": "অর্ডার খুলুন",
@@ -158,5 +158,6 @@
       "order": "অর্ডার"
     }
   },
-  "detailsTitle": "টিকিটের বিবরণ"
+  "detailsTitle": "টিকিটের বিবরণ",
+  "backToIssued": "ইস্যু করা অর্ডারে ফিরুন"
 }

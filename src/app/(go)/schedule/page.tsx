@@ -3,8 +3,8 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
-import { Check, ChevronLeft, ChevronRight, LayoutGrid, List, Lock, ShoppingBag, TriangleAlert, X } from "lucide-react";
-import { Button, Checkbox, EmptyState, FormField, MarketBadge, Modal, Notice, ProductThumb, Skeleton, useToast } from "@/components/ui";
+import { Check, Lock, ShoppingBag, TriangleAlert, X } from "lucide-react";
+import { Button, Checkbox, EmptyState, FormField, Modal, Notice, ProductThumb, Skeleton, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClockMin, formatClockRange, formatDay, formatMoney } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
@@ -38,7 +38,6 @@ import {
   type PaymentMethod,
   type Resource,
 } from "@/lib/api";
-import { shiftDay } from "@/lib/dayModel";
 import { appendToLiveSale, setReturnTo } from "../pos/_lib/liveSale";
 import { buildOrderLines } from "@/lib/orderMath";
 import { taxRateFor } from "@/lib/tax";
@@ -50,8 +49,8 @@ import { Board } from "./_components/Board";
 import { BlockSheet, HoldSheet, MoveSheet, RefundSheet, SessionSheet, TakeBalanceSheet, type HoldRequest } from "./_components/Sheets";
 import { pendingRefundFor, refundableFor, refundRequestsForOrder, withdrawRefundRequest, type RefundReason } from "@/lib/api/refundRequests";
 import { ActionBar, BarSummary } from "../_components/ActionBar";
+import { DayStrip } from "./_components/DayStrip";
 
-type View = "grid" | "list";
 type SessionBlock = Extract<Block, { type: "session" }>;
 type SessionPick = {
   column: Column;
@@ -80,13 +79,6 @@ function remember(k: string, v: string) {
   }
 }
 
-/** Monday of the week a day is in — the rest of the app reads a week Monday first. */
-function mondayOf(ymd: string): string {
-  const d = new Date(`${ymd}T12:00:00`);
-  const dow = (d.getDay() + 6) % 7;
-  return shiftDay(ymd, -dow);
-}
-
 /**
  * The counter's schedule: the day as a board of places and hours.
  *
@@ -106,11 +98,10 @@ export default function SchedulePage() {
   const format = useFormatter();
   const toast = useToast();
 
-  /* Where the cashier was — the day, the group, the view — survives a trip to
+  /* Where the cashier was — the day and the group — survives a trip to
      the till and back. Coming back to today's courts when you were on
      Saturday's lanes is how a second sale gets rung up on the wrong day. */
   const [date, setDateState] = useState<string>(() => remembered("date") ?? DEMO_TODAY);
-  const [view, setViewState] = useState<View>(() => (remembered("view") === "list" ? "list" : "grid"));
   const [groupKey, setGroupState] = useState<string | null>(() => remembered("group"));
   /* What is chosen belongs to what is on screen: a different day or group is
      a different question, and a choice nobody can see any more must not be
@@ -122,7 +113,6 @@ export default function SchedulePage() {
   const [lastKey, setLastKey] = useState<string | null>(null);
   const clearPicks = () => { setPicks([]); setChoice(null); setWaiverOk(false); setWaiverMissing(false); setLastKey(null); };
   const setDate = (d: string) => { setDateState(d); remember("date", d); clearPicks(); };
-  const setView = (v: View) => { setViewState(v); remember("view", v); clearPicks(); };
   const setGroupKey = (g: string) => { setGroupState(g); remember("group", g); clearPicks(); };
 
   const [holdOpen, setHoldOpen] = useState(false);
@@ -187,14 +177,13 @@ export default function SchedulePage() {
   );
   const group = groups.find((g) => g.key === groupKey) ?? groups[0] ?? null;
 
-  const week = useMemo(() => {
-    const mon = mondayOf(date);
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = shiftDay(mon, i);
-      return { date: d, load: dayLoad(peekBookings(), d, locationId) };
-    });
+  /* How busy each day is: the dots under it in the strip. Looked up per day, so
+     the strip can run over as many days as it likes. */
+  const loadOf = useMemo(() => {
+    const bookings = peekBookings();
+    return (d: string) => dayLoad(bookings, d, locationId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, locationId, version]);
+  }, [locationId, version]);
 
   // ── what is chosen, and what it becomes ───────────────────────────────
   const selected = useMemo(() => new Set(picks.map((p) => p.block.key)), [picks]);
@@ -580,14 +569,6 @@ export default function SchedulePage() {
     return out.sort((a, b) => a.block.start - b.block.start);
   }, [group]);
 
-  const listItems = useMemo(() => {
-    const out: { column: Column; block: Extract<Block, { type: "booking" | "hold" }> }[] = [];
-    for (const g of groups)
-      for (const c of g.columns)
-        for (const b of g.blocks.get(c.id) ?? []) if (b.type === "booking" || b.type === "hold") out.push({ column: c, block: b });
-    return out.sort((a, b) => a.block.start - b.block.start);
-  }, [groups]);
-
   /* The server cannot see what this browser remembered, so nothing that
      depends on it is drawn until the browser has taken over — otherwise the
      first paint and the hydrated one disagree about the day. */
@@ -604,7 +585,7 @@ export default function SchedulePage() {
      nothing to choose, so it gets no row at all. From 1024px up the tabs sit
      on the week's own row, where there is room, and the board gets the line. */
   const wide = useMediaQuery(LG);
-  const showTabs = groups.length > 1 && view === "grid";
+  const showTabs = groups.length > 1;
   const groupTabs = (frame: string) => (
     <div
       role="tablist"
@@ -635,80 +616,21 @@ export default function SchedulePage() {
   );
 
   return (
-    <main className={cn("mx-auto flex w-full max-w-5xl flex-col gap-comfortable px-gutter pt-comfortable", view === "grid" ? "pb-0" : "pb-section")}>
+    <main className={cn("mx-auto flex w-full max-w-5xl flex-col gap-comfortable px-gutter pt-comfortable", "pb-0")}>
       <h1 className="sr-only">{t("title")}</h1>
 
-      {/* ── the week, with how busy each day is ──
-          One row of controls (which week, back to today, grid or list) over
-          one row of days. Every pixel above the board is an hour the cashier
-          cannot see, so nothing here takes a line of its own. */}
+      {/* ── the days, with how busy each is ──
+          One row of controls (which week, back to today, the calendar) over one
+          strip of days that scrolls sideways. Every pixel above the board is an
+          hour the cashier cannot see, so nothing here takes a line of its own. */}
       <section className="card-surface flex flex-col gap-inline p-tight">
-        <div className="flex items-center gap-inline">
-          <button type="button" onClick={() => setDate(shiftDay(date, -7))} aria-label={t("prevWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-muted-wash">
-            <ChevronLeft size={20} strokeWidth={2} aria-hidden />
-          </button>
-          <p className="min-w-0 truncate text-center text-md font-semibold text-fg">
-            {format.dateTime(dayDate, { month: "long", year: "numeric", ...latn })}
-          </p>
-          <button type="button" onClick={() => setDate(shiftDay(date, 7))} aria-label={t("nextWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-muted-wash">
-            <ChevronRight size={20} strokeWidth={2} aria-hidden />
-          </button>
-          {showTabs && wide ? <div className="min-w-0 flex-1 px-tight">{groupTabs("border border-line bg-subtle")}</div> : <span className="flex-1" />}
-          {!isToday && (
-            <button type="button" onClick={() => setDate(DEMO_TODAY)} className="inline-flex h-11 shrink-0 items-center rounded-full border-2 border-line px-comfortable text-base font-semibold text-fg">
-              {t("today")}
-            </button>
-          )}
-          {/* Grid or list, as two pictures with their names on them for a
-              screen reader: the grid is where selling happens, the list is
-              the day's bookings in time order. */}
-          <div role="radiogroup" aria-label={t("board.viewLabel")} className="inline-flex shrink-0 rounded-full border border-line bg-card">
-            {(["grid", "list"] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                role="radio"
-                aria-checked={view === v}
-                aria-label={t(v === "grid" ? "board.viewGrid" : "board.viewList")}
-                title={t(v === "grid" ? "board.viewGrid" : "board.viewList")}
-                onClick={() => setView(v)}
-                className={cn("inline-flex h-11 w-12 items-center justify-center rounded-full", view === v ? "bg-fg text-surface" : "text-muted")}
-              >
-                {v === "grid" ? <LayoutGrid size={18} aria-hidden /> : <List size={18} aria-hidden />}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="grid grid-cols-7 gap-1">
-          {week.map((d) => {
-            const on = d.date === date;
-            const today = d.date === DEMO_TODAY;
-            const dt = new Date(`${d.date}T12:00:00`);
-            return (
-              <button
-                key={d.date}
-                type="button"
-                onClick={() => setDate(d.date)}
-                aria-pressed={on}
-                aria-label={format.dateTime(dt, { weekday: "long", day: "numeric", month: "long", ...latn })}
-                className={cn(
-                  "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-inner transition-colors duration-quick",
-                  on ? "bg-ember-solid text-on-solid" : today ? "ring-2 ring-inset ring-ember-solid text-fg" : "text-fg hover:bg-muted-wash",
-                )}
-              >
-                <span className={cn("text-sm font-medium", on ? "text-on-solid" : "text-muted")}>
-                  {format.dateTime(dt, { weekday: "narrow" })}
-                </span>
-                <span className="text-lg font-semibold tabular-nums leading-none">{dt.getDate()}</span>
-                <span aria-hidden className="flex h-1.5 gap-0.5">
-                  {Array.from({ length: hydrated ? Math.min(3, d.load) : 0 }, (_, i) => (
-                    <span key={i} className={cn("h-1.5 w-1.5 rounded-full", on ? "bg-on-solid" : "bg-ember")} />
-                  ))}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <DayStrip
+          date={date}
+          today={DEMO_TODAY}
+          load={hydrated ? loadOf : () => 0}
+          onChange={setDate}
+          middle={showTabs && wide ? groupTabs("border border-line bg-subtle") : undefined}
+        />
       </section>
 
       {showTabs && !wide && groupTabs("card-surface")}
@@ -717,7 +639,7 @@ export default function SchedulePage() {
         <Skeleton h="60dvh" className="rounded-card" />
       ) : !group ? (
         <EmptyState title={t("board.emptyTitle")} message={t("board.emptyMessage")} />
-      ) : view === "grid" ? (
+      ) : (
         <>
         <Board
           group={group}
@@ -753,56 +675,12 @@ export default function SchedulePage() {
           onColumn={(c) => { if (c.resource) { setOos(c.resource); setOosReason(c.resource.outOfServiceReason ?? ""); } }}
         />
         </>
-      ) : listItems.length === 0 ? (
-        <EmptyState title={t("board.listEmptyTitle")} message={t("board.listEmptyMessage")} />
-      ) : (
-        <ul className="card-surface divide-y divide-line overflow-hidden">
-          {listItems.map(({ column, block }) => {
-            const isHold = block.type === "hold";
-            const who = isHold ? block.hold.heldFor : (block.guest ?? t("board.walkIn"));
-            const what = isHold ? block.hold.productName : (block.product?.name ?? "");
-            const place = column.kind === "unassigned" ? t("board.noPlace") : column.name;
-            return (
-              <li key={block.key}>
-                <button
-                  type="button"
-                  onClick={() => setBlockPick({ column, block })}
-                  className="flex min-h-16 w-full items-center gap-comfortable px-card py-tight text-left hover:bg-muted-wash"
-                >
-                  <span className="w-[4.75rem] shrink-0 text-md font-semibold tabular-nums text-fg">{formatClockMin(block.start)}</span>
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "h-10 w-1 shrink-0 rounded-full",
-                      isHold
-                        ? "bg-strong"
-                        : block.type === "booking" && block.arrived
-                          ? "bg-success"
-                          : block.type === "booking" && block.source
-                            ? "bg-market"
-                            : "bg-ember-solid",
-                    )}
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1 text-md font-semibold text-fg">
-                      {isHold && <Lock size={14} className="shrink-0 text-muted" aria-hidden />}
-                      {block.type === "booking" && block.source && <MarketBadge id={block.source.marketplaceId} size="go" />}
-                      <span className="truncate">{who}</span>
-                      {block.type === "booking" && block.source && <span className="sr-only">, {t("board.bookedOn", { name: block.source.marketplaceName })}</span>}
-                    </span>
-                    <span className="block truncate text-base text-muted">{[what, place].filter(Boolean).join(" · ")}</span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
       )}
 
       {/* ── what is chosen: Hold on the left, Add to sale on the right ──
           Fixed above the tab bar, and the board ends above it, so no hour is
           ever under a button. Only there while something is chosen. */}
-      {picks.length > 0 && view === "grid" && (
+      {picks.length > 0 && (
         <ActionBar
           id="sched-bar"
           label={t("bar.label")}
