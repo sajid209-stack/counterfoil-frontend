@@ -211,9 +211,16 @@ const baseProducts: Product[] = [
 ];
 
 /* ── Photos ────────────────────────────────────────────────────────────────
-   Files in public/demo/doers/. Only names listed here are used, so a photo not
-   yet added never shows as a broken image — its page draws its look's art. */
-const PHOTOS_PRESENT: string[] = [];
+   Files in public/demo/doers/, 1600px JPEGs. A name is only used once it is in
+   PHOTOS_PRESENT, so a photo not yet added never shows as a broken image. */
+const PHOTOS_PRESENT: string[] = [
+  "matcha-1.jpg", "matcha-2.jpg", "matcha-3.jpg",
+  "sushi-1.jpg", "sushi-2.jpg", "sushi-3.jpg",
+  "tea-1.jpg", "tea-2.jpg",
+  "social-1.jpg", "social-2.jpg",
+  "pass-1.jpg",
+  "private-1.jpg", "private-2.jpg",
+];
 const PHOTOS: Record<string, { file: string; alt: string }[]> = {
   prd_doers_matcha: [
     { file: "matcha-1.jpg", alt: "Whisking matcha in a ceramic bowl" },
@@ -267,10 +274,10 @@ const PAGES: Record<string, { slug: string; page: ProductPage }> = {
         { id: "h3", label: "Twelve seats", description: "Small enough that the host watches every whisk." },
       ],
       lineup: [
-        { id: "l1", kind: "session", at: "0:00", name: "Sift and measure", role: "Why sifting is half the bowl" },
-        { id: "l2", kind: "session", at: "0:20", name: "The W-whisk", role: "Foam in thirty seconds, once you have it" },
-        { id: "l3", kind: "session", at: "0:45", name: "Thin tea and thick tea", role: "Usucha and koicha, side by side" },
-        { id: "l4", kind: "session", at: "1:10", name: "Taste and talk", role: "With something sweet from the pantry" },
+        { id: "l1", kind: "session", at: "First 20 min", name: "Sift and measure", role: "Why sifting is half the bowl" },
+        { id: "l2", kind: "session", at: "20 min in", name: "The W-whisk", role: "Foam in thirty seconds, once you have it" },
+        { id: "l3", kind: "session", at: "45 min in", name: "Thin tea and thick tea", role: "Usucha and koicha, side by side" },
+        { id: "l4", kind: "session", at: "Last 20 min", name: "Taste and talk", role: "With something sweet from the pantry" },
       ],
       faq: [
         { id: "f1", q: "Do I need any experience?", a: "None. Most people have never held a bamboo whisk before." },
