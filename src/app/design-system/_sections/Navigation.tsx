@@ -212,7 +212,7 @@ export function NavigationSection() {
           <Rail />
         </Preview>
         <Callout>
-          On a phone the rail becomes a floating menu button that opens the same list as a sheet, and the till&rsquo;s tab bar draws its active tab the same way. Press the rows above to see the surface move and the parent stay bold.
+          On a phone the rail becomes a floating menu button that opens the same list as a sheet. The till&rsquo;s tab bar is docked and 64px tall: a 24px icon in a pill that marks the current tab, with a 13px label under it. Press the rows above to see the surface move and the parent stay bold.
         </Callout>
       </DocSection>
     </>

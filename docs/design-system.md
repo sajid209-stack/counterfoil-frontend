@@ -169,7 +169,7 @@ never for money, counts, times or dates. Figures are tabular everywhere (set on
 
 | Token | Size / line | Use |
 |---|---|---|
-| `text-2xs` | 11 / 16 | Go tab-bar labels only |
+| `text-2xs` | 11 / 16 | The classic till's tab-bar labels only |
 | `text-xs` | 12 / 18 | captions, metadata, badges, axis labels, field help |
 | `text-sm` | 13 / 20 | supporting text, table headers, dense cells, Go floor |
 | `text-base` | 14 / 20 | **default**: body, table cells, buttons, inputs |
@@ -295,6 +295,9 @@ picks a variant.
   a neutral `secondary-hover` fill, semibold `fg` label and `NAV_SELECTED_ICON`
   (`text-fg`), with no ring and no brand colour (Shopify's quiet recipe). Other rows are `NAV_IDLE` (muted,
   `muted-wash` hover).
+  *The till's tab bar* is docked, 64px tall and full width, with a hairline on top. Each tab is a 24px
+  icon inside a 56 × 32 pill (`NAV_SELECTED_FILL` when current) over a 13px label (`NAV_SELECTED_TEXT`
+  when current), 4px apart — Material 3's proportions. The landscape rail uses the same tab.
   *Nested groups:* a parent with children shows them indented, label only, and only
   while you are inside that group. The current page carries the selected surface;
   its parent goes bold with no fill (`NAV_PARENT_OF_SELECTED`), so exactly one row
@@ -362,7 +365,7 @@ These may use raw values; nothing else may.
 - Chart palettes (`--chart-*`, `--heat-*`) and operator-chosen category colours.
 - Fluid money figures that must fit their row (`clamp()` on the till).
 - The seat plan's 9px seat labels (each seat carries its full name).
-- The Go tab bar's 11px labels (five tabs across a 390px phone).
+- The classic till's 11px tab labels (a deliberate restoration of the older design; the till's own tab bar uses 13px).
 - Print pages' physical measurements.
 - Literal colours that must stay literal: the PWA manifest and `theme-color`
   meta, and the QR code (pure black on white to scan).

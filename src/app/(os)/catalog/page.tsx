@@ -46,15 +46,13 @@ import {
 import { PageAction, PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { MD, XL, useMediaQuery } from "@/lib/useMedia";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 import {
   archiveEvent,
   archiveProduct,
   createProduct,
   deleteEvent,
   duplicateEvent,
-  dayCountOf,
-  runsOverDays,
   listProducts,
   listResources,
   listStaff,
@@ -64,12 +62,11 @@ import {
   type Product,
 } from "@/lib/api";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
-import { formatClockOf, formatClockRange, formatDay, formatPriceShort } from "@/lib/format";
+import { formatDay } from "@/lib/format";
 import { DEMO_TODAY, demoNow } from "@/lib/schedule";
 import { slugOf } from "@/lib/api/products";
 import type { Blocker, SellingWarning } from "@/lib/sellable";
 import {
-  bookingWayOf,
   eventFill,
   needsAttention,
   productCopy,
@@ -123,13 +120,9 @@ function Catalog() {
   const subtitle = useBehaviourSubtitle();
   const tp = useTranslations("products");
   const te = useTranslations("events");
-  const tw = useTranslations("catalog.ways");
   const router = useRouter();
   const toast = useToast();
   const compact = !useMediaQuery(MD, true);
-  /* Below 1280 the When column would squeeze the name to a few letters a line,
-     so it steps out and the name's second line carries it instead. */
-  const xl = useMediaQuery(XL);
   const now = useMemo(() => demoNow(), []);
 
   const origin = useOrigin();
@@ -193,7 +186,6 @@ function Catalog() {
     const rankOf = (i: CatalogItem) => (needsAttention(i) ? -1 : rank[i.state]);
     return [...list].sort((a, b) => {
       if (sort.key === "name") return dir * a.name.localeCompare(b.name);
-      if (sort.key === "price") return dir * ((a.fromPrice ?? Infinity) - (b.fromPrice ?? Infinity));
       if (sort.key === "updated") return dir * b.updatedAt.localeCompare(a.updatedAt);
       /* The default: what needs doing, then what is on sale — upcoming events
          by date ahead of bookings, which have no date to sort by — then what
@@ -409,31 +401,6 @@ function Catalog() {
         : "blockerNoChannel",
     );
   const warningLabel = (w: SellingWarning) => t(`warning.${w.kind}`, { date: formatDay(w.date) });
-  const dateOf = (iso: string) =>
-    new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
-  const timeOf = (iso: string) => formatClockOf(iso);
-
-  /** When a booking can be had, in words, over two lines: HOW people book it,
-   *  then the days and hours (or the date, for a booking on a date). Every
-   *  booking has one, whatever its schedule — there is no type to fall back on. */
-  const whenOf = (i: CatalogItem): [string, string | null] => {
-    if (i.event) {
-      return [dateOf(i.event.startsAt), runsOverDays(i.event) ? t("col.runsDays", { count: dayCountOf(i.event) }) : timeOf(i.event.startsAt)];
-    }
-    const p = i.product!;
-    const way = bookingWayOf(p.bookingType);
-    const head = tw(`${way}.title`);
-    const s = p.schedule;
-    if (s?.startTime && s.endTime && (way === "settimes" || way === "byhour" || way === "anyday")) {
-      const days = s.openDays?.length === 7 || !s.openDays ? t("everyDay") : [...s.openDays].sort().map((d) => t(`day.short.${d}`)).join(" ");
-      const limit = p.bookingType === "BT-06" && s.dailyCapacity ? t("when.perDay", { count: s.dailyCapacity }) : null;
-      return [head, [days, formatClockRange(s.startTime, s.endTime), limit].filter(Boolean).join(" · ")];
-    }
-    if (p.bookingType === "BT-02" && p.validityDays) return [head, t("when.validDays", { count: p.validityDays })];
-    if (way === "course" && p.courseDates?.length) return [head, [t("sessions", { count: p.courseDates.length }), formatDay([...p.courseDates].sort()[0])].join(" · ")];
-    if (way === "pack" && p.credits?.count) return [head, t("when.visits", { count: p.credits.count })];
-    return [head, null];
-  };
 
   /** One thumbnail for everything: its first photo (an event's cover, when it has
    *  no photo), else the glyph for how it is booked. */
@@ -464,13 +431,7 @@ function Catalog() {
       );
     }
     const own = i.product ? subtitle(i.product, { resources, team }) : i.event!.venueName;
-    /* Below 1280 the When column is not drawn, so the second line carries it. */
-    const when = xl ? "" : whenOf(i).filter(Boolean).join(" · ");
-    return (
-      <span className="block truncate text-xs text-muted">
-        {[when, own].filter(Boolean).join(" · ")}
-      </span>
-    );
+    return <span className="block truncate text-xs text-muted">{own}</span>;
   };
 
   const StatePill = ({ i }: { i: CatalogItem }) => (
@@ -478,9 +439,6 @@ function Catalog() {
       {t(`state.${i.state}`)}
     </StatusPill>
   );
-
-  const priceText = (i: CatalogItem) =>
-    i.fromPrice === null ? t(i.kind === "event" ? "soldOut" : "noPrice") : i.fromPrice === 0 ? t("free") : formatPriceShort(i.fromPrice);
 
   /** The three marks of "where it's sold", in a fixed order so the column lines
    *  up: storefront, link, counter. An absent one is empty space of the same
@@ -541,33 +499,8 @@ function Catalog() {
         </span>
       ),
     },
-    {
-      key: "when",
-      header: t("col.when"),
-      width: "14rem",
-      render: (i) => {
-        const [first, second] = whenOf(i);
-        return (
-          <span className="flex min-w-0 flex-col text-sm">
-            <span className="line-clamp-2 break-words">{first}</span>
-            {second && <span className="truncate text-xs text-muted" title={second}>{second}</span>}
-          </span>
-        );
-      },
-    },
-    {
-      key: "price",
-      header: t("col.from"),
-      align: "right",
-      mono: false,
-      sortable: true,
-      width: "6rem",
-      render: (i) => (
-        <span className={cn("whitespace-nowrap text-sm tabular-nums", i.fromPrice === null && "text-muted")}>{priceText(i)}</span>
-      ),
-    },
-    { key: "where", header: t("col.where"), width: "6.5rem", render: (i) => <Marks w={i.where} /> },
-    { key: "state", header: t("col.state"), width: "7.5rem", render: (i) => <StatePill i={i} /> },
+    { key: "where", header: t("col.where"), width: "8rem", render: (i) => <Marks w={i.where} /> },
+    { key: "state", header: t("col.state"), width: "9rem", render: (i) => <StatePill i={i} /> },
     {
       key: "actions",
       header: <span className="sr-only">{t("col.actions")}</span>,
@@ -580,7 +513,7 @@ function Catalog() {
     },
   ];
 
-  const columns = xl ? allColumns : allColumns.filter((c) => c.key !== "when");
+  const columns = allColumns;
 
   const filtered = !!q || states.length > 0 || wheres.length > 0;
   const empty = !loading && items.filter((i) => i.state !== "archived").length === 0 && !wantArchived;
@@ -633,7 +566,7 @@ function Catalog() {
             loading={loading}
             layout="fixed"
             height="page"
-            minWidth={xl ? "58rem" : "44rem"}
+            minWidth="40rem"
             isSelected={(i) => selected.has(i.key)}
             sort={sort.key === "smart" ? undefined : sort}
             onSortChange={(key) => {
@@ -644,7 +577,7 @@ function Catalog() {
             cardVariant="list"
             renderCard={(i) => (
               /* Two lines, the way a phone reads a long index: who it is and
-                 what it costs, then its state and when it runs, in words. A warning
+                 its status, then what it is and where it is sold. A warning
                  replaces the meta line, because that is the one thing on the
                  row somebody has to act on. */
               <span className="flex items-center gap-comfortable">
@@ -655,19 +588,12 @@ function Catalog() {
                 )}
                 <Thumb i={i} />
                 <span className="flex min-w-0 flex-1 flex-col gap-inline">
-                  <span className="flex items-baseline gap-tight">
+                  <span className="flex items-center gap-tight">
                     <span className="min-w-0 flex-1 truncate text-base font-medium">{i.name}</span>
-                    <span className={cn("shrink-0 text-sm tabular-nums", i.fromPrice === null && "text-muted")}>{priceText(i)}</span>
+                    <StatePill i={i} />
                   </span>
                   <span className="flex min-w-0 items-center gap-tight text-sm text-muted">
-                    {/* Only the exception: nine rows in ten are on sale, and a
-                        pill on every one is what makes a calm list noisy. */}
-                    {i.state !== "onSale" && <StatePill i={i} />}
-                    {i.blockers.length > 0 || i.warnings.length > 0 ? (
-                      <span className="min-w-0 flex-1"><Sub i={i} /></span>
-                    ) : (
-                      <span className="min-w-0 flex-1 truncate">{whenOf(i).filter(Boolean).join(" · ")}</span>
-                    )}
+                    <span className="min-w-0 flex-1"><Sub i={i} /></span>
                     <Marks w={i.where} size={14} />
                   </span>
                 </span>
@@ -770,7 +696,6 @@ function Catalog() {
                         options={[
                           { value: "smart", label: t("sort.smart") },
                           { value: "name", label: t("sort.name") },
-                          { value: "price", label: t("sort.price") },
                           { value: "updated", label: t("sort.updated") },
                         ]}
                       />

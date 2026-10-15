@@ -100,7 +100,7 @@ export function AccessibilitySection() {
         <P>What is left is short, and each has a reason:</P>
         <ul className="flex max-w-prose list-disc flex-col gap-tight pl-major text-base text-fg marker:text-muted">
           <li><strong className="font-semibold">White on {ACCENT_HEX} in light and dark (3.50:1)</strong>: UI controls only, as above.</li>
-          <li><strong className="font-semibold">The 11px POS tab labels</strong> (<Code>text-2xs</Code>): five labelled tabs do not fit across a 390px phone at 14px, and every tab also carries an icon.</li>
+          <li><strong className="font-semibold">The classic till's 11px tab labels</strong> (<Code>text-2xs</Code>): a deliberate restoration of the older design. The till&rsquo;s own tab bar uses 13px labels.</li>
           <li><strong className="font-semibold">The 9px seat labels</strong> on a seat plan: each seat carries its full name as an accessible name and a title.</li>
           <li><strong className="font-semibold">The scopes below</strong> — the deck, event templates, the storefront accent, print pages, charts and fluid till figures — which use raw values for their own reasons.</li>
         </ul>

@@ -6,11 +6,9 @@
   "sessions": "{count, plural, one {#টি তারিখ} other {#টি তারিখ}}",
   "col": {
     "item": "নাম",
-    "when": "কখন",
     "from": "দাম শুরু",
     "state": "অবস্থা",
     "actions": "কাজ",
-    "runsDays": "{count} দিন চলবে",
     "where": "কোথায় বিক্রি হয়"
   },
   "noPrice": "দাম নেই",
@@ -18,10 +16,10 @@
   "free": "ফ্রি",
   "soldOf": "{cap}টির মধ্যে {sold}",
   "state": {
-    "onSale": "বিক্রি চলছে",
+    "onSale": "প্রকাশিত",
     "needsSetup": "তৈরি হয়নি",
     "soldOut": "সব বিক্রি হয়ে গেছে",
-    "offSale": "বিক্রি বন্ধ",
+    "offSale": "প্রকাশিত নয়",
     "ended": "শেষ",
     "archived": "সরিয়ে রাখা"
   },
@@ -65,7 +63,6 @@
   "sort": {
     "smart": "যা আগে দেখা দরকার",
     "name": "নাম",
-    "price": "দাম",
     "updated": "সম্প্রতি বদলানো"
   },
   "stateFilter": "অবস্থা দিয়ে বাছুন",
@@ -1102,11 +1099,6 @@
     "counter": "কাউন্টার",
     "none": "অনলাইনে নয়",
     "nowhere": "কোথাও বিক্রি হয় না"
-  },
-  "when": {
-    "perDay": "দিনে সর্বোচ্চ {count}",
-    "validDays": "{count} দিন চলবে",
-    "visits": "{count}টি ভিজিট"
   },
   "ways": {
     "anyday": {

@@ -419,12 +419,12 @@ export default function SellPage() {
      On a wide screen the two columns have to scroll independently, or reading
      the sale means scrolling past the catalogue. The Go shell hands its
      children no height to resolve against, so the height is stated here:
-     the viewport less the 64px header, less the 96px the shell reserves for
+     the viewport less the 64px header, less the 88px the shell reserves for
      the bottom tab bar — which a tablet in landscape does not have, because
      there the nav is the left rail. `dvh` rather than `vh` so a phone browser
      collapsing its address bar does not leave the footer stranded. */
   return (
-    <div className="grid grid-cols-1 gap-comfortable p-comfortable lg:h-[calc(100dvh-160px)] lg:grid-cols-[minmax(0,1fr)_30rem] lg:overflow-hidden rail:h-[calc(100dvh-64px)]">
+    <div className="grid grid-cols-1 gap-comfortable p-comfortable lg:h-[calc(100dvh-152px)] lg:grid-cols-[minmax(0,1fr)_30rem] lg:overflow-hidden rail:h-[calc(100dvh-64px)]">
       <h1 className="sr-only">{t("srTitle")}</h1>
 
       {/* The wall, as a column of its own on a tablet.
@@ -769,13 +769,11 @@ export default function SellPage() {
         {/* The one thing that never scrolls away: what this costs, and the
             next decision. On a phone it clears the Go tab bar. */}
         <div
-          /* 82px, matching the v1 till exactly rather than being picked by eye.
-             The Go tab bar is a floating pill inset 12px from the bottom and
-             64px tall, so it owns the bottom 76px; at 70px this bar's lower
-             edge sat 6px INSIDE it and was clipped. Both tills' bottom
-             furniture now rides at the same height, which is what a design
-             comparison needs. */
-          className="fixed inset-x-comfortable bottom-[calc(82px+env(safe-area-inset-bottom))] z-30 lg:static lg:mt-comfortable"
+          /* 72px, matching the v1 till exactly rather than being picked by
+             eye: the Go tab bar is docked and 64px tall, so this bar rides 8px
+             above it. Both tills' bottom furniture rides at the same height,
+             which is what a design comparison needs. */
+          className="fixed inset-x-comfortable bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 lg:static lg:mt-comfortable"
         >
           <div className="flex items-center gap-comfortable rounded-full bg-inverse px-section py-tight shadow-float lg:rounded-card lg:px-comfortable">
             {/* The bar states the figure ONCE.

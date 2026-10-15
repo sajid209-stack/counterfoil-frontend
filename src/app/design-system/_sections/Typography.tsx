@@ -5,7 +5,7 @@ import { Preview } from "../_components/Preview";
 import { TokenTable, type TokenRow } from "../_components/TokenTable";
 
 const SCALE: TokenRow[] = [
-  { name: "--text-2xs", utility: "text-2xs", note: "POS tab-bar labels only." },
+  { name: "--text-2xs", utility: "text-2xs", note: "The classic till's tab-bar labels only." },
   { name: "--text-xs", utility: "text-xs", note: "Captions, metadata, badges, axis labels, field help." },
   { name: "--text-sm", utility: "text-sm", note: "Supporting text, table headers, dense cells. The POS reading floor." },
   { name: "--text-base", utility: "text-base", note: "The default: body, table cells, buttons, inputs." },

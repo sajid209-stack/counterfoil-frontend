@@ -31,9 +31,9 @@ export default function TillSettingsPage() {
   return (
     <div
       className="mx-auto flex w-full max-w-2xl flex-col gap-section p-section"
-      /* The Go tab bar is a floating pill inset 12px and 64px tall, so it owns
-         the bottom 76px. Without this the last card sits under it. */
-      style={{ paddingBottom: "calc(96px + env(safe-area-inset-bottom))" }}
+      /* The Go tab bar is docked and 64px tall, so it owns
+         the bottom 64px. Without this the last card sits under it. */
+      style={{ paddingBottom: "calc(88px + env(safe-area-inset-bottom))" }}
     >
       <header>
         <h1 className="text-xl font-semibold tracking-title">{t("tillSettings.title")}</h1>

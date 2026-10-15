@@ -6,11 +6,9 @@
   "sessions": "{count, plural, one {# date} other {# dates}}",
   "col": {
     "item": "Name",
-    "when": "When",
     "from": "Price from",
     "state": "Status",
     "actions": "Actions",
-    "runsDays": "Runs {count} days",
     "where": "Where it's sold"
   },
   "noPrice": "No price",
@@ -18,10 +16,10 @@
   "free": "Free",
   "soldOf": "{sold} of {cap}",
   "state": {
-    "onSale": "On sale",
+    "onSale": "Published",
     "needsSetup": "Not ready",
     "soldOut": "Sold out",
-    "offSale": "Not on sale",
+    "offSale": "Not published",
     "ended": "Ended",
     "archived": "Archived"
   },
@@ -65,7 +63,6 @@
   "sort": {
     "smart": "What needs you first",
     "name": "Name",
-    "price": "Price",
     "updated": "Recently changed"
   },
   "stateFilter": "Filter by status",
@@ -1102,11 +1099,6 @@
     "counter": "Counter",
     "none": "Not online",
     "nowhere": "Not sold anywhere"
-  },
-  "when": {
-    "perDay": "Up to {count} a day",
-    "validDays": "Good for {count, plural, one {# day} other {# days}}",
-    "visits": "{count, plural, one {# visit} other {# visits}}"
   },
   "ways": {
     "anyday": {

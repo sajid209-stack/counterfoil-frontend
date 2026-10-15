@@ -38,18 +38,24 @@ import { liveSaleCount, onLiveSaleChange } from "../pos/_lib/liveSale";
 import { applyTillText, usePrefs } from "@/lib/prefs";
 
 /**
- * How much of the bottom of the screen the floating tab bar owns: it sits 12px
- * off the edge and is 62px tall, plus whatever the device reserves for its
+ * How much of the bottom of the screen the tab bar owns: a docked bar, 64px
+ * tall including its top hairline, plus whatever the device reserves for its
  * home indicator.
  *
+ * Material 3 draws a bottom navigation bar at 80dp and iOS a tab bar at 49pt;
+ * 64 is the till's middle — a 24px icon in a 32px indicator, a 13px label, and
+ * a 64px-tall target that clears the 48px touch floor with room for a thumb.
+ * It is full width and flush with the edge, like both of them, rather than a
+ * floating pill: a floating bar leaves a gap of page on every side that
+ * content shows through, and needs a scrim to hide it.
+ *
  * Every piece of furniture that has to clear the bar measures from here — the
- * ground scrim, the floating cart button — so they cannot drift apart from it
- * or from each other. The content column's own padding is this plus 22px of
- * breathing room, which is the 96px it has always reserved.
+ * floating cart button, the action bars — so they cannot drift apart from it
+ * or from each other. The content column's own padding is this plus 24px.
  */
-const BAR_CLEAR = "12px + 62px + env(safe-area-inset-bottom)";
+const BAR_CLEAR = "64px + env(safe-area-inset-bottom)";
 import { cn } from "@/lib/cn";
-import { NAV_IDLE, NAV_SELECTED, NAV_SELECTED_ICON } from "@/components/ui/navStyles";
+import { NAV_SELECTED_FILL, NAV_SELECTED_ICON, NAV_SELECTED_TEXT } from "@/components/ui/navStyles";
 
 /** Tailwind's sm: where the header has room for the page-state picker. */
 const SM = "(min-width: 40rem)";
@@ -168,6 +174,24 @@ export function GoShell({ children }: { children: React.ReactNode }) {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
+  /* One tab, in one anatomy, for the bottom bar and the landscape rail:
+       a 24px icon inside a 56 x 32 pill — the pill is the "you are here" —
+       with a 13px label under it, 4px apart. Material 3's proportions, which
+       are the ones every phone user already reads; the pill sits round the
+       ICON only, because a fill round the whole 64px target is bigger than
+       the thing it points at. The whole cell is the target. */
+  const tabCell = (active: boolean, rail: boolean) =>
+    cn(
+      "group flex min-w-0 flex-1 flex-col items-center justify-center gap-inline transition-colors duration-quick",
+      rail ? "h-16 flex-none" : "h-full",
+      active ? NAV_SELECTED_TEXT : "font-medium text-muted hover:text-fg",
+    );
+  const tabPill = (active: boolean) =>
+    cn(
+      "flex h-8 w-14 items-center justify-center rounded-full transition-colors duration-quick",
+      active ? NAV_SELECTED_FILL : "group-hover:bg-muted-wash group-active:bg-muted-wash",
+    );
+
   const tabButton = (tab: (typeof TABS)[number], rail: boolean) => {
     const active = isActive(tab.href);
     const Icon = tab.icon;
@@ -177,33 +201,22 @@ export function GoShell({ children }: { children: React.ReactNode }) {
         href={tab.href}
         aria-current={active ? "page" : undefined}
         onClick={() => { if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
-        className={cn(
-          "flex min-w-12 flex-1 flex-col items-center justify-center gap-inline rounded-control transition-colors duration-quick",
-          rail ? "h-[64px] flex-none" : "h-[54px]",
-          /* The same "you are here" as every other menu (navStyles): the wash
-              WITH its edge, a semibold label and an ember icon. The wash alone
-              is about 1.03:1 against the bar, so the ring and the weight carry
-              it. The heavier icon stroke is a fourth way, kept for the tab bar. */
-          active ? NAV_SELECTED : `font-medium active:bg-muted-wash ${NAV_IDLE}`,
-        )}
+        className={tabCell(active, rail)}
       >
-        <Icon size={22} strokeWidth={active ? 2.25 : 1.6} className={active ? NAV_SELECTED_ICON : undefined} />
-        <span className="max-w-full truncate text-2xs">{t(tab.key)}</span>
+        <span className={tabPill(active)}>
+          <Icon size={24} strokeWidth={active ? 2.25 : 1.75} className={active ? NAV_SELECTED_ICON : undefined} />
+        </span>
+        <span className="max-w-full truncate text-sm leading-tight">{t(tab.key)}</span>
       </Link>
     );
   };
 
   const moreButton = (rail: boolean) => (
-    <button
-      type="button"
-      onClick={() => setMoreOpen(true)}
-      className={cn(
-        "flex min-w-12 flex-1 flex-col items-center justify-center gap-inline rounded-control text-muted transition-colors duration-quick active:bg-muted-wash",
-        rail ? "h-[64px] flex-none" : "h-[54px]",
-      )}
-    >
-      <Ellipsis size={22} strokeWidth={1.6} />
-      <span className="max-w-full truncate text-2xs font-medium">{t("more")}</span>
+    <button type="button" onClick={() => setMoreOpen(true)} className={tabCell(false, rail)}>
+      <span className={tabPill(false)}>
+        <Ellipsis size={24} strokeWidth={1.75} />
+      </span>
+      <span className="max-w-full truncate text-sm leading-tight">{t("more")}</span>
     </button>
   );
 
@@ -244,56 +257,33 @@ export function GoShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-0 flex-1">
         {/* Tablet-landscape left rail (88px, icon over label) */}
         {!bare && (
-          <nav aria-label={tp("shell.menu")} className="sticky top-0 hidden h-[calc(100dvh-64px)] w-[88px] shrink-0 flex-col gap-inline p-tight rail:flex">
+          <nav aria-label={tp("shell.menu")} className="sticky top-0 hidden h-[calc(100dvh-64px)] w-[88px] shrink-0 flex-col gap-tight p-tight rail:flex">
             {tabs.map((t) => tabButton(t, true))}
             {moreButton(true)}
           </nav>
         )}
 
         {/* Content clears the bottom bar (+ home indicator) except in rail mode */}
-        {/* BAR_CLEAR + 22px of breathing room. Kept as a class so `rail:pb-0`
+        {/* BAR_CLEAR + 24px of breathing room. Kept as a class so `rail:pb-0`
             can still reset it — an inline style would beat the variant. */}
-        <div className={cn("min-w-0 flex-1", bare ? "pb-section" : "pb-[calc(96px+env(safe-area-inset-bottom))] rail:pb-0")}>{face ?? children}</div>
+        <div className={cn("min-w-0 flex-1", bare ? "pb-section" : "pb-[calc(88px+env(safe-area-inset-bottom))] rail:pb-0")}>{face ?? children}</div>
       </div>
 
-      {/* Bottom tab bar — phone + tablet portrait */}
-      {/* Content passes BEHIND a floating bar, and the 12px of ground on
-          every side of it turns that into a sliced-looking card. A gradient of
-          the page colour under the bar lets the list dissolve into the page
-          instead. Decorative and inert, so it is out of the a11y tree and
-          never eats a tap.
-
-          It used to be a flat 200px whose opaque run ended at 140. The bar's
-          top edge is only 74px from the bottom, so the veil ERASED 66px of
-          content that was nowhere near it and washed out 60px more above
-          that — 126px, 15% of an 844px phone, on every Go screen. That is
-          what "the rows below look faded" was.
-
-          The stops are written in the bar's own units now: opaque exactly as
-          far as the bar reaches, then a 28px fade. */}
-      {!bare && (<>
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-20 rail:hidden"
-        style={{
-          height: `calc(${BAR_CLEAR} + 28px)`,
-          background: `linear-gradient(to top, var(--color-surface) 0, var(--color-surface) calc(${BAR_CLEAR}), transparent calc(${BAR_CLEAR} + 28px))`,
-        }}
-      />
-
-      {/* A floating pill inset from the screen edges, not a full-bleed strip.
-          It clears the home indicator on its own, and the content column above
-          reserves its height (86px) so the bar never sits over a row — a fixed
-          bar that overlaps content is the standing sticky-nav failure. */}
-      <nav
-        aria-label={tp("shell.menu")}
-        className="fixed inset-x-tight z-40 flex gap-inline rounded-full p-inline go-raised sm:inset-x-comfortable rail:hidden"
-        style={{ bottom: "calc(12px + env(safe-area-inset-bottom))" }}
-      >
-        {tabs.map((t) => tabButton(t, false))}
-        {moreButton(false)}
-      </nav>
-      </>)}
+      {/* Bottom tab bar — phone + tablet portrait. Docked: full width, flush
+          with the bottom edge, a hairline on top, and the device's home-indicator
+          inset inside it. Content scrolls under nothing — the bar is opaque — so
+          there is no scrim and no gap of page showing around it. The content
+          column above reserves its height, so the bar never sits over a row. */}
+      {!bare && (
+        <nav
+          aria-label={tp("shell.menu")}
+          className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-card pb-[env(safe-area-inset-bottom)] rail:hidden"
+          style={{ height: `calc(${BAR_CLEAR})` }}
+        >
+          {tabs.map((t) => tabButton(t, false))}
+          {moreButton(false)}
+        </nav>
+      )}
 
       {/* A sale in progress is reachable from anywhere.
           `PosScreen` is mounted only on /pos and /pos/cart, so a cashier who

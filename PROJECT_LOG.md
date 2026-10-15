@@ -17670,3 +17670,81 @@ differently one studio's product pages can be designed.
 Verified: all six pages and the storefront at 1440 with no console errors or
 sideways scroll; the default seed and other demos untouched; no hydration
 errors on dashboard, catalog, till and schedule as Doers; build clean.
+## The catalog list drops two columns, and the till gets a standard tab bar (2026-10-15)
+
+Owner, with two screenshots (the catalog list with When and Price from, Status boxed; the till's
+floating tab bar): *"When, Price from — needs to be removed and Status will be Published instead
+of On Sale"* and *"in POS the nav bar size is so inappropriate … not standard proportion of icon
+and text and button size … properly research UI and UX about nav bar, build a standard nav bar
+properly."*
+
+### 1. The catalog list
+
+- **The When and Price from columns are gone**, on the table and on the phone rows. The list is
+  Name · Where it's sold · Status and the row menu. A phone row is two lines: the name and its
+  status, then what it is and where it is sold. A warning still replaces the second line.
+- **Status says Published** where it said On sale, and **Not published** where it said Not on
+  sale. The label is one message, so it follows into the Filters chips and the record page's
+  header. The actions keep their words ("Put on sale", "Stop selling"), because the owner named
+  the status only.
+- The price still lives where it is decided: the record's Overview ("Price from"), the
+  storefront and the booking's own page. "Sort by price" went with the column, since a list
+  should not sort on a figure it does not show.
+- **Removed**, with their messages: `whenOf` and its helpers, `priceText`, the `xl` media query
+  that stepped the When column out below 1280px, and the keys `col.when`, `col.runsDays`,
+  `sort.price` and the three `when.*` strings. `col.from` stays: the Overview reads it.
+
+### 2. The till's tab bar
+
+The bar was a floating pill: inset 12px, 62px tall, each tab a 54px stadium with a 22px icon over an
+11px label, the whole tab filled when current, and a 28px scrim of page colour under it to hide the
+gap. The icon was twice the height of its label's cap, the label was below the till's own 13px
+floor, and the selected shape was larger than the thing it pointed at.
+
+Researched against Material 3's navigation bar (80dp, a 24dp icon in a 64 × 32 pill, a 12sp label
+4dp under it) and iOS's tab bar (49pt, docked, no pill). Both are **docked, full width, with
+the icon and label stacked, and the "you are here" on the icon**. The till's version:
+
+| | before | after |
+|---|---|---|
+| form | floating pill, 12px inset | docked, full width, hairline on top |
+| height | 62px + 12px gap | 64px including the hairline |
+| icon | 22px | 24px |
+| label | 11px | 13px (the till's reading floor) |
+| selected | a fill round the whole tab | a 56 × 32 pill round the icon, label in full ink at 600 |
+| scrim under it | 102px gradient | none — the bar is opaque |
+
+- **One anatomy** for the bottom bar and the landscape rail (`tabCell` / `tabPill` in
+  `GoShell`), so a cashier meets the same tab on a phone and on a tablet. The pill uses the
+  existing neutral selected recipe, now exported in two halves (`NAV_SELECTED_FILL`,
+  `NAV_SELECTED_TEXT`) so every menu still has one definition.
+- **The whole cell is the target** — 78px × 63px at 390 — and the hover and pressed fills sit on
+  the pill.
+- **Everything that clears the bar moved with it.** `BAR_CLEAR` is 64px + the device inset; the
+  content padding is 88px; the floating action bar rides 12px above; the docked action bar now
+  rests on the tab bar's top edge instead of reaching under it; the sell screen's bar and the
+  completion screen's button ride 8px above; the till's settings page and the sell grid's
+  height follow. The cart button already measured from `BAR_CLEAR`.
+- **The 11px exception is gone** for the new till. `text-2xs` stays for the classic till, which
+  is a deliberate restoration; the design-system docs say so.
+
+### Verified
+
+- `tsc` and `lint:tokens` are clean; `eslint` on every changed file is clean; i18n is
+  0 missing / 0 extra.
+- Measured on the dev server at 390, 320, 430 (dark), Bangla, the landscape rail at 1280 × 800
+  and across Sell, Schedule, Scan and Check in: the bar is fixed at the bottom with a zero
+  gap, 64px tall; every tab is a 24px icon in a 56 × 32 pill over a 13px label; the current
+  tab is 600 weight; no label is clipped at 320 (one was, by 4px, until the label's side
+  padding came off); no console errors.
+- `catalog2-e2e` **459/459** on a production build, after its list assertions were updated:
+  the columns, the Published and Not published words, and the from-price, which is now checked
+  on the storefront and the booking's page, with the list asserted to show none.
+- Go-shell regression on the production build: 61 runs, no failures; phone audit hidden 0 · under44 0 · clipped 0 · errors 0 (the 14 sub-12px items are the deck).
+
+### Open
+
+- The tab bar's selected pill is the neutral fill, as every menu has been since the owner asked
+  for that on 2026-10-13. Against the white bar it is a quiet cue; the weight, the ink icon and
+  the 2.25 stroke carry it. If it should be stronger, it is `NAV_SELECTED_FILL`.
+- The shift timer in the till's header is still the fixed 3:24.
