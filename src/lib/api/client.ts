@@ -196,6 +196,8 @@ const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
     },
   },
 };
+/** Each whole-business demo's catalogue, for telling its item links apart. */
+const BUNDLE_ITEMS: Record<string, () => Product[]> = { doers: () => doers.doersProducts };
 export const isBundleDemo = (id: string) => id in BUNDLES;
 /** The catalogues of the whole-business demos, so a server that only holds the default seed can
  *  still tell a demo's item link from a made-up one (see `demoItemAtSlug`). */
@@ -217,8 +219,12 @@ if (typeof window !== "undefined") {
     const path = window.location.pathname;
     let id: string | null = localStorage.getItem(DEMO_KEY);
     const slugHit = Object.entries(BUNDLES).find(([, b]) => path === `/s/${b.slug}` || path.startsWith(`/s/${b.slug}/`));
+    // An item's own link (/b/<slug>) opens the demo whose catalogue holds it.
+    const itemSlug = path.match(/^\/b\/([^/]+)/)?.[1];
+    const itemHit = itemSlug ? Object.entries(BUNDLE_ITEMS).find(([, list]) => list().some((p) => p.slug === itemSlug)) : undefined;
     if (slugHit) id = slugHit[0];
-    else if (path.startsWith("/s/")) id = null;
+    else if (itemHit) id = itemHit[0];
+    else if (path.startsWith("/s/") || itemSlug) id = null;
     const demoHit = path.match(/^\/demo\/([a-z-]+)/);
     if (demoHit) id = Object.keys(BUNDLES).find((k) => demoHit[1].startsWith(k)) ?? id;
     if (id && BUNDLES[id]) BUNDLES[id].apply();

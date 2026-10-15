@@ -17645,3 +17645,28 @@ type. BT codes stay as derived data (D6), and only the support tab shows them.
 - How a booking is booked cannot be changed on an existing booking (its BT code would change).
   The When tab says so and points to Duplicate.
 - The old `/catalog/new/<kind>?type=` redirects keep their query string, which does nothing.
+
+## The Doers Club demo, on the new product pages (2026-10-15)
+
+Owner: move the Doers demo onto the designer's catalogue revision 2, and show how
+differently one studio's product pages can be designed.
+
+- **Six bookings, six looks**, each with its own `slug` and a designed `page`
+  (`lib/mock/doers.ts`): Matcha on **Gallery** (highlights, the 90-minute running
+  order, questions), Sushi on **Classic**, Tea on **Journey** (the six teas drawn
+  as a route), Social Night on **Neon** (countdown to the next Thursday, numbers,
+  running order), the Doers Pass on **Poster**, and a new **Private team
+  workshop** on **Clean** — sold online **by its link only** (`/b/private-team-workshop`),
+  the third way to sell.
+- **Item links open the demo for a stranger**: `/b/<slug>` of a demo item applies
+  that demo on first load, as `/s/thedoersclub` already did.
+- **Photos are wired but not shipped**: `PHOTOS` names 13 files in
+  `public/demo/doers/`; one is only used once listed in `PHOTOS_PRESENT`, so a
+  missing file never shows as a broken image.
+- **"11:00 AM & 4:00 PM · 1 hr 30 min each"** replaces "Every 5 hr, 11:00 AM –
+  5:30 PM" in the page header (`lib/storefront/when.ts`) for bookings with gaps
+  between sessions or one a day.
+
+Verified: all six pages and the storefront at 1440 with no console errors or
+sideways scroll; the default seed and other demos untouched; no hydration
+errors on dashboard, catalog, till and schedule as Doers; build clean.

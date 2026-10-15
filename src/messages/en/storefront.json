@@ -251,6 +251,7 @@
   "editorLinkOnlyNote": "Items sold only by their link are not shown on this page.",
   "when": {
     "every": "Every {interval}, {hours}",
+    "at": "{times} · {length} each",
     "openDaily": "Open daily {hours}",
     "open": "Open {parts}",
     "classes": "{count} classes, {first} – {last}",

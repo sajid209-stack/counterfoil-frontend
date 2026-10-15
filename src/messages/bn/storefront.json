@@ -251,6 +251,7 @@
   "editorLinkOnlyNote": "যেসব আইটেম শুধু নিজের লিংকে বিক্রি হয়, সেগুলো এই পেজে দেখানো হয় না।",
   "when": {
     "every": "প্রতি {interval}, {hours}",
+    "at": "{times} · প্রতিটি {length}",
     "openDaily": "প্রতিদিন খোলা {hours}",
     "open": "খোলা {parts}",
     "classes": "{count}টি ক্লাস, {first} – {last}",

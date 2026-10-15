@@ -5,7 +5,7 @@
  * is typed twice. Pure: the caller hands in its translator.
  */
 import { formatDuration } from "@/lib/duration";
-import { formatClockRange, formatDay } from "@/lib/format";
+import { formatClock, formatClockRange, formatDay } from "@/lib/format";
 import { toMinutes } from "@/lib/schedule";
 import type { Location, Product } from "@/lib/api/types";
 
@@ -55,7 +55,16 @@ export function whenInWords(p: Product, location: Location | undefined, t: T): s
       : t("when.classes", { count: dates.length, first: formatDay(dates[0], { weekday: true }), last: formatDay(dates[dates.length - 1], { weekday: true }) });
   }
   if (sch && sch.slotMinutes > 0 && sch.dailyCapacity == null && toMinutes(sch.endTime) > toMinutes(sch.startTime)) {
-    const every = t("when.every", { interval: formatDuration(sch.slotMinutes), hours: formatClockRange(sch.startTime, sch.endTime) });
+    /* Sessions with gaps between them (a 90-minute class at 11 and at 4), or one
+       a day: the start times themselves, not an interval nobody books by. */
+    const starts: string[] = [];
+    for (let m = toMinutes(sch.startTime); m + sch.sessionMinutes <= toMinutes(sch.endTime); m += sch.slotMinutes) {
+      starts.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+    }
+    const setTimes = starts.length > 0 && starts.length <= 3 && (sch.slotMinutes > sch.sessionMinutes || starts.length === 1);
+    const every = setTimes
+      ? t("when.at", { times: starts.map((x) => formatClock(x)).join(" & "), length: formatDuration(sch.sessionMinutes) })
+      : t("when.every", { interval: formatDuration(sch.slotMinutes), hours: formatClockRange(sch.startTime, sch.endTime) });
     return sch.openDays.length > 0 && sch.openDays.length < 7 ? `${every} · ${daysText(sch.openDays)}` : every;
   }
   if (sch && sch.openDays.length > 0) {
