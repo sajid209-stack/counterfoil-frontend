@@ -18,18 +18,22 @@ import {
 import { defaultSchedule, isFlexibleResource, isResourceType, needsSchedule, slotTimes, usesBuffer } from "@/lib/schedule";
 import { formatClock, formatDateTime } from "@/lib/format";
 import { defaultDurationConfig, durationOptions } from "@/lib/duration";
-import type { DurationConfig } from "@/lib/api";
+import type { DurationConfig, EventDay } from "@/lib/api";
+import { bookingWayOf } from "@/lib/catalog";
 import { pageOf } from "@/lib/productPage";
 import { slugOf } from "@/lib/api/products";
-import { BookingSetup, effectiveBuffer, type BookingSetupResult } from "./BookingSetup";
+import { effectiveBuffer, type BookingSetupResult } from "./BookingSetup";
 import { DurationEngineField } from "./DurationEngineField";
 import { ScheduleBuilder } from "./ScheduleBuilder";
 import { ScheduleBufferField } from "./ScheduleBufferField";
-import { emptyTier, PriceTiersField, type FormTier } from "./PriceTiersField";
 import { PricingRulesField, type FormPricingRule } from "./PricingRulesField";
 import { PoliciesField } from "./PoliciesField";
 import { AddOnsField, type FormAddOn } from "./AddOnsField";
 import { ImageUploadField, type FormImage } from "./ImageUploadField";
+import { EventDetails } from "../event/EventDetails";
+import { endsAtOf, type EventContent } from "../event/eventContent";
+import { TicketEditor } from "../tickets/TicketEditor";
+import { ticketsFromTiers, ticketsToInputs, type TicketRow } from "../tickets/ticketRows";
 import type { OnlineChoice } from "../sell/SellChannels";
 import { defaultPolicies } from "@/lib/tax";
 import type { ProductPolicies, TaxClass } from "@/lib/api";
@@ -67,6 +71,21 @@ export const summaryKeyOf = summaryKey;
  * is sold and what its page looks like ARE here, because those are edited in
  * tabs of the same record and saved with the rest.
  */
+/**
+ * The facts of an on-a-date booking (BT-15) as a form holds them: the day it
+ * starts, an optional end, the days it runs when there are several, and the
+ * place. Every other booking leaves them blank and never reads them.
+ */
+export interface EventFacts {
+  date: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+  days: EventDay[];
+  venueName: string;
+  venueAddress: string;
+}
+
 export interface FormState {
   name: string;
   description: string;
@@ -82,7 +101,10 @@ export interface FormState {
   page: ProductPage;
   maxPerOrder: string;
   minAge: string;
-  tiers: FormTier[];
+  /** The tickets, in the ONE ticket editor every booking uses. */
+  tiers: TicketRow[];
+  /** An on-a-date booking's day, hours and place. */
+  ev: EventFacts;
   pricingRules: FormPricingRule[];
   waitlist: boolean;
   taxClass: TaxClass;
@@ -108,6 +130,55 @@ export interface FormState {
 /** The online answer a saved item gives: not online without the "online" channel, else listed unless said otherwise. */
 export const onlineModeOf = (p: Pick<Product, "channels" | "online">): OnlineChoice =>
   !p.channels.includes("online") ? "off" : (p.online ?? "listed");
+
+/** An on-a-date booking's facts from its record. */
+export function eventFactsOf(p: Product): EventFacts {
+  const e = p.event;
+  return {
+    date: e ? e.startsAt.slice(0, 10) : "",
+    startTime: e ? e.startsAt.slice(11, 16) : "19:00",
+    endDate: e?.endsAt ? e.endsAt.slice(0, 10) : "",
+    endTime: e?.endsAt ? e.endsAt.slice(11, 16) : "",
+    days: e?.days ?? [],
+    venueName: e?.venueName ?? "",
+    venueAddress: e?.venueAddress ?? "",
+  };
+}
+
+/** The fields EventDetails edits, read from the form. The line under the name,
+ *  the description and the cover are shared with the Page tab; they are held
+ *  where the record keeps them, so the two tabs cannot disagree. */
+export function contentOf(state: FormState): EventContent {
+  return {
+    title: state.name,
+    subtitle: state.page.tagline ?? "",
+    description: state.description,
+    coverUrl: state.page.coverUrl ?? "",
+    date: state.ev.date,
+    startTime: state.ev.startTime,
+    endDate: state.ev.endDate,
+    endTime: state.ev.endTime,
+    days: state.ev.days,
+    venueName: state.ev.venueName,
+    venueAddress: state.ev.venueAddress,
+    videoUrl: state.page.videoUrl ?? "",
+    organiserName: state.page.organiser?.name ?? "",
+    organiserBlurb: state.page.organiser?.blurb ?? "",
+    lineup: state.page.lineup,
+    faq: state.page.faq,
+  };
+}
+
+/** What EventDetails reports changing, written back to the form. */
+export function applyContent(s: FormState, c: Partial<EventContent>): FormState {
+  const ev = { ...s.ev };
+  for (const k of ["date", "startTime", "endDate", "endTime", "venueName", "venueAddress"] as const) if (c[k] !== undefined) ev[k] = c[k] as string;
+  if (c.days !== undefined) ev.days = c.days;
+  let page = s.page;
+  if (c.subtitle !== undefined) page = { ...page, tagline: c.subtitle.trim() ? c.subtitle : undefined };
+  if (c.coverUrl !== undefined) page = { ...page, coverUrl: c.coverUrl || undefined };
+  return { ...s, name: c.title ?? s.name, description: c.description ?? s.description, ev, page };
+}
 
 export function fromProduct(p: Product, summaryOf: (code: BookingTypeCode) => string): FormState {
   const mode = onlineModeOf(p);
@@ -137,7 +208,8 @@ export function fromProduct(p: Product, summaryOf: (code: BookingTypeCode) => st
     page: pageOf(p),
     maxPerOrder: p.maxPerOrder != null ? String(p.maxPerOrder) : "",
     minAge: p.minAge != null ? String(p.minAge) : "",
-    tiers: p.tiers.map((t) => ({ id: t.id, name: t.name, price: minorToMajor(t.price), maxPerOrder: t.maxPerOrder != null ? String(t.maxPerOrder) : "", admits: String(t.admits ?? 1), ageNote: t.ageNote ?? "", donation: !!t.donation, active: t.active })),
+    tiers: ticketsFromTiers(p.tiers),
+    ev: eventFactsOf(p),
     pricingRules: (p.pricingRules ?? []).map((r) => ({ id: r.id, days: r.days, fromTime: r.fromTime, toTime: r.toTime, price: minorToMajor(r.price) })),
     waitlist: !!p.waitlistEnabled,
     taxClass: p.taxClass ?? "standard",
@@ -190,7 +262,14 @@ export function buildInput(state: FormState, product: Product, base: FormState):
     description: state.description,
     images: state.images.map(({ id, url, alt }) => ({ id, url, alt })),
     bookingType: state.booking.bookingType,
-    tiers: state.tiers.map((t) => ({ id: t.id, name: t.name, price: majorToMinor(t.price), maxPerOrder: numOrUndef(t.maxPerOrder), admits: parseInt(t.admits, 10) || 1, ageNote: t.ageNote || undefined, donation: t.donation || undefined, active: t.active })),
+    /* A ticket keeps what the form cannot hold: how many had sold before
+       Counterfoil recorded sales is part of the record. A ticket good for
+       particular days only keeps them while the booking still runs several. */
+    tiers: ticketsToInputs(state.tiers).map((t) => ({
+      ...(product.tiers.find((x) => x.id === t.id) ?? {}),
+      ...t,
+      dayIds: state.ev.days.length > 1 ? t.dayIds : undefined,
+    })),
     locationIds: state.locationIds,
     channels: channelsOf(state.counter, state.onlineMode),
     maxPerOrder: numOrUndef(state.maxPerOrder),
@@ -236,9 +315,22 @@ export function buildInput(state: FormState, product: Product, base: FormState):
     sections: product.sections,
     waitlistEnabled: state.waitlist,
     taxClass: state.taxClass,
-    policies: state.policies,
     addOns: state.addOns.filter((a) => a.name.trim()).map((a) => ({ id: a.id ?? `add_${globalThis.crypto.randomUUID().slice(0, 8)}`, name: a.name, price: majorToMinor(a.price), perPerson: a.perPerson, itemId: a.itemId })),
   };
+  /* Rules written before this booking was saved are left as they were unless
+     the operator changed them: saving a title must not write a whole default
+     policy the operator never saw. */
+  if (product.policies || JSON.stringify(state.policies) !== JSON.stringify(base.policies)) input.policies = state.policies;
+  if (bt === "BT-15" && product.event) {
+    input.event = {
+      ...product.event,
+      startsAt: `${state.ev.date}T${state.ev.startTime}:00+06:00`,
+      endsAt: endsAtOf(state.ev),
+      days: state.ev.days.length > 1 ? state.ev.days : undefined,
+      venueName: state.ev.venueName.trim(),
+      venueAddress: state.ev.venueAddress.trim() || undefined,
+    };
+  }
   if (state.onlineMode !== "off") {
     input.online = state.onlineMode;
     input.slug = state.slug.trim();
@@ -271,6 +363,9 @@ export interface ProductCtx {
   products: Product[];
   currency: string;
   onCreateResource: (name: string, noun: string) => Promise<Resource | null>;
+  /** What each saved ticket has sold, by ticket id: the Tickets tab refuses to
+   *  go below it, and a ticket that has sold cannot be removed. */
+  sold: Record<string, number>;
 }
 
 /** Create a resource (a lane, a court) from inside a form, and hand it back. */
@@ -282,11 +377,6 @@ export async function createResourceFor(name: string, noun: string): Promise<Res
   return res.ok ? res.data : null;
 }
 
-/** The kinds whose "when" has something to edit: a schedule, a pool of places to
- *  book, a gap between bookings, how long it is valid for, or a guide. */
-export const hasWhen = (bt: BookingTypeCode): boolean =>
-  needsSchedule(bt) || isResourceType(bt) || usesBuffer(bt) || (["BT-01", "BT-02", "BT-09"] as BookingTypeCode[]).includes(bt);
-
 /** The resource pool's noun: the operator's own word when they agree on one. */
 function useResourceNoun(resources: Resource[]) {
   const t = useTranslations("catalog.form");
@@ -295,49 +385,73 @@ function useResourceNoun(resources: Resource[]) {
 
 /* ── Details: what it is ─────────────────────────────────────────────────── */
 export function DetailsTab({ ctx }: { ctx: ProductCtx }) {
-  const { state, set, setState, errors, resources, team, products, onCreateResource } = ctx;
-  const t = useTranslations("catalog.form");
+  const { state, set, setState, errors } = ctx;
   const tw = useTranslations("catalog.wizard");
+  const ta = useTranslations("catalog.addFlow");
   return (
-    <div className="flex flex-col gap-section">
-      <div className="grid gap-section sm:grid-cols-2">
+    <div className="flex flex-col gap-major">
+      <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
         <FormField label={tw("name")} required value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} className="sm:col-span-2" />
-        <FormField label={tw("description")} variant="textarea" placeholder={tw("descriptionPlaceholder")} value={state.description} onChange={(e) => set("description", e.target.value)} className="sm:col-span-2" />
-        <div className="sm:col-span-2"><ImageUploadField images={state.images} onChange={(images) => set("images", images)} /></div>
-      </div>
-      <div>
-        <p className="mb-tight text-md font-semibold text-fg">{t("howTitle")}</p>
-        <BookingSetup
-          value={state.booking}
-          resources={resources}
-          team={team}
-          products={products}
-          onCreateResource={onCreateResource}
-          onChange={(b) => {
-            if (!b) return;
-            setState((s) => ({
-              ...s,
-              booking: b,
-              schedule: needsSchedule(b.bookingType) ? (s.schedule ?? defaultSchedule(b.bookingType)) : null,
-              durationConfig: isFlexibleResource(b.bookingType)
-                ? { ...(s.durationConfig ?? defaultDurationConfig(majorToMinor(s.tiers[0]?.price ?? ""))), ...(b.resource?.durationCore ?? {}) }
-                : null,
-            }));
-          }}
+        <FormField
+          label={ta("summary")}
+          help={ta("summaryHelp")}
+          value={state.page.tagline ?? ""}
+          onChange={(e) => set("page", { ...state.page, tagline: e.target.value || undefined })}
+          className="sm:col-span-2"
         />
+        <FormField label={tw("description")} variant="textarea" placeholder={tw("descriptionPlaceholder")} value={state.description} onChange={(e) => set("description", e.target.value)} className="sm:col-span-2" />
+        <div className="flex flex-col gap-inline sm:col-span-2">
+          <ImageUploadField images={state.images} onChange={(images) => set("images", images)} />
+          <p className="text-sm text-muted">{tw("photoHelp")}</p>
+        </div>
       </div>
+      {/* The cover is the page's picture; the Page tab edits the same one. */}
+      <EventDetails
+        categoryId={ctx.product.event?.kind ?? "entertainment"}
+        content={contentOf(state)}
+        onContent={(c) => setState((s) => applyContent(s, c))}
+        errors={errors}
+        show={["cover"]}
+      />
     </div>
   );
 }
 
 /* ── When: the days, hours, places and lengths it is bookable ────────────── */
 export function WhenTab({ ctx }: { ctx: ProductCtx }) {
-  const { product, state, set, setState, team, resources, currency } = ctx;
+  const { product, state, set, setState, team, resources, currency, errors } = ctx;
   const t = useTranslations("catalog.form");
+  const ta = useTranslations("catalog.addFlow");
+  const tw = useTranslations("catalog.ways");
+  const ti = useTranslations("catalog.item");
   const resourceNoun = useResourceNoun(resources);
   const pool = resources.filter((r) => (state.booking.resource?.resourceIds ?? product.resourceIds ?? []).includes(r.id));
+  const way = bookingWayOf(state.booking.bookingType);
+  const onDate = state.booking.bookingType === "BT-15";
   return (
-    <div className="flex flex-col gap-section">
+    <div className="flex flex-col gap-major">
+      {/* The question the wizard asked, with the answer this booking has. It is
+          read here, not re-asked: how a booking is booked decides what its
+          orders and availability mean, so a different answer is a new booking. */}
+      <div className="flex flex-col gap-tight">
+        <h3 className="text-md font-semibold text-fg">{ta("title.when")}</h3>
+        <div className="rounded-inner bg-subtle p-comfortable">
+          <p className="text-base font-medium text-fg">{tw(`${way}.title`)}</p>
+          <p className="text-sm text-muted">{tw(`${way}.helper`)}</p>
+        </div>
+        <p className="text-sm text-muted">{ti("when.fixed")}</p>
+      </div>
+      {onDate && (
+        <EventDetails
+          categoryId={product.event?.kind ?? "entertainment"}
+          content={contentOf(state)}
+          onContent={(c) => setState((s) => applyContent(s, c))}
+          errors={errors}
+          show={["when", "where"]}
+          scopedTickets={state.tiers.filter((r) => r.dayIds.length > 0).length}
+          onUntieTickets={() => set("tiers", state.tiers.map((r) => (r.dayIds.length ? { ...r, dayIds: [] } : r)))}
+        />
+      )}
       {/* Which spaces this booking may use, as a plain field.
           It was only reachable inside the setup questions, and re-opening
           those to change one lane meant re-answering the lot — so in
@@ -353,7 +467,7 @@ export function WhenTab({ ctx }: { ctx: ProductCtx }) {
           {resources.length === 0 ? (
             <p className="text-sm text-muted">{t("resourceNone", { noun: resourceNoun })}</p>
           ) : (
-            <div className="grid gap-tight sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-tight sm:grid-cols-2">
               {resources.map((r) => {
                 const on = (state.booking.resource?.resourceIds ?? []).includes(r.id);
                 return (
@@ -442,7 +556,7 @@ export function WhenTab({ ctx }: { ctx: ProductCtx }) {
         <div className="flex flex-col gap-tight">
           <span className="text-sm font-medium text-muted">{t("showNames")}</span>
           <p className="text-xs text-muted">{t("showNamesHelp")}</p>
-          <div className="grid gap-tight sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-tight sm:grid-cols-3">
             {slotTimes(state.schedule).map((time) => (
               <div key={time} className="flex items-center gap-tight">
                 <span className="w-20 shrink-0 whitespace-nowrap text-sm tabular-nums text-muted">{formatClock(time)}</span>
@@ -468,39 +582,23 @@ export function WhenTab({ ctx }: { ctx: ProductCtx }) {
 
 /* ── Tickets & prices ────────────────────────────────────────────────────── */
 export function PricesTab({ ctx }: { ctx: ProductCtx }) {
-  const { product, state, set, team, errors, currency } = ctx;
+  const { product, state, set, team, errors, currency, sold } = ctx;
   const t = useTranslations("catalog.form");
-  const tf = useTranslations("catalog.fields");
-  // The pricing basis drives the tab: per-booking products show one
-  // price + group limits — never tier machinery.
+  const tev = useTranslations("catalog.editEvent");
+  const hasSold = Object.values(sold).some((n) => n > 0);
+  // The pricing basis tells the operator what the price means; the editor is
+  // the same either way.
   const basis = state.booking.resource?.basis ?? product.pricingBasis ?? (isResourceType(state.booking.bookingType) ? "per_booking" : "per_person");
   return (
     <div className="flex flex-col gap-major">
-      {basis === "per_booking" ? (
-        <div className="flex flex-col gap-tight">
-          <FormField
-            label={`${t("perBookingPrice")} (${currency === "BDT" ? "৳" : currency})`}
-            variant="number"
-            placeholder="1500"
-            value={state.tiers[0]?.price ?? ""}
-            onChange={(e) => set("tiers", state.tiers.length ? state.tiers.map((x, i) => (i === 0 ? { ...x, price: e.target.value } : x)) : [{ ...emptyTier(), name: tf("tierStandard"), price: e.target.value }])}
-            className="max-w-xs"
-            help={t("perBookingHelp")}
-          />
-          <p className="text-xs text-muted">{t("perBookingSwitch", { tab: t("tab.details") })}</p>
-        </div>
-      ) : (
-        <PriceTiersField tiers={state.tiers} onChange={(tiers) => set("tiers", tiers)} errors={errors} currency={currency} />
-      )}
+      {hasSold && <p className="text-sm text-muted">{tev("soldNote")}</p>}
+      {basis === "per_booking" && <p className="text-sm text-muted">{t("perBookingHelp")}</p>}
+      <TicketEditor rows={state.tiers} onChange={(rows) => set("tiers", rows)} errors={errors} currency={currency} days={state.ev.days} sold={sold} totals />
       {needsSchedule(state.booking.bookingType) && (
         <PricingRulesField rules={state.pricingRules} onChange={(r) => set("pricingRules", r)} currency={currency} basePriceMajor={state.tiers[0]?.price ?? ""} dayStart={state.schedule?.startTime} dayEnd={state.schedule?.endTime} />
       )}
       <TypeSpecificFields placement="prices" state={state} set={set} team={team} providerNoun={product.providerNoun} />
-      {/* Extras sit with the prices, not with the policies. They were
-          under Policies when an add-on was a typed name and a number;
-          now that one can hand over a counted thing from the shelf it
-          is plainly a selling decision — what else the counter offers,
-          and for how much. */}
+      {/* Extras sit with the prices: what else is handed over, and for how much. */}
       <AddOnsField addOns={state.addOns} onChange={(a) => set("addOns", a)} currency={currency} locationIds={state.locationIds} />
     </div>
   );
@@ -513,7 +611,7 @@ export function RulesTab({ ctx }: { ctx: ProductCtx }) {
   return (
     <div className="flex flex-col gap-major">
       <FormField label={t("taxLabel")} variant="select" value={state.taxClass} onChange={(e) => set("taxClass", e.target.value as TaxClass)} options={[{ value: "standard", label: t("taxStandard") }, { value: "reduced", label: t("taxReduced") }, { value: "exempt", label: t("taxExempt") }]} className="max-w-xs" help={t("taxHelp")} />
-      <div className="grid gap-section sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
         <FormField label={t("maxPerOrder")} variant="number" value={state.maxPerOrder} onChange={(e) => set("maxPerOrder", e.target.value)} help={t("noLimitHelp")} />
         <FormField label={t("minAge")} variant="number" value={state.minAge} onChange={(e) => set("minAge", e.target.value)} help={t("noLimitHelp")} />
       </div>
@@ -564,7 +662,7 @@ function TypeSpecificFields({
 
   if (placement === "when" && here("BT-01")) {
     return (
-      <div className="grid gap-section sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
         <FormField
           label={t("validLabel")}
           variant="select"
@@ -592,7 +690,7 @@ function TypeSpecificFields({
 
   if (placement === "when" && here("BT-02")) {
     return (
-      <div className="grid gap-section sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-section sm:grid-cols-3">
         <FormField
           label={t("windowLabel")}
           variant="select"
@@ -624,7 +722,7 @@ function TypeSpecificFields({
 
   if (placement === "when" && here("BT-09")) {
     return (
-      <div className="grid gap-section sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
         <FormField
           label={t("minGroup")}
           variant="number"
@@ -647,7 +745,7 @@ function TypeSpecificFields({
           const extra = state.providerExtras[id] ?? { premium: "", durations: "" };
           const name = team.find((m) => m.id === id)?.name ?? id;
           return (
-            <div key={id} className="grid items-center gap-tight sm:grid-cols-[1fr_10rem_12rem]">
+            <div key={id} className="grid grid-cols-1 items-center gap-tight sm:grid-cols-[1fr_10rem_12rem]">
               <span className="text-base">{name}</span>
               <FormField label={t("extraCharge")} variant="number" placeholder="0" value={extra.premium} onChange={(e) => set("providerExtras", { ...state.providerExtras, [id]: { ...extra, premium: e.target.value } })} />
               <FormField label={t("lengthsMin")} placeholder={t("lengthsPlaceholder")} value={extra.durations} onChange={(e) => set("providerExtras", { ...state.providerExtras, [id]: { ...extra, durations: e.target.value } })} />

@@ -7,7 +7,8 @@ import { Button, FormField, Tabs, TimeInput } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { dayName } from "@/lib/events/days";
 import { parseEventVideo } from "@/lib/events/video";
-import { sectionsFor } from "@/lib/productPage";
+import { listLocations } from "@/lib/api/locations";
+import { useApiQuery } from "@/lib/useApi";
 import type { PageSectionId, Product, ProductPage } from "@/lib/api/types";
 import { newId } from "./pageOps";
 
@@ -20,6 +21,8 @@ export interface EditorCtx {
   onDescription?: (next: string) => void;
   onEditDetails?: () => void;
   onEditTickets?: () => void;
+  /** Takes the operator to the countdown settings, which live above the list. */
+  onGoCountdown?: () => void;
 }
 
 function Note({ children }: { children: React.ReactNode }) {
@@ -77,19 +80,48 @@ function policyLines(product: Product, t: ReturnType<typeof useTranslations>): s
   return lines;
 }
 
+/** Where it is: the event's own venue, or the venues the booking is sold at. */
+function WhereBody({ ctx }: { ctx: EditorCtx }) {
+  const t = useTranslations("catalog.page");
+  const { product } = ctx;
+  const q = useApiQuery(() => listLocations({ pageSize: 100 }), []);
+  const own = product.event?.venueName?.trim();
+  const places = (q.data?.data ?? []).filter((l) => product.locationIds.includes(l.id));
+  return (
+    <ReadOnly action={t("editDetails")} onAction={ctx.onEditDetails}>
+      {own ? (
+        <>
+          <span className="block font-medium">{own}</span>
+          {product.event?.venueAddress && <span className="block text-muted">{product.event.venueAddress}</span>}
+        </>
+      ) : places.length > 0 ? (
+        <ul className="flex flex-col gap-tight">
+          {places.map((l) => (
+            <li key={l.id}>
+              <span className="font-medium">{l.name}</span>
+              <span className="block text-muted">{[l.addressLine1, l.city].filter(Boolean).join(", ")}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        t("venueNote")
+      )}
+    </ReadOnly>
+  );
+}
+
 export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) {
   const t = useTranslations("catalog.page");
   const { product, page, onChange } = ctx;
   const [openDay, setOpenDay] = useState(0);
   const days = product.event?.days ?? [];
-  const isEvent = product.bookingType === "BT-15";
 
   switch (id) {
     case "hero":
       return <ReadOnly action={t("editDetails")} onAction={ctx.onEditDetails}>{t("heroNote")}</ReadOnly>;
 
     case "countdown":
-      return <Note>{t("countdownNote")}</Note>;
+      return <ReadOnly action={t("goCountdown")} onAction={ctx.onGoCountdown}>{t("countdownRowNote")}</ReadOnly>;
 
     case "tickets":
       return <ReadOnly action={t("editTickets")} onAction={ctx.onEditTickets}>{t("ticketsNote")}</ReadOnly>;
@@ -114,18 +146,7 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
       );
 
     case "venue":
-      return (
-        <ReadOnly action={t("editDetails")} onAction={ctx.onEditDetails}>
-          {product.event?.venueName ? (
-            <>
-              <span className="block font-medium">{product.event.venueName}</span>
-              {product.event.venueAddress && <span className="block text-muted">{product.event.venueAddress}</span>}
-            </>
-          ) : (
-            t("venueNote")
-          )}
-        </ReadOnly>
-      );
+      return <WhereBody ctx={ctx} />;
 
     case "included": {
       const rows = product.tiers.filter((x) => x.active);
@@ -138,7 +159,9 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
               {rows.map((x) => (
                 <li key={x.id}>
                   <span className="font-medium">{x.name}</span>
-                  <span className="block text-muted">{x.note?.trim() ? x.note : t("includedNoNote")}</span>
+                  <span className="block text-muted">
+                    {[x.note?.trim(), ...(x.perks ?? [])].filter(Boolean).join(" · ") || t("includedNoNote")}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -164,27 +187,17 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
               {product.description.trim() ? <span className="line-clamp-4 whitespace-pre-line">{product.description}</span> : t("aboutNone")}
             </ReadOnly>
           )}
-          {isEvent && (
-            <>
-              <FormField
-                label={t("organiser")}
-                placeholder={t("organiserPlaceholder")}
-                value={page.organiser?.name ?? ""}
-                onChange={(e) => onChange({ organiser: { ...page.organiser, name: e.target.value } })}
-              />
-              <FormField
-                label={t("organiserLine")}
-                value={page.organiser?.blurb ?? ""}
-                onChange={(e) => onChange({ organiser: { name: page.organiser?.name ?? "", blurb: e.target.value } })}
-              />
-              {!sectionsFor(page.look).includes("know") && (
-                <>
-                  <Note>{t("infoNote")}</Note>
-                  <InfoRows ctx={ctx} />
-                </>
-              )}
-            </>
-          )}
+          <FormField
+            label={t("organiser")}
+            placeholder={t("organiserPlaceholder")}
+            value={page.organiser?.name ?? ""}
+            onChange={(e) => onChange({ organiser: { ...page.organiser, name: e.target.value } })}
+          />
+          <FormField
+            label={t("organiserLine")}
+            value={page.organiser?.blurb ?? ""}
+            onChange={(e) => onChange({ organiser: { name: page.organiser?.name ?? "", blurb: e.target.value } })}
+          />
         </>
       );
 
@@ -207,13 +220,14 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
         </>
       );
 
-    case "know":
+    case "know": {
+      const rules = policyLines(product, t);
       return (
         <>
           <Note>{t("knowNote")}</Note>
-          {policyLines(product, t).length > 0 && (
+          {rules.length > 0 && (
             <ul className="flex flex-col gap-inline text-sm text-fg">
-              {policyLines(product, t).map((l) => (
+              {rules.map((l) => (
                 <li key={l}>{l}</li>
               ))}
             </ul>
@@ -221,6 +235,7 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
           <InfoRows ctx={ctx} />
         </>
       );
+    }
 
     case "stats":
       return (

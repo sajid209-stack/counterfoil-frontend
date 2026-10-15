@@ -2,29 +2,39 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { CalendarClock, Check, ChevronDown, Clock, MapPin, Navigation, Tag } from "lucide-react";
+import { CalendarClock, Check, ChevronDown, Clock, MapPin, Navigation } from "lucide-react";
 import { BackLink, directionsHref } from "@/app/s/_components/Chrome";
-import { Media, sfBtn, typeGroup } from "@/app/s/_components/sf";
+import { Media, sfBtn } from "@/app/s/_components/sf";
 import { BookingPicker } from "@/app/s/_components/flow/BookingPicker";
 import { cn } from "@/lib/cn";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { formatDuration } from "@/lib/duration";
-import { formatClockRange, formatDay } from "@/lib/format";
+import { formatClock, formatClockRange, formatDay } from "@/lib/format";
 import { eventDays } from "@/lib/api/eventModel";
 import type { PageSectionId, Product } from "@/lib/api/types";
-import { pageOf } from "@/lib/productPage";
+import { ALL_PAGE_SECTIONS, countdownOf, pageOf } from "@/lib/productPage";
 import { productMinutes } from "@/lib/storefront/facts";
 import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
 import { scheduleHoursOn, storefrontPattern } from "@/lib/storefront/pattern";
 import { PageFrame } from "./PageFrame";
+import { useKnowLines } from "./pageText";
 import { VideoBlock } from "./VideoBlock";
 
 const isoOfLocalDate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-/** The sections this page can draw below the hero, in the order the page lists
- *  them. Hero and the booking panel are always drawn and are not in this list. */
-const BODY_SECTIONS: PageSectionId[] = ["about", "highlights", "included", "know", "gallery", "video", "faq", "venue"];
+/** The sections this page can draw below the hero: every one but the top of
+ *  the page and the booking panel, which are always drawn. */
+const BODY_SECTIONS: PageSectionId[] = ALL_PAGE_SECTIONS.filter((x) => x !== "hero" && x !== "tickets");
+
+/* A line-up entry's `at` is "21:00", a clock span, or words the operator wrote
+   (a day label): only clock times are converted. */
+const atLabel = (at: string): string => {
+  const v = at.trim();
+  if (/^\d{1,2}:\d{2}$/.test(v)) return formatClock(v);
+  const span = /^(\d{1,2}:\d{2})\s*[–—-]\s*(\d{1,2}:\d{2})$/.exec(v);
+  return span ? formatClockRange(span[1], span[2]) : at;
+};
 
 /**
  * The standard page: the look every item has until it is given another.
@@ -45,8 +55,11 @@ const BODY_SECTIONS: PageSectionId[] = ["about", "highlights", "included", "know
 export function StandardPage({ product, chrome }: { product: Product; chrome: "storefront" | "link" | "none" }) {
   const flow = useStorefrontFlow();
   const t = useTranslations("storefront");
+  const ec = useTranslations("events");
   const subtitle = useBehaviourSubtitle();
   const [picked, setPicked] = useState(0);
+  const [dayId, setDayId] = useState<string | null>(null);
+  const knowLines = useKnowLines(product);
 
   const page = pageOf(product);
   const listed = new Set(page.sections);
@@ -57,7 +70,6 @@ export function StandardPage({ product, chrome }: { product: Product; chrome: "s
   const mainAlt = cover ? product.name : (images[Math.min(picked, Math.max(0, images.length - 1))]?.alt ?? product.name);
   const showThumbs = !cover && !hasGallery && images.length > 1;
   const minutes = productMinutes(product);
-  const pol = product.policies;
   const pattern = storefrontPattern(product.bookingType);
   const ev = product.event;
 
@@ -87,11 +99,38 @@ export function StandardPage({ product, chrome }: { product: Product; chrome: "s
       })()
     : null;
 
-  const know: string[] = [t("know.instant"), t("know.sms")];
-  if (pol?.cancellation === "free_until") know.push(pol.cancelHours > 0 ? t("know.freeCancel", { hours: pol.cancelHours }) : t("know.freeCancelAny"));
-  else if (pol?.cancellation === "fee") know.push(t("know.feeCancel", { hours: pol.cancelHours, pct: pol.cancelFeePct }));
-  else if (pol?.cancellation === "none") know.push(t("know.noCancel"));
-  if (pol?.reschedule === "until" && pol.rescheduleHours > 0) know.push(t("know.reschedule", { hours: pol.rescheduleHours }));
+  const know = knowLines;
+
+  /* Countdown, figures, people, programme and sponsors: drawn from what the
+     page holds, and only when there is something to draw. */
+  const cd = countdownOf(product, flow.now);
+  const countdown = cd
+    ? (() => {
+        const ms = Math.max(0, cd.at.getTime() - flow.now.getTime());
+        return {
+          label: cd.label?.trim() || (pageOf(product).countdown?.mode === "date" ? ec("tpl.countingDown") : ec("tpl.startsIn")),
+          cells: [
+            { value: Math.floor(ms / 86400000), label: t("page.countdownDays") },
+            { value: Math.floor((ms % 86400000) / 3600000), label: t("page.countdownHours") },
+            { value: Math.floor((ms % 3600000) / 60000), label: t("page.countdownMins") },
+          ],
+        };
+      })()
+    : null;
+  const stats = page.stats.filter((x) => x.value.trim() && x.label.trim());
+  const people = page.lineup.filter((l) => l.kind !== "session" && l.name.trim());
+  const entries = page.lineup.filter((l) => l.name.trim());
+  const days = ev ? eventDays({ id: product.id, startsAt: ev.startsAt, days: ev.days }) : [];
+  const activeDay = days.find((d) => d.id === dayId)?.id ?? days[0]?.id;
+  const shownEntries = days.length > 1 ? entries.filter((e) => !e.dayId || e.dayId === activeDay) : entries;
+  const sponsors = page.sponsors.filter((x) => x.name.trim());
+  const sponsorGroups = sponsors.reduce<{ tier: string; items: typeof sponsors }[]>((acc, sp) => {
+    const tier = sp.tier?.trim() ?? "";
+    const g = acc.find((x) => x.tier === tier);
+    if (g) g.items.push(sp);
+    else acc.push({ tier, items: [sp] });
+    return acc;
+  }, []);
 
   const includedTiers = product.tiers.filter((x) => x.active && (x.note || (x.perks && x.perks.length > 0)));
   const video = page.videoUrl;
@@ -111,6 +150,114 @@ export function StandardPage({ product, chrome }: { product: Product; chrome: "s
   const h2 = "text-xl font-semibold";
 
   const sections: Record<string, React.ReactNode> = {
+    countdown: countdown ? (
+      <section key="countdown" id="countdown" aria-label={countdown.label}>
+        <div className="rounded-lg border border-hairline p-section text-center">
+          <p className="text-base font-semibold text-muted">{countdown.label}</p>
+          <div className="mt-tight flex justify-center gap-section">
+            {countdown.cells.map((c) => (
+              <div key={c.label} className="min-w-16">
+                <p className="text-4xl font-semibold leading-none tracking-figure tabular-nums">{String(c.value).padStart(2, "0")}</p>
+                <p className="mt-inline text-base text-muted">{c.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    ) : null,
+
+    stats: stats.length ? (
+      <section key="stats" id="stats">
+        <h2 className={h2}>{t("page.stats")}</h2>
+        <ul className="mt-tight grid grid-cols-2 gap-tight sm:grid-cols-3 lg:grid-cols-4">
+          {stats.map((st) => (
+            <li key={st.id} className="rounded-lg border border-hairline p-section">
+              <p className="text-3xl font-semibold leading-tight tracking-figure tabular-nums">{st.value}</p>
+              <p className="mt-inline text-base text-muted">{st.label}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null,
+
+    lineup: people.length ? (
+      <section key="lineup" id="lineup">
+        <h2 className={h2}>{t("page.lineupPeople")}</h2>
+        <ul className="mt-tight grid grid-cols-1 gap-tight sm:grid-cols-2">
+          {people.map((p) => (
+            <li key={p.id} className="flex items-center gap-comfortable rounded-lg border border-hairline p-section">
+              <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ember-wash text-md font-semibold text-brand-foreground">
+                {p.name.trim().charAt(0).toUpperCase()}
+              </span>
+              <span className="min-w-0">
+                <span className="block break-words text-md font-semibold">{p.name}</span>
+                {(p.role || p.at) && (
+                  <span className="block break-words text-base text-muted">{[p.role, p.at ? atLabel(p.at) : null].filter(Boolean).join(" · ")}</span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null,
+
+    schedule: entries.length ? (
+      <section key="schedule" id="schedule">
+        <h2 className={h2}>{t("page.schedule")}</h2>
+        {days.length > 1 && (
+          <div role="tablist" aria-label={t("page.schedule")} className="mt-tight flex flex-wrap gap-tight">
+            {days.map((d, i) => (
+              <button
+                key={d.id}
+                type="button"
+                role="tab"
+                aria-selected={d.id === activeDay}
+                onClick={() => setDayId(d.id)}
+                className={cn(
+                  "min-h-11 rounded-full border px-section text-base font-semibold",
+                  d.id === activeDay ? "border-ember-solid bg-ember-wash text-brand-foreground" : "border-line",
+                )}
+              >
+                {d.name?.trim() || t("page.day", { n: i + 1 })}
+                <span className="ml-tight font-normal text-muted">{formatDay(d.date, { weekday: true })}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        <ol className="mt-tight divide-y divide-hairline rounded-lg border border-hairline">
+          {shownEntries.map((e) => (
+            <li key={e.id} className="flex gap-section p-section">
+              <span className="w-24 shrink-0 text-base font-semibold tabular-nums">{e.at ? atLabel(e.at) : ""}</span>
+              <span className="min-w-0">
+                <span className="block break-words text-md font-semibold">{e.name}</span>
+                {e.role && <span className="block break-words text-base text-muted">{e.role}</span>}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </section>
+    ) : null,
+
+    sponsors: sponsors.length ? (
+      <section key="sponsors" id="sponsors">
+        <h2 className={h2}>{t("page.sponsors")}</h2>
+        <div className="mt-tight flex flex-col gap-comfortable">
+          {sponsorGroups.map((g) => (
+            <div key={g.tier}>
+              {g.tier && <p className="text-base font-semibold text-muted">{g.tier}</p>}
+              <ul className="mt-inline flex flex-wrap gap-tight">
+                {g.items.map((sp) => (
+                  <li key={sp.id} className="rounded-lg border border-hairline px-section py-comfortable text-md font-semibold">
+                    {sp.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+    ) : null,
+
     about: product.description ? (
       <section key="about">
         <h2 className={h2}>{t("about")}</h2>
@@ -310,10 +457,6 @@ export function StandardPage({ product, chrome }: { product: Product; chrome: "s
             </h1>
             {page.tagline && <p className="mt-tight max-w-[56ch] text-lg text-muted">{page.tagline}</p>}
             <ul className="mt-section flex flex-wrap gap-tight">
-              <li className={fact}>
-                <Tag size={14} strokeWidth={1.75} className="text-muted" aria-hidden />
-                {t(`filter.${typeGroup(product.bookingType)}`)}
-              </li>
               {eventWhen && (
                 <li className={fact}>
                   <CalendarClock size={14} strokeWidth={1.75} className="text-muted" aria-hidden />

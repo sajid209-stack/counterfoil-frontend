@@ -191,7 +191,7 @@ function Section({ title, note, children }: { title: string; note?: string; chil
     <div>
       <p className="mb-tight text-md font-semibold text-fg">{title}</p>
       {note && <p className="-mt-inline mb-tight text-sm text-muted">{note}</p>}
-      <div className="grid gap-section sm:grid-cols-2">{children}</div>
+      <div className="grid grid-cols-1 gap-section sm:grid-cols-2">{children}</div>
     </div>
   );
 }

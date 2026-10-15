@@ -87,18 +87,8 @@
       "action": "Add something to sell"
     },
     "catalog-new": {
-      "title": "Nothing matches that",
-      "body": "Try another word, like tour, court or concert.",
-      "action": "Back to catalog"
-    },
-    "catalog-new-booking": {
       "title": "Start your booking",
       "body": "A name and a price are enough. You can change the rest later.",
-      "action": "Start"
-    },
-    "catalog-new-event": {
-      "title": "Start your event",
-      "body": "Add a name, a date and a ticket price to put it on sale.",
       "action": "Start"
     },
     "catalog-booking": {

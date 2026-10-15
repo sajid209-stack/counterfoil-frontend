@@ -27,7 +27,7 @@ export const BLOCKER_TAB: Record<Blocker, TabId> = {
   noTicket: "prices",
   noSchedule: "when",
   noResource: "when",
-  noDate: "details",
+  noDate: "when",
   noVenue: "where",
   noChannel: "where",
 };
@@ -64,8 +64,8 @@ export function useRecordTab(available: TabId[]): [TabId, (next: TabId) => void]
 }
 
 /**
- * The record page's frame, for a booking and an event alike: a way back, the
- * state and the kind in the header row, ONE primary action (Put on sale / Take
+ * The record page's frame, the same for every booking: a way back, the state in
+ * the header row (never a type), ONE primary action (Put on sale / Take
  * off sale) with everything else behind "…", the tabs, and the settings save bar
  * — present only while something has changed, on every tab, because a change
  * made on one tab is saved with the rest.
@@ -74,7 +74,6 @@ export function RecordFrame({
   title,
   description,
   state,
-  kindLabel,
   primary,
   secondary,
   menu,
@@ -92,7 +91,6 @@ export function RecordFrame({
   title: string;
   description?: string;
   state: CatalogState;
-  kindLabel: string;
   primary?: { label: string; icon: ReactNode; onClick: () => void; disabled?: boolean };
   /** The rarer, riskier action (Stop selling): never the orange primary. */
   secondary?: { label: string; icon: ReactNode; onClick: () => void; disabled?: boolean };
@@ -135,12 +133,9 @@ export function RecordFrame({
       description={description}
       back={{ href: "/catalog", label: t("title") }}
       status={
-        <span className="flex min-w-0 flex-wrap items-center gap-tight">
-          <StatusPill tone={STATE_TONE[state]} shape={state === "offSale" || state === "archived" ? "record" : "transaction"}>
-            {t(`state.${state}`)}
-          </StatusPill>
-          <span className="min-w-0 truncate text-sm text-muted">{kindLabel}</span>
-        </span>
+        <StatusPill tone={STATE_TONE[state]} shape={state === "offSale" || state === "archived" ? "record" : "transaction"}>
+          {t(`state.${state}`)}
+        </StatusPill>
       }
       primary={primary}
       /* From md a menu. On a phone the bar's "…" already opens a panel, so the

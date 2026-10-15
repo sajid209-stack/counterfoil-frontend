@@ -166,15 +166,6 @@
     "payTitle": "Pay your way",
     "payBody": "bKash, card or Bangla QR."
   },
-  "filter": {
-    "label": "Filter by kind",
-    "all": "All",
-    "entry": "Entry tickets",
-    "timed": "Tours, shows and classes",
-    "space": "Courts and fields",
-    "packs": "Passes and bundles",
-    "events": "Events"
-  },
   "know": {
     "title": "Good to know",
     "instant": "Your booking is confirmed as soon as you pay.",
@@ -246,7 +237,23 @@
     "playVideo": "Play video",
     "faq": "Questions and answers",
     "getTickets": "Get tickets",
-    "photoOf": "Photo {n} of {total}"
+    "photoOf": "Photo {n} of {total}",
+    "countdownDays": "days",
+    "countdownHours": "hours",
+    "countdownMins": "mins",
+    "lineupPeople": "Lineup",
+    "schedule": "Schedule",
+    "stats": "At a glance",
+    "sponsors": "Sponsors",
+    "day": "Day {n}",
+    "allDays": "All days"
   },
-  "editorLinkOnlyNote": "Items sold only by their link are not shown on this page."
+  "editorLinkOnlyNote": "Items sold only by their link are not shown on this page.",
+  "when": {
+    "every": "Every {interval}, {hours}",
+    "openDaily": "Open daily {hours}",
+    "open": "Open {parts}",
+    "classes": "{count} classes, {first} – {last}",
+    "classesOn": "Classes on {dates}"
+  }
 }

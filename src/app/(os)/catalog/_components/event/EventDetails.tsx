@@ -26,8 +26,6 @@ export function EventDetails({
   errors,
   scopedTickets,
   onUntieTickets,
-  subtype,
-  onSubtype,
   show = ["what", "when", "where", "cover"],
 }: {
   categoryId: CategoryId;
@@ -36,9 +34,6 @@ export function EventDetails({
   errors: Record<string, string>;
   scopedTickets?: number;
   onUntieTickets?: () => void;
-  /** The kind of event within its category — a label only, so optional. */
-  subtype?: string;
-  onSubtype?: (s: string) => void;
   /** Which groups to draw. All four by default; the add wizard draws the facts
    *  across two steps (the name elsewhere, when and where, then the cover). */
   show?: Array<"what" | "when" | "where" | "cover">;
@@ -73,16 +68,6 @@ export function EventDetails({
           onChange={(e) => onContent({ subtitle: e.target.value })}
           className="sm:col-span-2"
         />
-        {onSubtype && (
-          <FormField
-            label={td("kind")}
-            variant="select"
-            help={td("kindHelp")}
-            value={subtype ?? ""}
-            onChange={(e) => onSubtype(e.target.value)}
-            options={[{ value: "", label: td("kindNone") }, ...cat.subtypes.map((s) => ({ value: s, label: t(`subtype.${s}`) }))]}
-          />
-        )}
       </Group>
       )}
 
@@ -154,7 +139,7 @@ function Group({ title, help, children }: { title: string; help?: string; childr
         <h3 className="text-md font-semibold text-fg">{title}</h3>
         {help && <p className="mt-0.5 text-sm text-muted">{help}</p>}
       </div>
-      <div className="grid items-start gap-section sm:grid-cols-2">{children}</div>
+      <div className="grid grid-cols-1 items-start gap-section sm:grid-cols-2">{children}</div>
     </section>
   );
 }

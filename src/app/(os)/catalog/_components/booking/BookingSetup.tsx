@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Pencil, Plus, X } from "lucide-react";
 import { Button, Checkbox, ChoiceCard, DateField, DurationInput, FormField } from "@/components/ui";
@@ -69,6 +69,7 @@ export function BookingSetup({
   products = [],
   onCreateResource,
   start = "q1",
+  embedded = false,
 }: {
   value: BookingSetupResult | null;
   onChange: (result: BookingSetupResult | null) => void;
@@ -77,6 +78,15 @@ export function BookingSetup({
   products?: Product[];
   onCreateResource?: (name: string, noun: string) => Promise<Resource | null>;
   start?: SetupStart;
+  /**
+   * Drawn inside another step (the add wizard's "When"), which already asked the
+   * question that picked this branch. There is no Done button and no way back to
+   * the whole tree: the answer is reported through `onChange` as it is made
+   * (null while it is incomplete), and the parent's Continue says what is
+   * missing. `value` only seeds the fields, so coming back to the step shows
+   * what was answered.
+   */
+  embedded?: boolean;
 }) {
   const t = useTranslations("catalog.setup");
   const { dur: formatDuration } = useCatalogFormat();
@@ -92,30 +102,30 @@ export function BookingSetup({
   // which is where every other time-slot kind now asks it too — this is a
   // pass-through of whatever is already stored, not an editable field here.
   const buffer = value?.resource?.bufferMinutes ?? 0;
-  const [durMin, setDurMin] = useState(60);
-  const [durMax, setDurMax] = useState(180);
-  const [durInc, setDurInc] = useState(30);
+  const [durMin, setDurMin] = useState(value?.resource?.durationCore?.minMinutes ?? 60);
+  const [durMax, setDurMax] = useState(value?.resource?.durationCore?.maxMinutes ?? 180);
+  const [durInc, setDurInc] = useState(value?.resource?.durationCore?.incrementMinutes ?? 30);
   const [newName, setNewName] = useState("");
   const [newNoun, setNewNoun] = useState(resources[0]?.nounSingular ?? "Field");
   const [adding, setAdding] = useState(false);
   // provider
-  const [provNoun, setProvNoun] = useState("Therapist");
-  const [provIds, setProvIds] = useState<string[]>([]);
-  const [provDuration, setProvDuration] = useState("60");
-  const [provPickable, setProvPickable] = useState(true);
+  const [provNoun, setProvNoun] = useState(value?.provider?.noun ?? "Therapist");
+  const [provIds, setProvIds] = useState<string[]>(value?.provider?.providerIds ?? []);
+  const [provDuration, setProvDuration] = useState(String(value?.provider?.durationMinutes ?? 60));
+  const [provPickable, setProvPickable] = useState(value?.provider?.pickable ?? true);
   // An appointment has no later "when" step to ask this in (no weekly
   // schedule — availability comes from who is free), so it is asked here,
   // beside "How long does it take?" — the only other timing question it has.
   const [provBuffer, setProvBuffer] = useState(value?.provider?.bufferMinutes ?? 0);
   // course
-  const [courseDates, setCourseDates] = useState<string[]>([]);
+  const [courseDates, setCourseDates] = useState<string[]>(value?.course?.dates ?? []);
   const [courseDate, setCourseDate] = useState("");
-  const [courseCap, setCourseCap] = useState("12");
+  const [courseCap, setCourseCap] = useState(String(value?.course?.capacity ?? 12));
   // bundle / credits
-  const [bundleIds, setBundleIds] = useState<string[]>([]);
-  const [creditIds, setCreditIds] = useState<string[]>([]);
-  const [creditCount, setCreditCount] = useState("10");
-  const [creditExpiry, setCreditExpiry] = useState("90");
+  const [bundleIds, setBundleIds] = useState<string[]>(value?.bundle?.componentIds ?? []);
+  const [creditIds, setCreditIds] = useState<string[]>(value?.credits?.productIds ?? []);
+  const [creditCount, setCreditCount] = useState(String(value?.credits?.count ?? 10));
+  const [creditExpiry, setCreditExpiry] = useState(String(value?.credits?.expiryDays ?? 90));
   const [doneError, setDoneError] = useState(false);
 
   const finish = (bookingType: BookingTypeCode, summary: string, validityDays?: number) => onChange({ bookingType, summary, validityDays });
@@ -124,7 +134,75 @@ export function BookingSetup({
    *  the way to a different kind without leaving the form. */
   const back = () => setStep("q1");
 
-  if (value) {
+  const noun = resources.find((r) => picked.includes(r.id))?.nounSingular ?? newNoun;
+  const toggle = (arr: string[], id: string) => (arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
+
+  const buildResource = (): BookingSetupResult | null => {
+    if (picked.length === 0) return null;
+    const bookingType: BookingTypeCode = fixed && exclusive ? "BT-04" : "BT-05";
+    const flexOptions: number[] = [];
+    if (!fixed) for (let d = durMin; d <= durMax; d += durInc) flexOptions.push(d);
+    const timing = fixed
+      ? t("summary.fixedSlot")
+      : t("summary.flexRange", { min: formatDuration(durMin), max: formatDuration(durMax), step: formatDuration(durInc) });
+    const summary = [
+      t("summary.resource", { noun: noun.toLowerCase(), timing, count: picked.length }),
+      t(exclusive ? "summary.exclusive" : "summary.shared"),
+      buffer > 0 ? t("summary.gap", { gap: formatDuration(buffer) }) : "",
+    ].filter(Boolean).join(" ");
+    return {
+      bookingType,
+      summary,
+      resource: {
+        resourceIds: picked, exclusive, bufferMinutes: buffer,
+        flexibleDurations: fixed ? undefined : flexOptions,
+        durationCore: fixed ? undefined : { minMinutes: durMin, maxMinutes: durMax, incrementMinutes: durInc },
+        basis,
+      },
+    };
+  };
+  const buildProvider = (): BookingSetupResult | null => {
+    if (provIds.length === 0) return null;
+    const minutes = parseInt(provDuration, 10) || 60;
+    return {
+      bookingType: "BT-10",
+      summary: t("summary.provider", { noun: provNoun.toLowerCase(), duration: formatDuration(minutes), pick: provPickable ? "name" : "first", count: provIds.length }),
+      provider: { providerIds: provIds, noun: provNoun, pickable: provPickable, durationMinutes: minutes, bufferMinutes: provBuffer },
+    };
+  };
+  const buildCourse = (): BookingSetupResult | null =>
+    courseDates.length === 0 ? null : { bookingType: "BT-13", summary: t("summary.course", { count: courseDates.length, places: courseCap }), course: { dates: courseDates, capacity: parseInt(courseCap, 10) || 0 } };
+  const buildBundle = (): BookingSetupResult | null =>
+    bundleIds.length < 2 ? null : { bookingType: "BT-08", summary: t("summary.bundle", { count: bundleIds.length }), bundle: { componentIds: bundleIds } };
+  const buildCredits = (): BookingSetupResult | null =>
+    creditIds.length === 0 ? null : { bookingType: "BT-12", summary: t("summary.credits", { count: creditCount, days: creditExpiry, products: creditIds.length }), credits: { count: parseInt(creditCount, 10) || 0, expiryDays: parseInt(creditExpiry, 10) || 0, productIds: creditIds } };
+  const finishWith = (r: BookingSetupResult | null) => { if (r) onChange(r); };
+  const finishResource = () => finishWith(buildResource());
+  const finishProvider = () => finishWith(buildProvider());
+  const finishCourse = () => finishWith(buildCourse());
+  const finishBundle = () => finishWith(buildBundle());
+  const finishCredits = () => finishWith(buildCredits());
+
+  /* Embedded: the answer so far, reported as it changes. Compared by its JSON so
+     a parent that hands the same answer back does not set off another round. */
+  const live = embedded
+    ? start === "resource" ? buildResource()
+      : start === "provider" ? buildProvider()
+      : start === "course" ? buildCourse()
+      : start === "bundle" ? buildBundle()
+      : start === "credits" ? buildCredits()
+      : null
+    : null;
+  const liveKey = JSON.stringify(live);
+  const latest = useRef(onChange);
+  useEffect(() => {
+    latest.current = onChange;
+  });
+  useEffect(() => {
+    if (embedded) latest.current(liveKey === "null" ? null : (JSON.parse(liveKey) as BookingSetupResult));
+  }, [embedded, liveKey]);
+
+  if (value && !embedded) {
     return (
       <div className="rounded-control bg-muted-wash p-comfortable">
         <div className="flex items-start justify-between gap-section">
@@ -137,43 +215,6 @@ export function BookingSetup({
     );
   }
 
-  const noun = resources.find((r) => picked.includes(r.id))?.nounSingular ?? newNoun;
-  const toggle = (arr: string[], id: string) => (arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
-
-  const finishResource = () => {
-    const bookingType: BookingTypeCode = fixed && exclusive ? "BT-04" : "BT-05";
-    const flexOptions: number[] = [];
-    if (!fixed) for (let d = durMin; d <= durMax; d += durInc) flexOptions.push(d);
-    const timing = fixed
-      ? t("summary.fixedSlot")
-      : t("summary.flexRange", { min: formatDuration(durMin), max: formatDuration(durMax), step: formatDuration(durInc) });
-    const summary = [
-      t("summary.resource", { noun: noun.toLowerCase(), timing, count: picked.length }),
-      t(exclusive ? "summary.exclusive" : "summary.shared"),
-      buffer > 0 ? t("summary.gap", { gap: formatDuration(buffer) }) : "",
-    ].filter(Boolean).join(" ");
-    onChange({
-      bookingType,
-      summary,
-      resource: {
-        resourceIds: picked, exclusive, bufferMinutes: buffer,
-        flexibleDurations: fixed ? undefined : flexOptions,
-        durationCore: fixed ? undefined : { minMinutes: durMin, maxMinutes: durMax, incrementMinutes: durInc },
-        basis,
-      },
-    });
-  };
-  const finishProvider = () => {
-    const minutes = parseInt(provDuration, 10) || 60;
-    onChange({
-      bookingType: "BT-10",
-      summary: t("summary.provider", { noun: provNoun.toLowerCase(), duration: formatDuration(minutes), pick: provPickable ? "name" : "first", count: provIds.length }),
-      provider: { providerIds: provIds, noun: provNoun, pickable: provPickable, durationMinutes: minutes, bufferMinutes: provBuffer },
-    });
-  };
-  const finishCourse = () => onChange({ bookingType: "BT-13", summary: t("summary.course", { count: courseDates.length, places: courseCap }), course: { dates: courseDates, capacity: parseInt(courseCap, 10) || 0 } });
-  const finishBundle = () => onChange({ bookingType: "BT-08", summary: t("summary.bundle", { count: bundleIds.length }), bundle: { componentIds: bundleIds } });
-  const finishCredits = () => onChange({ bookingType: "BT-12", summary: t("summary.credits", { count: creditCount, days: creditExpiry, products: creditIds.length }), credits: { count: parseInt(creditCount, 10) || 0, expiryDays: parseInt(creditExpiry, 10) || 0, productIds: creditIds } });
 
   const addResource = async () => {
     if (!onCreateResource || !newName.trim()) return;
@@ -193,7 +234,8 @@ export function BookingSetup({
   /* Done is never greyed out. Pressed with an answer missing, it says which
      one, beside the button — a disabled button that will not say why is the
      commonest dead end in a form. */
-  const footer = (onDone: () => void, missing: string | null) => (
+  const footer = (onDone: () => void, missing: string | null) =>
+    embedded ? null : (
     <div className="flex flex-col gap-tight">
       {doneError && missing && (
         <p role="alert" className="text-sm font-medium text-danger">{missing}</p>
@@ -211,7 +253,7 @@ export function BookingSetup({
         </Button>
       </div>
     </div>
-  );
+    );
 
   return (
     <div className="flex flex-col gap-tight">
@@ -286,7 +328,7 @@ export function BookingSetup({
           </div>
           <Radio label={t("resource.timeTitle")} value={fixed ? "fixed" : "flex"} onChange={(v) => setFixed(v === "fixed")} options={[{ value: "fixed", label: t("resource.fixed.title"), helper: t("resource.fixed.helper") }, { value: "flex", label: t("resource.flex.title"), helper: t("resource.flex.helper") }]} />
           {!fixed && (
-            <div className="grid gap-section sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-section sm:grid-cols-3">
               <DurationInput label={t("resource.shortest")} value={durMin} min={5} onChange={setDurMin} chips={[30, 60]} />
               <DurationInput label={t("resource.longest")} value={durMax} min={5} onChange={setDurMax} chips={[120, 180]} />
               <DurationInput label={t("resource.steps")} value={durInc} min={5} step={5} onChange={setDurInc} chips={[15, 30, 60]} help={t("resource.stepsHelp")} />
@@ -372,7 +414,7 @@ function Radio({ label, value, onChange, options }: { label: string; value: stri
   return (
     <div className="flex flex-col gap-tight">
       <Question>{label}</Question>
-      <div className="grid gap-tight sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-tight sm:grid-cols-2">
         {options.map((o) => {
           const selected = value === o.value;
           return (

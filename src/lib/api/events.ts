@@ -10,8 +10,12 @@ import {
   slugify,
   tierToPrice,
 } from "./eventModel";
-import type { AddOn, ApiResult, Channel, ListParams, ListResponse, Lifecycle, Minor, PriceTier, Product } from "./types";
+import type { AddOn, ApiResult, Channel, ListParams, ListResponse, Lifecycle, Minor, PageSectionId, PriceTier, Product, ProductPage } from "./types";
 import { categoryById, type CategoryId, type SectionId } from "@/lib/events/catalog";
+import { lookDefaults, pageOf } from "@/lib/productPage";
+import { demoNow } from "@/lib/schedule";
+import { nextAvailable } from "@/lib/storefront/pattern";
+import { peekLocations } from "./locations";
 
 /* The pure half of the event model — the view, its inverse, and the day and
    capacity helpers — lives in eventModel.ts so the mock seed can import it
@@ -91,6 +95,10 @@ export interface EventTier {
    * covers.
    */
   dayIds?: string[];
+  /** The ticket has no quantity of its own (a booking's ticket with no
+   *  capacity): it can be bought until something else stops it. `quantity` is
+   *  0 then, and no screen may read that as "none left". */
+  unlimited?: boolean;
 }
 
 /** A figure worth stating before anyone scrolls — what the page is at a glance.
@@ -125,6 +133,9 @@ export interface EventCustomisation {
   variant: string;
   /** Ordered and filtered by the operator; `hero` and `tickets` always present. */
   sections: SectionId[];
+  /** The page's whole section list (the event sections plus "included" and
+   *  "know"), in order — only set by `pageView`, which draws any booking. */
+  pageSections?: PageSectionId[];
   coverUrl?: string;
 }
 
@@ -234,6 +245,15 @@ export interface EventRecord {
    *  reverse index serve both — an event is a thing you sell, and the stock
    *  question is the same question. */
   extras?: AddOn[];
+  /** Photos of the booking — set by `pageView`; an event view has none. */
+  images?: { id: string; url: string; alt?: string }[];
+  /** `pageView` of a booking that has no first day to name: nothing may draw a
+   *  date for it, a clock, "Runs N days" or add-to-calendar. */
+  undated?: boolean;
+  /** `pageView` of a booking that repeats: its "when" in words ("Every 45 min,
+   *  11:00 AM – 4:30 PM"), drawn where an event's date and time are. Then
+   *  `startsAt` is the NEXT time it can be booked, not a one-off start. */
+  whenText?: string;
   customisation: EventCustomisation;
   createdAt: string;
   updatedAt: string;
@@ -394,6 +414,105 @@ export function withLiveSales(e: EventRecord): EventRecord {
 /** The event view of a BT-15 product, with tickets sold here counted. The one
  *  place the catalogue, the till and every event screen get an `EventRecord`. */
 export const eventView = (p: Product): EventRecord => withLiveSales(eventViewBase(p));
+
+/* ── The page view: any booking, drawn by any look ───────────────────────── */
+
+export interface PageViewOptions {
+  /** The moment the page is read at (a preview and a live page pass theirs). */
+  now?: Date;
+  /** The booking's "when" in words, in the reader's language — built from the
+   *  booking by a hook, because this file has no translator. Only used for a
+   *  booking that repeats; an on-a-date booking has its own date. */
+  whenText?: string;
+  /** Where the booking is when it names no location of its own. */
+  venue?: { name: string; address?: string };
+}
+
+const EVENT_SECTIONS: ReadonlySet<string> = new Set<string>([
+  "hero", "countdown", "stats", "highlights", "about", "lineup", "schedule", "gallery", "tickets", "venue", "video", "sponsors", "faq",
+]);
+
+/**
+ * ANY booking as the record the page templates draw (docs/catalog.md §10.6).
+ *
+ * An on-a-date booking (BT-15) is its `eventView`, with the look, the section
+ * list and the photos of its page laid over it. Every other booking is built
+ * from what it already knows:
+ *
+ *   - when: its NEXT bookable day if it has a schedule (or a course's next
+ *     date), with `whenText` saying the pattern in words ("Every 45 min, …");
+ *     with neither it is `undated` and no screen may draw a date for it;
+ *   - where: its location's name and address (the first of `locationIds`);
+ *   - tickets: its price tiers — one with no capacity is unlimited;
+ *   - the page: `pageOf`, the look's defaults for what it leaves out.
+ *
+ * Pure of the clock apart from `nextAvailable`, which takes `opts.now`.
+ */
+export function pageView(p: Product, opts: PageViewOptions = {}): EventRecord {
+  const page = pageOf(p);
+  const look = page.look;
+  const base = withLiveSales(eventViewBase(p));
+  const dated = isEventProduct(p) && !!p.event;
+  const cat = categoryById(look === "standard" ? base.categoryId : look);
+  const d = lookDefaults(look);
+
+  let startsAt = base.startsAt;
+  let undated = false;
+  let venueName = base.venueName;
+  let venueAddress = base.venueAddress;
+  let whenText: string | undefined;
+  if (!dated) {
+    const now = opts.now ?? demoNow();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const next = nextAvailable(p, now);
+    const course = p.courseDates?.find((x) => x >= today) ?? p.courseDates?.[0];
+    const day = next?.date ?? course;
+    /* Noon, in the business's offset: only the DAY of this is ever shown (the
+       time of day lives in `whenText`), and noon keeps that day the same in
+       every reader's zone. */
+    if (day) startsAt = `${day}T12:00:00+06:00`;
+    else {
+      undated = true;
+      startsAt = p.createdAt;
+    }
+    whenText = opts.whenText;
+    const loc = peekLocations().find((l) => l.id === p.locationIds[0]);
+    venueName = loc?.name ?? opts.venue?.name ?? "";
+    venueAddress = loc
+      ? [loc.addressLine1, loc.addressLine2, loc.city].filter(Boolean).join(", ") || undefined
+      : opts.venue?.address;
+  }
+
+  const listed = [...new Set(page.sections)];
+  const pageSections: PageSectionId[] = [
+    ...(listed.includes("hero") ? [] : (["hero"] as PageSectionId[])),
+    ...listed,
+    ...(listed.includes("tickets") ? [] : (["tickets"] as PageSectionId[])),
+  ];
+  const variant = page.variant && cat.variants.includes(page.variant) ? page.variant : (d.variant ?? cat.variants[0]);
+
+  return {
+    ...base,
+    categoryId: cat.id,
+    startsAt,
+    endsAt: dated ? base.endsAt : undefined,
+    days: dated ? base.days : undefined,
+    venueName,
+    venueAddress,
+    undated: undated || undefined,
+    whenText,
+    images: p.images,
+    customisation: {
+      accent: page.accent ?? d.accent ?? cat.theme.accent,
+      displayFont: page.displayFont ?? d.displayFont ?? cat.theme.display,
+      bodyFont: page.bodyFont ?? d.bodyFont ?? cat.theme.body,
+      variant,
+      sections: pageSections.filter((x): x is SectionId => EVENT_SECTIONS.has(x)),
+      pageSections,
+      coverUrl: page.coverUrl ?? p.images[0]?.url,
+    },
+  };
+}
 
 const viewsOf = (rows: Product[]): EventRecord[] => {
   const all = ledgerAll();
@@ -562,8 +681,8 @@ export function createEvent(input: EventInput): Promise<ApiResult<EventRecord>> 
 function applyPatch(p: Product, patch: Partial<EventInput>): Partial<Product> {
   const next: Partial<Product> = {};
   const ev = { ...(p.event ?? { kind: "entertainment" as const, subtype: "event", startsAt: p.createdAt, venueName: "" }) };
-  const cat = categoryById(ev.kind);
-  const pg = { ...(p.page ?? { look: ev.kind, sections: cat.sections, stats: [], highlights: [], info: [], faq: [], lineup: [], sponsors: [] }) };
+  const cat = categoryById(ev.kind ?? "entertainment");
+  const pg: ProductPage = { ...(p.page ?? { look: ev.kind ?? "standard", sections: cat.sections, stats: [], highlights: [], info: [], faq: [], lineup: [], sponsors: [] }) };
   let evTouched = false;
   let pgTouched = false;
   const setEv = <K extends keyof typeof ev>(k: K, v: (typeof ev)[K]) => {

@@ -7,17 +7,17 @@ import { Button, FormField } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { CATEGORIES } from "@/lib/events/catalog";
 import { templateFontVars } from "@/lib/events/fonts";
-import { looksFor } from "@/lib/productPage";
+import { ALL_LOOKS, LOOK_KEY } from "@/lib/productPage";
 import { ACCENT_HEX } from "@/lib/storefront/theme";
 import type { AccentColor, PageLook, Product, ProductPage } from "@/lib/api/types";
 import { eventAccents } from "./pageOps";
 
-const STANDARD_ACCENTS = Object.keys(ACCENT_HEX) as AccentColor[];
+const CLASSIC_ACCENTS = Object.keys(ACCENT_HEX) as AccentColor[];
 
 function Group({ title, help, children }: { title: string; help?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-tight">
-      <h3 className="text-sm font-semibold text-fg">{title}</h3>
+      <h3 className="text-md font-semibold text-fg">{title}</h3>
       {help && <p className="text-sm text-muted">{help}</p>}
       {children}
     </div>
@@ -25,8 +25,38 @@ function Group({ title, help, children }: { title: string; help?: string; childr
 }
 
 /**
- * Look, colour, cover and the line under the name — the choices that change how
- * the whole page feels, before any section's words.
+ * One look, drawn small: its own ground, its own display face, its accent and
+ * two lines of text, so the choice is made by looking. Classic has no theme of
+ * its own and is drawn from the design system's tokens.
+ */
+function LookSwatch({ look }: { look: PageLook }) {
+  const th = look === "standard" ? null : CATEGORIES.find((c) => c.id === look)?.theme;
+  if (!th) {
+    return (
+      <span aria-hidden className="flex h-16 flex-col justify-between bg-card px-comfortable py-tight text-fg">
+        <span className="text-xl font-semibold leading-none">Aa</span>
+        <span className="flex items-center gap-tight">
+          <span className="h-1.5 w-8 rounded-full bg-ember-solid" />
+          <span className="h-1.5 flex-1 rounded-full bg-line" />
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span aria-hidden className="flex h-16 flex-col justify-between px-comfortable py-tight" style={{ background: th.bg, color: th.fg }}>
+      <span className="text-xl leading-none" style={{ fontFamily: th.display }}>Aa</span>
+      <span className="flex items-center gap-tight">
+        <span className="h-1.5 w-8 rounded-full" style={{ background: th.accent }} />
+        <span className="h-1.5 flex-1 rounded-full" style={{ background: th.line }} />
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Look, colour, cover and the line under the name: the choices that change how
+ * the whole page feels, before any section's words. The same seven looks are
+ * offered for every booking.
  */
 export function LookControls({
   product,
@@ -40,12 +70,14 @@ export function LookControls({
   onPage: (patch: Partial<ProductPage>) => void;
 }) {
   const t = useTranslations("catalog.page");
-  const te = useTranslations("events");
   const ts = useTranslations("settings");
-  const looks = looksFor(product);
+  const looks = ALL_LOOKS;
   const file = useRef<HTMLInputElement>(null);
 
-  const accents = page.look === "standard" ? STANDARD_ACCENTS.map((k) => ({ key: k, hex: ACCENT_HEX[k], name: ts(`storefront.colors.${k}`) })) : eventAccents(page.look).map((hex, i) => ({ key: hex, hex, name: t("colourN", { n: i + 1 }) }));
+  const classic = page.look === "standard";
+  const accents = classic
+    ? CLASSIC_ACCENTS.map((k) => ({ key: k, hex: ACCENT_HEX[k], name: ts(`storefront.colors.${k}`) }))
+    : eventAccents(page.look).map((hex, i) => ({ key: hex, hex, name: t("colourN", { n: i + 1 }) }));
   const photo = product.images[0]?.url;
   const cover = page.coverUrl ?? photo;
   const coverState = page.coverUrl ? t("coverUploaded") : photo ? t("coverFirst") : t("coverDesigned");
@@ -57,47 +89,35 @@ export function LookControls({
 
   return (
     <div className="flex flex-col gap-major">
-      <Group title={t("look")} help={looks.length === 1 ? t("lookStandardHelp") : t("lookHelp")}>
-        {looks.length === 1 ? (
-          <p className="flex items-center gap-tight text-base font-medium text-fg">
-            <Check size={16} strokeWidth={2.5} aria-hidden className="text-brand-foreground" />
-            {t("lookStandard")}
-          </p>
-        ) : (
-          <div role="radiogroup" aria-label={t("look")} className={cn("grid grid-cols-2 gap-tight", templateFontVars)}>
-            {looks.map((l) => {
-              const cat = CATEGORIES.find((c) => c.id === l);
-              if (!cat) return null;
-              const th = cat.theme;
-              return (
-                <label
-                  key={l}
-                  className={cn(
-                    "relative flex cursor-pointer flex-col overflow-hidden rounded-sm border border-line bg-card transition-colors duration-quick ease-counterfoil hover:border-strong",
-                    "has-checked:border-ember has-checked:ring-2 has-checked:ring-inset has-checked:ring-ember",
-                    "has-focus-visible:outline has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring",
-                  )}
-                >
-                  <input type="radio" name="page-look" value={l} checked={page.look === l} onChange={() => onLook(l)} className="peer sr-only" />
-                  {/* The look's own ground, accent and display face, drawn from its theme. */}
-                  <span aria-hidden className="flex h-14 items-end justify-between px-comfortable pb-tight" style={{ background: th.bg, color: th.fg }}>
-                    <span className="text-2xl leading-none" style={{ fontFamily: th.display }}>Aa</span>
-                    <span className="h-3 w-3 rounded-full" style={{ background: th.accent }} />
-                  </span>
-                  <span className="flex min-h-11 items-center gap-tight px-comfortable py-tight text-sm font-medium text-fg">
-                    <span className="min-w-0 flex-1">{te(`category.${cat.key}`)}</span>
-                    {page.look === l && <Check size={14} strokeWidth={2.5} aria-hidden className="shrink-0 text-brand-foreground" />}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        )}
+      <Group title={t("look")} help={t("lookHelp")}>
+        <div role="radiogroup" aria-label={t("look")} className={cn("grid grid-cols-2 gap-tight", templateFontVars)}>
+          {looks.map((l) => {
+            const name = t(`looks.${LOOK_KEY[l]}`);
+            const on = page.look === l;
+            return (
+              <label
+                key={l}
+                className={cn(
+                  "relative flex cursor-pointer flex-col overflow-hidden rounded-inner bg-card ring-1 ring-inset ring-line transition-colors duration-quick ease-counterfoil hover:ring-strong",
+                  "has-checked:ring-2 has-checked:ring-ember",
+                  "has-focus-visible:outline has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring",
+                )}
+              >
+                <input type="radio" name="page-look" value={l} checked={on} onChange={() => onLook(l)} className="peer sr-only" />
+                <LookSwatch look={l} />
+                <span className="flex min-h-11 items-center gap-tight px-comfortable py-tight text-sm font-medium text-fg">
+                  <span className="min-w-0 flex-1">{name}</span>
+                  {on && <Check size={14} strokeWidth={2.5} aria-hidden className="shrink-0 text-brand-foreground" />}
+                </span>
+              </label>
+            );
+          })}
+        </div>
       </Group>
 
       <Group title={t("colour")}>
         <div role="group" aria-label={t("colour")} className="flex flex-wrap gap-tight">
-          {page.look === "standard" && (
+          {classic && (
             <button
               type="button"
               onClick={() => onPage({ accent: undefined })}
@@ -137,7 +157,7 @@ export function LookControls({
           <span
             role="img"
             aria-label={t("coverPreview")}
-            className="block aspect-video w-full rounded-sm bg-muted-wash bg-cover bg-center"
+            className="block aspect-video w-full rounded-inner bg-muted-wash bg-cover bg-center"
             style={{ backgroundImage: `url("${cover}")` }}
           />
         )}

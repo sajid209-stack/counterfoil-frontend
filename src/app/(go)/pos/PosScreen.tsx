@@ -7,7 +7,7 @@ import { useEnumLabels } from "@/lib/labels";
 import { Archive, Banknote, Check, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, CreditCard, QrCode, Send, Percent, Plus, Search, Ticket, Trash2, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, FormField, Modal, ProductThumb, Notice, SkeletonText, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { counterEvents, counterItems, inventoryItem, inventoryLineId, levelOf, peekTicketCodeSettings, tillMethods, advanceMinimum, checkout, getAdvancePolicy, earnPoints, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isOpenOn, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type MembershipTier, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord } from "@/lib/api";
+import { counterEvents, counterItems, eventDays, inventoryItem, inventoryLineId, levelOf, peekTicketCodeSettings, tillMethods, advanceMinimum, checkout, getAdvancePolicy, earnPoints, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isOpenOn, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type MembershipTier, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord } from "@/lib/api";
 import { eventFromPrice as sharedEventFromPrice } from "@/lib/api/eventModel";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_TILL_ID } from "@/lib/session";
@@ -20,7 +20,7 @@ import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
 import { taxRateFor } from "@/lib/tax";
 import { FEATURES } from "@/lib/features";
-import { formatClock, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
+import { formatClock, formatDay, formatDayRange, formatMoney, formatPriceShort } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
 import { CustomerRow, HowMuchNow, PromoCodeRow, SaleRow, type PayChoice } from "./CheckoutParts";
@@ -339,17 +339,15 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     [hydrated, tillLocationId, cart],
   );
   const SHOP = "shop";
-  /* Events at the counter. Like the shelf, one chip of their own rather than a
-     category: an event is not a booking — it has days and ticket types, no
-     schedule and no resources — and filing it under the catalogue's groups
-     would put it behind a chip that means something else. Only events this
-     counter's venue actually sells. */
+  /* On-a-date bookings at the counter. They stand on the wall with every other
+     booking, in the same tile; only the tap differs (the day, then the
+     tickets, in their own sheet). Only those this counter's venue sells, and
+     only those this counter is set up to sell. */
   const eventsForSale = useMemo(
-    () => (hydrated ? counterEvents(tillLocationId) : []),
+    () => (hydrated ? counterEvents(tillLocationId).filter((e) => allowedHere === "all" || allowedHere.includes(e.id)) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- derived from the store; the cart changing is when it can have moved
-    [hydrated, tillLocationId, cart],
+    [hydrated, tillLocationId, cart, allowedHere],
   );
-  const EVENTS = "events";
   const [eventSheet, setEventSheet] = useState<EventRecord | null>(null);
   /** The cheapest ticket somebody could still buy — what a tile leads with,
    *  the same "from" price the event's own page states. */
@@ -385,7 +383,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   });
   const shelfHeading = shownItems.length > 0 && shown.length > 0;
   const shownEvents = eventsForSale.filter((e) => {
-    if (category !== "all" && category !== EVENTS) return false;
+    if (category !== "all") return false;
     const q = query.trim().toLowerCase();
     return !q || e.title.toLowerCase().includes(q) || e.venueName.toLowerCase().includes(q);
   });
@@ -400,7 +398,6 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   const wallGroups = [
     { id: "all", name: t("categoryAll") },
     ...(shopItems.length > 0 ? [{ id: SHOP, name: t("shop.chip") }] : []),
-    ...(eventsForSale.length > 0 ? [{ id: EVENTS, name: t("event.chip") }] : []),
   ];
   /** The price a tile quotes: what one tap on it sells, now. Not the
    *  cheapest ticket (General Admission read ৳300 — the child ticket — and its
@@ -1265,25 +1262,29 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     />
                   );
                 })}
-                {/* Events: a different kind of thing from a booking, so they
-                    group under their own heading. A tap opens its own sheet —
-                    there is something to decide: which day, which ticket. */}
-                {shownEvents.length > 0 && <WallHeading icon={<Ticket size={16} strokeWidth={1.75} aria-hidden />}>{t("event.chip")}</WallHeading>}
+                {/* On-a-date bookings stand with the rest. A tap opens their
+                    own sheet — there is something to decide: which day, which
+                    ticket. The live line says the date (or why it is not
+                    selling). */}
                 {shownEvents.map((e) => {
                   const left = eventPlacesLeft(e);
-                  const gone = left <= 0;
+                  /* "Sat 24 – Sun 25 Oct": the month once, so it fits a phone tile. */
+                  const dates = formatDayRange(eventDays(e).map((d) => d.date), { weekday: true }).replace(/ ([A-Za-z]{3}) – (.*) \1$/, " – $2 $1");
+                  const ended = eventDays(e).every((d) => d.date < TODAY);
+                  const gone = !ended && left <= 0;
                   return (
                     <WallTile
                       key={e.id}
                       onClick={() => setEventSheet(e)}
-                      disabled={gone}
+                      disabled={gone || ended}
                       thumb={<span className="flex size-11 shrink-0 items-center justify-center rounded-inner bg-subtle text-muted"><Ticket size={20} strokeWidth={1.5} aria-hidden /></span>}
                       name={e.title}
                       price={eventFromPrice(e) === 0 ? t("event.free") : formatPriceShort(eventFromPrice(e), currency)}
-                      meta={`${formatDay(e.startsAt.slice(0, 10), { weekday: true })} · ${e.venueName}`}
-                      live={!gone && left <= 20 ? { tone: "low", text: t("event.left", { count: left }) } : null}
-                      soldOut={gone}
-                      soldOutLabel={t("event.soldOut")}
+                      meta={e.venueName}
+                      live={ended ? { tone: "none", text: t("event.endedOn", { dates }) } : gone ? { tone: "none", text: t("event.soldOutOn", { dates }) } : { tone: "ok", text: dates }}
+                      flag={!gone && !ended && left <= 20 ? t("event.left", { count: left }) : undefined}
+                      soldOut={gone || ended}
+                      soldOutLabel={ended ? t("event.ended") : t("event.soldOut")}
                     />
                   );
                 })}

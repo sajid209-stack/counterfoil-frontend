@@ -461,7 +461,6 @@
     "noCode": "No shop item has the code {code}."
   },
   "event": {
-    "chip": "Event tickets",
     "whichDay": "Which day?",
     "whichTicket": "Which ticket?",
     "dayN": "Day {n}",
@@ -472,7 +471,10 @@
     "runsDays": "runs {count} days",
     "pickTickets": "Choose tickets",
     "summary": "{count, plural, one {# ticket} other {# tickets}}",
-    "add": "{count, plural, one {Add # ticket} other {Add # tickets}}"
+    "add": "{count, plural, one {Add # ticket} other {Add # tickets}}",
+    "ended": "Ended",
+    "endedOn": "Ended · {dates}",
+    "soldOutOn": "Sold out · {dates}"
   },
   "tillSettings": {
     "title": "Display & language",

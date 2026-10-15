@@ -8,6 +8,7 @@ import { PreviewFrame } from "@/components/PreviewFrame";
 import { ProductPageView } from "@/components/productPage/ProductPageView";
 import { cn } from "@/lib/cn";
 import type { PageLook, Product, ProductPage } from "@/lib/api/types";
+import { CountdownSettings } from "./CountdownSettings";
 import { LookControls } from "./LookControls";
 import { SectionList } from "./SectionList";
 import { switchLook } from "./pageOps";
@@ -96,6 +97,7 @@ export function PageDesigner({ product, page, onPage, onEditDetails, onEditTicke
   const controls = (
     <div className="card-surface flex flex-col gap-major p-card">
       <LookControls product={product} page={page} onLook={setLook} onPage={patch} />
+      <CountdownSettings product={product} page={page} onPage={onPage} />
       <SectionList product={product} page={page} onPage={onPage} onDescription={onDescription} onEditDetails={onEditDetails} onEditTickets={onEditTickets} />
     </div>
   );

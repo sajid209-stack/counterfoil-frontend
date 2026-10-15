@@ -18,7 +18,7 @@ import { StorefrontChrome, directionsHref } from "./Chrome";
 import { QuickAddSheet } from "./flow/QuickAddSheet";
 import { QuickAddToast } from "./flow/QuickAddToast";
 import { StickyBasketBar } from "./flow/StickyBasketBar";
-import { GROUP_ORDER, HeroArt, Media, sfBtn, typeGroup, type TypeGroup } from "./sf";
+import { HeroArt, Media, sfBtn } from "./sf";
 import { WEEK_ORDER, useVenueHours } from "./useVenueHours";
 
 /** Scrolls inside whichever document the click happened in. The editor's
@@ -38,7 +38,7 @@ const scrollToId = (id: string) => (e: React.MouseEvent<HTMLElement>) => {
  *
  * Top to bottom: a hero (the headline, a way in, and the three facts a visitor
  * wants first), the reasons it is safe to book, what's on (large picture
- * cards, filtered by kind), then how to visit (hours with today marked, the
+ * cards), then how to visit (hours with today marked, the
  * address with directions).
  */
 export function StorefrontView() {
@@ -50,7 +50,6 @@ export function StorefrontView() {
   const products = useMemo(() => flow.products.filter((p) => !flow.unlistedIds?.includes(p.id)), [flow.products, flow.unlistedIds]);
   const t = useTranslations("storefront");
   const hours = useVenueHours(location, flow.now);
-  const [group, setGroup] = useState<TypeGroup | "all">("all");
   const [quick, setQuick] = useState<{ product: Product; opener: HTMLElement } | null>(null);
   const [toast, setToast] = useState<{ name: string; key: number } | null>(null);
 
@@ -64,8 +63,7 @@ export function StorefrontView() {
   };
   const confirmAdded = (p: Product) => setToast({ name: p.name, key: Date.now() });
 
-  const groups = GROUP_ORDER.filter((g) => products.some((p) => typeGroup(p.bookingType) === g));
-  const shown = group === "all" ? products : products.filter((p) => typeGroup(p.bookingType) === group);
+  const shown = products;
   const prices = products.map((p) => fromPriceOf(p, flow.now)).filter((x): x is number => x !== null);
   const cheapest = prices.length ? Math.min(...prices) : null;
   const todayRow = location.openingHours.find((h) => h.dayOfWeek === flow.now.getDay());
@@ -151,27 +149,6 @@ export function StorefrontView() {
             <h2 className="text-2xl font-semibold tracking-title sm:text-3xl">{t("whatsOn")}</h2>
             {products.length > 0 && <p className="mt-inline text-base text-muted">{t("count", { count: products.length })}</p>}
           </div>
-          {groups.length > 1 && (
-            <div role="group" aria-label={t("filter.label")} className="-mx-gutter flex gap-tight overflow-x-auto px-gutter pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-              {(["all", ...groups] as const).map((g) => {
-                const on = group === g;
-                return (
-                  <button
-                    key={g}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => setGroup(g)}
-                    className={cn(
-                      "flex min-h-11 shrink-0 items-center rounded-full border px-section text-base font-medium transition-colors duration-quick",
-                      on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg hover:border-fg",
-                    )}
-                  >
-                    {t(`filter.${g}`)}
-                  </button>
-                );
-              })}
-            </div>
-          )}
         </div>
 
         {products.length === 0 ? (
@@ -489,9 +466,6 @@ function ProductCard({
       {openWith(
         <div className="relative">
           <Media src={p.images?.[0]?.url} alt="" bookingType={p.bookingType} seed={p.id} className="aspect-[16/10] w-full" />
-          <span className="absolute left-comfortable top-comfortable rounded-full bg-card px-comfortable py-inline text-xs font-semibold text-fg shadow-card">
-            {t(`filter.${typeGroup(p.bookingType)}`)}
-          </span>
           {inBasket > 0 && (
             <span className="tnum absolute right-comfortable top-comfortable inline-flex items-center gap-inline rounded-full bg-ember-solid px-comfortable py-inline text-xs font-semibold text-on-solid shadow-card">
               <Check size={12} strokeWidth={3} aria-hidden />

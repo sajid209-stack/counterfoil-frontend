@@ -25,7 +25,9 @@ export function sellingBlockers(product: Product, resources: Resource[] = []): B
   if (product.bookingType === "BT-15") {
     if (!product.event?.startsAt) out.push("noDate");
     if (!product.event?.venueName?.trim()) out.push("noVenue");
-    if (!product.tiers.some((t) => t.active && (t.capacity ?? 0) > 0 && t.price >= 0)) out.push("noTicket");
+    /* A ticket with no capacity of its own is unlimited ("How many" left blank),
+       so it can be bought; a capacity of 0 is a ticket with no places. */
+    if (!product.tiers.some((t) => t.active && (t.capacity === undefined || t.capacity > 0) && t.price >= 0)) out.push("noTicket");
     if (product.channels.length === 0) out.push("noChannel");
     return out;
   }

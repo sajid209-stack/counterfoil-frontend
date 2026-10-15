@@ -290,3 +290,85 @@ settings save bar, using the same components as the wizard.
   basket. The six event looks render through the existing event template.
 - Settings → Storefront designs only the venue front page. Its list of featured items
   shows only listed items, and says so.
+
+## 10. Revision 2 (2026-10-15): everything is a booking
+
+Owner review of the first build: no types, no sales column, no preset gallery when adding,
+and one page-design system for every booking, with settings for a countdown. This section
+**supersedes** §4–§6 and §9 where they differ.
+
+### 10.1 The rule
+
+**There is one thing in the Catalog: a booking.** A concert, a planetarium show, a court by
+the hour and a ten-visit pass are all bookings. They differ only in *how people book them*,
+which is an answer inside the booking, not a type on it. Nothing in the Catalog shows,
+filters or groups by type. `BT-xx` codes stay in the data as derived values, as they always
+have (D6).
+
+### 10.2 The list — `/catalog`
+
+Columns: select · **Name** (photo, name, the line under it) · **When** · **Price from** ·
+**Where it's sold** · **Status** · row menu. There is no Type column and no Sales column. Sales
+live on each booking's Overview. Filters: status and where it's sold. There is no type filter.
+
+### 10.3 Adding — `/catalog/new`
+
+**Add booking** opens the wizard directly. There is no chooser page and no preset cards. The
+steps:
+
+1. **Name**: name, the line under it, description, photos.
+2. **When**: first one plain question, *How do people book it?*, as a radio list, with its
+   details opening underneath:
+   - **Any day it's open**: no time to pick. Can be limited per day, or valid for a number of
+     days.
+   - **At set times**: start times on a schedule. Can have a guide per group.
+   - **On a date**: one day or several days in a row, at a place you name.
+   - **By the hour**: rent a field, court, lane or room.
+   - **Time with a person**: an appointment with someone on the team.
+   - *More ways* (a disclosure): a course of several dates · a pack of visits · several
+     bookings sold together.
+3. **Tickets & prices**: the same editor for every booking. A ticket can have a quantity, the
+   days it is good for (on-a-date bookings) and a date when sales stop.
+4. **Where it's sold**: unchanged.
+5. **Page**: §10.5. Skipped when the booking is not online.
+6. **Check**.
+
+Old `/catalog/new/<kind>` addresses redirect to `/catalog/new`. Copying an existing booking is
+the row menu's Duplicate.
+
+### 10.4 The record — `/catalog/<id>`
+
+The same tabs for every booking: Overview · Details · When · Tickets & prices · Where it's
+sold · Page · Rules · For support. The header shows no type. The Overview has one layout for
+everything: at a glance (price from, sold of the total where tickets have quantities, money
+taken from orders), coming up (the next dates or days), its link, and sales by ticket.
+
+### 10.5 The page designer — one system for every booking
+
+- **Look**: seven looks for every booking, named for how they look, not what they are for:
+  Classic · Poster · Floodlit · Clean · Gallery · Journey · Neon. Each shows a small preview.
+  New bookings start on Classic.
+- **Colour**, **cover photo**, **line under the name**.
+- **Countdown** (settings):
+  - Show a countdown: Off · To the first day (on-a-date bookings) · To a date and time you
+    choose.
+  - Label (e.g. "Starts in", "Offer ends in").
+  - Hide it when it reaches zero (on by default).
+  - The countdown is a section that can be placed anywhere in the order.
+- **Sections**: one list for every booking, drawn by every look. About · Highlights · Numbers ·
+  What's included · Good to know · Programme (people and times) · Photos · Video · Questions ·
+  Where · Sponsors · Countdown. The top of the page and the booking panel are fixed. A section
+  with nothing written in it is hidden by default. There is no sample text: a page shows only
+  what the operator wrote, or what the booking already knows.
+
+### 10.6 Contract changes
+
+- `ProductPage.countdown?: { mode: "off" | "start" | "date"; at?: ISODateTime; label?: string;
+  hideAtZero?: boolean }`. Absent means off, or "start" for an on-a-date booking whose page was
+  designed before this.
+- `ProductEvent.kind` becomes optional. It is no longer asked; it only picks a default look for
+  old records.
+- `PageLook` keeps its values (`"standard"` and the six look ids). Only the names shown change.
+- One renderer contract: every look draws every section in `ALL_PAGE_SECTIONS` for any booking,
+  through `pageView(product)`, which works for any booking (dates, venue and "when" are taken
+  from the booking itself when it has no `event`).

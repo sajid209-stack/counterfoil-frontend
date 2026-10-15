@@ -461,7 +461,6 @@
     "noCode": "{code} কোডের কোনো জিনিস দোকানে নেই।"
   },
   "event": {
-    "chip": "ইভেন্ট টিকিট",
     "whichDay": "কোন দিন?",
     "whichTicket": "কোন টিকিট?",
     "dayN": "দিন {n}",
@@ -472,7 +471,10 @@
     "runsDays": "{count} দিন চলবে",
     "pickTickets": "টিকিট বেছে নিন",
     "summary": "{count, plural, one {#টি টিকিট} other {#টি টিকিট}}",
-    "add": "{count, plural, one {#টি টিকিট যোগ করুন} other {#টি টিকিট যোগ করুন}}"
+    "add": "{count, plural, one {#টি টিকিট যোগ করুন} other {#টি টিকিট যোগ করুন}}",
+    "ended": "শেষ",
+    "endedOn": "শেষ · {dates}",
+    "soldOutOn": "বিক্রি শেষ · {dates}"
   },
   "tillSettings": {
     "title": "স্ক্রিন ও ভাষা",

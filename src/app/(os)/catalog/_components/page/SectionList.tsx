@@ -6,6 +6,7 @@ import {
   ArrowDown,
   ArrowUp,
   ChevronDown,
+  CalendarClock,
   Clock,
   Eye,
   EyeOff,
@@ -25,11 +26,10 @@ import {
   Handshake,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Button, StatusPill } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { categoryById, type CategoryId } from "@/lib/events/catalog";
 import type { PageSectionId, Product, ProductPage } from "@/lib/api/types";
-import { canMove, edited, isRequired, keepSample, moveBefore, moveSection, rowsOf, toggleSection } from "./pageOps";
+import { canMove, edited, isRequired, keepSample, moveBefore, moveSection, rowHasSample, rowsOf, sectionFill, toggleCountdownRow, toggleSection } from "./pageOps";
 import { SectionBody, type EditorCtx } from "./SectionEditors";
 
 const ICON: Record<PageSectionId, LucideIcon> = {
@@ -41,7 +41,7 @@ const ICON: Record<PageSectionId, LucideIcon> = {
   included: ListChecks,
   know: Info,
   lineup: Users,
-  schedule: Users,
+  schedule: CalendarClock,
   gallery: LayoutGrid,
   video: Play,
   sponsors: Handshake,
@@ -72,7 +72,6 @@ export function SectionList({
   onEditTickets?: () => void;
 }) {
   const t = useTranslations("catalog.page");
-  const te = useTranslations("events");
   const [open, setOpen] = useState<string>("");
   const [dragId, setDragId] = useState<PageSectionId | null>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -91,9 +90,13 @@ export function SectionList({
     (pick(dir) ?? pick(dir === "up" ? "down" : "up"))?.focus();
   }, [page.sections]);
 
-  const labelOf = (id: PageSectionId) => {
-    if (id === "lineup" && page.look !== "standard") return te(`section.${categoryById(page.look as CategoryId).lineupKey}`);
-    return t(`section.${id}`);
+  const labelOf = (id: PageSectionId) => t(`section.${id}`);
+
+  /* The countdown settings sit above this list; take the operator to them. */
+  const goCountdown = () => {
+    const el = document.getElementById("page-countdown");
+    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    el?.querySelector<HTMLElement>("input[type=radio]:checked")?.focus({ preventScroll: true });
   };
 
   const ctx = (id: PageSectionId): EditorCtx => ({
@@ -103,14 +106,16 @@ export function SectionList({
     onDescription: onDescription ? (v) => { onDescription(v); onPage(edited(page, id, {})); } : undefined,
     onEditDetails,
     onEditTickets,
+    onGoCountdown: goCountdown,
   });
 
   const row = (id: PageSectionId, isShown: boolean) => {
     const name = labelOf(id);
     const Icon = ICON[id];
     const required = isRequired(id);
-    const sample = isShown && !!page.samples?.includes(id);
-    const sub = !isShown ? t("hiddenRow") : id === "hero" ? t("heroRow") : required ? t("alwaysShown") : null;
+    const sample = isShown && rowHasSample(page, id);
+    const fill = sectionFill(id, product, page);
+    const sub = !isShown ? t("hiddenRow") : required ? t("alwaysShown") : sample ? t("sampleRow") : fill === "empty" ? t("empty") : null;
     const up = canMove(page, id, -1);
     const down = canMove(page, id, 1);
     const isOpen = open === id;
@@ -158,9 +163,8 @@ export function SectionList({
             <span className="min-w-0 flex-1">
               <span className={cn("flex flex-wrap items-center gap-x-tight text-sm font-medium", isShown ? "text-fg" : "text-muted")}>
                 {name}
-                {sample && <StatusPill tone="warning">{t("sample")}</StatusPill>}
               </span>
-              {sub && <span className="block text-xs text-muted">{sub}</span>}
+              {sub && <span className="block text-sm text-muted">{sub}</span>}
             </span>
             <ChevronDown size={16} strokeWidth={1.5} aria-hidden className={cn("shrink-0 text-muted transition-transform duration-quick", isOpen && "rotate-180")} />
           </button>
@@ -175,7 +179,7 @@ export function SectionList({
               size="icon"
               aria-label={isShown ? t("hide", { name }) : t("show", { name })}
               title={isShown ? t("hide", { name }) : t("show", { name })}
-              onClick={() => onPage(toggleSection(page, id))}
+              onClick={() => onPage(id === "countdown" ? toggleCountdownRow(page, product) : toggleSection(page, id))}
               className="text-muted"
             >
               {isShown ? <Eye size={16} strokeWidth={1.5} aria-hidden /> : <EyeOff size={16} strokeWidth={1.5} aria-hidden />}
@@ -214,7 +218,7 @@ export function SectionList({
         {isOpen && (
           <div className="flex flex-col gap-section bg-subtle px-comfortable pb-card pt-tight">
             {sample && (
-              <div className="flex flex-wrap items-center justify-between gap-tight rounded-sm bg-warning-wash px-comfortable py-tight">
+              <div className="flex flex-wrap items-center justify-between gap-tight rounded-inner bg-subtle px-comfortable py-tight">
                 <p className="min-w-0 flex-1 text-sm text-fg">{t("sampleNote")}</p>
                 <Button variant="secondary" size="sm" onClick={() => onPage(keepSample(page, id))}>
                   {t("keepSample")}
@@ -222,6 +226,7 @@ export function SectionList({
               </div>
             )}
             {!isShown && <p className="text-sm text-muted">{t("hiddenNote")}</p>}
+            {isShown && fill === "empty" && <p className="text-sm text-muted">{t("emptyNote")}</p>}
             <SectionBody id={id} ctx={ctx(id)} />
           </div>
         )}
@@ -231,9 +236,10 @@ export function SectionList({
 
   return (
     <div className="flex flex-col gap-tight">
-      <h3 className="text-sm font-semibold text-fg">{t("sections")}</h3>
+      <h3 className="text-md font-semibold text-fg">{t("sections")}</h3>
       <p className="text-sm text-muted">{t("sectionsHelp")}</p>
-      <div ref={list} className="overflow-hidden rounded-sm border border-line bg-card">
+      {(page.samples ?? []).some((x) => page.sections.includes(x)) && <p className="text-sm text-muted">{t("samplesNote")}</p>}
+      <div ref={list} className="overflow-hidden rounded-inner border border-line bg-card">
         {shown.map((id) => row(id, true))}
         {hidden.length > 0 && (
           <>

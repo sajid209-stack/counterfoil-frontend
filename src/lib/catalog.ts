@@ -229,9 +229,10 @@ export function bookingUse(p: Product, today: string, days = 7): BookingUse | nu
 }
 
 /**
- * What a booking is, in the operator's words — the catalog's "type" column and
- * the chooser's cards read the same key, so a card and the rows it creates can
- * never be called two different things.
+ * An internal grouping of booking types, kept for the record pages' own copy
+ * (what an empty "next dates" panel says). It is NOT shown, filtered or grouped
+ * by anywhere in the Catalog any more: see `BookingWay` for how a booking is
+ * described to the operator.
  */
 export type BookingKind =
   | "entry"
@@ -281,9 +282,51 @@ export function bookingKindOf(bt: BookingTypeCode): BookingKind {
   }
 }
 
-/** The kinds the chooser offers, in the order it offers them — every kind a
- *  booking can be, so a card's "N in your catalog" and the Bookings tab agree. */
-export const BOOKING_KINDS: Exclude<BookingKind, "event">[] = ["entry", "timed", "tour", "space", "appointment", "course", "pass", "bundle"];
+/**
+ * HOW people book it — the one plain question the add flow asks (docs/catalog.md
+ * §10.3), and the words the list's When column opens with. It is what the
+ * operator sees in place of a type: nothing in the Catalog is labelled, filtered
+ * or grouped by what a booking IS, only by how it is booked, and the BT code
+ * behind it stays derived and never shown.
+ *
+ * - `anyday` — no time to pick (BT-01), limited per day (BT-06) or good for a
+ *   number of days (BT-02).
+ * - `settimes` — start times on a schedule (BT-03), with a guide (BT-09), or a
+ *   seated show (BT-07).
+ * - `ondate` — one day or several, at a place you name (BT-15).
+ * - `byhour` — a field, court, lane or room (BT-04 / BT-05).
+ * - `person` — an appointment (BT-10).
+ * - `course` — a course of several dates (BT-13).
+ * - `pack` — a pack of visits (BT-12, and a field pass, BT-14).
+ * - `combined` — several bookings sold together (BT-08).
+ */
+export type BookingWay = "anyday" | "settimes" | "ondate" | "byhour" | "person" | "course" | "pack" | "combined";
+
+export function bookingWayOf(bt: BookingTypeCode): BookingWay {
+  switch (bt) {
+    case "BT-03":
+    case "BT-09":
+    case "BT-07":
+      return "settimes";
+    case "BT-15":
+      return "ondate";
+    case "BT-04":
+    case "BT-05":
+      return "byhour";
+    case "BT-10":
+      return "person";
+    case "BT-13":
+      return "course";
+    case "BT-12":
+    case "BT-14":
+      return "pack";
+    case "BT-08":
+      return "combined";
+    default:
+      return "anyday";
+  }
+}
+
 
 /** Copy an object without certain keys. Written out rather than destructured
  *  into throwaway names, so that adding a field to a record cannot silently

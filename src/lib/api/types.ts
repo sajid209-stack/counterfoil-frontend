@@ -401,10 +401,11 @@ export type OnlineListing = "listed" | "link";
 
 /** BT-15. */
 export interface ProductEvent {
-  /** The kind of event: picks the default page look, sections and wording. */
-  kind: CategoryId;
-  /** The operator's word for it: "Concert", "Tournament", "Conference". */
-  subtype: string;
+  /** Old records only (docs/catalog.md §10.6): picks a default look for a
+   *  page designed before every booking shared one designer. Never asked. */
+  kind?: CategoryId;
+  /** Old records only: the operator's word for it ("Concert"). Never asked. */
+  subtype?: string;
   /** The first day's opening instant, with its offset. Everything that sorts,
    *  counts down or states when it begins reads this. */
   startsAt: ISODateTime;
@@ -453,8 +454,24 @@ export interface ProductPage {
   organiser?: EventOrganiser;
   sponsors: EventSponsor[];
   /** Sections still showing sample text the operator has not confirmed. A
-   *  page is never published with words nobody chose without saying so. */
+   *  page is never published with words nobody chose without saying so. No
+   *  new page is seeded with sample text (§10.5); old records may carry some. */
   samples?: PageSectionId[];
+  /** The countdown's settings. Absent: off, except an on-a-date booking
+   *  designed before this, which counts to its first day. */
+  countdown?: PageCountdown;
+}
+
+/** A countdown on a booking's page (docs/catalog.md §10.5). */
+export interface PageCountdown {
+  /** Off; to the first day (on-a-date bookings only); or to a moment chosen. */
+  mode: "off" | "start" | "date";
+  /** For "date": when it reaches zero. */
+  at?: ISODateTime;
+  /** What it counts to, in the operator's words: "Starts in", "Offer ends in". */
+  label?: string;
+  /** Hide the countdown once it reaches zero. Default true. */
+  hideAtZero?: boolean;
 }
 
 // ── Location ───────────────────────────────────────────────────────────────

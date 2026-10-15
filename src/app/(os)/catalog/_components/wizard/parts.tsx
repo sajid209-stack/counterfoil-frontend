@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 
 /** The steps of the add wizard. Only the ones that apply to the item in hand
  *  are ever drawn. */
-export type StepKey = "how" | "name" | "when" | "price" | "where" | "page" | "review";
+export type StepKey = "name" | "when" | "price" | "where" | "page" | "review";
 
 /** One line of the ready-to-sell list. */
 export interface ReadyCheck {

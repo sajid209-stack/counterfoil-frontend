@@ -219,7 +219,7 @@ export function TimeInput({
             }
           }}
           onWheel={(e) => { if (draft !== null) { e.preventDefault(); nudge(e.deltaY < 0 ? 1 : -1); } }}
-          className="min-w-0 flex-1 bg-transparent px-comfortable text-base tabular-nums placeholder:text-faint disabled:cursor-not-allowed"
+          className="w-0 min-w-0 flex-1 bg-transparent px-comfortable text-base tabular-nums placeholder:text-faint disabled:cursor-not-allowed"
         />
         {/* Where the caller asked for a list, one control rather than three:
             a chevron that opens every time at the step. Typing still works,

@@ -1,20 +1,12 @@
-"use client";
+import { NewItemPage } from "../_components/wizard/NewItemPage";
 
-import { useTranslations } from "next-intl";
-import { PageShell } from "@/components/ui";
-import { CatalogChooser } from "../_components/CatalogChooser";
-
-/** Add to the catalog: the chooser, on a page of its own. One page, two groups
- *  (what repeats on a schedule, what happens on a date), one card style. */
+/**
+ * `/catalog/new`: "Add booking" opens the wizard directly. There is no chooser
+ * page and no preset cards (docs/catalog.md §10.3): everything the Catalog sells
+ * is a booking, and how people book it is the first question inside it.
+ * Addresses from before this (`/catalog/new/<kind>`, `/catalog/new/booking`,
+ * `/catalog/new/event`) redirect here from next.config.ts.
+ */
 export default function NewCatalogItemPage() {
-  const t = useTranslations("catalog");
-  return (
-    /* The way back is the page's own back link, in the standard header row,
-       rather than a hand-placed anchor with its own line-height and margin. */
-    <PageShell title={t("chooser.title")} description={t("chooser.description")} back={{ href: "/catalog", label: t("title") }}>
-      <div className="pb-hero">
-        <CatalogChooser />
-      </div>
-    </PageShell>
-  );
+  return <NewItemPage />;
 }

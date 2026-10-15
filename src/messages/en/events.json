@@ -1,9 +1,5 @@
 {
-  "title": "Events",
-  "description": "One-time events with their own page, like concerts, tours and exhibitions.",
-  "newTitle": "Add an event",
   "newDescription": "Add the name, date and place. Then set up the page and ticket prices.",
-  "create": "Create event",
   "back": "Back",
   "continue": "Continue",
   "free": "Free",
@@ -13,10 +9,8 @@
   "getTickets": "Get tickets",
   "addToCalendar": "Add to calendar",
   "step": {
-    "categoryTitle": "What kind of event is it?",
     "categoryHelp": "This sets the page's look and colours. You can change them later.",
     "ticketsTitle": "Tickets and prices",
-    "ticketsHelp": "Most events sell better with 2 or 3 ticket types, e.g. Regular and VIP.",
     "designTitle": "Set up the page"
   },
   "category": {
@@ -34,47 +28,6 @@
     "arts": "Exhibitions, fashion shows, cultural nights. A calm look with lots of space.",
     "travel": "Tours, trips, cruises. Big pictures and a day-by-day plan.",
     "nightlife": "Clubs, DJ nights, parties. A dark neon look, lineup and entry rules."
-  },
-  "subtype": {
-    "concert": "Concert",
-    "music": "Live music",
-    "movie": "Film show",
-    "drama": "Theatre",
-    "standup": "Stand-up",
-    "party": "Party",
-    "festival": "Festival",
-    "reunion": "Reunion",
-    "popculture": "Pop culture",
-    "match": "Match",
-    "tournament": "Tournament",
-    "race": "Race",
-    "recreational": "Fun activity",
-    "workshop": "Workshop",
-    "class": "Class",
-    "conference": "Conference",
-    "seminar": "Seminar",
-    "launch": "Launch",
-    "corporate": "Company event",
-    "networking": "Meet-up",
-    "training": "Training",
-    "exhibition": "Exhibition",
-    "fashion": "Fashion show",
-    "cultural": "Cultural show",
-    "installation": "Art installation",
-    "screening": "Film screening",
-    "literary": "Book event",
-    "tour": "Tour",
-    "trip": "Trip",
-    "excursion": "Day trip",
-    "sightseeing": "Sightseeing",
-    "cruise": "Cruise",
-    "package": "Travel package",
-    "club": "Club night",
-    "rave": "Rave",
-    "private": "Private party",
-    "djnight": "DJ night",
-    "themed": "Themed night",
-    "afterparty": "Afterparty"
   },
   "variant": {
     "poster": "Big poster",
@@ -135,14 +88,13 @@
     "fraunces": "Fraunces — soft and old-style"
   },
   "field": {
-    "title": "Event name",
+    "title": "Name",
     "subtitle": "Short line under the name",
     "subtitlePlaceholder": "One night, one stage, three decades of sound",
     "venue": "Venue",
     "venuePlaceholder": "Army Stadium",
     "address": "Address",
     "addressPlaceholder": "Banani, Dhaka 1213",
-    "description": "About this event",
     "descriptionPlaceholder": "What happens, who it is for, and what people should know before they buy."
   },
   "tickets": {
@@ -164,7 +116,6 @@
       "free": "Free entry"
     },
     "summaryEnds": "Stops selling {date}",
-    "keepOne": "An event needs at least one ticket type",
     "potentialUnpriced": "Add prices to see how much you could earn",
     "potentialFree": "All free. No money to collect.",
     "days": {
@@ -183,17 +134,14 @@
     "perksHelp": "Shown on the page under the ticket. Write one thing on each line."
   },
   "error": {
-    "title": "Enter a name for the event.",
     "venue": "Enter the venue.",
     "tierName": "Enter a ticket name.",
     "tierQuantity": "Enter how many tickets to sell."
   },
   "placeholder": {
-    "title": "Your event name",
     "venue": "Your venue",
     "description": "A line or two about what happens and who it is for.",
     "faqQ": "Can I get a refund?",
-    "faqA": "Yes, in full, up to 48 hr before the event.",
     "tier": "Regular"
   },
   "sample": {
@@ -234,12 +182,10 @@
     "mins": "Minutes"
   },
   "stat": {
-    "events": "Events",
     "sold": "Tickets sold",
     "live": "On sale"
   },
   "col": {
-    "event": "Event",
     "when": "When",
     "sold": "Sold",
     "from": "From",
@@ -255,8 +201,6 @@
     "ended": "Ended",
     "archived": "Archived"
   },
-  "emptyTitle": "No events yet",
-  "emptyMessage": "Add an event to give it its own page and tickets.",
   "architect": {
     "title": "Page designer",
     "brand": "Colours and fonts",
@@ -287,7 +231,6 @@
     "videoUrl": "Video link",
     "videoOk": "The link works. The video will show on the page.",
     "videoBad": "This is not a YouTube or Vimeo link. Paste one to show the video.",
-    "sponsorsNote": "Who is supporting the event. Give each one a level, e.g. Main or Partner. The first level shows biggest.",
     "sponsorName": "Sponsor",
     "sponsorTier": "Level",
     "addSponsor": "Add a sponsor",
@@ -304,8 +247,6 @@
     "benefit": "Reason",
     "benefitLine": "One line about it",
     "pairedWith": "With this page style it shows next to {section}. Turn it off here to remove it.",
-    "heroFromDetails": "The name, short line, date and cover picture come from the event details.",
-    "venueFromDetails": "The venue and address come from the event details.",
     "editDetails": "Edit details",
     "sample": "Sample",
     "sampleNote": "This is example text. Change it, hide this part, or keep it.",
@@ -355,7 +296,13 @@
     "allDays": "All days",
     "saves": "Save {amount}",
     "admitsOn": "Good for",
-    "runsDays": "Runs for {count} days"
+    "runsDays": "Runs for {count} days",
+    "included": "What each ticket includes",
+    "know": "Good to know",
+    "nextUp": "Next",
+    "startsIn": "Starts in",
+    "countingDown": "Counting down",
+    "when": "When"
   },
   "defaults": {
     "entertainment": {

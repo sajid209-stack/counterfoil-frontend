@@ -62,32 +62,6 @@ export const sfBtn = {
   link: "inline-flex min-h-11 items-center gap-inline text-base font-semibold text-brand-foreground underline-offset-4 hover:underline",
 };
 
-/* ── Booking groups, for the filter row ─────────────────────────────────── */
-export type TypeGroup = "entry" | "timed" | "space" | "packs" | "events";
-export function typeGroup(bt: BookingTypeCode): TypeGroup {
-  switch (bt) {
-    case "BT-15":
-      return "events";
-    case "BT-04":
-    case "BT-05":
-      return "space";
-    case "BT-03":
-    case "BT-09":
-    case "BT-10":
-    case "BT-07":
-    case "BT-13":
-      return "timed";
-    case "BT-02":
-    case "BT-08":
-    case "BT-12":
-    case "BT-14":
-      return "packs";
-    default:
-      return "entry";
-  }
-}
-export const GROUP_ORDER: TypeGroup[] = ["entry", "timed", "space", "packs", "events"];
-
 export function TypeIcon({ bookingType, size }: { bookingType?: BookingTypeCode; size: number }) {
   const p = { size, strokeWidth: 1.5 };
   switch (bookingType) {

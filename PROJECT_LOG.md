@@ -17543,3 +17543,105 @@ Bangla (173 captures in round 2). Each finding was fixed and checked before the 
 - A guest reaching an item by its link has a one-item basket. Mixing items means using the
   storefront.
 - The `/bookings` and `/events` redirects keep their old `?kind=` query in the address.
+
+## Catalog revision 2: everything is a booking (2026-10-15)
+
+Owner review of the merged catalogue, with two screenshots:
+
+> "no types, no sales, no catalog and no pre sets needed when user add a catalog … every page
+> UI and design customize page system needs to be same type for every catalog, not different
+> for bookings or events … every bookings, events or anything will be in one type and that's
+> booking, and in pages customize system needs settings for countdown."
+
+The decisions are in `docs/catalog.md` §10, which supersedes the earlier screen specs. The plan
+and the contract were written on Opus. The work was built by Sonnet agents with separate file
+ownership: the renderer, the page designer, the add flow, the record page, and two clean-up
+passes. Each was reviewed on Opus against screenshots before the next.
+
+### One rule
+
+**There is one thing in the Catalog: a booking.** A concert, a planetarium show, a court by the
+hour and a ten-visit pass differ only in *how people book them*. That is an answer inside the
+booking, not a type on it. Nothing an operator or a customer sees shows, filters or groups by
+type. BT codes stay as derived data (D6), and only the support tab shows them.
+
+### What changed
+
+- **List.** The Type and Sales columns and the type filter are gone. The columns are Name ·
+  When · Price from · Where it's sold · Status. When is written in words ("At set times",
+  "Every day · 10:00 AM – 5:00 PM", "Sat 24 Oct · Runs 2 days"). The button is **Add booking**.
+- **Adding.** `/catalog/new` opens the wizard directly. The chooser page, the preset cards and
+  the "Copy something you already sell" entry are gone; Duplicate is in the row menu. The old
+  `/catalog/new/<kind>` addresses redirect.
+  - Steps: Name → When → Tickets & prices → Where it's sold → Page → Check.
+  - **When** asks one plain question, *How do people book it?*, as a radio list with details
+    opening underneath:
+    - Any day it's open: can be limited per day, or valid for a number of days.
+    - At set times: can have a guide per group.
+    - On a date: one day or several.
+    - By the hour.
+    - Time with a person.
+    - More ways: a course, a pack of visits, or several bookings sold together.
+  - The BT code is derived from the answer.
+- **One ticket editor** (`_components/tickets/TicketEditor`) for every booking.
+  - Each ticket has a name, a price, and *How many* (blank means no limit).
+  - Under More: what it includes, people per ticket, an age note, when sales stop, a note,
+    most per order, and pay-what-you-want.
+  - Day chips and the all-days saving appear only when a booking runs on several days.
+- **One record** for every booking.
+  - The same eight tabs: Overview · Details · When · Tickets & prices · Where it's sold · Page ·
+    Rules · For support.
+  - No type in the header.
+  - The Overview has one layout: at a glance, coming up, sales by ticket, and its link. Money
+    comes from orders for every booking.
+- **One page designer** for every booking.
+  - Seven looks named for how they look: Classic · Poster · Floodlit · Clean · Gallery ·
+    Journey · Neon.
+  - One section list: Numbers, Highlights, About, What's included, Good to know, Programme
+    (people and times, one row), Photos, Video, Questions, Where, Sponsors, and Countdown.
+  - **Countdown settings:** Off, To the first day (offered only when the booking has one), or
+    To a date and time. A label. Hide at zero.
+  - No sample text anywhere.
+- **One renderer.** Every look draws every section for any booking (`pageView(product)`).
+  - A booking with no dates states its "when" in words and draws no date or countdown it does
+    not have.
+  - Every look books through the same picker.
+- **No type labels for customers.** The storefront's "What's on" type filters and card badges,
+  the Classic page's category chip, and the themed hero's old subtype chip are gone. The
+  behaviour line says how a booking works ("At set times · Starts every 45 min"), not what it
+  is called.
+- **The till.** The "Event tickets" chip is gone. On-a-date bookings are ordinary tiles on the
+  wall: their date on the tile, sold out or ended in words, the day-and-ticket sheet on tap. The
+  counter's own booking list now applies to them.
+- **Fixed on the way:**
+  - An unlimited ticket read "14 of 0 sold".
+  - The schedule builder's number fields overflowed their card on a phone. So did the "Add
+    closed day" row at 320.
+  - The countdown's "already passed" check now uses the demo clock, like its date picker.
+  - 280 dead catalogue message keys were removed.
+
+### Verified
+
+- `tsc`, `lint:tokens` and i18n are clean. `eslint` shows only the documented baseline.
+- The production build passes.
+- **`catalog2-e2e`: 459 checks, all passing.** It was rewritten for revision 2, each old check
+  replaced by its revision-2 equivalent. It covers:
+  - the list without types;
+  - adding with no chooser, and the When question driving three flows;
+  - the same tabs and page designer for three different bookings;
+  - the countdown;
+  - no type labels on the storefront, the booking pages or the till;
+  - the from-price rule, link-only, buying online and at the till, money not rewritten, and the
+    confirmation date.
+- The till: `pos-v2` 38/38 and 36/36, `r3` 25/25.
+- **Full regression (105 runs) on the final build: green.** The route sweeps are clean on all 59 routes ×3, and the phone audit shows hidden 0 · under-44 0 · clipped 0 · errors 0.
+  - The buffer suite and `t12` were ported to the new flow: the When question, and dates on the When tab. Every behaviour assertion was kept.
+  - The port found one real bug, now fixed: the Check step left "N min between bookings" off a time-with-a-person booking.
+  - `cu` waits for the edit dialog to finish opening; it clicked Save during the dialog's rise.
+
+### Open
+
+- The Bangla strings are drafts.
+- How a booking is booked cannot be changed on an existing booking (its BT code would change).
+  The When tab says so and points to Duplicate.
+- The old `/catalog/new/<kind>?type=` redirects keep their query string, which does nothing.

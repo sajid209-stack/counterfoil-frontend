@@ -2,18 +2,17 @@
 
 import { useActiveLocation } from "@/lib/activeLocation";
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, ArrowRight, Check, ChevronUp } from "lucide-react";
-import { Button, FormField, Modal, Notice, useToast } from "@/components/ui";
+import { Button, Checkbox, FormField, Modal, Notice, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
   createLocation,
   createProduct,
   createResourceRecord,
   freeSlugFor,
-  tierToPrice,
+  type BookingTypeCode,
   type Channel,
   type Lifecycle,
   type Location,
@@ -24,31 +23,30 @@ import {
   type Staff,
 } from "@/lib/api";
 import type { PriceTier, ProductPage } from "@/lib/api/types";
-import { bookingKindOf, type BookingKind } from "@/lib/catalog";
+import { bookingWayOf, type BookingWay } from "@/lib/catalog";
 import { formatClock, formatClockRange, formatDay, formatPriceShort } from "@/lib/format";
-import { categoryById, type CategoryId } from "@/lib/events/catalog";
 import { defaultPage } from "@/lib/productPage";
 import { defaultSchedule, DEMO_TODAY, demoNow, isDailyCapped, isSlotBased, needsSchedule, slotTimes, usesBuffer } from "@/lib/schedule";
 import { defaultPolicies } from "@/lib/tax";
-import { BookingSetup, effectiveBuffer, type BookingSetupResult } from "../booking/BookingSetup";
+import { BookingSetup, effectiveBuffer, type BookingSetupResult, type SetupStart } from "../booking/BookingSetup";
 import { ImageUploadField, type FormImage } from "../booking/ImageUploadField";
-import { emptyTier, PriceTiersField, type FormTier } from "../booking/PriceTiersField";
 import { PricingRulesField, type FormPricingRule } from "../booking/PricingRulesField";
 import { ScheduleBufferField } from "../booking/ScheduleBufferField";
 import { ScheduleBuilder } from "../booking/ScheduleBuilder";
 import type { EventContent } from "../event/eventContent";
 import { endsAtOf, shiftDay } from "../event/eventContent";
 import { EventDetails } from "../event/EventDetails";
-import { emptyTier as emptyEventTier, TicketTiers, toTiers, type FormTier as EventFormTier } from "../event/TicketTiers";
 import { PageDesigner } from "../page/PageDesigner";
 import { SellChannels, type OnlineChoice } from "../sell/SellChannels";
+import { TicketEditor } from "../tickets/TicketEditor";
+import { emptyTicket, ticketsToInputs, type TicketRow } from "../tickets/ticketRows";
 import { useCatalogFormat } from "../../_lib/useCatalogFormat";
-import { seedEventPage, slugIsFine, unresolvedSamples, majorToMinor } from "./draft";
-import { PER_THING, presetFor, type WizardKind } from "./kinds";
+import { majorToMinor, slugIsFine } from "./draft";
 import { ChannelLine, Checklist, Missing, ReviewRow, type ReadyCheck, type StepKey } from "./parts";
+import { WaysToBook } from "./WaysToBook";
 
-/** What the event steps hold: the facts a date and a place are made of. The
- *  name, the line under it and the cover belong to the item and its page. */
+/** What an on-a-date booking is made of: the facts a date and a place are. The
+ *  name, the line under it and the cover belong to the booking and its page. */
 interface EventFacts {
   date: string;
   startTime: string;
@@ -59,11 +57,27 @@ interface EventFacts {
   venueAddress: string;
 }
 
+/** The ways whose question is answered by the existing question flows. */
+const SETUP_START: Partial<Record<BookingWay, SetupStart>> = {
+  byhour: "resource",
+  person: "provider",
+  course: "course",
+  pack: "credits",
+  combined: "bundle",
+};
+/** The message that says what a question flow still needs, by the answer it sits under. */
+const SETUP_MISSING: Partial<Record<BookingWay, "resource" | "provider" | "course" | "credits" | "bundle">> = {
+  byhour: "resource",
+  person: "provider",
+  course: "course",
+  pack: "credits",
+  combined: "bundle",
+};
+/** A booking sold per lane, appointment, pack or course starts with one
+ *  Standard price; one sold per person starts with an Adult ticket. */
+const PER_THING: BookingWay[] = ["byhour", "person", "pack", "combined", "course"];
+
 export interface AddWizardProps {
-  /** The chooser card this came from. `booking` is "Not sure?": no kind yet. */
-  kind: WizardKind;
-  /** For an event: the kind of event the card chose. */
-  eventType?: CategoryId | null;
   locations: Location[];
   team: Staff[];
   resources: Resource[];
@@ -72,67 +86,61 @@ export interface AddWizardProps {
 }
 
 /**
- * Add anything to the catalog: one wizard for every kind, events included
- * (docs/catalog.md §5).
+ * Add a booking (docs/catalog.md §10.3). Everything the Catalog sells is one
+ * thing, a booking; it differs only in HOW people book it, which is an answer
+ * inside it rather than a type on it.
  *
- * The steps run in the order the thing is thought about: how it is booked,
- * what it is called, when it runs, what it costs, where it is sold, how its
- * page looks, and a last look at all of it. A step exists only where it means
- * something — an entry ticket has no schedule, an appointment already says how
- * it is booked, and an item that is not sold online has no page.
+ * Name → When → Tickets & prices → Where it's sold → Page → Check. The Page
+ * step is skipped when the booking is not sold online, because no customer will
+ * see one. "When" opens with one plain question, *How do people book it?*, and
+ * the details of the chosen answer open underneath it. The booking type behind
+ * the answer is derived and never shown.
  *
- * Beside the form is the item as it stands and a ready-to-sell list. No button
- * in it is ever greyed out: pressed too early, Continue and Put on sale say what
- * is missing, beside the thing that is missing, and put the cursor there. A
- * disabled button that will not say why is a dead end.
+ * Beside the form is the booking as it stands and a ready-to-sell list. No
+ * button in it is ever greyed out: pressed too early, Continue and Put on sale
+ * say what is missing, beside the thing that is missing, and put the cursor
+ * there. A disabled button that will not say why is a dead end.
  *
- * One record is made, whichever kind: a `Product`. An event is a product whose
- * booking type is BT-15 (when it is, who plays, which days a ticket admits); its
- * page starts from its kind's designed look, with the kind's sample content
- * marked so it must be edited, hidden or kept before the event can go on sale.
+ * One record is made, whichever way it is booked: a `Product`. A booking on a
+ * date is one whose booking type is BT-15 (the day or days, the place); it has no
+ * "kind of event" to answer. Its page starts as the default page, with no sample
+ * text (§10.5).
  */
-export function AddWizard({ kind, eventType = null, locations: initialLocations, team, resources: initialResources, products = [], currency = "BDT" }: AddWizardProps) {
+export function AddWizard({ locations: initialLocations, team, resources: initialResources, products = [], currency = "BDT" }: AddWizardProps) {
   const t = useTranslations("catalog.wizard");
   const ta = useTranslations("catalog.addFlow");
-  const tw = useTranslations("catalog.eventWizard");
-  const te = useTranslations("events");
-  const tc = useTranslations("catalog");
+  const tw = useTranslations("catalog.ways");
   const tf = useTranslations("catalog.fields");
   const tSetup = useTranslations("catalog.setup");
-  const td = useTranslations("catalog.eventDetails");
+  const tk = useTranslations("catalog.tickets");
+  const tc = useTranslations("catalog");
+  const tev = useTranslations("catalog.eventWizard");
+  const te = useTranslations("events");
   const { dur: formatDuration, dayShort } = useCatalogFormat();
   const router = useRouter();
   const toast = useToast();
-  const isEvent = kind === "event";
-  const preset = presetFor(kind);
   const now = useMemo(() => demoNow(), []);
 
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   /** A step-level problem that belongs to no one field — "choose an answer". */
   const [stepError, setStepError] = useState<string | null>(null);
-  /** Put on sale was refused for sample text: the one notice on the Page step turns red. */
-  const [samplesRefused, setSamplesRefused] = useState(false);
 
   // ── what it is ────────────────────────────────────────────────────────────
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<FormImage[]>([]);
-  const [booking, setBooking] = useState<BookingSetupResult | null>(() =>
-    preset.answer
-      ? { bookingType: preset.answer, summary: tSetup(preset.answer === "BT-03" ? "summary.timed" : "summary.guided") }
-      : null,
-  );
-  const evType: CategoryId = eventType ?? "entertainment";
-  const [subtype, setSubtype] = useState("");
 
-  // ── its page, from the start: the line under the name lives in it ────────
-  const [page, setPage] = useState<ProductPage>(() =>
-    isEvent ? seedEventPage(eventType ?? "entertainment", te) : defaultPage({ bookingType: preset.answer ?? "BT-01" }),
-  );
-
-  // ── when ──────────────────────────────────────────────────────────────────
-  const [schedule, setSchedule] = useState<ProductSchedule | null>(() => (preset.answer ? defaultSchedule(preset.answer) : null));
+  // ── how it is booked ──────────────────────────────────────────────────────
+  const [way, setWay] = useState<BookingWay | null>(null);
+  const [limitDay, setLimitDay] = useState(false);
+  const [validOn, setValidOn] = useState(false);
+  const [validDays, setValidDays] = useState("7");
+  const [guided, setGuided] = useState(false);
+  /** The result of the existing question flows (by the hour, a person, a course,
+   *  a pack, a combo) — and, for the simple answers, the one derived from them. */
+  const [booking, setBooking] = useState<BookingSetupResult | null>(null);
+  const [schedule, setSchedule] = useState<ProductSchedule | null>(null);
   const [waitlist, setWaitlist] = useState(false);
   const [ev, setEv] = useState<EventFacts>({
     /* The date is prefilled, not blank. The page preview has to draw SOME day —
@@ -148,15 +156,20 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
     venueAddress: "",
   });
 
+  // ── its page ──────────────────────────────────────────────────────────────
+  /* The page starts as the default for the booking. Until the designer changes
+     it, it follows the way (an on-a-date booking gets its countdown). */
+  const [page, setPage] = useState<ProductPage>(() => defaultPage({ bookingType: "BT-01" }));
+  const [pageTouched, setPageTouched] = useState(false);
+
   // ── what it costs ─────────────────────────────────────────────────────────
-  const [tiers, setTiers] = useState<FormTier[]>(() => [emptyTier(tf(PER_THING.includes(kind) ? "tierStandard" : "tierAdult"))]);
-  const [evTiers, setEvTiers] = useState<EventFormTier[]>(() => [emptyEventTier(te("tickets.namePlaceholder"))]);
+  const [tickets, setTickets] = useState<TicketRow[]>(() => [emptyTicket(tf("tierAdult"))]);
   const [pricingRules, setPricingRules] = useState<FormPricingRule[]>([]);
 
   // ── where it is sold ──────────────────────────────────────────────────────
   const [resources, setResources] = useState<Resource[]>(initialResources);
   const [locations, setLocations] = useState<Location[]>(initialLocations);
-  const [counter, setCounter] = useState(!isEvent);
+  const [counter, setCounter] = useState(true);
   const [online, setOnline] = useState<OnlineChoice>("listed");
   const [typedSlug, setTypedSlug] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[] | null>(null);
@@ -182,104 +195,162 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
     return null;
   };
 
-  /* Choosing how it is booked also sets up its schedule, where it has one —
-     here rather than in an effect that watched `booking`, which rendered once
-     with the new answer and no schedule before correcting itself. A schedule
-     already made is kept when the answer only changes shape within the kind. */
-  const chooseBooking = (next: BookingSetupResult | null) => {
+  // ── the booking type, derived from the answers ────────────────────────────
+  const isEvent = way === "ondate";
+  const daysN = Math.max(0, parseInt(validDays, 10) || 0);
+  /** The booking type the answers add up to, or null while one is still open. */
+  const bookingType: BookingTypeCode | null =
+    way === "anyday" ? (limitDay ? "BT-06" : validOn ? "BT-02" : "BT-01")
+    : way === "settimes" ? (guided ? "BT-09" : "BT-03")
+    : way === "ondate" ? "BT-15"
+    : way ? (booking?.bookingType ?? null)
+    : null;
+
+  /** Take a new answer to how it is booked, and set up the schedule it needs.
+   *  The schedule already made is kept when the answer only changes shape within
+   *  the same kind; `fresh` starts it again (a different way altogether). */
+  const applyBooking = (next: BookingSetupResult | null, fresh = false) => {
     setBooking(next);
     setStepError(null);
-    setSchedule((cur) => (next && needsSchedule(next.bookingType) ? (cur ?? defaultSchedule(next.bookingType)) : null));
+    setSchedule((cur) => {
+      if (!next) return fresh ? null : cur;
+      if (!needsSchedule(next.bookingType)) return null;
+      return fresh ? defaultSchedule(next.bookingType) : (cur ?? defaultSchedule(next.bookingType));
+    });
   };
 
+  /** The answer for the ways that need no question flow. */
+  const simpleResult = (w: BookingWay, o: { limit: boolean; valid: boolean; days: number; guided: boolean }, buffer?: number): BookingSetupResult | null => {
+    if (w === "anyday") {
+      const bt: BookingTypeCode = o.limit ? "BT-06" : o.valid ? "BT-02" : "BT-01";
+      return {
+        bookingType: bt,
+        summary: o.limit ? tSetup("summary.dateCapped") : o.valid ? t("sumValid", { count: o.days }) : tSetup("summary.showUp"),
+        validityDays: o.valid && !o.limit ? o.days : undefined,
+      };
+    }
+    if (w === "settimes") {
+      return { bookingType: o.guided ? "BT-09" : "BT-03", summary: tSetup(o.guided ? "summary.guided" : "summary.timed"), bufferMinutes: buffer };
+    }
+    return null;
+  };
+
+  const rename = (to: BookingWay | null) => {
+    /* Only an untouched first row is renamed: a name somebody typed is theirs. */
+    setTickets((rows) => {
+      if (rows.length !== 1 || rows[0].price !== "" || rows[0].perks !== "") return rows;
+      const was = rows[0].name;
+      const adult = tf("tierAdult");
+      const standard = tf("tierStandard");
+      if (was !== "" && was !== adult && was !== standard) return rows;
+      const want = to && PER_THING.includes(to) ? standard : adult;
+      return was === want ? rows : [{ ...rows[0], name: want }];
+    });
+  };
+
+  const chooseWay = (next: BookingWay) => {
+    if (next === way) return;
+    setWay(next);
+    setErrors({});
+    rename(next);
+    /* Until the designer has changed it, the page follows the answer. */
+    if (!pageTouched) {
+      setPage((cur) => ({ ...defaultPage({ bookingType: next === "ondate" ? "BT-15" : "BT-01" }), tagline: cur.tagline }));
+    }
+    if (next === "anyday" || next === "settimes") {
+      applyBooking(simpleResult(next, { limit: limitDay, valid: validOn, days: daysN, guided }, undefined), true);
+    } else {
+      applyBooking(null, true);
+    }
+  };
+
+  const onAnyday = (patch: Partial<{ limit: boolean; valid: boolean; days: string }>) => {
+    const o = { limit: patch.limit ?? limitDay, valid: patch.valid ?? validOn, days: patch.days ?? validDays };
+    setLimitDay(o.limit);
+    setValidOn(o.valid);
+    setValidDays(o.days);
+    applyBooking(simpleResult("anyday", { limit: o.limit, valid: o.valid, days: parseInt(o.days, 10) || 0, guided }));
+  };
+  const onGuided = (on: boolean) => {
+    setGuided(on);
+    applyBooking(simpleResult("settimes", { limit: limitDay, valid: validOn, days: daysN, guided: on }, booking?.bufferMinutes));
+  };
+
+  /** What the question flows report as they are answered. */
+  const onSetup = (result: BookingSetupResult | null) => applyBooking(result);
+
   // ── which steps this item has ─────────────────────────────────────────────
-  const showHow = !isEvent && !preset.answer;
-  const needsWhen = isEvent || (!!booking && needsSchedule(booking.bookingType));
   const hasPage = online !== "off";
-  const steps: StepKey[] = [
-    ...(showHow ? (["how"] as const) : []),
-    "name",
-    ...(needsWhen ? (["when"] as const) : []),
-    "price",
-    "where",
-    ...(hasPage ? (["page"] as const) : []),
-    "review",
-  ];
-  const [stepKey, setStepKey] = useState<StepKey>(showHow ? "how" : "name");
+  const steps: StepKey[] = ["name", "when", "price", "where", ...(hasPage ? (["page"] as const) : []), "review"];
+  const [stepKey, setStepKey] = useState<StepKey>("name");
   const stepIndex = Math.max(0, steps.indexOf(stepKey));
   /* The one rule the checklist follows: nothing is ticked on the operator's
      behalf. An item is done when its step has been looked at AND what it holds
      is valid — so a default schedule is not "Days and times" until somebody
      has seen it. */
-  const [seen, setSeen] = useState<Set<StepKey>>(() => new Set<StepKey>(showHow ? ["how"] : ["name"]));
+  const [seen, setSeen] = useState<Set<StepKey>>(() => new Set<StepKey>(["name"]));
   const goTo = (key: StepKey) => {
     setStepError(null);
-    setSamplesRefused(false);
     setSeen((cur) => (cur.has(key) ? cur : new Set(cur).add(key)));
     setStepKey(key);
   };
   const go = (i: number) => goTo(steps[Math.max(0, Math.min(steps.length - 1, i))]);
 
   // ── what each step needs ──────────────────────────────────────────────────
+  const hasSchedule = !isEvent && !!bookingType && needsSchedule(bookingType);
   const scheduleValid =
-    isEvent || !needsWhen || !schedule || !booking
+    !hasSchedule || !schedule || !bookingType
       ? true
-      : isDailyCapped(booking.bookingType)
+      : isDailyCapped(bookingType)
         ? (schedule.dailyCapacity ?? 0) > 0 && schedule.openDays.length > 0
-        : schedule.openDays.length > 0 && (!isSlotBased(booking.bookingType) || slotTimes(schedule).length > 0);
+        : schedule.openDays.length > 0 && (!isSlotBased(bookingType) || slotTimes(schedule).length > 0);
+  const validDaysOk = !(way === "anyday" && validOn && !limitDay) || daysN > 0;
 
   const eventWhenErrors = () => {
     const e: Record<string, string> = {};
-    if (!ev.date) e.date = tw("missing.date");
+    if (!ev.date) e.date = tev("missing.date");
     if (!ev.venueName.trim()) e.venueName = te("error.venue");
     const end = endsAtOf(ev);
-    if (end && ev.date && Date.parse(end) <= Date.parse(`${ev.date}T${ev.startTime}:00+06:00`)) e.ends = tw("missing.ends");
+    if (end && ev.date && Date.parse(end) <= Date.parse(`${ev.date}T${ev.startTime}:00+06:00`)) e.ends = tev("missing.ends");
     return e;
   };
   /* A blank price is not a free ticket — it is a price nobody has set. Free is
      a 0, typed, which is what the field's placeholder says. */
-  const eventTicketErrors = () => {
+  const ticketErrors = () => {
     const e: Record<string, string> = {};
-    evTiers.forEach((r, i) => {
-      if (!r.name.trim()) e[i === 0 ? "tierName" : `tiers.${i}.name`] = te("error.tierName");
-      if (r.price.trim() === "") e[`tiers.${i}.price`] = t("missing.tierPrice");
-      if (!r.quantity.trim()) e[i === 0 ? "tierQuantity" : `tiers.${i}.quantity`] = te("error.tierQuantity");
+    if (tickets.length === 0) e.tiers = t("missing.tiers");
+    tickets.forEach((x, i) => {
+      if (!x.name.trim()) e[`tiers.${i}.name`] = t("missing.tierName");
+      if (x.price.trim() === "") e[`tiers.${i}.price`] = t("missing.tierPrice");
     });
     return e;
   };
-  const bookingTierErrors = () => {
-    const e: Record<string, string> = {};
-    if (tiers.length === 0) e.tiers = t("missing.tiers");
-    tiers.forEach((x, i) => {
-      if (!x.name.trim()) e[`tiers.${i}.name`] = t("missing.tierName");
-      if (x.price === "") e[`tiers.${i}.price`] = t("missing.tierPrice");
-    });
-    return e;
+
+  /** The one thing that stops the "When" step, said in words. */
+  const whenProblem = (): string | null => {
+    if (!way) return t("missing.how");
+    if (way === "ondate") return null;
+    if (way === "anyday" && !validDaysOk) return tw("missing.validDays");
+    const flow = SETUP_MISSING[way];
+    if (flow && !booking) return tSetup(`missing.${flow}`);
+    if (!scheduleValid) return t("missing.when");
+    return null;
   };
 
   const eventWhenOk = Object.keys(eventWhenErrors()).length === 0;
-  const priceOk = isEvent ? Object.keys(eventTicketErrors()).length === 0 : Object.keys(bookingTierErrors()).length === 0;
+  const whenOk = isEvent ? eventWhenOk : whenProblem() === null;
+  const priceOk = Object.keys(ticketErrors()).length === 0;
   const venuesNeeded = counter || online === "listed";
   const linkOk = online === "off" || slugIsFine(slug);
   const channelOk = (counter || online !== "off") && (!venuesNeeded || locationIds.length > 0) && linkOk;
-  const samples = isEvent ? unresolvedSamples(page) : [];
-
-  const unpriced = isEvent ? evTiers.find((r) => r.name.trim() && r.price.trim() === "") : tiers.find((x) => x.name.trim() && x.price === "");
+  const unpriced = tickets.find((x) => x.name.trim() && x.price.trim() === "");
 
   const checks: ReadyCheck[] = [
-    ...(showHow ? [{ key: "how", label: t("check.how"), done: seen.has("how") && !!booking, step: "how" as StepKey }] : []),
     { key: "name", label: t("check.name"), done: seen.has("name") && name.trim().length > 0, step: "name" },
-    ...(needsWhen
-      ? [{
-          key: "when",
-          label: isEvent ? ta("check.whenEvent") : t("check.when"),
-          done: seen.has("when") && (isEvent ? eventWhenOk : scheduleValid),
-          step: "when" as StepKey,
-        }]
-      : []),
+    { key: "when", label: isEvent ? ta("check.whenEvent") : t("check.when"), done: seen.has("when") && whenOk, step: "when" },
     {
       key: "price",
-      label: isEvent ? tw("check.tickets") : t("check.price"),
+      label: t("check.price"),
       done: seen.has("price") && priceOk,
       step: "price",
       hint: seen.has("price") && !priceOk ? (unpriced ? t("hint.needsPrice", { name: unpriced.name.trim() }) : t("hint.needsName")) : undefined,
@@ -298,15 +369,7 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
               : ta("hint.link")
           : undefined,
     },
-    ...(hasPage
-      ? [{
-          key: "page",
-          label: isEvent ? tw("check.page") : tw("check.pageBooking"),
-          done: samples.length === 0,
-          step: "page" as StepKey,
-          hint: samples.length > 0 ? tw("hint.samples", { count: samples.length }) : undefined,
-        }]
-      : []),
+    ...(hasPage ? [{ key: "page", label: tev("check.pageBooking"), done: seen.has("page"), step: "page" as StepKey }] : []),
   ];
   const ready = checks.every((c) => c.done);
 
@@ -326,13 +389,12 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
   const validate = (key: StepKey): boolean => {
     const e: Record<string, string> = {};
     let problem: string | null = null;
-    if (key === "how" && !booking) problem = t("missing.how");
     if (key === "name" && !name.trim()) e.name = t("missing.name");
     if (key === "when") {
       if (isEvent) Object.assign(e, eventWhenErrors());
-      else if (!scheduleValid) problem = t("missing.when");
+      else problem = whenProblem();
     }
-    if (key === "price") Object.assign(e, isEvent ? eventTicketErrors() : bookingTierErrors());
+    if (key === "price") Object.assign(e, ticketErrors());
     if (key === "where") {
       if (!counter && online === "off") problem = t("nowhere");
       else if (venuesNeeded && locationIds.length === 0) e.locations = t("missing.location");
@@ -369,31 +431,35 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
 
   // ── the record ────────────────────────────────────────────────────────────
   const startsAt = `${ev.date}T${ev.startTime}:00+06:00`;
-  /** The item as one `Product` input. `preview` fills what is still empty with
-   *  stand-ins, so the page never looks broken mid-wizard; a save never does. */
+  /** The booking as one `Product` input. `preview` fills what is still empty
+   *  with stand-ins, so the page never looks broken mid-wizard; a save never
+   *  does. */
   const assemble = (status: Lifecycle, preview: boolean): ProductInput => {
     const channels: Channel[] = [...(counter ? (["counter"] as Channel[]) : []), ...(online !== "off" ? (["online"] as Channel[]) : [])];
+    const bt: BookingTypeCode = bookingType ?? "BT-01";
+    const rows = tickets
+      .filter((x) => x.name.trim() || preview)
+      .map((x) => (preview && !x.name.trim() ? { ...x, name: tf("tierAdult") } : x));
     const shared = {
       name: name.trim() || (preview ? ta("untitled") : ""),
-      description: description.trim() || (preview && isEvent ? te("placeholder.description") : ""),
+      description: description.trim(),
+      images: images.map(({ id, url, alt }) => ({ id, url, alt })),
       locationIds,
       channels,
       status,
       online: online === "off" ? undefined : online,
       slug: online !== "off" && slugIsFine(slug) ? slug.trim() : undefined,
+      /* The default page for this booking, or what the designer made of it. */
       page,
+      bookingType: bt,
+      tiers: ticketsToInputs(rows),
     };
     if (isEvent) {
-      const rows = toTiers(evTiers).map((x) => (preview ? { ...x, name: x.name || te("placeholder.tier"), quantity: x.quantity || 100 } : x));
       return {
         ...shared,
-        images: [],
-        bookingType: "BT-15",
-        tiers: rows.map(tierToPrice),
+        schedule: null,
         taxClass: "exempt",
         event: {
-          kind: evType,
-          subtype,
           startsAt,
           endsAt: endsAtOf(ev),
           days: ev.days.length > 1 ? ev.days : undefined,
@@ -402,15 +468,10 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
         },
       };
     }
-    const bt = booking?.bookingType ?? preset.answer ?? "BT-01";
     return {
       ...shared,
-      images: images.map(({ id, url, alt }) => ({ id, url, alt })),
-      bookingType: bt,
-      tiers: tiers
-        .filter((x) => x.name.trim() || preview)
-        .map((x) => ({ id: x.id, name: x.name, price: majorToMinor(x.price), maxPerOrder: x.maxPerOrder ? parseInt(x.maxPerOrder, 10) : undefined, admits: parseInt(x.admits, 10) || 1, ageNote: x.ageNote || undefined, active: x.active })),
-      validityDays: booking?.validityDays,
+      validityDays: bt === "BT-02" ? daysN : booking?.validityDays,
+      ...(bt === "BT-02" ? { windowMode: "rolling" as const } : {}),
       schedule: needsSchedule(bt) ? schedule : null,
       resourceIds: booking?.resource?.resourceIds,
       resourceExclusive: booking?.resource?.exclusive,
@@ -418,12 +479,12 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
       flexibleDurations: booking?.resource?.flexibleDurations,
       pricingBasis: booking?.resource?.basis,
       // Flexible: seed the duration engine from the wizard's core; the editor
-      // refines the pricing model (defaults to hourly at the first tier price).
+      // refines the pricing model (defaults to hourly at the first ticket price).
       durationConfig: booking?.resource?.durationCore
         ? {
             ...booking.resource.durationCore,
             pricingModel: "hourly" as const,
-            hourlyRate: majorToMinor(tiers[0]?.price ?? ""),
+            hourlyRate: majorToMinor(tickets[0]?.price ?? ""),
             mustEndByClose: true, walkInRoundMinutes: 15, leadTimeMinutes: 0,
           }
         : undefined,
@@ -459,25 +520,14 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
        record cannot exist without. */
     const need: ReadyCheck | undefined = onSale
       ? checks.find((c) => !c.done)
-      : checks.find((c) => ["how", "name"].includes(c.key) && !c.done) ??
-        (isEvent && !eventWhenOk ? checks.find((c) => c.key === "when") : undefined);
+      : checks.find((c) => c.key === "name" && !c.done) ?? (!whenOk ? checks.find((c) => c.key === "when") : undefined);
     if (need) {
       goTo(need.step);
-      if (need.step === "page") {
-        /* One notice, not two: the one already there turns red, takes focus,
-           and the first sample is brought into view. */
-        setSamplesRefused(true);
-        requestAnimationFrame(() => {
-          document.querySelector<HTMLElement>("[data-samples-notice]")?.focus({ preventScroll: true });
-          const first = samples[0] ? document.querySelector<HTMLElement>(`[data-section="${samples[0]}"]`) : null;
-          (first ?? document.querySelector<HTMLElement>("[data-samples-notice]"))?.scrollIntoView({ block: "center", behavior: "smooth" });
-        });
-      }
-      else if (need.step === "where" && channelOk && !seen.has("where")) setStepError(t("missing.channelConfirm"));
+      if (need.step === "where" && channelOk && !seen.has("where")) setStepError(t("missing.channelConfirm"));
+      else if (need.step === "page") setStepError(null);
       else validate(need.step);
       return;
     }
-    if (!onSale && !isEvent && !booking) { goTo("how"); validate("how"); return; }
     setSaving(true);
     const res = await createProduct(assemble(onSale ? "active" : "inactive", false));
     setSaving(false);
@@ -494,7 +544,7 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
     }
   };
 
-  // ── the event's facts, as EventDetails and TicketTiers read them ─────────
+  // ── an on-a-date booking's facts, as EventDetails reads them ──────────────
   const evContent: EventContent = {
     title: name,
     subtitle: page.tagline ?? "",
@@ -514,9 +564,6 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
     faq: page.faq,
   };
   const patchEvent = (p: Partial<EventContent>) => {
-    if (p.title !== undefined) setName(p.title);
-    if (p.subtitle !== undefined) setPage((pg) => ({ ...pg, tagline: p.subtitle || undefined }));
-    if (p.coverUrl !== undefined) setPage((pg) => ({ ...pg, coverUrl: p.coverUrl || undefined }));
     setEv((cur) => ({
       ...cur,
       ...(p.date !== undefined ? { date: p.date } : {}),
@@ -527,29 +574,21 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
       ...(p.venueName !== undefined ? { venueName: p.venueName } : {}),
       ...(p.venueAddress !== undefined ? { venueAddress: p.venueAddress } : {}),
     }));
+    setStepError(null);
     setErrors((e) => {
       const nextErrors = { ...e };
-      for (const k of Object.keys(p)) delete nextErrors[k.startsWith("end") ? "ends" : k];
+      for (const k of Object.keys(p)) delete nextErrors[k.startsWith("end") ? "ends" : k === "venueName" ? "venueName" : k];
       return nextErrors;
     });
   };
 
   // ── how it reads ──────────────────────────────────────────────────────────
-  const kindNow: BookingKind | null = booking ? bookingKindOf(booking.bookingType) : kind === "booking" || isEvent ? null : kind;
-  const kindLabel = isEvent ? te(`category.${categoryById(evType).key}`) : kindNow ? tc(`type.${kindNow}`) : null;
-  const priced = tiers.filter((x) => x.name.trim() && x.price !== "");
-  const priceLine = isEvent
-    ? (() => {
-        const rows = toTiers(evTiers.filter((r) => r.name.trim() && r.price.trim() !== ""));
-        const cap = toTiers(evTiers).filter((x) => x.name).reduce((n, x) => n + x.quantity, 0);
-        if (!rows.length) return "";
-        const from = Math.min(...rows.map((x) => x.price));
-        return cap > 0 ? tw("fromAndCap", { price: from === 0 ? te("free") : formatPriceShort(from), count: cap.toLocaleString() }) : "";
-      })()
-    : priced.map((x) => `${x.name} ${formatPriceShort(majorToMinor(x.price), currency)}`).join(" · ");
+  const priced = tickets.filter((x) => x.name.trim() && x.price.trim() !== "");
+  const priceLine = priced.map((x) => `${x.name} ${formatPriceShort(majorToMinor(x.price), currency)}`).join(" · ");
 
   /** The schedule, in a sentence: which days, which hours, and how much. */
   const whenLine = (() => {
+    if (!way) return null;
     if (isEvent) {
       if (!ev.date) return null;
       return (
@@ -557,25 +596,26 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
         (ev.days.length > 1 ? ` · ${ta("days", { count: ev.days.length })}` : ev.endDate && ev.endDate !== ev.date ? ` → ${formatDay(ev.endDate, { weekday: true })}` : "")
       );
     }
-    if (!schedule || !booking) return null;
+    if (!booking) return null;
+    const bt = booking.bookingType;
+    /* The time kept free between bookings belongs to the answer, with or
+       without a schedule — an appointment has none, and lost it here. */
+    const buffer = usesBuffer(bt) ? effectiveBuffer(booking) : 0;
+    const bufferLine = buffer > 0 ? t("bufferLine", { time: formatDuration(buffer) }) : "";
+    if (!schedule || !hasSchedule) return [booking.summary, bufferLine].filter(Boolean).join(" · ");
     const days = schedule.openDays.length === 7 ? t("everyDay") : [...schedule.openDays].sort().map((d) => dayShort(d)).join(" ");
     const hours = schedule.startTime && schedule.endTime ? formatClockRange(schedule.startTime, schedule.endTime) : "";
-    const amount = isSlotBased(booking.bookingType)
+    const amount = isSlotBased(bt)
       ? t("sessionsPerDay", { count: slotTimes(schedule).length })
-      : isDailyCapped(booking.bookingType)
+      : isDailyCapped(bt)
         ? t("perDay", { count: schedule.dailyCapacity ?? 0 })
         : "";
-    const each = isSlotBased(booking.bookingType) && schedule.capacityPerSession > 0 ? t("placesEach", { count: schedule.capacityPerSession }) : "";
-    const rhythm = isSlotBased(booking.bookingType)
+    const each = isSlotBased(bt) && schedule.capacityPerSession > 0 ? t("placesEach", { count: schedule.capacityPerSession }) : "";
+    const rhythm = isSlotBased(bt)
       ? t(schedule.sessionMinutes > schedule.slotMinutes ? "everyEachOverlap" : "everyEach", { every: formatDuration(schedule.slotMinutes), each: formatDuration(schedule.sessionMinutes) })
       : "";
-    const buffer = usesBuffer(booking.bookingType) ? effectiveBuffer(booking) : 0;
-    const bufferLine = buffer > 0 ? t("bufferLine", { time: formatDuration(buffer) }) : "";
     return [days, hours, rhythm, amount, each, bufferLine].filter(Boolean).join(" · ");
   })();
-  // Appointments (BT-10) have no "when" row at all — their buffer is shown
-  // beside the "how it's booked" summary instead, where it was set.
-  const bufferMinutes = booking ? effectiveBuffer(booking) : 0;
   const locationNames = locations.filter((l) => locationIds.includes(l.id)).map((l) => l.name);
   /* How far ahead it can be booked and when sales close — set by the booking's
      policies, which open once it is saved; stated here so nobody goes on sale
@@ -588,22 +628,96 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
 
   const editText = t("edit");
   const editLabel = (key: StepKey) => t("editStep", { step: ta(`step.${key}`) });
-  const pageLine = !hasPage ? null : isEvent ? te(`category.${categoryById(page.look === "standard" ? evType : page.look).key}`) : ta("review.pageStandard");
+  const wayTitle = way ? tw(`${way}.title`) : null;
+
+  /** The schedule: days, hours and how many — under the answers that need one. */
+  const scheduleArea =
+    booking && schedule && hasSchedule ? (
+      <div className="flex flex-col gap-major">
+        <ScheduleBuilder
+          bookingType={booking.bookingType}
+          value={schedule}
+          onChange={setSchedule}
+          team={team}
+          bufferMinutes={effectiveBuffer(booking)}
+          bufferSlot={<ScheduleBufferField booking={booking} onChange={setBooking} resources={resources} />}
+        />
+        <p className="text-sm text-muted">{t("windowWithLater", { window: bookingWindow })}</p>
+        <FormField label={t("waitlist")} variant="toggle" checked={waitlist} onChange={(e) => setWaitlist((e.target as HTMLInputElement).checked)} />
+      </div>
+    ) : null;
+
+  /** A question flow (by the hour, a person, a course, a pack, a combo), drawn
+   *  under its answer; the answer is reported as it is made. */
+  const setupFlow = (w: BookingWay) => (
+    <BookingSetup
+      embedded
+      start={SETUP_START[w]}
+      value={booking && bookingWayOf(booking.bookingType) === w ? booking : null}
+      onChange={onSetup}
+      resources={resources}
+      team={team}
+      products={products}
+      onCreateResource={onCreateResource}
+    />
+  );
+
+  const details: Partial<Record<BookingWay, React.ReactNode>> = {
+    anyday: (
+      <>
+        <div className="flex flex-col">
+          <Checkbox checked={limitDay} onCheckedChange={(v) => onAnyday({ limit: v })} label={tw("anyday.limit.title")} description={tw("anyday.limit.helper")} />
+          <Checkbox checked={validOn} onCheckedChange={(v) => onAnyday({ valid: v })} label={tw("anyday.valid.title")} description={tw("anyday.valid.helper")} />
+        </div>
+        {validOn && (
+          <FormField
+            label={tw("anyday.valid.days")}
+            variant="number"
+            name="wiz-valid-days"
+            placeholder="7"
+            value={validDays}
+            error={errors.validDays}
+            help={limitDay ? tw("anyday.valid.limitNote") : undefined}
+            onChange={(e) => { onAnyday({ days: e.target.value }); setErrors((x) => ({ ...x, validDays: "" })); }}
+            className="max-w-xs"
+          />
+        )}
+        {limitDay && scheduleArea}
+      </>
+    ),
+    settimes: (
+      <>
+        <Checkbox checked={guided} onCheckedChange={onGuided} label={tw("settimes.guided.title")} description={tw("settimes.guided.helper")} />
+        {scheduleArea}
+      </>
+    ),
+    ondate: (
+      <EventDetails
+        categoryId="entertainment"
+        content={evContent}
+        onContent={patchEvent}
+        errors={errors}
+        show={["when", "where"]}
+        scopedTickets={tickets.filter((r) => r.dayIds.length > 0).length}
+        onUntieTickets={() => setTickets((rows) => rows.map((r) => (r.dayIds.length ? { ...r, dayIds: [] } : r)))}
+      />
+    ),
+    byhour: (
+      <>
+        {setupFlow("byhour")}
+        {scheduleArea}
+      </>
+    ),
+    person: setupFlow("person"),
+    course: setupFlow("course"),
+    pack: setupFlow("pack"),
+    combined: setupFlow("combined"),
+  };
 
   return (
     <div className="grid gap-major pb-[calc(9rem+env(safe-area-inset-bottom))] md:pb-hero lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="flex min-w-0 flex-col gap-section">
-        {/* What this is, and the way back to choosing something else — the one
-            route back; the breadcrumb above it is the other. */}
-        {(kindLabel || kind === "booking") && (
-          <div className="flex flex-wrap items-center gap-tight text-sm">
-            <span className="text-muted">{t("adding")}</span>
-            <span className="rounded-full bg-muted-wash px-comfortable py-0.5 font-medium text-fg">{kindLabel ?? ta("notSure")}</span>
-            <Link href="/catalog/new" className="inline-flex min-h-11 items-center font-medium text-brand-foreground underline-offset-2 hover:underline md:min-h-0">{t("changeKind")}</Link>
-          </div>
-        )}
-
-        {/* On a phone the steps are a sentence and a bar, not seven pills that
+        {/* On a phone the steps are a sentence and a bar, not six pills that
             wrap onto two lines. */}
         <div className="flex flex-col gap-inline sm:hidden">
           <p className="text-sm text-muted">
@@ -648,8 +762,8 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
             other step is one card with its question on top. */}
         <div className={cn(stepKey !== "page" && "card-surface p-card")}>
           <div className="mb-section">
-            <h2 className="text-md font-semibold text-fg">{ta(stepKey === "when" && isEvent ? "title.whenEvent" : stepKey === "price" && isEvent ? "title.priceEvent" : `title.${stepKey}`)}</h2>
-            <p className="mt-inline text-sm text-muted">{ta(stepKey === "when" && isEvent ? "help.whenEvent" : stepKey === "price" && isEvent ? "help.priceEvent" : `help.${stepKey}`)}</p>
+            <h2 className="text-md font-semibold text-fg">{ta(`title.${stepKey}`)}</h2>
+            <p className="mt-inline text-sm text-muted">{ta(`help.${stepKey}`)}</p>
           </div>
 
           {stepError && (
@@ -659,31 +773,13 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
             </p>
           )}
 
-          {stepKey === "how" && (
-            <BookingSetup
-              value={booking}
-              onChange={chooseBooking}
-              resources={resources}
-              team={team}
-              products={products}
-              onCreateResource={onCreateResource}
-              start={preset.start}
-            />
-          )}
-
           {stepKey === "name" && (
-            <div className="grid gap-section sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
               <FormField
                 label={t("name")}
                 name="wiz-name"
                 required
-                placeholder={t("namePlaceholderEg", {
-                  example: isEvent
-                    ? td(`example.${categoryById(evType).key}`)
-                    : kindNow
-                      ? tc(`chooser.booking.${kindNow}.examples`).split(",")[0].trim().replace(/^./, (c) => c.toUpperCase())
-                      : t("namePlaceholder"),
-                })}
+                placeholder={t("namePlaceholderEg", { example: t("namePlaceholder") })}
                 value={name}
                 error={errors.name}
                 onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((x) => ({ ...x, name: "" })); }}
@@ -693,72 +789,40 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
                 label={ta("summary")}
                 name="wiz-summary"
                 help={ta("summaryHelp")}
-                placeholder={t("namePlaceholderEg", { example: isEvent ? td("subtitleExample") : ta("summaryExample") })}
+                placeholder={t("namePlaceholderEg", { example: ta("summaryExample") })}
                 value={page.tagline ?? ""}
                 onChange={(e) => setPage((pg) => ({ ...pg, tagline: e.target.value || undefined }))}
                 className="sm:col-span-2"
               />
-              {isEvent && (
-                <>
-                  <FormField
-                    label={td("kind")}
-                    variant="select"
-                    help={td("kindHelp")}
-                    value={subtype}
-                    onChange={(e) => setSubtype(e.target.value)}
-                    options={[{ value: "", label: td("kindNone") }, ...categoryById(evType).subtypes.map((s) => ({ value: s, label: te(`subtype.${s}`) }))]}
-                  />
-                </>
-              )}
               <FormField label={t("description")} variant="textarea" placeholder={t("descriptionPlaceholder")} value={description} onChange={(e) => setDescription(e.target.value)} className="sm:col-span-2" />
-              <div className="sm:col-span-2">
-                {isEvent ? (
-                  <EventDetails categoryId={evType} content={evContent} onContent={patchEvent} errors={errors} show={["cover"]} />
-                ) : (
-                  <ImageUploadField images={images} onChange={setImages} />
-                )}
+              <div className="flex flex-col gap-inline sm:col-span-2">
+                <ImageUploadField images={images} onChange={setImages} />
+                <p className="text-sm text-muted">{t("photoHelp")}</p>
               </div>
             </div>
           )}
 
-          {stepKey === "when" && isEvent && (
-            <EventDetails
-              categoryId={evType}
-              content={evContent}
-              onContent={patchEvent}
-              errors={errors}
-              show={["when", "where"]}
-              scopedTickets={evTiers.filter((r) => r.dayIds.length > 0).length}
-              onUntieTickets={() => setEvTiers((rows) => rows.map((r) => (r.dayIds.length ? { ...r, dayIds: [] } : r)))}
-            />
-          )}
-
-          {stepKey === "when" && !isEvent && booking && schedule && (
-            <div className="flex flex-col gap-major">
-              <ScheduleBuilder
-                bookingType={booking.bookingType}
-                value={schedule}
-                onChange={setSchedule}
-                team={team}
-                bufferMinutes={effectiveBuffer(booking)}
-                bufferSlot={<ScheduleBufferField booking={booking} onChange={setBooking} resources={resources} />}
-              />
-              <p className="text-sm text-muted">{t("windowWithLater", { window: bookingWindow })}</p>
-              <FormField label={t("waitlist")} variant="toggle" checked={waitlist} onChange={(e) => setWaitlist((e.target as HTMLInputElement).checked)} />
-            </div>
+          {stepKey === "when" && (
+            <WaysToBook value={way} onChange={chooseWay} details={details} invalid={!!stepError && !way} aria-label={ta("title.when")} />
           )}
 
           {stepKey === "price" && (
-            isEvent ? (
-              <TicketTiers rows={evTiers} onChange={setEvTiers} errors={errors} days={ev.days} />
-            ) : (
-              <div className="flex flex-col gap-major">
-                <PriceTiersField tiers={tiers} onChange={setTiers} errors={errors} currency={currency} heading={false} />
-                {needsWhen && (
-                  <PricingRulesField rules={pricingRules} onChange={setPricingRules} currency={currency} basePriceMajor={tiers[0]?.price ?? ""} dayStart={schedule?.startTime} dayEnd={schedule?.endTime} />
-                )}
-              </div>
-            )
+            <div className="flex flex-col gap-major">
+              <TicketEditor
+                rows={tickets}
+                onChange={(rows) => {
+                  setTickets(rows);
+                  setErrors((e) => (Object.keys(e).length ? {} : e));
+                }}
+                errors={errors}
+                currency={currency}
+                days={isEvent ? ev.days : []}
+                totals
+              />
+              {!isEvent && hasSchedule && (
+                <PricingRulesField rules={pricingRules} onChange={setPricingRules} currency={currency} basePriceMajor={tickets[0]?.price ?? ""} dayStart={schedule?.startTime} dayEnd={schedule?.endTime} />
+              )}
+            </div>
           )}
 
           {stepKey === "where" && (
@@ -780,23 +844,14 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
           )}
 
           {stepKey === "page" && (
-            <div className="flex flex-col gap-section">
-              {samples.length > 0 && (
-                <div data-samples-notice tabIndex={-1} className="outline-none">
-                  <Notice tone={samplesRefused ? "danger" : "warning"} size="sm">
-                    {tw("hint.samples", { count: samples.length })}
-                  </Notice>
-                </div>
-              )}
-              <PageDesigner
-                product={draftProduct()}
-                page={page}
-                onPage={setPage}
-                onEditDetails={() => goTo("name")}
-                onEditTickets={() => goTo("price")}
-                onDescription={setDescription}
-              />
-            </div>
+            <PageDesigner
+              product={draftProduct()}
+              page={page}
+              onPage={(p) => { setPage(p); setPageTouched(true); }}
+              onEditDetails={() => goTo("name")}
+              onEditTickets={() => goTo("price")}
+              onDescription={setDescription}
+            />
           )}
 
           {/* The review is the whole item, one row per step, each with the way
@@ -805,46 +860,30 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
           {stepKey === "review" && (
             <div className="flex flex-col">
               <h3 className="mb-tight break-words text-xl font-semibold text-fg">{name || ta("untitled")}</h3>
-              {showHow && (
-                <ReviewRow label={ta("row.how")} onEdit={() => goTo("how")} editText={editText} editLabel={editLabel("how")}>
-                  {booking?.summary ?? <Missing>{t("check.how")}</Missing>}
-                  {/* A kind with no "when" step (an appointment) still shows its
-                      buffer — it was set here, so it reads here too. */}
-                  {!needsWhen && bufferMinutes > 0 && <span className="block text-muted">{t("bufferLine", { time: formatDuration(bufferMinutes) })}</span>}
-                </ReviewRow>
-              )}
               <ReviewRow label={ta("row.name")} onEdit={() => goTo("name")} editText={editText} editLabel={editLabel("name")}>
                 {name.trim() ? (
                   <>
                     <span className="block font-medium">{name}</span>
                     {page.tagline && <span className="block text-muted">{page.tagline}</span>}
-                    <span className="block text-muted">
-                      {isEvent ? (page.coverUrl ? ta("review.cover") : ta("review.noCover")) : images.length ? t("photos", { count: images.length }) : t("noPhoto")}
-                    </span>
+                    <span className="block text-muted">{images.length ? t("photos", { count: images.length }) : t("noPhoto")}</span>
                   </>
                 ) : (
                   <Missing>{t("check.name")}</Missing>
                 )}
               </ReviewRow>
-              {needsWhen && (
-                <ReviewRow label={ta("row.when")} onEdit={() => goTo("when")} editText={editText} editLabel={editLabel("when")}>
-                  {isEvent ? (
-                    eventWhenOk && whenLine ? (
-                      <>
-                        <span className="block">{whenLine}</span>
-                        <span className="block text-muted">{[ev.venueName.trim(), ev.venueAddress.trim()].filter(Boolean).join(" · ")}</span>
-                      </>
-                    ) : (
-                      <Missing>{ta("check.whenEvent")}</Missing>
-                    )
-                  ) : scheduleValid && whenLine ? (
-                    whenLine
-                  ) : (
-                    <Missing>{t("check.when")}</Missing>
-                  )}
-                  {!isEvent && waitlist && <span className="block text-muted">{t("waitlistOn")}</span>}
-                </ReviewRow>
-              )}
+              <ReviewRow label={ta("row.when")} onEdit={() => goTo("when")} editText={editText} editLabel={editLabel("when")}>
+                {whenOk && wayTitle ? (
+                  <>
+                    <span className="block font-medium">{wayTitle}</span>
+                    {guided && way === "settimes" && <span className="block text-muted">{tw("settimes.guided.title")}</span>}
+                    {whenLine && <span className="block text-muted">{whenLine}</span>}
+                    {isEvent && ev.venueName.trim() && <span className="block text-muted">{[ev.venueName.trim(), ev.venueAddress.trim()].filter(Boolean).join(" · ")}</span>}
+                    {waitlist && !isEvent && <span className="block text-muted">{t("waitlistOn")}</span>}
+                  </>
+                ) : (
+                  <Missing>{wayTitle ? (isEvent ? ta("check.whenEvent") : t("check.when")) : t("missing.how")}</Missing>
+                )}
+              </ReviewRow>
               {!isEvent && (
                 <ReviewRow label={t("row.window")}>
                   <span className="block">{bookingWindow}</span>
@@ -852,25 +891,16 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
                 </ReviewRow>
               )}
               <ReviewRow label={ta("row.price")} onEdit={() => goTo("price")} editText={editText} editLabel={editLabel("price")}>
-                {isEvent ? (
-                  priceOk ? (
-                    <span className="flex flex-col gap-0.5">
-                      {toTiers(evTiers).map((x, i) => (
-                        <span key={i} className="flex items-baseline justify-between gap-section">
-                          <span>{x.name}<span className="text-muted"> · {tw("qty", { count: x.quantity })}</span></span>
-                          <span className="tabular-nums">{x.price === 0 ? te("free") : formatPriceShort(x.price)}</span>
-                        </span>
-                      ))}
-                    </span>
-                  ) : (
-                    <Missing>{tw("check.tickets")}</Missing>
-                  )
-                ) : priced.length ? (
+                {priceOk && priced.length ? (
                   <span className="flex flex-col gap-0.5">
-                    {priced.map((x, i) => (
-                      <span key={i} className="flex items-baseline justify-between gap-section">
-                        <span>{x.name}{x.ageNote ? <span className="text-muted"> · {x.ageNote}</span> : null}</span>
-                        <span className="tabular-nums">{formatPriceShort(majorToMinor(x.price), currency)}</span>
+                    {priced.map((x) => (
+                      <span key={x.id} className="flex items-baseline justify-between gap-section">
+                        <span>
+                          {x.name}
+                          {x.quantity ? <span className="text-muted"> · {tk("available", { count: parseInt(x.quantity, 10) || 0 })}</span> : null}
+                          {x.ageNote ? <span className="text-muted"> · {x.ageNote}</span> : null}
+                        </span>
+                        <span className="tabular-nums">{majorToMinor(x.price) === 0 ? tc("free") : formatPriceShort(majorToMinor(x.price), currency)}</span>
                       </span>
                     ))}
                     {pricingRules.some((r) => r.price !== "") && (
@@ -893,8 +923,8 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
               <ReviewRow label={ta("row.page")} onEdit={hasPage ? () => goTo("page") : undefined} editText={editText} editLabel={editLabel("page")}>
                 {hasPage ? (
                   <span className="flex flex-col gap-0.5">
-                    <span>{pageLine}</span>
-                    {isEvent && samples.length > 0 ? <Missing>{tw("hint.samples", { count: samples.length })}</Missing> : <span className="text-muted">{ta("review.pageSections", { count: page.sections.length })}</span>}
+                    <span>{ta("review.pageStandard")}</span>
+                    <span className="text-muted">{ta("review.pageSections", { count: page.sections.length })}</span>
                   </span>
                 ) : (
                   <span className="text-muted">{ta("rail.noPage")}</span>
@@ -952,16 +982,14 @@ export function AddWizard({ kind, eventType = null, locations: initialLocations,
       </div>
 
       {/* The item as it stands, and what stands between it and the counter. */}
-      <aside className="hidden h-fit lg:sticky lg:top-section lg:block" aria-label={isEvent ? tw("summaryTitle") : t("summaryTitle")}>
+      <aside className="hidden h-fit lg:sticky lg:top-section lg:block" aria-label={t("summaryTitle")}>
         <div className="card-surface flex flex-col gap-section p-card">
           <div>
-            <p className="text-sm font-medium text-muted">{isEvent ? tw("summaryTitle") : t("summaryTitle")}</p>
+            <p className="text-sm font-medium text-muted">{t("summaryTitle")}</p>
             <p className={cn("mt-inline break-words text-md font-semibold leading-snug", !name.trim() && "text-muted")}>{name.trim() || ta("untitled")}</p>
-            {kindLabel && <p className="mt-0.5 text-sm text-muted">{kindLabel}</p>}
-            {!isEvent && booking && <p className="mt-tight text-sm leading-snug">{booking.summary}</p>}
-            {isEvent && seen.has("when") && whenLine && <p className="mt-tight text-sm">{whenLine}</p>}
+            {wayTitle && <p className="mt-0.5 text-sm text-muted">{wayTitle}</p>}
+            {seen.has("when") && whenLine && <p className="mt-tight text-sm leading-snug">{whenLine}</p>}
             {isEvent && ev.venueName.trim() && <p className="text-sm text-muted">{ev.venueName.trim()}</p>}
-            {!isEvent && bufferMinutes > 0 && <p className="mt-tight text-sm text-muted">{t("bufferLine", { time: formatDuration(bufferMinutes) })}</p>}
             {priceLine && <p className="mt-tight text-sm tabular-nums">{priceLine}</p>}
           </div>
           <Checklist checks={checks} reachable={(step) => seen.has(step)} onGo={goTo} ready={ready} noPage={!hasPage} />

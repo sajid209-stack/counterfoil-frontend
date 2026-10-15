@@ -10,7 +10,7 @@ import { formatDuration } from "@/lib/duration";
 import { productMinutes } from "@/lib/storefront/facts";
 import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
 import type { BasketLine } from "@/lib/storefront/basket";
-import { Media, typeGroup } from "../sf";
+import { Media } from "../sf";
 import { BookingPicker } from "./BookingPicker";
 
 const FOCUSABLE =
@@ -180,7 +180,6 @@ export function QuickAddSheet({
             <div className="min-w-0 flex-1">
               <h2 className="break-words text-lg font-semibold leading-snug">{product.name}</h2>
               <p className="mt-inline flex flex-wrap items-center gap-x-comfortable text-base text-muted">
-                <span>{t(`filter.${typeGroup(product.bookingType)}`)}</span>
                 {minutes !== null && (
                   <span className="inline-flex items-center gap-inline">
                     <Clock size={14} strokeWidth={1.75} aria-hidden />

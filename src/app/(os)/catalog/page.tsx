@@ -1,33 +1,27 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   AlertTriangle,
   Archive,
-  Briefcase,
   CalendarOff,
   Clock,
   Copy,
-  Disc3,
   Eye,
   EyeOff,
   Globe,
   LayoutGrid,
   Link2,
-  Music,
-  Palette,
   Pencil,
   Plus,
   Power,
   PowerOff,
   RotateCcw,
-  Ship,
   Store,
   Trash2,
-  Trophy,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -60,9 +54,7 @@ import {
   deleteEvent,
   duplicateEvent,
   dayCountOf,
-  eventTaken,
   runsOverDays,
-  listBookings,
   listProducts,
   listResources,
   listStaff,
@@ -72,25 +64,19 @@ import {
   type Product,
 } from "@/lib/api";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
-import { categoryById } from "@/lib/events/catalog";
-import { templateFontVars } from "@/lib/events/fonts";
 import { formatClockOf, formatClockRange, formatDay, formatPriceShort } from "@/lib/format";
 import { DEMO_TODAY, demoNow } from "@/lib/schedule";
 import { slugOf } from "@/lib/api/products";
 import type { Blocker, SellingWarning } from "@/lib/sellable";
 import {
-  BOOKING_KINDS,
-  bookingKindOf,
-  bookingUse,
+  bookingWayOf,
   eventFill,
   needsAttention,
   productCopy,
   productItem,
-  type BookingKind,
   type CatalogItem,
   type CatalogState,
 } from "@/lib/catalog";
-import { CatalogChooser } from "./_components/CatalogChooser";
 import { copyText, itemUrl, useOrigin } from "./_components/record/parts";
 
 /* A catalog is scanned, not paged through: fifty rows is a whole venue's
@@ -98,10 +84,6 @@ import { copyText, itemUrl, useOrigin } from "./_components/record/parts";
    twenty-six across three. */
 const PAGE_SIZE = 50;
 
-/** The Type filter: every kind of booking, or events. There are no Bookings /
- *  Events views any more — they taught the split the catalog no longer has. */
-type TypeFilter = "all" | Exclude<BookingKind, "event"> | "event";
-const TYPE_FILTERS: TypeFilter[] = ["all", ...BOOKING_KINDS, "event"];
 /** Where it's sold, as the filter names it. "none" is Not online. */
 type WhereFilter = "storefront" | "link" | "counter" | "none";
 const WHERE_FILTERS: WhereFilter[] = ["storefront", "link", "counter", "none"];
@@ -118,62 +100,38 @@ const STATE_TONE: Record<CatalogState, PillTone> = {
   ended: "neutral",
   archived: "neutral",
 };
-/** Each event category's glyph, for a row that has no cover image. */
-const EVENT_ICON: Record<string, LucideIcon> = {
-  entertainment: Music,
-  sports: Trophy,
-  business: Briefcase,
-  arts: Palette,
-  travel: Ship,
-  nightlife: Disc3,
-};
 
 export default function CatalogPage() {
-  // The tab lives in the URL (`?kind=events`), so the old /events and
-  // /bookings addresses land on the view they always showed.
-  return (
-    <Suspense>
-      <Catalog />
-    </Suspense>
-  );
+  return <Catalog />;
 }
 
 /**
  * The catalog: everything the operator sells, in one list.
  *
- * Bookings and Events were two features, and "what do we sell?" had half its
- * answer in each. This is one list, read in one vocabulary (`lib/catalog`):
- * a state that means the same thing for a lane and for a concert, a type
- * column in the operator's words, and one row menu and one bulk bar that each
- * do the right thing to whichever kind they are pointed at.
+ * There is one thing in the Catalog: a booking (docs/catalog.md §10.1). It is
+ * read in one vocabulary (`lib/catalog`) — a status that means the same for a
+ * lane and for a concert, a When in words, a Price from — and nothing in it
+ * shows, filters or groups by type. Columns: select · Name · When · Price from ·
+ * Where it's sold · Status · row menu (§10.2). Sales live on each booking's
+ * Overview, not here.
  *
- * The kinds stay one click apart as views — All · Bookings · Events — because
- * the people who used each list for months should find it where their hands
- * expect it. State is a filter under the views, counted, so "what needs me?"
- * is a glance rather than a search.
+ * Filters are status and where it's sold, behind the one Filters button;
+ * "what needs me?" is a status facet, so it is a glance rather than a search.
  */
 function Catalog() {
   const t = useTranslations("catalog");
   const subtitle = useBehaviourSubtitle();
   const tp = useTranslations("products");
   const te = useTranslations("events");
+  const tw = useTranslations("catalog.ways");
   const router = useRouter();
-  const params = useSearchParams();
   const toast = useToast();
   const compact = !useMediaQuery(MD, true);
-  /* Below 1280 the Type and When columns would squeeze the name to a few
-     letters a line, so they step out and the name carries the type instead. */
+  /* Below 1280 the When column would squeeze the name to a few letters a line,
+     so it steps out and the name's second line carries it instead. */
   const xl = useMediaQuery(XL);
   const now = useMemo(() => demoNow(), []);
 
-  /* The type lives in the address (`?type=tour`), so a filtered list is a link.
-     The old `?kind=events` from before the views went still lands on events. */
-  const typeParam = params.get("type") ?? (params.get("kind") === "events" ? "event" : null);
-  const type: TypeFilter = TYPE_FILTERS.includes(typeParam as TypeFilter) ? (typeParam as TypeFilter) : "all";
-  const setType = (next: TypeFilter) => {
-    setPage(1);
-    router.replace(next === "all" ? "/catalog" : `/catalog?type=${next}`, { scroll: false });
-  };
   const origin = useOrigin();
 
   const [search, setSearch] = useState("");
@@ -192,33 +150,9 @@ function Catalog() {
   );
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
   const teamQ = useApiQuery(() => listStaff({ pageSize: 100 }), []);
-  const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), [reloadKey]);
 
   const resources = useMemo(() => resourcesQ.data?.data ?? [], [resourcesQ.data]);
   const team = useMemo(() => teamQ.data?.data ?? [], [teamQ.data]);
-
-  /* What each booking has sold ahead of today — the fallback for a booking
-     with no capacity to draw a bar against. Counted by the slot's own date: a
-     booking carries no date of its own sale, and the demand still to come is
-     the figure a manager acts on. */
-  const recent = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const b of bookingsQ.data?.data ?? []) {
-      if (b.status !== "confirmed" || b.slotStart.slice(0, 10) < DEMO_TODAY) continue;
-      m.set(b.productId, (m.get(b.productId) ?? 0) + 1);
-    }
-    return m;
-  }, [bookingsQ.data]);
-
-  /* How full each booking's next week is — the same bar an event's fill draws,
-     so a lane and a concert can be compared down one column. */
-  const use = useMemo(() => {
-    const m = new Map<string, ReturnType<typeof bookingUse>>();
-    for (const p of productsQ.data?.data ?? []) m.set(p.id, bookingUse(p, DEMO_TODAY));
-    return m;
-    // Bookings live in the mock store the helper reads; a reload is what moves them.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productsQ.data, bookingsQ.data]);
 
   /* One list, one record: an event is a BT-15 product, so it arrives with the
      rest and `productItem` reads it as an event row. Fetching events apart and
@@ -232,16 +166,9 @@ function Catalog() {
 
   // ── filtering ─────────────────────────────────────────────────────────────
   const q = search.trim().toLowerCase();
-  const typeLabel = (i: CatalogItem) =>
-    i.product ? t(`type.${bookingKindOf(i.product.bookingType)}`) : t("type.event", { category: te(`category.${categoryById(i.event!.categoryId).key}`) });
-  /** The type in one short line: a booking's kind, an event's category —
-   *  the date beside it already says it happens once. */
-  const typeShort = (i: CatalogItem) =>
-    i.product ? t(`type.${bookingKindOf(i.product.bookingType)}`) : te(`category.${categoryById(i.event!.categoryId).key}`);
   const matchesSearch = (i: CatalogItem) =>
     !q ||
     i.name.toLowerCase().includes(q) ||
-    typeLabel(i).toLowerCase().includes(q) ||
     (i.event?.venueName ?? "").toLowerCase().includes(q) ||
     (i.product?.description ?? "").toLowerCase().includes(q);
   const inFacet = (i: CatalogItem, f: Facet) => (f === "attention" ? needsAttention(i) : i.state === f);
@@ -249,8 +176,6 @@ function Catalog() {
    *  lists already followed, and what makes Archive safe rather than a
    *  disappearance. */
   const visibleByState = (i: CatalogItem) => (states.length ? states.some((f) => inFacet(i, f)) : i.state !== "archived");
-  const ofType = (i: CatalogItem, k: TypeFilter) =>
-    k === "all" || (k === "event" ? i.kind === "event" : i.product !== undefined && bookingKindOf(i.product.bookingType) === k);
   /** Where it's sold: any of the chosen answers. Not online means neither the
    *  storefront nor its link — an item sold only at the counter, or nowhere. */
   const inWhere = (i: CatalogItem, w: WhereFilter) =>
@@ -258,13 +183,9 @@ function Catalog() {
   const wheresOk = (i: CatalogItem) => wheres.length === 0 || wheres.some((w) => inWhere(i, w));
 
   const base = items.filter(matchesSearch).filter(wheresOk);
-  /* How many of each type there are under the other filters, so the dropdown
-     says what it would show before it is opened. */
-  const typeCounts = Object.fromEntries(TYPE_FILTERS.map((k) => [k, base.filter((i) => ofType(i, k) && visibleByState(i)).length])) as Record<TypeFilter, number>;
-  const inKind = base.filter((i) => ofType(i, type));
-  const facetCounts = Object.fromEntries(FACETS.map((f) => [f, inKind.filter((i) => inFacet(i, f)).length])) as Record<Facet, number>;
+  const facetCounts = Object.fromEntries(FACETS.map((f) => [f, base.filter((i) => inFacet(i, f)).length])) as Record<Facet, number>;
   const sorted = useMemo(() => {
-    const list = inKind.filter(visibleByState);
+    const list = base.filter(visibleByState);
     const dir = sort.order === "asc" ? 1 : -1;
     const rank: Record<CatalogState, number> = { needsSetup: 0, onSale: 1, soldOut: 2, offSale: 3, ended: 4, archived: 5 };
     /* What needs somebody leads, whatever its state — a course on sale whose
@@ -284,13 +205,13 @@ function Catalog() {
       );
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- derived from the filters above
-  }, [items, type, q, states, wheres, sort]);
+  }, [items, q, states, wheres, sort]);
   /* Rows hold their places through an action. The default order ranks by
      state, so taking a row off sale would otherwise move it — often to a later
      page — at the moment someone looks for it to check the change, or to press
      Undo. Changing a filter or the sort is asking for a new order, so the held
      one lapses as soon as any of them moves. */
-  const sig = `${type}|${q}|${states.join()}|${wheres.join()}|${sort.key}|${sort.order}`;
+  const sig = `${q}|${states.join()}|${wheres.join()}|${sort.key}|${sort.order}`;
   const [held, setHeld] = useState<{ sig: string; keys: string[] } | null>(null);
   const rows = useMemo(() => {
     if (!held || held.sig !== sig) return sorted;
@@ -299,10 +220,9 @@ function Catalog() {
     return [...sorted].sort((a, b) => place(a.key) - place(b.key));
   }, [sorted, held, sig]);
   const holdOrder = () => setHeld({ sig, keys: rows.map((r) => r.key) });
-  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  useEffect(() => {
-    if ((page - 1) * PAGE_SIZE >= rows.length && page > 1) setPage(1);
-  }, [rows.length, page]);
+  /* A page past the end (a filter just shortened the list) shows the last one. */
+  const curPage = Math.min(page, Math.max(1, Math.ceil(rows.length / PAGE_SIZE)));
+  const pageRows = rows.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE);
 
   const toggleFacet = (f: Facet) => {
     setPage(1);
@@ -493,46 +413,34 @@ function Catalog() {
     new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
   const timeOf = (iso: string) => formatClockOf(iso);
 
-  /** When a booking can be had: its days over its hours — the same two lines
-   *  an event's date and time take — or how it is used when it has none. */
-  const whenOf = (p: Product): [string, string | null] => {
-    const s = p.schedule;
-    if (s?.startTime && s.endTime) {
-      const days = s.openDays?.length === 7 || !s.openDays ? t("everyDay") : [...s.openDays].sort().map((d) => t(`day.short.${d}`)).join(" ");
-      return [days, formatClockRange(s.startTime, s.endTime)];
+  /** When a booking can be had, in words, over two lines: HOW people book it,
+   *  then the days and hours (or the date, for a booking on a date). Every
+   *  booking has one, whatever its schedule — there is no type to fall back on. */
+  const whenOf = (i: CatalogItem): [string, string | null] => {
+    if (i.event) {
+      return [dateOf(i.event.startsAt), runsOverDays(i.event) ? t("col.runsDays", { count: dayCountOf(i.event) }) : timeOf(i.event.startsAt)];
     }
-    if (p.courseDates?.length) return [t("sessions", { count: p.courseDates.length }), formatDay([...p.courseDates].sort()[0])];
-    return [t(`whenKind.${bookingKindOf(p.bookingType)}`), null];
+    const p = i.product!;
+    const way = bookingWayOf(p.bookingType);
+    const head = tw(`${way}.title`);
+    const s = p.schedule;
+    if (s?.startTime && s.endTime && (way === "settimes" || way === "byhour" || way === "anyday")) {
+      const days = s.openDays?.length === 7 || !s.openDays ? t("everyDay") : [...s.openDays].sort().map((d) => t(`day.short.${d}`)).join(" ");
+      const limit = p.bookingType === "BT-06" && s.dailyCapacity ? t("when.perDay", { count: s.dailyCapacity }) : null;
+      return [head, [days, formatClockRange(s.startTime, s.endTime), limit].filter(Boolean).join(" · ")];
+    }
+    if (p.bookingType === "BT-02" && p.validityDays) return [head, t("when.validDays", { count: p.validityDays })];
+    if (way === "course" && p.courseDates?.length) return [head, [t("sessions", { count: p.courseDates.length }), formatDay([...p.courseDates].sort()[0])].join(" · ")];
+    if (way === "pack" && p.credits?.count) return [head, t("when.visits", { count: p.credits.count })];
+    return [head, null];
   };
 
+  /** One thumbnail for everything: its first photo (an event's cover, when it has
+   *  no photo), else the glyph for how it is booked. */
   const Thumb = ({ i }: { i: CatalogItem }) => {
-    if (i.product) return <ProductThumb images={i.product.images} name={i.name} bookingType={i.product.bookingType} size="chip" />;
-    const cover = i.event!.customisation.coverUrl;
-    if (cover) {
-      return (
-        <span
-          aria-hidden
-          className="block h-10 w-10 shrink-0 rounded-inner border border-line bg-cover bg-center"
-          style={{ backgroundImage: `url("${cover}")` }}
-        />
-      );
-    }
-    /* No cover yet: the category's glyph on a wash of the event's own accent —
-       the same shape a booking without a photo takes, rather than a blank tile
-       that reads as an image that failed to load. The glyph is ink, not the
-       accent, so a dark accent on a dark theme cannot make it vanish. */
-    const cat = categoryById(i.event!.categoryId);
-    const Icon = EVENT_ICON[cat.key] ?? Music;
-    const accent = i.event!.customisation.accent;
-    return (
-      <span
-        aria-hidden
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-inner border bg-card"
-        style={{ borderColor: accent }}
-      >
-        <Icon size={18} strokeWidth={1.5} className="text-fg" />
-      </span>
-    );
+    const cover = i.event?.customisation.coverUrl;
+    const images = i.product?.images ?? (cover ? [{ id: "cover", url: cover, alt: i.name }] : []);
+    return <ProductThumb images={images} name={i.name} bookingType={i.product?.bookingType ?? "BT-15"} size="chip" />;
   };
 
   const Sub = ({ i }: { i: CatalogItem }) => {
@@ -556,51 +464,12 @@ function Catalog() {
       );
     }
     const own = i.product ? subtitle(i.product, { resources, team }) : i.event!.venueName;
+    /* Below 1280 the When column is not drawn, so the second line carries it. */
+    const when = xl ? "" : whenOf(i).filter(Boolean).join(" · ");
     return (
       <span className="block truncate text-xs text-muted">
-        {xl ? own : [typeShort(i), own].filter(Boolean).join(" · ")}
+        {[when, own].filter(Boolean).join(" · ")}
       </span>
-    );
-  };
-
-  /** One bar for both kinds: an event's tickets against its capacity, a
-   *  booking's next seven days against what it could have held. */
-  const Fill = ({ top, pct, bottom }: { top: string; pct: number; bottom: string }) => (
-    <span className="flex w-full min-w-0 flex-col gap-inline">
-      <span className="flex items-baseline justify-between gap-tight whitespace-nowrap text-xs">
-        <span className="truncate tabular-nums">{top}</span>
-        <span className="text-muted tabular-nums">{pct}%</span>
-      </span>
-      <span className="h-1.5 w-full overflow-hidden rounded-full bg-line">
-        <span className={cn("block h-full rounded-full", pct >= 90 ? "bg-ember-solid" : "bg-success-solid")} style={{ width: `${pct}%` }} />
-      </span>
-      <span className="truncate whitespace-nowrap text-xs text-muted tabular-nums">{bottom}</span>
-    </span>
-  );
-
-  const Selling = ({ i }: { i: CatalogItem }) => {
-    if (i.event) {
-      const f = eventFill(i.event);
-      return <Fill top={t("soldOf", { sold: f.sold.toLocaleString(), cap: f.cap.toLocaleString() })} pct={f.pct} bottom={t("moneyTaken", { amount: formatPriceShort(eventTaken(i.event)) })} />;
-    }
-    const u = use.get(i.id);
-    if (u) {
-      return (
-        <Fill
-          top={t(u.unit === "slots" ? "useSlots" : "usePlaces", { used: u.used.toLocaleString(), cap: u.cap.toLocaleString() })}
-          pct={u.pct}
-          bottom={t("next7")}
-        />
-      );
-    }
-    const n = recent.get(i.id) ?? 0;
-    return n === 0 ? (
-      <span className="text-xs text-muted">
-        <span aria-hidden>—</span>
-        <span className="sr-only">{t("noneRecent")}</span>
-      </span>
-    ) : (
-      <span className="text-xs tabular-nums">{t("recent", { count: n })}</span>
     );
   };
 
@@ -639,17 +508,6 @@ function Catalog() {
     );
   };
 
-  const typeSelect = (
-    <Select
-      aria-label={t("typeFilter.label")}
-      value={type}
-      onChange={(v) => setType(v as TypeFilter)}
-      size="sm"
-      triggerClassName="w-full md:w-48"
-      options={TYPE_FILTERS.map((k) => ({ value: k, label: `${t(`typeFilter.${k}`)} (${typeCounts[k]})` }))}
-    />
-  );
-
   const somePicked = pageRows.some((r) => selected.has(r.key)) && !allOnPage;
   const allColumns: Column<CatalogItem>[] = [
     {
@@ -684,39 +542,18 @@ function Catalog() {
       ),
     },
     {
-      key: "type",
-      header: t("col.type"),
-      width: "11rem",
-      /* Words only. The coloured dot an event used to carry was its template's
-         accent — decoration on every other row of a list that is read for names
-         and states. */
-      render: (i) => (
-        <span className="block truncate text-sm text-muted" title={typeLabel(i)}>
-          {typeShort(i)}
-        </span>
-      ),
-    },
-    {
       key: "when",
       header: t("col.when"),
-      width: "9.75rem",
-      render: (i) =>
-        i.event ? (
-          /* A multi-day event states how long it runs rather than the clock on
-             its first day — the time under a two-day tournament said nothing
-             about the second. */
-          <span className="flex flex-col whitespace-nowrap text-sm">
-            <span>{dateOf(i.event.startsAt)}</span>
-            <span className="text-xs text-muted">
-              {runsOverDays(i.event) ? t("col.runsDays", { count: dayCountOf(i.event) }) : timeOf(i.event.startsAt)}
-            </span>
-          </span>
-        ) : (
+      width: "14rem",
+      render: (i) => {
+        const [first, second] = whenOf(i);
+        return (
           <span className="flex min-w-0 flex-col text-sm">
-            <span className="line-clamp-2 break-words">{whenOf(i.product!)[0]}</span>
-            {whenOf(i.product!)[1] && <span className="text-xs text-muted tabular-nums">{whenOf(i.product!)[1]}</span>}
+            <span className="line-clamp-2 break-words">{first}</span>
+            {second && <span className="truncate text-xs text-muted" title={second}>{second}</span>}
           </span>
-        ),
+        );
+      },
     },
     {
       key: "price",
@@ -730,7 +567,6 @@ function Catalog() {
       ),
     },
     { key: "where", header: t("col.where"), width: "6.5rem", render: (i) => <Marks w={i.where} /> },
-    { key: "selling", header: t("col.selling"), width: "10.5rem", render: (i) => <Selling i={i} /> },
     { key: "state", header: t("col.state"), width: "7.5rem", render: (i) => <StatePill i={i} /> },
     {
       key: "actions",
@@ -744,16 +580,15 @@ function Catalog() {
     },
   ];
 
-  const columns = xl ? allColumns : allColumns.filter((c) => c.key !== "type" && c.key !== "when");
+  const columns = xl ? allColumns : allColumns.filter((c) => c.key !== "when");
 
-  const filtered = !!q || states.length > 0 || wheres.length > 0 || type !== "all";
+  const filtered = !!q || states.length > 0 || wheres.length > 0;
   const empty = !loading && items.filter((i) => i.state !== "archived").length === 0 && !wantArchived;
   const clearAll = () => {
     setSearch("");
     setStates([]);
     setWheres([]);
     setPage(1);
-    if (type !== "all") setType("all");
   };
 
   /* Chips that apply to this view, and among those only the ones with
@@ -771,7 +606,7 @@ function Catalog() {
           chooser says what a catalog holds while it asks what to add. */}
       {empty ? (
         <Card as="section">
-          <div className="mb-major max-w-2xl">
+          <div className="max-w-2xl">
             <h2 className="text-lg font-semibold tracking-title">{t("firstRun.title")}</h2>
             <p className="mt-tight text-base text-muted">{t("firstRun.body")}</p>
             <ol className="mt-section grid gap-tight sm:grid-cols-3">
@@ -783,10 +618,14 @@ function Catalog() {
               ))}
             </ol>
           </div>
-          <CatalogChooser />
+          <div className="mt-major">
+            <Link href="/catalog/new">
+              <Button icon={<Plus size={16} strokeWidth={1.5} />}>{t("add")}</Button>
+            </Link>
+          </div>
         </Card>
       ) : (
-        <div className={cn("flex flex-col gap-section", templateFontVars, selected.size > 0 && "pb-24")}>
+        <div className={cn("flex flex-col gap-section", selected.size > 0 && "pb-24")}>
           <DataTable
             columns={columns}
             rows={pageRows}
@@ -794,7 +633,7 @@ function Catalog() {
             loading={loading}
             layout="fixed"
             height="page"
-            minWidth={xl ? "66rem" : "50rem"}
+            minWidth={xl ? "58rem" : "44rem"}
             isSelected={(i) => selected.has(i.key)}
             sort={sort.key === "smart" ? undefined : sort}
             onSortChange={(key) => {
@@ -805,10 +644,7 @@ function Catalog() {
             cardVariant="list"
             renderCard={(i) => (
               /* Two lines, the way a phone reads a long index: who it is and
-                 what it costs, then its state and the one fact that says what
-                 kind of thing it is. The sold-against-capacity bar is the
-                 desktop's comparison column and is dropped here — secondary
-                 data a phone row does not have the room for. A warning
+                 what it costs, then its state and when it runs, in words. A warning
                  replaces the meta line, because that is the one thing on the
                  row somebody has to act on. */
               <span className="flex items-center gap-comfortable">
@@ -830,10 +666,7 @@ function Catalog() {
                     {i.blockers.length > 0 || i.warnings.length > 0 ? (
                       <span className="min-w-0 flex-1"><Sub i={i} /></span>
                     ) : (
-                      <span className="min-w-0 flex-1 truncate">
-                        {typeShort(i)}
-                        {i.event ? ` · ${dateOf(i.event.startsAt)}` : ""}
-                      </span>
+                      <span className="min-w-0 flex-1 truncate">{whenOf(i).filter(Boolean).join(" · ")}</span>
                     )}
                     <Marks w={i.where} size={14} />
                   </span>
@@ -849,11 +682,6 @@ function Catalog() {
                  facets and the sort live in the panel; nothing else is drawn
                  until it is chosen. */
               <FilterBar
-                /* The Type filter, beside the search: the one cut a catalog is made by
-                   most often. It replaced the All / Bookings / Events views. On a
-                   phone there is no room beside a search field, so it moves into
-                   the Filters sheet with the rest. */
-                lead={compact ? undefined : typeSelect}
                 search={
                   <FilterSearch
                     value={search}
@@ -878,17 +706,6 @@ function Catalog() {
                   </>
                 }
                 filters={[
-                  ...(compact
-                    ? [
-                        {
-                          key: "type",
-                          label: t("typeFilter.label"),
-                          active: type !== "all" ? t(`typeFilter.${type}`) : null,
-                          onClear: () => setType("all"),
-                          control: typeSelect,
-                        },
-                      ]
-                    : []),
                   {
                     key: "state",
                     label: t("col.state"),
@@ -977,7 +794,7 @@ function Catalog() {
                 }
               />
             }
-            pagination={{ page, pageSize: PAGE_SIZE, total: rows.length, onPageChange: setPage }}
+            pagination={{ page: curPage, pageSize: PAGE_SIZE, total: rows.length, onPageChange: setPage }}
           />
         </div>
       )}

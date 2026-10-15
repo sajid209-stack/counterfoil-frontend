@@ -1,36 +1,13 @@
 {
   "title": "Catalog",
-  "description": "Everything you sell: things people book, and events on a date.",
-  "add": "Add something to sell",
-  "type": {
-    "entry": "Entry ticket",
-    "timed": "Time slots",
-    "tour": "Guided tour",
-    "space": "Space to rent",
-    "appointment": "Appointment",
-    "course": "Course",
-    "pass": "Pass or visit pack",
-    "bundle": "Combo ticket",
-    "event": "Event · {category}"
-  },
-  "whenKind": {
-    "entry": "Any open day",
-    "timed": "Set start times",
-    "tour": "Set tour times",
-    "space": "By the slot or the hour",
-    "appointment": "When staff are free",
-    "course": "A set of dates",
-    "pass": "Any time",
-    "bundle": "When its parts run"
-  },
+  "description": "Everything you sell. Each one is a booking.",
+  "add": "Add booking",
   "everyDay": "Every day",
   "sessions": "{count, plural, one {# date} other {# dates}}",
   "col": {
     "item": "Name",
-    "type": "Type",
     "when": "When",
     "from": "Price from",
-    "selling": "Sales",
     "state": "Status",
     "actions": "Actions",
     "runsDays": "Runs {count} days",
@@ -40,8 +17,6 @@
   "soldOut": "Sold out",
   "free": "Free",
   "soldOf": "{sold} of {cap}",
-  "recent": "{count, plural, one {# upcoming booking} other {# upcoming bookings}}",
-  "noneRecent": "No upcoming bookings",
   "state": {
     "onSale": "On sale",
     "needsSetup": "Not ready",
@@ -104,123 +79,12 @@
     "title": "Add the first thing you sell",
     "body": "A lane, a tour, a massage or a concert. Say what it is, and we only ask what it needs.",
     "step": {
-      "pick": "Choose what it is",
+      "pick": "Say how people book it",
       "shape": "Set when it runs and the price",
       "sell": "Put it on sale at the counter and online"
     }
   },
   "copyName": "{name} (copy)",
-  "chooser": {
-    "title": "Add something to sell",
-    "description": "Choose what you are adding. We only ask what it needs.",
-    "searchPlaceholder": "Search: bowling, massage, concert…",
-    "searchLabel": "Search the kinds of things you can sell",
-    "bookingsTitle": "Repeats on a schedule",
-    "eventsTitle": "Happens on a date",
-    "have": "{count} already added",
-    "eg": "e.g.",
-    "noMatch": "Nothing called “{query}”",
-    "noMatchHint": "Try another word, or answer the questions below.",
-    "guidedTitle": "Not sure which one?",
-    "guidedBody": "Answer a few questions about how people book it.",
-    "copyTitle": "Copy something you already sell",
-    "copyBody": "Start from a similar booking or event, then change what is different.",
-    "copySearch": "Search what you sell",
-    "copyAction": "Copy",
-    "copying": "Copying…",
-    "booking": {
-      "entry": {
-        "title": "Entry tickets",
-        "body": "Customers come in on the day. No time to choose.",
-        "examples": "museum entry, park day pass",
-        "keywords": "admission entry gate ticket museum park zoo garden day pass walk-in"
-      },
-      "timed": {
-        "title": "Time slot tickets",
-        "body": "Set start times, with a set number of spaces.",
-        "examples": "planetarium show, timed museum entry",
-        "keywords": "session slot screening show timed cinema planetarium theatre class"
-      },
-      "tour": {
-        "title": "Guided tours",
-        "body": "A guide takes each group. Spaces depend on which guide leads.",
-        "examples": "heritage walk, boat tour",
-        "keywords": "tour guide guided walking departure excursion boat trip heritage"
-      },
-      "space": {
-        "title": "Spaces to rent",
-        "body": "Rent a field, court, lane or room, by the slot or by the hour.",
-        "examples": "futsal pitch, bowling lane",
-        "keywords": "field turf court lane bowling badminton futsal cricket tennis room table studio bay hire rental pitch"
-      },
-      "appointment": {
-        "title": "Appointments",
-        "body": "Time with a person. Customers choose a name, or take whoever is free first.",
-        "examples": "massage, coaching session",
-        "keywords": "appointment massage spa therapist salon stylist coach trainer lesson instructor treatment"
-      },
-      "course": {
-        "title": "Courses",
-        "body": "One sign-up for a set of dates.",
-        "examples": "swimming course, art workshop series",
-        "keywords": "course class series workshop programme program lessons term"
-      },
-      "pass": {
-        "title": "Passes and visit packs",
-        "body": "Buy now, use later. A pack of visits or credits.",
-        "examples": "10-visit pass, class credits",
-        "keywords": "pass credits credit pack punch card multi-visit bundle of visits membership prepaid"
-      },
-      "bundle": {
-        "title": "Combo tickets",
-        "body": "Several of your bookings sold as one ticket.",
-        "examples": "fort + museum combo",
-        "keywords": "bundle combo package combined together attractions"
-      }
-    },
-    "event": {
-      "entertainment": {
-        "title": "Concert or show",
-        "body": "A show, a concert or a comedy night.",
-        "examples": "live concert, stand-up night",
-        "keywords": "concert gig music comedy theatre show festival live band"
-      },
-      "sports": {
-        "title": "Sports or tournament",
-        "body": "A match, a race or a tournament.",
-        "examples": "cricket final, fun run",
-        "keywords": "sport match game tournament race run league final"
-      },
-      "business": {
-        "title": "Conference or talk",
-        "body": "A conference, a seminar or a meetup.",
-        "examples": "tech summit, trade fair",
-        "keywords": "conference summit meetup seminar workshop business expo fair networking"
-      },
-      "arts": {
-        "title": "Exhibition",
-        "body": "An exhibition, an opening or an art fair.",
-        "examples": "gallery opening, art fair",
-        "keywords": "art exhibition gallery opening museum culture craft photography"
-      },
-      "travel": {
-        "title": "Trip or tour",
-        "body": "A trip or a retreat on set dates.",
-        "examples": "Sundarbans trip, hill retreat",
-        "keywords": "travel trip expedition retreat journey excursion holiday adventure"
-      },
-      "nightlife": {
-        "title": "Club night",
-        "body": "A club night, a party or a DJ set.",
-        "examples": "rooftop party, DJ night",
-        "keywords": "club party dj rave night nightlife dance"
-      }
-    },
-    "bookingsRule": "Happens again and again, the same way each time",
-    "eventsRule": "Happens once, or on a few dates, with its own page",
-    "tieBreak": "Found in both. Choose a booking if it happens again and again the same way. Choose an event if it happens once and needs its own page.",
-    "haveShort": "{count} added"
-  },
   "setup": {
     "change": "Change answer",
     "back": "Back",
@@ -392,49 +256,15 @@
     }
   },
   "wizard": {
-    "pageTitle": "Add a booking",
-    "pageDescription": "Say what it is and how people book it.",
-    "adding": "Adding",
-    "changeKind": "Change",
     "progress": "Progress",
-    "step": {
-      "how": "How it's booked",
-      "details": "Name",
-      "when": "When",
-      "price": "Price",
-      "where": "Where it's sold",
-      "review": "Check"
-    },
-    "title": {
-      "how": "How do people book it?",
-      "details": "What is it called?",
-      "when": "When does it run?",
-      "price": "What does it cost?",
-      "where": "Where is it sold?",
-      "review": "Check it over"
-    },
-    "help": {
-      "how": "Pick the answer that fits best.",
-      "details": "Customers see this name on tickets and receipts.",
-      "when": "Set the days and times. The box below shows how many people that allows.",
-      "price": "Set a price for each ticket type. Add a time price if evenings or weekends cost more.",
-      "where": "At the counter, online, or both, and at which venues.",
-      "review": "This is what goes on sale."
-    },
     "name": "Name",
     "namePlaceholder": "Sunset boat tour",
     "description": "Description",
     "descriptionPlaceholder": "What the customer gets…",
-    "category": "Category",
     "waitlist": "Let people join a waiting list when it's full",
-    "soldWhere": "Where it's sold",
     "atCounter": "At the counter",
     "online": "Online",
     "nowhere": "Choose at least one. Otherwise nobody can buy it.",
-    "locations": "Locations",
-    "noLocation": "You haven't added a venue yet.",
-    "addLocationNow": "Add one now",
-    "soldAt": "Sold at <b>{name}</b>.",
     "addLocation": "Add a venue",
     "locationAdded": "Venue added.",
     "locationName": "Name",
@@ -442,13 +272,7 @@
     "city": "City",
     "cityPlaceholder": "Dhaka",
     "cancel": "Cancel",
-    "untitled": "No name yet",
     "row": {
-      "price": "Price",
-      "where": "Where",
-      "how": "How it's booked",
-      "details": "Name",
-      "when": "When",
       "window": "When people can book"
     },
     "sessionsPerDay": "{count, plural, one {# slot} other {# slots}} a day",
@@ -464,9 +288,8 @@
     "summaryTitle": "Your booking",
     "readyTitle": "Ready to sell",
     "check": {
-      "how": "How it's booked",
       "name": "A name",
-      "when": "Days and times",
+      "when": "When",
       "price": "A price",
       "channel": "Where it's sold"
     },
@@ -486,9 +309,6 @@
       "location": "Choose at least one venue where it is sold."
     },
     "namePlaceholderEg": "e.g. {example}",
-    "atCounterHelp": "Your staff sell it at the counter.",
-    "onlineHelp": "Customers can book it on your booking page.",
-    "notOnline": "Not on your website. It will only be sold at the counter.",
     "notOnlineShort": "Not on your website",
     "editStep": "Change {step}",
     "edit": "Edit",
@@ -514,12 +334,9 @@
     "everyEachOverlap": "starts every {every} · lasts {each} (slots overlap)",
     "windowWithLater": "{window}. You can change this under Rules after saving.",
     "bufferLine": "{time} between bookings",
-    "fullPreview": "Full page",
-    "pane": {
-      "make": "The event",
-      "design": "Page design"
-    },
-    "whatsLeft": "What's left"
+    "whatsLeft": "What's left",
+    "sumValid": "Tickets are good for {count, plural, one {# day} other {# days}}.",
+    "photoHelp": "The first photo is also the cover of your page."
   },
   "fields": {
     "tiers": "Ticket types and prices",
@@ -561,7 +378,6 @@
     "capacityDay": "Up to <b>{visitors}</b> people a day, {days} days a week.",
     "closedDates": "Days you are closed",
     "closed": "Closed",
-    "remove": "Remove",
     "removeClosed": "Remove closed day {date}",
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
@@ -734,15 +550,6 @@
     "exampleBands": "This uses your time prices."
   },
   "form": {
-    "tab": {
-      "details": "Details",
-      "availability": "How and when",
-      "pricing": "Prices",
-      "policies": "Rules",
-      "where": "Where it's sold",
-      "advanced": "For support"
-    },
-    "howTitle": "How people book it",
     "resourceHelp": "Tick the {noun} people can book for this.",
     "resourceShared": "Bookings that share one cannot both use it at the same time.",
     "resourceNone": "None added yet. Add them in Settings → {noun}.",
@@ -758,15 +565,10 @@
     "maxPerOrder": "Max tickets per order",
     "noLimitHelp": "Leave empty for no limit.",
     "minAge": "Minimum age",
-    "onSale": "On sale",
-    "onSaleOn": "Customers can buy it now.",
-    "onSaleOff": "Hidden. Nobody can buy it.",
     "waitlist": "Waiting list when full",
     "waitlistOn": "People can join a waiting list when it is full.",
     "waitlistOff": "No waiting list.",
-    "perBookingPrice": "Price for the whole booking",
     "perBookingHelp": "One price for the whole group. Set the group size under Rules.",
-    "perBookingSwitch": "To charge per person instead, change the answer under “{tab}”.",
     "taxLabel": "VAT",
     "taxStandard": "Standard VAT",
     "taxReduced": "Reduced VAT",
@@ -777,11 +579,6 @@
     "advId": "Booking ID",
     "advCreated": "Created",
     "advUpdated": "Last changed",
-    "unsaved": "Unsaved changes",
-    "noChanges": "No changes",
-    "cancel": "Cancel",
-    "save": "Save changes",
-    "saved": "Changes saved.",
     "validLabel": "How long the ticket works",
     "validUntilUsed": "Until it is used",
     "validDays": "For {count} days after buying",
@@ -822,8 +619,6 @@
     "passIdHelp": "Staff type this in when they sell the pass."
   },
   "editEvent": {
-    "saved": "{title} saved.",
-    "tabTickets": "Ticket types",
     "soldNote": "Ticket types that have sold keep their sales. You can raise the number of tickets, or lower it to what has sold, but not below.",
     "removedSold": "{name} has {count} sold, so it can't be removed. To stop selling it, lower its number to {count}.",
     "belowSold": "{name} has already sold {count}. The number can't go below that.",
@@ -838,9 +633,6 @@
   "facet": {
     "attention": "Needs attention"
   },
-  "useSlots": "{used} of {cap} slots",
-  "usePlaces": "{used} of {cap} spaces",
-  "next7": "next 7 days",
   "selectAllMatching": "Select all {count} that match",
   "bulk": {
     "putOn": "Put {count} on sale",
@@ -853,9 +645,6 @@
   "eventDetails": {
     "what": "What it is",
     "subtitleHelp": "One line under the name, on the page and in lists.",
-    "kind": "What kind of event? (optional)",
-    "kindHelp": "Shown in lists.",
-    "kindNone": "Not set",
     "when": "When it is",
     "date": "Date",
     "pickDate": "Choose a date",
@@ -884,154 +673,41 @@
     "subtitleExample": "One night, one stage"
   },
   "eventWizard": {
-    "step": {
-      "category": "Kind",
-      "details": "Details",
-      "design": "Page",
-      "tickets": "Tickets and sales",
-      "publish": "Put on sale"
-    },
-    "title": {
-      "details": "The basics",
-      "publish": "Check it over",
-      "tickets": "Tickets and sales"
-    },
-    "help": {
-      "details": "Name, date and venue. The page and every ticket show these.",
-      "design": "Choose how the page looks and fill in each part. The preview changes as you type.",
-      "publish": "This is what goes on sale: the details, the page and the tickets."
-    },
-    "row": {
-      "details": "Details",
-      "page": "Page",
-      "tickets": "Tickets",
-      "where": "Where"
-    },
     "missing": {
       "date": "Choose the date.",
-      "ends": "The end must be after the start.",
-      "counterLocation": "Choose which venues' counters will sell it."
+      "ends": "The end must be after the start."
     },
     "check": {
-      "name": "A name",
-      "date": "A date",
-      "venue": "A venue",
-      "page": "The page, without sample text",
-      "tickets": "Tickets",
-      "channel": "Where it's sold",
       "pageBooking": "Your page"
-    },
-    "sections": "{count, plural, one {# part} other {# parts}}",
-    "qty": "{count, plural, one {# ticket} other {# tickets}}",
-    "ready": "Everything is ready. Put it on sale now, or save it and come back later.",
-    "summaryTitle": "Your event",
-    "untitled": "No name yet",
-    "fromAndCap": "From {price} · {count} tickets",
-    "hint": {
-      "samples": "{count, plural, one {# part still shows sample text. Edit or hide it.} other {# parts still show sample text. Edit or hide them.}}"
-    },
-    "onlineHelp": "On the event's own page. It goes live when public event pages start.",
-    "onlinePage": "Online, on its page",
-    "notLiveYet": "Putting it on sale publishes its page and makes it available at the counter straight away.",
-    "counterHelp": "At the counter. It shows under Event tickets on the sales screen."
+    }
   },
   "select": "Select",
   "selectDone": "Done",
   "eventRecord": {
     "colTicket": "Ticket type",
     "colPrice": "Price",
-    "colSold": "Sold",
-    "colRevenue": "Money in",
-    "salesEnd": "Stops selling {date}",
-    "where": "Where it's sold",
-    "when": "When",
-    "venue": "Venue",
-    "page": "Page address",
-    "notLive": "not live yet",
     "days": {
-      "title": "Each day",
-      "nth": "Day {n}",
-      "soldOf": "{sold} of {cap} tickets",
-      "admits": "Valid on: {names}",
-      "admitsAll": "Valid every day",
-      "admitsOn": "Valid on {days}",
-      "count": "{count, plural, one {# day} other {# days}}"
+      "nth": "Day {n}"
     },
     "settle": {
-      "title": "Sales summary",
       "export": "Download CSV",
       "capacity": "Total tickets",
       "sold": "Sold",
-      "unsold": "{count, number} not sold",
       "unsoldCol": "Not sold",
       "faceValue": "Value at today's prices",
       "taken": "Money taken",
-      "refunded": "{amount} refunded",
       "refundedCol": "Refunded",
       "total": "Total",
-      "tickets": "{count, number} tickets",
       "byDay": "By day",
       "byChannel": "Where it was bought",
       "channel": {
         "counter": "At the counter",
         "online": "Online",
         "opening": "Before Counterfoil"
-      },
-      "openingNote": "Sales made before you used Counterfoil. They are counted, but their money is not shown here.",
-      "channels": "{count, plural, one {# place} other {# places}}",
-      "faceValueNote": "What the tickets sold would be worth at today's prices. This is not money taken."
-    },
-    "live": "live",
-    "viewPage": "View page",
-    "tierOpening": "{count, number} sold before Counterfoil"
+      }
+    }
   },
   "eventCanvas": {
-    "namePlaceholder": "Name your event",
-    "taglinePlaceholder": "One line under it (optional)",
-    "datePlaceholder": "Pick a date",
-    "venuePlaceholder": "Where is it?",
-    "addEnd": "+ End time",
-    "addCover": "Add a cover photo",
-    "replaceCover": "Replace",
-    "removeCover": "Remove the cover photo",
-    "look": {
-      "title": "Look",
-      "entertainment": "Concert",
-      "sports": "Sport",
-      "business": "Conference",
-      "arts": "Exhibition",
-      "travel": "Trip",
-      "nightlife": "Night",
-      "help": "Changes the font, the colours and the parts of the page."
-    },
-    "font": "Change the font",
-    "accentOption": "Use {hex}",
-    "details": {
-      "title": "Details customers ask about",
-      "placeholder": "Write it here",
-      "remove": "Remove {label}",
-      "doors": "Doors open",
-      "dress": "Dress code",
-      "parking": "Parking",
-      "age": "Age",
-      "accessibility": "Disabled access",
-      "food": "Food",
-      "sample": "Sample",
-      "sampleHelp": "These are examples for this kind of event. Edit or clear them. They are published exactly as written.",
-      "clearSamples": "Clear {count, plural, one {# sample} other {# samples}}"
-    },
-    "accent": "Colour",
-    "whenWhere": "When and where",
-    "face": {
-      "bebas": "Bebas Neue",
-      "syne": "Syne",
-      "space": "Space Grotesk",
-      "playfair": "Playfair",
-      "outfit": "Outfit",
-      "fraunces": "Fraunces",
-      "inter": "Inter",
-      "mono": "DM Mono"
-    },
     "days": {
       "add": "+ Runs for more than one day",
       "runsFor": "Runs {count} days",
@@ -1040,7 +716,7 @@
       "namePlaceholder": "Day {n}",
       "nameLabel": "Name for day {n}",
       "help": "Each day can have its own programme and ticket price. Leave a name empty and it shows as Day 1, Day 2.",
-      "helpTimes": "Set a day's own hours if they are different. If empty, the event's times are used.",
+      "helpTimes": "Set a day's own hours if they are different. If empty, the booking's times are used.",
       "dropTitle": "Go back to one day?",
       "dropBody": "{tickets} tickets and {entries} programme items are linked to a day. They will no longer be linked, and the days will be removed. Tickets already sold are not affected."
     }
@@ -1104,24 +780,21 @@
     "section": {
       "hero": "Top of the page",
       "countdown": "Countdown",
-      "stats": "At a glance",
+      "stats": "Numbers",
       "highlights": "Highlights",
       "about": "About",
       "included": "What's included",
       "know": "Good to know",
-      "lineup": "Line-up",
-      "schedule": "Schedule",
+      "lineup": "Programme (people and times)",
       "gallery": "Photos",
       "video": "Video",
       "sponsors": "Sponsors",
-      "tickets": "Tickets",
+      "tickets": "Booking",
       "venue": "Where",
       "faq": "Questions"
     },
     "look": "Look",
-    "lookHelp": "Pick how the page looks. Your words stay.",
-    "lookStandardHelp": "Every item that is not an event uses this page.",
-    "lookStandard": "Standard",
+    "lookHelp": "Pick how the page looks. Your sections and words stay.",
     "colour": "Colour",
     "colourN": "Colour {n}",
     "colourDefault": "Default colour",
@@ -1143,21 +816,18 @@
     "hiddenHeading": "Hidden ({count})",
     "hiddenRow": "Hidden",
     "hiddenNote": "This section is hidden. Press the eye to show it.",
-    "heroRow": "Always first.",
-    "alwaysShown": "Always shown.",
+    "alwaysShown": "Always shown",
     "hide": "Hide {name}",
     "show": "Show {name}",
     "moveUp": "Move {name} up",
     "moveDown": "Move {name} down",
     "alreadyFirst": "Already first.",
     "alreadyLast": "Already last.",
-    "sample": "Sample",
-    "sampleNote": "This is example text. Change it, hide this section, or keep it.",
-    "keepSample": "Keep sample text",
+    "sampleNote": "These words were put here for you. Change them, hide this section, or keep them as they are.",
+    "keepSample": "Keep these words",
     "editDetails": "Edit in Details",
     "editTickets": "Edit in Tickets & prices",
     "heroNote": "The name, photos and facts come from Details.",
-    "countdownNote": "Counts down to the start time. Nothing to fill in.",
     "ticketsNote": "Ticket names and prices come from Tickets & prices.",
     "galleryCount": "{count, plural, one {# photo} other {# photos}} from Details.",
     "galleryNone": "No photos yet. Add some in Details.",
@@ -1170,7 +840,6 @@
     "organiser": "Hosted by",
     "organiserPlaceholder": "e.g. Dhaka Music Club",
     "organiserLine": "One line about them",
-    "infoNote": "Facts people check before buying, e.g. Age: 18+.",
     "highlightsNote": "A few short points about why to come.",
     "highlightN": "Highlight {n}",
     "removeHighlight": "Remove highlight: {name}",
@@ -1190,7 +859,7 @@
       "waiver": "Needs a signed safety form",
       "age": "Ages {age} and over"
     },
-    "statsNote": "A few short numbers people see first, e.g. 16 · Teams.",
+    "statsNote": "A few short numbers people see first, e.g. 16 teams.",
     "statN": "Number {n}",
     "removeStat": "Remove number: {name}",
     "statValue": "Number",
@@ -1206,12 +875,12 @@
     "faqQPlaceholder": "e.g. Can I bring a child?",
     "faqA": "Answer",
     "addFaq": "Add a question",
-    "sponsorsNote": "Who is supporting it. Give each one a level, e.g. Main or Partner.",
+    "sponsorsNote": "Who is supporting it. Put each one in a group.",
     "sponsorN": "Sponsor {n}",
     "removeSponsor": "Remove sponsor: {name}",
     "sponsorName": "Sponsor",
-    "sponsorLevel": "Level",
-    "sponsorLevelPlaceholder": "e.g. Main",
+    "sponsorLevel": "Group",
+    "sponsorLevelPlaceholder": "e.g. Main partners",
     "addSponsor": "Add a sponsor",
     "dayN": "Day {n}",
     "dayTabs": "Which day",
@@ -1241,14 +910,50 @@
     "untitled": "this item",
     "preview": "Preview",
     "previewNote": "This is the real page, with your changes. Nothing is saved yet.",
-    "openPreview": "See the page"
+    "openPreview": "See the page",
+    "looks": {
+      "classic": "Classic",
+      "poster": "Poster",
+      "floodlit": "Floodlit",
+      "clean": "Clean",
+      "gallery": "Gallery",
+      "journey": "Journey",
+      "neon": "Neon"
+    },
+    "countdown": {
+      "title": "Countdown",
+      "show": "Show a countdown",
+      "off": "Off",
+      "start": "To the first day",
+      "startHelp": "Counts down to when it begins.",
+      "date": "To a date and time",
+      "dateHelp": "You choose the moment.",
+      "pickDate": "Pick a date",
+      "time": "Time",
+      "label": "Label",
+      "labelHelp": "The words next to the clock.",
+      "labelStart": "Starts in",
+      "labelDate": "Offer ends in",
+      "hide": "Hide it when it reaches zero",
+      "hideOn": "It disappears when the time comes.",
+      "hideOff": "It stays on the page and shows zero.",
+      "willCount": "Counts down to {when}.",
+      "needMoment": "Pick a date and a time to start the countdown.",
+      "passedHidden": "That time has already passed, so it will not show.",
+      "passedShown": "That time has already passed, so it shows zero."
+    },
+    "countdownRowNote": "Set how it counts in the countdown settings above.",
+    "goCountdown": "Open countdown settings",
+    "empty": "Nothing written yet — hidden on the page",
+    "emptyNote": "Write something here and this section shows on the page. Until then it stays hidden.",
+    "sampleRow": "Still shows sample text",
+    "samplesNote": "Some sections still show sample text."
   },
   "addFlow": {
-    "pageTitle": "Add to your catalog",
+    "pageTitle": "Add a booking",
     "pageDescription": "Answer a few short questions. Then put it on sale.",
-    "backLabel": "Choose something else",
+    "backLabel": "Back to catalog",
     "untitled": "No name yet",
-    "notSure": "Not sure yet",
     "step": {
       "how": "How it's booked",
       "name": "Name",
@@ -1261,10 +966,8 @@
     "title": {
       "how": "How do people book it?",
       "name": "What is it called?",
-      "when": "When does it run?",
-      "whenEvent": "When and where is it?",
+      "when": "How do people book it?",
       "price": "What does it cost?",
-      "priceEvent": "What tickets do you sell?",
       "where": "Where is it sold?",
       "page": "This is the page customers see",
       "review": "Check it over"
@@ -1272,10 +975,8 @@
     "help": {
       "how": "Pick the answer that fits best.",
       "name": "Customers see this on tickets and receipts.",
-      "when": "Set the days and times. The box below shows how many people that allows.",
-      "whenEvent": "Pick the date and say where it is. A bigger event can run for more than one day.",
-      "price": "Set a price for each ticket type. Add a time price if evenings or weekends cost more.",
-      "priceEvent": "Add each kind of ticket with its price and how many you will sell.",
+      "when": "Pick the answer that fits best. Its details open underneath.",
+      "price": "Add a ticket type for each price, like Adult and Child. Leave \"How many\" empty for no limit.",
       "where": "At the counter, online, or both, and at which venues.",
       "page": "It is already finished. Change what you like, then use it.",
       "review": "This is what goes on sale."
@@ -1296,7 +997,6 @@
       "noPage": "No page — it is not sold online."
     },
     "row": {
-      "how": "How it's booked",
       "name": "Name",
       "when": "When",
       "price": "Tickets & prices",
@@ -1304,8 +1004,6 @@
       "page": "Page"
     },
     "review": {
-      "cover": "Cover photo added",
-      "noCover": "No cover photo",
       "onlineLink": "Online, only by its link",
       "pageStandard": "The standard page",
       "pageSections": "{count, plural, one {# part} other {# parts}} on the page"
@@ -1355,13 +1053,9 @@
     "overview": {
       "glance": "At a glance",
       "noPrice": "No price yet",
-      "last30": "Sold in the last 30 days",
-      "soldCount": "{count, plural, one {# ticket} other {# tickets}}",
       "soldNone": "None yet",
       "tookIn": "Money in",
       "comingUp": "Coming up",
-      "next7Slots": "Next 7 days: {used, number} of {cap, number} slots taken ({pct, number}%)",
-      "next7Places": "Next 7 days: {used, number} of {cap, number} places taken ({pct, number}%)",
       "noDates": {
         "entry": "Customers come on any day you are open. There are no dates to show.",
         "timed": "No time slots are set. Add them in When.",
@@ -1371,28 +1065,35 @@
         "course": "The course dates are in Details.",
         "pass": "A pass has no dates of its own.",
         "bundle": "A combo ticket has no dates of its own.",
-        "event": "The event dates are in Details."
+        "event": "The dates are in When."
       },
       "times": "{count, plural, one {# start time} other {# start times}}, first at {first}",
       "firstFree": "First free at {time}",
       "slotsDay": "Open all day",
       "placesDay": "Open all day",
       "slotsTaken": "{used, number} of {cap, number} slots taken",
-      "placesTaken": "{used, number} of {cap, number} places taken"
-    }
-  },
-  "typeFilter": {
-    "label": "Type",
-    "all": "All types",
-    "entry": "Entry tickets",
-    "timed": "Time slots",
-    "tour": "Guided tours",
-    "space": "Spaces",
-    "appointment": "Appointments",
-    "course": "Courses",
-    "pass": "Passes",
-    "bundle": "Combos",
-    "event": "Events"
+      "placesTaken": "{used, number} of {cap, number} places taken",
+      "sold": "Sold",
+      "soldOfTotal": "{sold, number} of {cap, number} sold",
+      "soldOnly": "{count, number} sold",
+      "dayN": "Day {n}",
+      "dayOf": "{sold, number} of {cap, number} tickets",
+      "admits": "Tickets that get in: {names}",
+      "byTicket": "Sales by ticket",
+      "noTickets": "No tickets yet. Add them in Tickets & prices.",
+      "before": "{count, number} sold before Counterfoil",
+      "stops": "Stops selling {date}",
+      "col": {
+        "ticket": "Ticket type",
+        "price": "Price",
+        "sold": "Sold",
+        "taken": "Money in"
+      }
+    },
+    "when": {
+      "fixed": "To book it a different way, make a new booking. You can copy this one from the list."
+    },
+    "ticketFallback": "This ticket type"
   },
   "where": {
     "title": "Where it's sold",
@@ -1402,5 +1103,73 @@
     "none": "Not online",
     "nowhere": "Not sold anywhere"
   },
-  "moneyTaken": "{amount} taken"
+  "when": {
+    "perDay": "Up to {count} a day",
+    "validDays": "Good for {count, plural, one {# day} other {# days}}",
+    "visits": "{count, plural, one {# visit} other {# visits}}"
+  },
+  "ways": {
+    "anyday": {
+      "title": "Any day it's open",
+      "helper": "No time to pick. Tickets work on any day you're open.",
+      "limit": {
+        "title": "Limit how many per day",
+        "helper": "When a day is full, it stops selling."
+      },
+      "valid": {
+        "title": "Good for a number of days",
+        "helper": "A ticket works for a number of days after it starts.",
+        "days": "How many days",
+        "limitNote": "A daily limit is for one day, so this is not used."
+      }
+    },
+    "settimes": {
+      "title": "At set times",
+      "helper": "Customers pick a start time, like a show or a class.",
+      "guided": {
+        "title": "A guide leads each group",
+        "helper": "Pick which guides can lead. Spaces depend on the guide."
+      }
+    },
+    "ondate": {
+      "title": "On a date",
+      "helper": "One day, or several days in a row, at a place you name."
+    },
+    "byhour": {
+      "title": "By the hour",
+      "helper": "Rent a field, court, lane or room."
+    },
+    "person": {
+      "title": "Time with a person",
+      "helper": "An appointment with someone on your team."
+    },
+    "course": {
+      "title": "A course of several dates",
+      "helper": "One sign-up for a set of dates."
+    },
+    "pack": {
+      "title": "A pack of visits",
+      "helper": "Buy now, use later."
+    },
+    "combined": {
+      "title": "Several bookings sold together",
+      "helper": "One ticket that covers more than one booking."
+    },
+    "more": "More ways to book",
+    "missing": {
+      "validDays": "Enter how many days it is good for."
+    }
+  },
+  "tickets": {
+    "howMany": "How many",
+    "noLimit": "No limit",
+    "summaryPeople": "{count, plural, one {# person} other {# people}} per ticket",
+    "summaryIncludes": "{count, plural, one {# thing included} other {# things included}}",
+    "includesPlaceholder": "e.g. Welcome drink",
+    "admitsHelp": "How many people one ticket lets in.",
+    "note": "Short note",
+    "keepOne": "Keep at least one ticket type",
+    "available": "{count} available",
+    "soldOnly": "{count, number} sold"
+  }
 }

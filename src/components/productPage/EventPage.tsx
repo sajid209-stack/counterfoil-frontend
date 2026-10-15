@@ -4,13 +4,14 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { EventTemplate } from "@/components/events/EventTemplate";
 import { QuickAddSheet } from "@/app/s/_components/flow/QuickAddSheet";
 import { QuickAddToast } from "@/app/s/_components/flow/QuickAddToast";
-import { eventView } from "@/lib/api/events";
+import { pageView } from "@/lib/api/events";
 import type { Product } from "@/lib/api/types";
 import { templateFontVars } from "@/lib/events/fonts";
-import { useTemplateLabels } from "@/lib/events/useTemplateLabels";
+import { countdownOf, pageOf } from "@/lib/productPage";
 import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { PageFrame } from "./PageFrame";
+import { useKnowLines, usePageLabels, useWhenWords } from "./pageText";
 
 /**
  * An event's page in one of the six designed looks: the event template, drawn
@@ -24,8 +25,26 @@ import { PageFrame } from "./PageFrame";
  */
 export function EventPage({ product, chrome }: { product: Product; chrome: "storefront" | "link" | "none" }) {
   const flow = useStorefrontFlow();
-  const ev = useMemo(() => eventView(product), [product]);
-  const labels = useTemplateLabels(ev.categoryId);
+  const whenText = useWhenWords(product, flow.location);
+  const ev = useMemo(
+    () =>
+      pageView(product, {
+        now: flow.now,
+        whenText: whenText || undefined,
+        venue: { name: flow.location.name, address: [flow.location.addressLine1, flow.location.city].filter(Boolean).join(", ") },
+      }),
+    [product, flow.now, flow.location, whenText],
+  );
+  const labels = usePageLabels(ev.categoryId);
+  const know = useKnowLines(product);
+  /* The countdown as the page's settings resolve it, with the words to put over
+     it: the operator's own, or plain ones for the kind of countdown it is. */
+  const countdown = useMemo(() => {
+    const target = countdownOf(product, flow.now);
+    if (!target) return null;
+    const mode = pageOf(product).countdown?.mode ?? "start";
+    return { at: target.at, label: target.label?.trim() || (mode === "date" ? labels.countingDown : labels.startsIn) };
+  }, [product, flow.now, labels.countingDown, labels.startsIn]);
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState<{ name: string; key: number } | null>(null);
 
@@ -59,6 +78,8 @@ export function EventPage({ product, chrome }: { product: Product; chrome: "stor
           device={wide ? "desktop" : "mobile"}
           labels={labels}
           now={flow.now}
+          countdown={countdown}
+          know={know}
           inert={inert}
           onBook={inert ? undefined : () => setOpen(true)}
         />

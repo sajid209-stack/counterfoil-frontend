@@ -32,6 +32,7 @@ function tierView(t: PriceTier, live?: LiveSold): EventTier {
     // A ticket with no cap of its own has no quantity to state; the event
     // screens treat the figure as the cap, so an uncapped tier reads as 0.
     quantity: t.capacity ?? 0,
+    unlimited: t.capacity === undefined ? true : undefined,
     sold: (t.openingSold ?? 0) + (live?.get(t.id) ?? 0),
     opening: t.openingSold ?? 0,
     description: t.note,
@@ -85,7 +86,7 @@ export function slugify(title: string, taken: string[] = []): string {
  */
 export function eventViewBase(p: Product): EventRecord {
   const ev = p.event ?? { kind: "entertainment" as const, subtype: "event", startsAt: p.createdAt, venueName: "" };
-  const cat = categoryById(ev.kind);
+  const cat = categoryById(ev.kind ?? "entertainment");
   const pg = p.page;
   return {
     id: p.id,
@@ -94,8 +95,8 @@ export function eventViewBase(p: Product): EventRecord {
     slug: p.slug ?? slugify(p.name),
     title: p.name,
     subtitle: pg?.tagline,
-    categoryId: ev.kind,
-    subtype: ev.subtype,
+    categoryId: ev.kind ?? "entertainment",
+    subtype: ev.subtype ?? "",
     startsAt: ev.startsAt,
     endsAt: ev.endsAt,
     days: ev.days,

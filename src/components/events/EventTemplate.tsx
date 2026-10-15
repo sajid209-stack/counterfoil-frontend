@@ -2,8 +2,9 @@
 
 import type { CSSProperties } from "react";
 import { useState } from "react";
-import { ArrowRight, Building2, CalendarDays, CalendarPlus, ChevronDown, Clock, Flame, Lightbulb, MapPin, Play, Rocket, Ticket, Users } from "lucide-react";
+import { ArrowRight, Building2, CalendarDays, CalendarPlus, Check, ChevronDown, Clock, Flame, Lightbulb, MapPin, Play, Rocket, Ticket, Users } from "lucide-react";
 import type { EventRecord, EventTier } from "@/lib/api/events";
+import type { PageSectionId } from "@/lib/api/types";
 import { bundleSaving, dayCountOf, eventDays, eventFromPrice, isBundleTier, runsOverDays, spansDays, tierDays } from "@/lib/api/events";
 import { dayName } from "@/lib/events/days";
 import { formatClock, formatClockOf, formatClockRange, formatDay } from "@/lib/format";
@@ -87,6 +88,20 @@ interface Labels {
   viewOnMap: string;
   /** Carries a "{count}" placeholder the template fills. */
   remaining: string;
+  /* Added with the one page system (docs/catalog.md §10.5). Optional so a
+     caller written before it still compiles; each has a plain fallback. */
+  /** Heading of the section listing what each ticket includes. */
+  included?: string;
+  /** Heading of the good-to-know section. */
+  know?: string;
+  /** "Next" — in front of the date a repeating booking can next be booked. */
+  nextUp?: string;
+  /** The default countdown label for a countdown to the first day. */
+  startsIn?: string;
+  /** The default countdown label for a countdown to a date the operator chose. */
+  countingDown?: string;
+  /** Label of the "when" row on a layout that lists the facts of the day. */
+  when?: string;
 }
 
 export function EventTemplate({
@@ -96,10 +111,20 @@ export function EventTemplate({
   now,
   onBook,
   inert = false,
+  countdown,
+  know = [],
 }: {
   event: EventRecord;
   device?: Device;
   labels: Labels;
+  /** The countdown as the page settings resolve it (`countdownOf`): a target
+   *  and the words to put over it, or null for none. Left out, the page counts
+   *  down to its first day when it has one — which is all a page did before the
+   *  countdown had settings. */
+  countdown?: { at: Date; label?: string } | null;
+  /** The good-to-know lines the booking's policies give ("Free cancellation up
+   *  to 24 hr before."), already in the reader's language. */
+  know?: string[];
   /** Passed in rather than read from the clock so the countdown is
    *  deterministic in a preview and cannot hydrate to a different number. */
   now: Date;
@@ -116,6 +141,9 @@ export function EventTemplate({
   const c = event.customisation;
   const narrow = device === "mobile";
   const variant = c.variant;
+  /* The page's whole section list. An event's own list has no "included" or
+     "know"; a page drawn by `pageView` carries them in `pageSections`. */
+  const sections: PageSectionId[] = c.pageSections ?? c.sections;
 
   const vars = {
     "--e-bg": t.bg,
@@ -251,15 +279,37 @@ export function EventTemplate({
      time of a day the reader is not looking at. A multi-day event says how
      many days it runs instead, and leaves the clock to each day's own line in
      the programme, where it is true. */
-  const timeLine = overDays
-    ? labels.runsDays.replace("{count}", String(dayCountOf(event)))
-    : event.endsAt
-      ? formatClockRange(minOfDay(start), minOfDay(new Date(event.endsAt)))
-      : `${labels.starts} ${time(start)}`;
+  /* A booking with no first day has no date to state, no clock and no "Runs N
+     days": it says WHEN in words, or says nothing. One that repeats has a next
+     day and the pattern in words — a clock under it would claim a one-off. */
+  const undated = !!event.undated;
+  const recurring = !!event.whenText;
+  const timeLine = undated || recurring
+    ? (event.whenText ?? "")
+    : overDays
+      ? labels.runsDays.replace("{count}", String(dayCountOf(event)))
+      : event.endsAt
+        ? formatClockRange(minOfDay(start), minOfDay(new Date(event.endsAt)))
+        : `${labels.starts} ${time(start)}`;
   /* The head line of the hero. A buyer got the first date and nothing else
      while the operator's own record stated the range — the page a ticket is
      bought from should not know less about when it is than the back office. */
-  const dateLine = overDays && event.endsAt ? `${longDate(start)} – ${longDate(new Date(event.endsAt))}` : longDate(start);
+  const dateLine = undated
+    ? ""
+    : recurring
+      ? `${labels.nextUp ?? "Next"}: ${longDate(start)}`
+      : overDays && event.endsAt
+        ? `${longDate(start)} – ${longDate(new Date(event.endsAt))}`
+        : longDate(start);
+  /* The countdown, as the page settings resolve it. Not passed: the first day,
+     for a page that has one (the way every page behaved before settings). */
+  const cd = countdown === undefined ? (undated || recurring ? null : { at: start, label: labels.startsIn }) : countdown;
+  /* What a ticket buys, one entry per ticket type that says anything. */
+  const includedTiers = event.tiers.filter((x) => x.description || (x.perks && x.perks.length > 0));
+  /* Good to know takes the "info" rows when the page lists it, so a page that
+     has both does not state the same rows twice (in About and in here). */
+  const infoInKnow = sections.includes("know");
+  const photos = event.images ?? [];
   const dayList = multiDay
     ? eventDays(event).map((d, i) => ({
         id: d.id,
@@ -291,9 +341,37 @@ export function EventTemplate({
      wherever it sits in the order; hide either half and the other takes the
      whole width, so both stay honest controls in the architect. */
   const PAIRS: Partial<Record<SectionId, SectionId>> = structured
-    ? { about: "tickets", video: "venue" }
+    ? {
+        /* A pair exists only where BOTH halves are on the page. Hiding About
+           must give Tickets its own row back rather than drop it. */
+        ...(sections.includes("about") && sections.includes("tickets") ? { about: "tickets" as const } : {}),
+        ...(sections.includes("video") && sections.includes("venue") ? { video: "venue" as const } : {}),
+      }
     : {};
   const absorbed = new Set(Object.values(PAIRS).filter(Boolean) as SectionId[]);
+
+  /* A section that renders nothing must not appear in the nav, and must not
+     take a number: an anchor that scrolls nowhere is worse than one fewer link,
+     and a gap in the numbering invites the reader to look for something that
+     was never drawn. This mirrors the guards in the renderers below rather
+     than guessing from the order alone. */
+  const hasAbout = Boolean(event.description) || event.highlights.length > 0 || Boolean(event.organiser);
+  const drawn: Partial<Record<PageSectionId, boolean>> = {
+    countdown: cd !== null,
+    stats: event.stats.length > 0,
+    video: parseEventVideo(event.videoUrl) !== null || (PAIRS.video === "venue" && !!event.venueName),
+    sponsors: event.sponsors.length > 0,
+    highlights: event.highlights.length > 0,
+    about: hasAbout || PAIRS.about === "tickets",
+    included: includedTiers.length > 0,
+    know: know.length > 0 || event.info.length > 0,
+    lineup: event.lineup.some((l) => l.kind !== "session"),
+    schedule: event.lineup.length > 0,
+    gallery: photos.length > 0,
+    tickets: true,
+    venue: Boolean(event.venueName),
+    faq: event.faq.length > 0,
+  };
 
   /* Numbered by their place among the sections that ACTUALLY carry a header.
      Counting hero and countdown made the first visible index read "03", with
@@ -304,33 +382,19 @@ export function EventTemplate({
      `stats` is the same fault in its smaller form and survived that fix: the
      figures band draws no heading, so it took 01 and showed nothing, and
      every page began at 02. */
-  const NUMBERED: SectionId[] = c.sections.filter(
-    (x) => x !== "hero" && x !== "countdown" && x !== "stats" && !absorbed.has(x),
+  const NUMBERED: PageSectionId[] = sections.filter(
+    (x) => x !== "hero" && x !== "countdown" && x !== "stats" && !absorbed.has(x as SectionId) && drawn[x] !== false,
   );
-  const indexOf = (id: SectionId) => NUMBERED.indexOf(id) + 1;
+  const indexOf = (id: PageSectionId) => NUMBERED.indexOf(id) + 1;
 
-  /* A section that renders nothing must not appear in the nav: an anchor that
-     scrolls nowhere is worse than one fewer link. This mirrors the guards in
-     the renderers below rather than guessing from the order alone. */
-  const drawn: Partial<Record<SectionId, boolean>> = {
-    stats: event.stats.length > 0,
-    video: parseEventVideo(event.videoUrl) !== null || (structured && !!event.venueName),
-    sponsors: event.sponsors.length > 0,
-    highlights: event.highlights.length > 0,
-    about: Boolean(event.description) || event.info.length > 0 || event.highlights.length > 0,
-    lineup: event.lineup.some((l) => l.kind !== "session"),
-    schedule: event.lineup.length > 0,
-    gallery: true,
-    tickets: true,
-    venue: true,
-    faq: event.faq.length > 0,
-  };
-  const anchorLabel: Partial<Record<SectionId, string>> = {
+  const anchorLabel: Partial<Record<PageSectionId, string>> = {
     stats: labels.stats,
     video: labels.video,
     sponsors: labels.sponsors,
     highlights: labels.highlights,
     about: labels.about,
+    included: labels.included ?? "What each ticket includes",
+    know: labels.know ?? "Good to know",
     lineup: labels.lineup,
     schedule: labels.schedule,
     gallery: labels.gallery,
@@ -340,7 +404,7 @@ export function EventTemplate({
   };
   /* Five at most. A nav that wraps to a second line stops being chrome and
      starts being a section of its own. */
-  const anchors = c.sections
+  const anchors = sections
     .filter(
       (x) =>
         x !== "hero" &&
@@ -348,6 +412,7 @@ export function EventTemplate({
         // The bar already ends in a Get-tickets pill, so an anchor beside it
         // saying Tickets is the same destination twice in 200px.
         x !== "tickets" &&
+        !absorbed.has(x as SectionId) &&
         drawn[x] &&
         anchorLabel[x],
     )
@@ -363,13 +428,121 @@ export function EventTemplate({
   const sellingFast = stock.q > 0 && stock.sold / stock.q >= 0.5;
 
 
-  const draw: Record<SectionId, () => React.ReactNode> = {
+  const draw: Record<PageSectionId, () => React.ReactNode> = {
     hero: () => (
-      <Hero event={event} variant={variant} narrow={narrow} theme={t} labels={labels} pad={pad} upper={upper} fromPrice={fromPrice} timeLine={timeLine} dateLine={dateLine} />
+      <Hero event={event} variant={variant} narrow={narrow} theme={t} labels={labels} pad={pad} fromPrice={fromPrice} timeLine={timeLine} dateLine={dateLine} />
     ),
-    countdown: () => (
-      <Countdown to={start} now={now} narrow={narrow} pad={pad} labels={labels} upper={upper} glow={t.glow} />
-    ),
+    /* Drawn only when the page's settings give a target (see cd above), with the
+       words the operator chose over it. */
+    countdown: () =>
+      cd ? (
+        <Countdown to={cd.at} label={cd.label} now={now} narrow={narrow} pad={pad} labels={labels} upper={upper} glow={t.glow} />
+      ) : null,
+
+    /* What each ticket buys: its note and its perks, one card per ticket type
+       that says anything. A ticket with nothing written on it has no card — an
+       empty card is a promise nobody made. */
+    included: () =>
+      includedTiers.length ? (
+        <Section id="included" index={indexOf("included")} eyebrow={labels.included ?? "What each ticket includes"} title={labels.included ?? "What each ticket includes"}>
+          <div
+            style={{
+              display: "grid",
+              gap: narrow ? 12 : 16,
+              gridTemplateColumns: narrow || includedTiers.length === 1 ? "1fr" : "repeat(2, minmax(0, 1fr))",
+            }}
+          >
+            {includedTiers.map((tr) => (
+              <div
+                key={tr.id}
+                style={{
+                  minWidth: 0,
+                  padding: narrow ? "16px 18px" : "20px 22px",
+                  borderRadius: "var(--e-radius)",
+                  border: `1px solid var(--e-line)`,
+                  background: "var(--e-panel)",
+                }}
+              >
+                <p style={{ font: `600 ${narrow ? "15px" : "16px"}/1.3 var(--e-body)`, color: "var(--e-fg)", margin: 0 }}>{tr.name}</p>
+                {tr.description && (
+                  <p style={{ font: "400 14px/1.55 var(--e-body)", color: "var(--e-muted)", margin: "7px 0 0" }}>{tr.description}</p>
+                )}
+                {tr.perks && tr.perks.length > 0 && (
+                  <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0", display: "grid", gap: 8 }}>
+                    {tr.perks.map((perk, i) => (
+                      <li key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                        <Check size={16} strokeWidth={2.25} aria-hidden style={{ color: "var(--e-accent)", flexShrink: 0, marginTop: 2 }} />
+                        <span style={{ font: "400 14px/1.5 var(--e-body)", color: "var(--e-fg)" }}>{perk}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        </Section>
+      ) : null,
+
+    /* Good to know: the policy lines the booking gives (confirmation, the
+       ticket, cancelling, changing the time) and the operator's own rows —
+       the same two things the Classic page states, under the same heading. */
+    know: () =>
+      know.length > 0 || event.info.length > 0 ? (
+        <Section id="know" index={indexOf("know")} eyebrow={labels.know ?? "Good to know"} title={labels.know ?? "Good to know"}>
+          {know.length > 0 && (
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 12, maxWidth: "62ch" }}>
+              {know.map((line) => (
+                <li key={line} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <span
+                    aria-hidden
+                    style={{
+                      display: "grid",
+                      placeItems: "center",
+                      width: 24,
+                      height: 24,
+                      flexShrink: 0,
+                      borderRadius: 999,
+                      background: "var(--e-badge-bg)",
+                      color: "var(--e-badge-ink)",
+                    }}
+                  >
+                    <Check size={14} strokeWidth={2.5} />
+                  </span>
+                  <span style={{ font: "400 15px/1.55 var(--e-body)", color: "var(--e-fg)" }}>{line}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {event.info.length > 0 && (
+            <div
+              style={{
+                marginTop: know.length > 0 ? (narrow ? 22 : 30) : 0,
+                display: "grid",
+                gridTemplateColumns: narrow ? "1fr" : `repeat(${Math.min(event.info.length, 3)}, 1fr)`,
+                gap: narrow ? 10 : 16,
+              }}
+            >
+              {event.info.map((f) => (
+                <div
+                  key={f.id}
+                  style={{
+                    minWidth: 0,
+                    padding: narrow ? "14px 16px" : "18px 20px",
+                    borderRadius: "var(--e-radius)",
+                    border: `1px solid var(--e-line)`,
+                    background: "var(--e-panel)",
+                  }}
+                >
+                  <p style={{ font: "600 12px/1 var(--e-body)", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--e-panel-ink)", margin: 0 }}>
+                    {f.label}
+                  </p>
+                  <p style={{ font: "400 14px/1.55 var(--e-body)", color: "var(--e-muted)", margin: "9px 0 0", overflowWrap: "anywhere" }}>{f.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+      ) : null,
     /* Three figures, stated before anyone scrolls. What they SAY differs by
        category — a gallery counts works and weeks, a tour counts days and
        stops — because "at a glance" is only useful if it is a glance at the
@@ -562,7 +735,7 @@ export function EventTemplate({
           {/* The practical trio lives here on this layout: doors, what is
               included, how to get there — all of them answers about the day
               itself, beside the address they apply to. */}
-          {event.info.length > 0 && (
+          {event.info.length > 0 && !infoInKnow && (
             <div style={{ display: "grid", gap: 0, borderTop: `1px solid var(--e-line)` }}>
               {event.info.map((f, i) => (
                 <div key={f.id} style={{ paddingTop: 12, paddingBottom: i === event.info.length - 1 ? 0 : 12, borderTop: i ? `1px solid var(--e-line)` : "none" }}>
@@ -587,7 +760,7 @@ export function EventTemplate({
       ) : null;
 
       return (
-        <Section id="video" index={indexOf("video")} eyebrow={labels.video} title={labels.video}>
+        <Section id="video" index={indexOf("video")} eyebrow={v ? labels.video : labels.venue} title={v ? labels.video : labels.venue}>
           <div
             style={{
               display: "grid",
@@ -637,8 +810,7 @@ export function EventTemplate({
        phone the argument comes first and the panel follows, because a buyer
        scrolling a 390px screen has not been given the reason yet. */
     about: () => {
-      const hasAbout = Boolean(event.description) || event.highlights.length > 0 || Boolean(event.organiser);
-      const rail = PAIRS.about === "tickets" && (drawn.tickets ?? false);
+      const rail =PAIRS.about === "tickets" && (drawn.tickets ?? false);
       if (!hasAbout && !rail) return null;
       const body = (
         <>
@@ -751,7 +923,7 @@ export function EventTemplate({
           {/* The practical trio. On the paired layout it travels with the
               venue card, where "doors at 08:30" sits with the address it
               applies to; elsewhere it belongs here with the prose. */}
-          {!structured && event.info.length > 0 && (
+          {!structured && !infoInKnow && event.info.length > 0 && (
             <div
               style={{
                 marginTop: narrow ? 22 : 30,
@@ -867,105 +1039,121 @@ export function EventTemplate({
           <Agenda entries={event.lineup} narrow={narrow} labels={labels} upper={upper} eventDayList={dayList} />
         </Section>
       ) : null,
-    gallery: () =>
-      variant === "poster" ? (
+    /* Real photos only. A row of generated plates is not a section somebody
+       wrote — a booking with no photos has no photos section. */
+    gallery: () => {
+      if (photos.length === 0) return null;
+      const photo = (i: number, extra: CSSProperties = {}): React.ReactNode => {
+        const ph = photos[i % photos.length];
+        return (
+          <div
+            key={`${ph.id}-${i}`}
+            role="img"
+            aria-label={ph.alt ?? event.title}
+            style={{
+              background: `url(${ph.url}) center/cover`,
+              borderTop: `1px solid var(--e-line)`,
+              borderBottom: `1px solid var(--e-line)`,
+              ...extra,
+            }}
+          />
+        );
+      };
+      if (variant === "poster") {
         /* Edge to edge, no gutters, no gaps.
            A contained mosaic is a gallery; a strip that runs off both sides of
            the page is the wall of faces every festival site puts between the
            bill and the tickets, and it is the one place a page like this should
            stop behaving like a document. */
-        <section id="gallery" style={{ scrollMarginTop: narrow ? 60 : 68, padding: `${narrow ? 40 : 72}px 0 0` }}>
-          <div style={{ padding: `0 ${pad}`, maxWidth: 1180, margin: "0 auto" }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-              <span
-                aria-hidden
+        const n = Math.min(photos.length, 4);
+        return (
+          <section id="gallery" style={{ scrollMarginTop: narrow ? 60 : 68, padding: `${narrow ? 40 : 72}px 0 0` }}>
+            <div style={{ padding: `0 ${pad}`, maxWidth: 1180, margin: "0 auto" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+                <span
+                  aria-hidden
+                  style={{
+                    font: "600 12px/1 var(--e-body)",
+                    letterSpacing: "0.14em",
+                    color: "var(--e-accent-ink)",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {String(indexOf("gallery")).padStart(2, "0")}
+                </span>
+                <span aria-hidden style={{ height: 1, flex: 1, background: "var(--e-line)", maxWidth: 64 }} />
+              </div>
+              <h2
                 style={{
-                  font: "600 12px/1 var(--e-body)",
-                  letterSpacing: "0.14em",
-                  color: "var(--e-accent-ink)",
-                  fontVariantNumeric: "tabular-nums",
+                  font: `600 ${narrow ? "24px" : "34px"}/1.1 var(--e-display)`,
+                  letterSpacing: t.displayTracking,
+                  color: "var(--e-fg)",
+                  margin: "10px 0 0",
                 }}
               >
-                {String(indexOf("gallery")).padStart(2, "0")}
-              </span>
-              <span aria-hidden style={{ height: 1, flex: 1, background: "var(--e-line)", maxWidth: 64 }} />
+                {labels.gallery}
+              </h2>
             </div>
-            <h2
+            <div
               style={{
-                font: `600 ${narrow ? "24px" : "34px"}/1.1 var(--e-display)`,
-                letterSpacing: t.displayTracking,
-                color: "var(--e-fg)",
-                margin: "10px 0 0",
+                marginTop: narrow ? 22 : 34,
+                display: "grid",
+                gridTemplateColumns: narrow ? "repeat(2, 1fr)" : `repeat(${n}, 1fr)`,
+                gap: 0,
               }}
             >
-              {labels.gallery}
-            </h2>
-          </div>
-          <div
-            aria-hidden
-            style={{
-              marginTop: narrow ? 22 : 34,
-              display: "grid",
-              gridTemplateColumns: narrow ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
-              gap: 0,
-            }}
-          >
-            {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                style={{
-                  aspectRatio: narrow ? "1 / 1" : "3 / 4",
-                  background: plateArt(c.accent, i, isLight(t.bg)),
-                  borderTop: `1px solid var(--e-line)`,
-                  borderBottom: `1px solid var(--e-line)`,
-                }}
-              />
-            ))}
-          </div>
-        </section>
-      ) : (
-      <Section id="gallery" index={indexOf("gallery")} eyebrow={labels.gallery} title={labels.gallery}>
-        {/* A mosaic, not a contact sheet. Equal squares read as a filing
-            system; varied spans read as a set of photographs somebody chose.
-            The spans are declared so both rows fill exactly — a grid that
-            leaves a hole is the thing that makes a gallery look broken. */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: narrow ? "repeat(2, 1fr)" : "repeat(6, 1fr)",
-            gridAutoRows: narrow ? "88px" : "clamp(96px, 11vw, 158px)",
-            gap: narrow ? 8 : 14,
-          }}
-        >
-          {(narrow
-            ? [
-                { c: 2, r: 2 },
-                { c: 1, r: 1 },
-                { c: 1, r: 1 },
-                { c: 2, r: 1 },
-              ]
-            : [
-                { c: 3, r: 2 },
-                { c: 3, r: 1 },
-                { c: 2, r: 1 },
-                { c: 1, r: 1 },
-              ]
-          ).map((tile, i) => (
+              {Array.from({ length: n }, (_, i) => photo(i, { aspectRatio: n < 3 ? "16 / 9" : narrow ? "1 / 1" : "3 / 4" }))}
+            </div>
+          </section>
+        );
+      }
+      /* A mosaic, not a contact sheet. Equal squares read as a filing
+         system; varied spans read as a set of photographs somebody chose.
+         The spans are declared so both rows fill exactly — a grid that
+         leaves a hole is the thing that makes a gallery look broken. With
+         fewer than four photos there is no mosaic to fill: they sit in a row. */
+      const mosaic = photos.length >= 4;
+      const tiles = narrow
+        ? [
+            { c: 2, r: 2 },
+            { c: 1, r: 1 },
+            { c: 1, r: 1 },
+            { c: 2, r: 1 },
+          ]
+        : [
+            { c: 3, r: 2 },
+            { c: 3, r: 1 },
+            { c: 2, r: 1 },
+            { c: 1, r: 1 },
+          ];
+      return (
+        <Section id="gallery" index={indexOf("gallery")} eyebrow={labels.gallery} title={labels.gallery}>
+          {mosaic ? (
             <div
-              key={i}
-              aria-hidden
               style={{
-                gridColumn: `span ${tile.c}`,
-                gridRow: `span ${tile.r}`,
-                borderRadius: "var(--e-radius)",
-                background: plateArt(c.accent, i, isLight(t.bg)),
-                border: `1px solid var(--e-line)`,
+                display: "grid",
+                gridTemplateColumns: narrow ? "repeat(2, 1fr)" : "repeat(6, 1fr)",
+                gridAutoRows: narrow ? "88px" : "clamp(96px, 11vw, 158px)",
+                gap: narrow ? 8 : 14,
               }}
-            />
-          ))}
-        </div>
-      </Section>
-      ),
+            >
+              {tiles.map((tile, i) =>
+                photo(i, {
+                  gridColumn: `span ${tile.c}`,
+                  gridRow: `span ${tile.r}`,
+                  borderRadius: "var(--e-radius)",
+                  border: `1px solid var(--e-line)`,
+                }),
+              )}
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: narrow ? "repeat(2, 1fr)" : `repeat(${photos.length}, 1fr)`, gap: narrow ? 8 : 14 }}>
+              {photos.map((_, i) => photo(i, { aspectRatio: "4 / 3", borderRadius: "var(--e-radius)", border: `1px solid var(--e-line)` }))}
+            </div>
+          )}
+        </Section>
+      );
+    },
     tickets: () =>
       absorbed.has("tickets") ? null : (
         <Section id="tickets" index={indexOf("tickets")} eyebrow={labels.tickets} title={labels.tickets}>
@@ -973,7 +1161,7 @@ export function EventTemplate({
         </Section>
       ),
     venue: () =>
-      absorbed.has("venue") ? null : (
+      absorbed.has("venue") || !event.venueName ? null : (
       <Section id="venue" index={indexOf("venue")} eyebrow={labels.venue} title={event.venueName}>
         <div style={{ display: "grid", gap: 16, gridTemplateColumns: narrow ? "1fr" : "1fr 1fr", alignItems: "start" }}>
           <div>
@@ -985,9 +1173,11 @@ export function EventTemplate({
             {/* "When do I turn up?" is asked here as often as in the hero,
                 and this line used to answer it with the first day's clock —
                 so a two-day tournament told a buyer "Saturday", full stop. */}
-            <p style={{ font: "400 15px/1.6 var(--e-body)", color: "var(--e-muted)", margin: "10px 0 0" }}>
-              {dateLine} · {timeLine}
-            </p>
+            {(dateLine || timeLine) && (
+              <p style={{ font: "400 15px/1.6 var(--e-body)", color: "var(--e-muted)", margin: "10px 0 0" }}>
+                {[dateLine, timeLine].filter(Boolean).join(" · ")}
+              </p>
+            )}
             {/* The link the conference variant has had since it was rebuilt,
                 and the other five templates did not: the plate beside this is
                 a placeholder for a map, and THIS is the thing a visitor
@@ -1207,7 +1397,7 @@ export function EventTemplate({
             {labels.getTickets}
           </a>
         </nav>
-        {c.sections.map((s) => (absorbed.has(s) ? null : <div key={s}>{draw[s]?.()}</div>))}
+        {sections.map((s) => (absorbed.has(s as SectionId) ? null : <div key={s}>{draw[s]?.()}</div>))}
 
         {/* A sticky bar is what turns a page into a ticket page. It states the
             cheapest ticket still on sale — the figure a buyer scans for — and
@@ -1288,7 +1478,6 @@ function Hero({
   theme,
   labels,
   pad,
-  upper,
   fromPrice,
   timeLine,
   dateLine,
@@ -1299,7 +1488,6 @@ function Hero({
   theme: ReturnType<typeof categoryById>["theme"];
   labels: Labels;
   pad: string;
-  upper: boolean;
   fromPrice: number | null;
   /** When it runs, said once by the page — a clock for one day, a count of
    *  days for several, never an end time borrowed from a day not named. */
@@ -1318,13 +1506,12 @@ function Hero({
   const structuredMeta = (
     <div style={{ display: "grid", gridTemplateColumns: narrow ? "1fr" : "auto auto", gap: narrow ? 16 : 44, justifyContent: "start", marginTop: narrow ? 22 : 30 }}>
       {[
-        {
-          icon: CalendarDays,
-          head: dateLine,
-          sub: timeLine,
-        },
+        /* With no date the "when" in words leads; with both, date then clock. */
+        dateLine ? { icon: CalendarDays, head: dateLine, sub: timeLine } : { icon: CalendarDays, head: timeLine, sub: undefined },
         { icon: MapPin, head: event.venueName, sub: event.venueAddress },
-      ].map(({ icon: Icon, head, sub }) => (
+      ]
+        .filter((x) => x.head)
+        .map(({ icon: Icon, head, sub }) => (
         <div key={head} style={{ display: "flex", gap: 12, alignItems: "flex-start", minWidth: 0 }}>
           <span
             aria-hidden
@@ -1355,7 +1542,9 @@ function Hero({
         { icon: CalendarDays, text: dateLine },
         { icon: Clock, text: timeLine },
         { icon: MapPin, text: event.venueName },
-      ].map(({ icon: Icon, text }) => (
+      ]
+        .filter((x) => x.text)
+        .map(({ icon: Icon, text }) => (
         <span key={text} style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 0 }}>
           <Icon size={15} strokeWidth={1.75} style={{ color: "var(--e-accent)", flexShrink: 0 }} />
           <span style={{ font: "400 14px/1.4 var(--e-body)", color: "var(--e-muted)" }}>{text}</span>
@@ -1478,7 +1667,8 @@ function Hero({
     </div>
   );
 
-  const eyebrowText = upper ? event.subtype : event.subtype;
+  /* The old event subtype ("Tournament", "Rave") is no longer shown: a booking carries no type label. */
+  const eyebrowText = "";
 
   // ── immersive / poster / neon / floodlit: art behind, content over a scrim ─
   if (variant === "immersive" || variant === "poster" || variant === "neon" || variant === "floodlit") {
@@ -1512,6 +1702,7 @@ function Hero({
           }}
         />
         <div style={{ position: "relative", padding: `${narrow ? 28 : 56}px ${pad}`, width: "100%" }}>
+          {eyebrowText ? (
           <span
             style={{
               display: "inline-block",
@@ -1527,6 +1718,7 @@ function Hero({
           >
             {eyebrowText}
           </span>
+          ) : null}
           {Title}
           {event.subtitle && (
             <p
@@ -1590,6 +1782,7 @@ function Hero({
         />
         <div style={{ position: "relative", display: "grid", gap: narrow ? 30 : 54, gridTemplateColumns: narrow ? "1fr" : "minmax(0, 1fr) minmax(0, 1fr)", alignItems: "center" }}>
           <div style={{ minWidth: 0 }}>
+            {eyebrowText ? (
             <p
               style={{
                 font: "500 12px/1 var(--e-body)",
@@ -1601,6 +1794,7 @@ function Hero({
             >
               {eyebrowText}
             </p>
+            ) : null}
             <h1
               style={{
                 font: `600 ${narrow ? "clamp(28px, 9vw, 40px)" : "clamp(38px, 4.4vw, 62px)"}/1.08 var(--e-display)`,
@@ -1633,12 +1827,21 @@ function Hero({
                   doors, and a journey is the one kind of event whose end date is
                   as much a fact as its start. `endsAt` has been on the record all
                   along with nothing drawing it. */}
-              {[
+              {(event.undated || event.whenText
+                ? [
+                    timeLine ? { k: labels.when ?? "When", v: timeLine } : null,
+                    dateLine ? { k: labels.nextUp ?? "Next", v: longDate(start) } : null,
+                    event.venueName ? { k: labels.venue, v: event.venueName } : null,
+                  ]
+                : [
                 { k: labels.departs, v: `${longDate(start)} \u00b7 ${time(start)}` },
                 event.endsAt
                   ? { k: labels.returns, v: `${longDate(new Date(event.endsAt))} · ${time(new Date(event.endsAt))}` }
                   : { k: labels.venue, v: event.venueName },
-              ].map((row) => (
+                  ]
+              )
+                .filter((r): r is { k: string; v: string } => !!r && !!r.v)
+                .map((row) => (
                 <div key={row.k} style={{ padding: narrow ? "13px 0" : "15px 0", borderBottom: `1px solid var(--e-line)`, minWidth: 0 }}>
                   <dt
                     style={{
@@ -1717,6 +1920,7 @@ function Hero({
           }}
         />
         <div style={{ position: "relative", maxWidth: narrow ? "100%" : "68%" }}>
+          {eyebrowText ? (
           <span
             style={{
               display: "inline-block",
@@ -1732,6 +1936,7 @@ function Hero({
           >
             <span style={{ display: "inline-block", transform: "skewX(9deg)" }}>{eyebrowText}</span>
           </span>
+          ) : null}
           {Title}
           {event.subtitle && (
             <p style={{ font: `400 ${narrow ? "15px" : "19px"}/1.5 var(--e-body)`, color: "var(--e-muted)", margin: "14px 0 0", maxWidth: "46ch" }}>
@@ -1749,9 +1954,11 @@ function Hero({
     return (
       <header style={{ padding: `${narrow ? 44 : 96}px ${pad}`, textAlign: narrow ? "left" : "center" }}>
         <div style={{ maxWidth: 860, margin: "0 auto" }}>
+          {eyebrowText ? (
           <p style={{ font: "400 12px/1.2 var(--e-body)", letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--e-accent-ink)", margin: 0 }}>
             {eyebrowText}
           </p>
+          ) : null}
           <div style={{ height: 1, background: "var(--e-line)", margin: `${narrow ? 20 : 28}px 0` }} />
           {Title}
           {event.subtitle && (
@@ -1824,6 +2031,7 @@ function Hero({
     <header style={{ padding: `${narrow ? 32 : 68}px ${pad}` }}>
       <div style={{ display: "grid", gap: narrow ? 24 : 44, gridTemplateColumns: narrow || stacked ? "1fr" : "1.15fr 1fr", alignItems: "center" }}>
         <div>
+          {eyebrowText ? (
           <span
             style={{
               display: "inline-block",
@@ -1839,6 +2047,7 @@ function Hero({
           >
             {eyebrowText}
           </span>
+          ) : null}
           {Title}
           {event.subtitle && (
             <p style={{ font: `400 ${narrow ? "17px" : "22px"}/1.4 var(--e-body)`, color: "var(--e-muted)", margin: "14px 0 0", maxWidth: "34ch" }}>
@@ -1872,6 +2081,9 @@ function Hero({
  *  reaches for, and its label has existed in this file's label set since the
  *  templates were written — with nothing rendering it. */
 function CalendarLink({ event, narrow, labels }: { event: EventRecord; narrow: boolean; labels: Labels }) {
+  /* A booking that repeats, or has no first day, has no single moment to put in
+     a calendar. */
+  if (event.undated || event.whenText) return null;
   return (
     <a
       href={calendarUrl(event)}
@@ -1895,6 +2107,7 @@ function CalendarLink({ event, narrow, labels }: { event: EventRecord; narrow: b
 
 function Countdown({
   to,
+  label,
   now,
   narrow,
   pad,
@@ -1903,6 +2116,8 @@ function Countdown({
   glow,
 }: {
   to: Date;
+  /** What it counts to, in the operator's words ("Starts in"). */
+  label?: string;
   now: Date;
   narrow: boolean;
   pad: string;
@@ -1921,14 +2136,28 @@ function Countdown({
   ];
   return (
     <section
+      id="countdown"
       style={{
-        display: "flex",
-        gap: narrow ? 10 : 18,
         padding: `${narrow ? 20 : 26}px ${pad}`,
         borderTop: `1px solid var(--e-line)`,
         background: "var(--e-panel)",
       }}
     >
+      {label && (
+        <p
+          style={{
+            font: "600 12px/1.2 var(--e-body)",
+            letterSpacing: upper ? "0.16em" : "0.06em",
+            textTransform: upper ? "uppercase" : "none",
+            color: "var(--e-panel-ink)",
+            textAlign: "center",
+            margin: `0 0 ${narrow ? 12 : 16}px`,
+          }}
+        >
+          {label}
+        </p>
+      )}
+      <div style={{ display: "flex", gap: narrow ? 10 : 18 }}>
       {cells.map((c) => (
         <div key={c.l} style={{ flex: 1, textAlign: "center" }}>
           <p
@@ -1960,6 +2189,7 @@ function Countdown({
           </p>
         </div>
       ))}
+      </div>
     </section>
   );
 }
@@ -2643,6 +2873,11 @@ function ScheduleList({ entries, narrow }: { entries: EventRecord["lineup"]; nar
  * edge down each row. The perforated tear does not survive a 90px-tall row, so
  * it is not drawn rather than drawn badly.
  */
+/** Tickets left of a ticket type: unlimited when it has no quantity of its own. */
+const leftOf = (t: EventTier) => (t.unlimited ? Infinity : Math.max(0, t.quantity - t.sold));
+/** Does the ticket belong in the ticket list: it has a quantity, or none at all. */
+const listed = (t: EventTier) => t.unlimited || t.quantity > 0;
+
 function TicketPanel({
   event,
   narrow,
@@ -2656,9 +2891,9 @@ function TicketPanel({
   theme: EventTheme;
   dayList?: { id: string; label: string; date: string }[];
 }) {
-  const all = event.tiers.filter((t) => t.quantity > 0);
-  const live = all.filter((t) => t.quantity - t.sold > 0);
-  const gone = all.filter((t) => t.quantity - t.sold <= 0);
+  const all = event.tiers.filter(listed);
+  const live = all.filter((t) => leftOf(t) > 0);
+  const gone = all.filter((t) => leftOf(t) <= 0);
   /* "Most popular" is read off the ledger, never chosen: the best-selling tier,
      and only when it is meaningfully ahead of the next. A badge that sits on
      whatever the operator wants to push is an advertisement wearing the clothes
@@ -2695,8 +2930,8 @@ function TicketPanel({
 
       <div style={{ display: "grid", gap: 10, marginTop: narrow ? 14 : 18 }}>
         {live.map((t) => {
-          const left = t.quantity - t.sold;
-          const scarce = left <= Math.max(1, Math.round(t.quantity * 0.15));
+          const left = leftOf(t);
+          const scarce = left !== Infinity && left <= Math.max(1, Math.round(t.quantity * 0.15));
           const popular = t.id === popularId;
           return (
             <div
@@ -2988,15 +3223,15 @@ function TicketTable({
    *  reading each one in turn. */
   structured?: boolean;
 }) {
-  const all = event.tiers.filter((t) => t.quantity > 0);
+  const all = event.tiers.filter(listed);
   /* In the comparison layout a tier that has gone is not a column.
      Four plans in a three-column grid put the sold-out early bird alone on a
      fourth row with two empty columns beside it — and a plan nobody can buy
      has no business taking a third of a comparison of plans they can. It is
      still stated, as a line underneath: "gone" is information a buyer wants,
      it just is not an option. */
-  const live = structured ? all.filter((t) => t.quantity - t.sold > 0) : all;
-  const gone = structured ? all.filter((t) => t.quantity - t.sold <= 0) : [];
+  const live = structured ? all.filter((t) => leftOf(t) > 0) : all;
+  const gone = structured ? all.filter((t) => leftOf(t) <= 0) : [];
   /* "Most popular" is read off the ledger, never chosen: the best-selling tier,
      and only when it is meaningfully ahead of the next one. A badge that sits
      on whatever the operator wants to push is an advertisement wearing the
@@ -3064,9 +3299,9 @@ function TicketTable({
         }}
       >
         {group.tiers.map((t, i) => {
-          const left = Math.max(0, t.quantity - t.sold);
+          const left = leftOf(t);
           const out = left === 0;
-          const scarce = !out && left <= Math.max(1, Math.round(t.quantity * 0.15));
+          const scarce = !out && left !== Infinity && left <= Math.max(1, Math.round(t.quantity * 0.15));
           /* A badge on every available tier is a badge on nothing: the first
              build read "TICKETS SELLING FAST" beside all four tiers, including
              one that had sold 31% of four thousand. It now appears only where
@@ -3206,7 +3441,7 @@ function TicketTable({
                   >
                     {t.price === 0 ? labels.free : formatPriceShort(t.price)}
                   </p>
-                  {!out && (
+                  {!out && left !== Infinity && (
                     <p style={{ font: "400 12px/1.4 var(--e-body)", color: "var(--e-muted)", margin: "5px 0 0" }}>
                       {labels.remaining.replace("{count}", String(left))}
                     </p>

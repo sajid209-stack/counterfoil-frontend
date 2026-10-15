@@ -2,10 +2,10 @@
   "openEntry": "যেকোনো দিন · সময় বাছতে হয় না",
   "datePass": "শুরুর তারিখ বাছুন · কয়েক দিন চলে",
   "dailyLimit": "তারিখ বাছুন · দিনে সীমিত",
-  "slots": "সময়ের স্লট",
-  "slotsEvery": "সময়ের স্লট · প্রতি {length}",
+  "slots": "নির্দিষ্ট সময়ে",
+  "slotsEvery": "প্রতি {length} পর পর শুরু",
   "sessionsLasting": "নির্দিষ্ট সময় · প্রতিটি {length}",
-  "guided": "গাইডসহ ট্যুর",
+  "guided": "গাইডসহ",
   "guidedEvery": "গাইডসহ · প্রতি {length}",
   "byHour": "ঘণ্টা ধরে বুক · {places}",
   "bySlot": "স্লট বুক করুন · {places}",
@@ -24,5 +24,5 @@
   "unfinished": "সেটআপ শেষ হয়নি",
   "hours": "{count, plural, one {# ঘণ্টা} other {# ঘণ্টা}}",
   "minutes": "{count, number} মিনিট",
-  "event": "নির্দিষ্ট তারিখে · ইভেন্টের টিকিট"
+  "event": "নির্দিষ্ট তারিখে"
 }

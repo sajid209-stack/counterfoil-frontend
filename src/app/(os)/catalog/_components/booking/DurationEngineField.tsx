@@ -74,7 +74,7 @@ export function DurationEngineField({
 
   return (
     <div className="flex flex-col gap-section">
-      <div className="grid gap-section sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-section sm:grid-cols-3">
         <DurationInput label={t("shortest")} value={value.minMinutes} min={5} onChange={(n) => set("minMinutes", n)} chips={[30, 60]} />
         <DurationInput label={t("longest")} value={value.maxMinutes} min={5} onChange={(n) => set("maxMinutes", n)} chips={[120, 180]} />
         <DurationInput label={t("step")} value={value.incrementMinutes} min={5} step={5} onChange={(n) => set("incrementMinutes", n)} chips={[15, 30, 60]} />
@@ -123,7 +123,7 @@ export function DurationEngineField({
             <span className="text-sm font-medium text-muted">{t("listTitle")}</span>
             <button type="button" onClick={fillFromHourly} className="min-h-11 text-sm text-brand-foreground hover:underline md:min-h-0">{t("fillFromHourly")}</button>
           </div>
-          <div className="grid gap-tight sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-tight sm:grid-cols-3">
             {options.map((d) => (
               <FormField key={d} label={`${dur(d)} (${symbol})`} variant="number" value={minorToMajor(value.priceList?.[d])} onChange={(e) => set("priceList", { ...value.priceList, [d]: majorToMinor(e.target.value) })} />
             ))}
@@ -132,7 +132,7 @@ export function DurationEngineField({
       )}
 
       {value.pricingModel === "base_extension" && (
-        <div className="grid gap-section sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
           <FormField label={`${t("firstPart", { time: dur(value.minMinutes) })} (${symbol})`} variant="number" value={minorToMajor(value.basePrice)} onChange={(e) => set("basePrice", majorToMinor(e.target.value))} />
           <FormField label={`${t("eachExtra", { time: dur(value.incrementMinutes) })} (${symbol})`} variant="number" value={minorToMajor(value.extensionPrice)} onChange={(e) => set("extensionPrice", majorToMinor(e.target.value))} />
         </div>
@@ -155,7 +155,7 @@ export function DurationEngineField({
             )}
           </div>
           <p className="text-sm text-muted">{t("dealsHelp")}</p>
-          <div className="grid gap-tight sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-tight sm:grid-cols-2 lg:grid-cols-3">
             {options.map((d) => {
               const formula = formulaPrice(value, d);
               const deal = isDealDuration(value, d);
@@ -192,7 +192,7 @@ export function DurationEngineField({
         </div>
       )}
 
-      <div className="grid gap-section sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-section sm:grid-cols-3">
         <FormField
           label={t("mustEnd")}
           variant="toggle"

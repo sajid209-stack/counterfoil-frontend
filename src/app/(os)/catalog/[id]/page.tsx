@@ -8,15 +8,15 @@ import { PageShell, Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getProduct, listLocations, listProducts, listResources, listStaff, type Product } from "@/lib/api";
 import { BookingRecord } from "../_components/record/BookingRecord";
-import { EventRecord } from "../_components/record/EventRecord";
 
 /**
  * One record page for every item in the catalog (docs/catalog.md §9.4).
  *
- * A booking and an event are both `/catalog/<id>`: the same header (state, kind,
- * one primary action), the same tabs, the same save bar. What differs is only
- * what a tab edits — a booking's schedule and prices, an event's days and
- * tickets — and that is decided here, once, by the record's type.
+ * Every booking — a ticket, a lane by the hour, a concert — is `/catalog/<id>`:
+ * the same header (a way back, the state, one primary action), the same eight
+ * tabs, the same Overview and the same save bar. What a tab edits depends on how
+ * the booking is booked, and that is decided inside the tab; the page never
+ * picks a different record for a different kind.
  */
 export default function CatalogItemPage() {
   return (
@@ -72,9 +72,5 @@ function Item() {
     currency: op.data?.currency ?? "BDT",
   };
 
-  return product.bookingType === "BT-15" ? (
-    <EventRecord key={product.id} product={product} env={env} onChanged={setSaved} />
-  ) : (
-    <BookingRecord key={product.id} product={product} env={env} onChanged={setSaved} />
-  );
+  return <BookingRecord key={product.id} product={product} env={env} onChanged={setSaved} />;
 }

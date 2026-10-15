@@ -41,6 +41,9 @@ export interface TierRowSpec {
   onQty: (v: string) => void;
   qtyPlaceholder?: string;
   qtyError?: string;
+  /** The number may be left blank (a "How many" with no limit), so a blank
+   *  field does not open the phone's disclosure on its own. */
+  qtyOptional?: boolean;
   /** Events: what this tier has sold, drawn against its quantity. */
   sold?: number;
   /**
@@ -140,7 +143,7 @@ function TierRow({
   const [more, setMore] = useState(false);
   const [editingPrice, setEditingPrice] = useState(false);
   const cap = parseInt(r.qty, 10) || 0;
-  const needsMore = r.qty === "" || !!r.qtyError;
+  const needsMore = (r.qty === "" && !r.qtyOptional) || !!r.qtyError;
   const moreOpen = more || needsMore;
   /* Grouped while it is read, raw while it is typed: 12000 reads as 12,000,
      and a comma never lands under the cursor mid-number. */
@@ -218,9 +221,12 @@ function TierRow({
                   <span className="sm:sr-only">{labels.sold}: </span>
                   {labels.soldOf(r.sold, cap)}
                 </span>
-                <span className="h-1.5 w-full overflow-hidden rounded-full bg-line">
-                  <span className={cn("block h-full rounded-full", pct >= 90 ? "bg-ember-solid" : "bg-success-solid")} style={{ width: `${pct}%` }} />
-                </span>
+                {/* A ticket with no limit has nothing to fill. */}
+                {cap > 0 && (
+                  <span className="h-1.5 w-full overflow-hidden rounded-full bg-line">
+                    <span className={cn("block h-full rounded-full", pct >= 90 ? "bg-ember-solid" : "bg-success-solid")} style={{ width: `${pct}%` }} />
+                  </span>
+                )}
               </>
             ) : (
               <span className="text-sm text-muted">

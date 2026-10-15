@@ -88,7 +88,7 @@ export function ScheduleBuilder({
   return (
     <div className="flex flex-col gap-section">
       {isSlotBased(bookingType) && (
-        <div className="grid gap-section sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
           <DurationInput label={t("every")} value={value.slotMinutes} min={5} onChange={(n) => set("slotMinutes", n)} chips={DURATION_CHIPS} help={t("everyHelp")} />
           <DurationInput label={t("lasts")} value={value.sessionMinutes} min={5} onChange={(n) => set("sessionMinutes", n)} chips={DURATION_CHIPS} />
         </div>
@@ -122,7 +122,7 @@ export function ScheduleBuilder({
                 : t("overlap", { lasts: dur(value.sessionMinutes), every: dur(value.slotMinutes) })}
             </Notice>
           )}
-          <div className="grid gap-section sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
             <TimeInput label={t("first")} value={value.startTime} onChange={(v) => set("startTime", v)} help={t("firstHelp")} />
             <TimeInput label={t("last")} value={value.endTime} onChange={(v) => set("endTime", v)} />
             <FormField label={t("holds")} variant="number" placeholder="20" value={String(value.capacityPerSession)} onChange={(e) => set("capacityPerSession", parseInt(e.target.value, 10) || 0)} />
@@ -265,8 +265,8 @@ export function ScheduleBuilder({
             </div>
           );
         })}
-        <div className="flex gap-tight">
-          <DateField value={exDate} today={DEMO_TODAY} onChange={setExDate} labels={{ previousMonth: t("previousMonth"), nextMonth: t("nextMonth"), today: t("today"), open: t("chooseDate") }} className="flex-1" />
+        <div className="flex flex-wrap gap-tight">
+          <DateField value={exDate} today={DEMO_TODAY} onChange={setExDate} labels={{ previousMonth: t("previousMonth"), nextMonth: t("nextMonth"), today: t("today"), open: t("chooseDate") }} className="min-w-[10rem] flex-1" />
           <Button variant="secondary" size="sm" onClick={addException} icon={<Plus size={16} strokeWidth={1.5} aria-hidden />}>
             {t("addClosed")}
           </Button>

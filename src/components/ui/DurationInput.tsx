@@ -85,7 +85,7 @@ export function DurationInput({
             if (e.key === "ArrowDown") { e.preventDefault(); nudge(-1); }
           }}
           onWheel={(e) => { if (draft !== null) { e.preventDefault(); nudge(e.deltaY < 0 ? 1 : -1); } }}
-          className="min-w-0 flex-1 bg-transparent px-comfortable text-base tabular-nums placeholder:text-faint disabled:cursor-not-allowed"
+          className="w-0 min-w-0 flex-1 bg-transparent px-comfortable text-base tabular-nums placeholder:text-faint disabled:cursor-not-allowed"
         />
         {/* Side by side and full height below md, where a thumb needs 44px;
             stacked for a pointer. Same as TimeInput. */}
