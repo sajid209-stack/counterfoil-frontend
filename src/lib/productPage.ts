@@ -60,7 +60,7 @@ export const STANDARD_SECTIONS = ALL_PAGE_SECTIONS;
 /** Shown on a new page: the sections that are already true from what the
  *  booking knows. Everything else waits until there is something written in
  *  it — an empty section on a public page is a promise nobody made. */
-export const DEFAULT_SECTIONS: PageSectionId[] = ["hero", "about", "included", "know", "gallery", "venue", "tickets"];
+export const DEFAULT_SECTIONS: PageSectionId[] = ["hero", "about", "tickets", "included", "know", "gallery", "venue"];
 
 /** Kept for callers written before revision 2. */
 export const STANDARD_DEFAULT = DEFAULT_SECTIONS;

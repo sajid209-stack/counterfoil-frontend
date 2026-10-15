@@ -165,6 +165,10 @@ export interface EventLineupEntry {
   day?: string;
   /** The day this belongs to, when the event has days. Wins over `day`. */
   dayId?: string;
+  /** A portrait of the person, shown on the page's line-up. Optional: without
+   *  photos the line-up is drawn as a clean list rather than a wall of
+   *  placeholder faces (docs/product-page.md §3.5). */
+  imageUrl?: string;
 }
 
 /** Who is putting the event on. A conference page is believed or not on the

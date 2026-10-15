@@ -36,8 +36,11 @@ export function QuickAddSheet({
   onClose,
   onAdded,
   hideDetails = false,
+  preselectTierId,
 }: {
   product: Product;
+  /** Open with one of this ticket type already chosen. */
+  preselectTierId?: string;
   /** Drop the "See details" link: used where the sheet opens ON the item's own
    *  page, where the link would lead back to where the guest already is. */
   hideDetails?: boolean;
@@ -213,7 +216,7 @@ export function QuickAddSheet({
           {hideDetails && <div className="pb-tight" />}
         </div>
 
-        <BookingPicker product={product} sheet={hooks} />
+        <BookingPicker product={product} sheet={hooks} preselectTierId={preselectTierId} />
       </div>
     </div>
   );

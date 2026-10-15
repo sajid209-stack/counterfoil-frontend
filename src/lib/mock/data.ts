@@ -225,7 +225,7 @@ const bookingProducts: Product[] = [
     id: "prd_admission",
     name: "General Admission",
     description: "Same-day entry to the grounds. Come any time we're open.",
-    images: [],
+    images: [{ id: "img_admission_1", url: "/demo/pages/admission-1.jpg", alt: "The pink Tomb of Pari Bibi at Lalbagh Fort in Dhaka behind a hedge" }, { id: "img_admission_2", url: "/demo/pages/admission-2.jpg", alt: "A paved path and clipped hedges in the grounds of Lalbagh Fort, Dhaka" }],
     bookingType: "BT-01",
     tiers: [
       { id: "tier_adult", name: "Adult", price: 50000, admits: 1, note: "Entry to the grounds and the museum, any time we are open.", active: true },
@@ -318,7 +318,7 @@ const bookingProducts: Product[] = [
     id: "prd_garden",
     name: "Sculpture Garden",
     description: "Open daily. Capped so it never gets crowded.",
-    images: [],
+    images: [{ id: "img_garden_1", url: "/demo/pages/garden-1.jpg", alt: "A straight garden path between trimmed hedges and flower beds at Lalbagh Fort" }, { id: "img_garden_2", url: "/demo/pages/garden-2.jpg", alt: "An aerial view of the quartered, green Mughal garden at Lalbagh Fort" }],
     bookingType: "BT-06",
     tiers: [{ id: "tier_g_flat", name: "Entry", price: 35000, active: true }],
     locationIds: ["loc_fort"],
@@ -378,7 +378,7 @@ const bookingProducts: Product[] = [
     id: "prd_tour2",
     name: "Sculpture Garden Tour",
     description: "A guided garden walk — same guides as the heritage tour, so 10:00 AM can only run one of them.",
-    images: [],
+    images: [{ id: "img_gardentour_1", url: "/demo/pages/gardentour-1.jpg", alt: "Lalbagh Fort's garden with its historic brick buildings behind the trees" }],
     bookingType: "BT-09",
     tiers: [{ id: "tier_t2_all", name: "Ticket", price: 90000, active: true }],
     locationIds: ["loc_fort"],
@@ -399,7 +399,7 @@ const bookingProducts: Product[] = [
     id: "prd_reentry",
     name: "All-Day Re-entry Pass",
     description: "Come and go all day — the gate re-admits while it's valid.",
-    images: [],
+    images: [{ id: "img_reentry_1", url: "/demo/pages/reentry-1.jpg", alt: "Visitors resting in the shade of a long arched arcade at Lalbagh Fort" }],
     bookingType: "BT-01",
     tiers: [{ id: "tier_re", name: "Day pass", price: 80000, active: true }],
     locationIds: ["loc_fort"],
@@ -413,7 +413,7 @@ const bookingProducts: Product[] = [
     updatedAt: T,
   },
   {
-    id: "prd_futsal", name: "Futsal", description: "Book a field for an hour — outdoor or indoor.", images: [], bookingType: "BT-04",
+    id: "prd_futsal", name: "Futsal", description: "Book a field for an hour — outdoor or indoor.", images: [{ id: "img_turf_1", url: "/demo/pages/turf-1.jpg", alt: "A small football pitch lit by floodlights at dusk with players on the grass" }, { id: "img_turf_2", url: "/demo/pages/turf-2.jpg", alt: "Players chasing the ball on a small artificial-turf pitch at night" }], bookingType: "BT-04",
     tiers: [{ id: "tier_fb_slot", name: "Slot", price: 150000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], dayOverrides: { 5: { startTime: "14:00", endTime: "23:00" } }, guideIds: [], exceptions: [] },
@@ -435,7 +435,7 @@ const bookingProducts: Product[] = [
     // The turf's variable-duration booking: people take a court for as long as
     // they want in half-hour steps, and two hours is a deal rather than twice
     // the price of one.
-    id: "prd_badminton", name: "Badminton Court", description: "Book the court by the half hour.", images: [], bookingType: "BT-05",
+    id: "prd_badminton", name: "Badminton Court", description: "Book the court by the half hour.", images: [{ id: "img_badminton_1", url: "/demo/pages/badminton-1.jpg", alt: "An empty indoor sports hall with a badminton court marked on a wooden floor" }], bookingType: "BT-05",
     tiers: [{ id: "tier_bd_hr", name: "Per hour", price: 80000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 30, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
@@ -469,7 +469,7 @@ const bookingProducts: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_massage", name: "Deep Tissue Massage", description: "Book a therapist for 60 or 90 minutes.", images: [], bookingType: "BT-10",
+    id: "prd_massage", name: "Deep Tissue Massage", description: "Book a therapist for 60 or 90 minutes.", images: [{ id: "img_massage_1", url: "/demo/pages/massage-1.jpg", alt: "A quiet massage room with a treatment table, towels and wooden window shutters" }, { id: "img_massage_2", url: "/demo/pages/massage-2.jpg", alt: "A spa treatment room with two bathrobes on the wall and a bench" }], bookingType: "BT-10",
     tiers: [{ id: "tier_ms_60", name: "60 min", price: 300000, active: true }, { id: "tier_ms_90", name: "90 min", price: 450000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null, schedule: null,
     providerIds: ["stf_nadia", "stf_karim"], providerNoun: "Therapist", providerPickable: true, flexibleDurations: [60, 90],
@@ -480,7 +480,7 @@ const bookingProducts: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_film", name: "Evening Film", description: "Pick your section.", images: [], bookingType: "BT-07",
+    id: "prd_film", name: "Evening Film", description: "Pick your section.", images: [{ id: "img_film_1", url: "/demo/pages/film-1.jpg", alt: "Rows of red cinema seats facing the screen in an empty auditorium" }, { id: "img_film_2", url: "/demo/pages/film-2.jpg", alt: "Tiered reclining seats in a dark cinema auditorium with lit steps" }], bookingType: "BT-07",
     tiers: [{ id: "tier_flm", name: "Ticket", price: 40000, active: true }],
     sections: [{ id: "sec_stalls", name: "Stalls", capacity: 120, price: 40000 }, { id: "sec_balcony", name: "Balcony", capacity: 40, price: 70000 }],
     layoutId: "layout_cinema",
@@ -488,14 +488,14 @@ const bookingProducts: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_bundle", name: "Day Pass Bundle", description: "Admission + Garden + Planetarium in one ticket.", images: [], bookingType: "BT-08",
+    id: "prd_bundle", name: "Day Pass Bundle", description: "Admission + Garden + Planetarium in one ticket.", images: [{ id: "img_admission_1", url: "/demo/pages/admission-1.jpg", alt: "The pink Tomb of Pari Bibi at Lalbagh Fort in Dhaka behind a hedge" }, { id: "img_garden_1", url: "/demo/pages/garden-1.jpg", alt: "A straight garden path between trimmed hedges and flower beds at Lalbagh Fort" }], bookingType: "BT-08",
     tiers: [{ id: "tier_bn", name: "Bundle", price: 100000, active: true }],
     bundleComponentIds: ["prd_admission", "prd_garden", "prd_planetarium"],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_yoga_pack", name: "10-Class Yoga Pack", description: "Ten credits to spend on yoga sessions.", images: [], bookingType: "BT-12",
+    id: "prd_yoga_pack", name: "10-Class Yoga Pack", description: "Ten credits to spend on yoga sessions.", images: [{ id: "img_yoga_2", url: "/demo/pages/yoga-2.jpg", alt: "A group practising yoga on mats under a thatched open-air shelter" }], bookingType: "BT-12",
     tiers: [{ id: "tier_yp", name: "Pack", price: 400000, active: true }],
     credits: { count: 10, expiryDays: 90, productIds: ["prd_yoga"] },
     creditsPerBooking: 1,
@@ -503,7 +503,7 @@ const bookingProducts: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_swim", name: "Beginner Swim Course", description: "Eight sessions, one enrolment.", images: [], bookingType: "BT-13",
+    id: "prd_swim", name: "Beginner Swim Course", description: "Eight sessions, one enrolment.", images: [{ id: "img_swim_1", url: "/demo/pages/swim-1.jpg", alt: "An empty eight-lane indoor swimming pool with lane ropes" }, { id: "img_swim_2", url: "/demo/pages/swim-2.jpg", alt: "Swimmers training in lanes of a bright blue pool" }], bookingType: "BT-13",
     tiers: [{ id: "tier_sw", name: "Course", price: 800000, active: true }],
     courseDates: ["2026-08-04", "2026-08-06", "2026-08-11", "2026-08-13", "2026-08-18", "2026-08-20", "2026-08-25", "2026-08-27"],
     joinPartway: false,
@@ -543,7 +543,7 @@ const bookingProducts: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_yoga", name: "Yoga Session", description: "Drop-in class, capped — join the waitlist when full.", images: [], bookingType: "BT-06",
+    id: "prd_yoga", name: "Yoga Session", description: "Drop-in class, capped — join the waitlist when full.", images: [{ id: "img_yoga_1", url: "/demo/pages/yoga-1.jpg", alt: "A yoga class in warrior pose on mats in a wood-floored studio" }], bookingType: "BT-06",
     tiers: [{ id: "tier_yg", name: "Drop-in", price: 50000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null, waitlistEnabled: true,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "07:00", endTime: "19:00", capacityPerSession: 0, dailyCapacity: 20, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
@@ -567,8 +567,46 @@ const bookingProducts: Product[] = [
    fort's; the club night is sold online ONLY by its link — never listed — the way a
    venue sells a night whose location is released hours before. */
 const SEED_EVENT_TWEAKS: Record<string, Partial<Product>> = {
-  evt_exhibition: { locationIds: ["loc_fort", "loc_museum"] },
-  evt_underground: { online: "link" },
+  evt_megaconcert: { images: [
+    { id: "img_concert_1", url: "/demo/pages/concert-1.jpg", alt: "A stage lit by beams of purple and yellow light above a large festival crowd at night" },
+    { id: "img_concert_2", url: "/demo/pages/concert-2.jpg", alt: "A big night crowd facing a brightly lit outdoor stage" },
+    { id: "img_concert_3", url: "/demo/pages/concert-3.jpg", alt: "Fans with raised hands in red stage light at a night concert" },
+    { id: "img_concert_4", url: "/demo/pages/concert-4.jpg", alt: "Audience on a grass slope facing a large festival stage in daylight" },
+    { id: "img_concert_5", url: "/demo/pages/concert-5.jpg", alt: "A dark night crowd in front of a lit stage screen" },
+  ] },
+  evt_turfcup: { images: [
+    { id: "img_turf_1", url: "/demo/pages/turf-1.jpg", alt: "A small football pitch lit by floodlights at dusk with players on the grass" },
+    { id: "img_turf_2", url: "/demo/pages/turf-2.jpg", alt: "Players chasing the ball on a small artificial-turf pitch at night" },
+    { id: "img_turf_3", url: "/demo/pages/turf-3.jpg", alt: "A floodlit football stadium at night seen from the stands" },
+    { id: "img_turf_4", url: "/demo/pages/turf-4.jpg", alt: "A marked football pitch with goals seen from above" },
+  ] },
+  evt_techsummit: { images: [
+    { id: "img_conf_1", url: "/demo/pages/conf-1.jpg", alt: "A large conference hall with an audience seated facing a stage and screens" },
+    { id: "img_conf_2", url: "/demo/pages/conf-2.jpg", alt: "A wide auditorium with tiered seating and a speaker at a lectern" },
+    { id: "img_conf_3", url: "/demo/pages/conf-3.jpg", alt: "Delegates seated and applauding at a conference session" },
+    { id: "img_conf_4", url: "/demo/pages/conf-4.jpg", alt: "Delegates at tables in a hotel meeting room watching a presentation screen" },
+  ] },
+  evt_exhibition: { locationIds: ["loc_fort", "loc_museum"], images: [
+    { id: "img_textile_1", url: "/demo/pages/textile-1.jpg", alt: "Visitors walking through a bright gallery with fibre sculptures on plinths" },
+    { id: "img_textile_2", url: "/demo/pages/textile-2.jpg", alt: "Blue indigo-dyed woven garments hung on wooden racks at an exhibition" },
+    { id: "img_textile_3", url: "/demo/pages/textile-3.jpg", alt: "A handloom with a blue cloth in progress in a weaving workshop" },
+    { id: "img_textile_4", url: "/demo/pages/textile-4.jpg", alt: "Weavers' hands working a red patterned cloth on a loom" },
+    { id: "img_textile_5", url: "/demo/pages/textile-5.jpg", alt: "Carved wooden textile printing blocks laid out on a white table" },
+  ] },
+  evt_sundarbans: { images: [
+    { id: "img_sundarbans_1", url: "/demo/pages/sundarbans-1.jpg", alt: "A double-deck passenger boat on a wide river with mangrove forest along the bank under big clouds" },
+    { id: "img_sundarbans_2", url: "/demo/pages/sundarbans-2.jpg", alt: "A passenger launch gliding along a misty river past mangroves" },
+    { id: "img_sundarbans_3", url: "/demo/pages/sundarbans-3.jpg", alt: "Mangrove branches arching over still, misty water" },
+    { id: "img_sundarbans_4", url: "/demo/pages/sundarbans-4.jpg", alt: "The bow of a boat heading down a narrow mangrove channel" },
+    { id: "img_sundarbans_5", url: "/demo/pages/sundarbans-5.jpg", alt: "Mangrove trees standing in the water at high tide" },
+  ] },
+  evt_underground: { online: "link", images: [
+    { id: "img_club_1", url: "/demo/pages/club-1.jpg", alt: "A club crowd under pink and white light beams, seen from behind" },
+    { id: "img_club_2", url: "/demo/pages/club-2.jpg", alt: "A mirror ball and blue lights over a packed dance floor" },
+    { id: "img_club_3", url: "/demo/pages/club-3.jpg", alt: "Dancers in motion under magenta club lighting" },
+    { id: "img_club_4", url: "/demo/pages/club-4.jpg", alt: "Green laser beams cutting through haze above a dancing crowd" },
+    { id: "img_club_5", url: "/demo/pages/club-5.jpg", alt: "A dark club dance floor filled with people" },
+  ] },
 };
 
 export const products: Product[] = [

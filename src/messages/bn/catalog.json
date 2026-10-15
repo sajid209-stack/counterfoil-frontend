@@ -944,7 +944,13 @@
     "empty": "এখনো কিছু লেখা হয়নি — পেজে দেখা যাবে না",
     "emptyNote": "এখানে কিছু লিখলে এই অংশ পেজে দেখা যাবে। তার আগে এটা লুকানো থাকবে।",
     "sampleRow": "এখনো নমুনা লেখা দেখাচ্ছে",
-    "samplesNote": "কিছু অংশে এখনো নমুনা লেখা দেখাচ্ছে।"
+    "samplesNote": "কিছু অংশে এখনো নমুনা লেখা দেখাচ্ছে।",
+    "portraitAdd": "ছবি যোগ করুন",
+    "portraitReplace": "ছবি বদলান",
+    "portraitRemove": "ছবি সরান",
+    "portraitAddFor": "{name}-এর ছবি যোগ করুন",
+    "portraitReplaceFor": "{name}-এর ছবি বদলান",
+    "portraitRemoveFor": "{name}-এর ছবি সরান"
   },
   "addFlow": {
     "pageTitle": "একটি বুকিং যোগ করুন",

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Trash2 } from "lucide-react";
+import { ImagePlus, Plus, Trash2 } from "lucide-react";
 import { Button, FormField, Tabs, TimeInput } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { dayName } from "@/lib/events/days";
@@ -344,6 +344,9 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
               />
               <FormField label={t("entryRole")} placeholder={t("entryRolePlaceholder")} value={l.role ?? ""} onChange={(e) => patch(l.id, { role: e.target.value })} />
               <TimeInput picker label={t("entryTime")} value={l.at ?? ""} onChange={(v) => patch(l.id, { at: v })} />
+              {(l.kind ?? "person") === "person" && (
+                <PortraitField name={l.name.trim() || t("entryN", { n: i + 1 })} url={l.imageUrl} onChange={(imageUrl) => patch(l.id, { imageUrl })} />
+              )}
             </ItemCard>
           ))}
           <AddButton
@@ -381,5 +384,46 @@ export function InfoRows({ ctx }: { ctx: EditorCtx }) {
       ))}
       <AddButton onClick={() => onChange({ info: [...page.info, { id: newId("i"), label: "", value: "" }] })}>{t("addInfo")}</AddButton>
     </>
+  );
+}
+
+/**
+ * A portrait for a person on the bill. With portraits the page draws a photo
+ * grid; without, a clean list — never a placeholder face
+ * (docs/product-page.md §3.5). Mock layer: the picked file is shown from a
+ * local object URL, the same way the cover upload works.
+ */
+function PortraitField({ name, url, onChange }: { name: string; url?: string; onChange: (url: string | undefined) => void }) {
+  const t = useTranslations("catalog.page");
+  const file = useRef<HTMLInputElement>(null);
+  return (
+    <div className="flex items-center gap-comfortable">
+      <span
+        aria-hidden
+        className="block h-14 w-12 shrink-0 rounded-inner border border-line bg-muted-wash bg-cover bg-center"
+        style={url ? { backgroundImage: `url("${url}")` } : undefined}
+      />
+      <div className="flex flex-wrap gap-tight">
+        <Button variant="secondary" size="sm" icon={<ImagePlus size={15} strokeWidth={1.5} aria-hidden />} onClick={() => file.current?.click()} aria-label={t(url ? "portraitReplaceFor" : "portraitAddFor", { name })}>
+          {url ? t("portraitReplace") : t("portraitAdd")}
+        </Button>
+        {url && (
+          <Button variant="secondary" size="sm" onClick={() => onChange(undefined)} aria-label={t("portraitRemoveFor", { name })}>
+            {t("portraitRemove")}
+          </Button>
+        )}
+      </div>
+      <input
+        ref={file}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onChange(URL.createObjectURL(f));
+          e.target.value = "";
+        }}
+      />
+    </div>
   );
 }

@@ -365,7 +365,7 @@ function LinkChrome({ storefront, location, poweredBy, showMore, accent, bleed, 
   const basketCls =
     "relative flex min-h-11 min-w-11 items-center justify-center gap-tight rounded-md border border-line px-comfortable text-base font-medium text-fg transition-colors duration-quick hover:border-strong";
   const basketLabel = t("basket.ariaLabel", { count: flow.itemCount });
-  const moreCls = "inline-flex min-h-11 items-center rounded-md px-comfortable text-base font-medium text-brand-foreground underline-offset-4 hover:underline";
+  const moreCls = "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-md px-comfortable text-base font-medium text-brand-foreground underline-offset-4 hover:underline";
 
   return (
     <SfRoot accent={accent ?? storefront.accent} className="flex flex-col">
@@ -381,8 +381,9 @@ function LinkChrome({ storefront, location, poweredBy, showMore, accent, bleed, 
           <div className="ml-auto flex items-center gap-tight">
             {more &&
               (moreHref && !inert ? (
-                <Link href={moreHref} className={moreCls}>
-                  {t("moreAt", { venue: location.name })}
+                <Link href={moreHref} className={moreCls} aria-label={t("moreAt", { venue: location.name })}>
+                  <span className="sm:hidden">{t("moreShort")}</span>
+                  <span className="hidden sm:inline">{t("moreAt", { venue: location.name })}</span>
                 </Link>
               ) : (
                 <span className={cn(moreCls, "hidden sm:inline-flex")}>{t("moreAt", { venue: location.name })}</span>

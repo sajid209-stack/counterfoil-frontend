@@ -256,5 +256,38 @@
     "open": "Open {parts}",
     "classes": "{count} classes, {first} – {last}",
     "classesOn": "Classes on {dates}"
-  }
+  },
+  "pg": {
+    "sec": {
+      "showAll": "Show all {count}",
+      "showFewer": "Show fewer",
+      "showAllPhotos": "Show all {count} photos",
+      "getDirections": "Get directions",
+      "dayEmpty": "Nothing is scheduled for this day yet.",
+      "daysLabel": "Days",
+      "versus": "{a} versus {b}",
+      "vs": "vs"
+    },
+    "shell": {
+      "runsDays": "Runs {count, plural, one {# day} other {# days}}",
+      "perPerson": "per person",
+      "perHour": "per hour",
+      "perBooking": "per booking",
+      "forPeople": "for {count, plural, one {# person} other {# people}}",
+      "lastFew": "Last few",
+      "salesEnded": "Sales ended",
+      "choose": "Choose",
+      "chooseNamed": "Choose {name}",
+      "moreCount": "+{count} more",
+      "navLabel": "Page sections",
+      "allDaysN": "All {count} days",
+      "ticketTypes": "Ticket types",
+      "bookNow": "Book now",
+      "addToCalendarFor": "Add {name} to your calendar",
+      "countdownLabel": "Countdown",
+      "bookBar": "Book",
+      "freeToo": "Some tickets are free"
+    }
+  },
+  "moreShort": "More"
 }

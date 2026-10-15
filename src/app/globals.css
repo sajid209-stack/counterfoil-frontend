@@ -1241,3 +1241,69 @@ html.dark[data-contrast="more"] {
 @media (min-width: 768px) { .sf .sf-sheet { animation-name: sf-drawer-in; } }
 .sf .sf-fade { animation: sf-fade-in 200ms ease-out backwards; }
 .sf .sf-toast { animation: sf-toast-in 200ms ease-out backwards; }
+
+/* ── Product pages (docs/product-page.md) ────────────────────────────────
+   One system for every booking. The page root carries `pg` (and `pg-dark dark`
+   in a dark look) and the --pg-* variables from productPage/page/theme.ts.
+   `.dark` brings the app's whole dark set; `.pg-dark` re-grounds it on the
+   page's NEUTRAL near-black, and `.pg` hands the accent tokens to the page's
+   own colour so the shared booking picker and buttons follow the look. */
+.sf .pg {
+  --color-ember: var(--sf-accent);
+  --color-ember-solid: var(--sf-fill);
+  --color-ember-hover: var(--sf-fill);
+  --color-ember-active: var(--sf-fill);
+  --color-ember-wash: var(--sf-soft);
+  --color-on-solid: var(--sf-on-fill);
+  --color-ring: var(--sf-accent);
+  --color-brand-foreground: var(--sf-ink);
+  background: var(--pg-bg);
+  color: var(--pg-fg);
+}
+.sf .pg-dark {
+  color-scheme: dark;
+  --color-surface: var(--pg-bg);
+  --color-card: var(--pg-card);
+  --color-sheet: var(--pg-card);
+  --color-chrome: var(--pg-card);
+  --color-fg: var(--pg-fg);
+  --color-muted: var(--pg-muted);
+  --color-line: var(--pg-line);
+  --color-hairline: var(--pg-line);
+  --color-strong: #3a3a42;
+  --color-subtle: var(--pg-surface);
+  --color-muted-wash: #222228;
+  --color-secondary-hover: #26262c;
+  --color-secondary-active: #2e2e35;
+  --color-btn-secondary: var(--pg-card);
+  --color-btn-secondary-line: #3a3a42;
+  --color-btn-secondary-hover: #222228;
+  --color-btn-secondary-active: #2a2a30;
+}
+/* The container and the rhythm every look shares. */
+.pg-container { width: 100%; max-width: 1264px; margin-inline: auto; padding-inline: 16px; }
+@media (min-width: 768px) { .pg-container { padding-inline: 24px; } }
+@media (min-width: 1280px) { .pg-container { padding-inline: 32px; } }
+.pg-section + .pg-section { margin-top: 40px; }
+@media (min-width: 768px) { .pg-section + .pg-section { margin-top: 56px; } }
+.pg-h2 { font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.015em; color: var(--pg-fg); text-wrap: balance; }
+.pg-intro { margin-top: 4px; font-size: 16px; line-height: 24px; color: var(--pg-muted); }
+.pg-title { font-family: var(--pg-display); letter-spacing: var(--pg-title-tracking); font-weight: 700; text-wrap: balance; font-size: 34px; line-height: 40px; }
+@media (min-width: 768px) { .pg-title { font-size: 48px; line-height: 56px; } }
+.pg-body { font-size: 16px; line-height: 26px; }
+.pg-meta { font-size: 14px; line-height: 20px; color: var(--pg-muted); }
+.pg-card { background: var(--pg-card); border: 1px solid var(--pg-line); border-radius: 16px; }
+.pg-muted { color: var(--pg-muted); }
+.pg-ink { color: var(--pg-ink); }
+/* Buttons: one primary per context. 48px tall, 12px corners. */
+.pg-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 12px; font-size: 16px; font-weight: 600; background: var(--pg-fill); color: var(--pg-on-fill); transition: filter 120ms ease, transform 120ms ease; }
+.pg-btn:hover { filter: brightness(1.06); }
+.pg-btn:active { transform: scale(0.98); }
+.pg-btn:disabled { opacity: 0.45; cursor: not-allowed; filter: none; transform: none; }
+.pg-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 12px; font-size: 16px; font-weight: 600; background: transparent; color: var(--pg-fg); border: 1px solid var(--pg-line); transition: background-color 120ms ease; }
+.pg-btn-secondary:hover { background: color-mix(in srgb, var(--pg-fg) 6%, transparent); }
+/* On a photo (the cover hero) the secondary button is a glass-free outline in white. */
+.pg-on-photo .pg-btn-secondary { color: #fff; border-color: rgb(255 255 255 / 0.45); }
+.pg-on-photo .pg-btn-secondary:hover { background: rgb(255 255 255 / 0.12); }
+.pg-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 10px; border-radius: 999px; font-size: 13px; font-weight: 500; background: color-mix(in srgb, var(--pg-fg) 7%, transparent); color: var(--pg-fg); }
+.pg [id] { scroll-margin-top: 80px; }

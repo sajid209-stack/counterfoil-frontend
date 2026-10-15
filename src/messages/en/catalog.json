@@ -944,7 +944,13 @@
     "empty": "Nothing written yet — hidden on the page",
     "emptyNote": "Write something here and this section shows on the page. Until then it stays hidden.",
     "sampleRow": "Still shows sample text",
-    "samplesNote": "Some sections still show sample text."
+    "samplesNote": "Some sections still show sample text.",
+    "portraitAdd": "Add a photo",
+    "portraitReplace": "Change photo",
+    "portraitRemove": "Remove photo",
+    "portraitAddFor": "Add a photo of {name}",
+    "portraitReplaceFor": "Change the photo of {name}",
+    "portraitRemoveFor": "Remove the photo of {name}"
   },
   "addFlow": {
     "pageTitle": "Add a booking",

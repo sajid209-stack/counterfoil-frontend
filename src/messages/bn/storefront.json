@@ -256,5 +256,38 @@
     "open": "খোলা {parts}",
     "classes": "{count}টি ক্লাস, {first} – {last}",
     "classesOn": "ক্লাসের দিন: {dates}"
-  }
+  },
+  "pg": {
+    "sec": {
+      "showAll": "সব {count}টি দেখুন",
+      "showFewer": "কম দেখুন",
+      "showAllPhotos": "সব {count}টি ছবি দেখুন",
+      "getDirections": "দিকনির্দেশ দেখুন",
+      "dayEmpty": "এই দিনের জন্য এখনো কিছু ঠিক করা হয়নি।",
+      "daysLabel": "দিন",
+      "versus": "{a} বনাম {b}",
+      "vs": "বনাম"
+    },
+    "shell": {
+      "runsDays": "{count} দিন ধরে চলবে",
+      "perPerson": "জনপ্রতি",
+      "perHour": "ঘণ্টাপ্রতি",
+      "perBooking": "প্রতি বুকিং",
+      "forPeople": "{count} জনের জন্য",
+      "lastFew": "শেষ কয়েকটি",
+      "salesEnded": "বিক্রি শেষ",
+      "choose": "বেছে নিন",
+      "chooseNamed": "{name} বেছে নিন",
+      "moreCount": "আরও {count}টি",
+      "navLabel": "পেজের অংশগুলো",
+      "allDaysN": "সব {count} দিন",
+      "ticketTypes": "টিকিটের ধরন",
+      "bookNow": "এখনই বুক করুন",
+      "addToCalendarFor": "{name} ক্যালেন্ডারে যোগ করুন",
+      "countdownLabel": "কাউন্টডাউন",
+      "bookBar": "বুক করুন",
+      "freeToo": "কিছু টিকিট বিনামূল্যে"
+    }
+  },
+  "moreShort": "আরও"
 }

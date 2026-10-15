@@ -1,11 +1,9 @@
 "use client";
 
 import type { Product } from "@/lib/api/types";
-import { pageOf } from "@/lib/productPage";
 import { useOptionalStorefrontFlow } from "@/lib/storefront/FlowProvider";
-import { EventPage } from "./EventPage";
 import { PreviewHost } from "./PreviewHost";
-import { StandardPage } from "./StandardPage";
+import { BookingPage } from "./page/BookingPage";
 
 /**
  * An item's page, drawn — the ONE renderer for it, used by the storefront
@@ -21,9 +19,8 @@ import { StandardPage } from "./StandardPage";
  *   chrome    "storefront" inside the venue's storefront header, "link" with
  *             the slim header of an item's own link, "none" for the designer.
  *
- * One system: every booking has the same seven looks and the same sections.
- * Classic is the storefront's own page; the other six are the event template,
- * drawn from `pageView(product)`, which works for any booking.
+ * One system: every booking, every one of the seven looks, is drawn by
+ * `page/BookingPage` (docs/product-page.md).
  */
 export interface ProductPageViewProps {
   product: Product;
@@ -46,10 +43,5 @@ export function ProductPageView({ product, mode = "live", chrome = "storefront" 
 }
 
 function PageBody({ product, chrome }: { product: Product; chrome: NonNullable<ProductPageViewProps["chrome"]> }) {
-  const page = pageOf(product);
-  return page.look !== "standard" ? (
-    <EventPage product={product} chrome={chrome} />
-  ) : (
-    <StandardPage product={product} chrome={chrome} />
-  );
+  return <BookingPage product={product} chrome={chrome} />;
 }

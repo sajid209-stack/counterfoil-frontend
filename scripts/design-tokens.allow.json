@@ -23,6 +23,13 @@
       "reason": "§12: event page templates (EventTemplate, PreviewFrame) carry their own type and palette, scoped to --e-*"
     },
     {
+      "path": "src/components/productPage/page/**",
+      "rules": [
+        "*"
+      ],
+      "reason": "docs/product-page.md: public product pages carry their own palette and type, scoped to --pg-* (page/theme.ts); the shared values live in the .pg-* classes in globals.css"
+    },
+    {
       "path": "src/app/e/**",
       "rules": [
         "*"

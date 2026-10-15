@@ -17780,3 +17780,112 @@ Sources: [Material Components — navigation bar (M3 Expressive)](https://gitea.
 [SAP Fiori iOS — tab bar](https://www.sap.com/design-system/fiori-design-ios/v24-12/components/navigation-and-search/tab-bar/usage) ·
 [Apple HIG — tab bars](https://developer-rno.apple.com/design/human-interface-guidelines/components/navigation-and-search/tab-bars) ·
 [SAP Fiori Android — navigation bar](https://www.sap.com/design-system/fiori-design-android/v25-4/components/m3-standard-components/navigation-bar/usage)
+
+## Product pages v3: one page system for every booking (2026-10-15)
+
+Owner, with screenshots of the six designed looks and a written audit: *"plan and build it, properly,
+get inspirations from behance and dribbble and best events pages UI and product pages UI, I need
+standard UI design best UI design in the world."* The spec is **`docs/product-page.md`**; it supersedes
+the renderer half of `docs/catalog.md` §10.5 (the data, the seven look ids and the designer stay).
+
+Planned, the contract written and every result reviewed on Opus; built by three Sonnet agents with
+separate file ownership (shell + booking, content sections, photos), two review rounds each.
+
+### What was wrong, confirmed against the code
+
+- **Two renderers that shared nothing but data**: `StandardPage` (Classic) and the 4,148-line
+  `EventTemplate` (the other six). Every look changed colour, type, section structure, borders and
+  card treatment at once.
+- **Synthetic visuals**: striped gradient plates with initials for speakers, artworks and DJs;
+  initials in circles for highlights; generated gallery tiles; no seeded event had a photo.
+- **Booking differed by look**: a date/time picker on Classic, ticket stubs and an order summary on
+  the others, with price, availability, perks and quantity in a different order each time.
+- Heroes up to a full viewport, 96–128px section padding, numbered uppercase eyebrows, whole pages
+  tinted pale green or purple.
+
+### The system
+
+- **One renderer**, `src/components/productPage/page/BookingPage.tsx`, for every booking and all
+  seven looks, with one context (`page/context.tsx`) built once and read by every part.
+- **A look is configuration, not a page** (`page/theme.ts`): a personality (energetic / editorial /
+  informational), light or dark, a hero treatment (split / cover / editorial) and a title face.
+  Poster, Floodlit and Neon are dark on NEUTRAL near-black; the accent only marks the button, links
+  and the selected state. The accent is computed for the ground (`pageColours`) so text and buttons
+  keep 4.5:1, and is handed to the storefront's `--sf-*` variables so the shared booking picker
+  follows it. Shared values live in the `.pg-*` classes in `globals.css`.
+- **Page anatomy**:
+  - a hero with title, tagline, facts (date or "when" in words, time, venue, "Runs N days"), Get
+    tickets, the price from with its unit, Add to calendar, and the countdown as an inline row;
+  - the key figures as a strip under it;
+  - a sticky section bar once the hero scrolls away;
+  - on desktop, the body beside a sticky booking card; on a phone, a fixed bottom bar with the price
+    and one button that opens the booking sheet.
+- **One ticket card everywhere** (`TicketOptions`):
+  - name and a state chip (Most popular, Last few, Sold out, Sales ended), the description, up to
+    four perks;
+  - day scope and the all-days saving on multi-day events;
+  - the price with its unit (per person / for 4 people / per hour), and Choose, which opens the
+    booking with that ticket chosen.
+  - Drawn only where there is a choice (two or more ticket types, or an on-a-date booking).
+- **The booking card is the existing `BookingPicker`**, so the money paths are unchanged. It gained
+  `compact` (one line per ticket when the cards are on the page) and `preselectTierId`. The
+  "choose at least one ticket" warning now appears only after Book now is pressed; at rest it is a
+  quiet line.
+- **Sections** (`page/sections/`): About (prose, facts grid, organiser), Highlights (icon cards, or
+  chips), Included (only for a single-ticket booking), Good to know, Line-up, Programme, Photos,
+  Video (click-to-load), Venue, Sponsors, Questions. Every one renders nothing when it has nothing to
+  say, and `sectionHasContent` shares the rule with the section bar.
+  - **Line-up**: portrait grid when people have photos, otherwise a clean list; the Poster look bills
+    by type size.
+  - **Programme**: day tabs, a fixed time column, fixtures as "A vs B", the Journey look's itinerary
+    as a route.
+- **Default section order** puts Tickets right after About (`DEFAULT_SECTIONS`); saved pages are
+  untouched.
+- **The hero price is the cheapest PAID ticket** when paid ones are on sale, with "Some tickets are
+  free" under it. A members-only free pass made the exhibition read "Free" over ৳300 and ৳750
+  tickets.
+
+### Photos
+
+43 Wikimedia Commons photos (CC0 / CC BY / CC BY-SA), about 1600px wide, 10 MB in all, in
+`public/demo/pages/` with `CREDITS.md` (creator, licence, source for every file). Every seeded event
+has a cover and 4–5 photos; the seeded bookings have 1–3. Generic scenes only (a festival crowd, a
+pitch under lights, a conference hall, a handloom, a boat on a mangrove channel, a club floor); the
+Lalbagh Fort photos show the real fort. **Speakers, artists and DJs have no portraits** on purpose:
+they are fictional, and a real stranger's face would misrepresent them. The designer can now add a
+portrait to anyone on the line-up (`EventLineupEntry.imageUrl`, contract for the backend lane).
+
+### Removed
+
+`StandardPage.tsx`, `EventPage.tsx`, `VideoBlock.tsx` and `src/components/events/EventTemplate.tsx`.
+
+### Verified
+
+- All seven looks reviewed by screenshot at 1440 and 390; the content agent also measured text
+  contrast on every section in the dark and light looks at 1440, 390 and 320 (no failures), and the
+  shell agent click-tested Choose → preselected ticket (panel and sheet), the section bar's anchors,
+  the phone bar, and the designer preview at both device widths.
+- Gallery photos all load (checked by `naturalWidth` after scrolling); no sideways scroll at 390.
+- `tsc`, `lint:tokens` and i18n are clean; `eslint` shows only the documented baseline.
+- **Regression on a production build: 17 suites, 0 failures**:
+  - catalog2-e2e 459;
+  - the storefront walks: live 31, preview 14, design 169, quick 104, dark/Bangla 6;
+  - the till 38, refunds 17, undo 17, printing 4, top cards 103;
+  - the 59-route sweeps at 1440, 390 and 390 Bangla dark;
+  - the phone audit: hidden 0 · under-44 0 · clipped 0 · errors 0.
+- **Harnesses ported to the new page, not loosened** (catalog2-e2e and the storefront live, preview
+  and design walks):
+  - on a phone the booking now opens in a sheet, from a ticket card's Choose or the bottom bar;
+  - on a desktop it is the panel;
+  - "Get tickets" is sentence case;
+  - the audit in the storefront design walk skips the section bar while it is parked off-screen and
+    inert.
+- **Found by the regression and fixed**: adding from the desktop panel used to leave the page for
+  the venue list, while the sheet stayed and confirmed. The picker now takes `onAdded`; the panel
+  stays on the page and shows the same "Added to basket" toast.
+
+### Open
+
+- The Bangla strings added here are drafts.
+- Speakers, artists and DJs show as a list until the operator adds portraits.
+- The venue map is a drawn panel, not a real map.

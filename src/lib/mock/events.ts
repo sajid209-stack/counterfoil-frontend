@@ -12,6 +12,19 @@ import { categoryById, type CategoryId } from "@/lib/events/catalog";
  */
 const iso = (d: string) => `${d}+06:00`;
 
+/* Real, licensed photographs (public/demo/pages/CREDITS.md) - generic scenes only. */
+const COVERS: Record<string, string> = {
+  evt_megaconcert: "/demo/pages/concert-1.jpg",
+  evt_turfcup: "/demo/pages/turf-1.jpg",
+  evt_techsummit: "/demo/pages/conf-1.jpg",
+  evt_exhibition: "/demo/pages/textile-1.jpg",
+  evt_sundarbans: "/demo/pages/sundarbans-1.jpg",
+  evt_underground: "/demo/pages/club-1.jpg",
+};
+
+/* The business and nightlife looks have no photo section by default; these two events have photographs, so they show them. */
+const WITH_GALLERY = new Set(["evt_techsummit", "evt_underground"]);
+
 function base(
   id: string,
   categoryId: CategoryId,
@@ -49,7 +62,8 @@ function base(
       displayFont: cat.theme.display,
       bodyFont: cat.theme.body,
       variant: cat.variants[0],
-      sections: cat.sections,
+      sections: WITH_GALLERY.has(id) ? cat.sections.flatMap((s) => (s === "tickets" ? ["gallery" as const, s] : [s])) : cat.sections,
+      coverUrl: COVERS[id],
     },
     createdAt: iso("2026-09-01T10:00:00"),
     updatedAt: iso("2026-09-08T10:00:00"),

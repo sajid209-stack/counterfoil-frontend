@@ -54,7 +54,27 @@ const addMinutes = (time: string, minutes: number): string => {
  * a desktop, in the page on a phone with its total and buttons fixed to the
  * bottom of the screen. One copy of the controls, never two.
  */
-export function BookingPicker({ product, sheet }: { product: Product; sheet?: SheetHooks }) {
+export function BookingPicker({
+  product,
+  sheet,
+  preselectTierId,
+  compact,
+  onAdded,
+}: {
+  product: Product;
+  sheet?: SheetHooks;
+  /** After "Add to basket" on the full page: where it goes next. Absent, the
+   *  guest is taken back to the venue's list (the storefront's own pages). The
+   *  product page's booking panel passes it so the guest stays on the page and
+   *  gets the same confirmation the quick-add sheet gives. */
+  onAdded?: () => void;
+  /** Ticket rows show name, price, what is left and the stepper only — for a
+   *  page that already draws the full ticket cards beside it. */
+  compact?: boolean;
+  /** Open with one of this ticket type already chosen ("Choose" on a ticket
+   *  card). Ignored where the booking sells no tickets (a field or lane hire). */
+  preselectTierId?: string;
+}) {
   const flow = useStorefrontFlow();
   const pattern = storefrontPattern(product.bookingType);
   const dates = useMemo(() => nextBookableDays(product, flow.now, 10), [product, flow.now]);
@@ -68,11 +88,11 @@ export function BookingPicker({ product, sheet }: { product: Product; sheet?: Sh
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", sheet && "h-full")}>
       {pattern === "resource" ? (
-        <ResourceBooking product={product} date={date} setDate={setDate} dates={dates} sheet={sheet} />
+        <ResourceBooking product={product} date={date} setDate={setDate} dates={dates} sheet={sheet} onAdded={onAdded} />
       ) : pattern === "event" ? (
-        <EventBooking product={product} sheet={sheet} />
+        <EventBooking product={product} sheet={sheet} preselectTierId={preselectTierId} compact={compact} onAdded={onAdded} />
       ) : (
-        <TicketBooking product={product} pattern={pattern} date={date} setDate={setDate} dates={dates} sheet={sheet} />
+        <TicketBooking product={product} pattern={pattern} date={date} setDate={setDate} dates={dates} sheet={sheet} preselectTierId={preselectTierId} compact={compact} onAdded={onAdded} />
       )}
     </div>
   );
@@ -195,6 +215,17 @@ function Footer({
 }) {
   const t = useTranslations("storefront");
   const chosen = total > 0;
+  /* At rest a missing choice is a quiet line; the warning appears only once the
+     guest has pressed a button with something still missing. The buttons are
+     never disabled, so "Book now" never looks broken. */
+  const [tried, setTried] = useState(false);
+  const guard = (go: () => void) => () => {
+    if (missing) {
+      setTried(true);
+      return;
+    }
+    go();
+  };
   return (
     <div
       data-sf-bookbar
@@ -204,11 +235,12 @@ function Footer({
           : "fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-card px-gutter pb-comfortable pt-comfortable shadow-float backdrop-blur lg:static lg:mt-section lg:border-line lg:bg-transparent lg:p-0 lg:pt-section lg:shadow-none lg:backdrop-blur-none"
       }
     >
-      {missing && (
+      {missing && tried && (
         <Notice tone="warning" size="sm" className="mb-tight">
           {missing}
         </Notice>
       )}
+      {missing && !tried && <p className="mb-tight text-sm text-muted">{missing}</p>}
       <div className="flex items-baseline gap-tight">
         <p className="text-base text-muted">{chosen ? t("booking.total") : t("from")}</p>
         <p className="tnum text-2xl font-semibold leading-none">
@@ -219,19 +251,19 @@ function Footer({
         /* In the sheet "Add to basket" is the primary: the guest chose to
            quick-add, so staying on the list is the common case. */
         <div className="mt-comfortable grid grid-cols-2 gap-tight">
-          <button type="button" onClick={onBookNow} disabled={!!missing} className={cn(sfBtn.secondary, "px-section")}>
+          <button type="button" onClick={guard(onBookNow)} aria-disabled={!!missing || undefined} className={cn(sfBtn.secondary, "px-section")}>
             {t("booking.bookNow")}
           </button>
-          <button type="button" onClick={onAdd} disabled={!!missing} className={cn(sfBtn.primary, "px-section")}>
+          <button type="button" onClick={guard(onAdd)} aria-disabled={!!missing || undefined} className={cn(sfBtn.primary, "px-section")}>
             {t("booking.addToBasket")}
           </button>
         </div>
       ) : (
         <div className="mt-comfortable grid grid-cols-2 gap-tight lg:grid-cols-1">
-          <button type="button" onClick={onAdd} disabled={!!missing} className={sfBtn.secondary}>
+          <button type="button" onClick={guard(onAdd)} aria-disabled={!!missing || undefined} className={sfBtn.secondary}>
             {t("booking.addToBasket")}
           </button>
-          <button type="button" onClick={onBookNow} disabled={!!missing} className={cn(sfBtn.primary, "lg:order-first")}>
+          <button type="button" onClick={guard(onBookNow)} aria-disabled={!!missing || undefined} className={cn(sfBtn.primary, "lg:order-first")}>
             {t("booking.bookNow")}
           </button>
         </div>
@@ -269,12 +301,14 @@ function ResourceBooking({
   setDate,
   dates,
   sheet,
+  onAdded,
 }: {
   product: Product;
   date: string | null;
   setDate: (d: string) => void;
   dates: string[];
   sheet?: SheetHooks;
+  onAdded?: () => void;
 }) {
   const t = useTranslations("storefront");
   const flow = useStorefrontFlow();
@@ -357,7 +391,8 @@ function ResourceBooking({
     if (flow.inert) return;
     if (sheet) return sheet.onAdd(buildLine());
     flow.addLine(buildLine());
-    flow.goVenue();
+    if (onAdded) onAdded();
+    else flow.goVenue();
   };
   const bookNow = () => {
     if (flow.inert) return;
@@ -413,7 +448,7 @@ function ResourceBooking({
                     selected={on}
                     hideCheck
                     onClick={() => { setDuration(mins); setTime(firstStart(date, mins, resourceChoice)); }}
-                    className={cn(CHOICE, "min-h-14 flex-col gap-0.5 py-inline")}
+                    className={cn(CHOICE, "h-auto min-h-16 flex-col gap-0.5 px-comfortable py-tight")}
                   >
                     <span>{formatDuration(mins)}</span>
                     <span className="tnum text-xs font-normal text-muted">{formatPriceShort(price)}</span>
@@ -469,13 +504,19 @@ function TicketBooking({
   setDate,
   dates,
   sheet,
+  onAdded,
+  preselectTierId,
+  compact,
 }: {
+  compact?: boolean;
   product: Product;
   pattern: "open" | "daily" | "sessions";
   date: string | null;
   setDate: (d: string) => void;
   dates: string[];
   sheet?: SheetHooks;
+  onAdded?: () => void;
+  preselectTierId?: string;
 }) {
   const t = useTranslations("storefront");
   const flow = useStorefrontFlow();
@@ -499,6 +540,13 @@ function TicketBooking({
   };
   const [time, setTime] = useState<string | null>(() => firstTime(date)?.time ?? null);
   const [qty, setQty] = useState<Record<string, number>>(() => {
+    /* A ticket chosen on a ticket card opens with one of that type. On the full
+       page nothing else is pre-chosen, so no room check is needed there. */
+    const want = preselectTierId ? tiers.find((x) => x.id === preselectTierId) : undefined;
+    if (want && (!needsDate || date)) {
+      if (!sheet) return { [want.id]: 1 };
+      return startRoom(date, firstTime(date)?.time ?? null) >= 1 ? { [want.id]: 1 } : {};
+    }
     const first = tiers[0];
     if (!sheet || !first) return {};
     if (needsDate && !date) return {};
@@ -562,7 +610,8 @@ function TicketBooking({
     if (flow.inert) return;
     if (sheet) return sheet.onAdd(buildLine());
     flow.addLine(buildLine());
-    flow.goVenue();
+    if (onAdded) onAdded();
+    else flow.goVenue();
   };
   const bookNow = () => {
     if (flow.inert) return;
@@ -617,18 +666,18 @@ function TicketBooking({
                 const n = qty[tr.id] ?? 0;
                 const disabledAdd = needsDate && (!date || (needsTime && !time));
                 return (
-                  <li key={tr.id} className="flex items-center gap-comfortable p-comfortable">
+                  <li key={tr.id} className={cn("flex items-center gap-comfortable", compact ? "px-comfortable py-tight" : "p-comfortable")}>
                     <div className="min-w-0 flex-1">
                       <p className="text-md font-semibold">{tr.name}</p>
                       <p className="tnum text-md font-semibold text-brand-foreground">
                         {tr.donation ? t("donationFrom", { price: formatMoney(tr.price) }) : tr.price === 0 ? t("free") : formatPriceShort(tr.price)}
                       </p>
-                      {(tr.ageNote || (tr.admits ?? 1) > 1) && (
+                      {!compact && (tr.ageNote || (tr.admits ?? 1) > 1) && (
                         <p className="text-base text-muted">
                           {[tr.ageNote, (tr.admits ?? 1) > 1 ? t("admits", { count: tr.admits ?? 1 }) : null].filter(Boolean).join(" · ")}
                         </p>
                       )}
-                      {tr.note && <p className="mt-inline text-base leading-snug text-muted">{tr.note}</p>}
+                      {!compact && tr.note && <p className="mt-inline text-base leading-snug text-muted">{tr.note}</p>}
                     </div>
                     <div className="flex shrink-0 items-center gap-tight">
                       <button
@@ -674,14 +723,22 @@ function TicketBooking({
  * sold into a Saturday that has already filled. A ticket that cannot be bought
  * is still shown, with the reason in words, so a guest sees the early-bird they
  * missed rather than wondering where it went. */
-function EventBooking({ product, sheet }: { product: Product; sheet?: SheetHooks }) {
+function EventBooking({ product, sheet, preselectTierId, compact, onAdded }: { product: Product; sheet?: SheetHooks; preselectTierId?: string; compact?: boolean; onAdded?: () => void }) {
   const t = useTranslations("storefront");
   const flow = useStorefrontFlow();
   const taxRate = taxRateFor(product, flow.operator) / 100;
   const ev = useMemo(() => eventView(product), [product]);
   const days = eventDays(ev);
   const multi = spansDays(ev);
-  const [dayId, setDayId] = useState<string | null>(() => (multi ? firstEventDay(ev, flow.now) : null));
+  /* A ticket chosen on a ticket card opens on the first day it can be bought. */
+  const [dayId, setDayId] = useState<string | null>(() => {
+    if (!multi) return null;
+    if (preselectTierId) {
+      const d = days.find((x) => eventTicketStates(ev, flow.now, x.id).some((s) => s.tier.id === preselectTierId && !s.block));
+      if (d) return d.id;
+    }
+    return firstEventDay(ev, flow.now);
+  });
   const states = useMemo(() => eventTicketStates(ev, flow.now, multi ? dayId : null), [ev, flow.now, multi, dayId]);
 
   /* Tickets of this event already in the basket count against what is left. */
@@ -696,6 +753,8 @@ function EventBooking({ product, sheet }: { product: Product; sheet?: SheetHooks
   };
 
   const [qty, setQty] = useState<Record<string, number>>(() => {
+    const want = preselectTierId ? states.find((s) => s.tier.id === preselectTierId && capOf(s) > 0) : undefined;
+    if (want) return { [want.tier.id]: 1 };
     if (!sheet) return {};
     const first = states.find((s) => capOf(s) > 0);
     return first ? { [first.tier.id]: 1 } : {};
@@ -755,7 +814,8 @@ function EventBooking({ product, sheet }: { product: Product; sheet?: SheetHooks
     if (flow.inert) return;
     if (sheet) return sheet.onAdd(buildLine());
     flow.addLine(buildLine());
-    flow.goVenue();
+    if (onAdded) onAdded();
+    else flow.goVenue();
   };
   const bookNow = () => {
     if (flow.inert) return;
@@ -811,20 +871,20 @@ function EventBooking({ product, sheet }: { product: Product; sheet?: SheetHooks
                         : null;
                 const admits = admitsText(s);
                 return (
-                  <li key={tr.id} className={cn("flex items-center gap-comfortable p-comfortable", s.block && "bg-subtle")}>
+                  <li key={tr.id} className={cn("flex items-center gap-comfortable", compact ? "px-comfortable py-tight" : "p-comfortable", s.block && "bg-subtle")}>
                     <div className="min-w-0 flex-1">
                       <p className={cn("text-md font-semibold", s.block && "text-muted")}>{tr.name}</p>
                       <p className={cn("tnum text-md font-semibold", s.block ? "text-muted line-through" : "text-brand-foreground")}>
                         {tr.price === 0 ? t("free") : formatPriceShort(tr.price)}
                       </p>
-                      {s.saving ? (
+                      {!compact && s.saving ? (
                         <p className="mt-inline inline-flex rounded-full bg-ember-wash px-comfortable py-inline text-xs font-semibold text-brand-foreground">
                           {t("event.saves", { amount: formatPriceShort(s.saving) })}
                         </p>
                       ) : null}
-                      {admits && <p className="mt-inline text-base text-muted">{admits}</p>}
-                      {tr.description && <p className="mt-inline text-base leading-snug text-muted">{tr.description}</p>}
-                      {tr.perks && tr.perks.length > 0 && (
+                      {!compact && admits && <p className="mt-inline text-base text-muted">{admits}</p>}
+                      {!compact && tr.description && <p className="mt-inline text-base leading-snug text-muted">{tr.description}</p>}
+                      {!compact && tr.perks && tr.perks.length > 0 && (
                         <p className="mt-inline text-base leading-snug text-muted">{tr.perks.slice(0, 3).join(" · ")}</p>
                       )}
                       {status && <p className={cn("mt-inline text-base font-medium", s.block ? "text-fg" : "text-warning")}>{status}</p>}
