@@ -296,8 +296,10 @@ picks a variant.
   (`text-fg`), with no ring and no brand colour (Shopify's quiet recipe). Other rows are `NAV_IDLE` (muted,
   `muted-wash` hover).
   *The till's tab bar* is docked, 64px tall and full width, with a hairline on top. Each tab is a 24px
-  icon inside a 56 × 32 pill (`NAV_SELECTED_FILL` when current) over a 13px label (`NAV_SELECTED_TEXT`
-  when current), 4px apart — Material 3's proportions. The landscape rail uses the same tab.
+  icon inside a 56 × 32 pill over a 13px label, 4px apart — Material 3 Expressive's proportions. The
+  current tab's pill is solid ink with the icon knocked out (`NAV_TAB_ACTIVE`; light in dark mode) and its
+  label is ink at 600 (`NAV_SELECTED_TEXT`); other tabs are grey outline icons over grey labels. More lights
+  while its sheet is open. The landscape rail uses the same tab.
   *Nested groups:* a parent with children shows them indented, label only, and only
   while you are inside that group. The current page carries the selected surface;
   its parent goes bold with no fill (`NAV_PARENT_OF_SELECTED`), so exactly one row

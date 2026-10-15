@@ -55,7 +55,7 @@ import { applyTillText, usePrefs } from "@/lib/prefs";
  */
 const BAR_CLEAR = "64px + env(safe-area-inset-bottom)";
 import { cn } from "@/lib/cn";
-import { NAV_SELECTED_FILL, NAV_SELECTED_ICON, NAV_SELECTED_TEXT } from "@/components/ui/navStyles";
+import { NAV_SELECTED_TEXT, NAV_TAB_ACTIVE } from "@/components/ui/navStyles";
 
 /** Tailwind's sm: where the header has room for the page-state picker. */
 const SM = "(min-width: 40rem)";
@@ -172,24 +172,36 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   const hasSlotted = (productsQ.data?.data ?? []).some((p) => isSlotBased(p.bookingType));
   const tabs = TABS.filter((t) => t.href !== "/schedule" || hasSlotted);
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  /* The scrolling till is the Sell tab too: it is another design of the same
+     job, and a till with no tab lit leaves a cashier asking where they are. */
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`) || (href === "/pos" && (pathname === "/sell" || pathname.startsWith("/sell/")));
 
   /* One tab, in one anatomy, for the bottom bar and the landscape rail:
-       a 24px icon inside a 56 x 32 pill — the pill is the "you are here" —
-       with a 13px label under it, 4px apart. Material 3's proportions, which
-       are the ones every phone user already reads; the pill sits round the
-       ICON only, because a fill round the whole 64px target is bigger than
-       the thing it points at. The whole cell is the target. */
+       a 24px icon inside a 56 x 32 pill, a 13px label under it, 4px apart —
+       Material 3 Expressive's bar (64 tall, a 56-wide indicator).
+
+       The current tab is the one thing that reads at a glance, the way iOS and
+       Material both mark it: the indicator is SOLID — ink, with the icon
+       knocked out in white (the light pill and dark icon in dark mode) — and
+       the label is ink at 600. Every other tab is a grey outline icon over a
+       grey label. A pale grey wash was the first version here and on a white
+       bar it measured about 1.2:1: a cashier who cannot read the labels could
+       not see which tab they were on either. Ink rather than orange, because
+       on the till orange means "act": the primary button and what is chosen
+       in a sale.
+
+       The whole cell is the target; pressing it presses the pill in. */
   const tabCell = (active: boolean, rail: boolean) =>
     cn(
-      "group flex min-w-0 flex-1 flex-col items-center justify-center gap-inline transition-colors duration-quick",
+      "group flex min-w-0 flex-1 flex-col items-center justify-center gap-inline",
       rail ? "h-16 flex-none" : "h-full",
       active ? NAV_SELECTED_TEXT : "font-medium text-muted hover:text-fg",
     );
   const tabPill = (active: boolean) =>
     cn(
-      "flex h-8 w-14 items-center justify-center rounded-full transition-colors duration-quick",
-      active ? NAV_SELECTED_FILL : "group-hover:bg-muted-wash group-active:bg-muted-wash",
+      "flex h-8 w-14 items-center justify-center rounded-full transition-[background-color,color,transform] duration-quick group-active:scale-95",
+      active ? NAV_TAB_ACTIVE : "group-hover:bg-muted-wash",
     );
 
   const tabButton = (tab: (typeof TABS)[number], rail: boolean) => {
@@ -204,17 +216,18 @@ export function GoShell({ children }: { children: React.ReactNode }) {
         className={tabCell(active, rail)}
       >
         <span className={tabPill(active)}>
-          <Icon size={24} strokeWidth={active ? 2.25 : 1.75} className={active ? NAV_SELECTED_ICON : undefined} />
+          <Icon size={24} strokeWidth={active ? 2 : 1.75} aria-hidden />
         </span>
         <span className="max-w-full truncate text-sm leading-tight">{t(tab.key)}</span>
       </Link>
     );
   };
 
+  /* More lights while its sheet is open, so the bar always says where you are. */
   const moreButton = (rail: boolean) => (
-    <button type="button" onClick={() => setMoreOpen(true)} className={tabCell(false, rail)}>
-      <span className={tabPill(false)}>
-        <Ellipsis size={24} strokeWidth={1.75} />
+    <button type="button" onClick={() => setMoreOpen(true)} aria-expanded={moreOpen} aria-haspopup="dialog" className={tabCell(moreOpen, rail)}>
+      <span className={tabPill(moreOpen)}>
+        <Ellipsis size={24} strokeWidth={moreOpen ? 2 : 1.75} aria-hidden />
       </span>
       <span className="max-w-full truncate text-sm leading-tight">{t("more")}</span>
     </button>

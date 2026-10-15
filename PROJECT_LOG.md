@@ -17748,3 +17748,35 @@ the icon and label stacked, and the "you are here" on the icon**. The till's ver
   for that on 2026-10-13. Against the white bar it is a quiet cue; the weight, the ink icon and
   the 2.25 stroke carry it. If it should be stronger, it is `NAV_SELECTED_FILL`.
 - The shift timer in the till's header is still the fixed 3:24.
+
+## The till's tab bar marks the current tab clearly (2026-10-15)
+
+Owner, with a screenshot of the bar (Schedule current, behind a pale grey pill): fix the POS nav
+button UI, researched properly.
+
+The proportions from the morning's rebuild stay (docked, 64px, a 24px icon in a 56 × 32 pill over a
+13px label). What failed was the **state**: the current tab's pill was the neutral `secondary-hover`
+grey, about 1.2:1 against the white bar, so the bar did not say where you were — on a till whose
+staff often go by the picture rather than the word.
+
+Researched: Material 3 (and its Expressive update: a 64dp bar with a 56dp indicator) marks the
+current destination with a filled indicator and a filled icon; Apple's tab bars and SAP's iOS
+guidance use a tinted, filled symbol for the selected tab and an outline for the rest.
+
+- **The current tab's pill is solid ink with the icon knocked out in white** (a light pill and dark
+  icon in dark mode), and its label is ink at 600. Every other tab is a grey outline icon over a grey
+  label. Ink rather than orange: on the till orange means act — the primary button and what is chosen
+  in a sale. New `NAV_TAB_ACTIVE` in `navStyles`; the OS rail keeps its quiet grey.
+- **More lights while its sheet is open**, with `aria-expanded`, so the bar always says where you are.
+- **The scrolling till (/sell) lights Sell**; it lit nothing before.
+- Pressing a tab presses its pill in (scale 95%). Focus uses the app's global ring.
+- `NAV_SELECTED_FILL` is removed (nothing uses it).
+
+Verified at 390, 320, 430 dark, Bangla and the landscape rail: 64px bar, every tab 24px / 56 × 32 /
+13px, the current one at 600, no label clipped, no console errors. `pos-v2` 38/38; the POS contrast
+audit is clean apart from the declared white-on-orange buttons. `tsc`, `eslint`, `lint:tokens` clean.
+
+Sources: [Material Components — navigation bar (M3 Expressive)](https://gitea.com/784622644/material-components-android/src/branch/master/docs/components/BottomNavigation.md) ·
+[SAP Fiori iOS — tab bar](https://www.sap.com/design-system/fiori-design-ios/v24-12/components/navigation-and-search/tab-bar/usage) ·
+[Apple HIG — tab bars](https://developer-rno.apple.com/design/human-interface-guidelines/components/navigation-and-search/tab-bars) ·
+[SAP Fiori Android — navigation bar](https://www.sap.com/design-system/fiori-design-android/v25-4/components/m3-standard-components/navigation-bar/usage)

@@ -10,16 +10,17 @@
  */
 export const NAV_SELECTED = "bg-secondary-hover text-fg font-semibold";
 
-/**
- * The same recipe in two halves, for a tab that draws its fill on the icon
- * alone (the till's tab bar and rail — Material 3's "active indicator": a pill
- * around the icon, the label under it in full ink at 600). A tab is a 64px
- * target; a fill round the whole of it makes the indicator bigger than the
- * thing it points at. Spelled out rather than built from NAV_SELECTED so
- * Tailwind can see each class whole.
- */
-export const NAV_SELECTED_FILL = "bg-secondary-hover";
+/** The selected label on its own, for a tab that marks its icon separately. */
 export const NAV_SELECTED_TEXT = "text-fg font-semibold";
+
+/**
+ * The till's tab bar and rail: the indicator is solid ink with the icon
+ * knocked out of it (the light pill in dark mode). A touch screen used at arm's
+ * length, by staff who often go by the picture rather than the word, needs the
+ * current tab to read at a glance; the quiet grey of the OS rail does not on a
+ * white bar.
+ */
+export const NAV_TAB_ACTIVE = "bg-inverse text-inverse-fg";
 
 /** The icon on the selected row. */
 export const NAV_SELECTED_ICON = "text-fg";
