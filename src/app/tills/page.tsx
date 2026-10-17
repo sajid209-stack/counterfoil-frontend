@@ -35,7 +35,7 @@ export default async function TillsPage() {
         </Link>
       </div>
 
-      <h1 className="type-h1 mt-major text-3xl">{t("tills.title")}</h1>
+      <h1 className="type-h1 mt-major text-xl">{t("tills.title")}</h1>
       <p className="type-body mt-tight max-w-xl text-muted">
         {t("tills.intro")}
       </p>

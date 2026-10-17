@@ -388,7 +388,7 @@ export function PageShell({
           section ("Catalog") while this names the page ("Add to your
           catalog"), and that one has to stay. It stays in the document either
           way, because a page needs its heading. */}
-      <h1 className={cn("type-h1 break-words text-2xl sm:text-3xl", echoesBar && "max-sm:sr-only")}>{title}</h1>
+      <h1 className={cn("type-h1 break-words text-lg sm:text-xl", echoesBar && "max-sm:sr-only")}>{title}</h1>
       {description && <p className="sr-only">{description}</p>}
     </div>
   );

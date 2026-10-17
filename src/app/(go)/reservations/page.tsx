@@ -30,7 +30,7 @@ export default function GoBookingsPage() {
     <main className="mx-auto flex max-w-2xl flex-col gap-section px-section py-section">
       <div>
         <p className="text-sm font-medium text-brand-foreground">{t("arrivalsGateLabel")}</p>
-        <h1 className="type-h1 mt-tight text-2xl">{t("arrivalsTitle")}</h1>
+        <h1 className="type-h1 mt-tight text-xl">{t("arrivalsTitle")}</h1>
       </div>
       <div className="relative">
         <Search size={18} strokeWidth={1.5} aria-hidden className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />

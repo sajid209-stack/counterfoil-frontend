@@ -267,7 +267,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             <div className="min-w-0 flex-1">
               <div id="os-page-header" />
               {/* While previewing there is no PageShell to portal its title in. */}
-              {face && <h1 className="type-h1 break-words text-2xl sm:text-3xl">{pageName}</h1>}
+              {face && <h1 className="type-h1 break-words text-lg sm:text-xl">{pageName}</h1>}
             </div>
             <div className="flex shrink-0 items-center justify-end gap-tight">
               {/* The venue first: it qualifies everything to its left, so it

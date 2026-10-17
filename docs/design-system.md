@@ -92,7 +92,8 @@ the fill.
 | secondary (button) | `btn-secondary`, with `fg` text, `btn-secondary-line` edge, `shadow-sm` | white | neutral-800 |
 | secondary line | `btn-secondary-line` | neutral-300 | neutral-700 |
 | secondary-hover · active | `btn-secondary-hover` · `btn-secondary-active` | neutral-100 · neutral-200 | neutral-700 · neutral-600 |
-| secondary-hover · active (neutral fills: nav selected, segmented hover) | `secondary-hover` · `secondary-active` | neutral-200 · neutral-300 | neutral-800 · neutral-700 |
+| secondary-hover · active (neutral fills: segmented hover) | `secondary-hover` · `secondary-active` | neutral-200 · neutral-300 | neutral-800 · neutral-700 |
+| nav selected · hover (menu rows) | `nav-selected` · `nav-hover` | neutral-100 · neutral-50 | neutral-800 · between 800 and 900 |
 | destructive (button) | `danger-soft`, with `danger` text and `danger-line` edge | red-50 | red-950 |
 | destructive-hover · active | `danger-soft-hover` · `danger-soft-active` | red-100 · red-200 | red-900 · red-800 |
 | solid red (marks only: verdicts, badges, closed sessions) | `danger-solid` | red-600 | red-600 |
@@ -174,10 +175,10 @@ never for money, counts, times or dates. Figures are tabular everywhere (set on
 | `text-sm` | 13 / 20 | supporting text, table headers, dense cells, Go floor |
 | `text-base` | 14 / 20 | **default**: body, table cells, buttons, inputs |
 | `text-md` | 16 / 24 | emphasised body, card titles, Go tile names, phone inputs |
-| `text-lg` | 18 / 26 | section headings |
-| `text-xl` | 20 / 28 | major sections, dialog titles |
-| `text-2xl` | 24 / 32 | phone page titles, band figures |
-| `text-3xl` | 28 / 34 | page titles, headline metrics |
+| `text-lg` | 18 / 26 | section headings, phone page titles |
+| `text-xl` | 20 / 28 | page titles, major sections, dialog titles |
+| `text-2xl` | 24 / 32 | band figures, confirmation headlines |
+| `text-3xl` | 28 / 34 | headline metrics |
 | `text-4xl` | 32 / 40 | hero metrics |
 | `text-display` | 40 / 44 | Go amount due, change |
 | `text-5xl` / `6xl` | 48 / 60 | the scan verdict and the landing only |
@@ -186,7 +187,7 @@ never for money, counts, times or dates. Figures are tabular everywhere (set on
 
 | Role | Classes |
 |---|---|
-| Page title | `text-2xl sm:text-3xl font-semibold tracking-title` |
+| Page title | `text-lg sm:text-xl font-semibold tracking-title` |
 | Section title | `text-lg font-semibold tracking-title` |
 | Card title | `text-md font-semibold` |
 | Body | `text-base` |
@@ -292,9 +293,11 @@ picks a variant.
 - **Tabs** — navigation between related content in one page.
 - **Navigation rows** (rail, Settings column, phone menu sheet, Go tab bar) — one
   definition in `components/ui/navStyles`. The current page is `NAV_SELECTED`:
-  a neutral `secondary-hover` fill, semibold `fg` label and `NAV_SELECTED_ICON`
+  the `nav-selected` fill (neutral-100; neutral-800 in dark), semibold `fg` label and `NAV_SELECTED_ICON`
   (`text-fg`), with no ring and no brand colour (Shopify's quiet recipe). Other rows are `NAV_IDLE` (muted,
-  `muted-wash` hover).
+  `nav-hover` fill on hover: neutral-50, half a step, so hover never looks selected). The weight carries
+  "you are here"; the fill only groups the row, so it stays one step off the chrome, lighter than a
+  pressed button (`secondary-hover`).
   *The till's tab bar* is docked, 64px tall and full width, with a hairline on top. Each tab is a 24px
   icon inside a 56 × 32 pill over a 13px label, 4px apart — Material 3 Expressive's proportions. The
   current tab's pill is solid ink with the icon knocked out (`NAV_TAB_ACTIVE`; light in dark mode) and its

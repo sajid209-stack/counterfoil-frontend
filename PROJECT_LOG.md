@@ -17889,3 +17889,71 @@ portrait to anyone on the line-up (`EventLineupEntry.imageUrl`, contract for the
 - The Bangla strings added here are drafts.
 - Speakers, artists and DJs show as a list until the operator adds portraits.
 - The venue map is a drawn panel, not a real map.
+
+## Smaller page titles, a lighter selected menu row (2026-10-17)
+
+Owner, with a screenshot of the dashboard (the title "Lalbagh Heritage Attractions" and the selected
+"Dashboard" row boxed): *"the page title needs to be smaller, its too large, and the selected menu
+needs to be a bit lighter, properly research and fix them for all pages, then update those in design
+system."*
+
+### Page titles: 28px → 20px
+
+Shopify's admin (Polaris) sets its page title at 20px semibold, one step above a card title rather
+than as a headline. On a screen of figures and lists the page's name says where you are; a 28px
+title was the loudest thing on every page, louder than the money on the dashboard.
+
+- **The page-title role is now `text-lg sm:text-xl`: 18px on a phone, 20px from `sm`**, semibold,
+  `tracking-title`. Card titles are 16px, so the title stays one clear step above them.
+- One change covers every OS page, because every OS title is drawn by `PageShell` or by the bar in
+  `OsShell`.
+- **The till's own page titles** (quick pass, reservations, shift open and close) and the admin and
+  till-design pages move from 24/28px to 20px to match. Check-in, Scan and My sales already were.
+  Confirmation headlines ("Sale complete", "Pass issued") stay at 24px: they are a result, not a
+  page name. The sign-in pages keep their larger title, since they are a form centred on an empty
+  page.
+
+### The selected menu row: one step lighter
+
+The selected row's fill was `secondary-hover` (neutral-200, #e2ded5), the same grey as a pressed
+button, and it read heavier than the menu it marks.
+
+- **Two new tokens**, re-declared for both modes and checked for parity by `lint:tokens`:
+  - `nav-selected`: neutral-100 (#efece5) in light, neutral-800 in dark;
+  - `nav-hover`: neutral-50 in light, halfway between neutral-800 and 900 in dark — half a step,
+    so hover never looks like the selected row.
+- `navStyles.ts` uses them: `NAV_SELECTED` is `bg-nav-selected` with the label at 600 in full ink,
+  and idle and parent rows hover to `nav-hover`. The weight carries "you are here"; the fill only
+  groups the row.
+- It applies everywhere `navStyles` is used: the rail, the collapsed rail and its flyouts, the
+  Settings column and list, and the phone's menu sheet (whose rows also press to `nav-selected` now,
+  and whose Sign out row hovers to `nav-hover`). Buttons that sit in those menus — collapse, the
+  back link — keep the button hover.
+- The till's tab bar is unchanged: its current tab is the solid ink pill the owner asked for on
+  2026-10-15.
+
+### Design system
+
+- `docs/design-system.md`: the type scale (18 = section headings and phone page titles, 20 = page
+  titles, 24 = band figures and confirmation headlines, 28 = headline metrics), the page-title role,
+  the two new tokens in the interaction table, and the Navigation rows paragraph.
+- `/design-system`: the Typography scale notes, the page-title role sample and the Bangla specimen;
+  the Navigation callout; and `nav-selected` and `nav-hover` in the Colour token table. The accent
+  surface's note no longer calls it "an active nav item", which it has not been since 2026-10-13.
+
+### Verified
+
+- Measured on the dev server: the dashboard, Settings and an order at 1440 in light and dark read
+  20px/600 titles; Orders at 390 reads 18px. The selected row computes to neutral-100 in light and
+  neutral-800 in dark, at weight 600. No sideways scroll, no console errors.
+- `tsc`, `lint:tokens` and i18n are clean (0 missing / 0 extra); `eslint` on every changed file shows
+  only OsShell's documented pre-existing error.
+- Harnesses on the dev server: grouped nav 201/201, top cards 103/103, hover 9/9, settings
+  navigation 53/53, the phone audit (hidden 0 · under-44 0 · clipped 0 · errors 0; the 14 sub-12px
+  items are the deck, as documented), and the 59-route sweeps at 1440 and at 390 in Bangla dark,
+  all clean. No harness had pinned the old title size or selected fill.
+
+### Open
+
+- The design-system documentation pages keep their larger 24/28px title: they are a reading layout,
+  not an app page.

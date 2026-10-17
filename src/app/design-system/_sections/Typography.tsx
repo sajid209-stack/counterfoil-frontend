@@ -10,10 +10,10 @@ const SCALE: TokenRow[] = [
   { name: "--text-sm", utility: "text-sm", note: "Supporting text, table headers, dense cells. The POS reading floor." },
   { name: "--text-base", utility: "text-base", note: "The default: body, table cells, buttons, inputs." },
   { name: "--text-md", utility: "text-md", note: "Emphasised body, card titles, POS tile names, phone inputs." },
-  { name: "--text-lg", utility: "text-lg", note: "Section headings." },
-  { name: "--text-xl", utility: "text-xl", note: "Major sections, dialog titles." },
-  { name: "--text-2xl", utility: "text-2xl", note: "Phone page titles, band figures." },
-  { name: "--text-3xl", utility: "text-3xl", note: "Page titles, headline metrics." },
+  { name: "--text-lg", utility: "text-lg", note: "Section headings, phone page titles." },
+  { name: "--text-xl", utility: "text-xl", note: "Page titles, major sections, dialog titles." },
+  { name: "--text-2xl", utility: "text-2xl", note: "Band figures, confirmation headlines." },
+  { name: "--text-3xl", utility: "text-3xl", note: "Headline metrics." },
   { name: "--text-4xl", utility: "text-4xl", note: "Hero metrics." },
   { name: "--text-display", utility: "text-display", note: "POS amount due and change." },
 ];
@@ -21,7 +21,7 @@ const SCALE: TokenRow[] = [
 /* Every recipe is written out as its literal classes so the sample IS the
    recipe, and so Tailwind sees each class. */
 const ROLES: Array<{ role: string; classes: string; sample: string }> = [
-  { role: "Page title", classes: "text-2xl sm:text-3xl font-semibold tracking-title", sample: "Orders" },
+  { role: "Page title", classes: "text-lg sm:text-xl font-semibold tracking-title", sample: "Orders" },
   { role: "Section title", classes: "text-lg font-semibold tracking-title", sample: "Payment methods" },
   { role: "Card title", classes: "text-md font-semibold", sample: "Winter Exhibition Pass" },
   { role: "Body", classes: "text-base", sample: "Tickets can be bought until the slot starts." },
@@ -193,7 +193,7 @@ export function TypographySection() {
         <Sub title="One scale, two scripts">
           <Preview label="Bangla at three steps">
             <div className="flex flex-col gap-tight" lang="bn">
-              <p className="text-3xl font-semibold tracking-title">অর্ডারের তালিকা</p>
+              <p className="text-xl font-semibold tracking-title">অর্ডারের তালিকা</p>
               <p className="text-md font-semibold">শীতকালীন প্রদর্শনী পাস</p>
               <p className="text-base">টিকিট কেনা যাবে স্লট শুরু হওয়ার আগে পর্যন্ত।</p>
               <p className="text-sm text-muted">প্রথম দর্শনের পর ৭ দিন বৈধ</p>

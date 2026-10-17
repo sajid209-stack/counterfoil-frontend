@@ -16,7 +16,7 @@ export default function ShiftOpenPage() {
     <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
       <div>
         <p className="text-base font-semibold text-brand-foreground">{t("startLabel")}</p>
-        <h1 className="type-h1 mt-tight text-2xl">{t("openingTitle")}</h1>
+        <h1 className="type-h1 mt-tight text-xl">{t("openingTitle")}</h1>
         <p className="type-body mt-tight text-muted">{t("openingHint")}</p>
       </div>
 

@@ -108,7 +108,7 @@ function MenuBody({ onClose }: { onClose: () => void }) {
      padding, the 20px icon and the gap), and always listed — a sheet is the
      full map, where the rail shows children only for the page you are in. */
   const state = (selected: boolean, parentOf: boolean) =>
-    selected ? NAV_SELECTED : parentOf ? NAV_PARENT_OF_SELECTED : cn("font-medium active:bg-secondary-hover", NAV_IDLE);
+    selected ? NAV_SELECTED : parentOf ? NAV_PARENT_OF_SELECTED : cn("font-medium active:bg-nav-selected", NAV_IDLE);
 
   const row = (d: NavDestination, leaves = false) => {
     const Icon = d.icon;
@@ -245,7 +245,7 @@ function MenuBody({ onClose }: { onClose: () => void }) {
         <Link
           href="/sign-in"
           data-menu-item="signOut"
-          className="flex h-12 items-center gap-section rounded-control px-comfortable text-md font-medium text-fg transition-colors duration-quick hover:bg-muted-wash active:bg-secondary-hover"
+          className="flex h-12 items-center gap-section rounded-control px-comfortable text-md font-medium text-fg transition-colors duration-quick hover:bg-nav-hover active:bg-nav-selected"
         >
           <LogOut size={20} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
           {t("signOut")}

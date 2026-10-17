@@ -3,12 +3,14 @@
  * rail, its nested rows, the phone's menu sheet, the Settings column and the
  * till's tab bar and rail.
  *
- * Shopify's quiet recipe, all neutral: a grey fill one step darker than the
- * hover wash (`secondary-hover`), the label in full ink at 600 and the icon in
- * full ink. No brand colour and no edge — the weight and the darker fill say
- * "here" without pulling the eye off the page.
+ * Shopify's quiet recipe, all neutral: a light fill one step off the white
+ * chrome (`nav-selected`, neutral-100), the label in full ink at 600 and the
+ * icon in full ink. Hover is half a step (`nav-hover`, neutral-50), so the two
+ * never look alike. No brand colour and no edge — the weight carries "here";
+ * the fill only groups the row. It was `secondary-hover` (neutral-200), the
+ * pressed-button grey, and read heavier than the menu it marks (2026-10-17).
  */
-export const NAV_SELECTED = "bg-secondary-hover text-fg font-semibold";
+export const NAV_SELECTED = "bg-nav-selected text-fg font-semibold";
 
 /** The selected label on its own, for a tab that marks its icon separately. */
 export const NAV_SELECTED_TEXT = "text-fg font-semibold";
@@ -26,7 +28,7 @@ export const NAV_TAB_ACTIVE = "bg-inverse text-inverse-fg";
 export const NAV_SELECTED_ICON = "text-fg";
 
 /** A row that is not the page you are on. */
-export const NAV_IDLE = "text-muted hover:bg-muted-wash hover:text-fg";
+export const NAV_IDLE = "text-muted hover:bg-nav-hover hover:text-fg";
 
 /**
  * The parent of the page you are on, when that page is one of its children
@@ -34,4 +36,4 @@ export const NAV_IDLE = "text-muted hover:bg-muted-wash hover:text-fg";
  * — exactly one row on the screen carries the selected surface — but full ink
  * and 600, so the group the page belongs to is still obvious.
  */
-export const NAV_PARENT_OF_SELECTED = "text-fg font-semibold hover:bg-muted-wash";
+export const NAV_PARENT_OF_SELECTED = "text-fg font-semibold hover:bg-nav-hover";

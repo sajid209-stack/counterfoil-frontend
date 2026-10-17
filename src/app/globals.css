@@ -634,6 +634,12 @@
   /* Secondary buttons: a neutral-100 fill with neutral-700 text, hover
      neutral-200, pressed neutral-300. */
   --color-secondary-hover: var(--color-neutral-200);
+  /* Navigation (rail, Settings column, phone menu sheet): the selected row is
+     one quiet step off the white chrome, hover a half step — lighter than the
+     secondary-hover fill a button uses, so the menu reads as a list rather
+     than a stack of pressed buttons. */
+  --color-nav-selected: var(--color-neutral-100);
+  --color-nav-hover: var(--color-neutral-50);
   --color-secondary-active: var(--color-neutral-300);
   /* Secondary BUTTON: a white control with a firm neutral-300 edge and a
      whisper of shadow, so it stands off the warm page and off a white card
@@ -745,6 +751,12 @@
   --color-danger-active: var(--color-red-800);
   --color-danger-disabled: color-mix(in srgb, var(--color-red-100) 60%, transparent);
   --color-secondary-hover: var(--color-neutral-200);
+  /* Navigation (rail, Settings column, phone menu sheet): the selected row is
+     one quiet step off the white chrome, hover a half step — lighter than the
+     secondary-hover fill a button uses, so the menu reads as a list rather
+     than a stack of pressed buttons. */
+  --color-nav-selected: var(--color-neutral-100);
+  --color-nav-hover: var(--color-neutral-50);
   --color-secondary-active: var(--color-neutral-300);
   /* Secondary BUTTON: a white control with a firm neutral-300 edge and a
      whisper of shadow, so it stands off the warm page and off a white card
@@ -847,6 +859,8 @@
   --color-danger-active: var(--color-red-800);
   --color-danger-disabled: color-mix(in srgb, var(--color-red-900) 40%, transparent);
   --color-secondary-hover: var(--color-neutral-800);
+  --color-nav-selected: var(--color-neutral-800);
+  --color-nav-hover: color-mix(in srgb, var(--color-neutral-800) 50%, var(--color-neutral-900));
   --color-secondary-active: var(--color-neutral-700);
   --color-btn-secondary: var(--color-neutral-800);
   --color-btn-secondary-line: var(--color-neutral-700);
