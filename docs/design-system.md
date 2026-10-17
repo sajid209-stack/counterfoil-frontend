@@ -359,6 +359,19 @@ records with key facts first. Desktop density: 36px controls.
   money-figure scale (`text-display` for the amount due).
 - A scan verdict is carried by shape, colour and words together.
 
+**On a phone** (both products; full research and audit in `docs/mobile.md`):
+- A figure is never cut and never behind a sideways scroll: figure bands are a
+  2-column grid of compact cells (`FigureBand`), an odd last cell spanning both.
+- The OS top bar holds the page name, one labelled primary pill (an icon disc
+  when the label is too long), "⋯" and the account.
+- A status chip marks the exception; the normal state ("Published") has none.
+  Names that tell rows apart wrap to two lines before they truncate.
+- Every control in a Filters sheet states its current value.
+- Developer tools (page state, till design, design system) come after what the
+  person came to do, in the menu sheet and in GO's More sheet.
+- GO's header holds the counter and the person; preferences live in Display &
+  language. Checkout's customer, discount and promo code are rows that open in place.
+
 ## 12. Documented exceptions
 
 These may use raw values; nothing else may.

@@ -149,7 +149,8 @@
     "apply": "Apply",
     "cancel": "Cancel",
     "days": "{count, plural, one {# day} other {# days}}",
-    "pickEnd": "Pick the last day"
+    "pickEnd": "Pick the last day",
+    "anyTime": "Any time"
   },
   "describe": {
     "customer": "Orders for {name}",

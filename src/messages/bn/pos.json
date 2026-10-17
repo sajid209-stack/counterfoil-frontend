@@ -589,7 +589,8 @@
     "full": "পুরো",
     "half": "অর্ধেক",
     "minimum": "সর্বনিম্ন",
-    "partSummary": "এখন {now} দিন · আসার সময় {later}"
+    "partSummary": "এখন {now} দিন · আসার সময় {later}",
+    "promoAdd": "যোগ করুন"
   },
   "sellDate": {
     "today": "আজ",

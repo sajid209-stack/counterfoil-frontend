@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, ChevronLeft, MoreHorizontal, Plus } from "lucide-react";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -12,15 +12,30 @@ import { useBarTitle } from "@/lib/barTitle";
 import { Button, type ButtonProps } from "./Button";
 
 /**
+ * The longest label (in characters) the phone bar draws as a pill, by what else
+ * the bar is holding.
+ *
+ * Measured at 320px, the narrowest screen anyone still has: the bar's 288px of
+ * content must leave the page's name ~96px (enough for "Inventory" before it
+ * truncates), and a pill is about 44px plus 7px a character. With the page's
+ * glyph and nothing else that is 16 characters, so 14 is the rule; a way back
+ * (or Settings' section chevron) in place of the glyph costs 24px (12), and a
+ * round "⋯" beside the pill costs 52px more (8, or 6 with both). A longer label
+ * is the plus disc with the words as its accessible name.
+ */
+const pillLabelMax = ({ lead, overflow }: { lead: boolean; overflow: boolean }) => 14 - (lead ? 2 : 0) - (overflow ? 6 : 0);
+
+/**
  * A page's one create action.
  *
  * Separate from `actions` because the two want different room. On a phone a
  * full-width "Add to your catalog" is 151px of a 358px line, on a page that
  * already spends 451px before its first row — so the primary moves into the
- * top bar as an ink plus, and its words become its accessible name. The page's
- * other `actions` go behind a round "⋯" beside it (`PhoneActions`), which is
- * Shopify admin mobile's header exactly: the one thing you came to do, and the
- * rest one tap away. Nothing is crammed into a bar that cannot hold it.
+ * top bar: a labelled pill while its label is short, a plus disc with the words
+ * as its accessible name when it is not (see `pillLabelMax`). The page's other
+ * `actions` go behind a round "⋯" beside it (`PhoneActions`), which is Shopify
+ * admin mobile's header exactly: the one thing you came to do, and the rest one
+ * tap away. Nothing is crammed into a bar that cannot hold it.
  *
  * A page declares it rather than PageShell guessing which of its buttons is
  * the important one.
@@ -320,6 +335,10 @@ export function PageShell({
      a PageShell rendered outside the OS shell keeps them in the page. */
   const phoneOverflow = !wide && !!barSlot && !!actions;
   const backInBar = useBackInBar();
+  const pathname = usePathname();
+  /* A way back — or Settings' section chevron — takes the bar's left slot, which
+     leaves less room for a pill. */
+  const leadInBar = (!!back && backInBar) || (pathname ?? "").startsWith("/settings");
   /* A header row exists for a RECORD: a way back, a state. A list or a
      dashboard has no row — its buttons are in its toolbar. (`actions` alone
      still draws one, for pages not yet moved; see the prop's note.) On a phone
@@ -340,26 +359,40 @@ export function PageShell({
       {primary.label}
     </Button>
   );
-  /* Phone: the glyph, in the bar, with the words as its name — a compact ink
-     disc with a plus, the way Shopify admin mobile draws its one create action.
-     The target is 44px; the disc inside it is 36. */
+  /* Phone: the action, in the bar. A SHORT label is worth showing — "Add
+     customer" says what the button does before you press it, which a bare plus
+     cannot, and it is how Shopify admin mobile draws its one create action. So
+     up to `pillLabelMax` characters it is a pill (the icon and the words, the
+     same orange as every primary, 36px of fill inside a 44px target); a longer
+     label would eat the page's name, so it falls back to the 36px disc with the
+     words as its accessible name. Measured at 320px: the longest label that
+     takes the pill still leaves the page name room to truncate cleanly. */
   const narrowPrimary = primary
     ? (() => {
+        const pill = Array.from(primary.label.trim()).length <= pillLabelMax({ lead: leadInBar, overflow: phoneOverflow });
         const cls = cn(
-          "group flex h-11 w-11 items-center justify-center rounded-full",
+          "group flex h-11 items-center justify-center rounded-full",
+          pill ? "shrink-0" : "w-11",
           primary.disabled && "pointer-events-none opacity-40",
         );
-        const body = (
+        const body = pill ? (
+          <span className="flex h-9 items-center gap-inline whitespace-nowrap rounded-full bg-ember-solid px-comfortable text-sm font-medium text-on-solid transition-colors duration-quick group-hover:bg-ember-hover group-active:bg-ember-active">
+            <span aria-hidden className="flex shrink-0 items-center">
+              {primary.icon ?? <Plus size={16} strokeWidth={2} />}
+            </span>
+            {primary.label}
+          </span>
+        ) : (
           <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-ember-solid text-on-solid transition-colors duration-quick group-hover:bg-ember-hover group-active:bg-ember-active">
             {primary.icon ?? <Plus size={18} strokeWidth={2} />}
           </span>
         );
         return primary.href && !primary.disabled ? (
-          <Link href={primary.href} aria-label={primary.label} className={cls}>
+          <Link href={primary.href} aria-label={pill ? undefined : primary.label} className={cls}>
             {body}
           </Link>
         ) : (
-          <button type="button" onClick={primary.onClick} aria-label={primary.label} disabled={primary.disabled} className={cls}>
+          <button type="button" onClick={primary.onClick} aria-label={pill ? undefined : primary.label} disabled={primary.disabled} className={cls}>
             {body}
           </button>
         );

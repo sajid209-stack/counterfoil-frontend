@@ -182,7 +182,7 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
 
           <dl className="mt-section grid grid-cols-2 gap-section xl:grid-cols-4">
             {[
-              item.tracked ? { k: "onHand", v: t("countUnit", { count: item.onHand, unit: item.unit }) } : null,
+              item.tracked ? { k: "onHand", v: item.onHand <= 0 ? t("badge.out") : t("stockCount", { count: item.onHand, unitKey: item.unit.trim().toLowerCase() || "each", unit: item.unit.trim() }) } : null,
               /* A hire has a second axis that a sale does not: what is out
                  with somebody. Without it "7 pairs" is a different and wrong
                  claim about a bin holding nineteen. */
@@ -221,7 +221,7 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
                       {levels.map((l) => (
                         <li key={l.locationId} className="flex flex-wrap items-baseline gap-tight border-b border-hairline py-comfortable last:border-0">
                           <span className="min-w-0 flex-1 truncate text-sm font-medium">{nameOf(l.locationId)}</span>
-                          <span className="text-sm tabular-nums">{t("countUnit", { count: l.onHand, unit: item.unit })}</span>
+                          <span className="text-sm tabular-nums">{l.onHand <= 0 ? t("badge.out") : t("stockCount", { count: l.onHand, unitKey: item.unit.trim().toLowerCase() || "each", unit: item.unit.trim() })}</span>
                         </li>
                       ))}
                     </ul>

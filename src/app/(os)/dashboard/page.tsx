@@ -786,24 +786,27 @@ export default function DashboardPage() {
 
   return (
     <PageShell title={wide ? op.data?.name || t("title") : t("title")}>
-      {/* The page's one control: which days it is showing. A desktop states the
-          days beside it, in words, on the row it shares with the control. "Today
-          · Wed 29 Jul" said Today twice, a word apart from the toggle's own
-          label, so the caption is only the date. The venue chooser lives in the
-          bar and governs the whole console. */}
+      {/* The page's one control: which days it is showing, and the days in
+          words beside it on the same line. "Today · Wed 29 Jul" said Today
+          twice, a word apart from the toggle's own label, so the caption is
+          only the date. On a phone the control is sized to its two options and
+          sits at the right of that line — a full-width orange bar was the
+          loudest thing on the screen for the quietest decision on it — and the
+          week reads as a range without weekdays, so both fit 320px. The venue
+          chooser lives in the bar and governs the whole console. */}
       <div className="mb-section flex items-center justify-between gap-section">
-        {wide && (
-          <p aria-live="polite" className="min-w-0 truncate text-sm text-muted">
-            {scope === "today"
-              ? formatDay(TODAY, { weekday: true })
-              : `${formatDay(dayShift(TODAY, -6), { weekday: true })} – ${formatDay(TODAY, { weekday: true })}`}
-          </p>
-        )}
+        <p aria-live="polite" className="min-w-0 truncate text-sm text-muted">
+          {scope === "today"
+            ? formatDay(TODAY, { weekday: true })
+            : wide
+              ? `${formatDay(dayShift(TODAY, -6), { weekday: true })} – ${formatDay(TODAY, { weekday: true })}`
+              : `${formatDay(dayShift(TODAY, -6))} – ${formatDay(TODAY)}`}
+        </p>
         {/* Scope, not actions — a dashboard is a place to look. */}
-        <div className={cn("min-w-0", wide ? "w-60 shrink-0" : "w-full")}>
+        <div className={cn("shrink-0", wide && "w-60")}>
           <SegmentedControl
             size="sm"
-            fullWidth
+            fullWidth={wide}
             value={scope}
             onChange={(v) => setScope(v as "today" | "week")}
             aria-label={t("scopeLabel")}

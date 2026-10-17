@@ -589,7 +589,8 @@
     "full": "Full",
     "half": "Half",
     "minimum": "Minimum",
-    "partSummary": "Pay {now} now · {later} at arrival"
+    "partSummary": "Pay {now} now · {later} at arrival",
+    "promoAdd": "Add"
   },
   "sellDate": {
     "today": "Today",

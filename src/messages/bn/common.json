@@ -22,8 +22,6 @@
   "light": "হালকা",
   "dark": "গাঢ়",
   "system": "সিস্টেম",
-  "moreCount": "আরও {count}টি",
-  "figures": "হিসাব",
   "filters": "ফিল্টার",
   "clearFilter": "{name} মুছুন",
   "noResults": "কিছু মেলেনি। অন্য ফিল্টার দিয়ে দেখুন।",

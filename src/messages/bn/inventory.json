@@ -177,5 +177,6 @@
   "returnedAtDesk": "ডেস্কে ফেরত",
   "filterKind": "ধরন",
   "filterSold": "যার সঙ্গে বিক্রি",
-  "soldAll": "সব আইটেম"
+  "soldAll": "সব আইটেম",
+  "stockCount": "{unitKey, select, each {{count, number}টি স্টকে আছে} bottle {{count, number}টি বোতল} pair {{count, number} জোড়া} set {{count, number}টি সেট} box {{count, number}টি বাক্স} hour {{count, number} ঘণ্টা} treatment {{count, number}টি ট্রিটমেন্ট} other {{count, number}টি {unit} স্টকে আছে}}"
 }

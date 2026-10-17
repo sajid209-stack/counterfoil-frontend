@@ -1092,8 +1092,8 @@ export function ProductSheet({
 
               {blocked && <BlockedNotice message={blocked.message} onDismiss={() => setBlocked(null)} />}
 
-              <span className="text-base font-semibold text-fg">{t("sheet.startTime")}</span>
-              <div className="card-surface overflow-hidden">
+              {flexTimes.length > 0 && <span className="text-base font-semibold text-fg">{t("sheet.startTime")}</span>}
+              {flexTimes.length > 0 && <div className="card-surface overflow-hidden">
                 <div className="-mb-px -mr-px grid grid-cols-4 sm:grid-cols-6">
                   {flexTimes.map((tt) => {
                     const st = startState(tt, duration, resourceId);
@@ -1109,7 +1109,7 @@ export function ProductSheet({
                     );
                   })}
                 </div>
-              </div>
+              </div>}
 
               {renderGroup()}
               {renderWaiver()}
@@ -1202,15 +1202,15 @@ export function ProductSheet({
               })}
               <ChoiceCard raised selected={!providerId} onClick={() => setProviderId(undefined)} className="flex w-full items-center justify-center px-7 py-comfortable text-base">{t("sheet.firstAvailable")}</ChoiceCard>
             </div>
-            <span className="mt-tight text-base font-semibold text-fg">{t("sheet.startTimeDuration", { minutes: providerDuration })}</span>
-            <div className="flex flex-wrap gap-inline">
+            {providerTimes.length > 0 && <span className="mt-tight text-base font-semibold text-fg">{t("sheet.startTimeDuration", { minutes: providerDuration })}</span>}
+            {providerTimes.length > 0 && <div className="flex flex-wrap gap-inline">
               {providerTimes.map((t) => {
                 const free = providerTimeFree(t);
                 return (
                   <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-full border px-comfortable text-sm ${!free ? "border-line bg-subtle text-muted line-through" : slotTime === t ? "border-ember-solid bg-ember-solid font-medium text-on-solid" : "border-line bg-card"}`}>{formatClock(t)}</button>
                 );
               })}
-            </div>
+            </div>}
             {slotTime && assignedProvider && !providerId && (
               <p className="text-sm text-muted">{t("sheet.firstAvailableAt", { time: formatClock(slotTime), name: `${assignedProvider.name}${premiumOf(assignedProvider.id) > 0 ? ` (+${formatMoney(premiumOf(assignedProvider.id), currency)})` : ""}` })}</p>
             )}
@@ -1290,12 +1290,12 @@ export function ProductSheet({
             named after what it holds: a museum picks a session, a tour picks a
             departure, and the operator's word for it is the one that should
             appear above the rows. */}
-        {needsSchedule(bt) && !resourceMode && !flexible && openToday && (
+        {needsSchedule(bt) && !resourceMode && !flexible && openToday && slots.length > 0 && (
           <p className="mb-tight text-base font-semibold text-fg">
             {t(guided ? "sheet.departureLabel" : "sheet.sessionLabel")}
           </p>
         )}
-        {needsSchedule(bt) && !resourceMode && !flexible && openToday && (
+        {needsSchedule(bt) && !resourceMode && !flexible && openToday && slots.length > 0 && (
           <SessionList
             currency={currency}
             selected={slotTime}

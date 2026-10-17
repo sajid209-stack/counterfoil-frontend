@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, ChevronRight, TicketPercent, UserRound, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -105,9 +105,12 @@ export function CustomerRow({
   );
 }
 
-/** A promo code: a field and Apply, or — once it has taken something off — a
- *  chip that says what and can be removed. An invalid one is refused in words
- *  under the field. */
+/** A promo code. Closed it is a row like Discount — "Promo code … Add ›" — and
+ *  an always-open field was an empty question on every sale. Pressing the row
+ *  opens the field in place, with the cursor in it. Once a code has taken
+ *  something off, the row gives way to a chip that says what and can be
+ *  removed. A wrong code is refused in words under the field, and the row
+ *  stays open so the cashier can type another. */
 export function PromoCodeRow({
   applied,
   taken,
@@ -131,15 +134,17 @@ export function PromoCodeRow({
 }) {
   const t = useTranslations("pos");
   const id = useId();
+  const [open, setOpen] = useState(false);
   const code = applied?.code ?? applied?.name ?? "";
-  return (
-    <div className="flex items-start gap-comfortable border-b border-line py-comfortable last:border-b-0">
-      <TicketPercent size={22} strokeWidth={1.6} className="mt-0.5 shrink-0 text-muted" aria-hidden />
-      <div className="min-w-0 flex-1">
-        <label htmlFor={id} className="block text-md font-medium">{t("pay.promoCode")}</label>
-        {applied ? (
+
+  if (applied) {
+    return (
+      <div className="flex items-start gap-comfortable border-b border-line py-comfortable last:border-b-0">
+        <TicketPercent size={22} strokeWidth={1.6} className="mt-0.5 shrink-0 text-muted" aria-hidden />
+        <div className="min-w-0 flex-1">
+          <span id={id} className="block text-md font-medium">{t("pay.promoCode")}</span>
           <div className="mt-tight flex">
-            <span id={id} className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-line bg-card pl-comfortable pr-1 text-md">
+            <span aria-labelledby={id} className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-line bg-card pl-comfortable pr-1 text-md">
               <Check size={16} strokeWidth={2.5} className="shrink-0 text-success" aria-hidden />
               <span className="min-w-0 truncate font-semibold">{code}</span>
               <span className="shrink-0 whitespace-nowrap font-medium tabular-nums text-muted">−{formatMoney(taken, currency)}</span>
@@ -153,41 +158,49 @@ export function PromoCodeRow({
               </button>
             </span>
           </div>
-        ) : (
-          <div className="mt-tight flex items-center gap-tight">
-            <input
-              id={id}
-              value={input}
-              onChange={(e) => onInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && input.trim()) onApply(); }}
-              placeholder={t("pay.promoPlaceholder")}
-              autoCapitalize="characters"
-              autoComplete="off"
-              spellCheck={false}
-              aria-invalid={!!error}
-              aria-describedby={error ? `${id}-err` : undefined}
-              className={cn(
-                "h-11 min-w-0 flex-1 rounded-full border bg-card px-comfortable text-md uppercase placeholder:normal-case placeholder:text-faint",
-                error ? "border-danger" : "border-line",
-              )}
-            />
-            <button
-              type="button"
-              onClick={onApply}
-              disabled={!input.trim()}
-              className="h-11 shrink-0 rounded-full border-2 border-line bg-card px-section text-md font-semibold text-fg transition-transform duration-quick active:scale-[0.98] disabled:opacity-50"
-            >
-              {t("pay.apply")}
-            </button>
-          </div>
-        )}
-        {error && (
-          <p id={`${id}-err`} role="alert" className="mt-tight text-sm text-danger">
-            {error}
-          </p>
-        )}
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <SaleRow icon={TicketPercent} label={t("pay.promoCode")} value={t("pay.promoAdd")} open={open} onToggle={() => setOpen((v) => !v)}>
+      <div className="flex items-center gap-tight">
+        {/* The field only exists once the row has been pressed, so focusing it
+            on mount is the cursor landing where the cashier just tapped. */}
+        <input
+          id={id}
+          autoFocus
+          value={input}
+          onChange={(e) => onInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && input.trim()) onApply(); }}
+          placeholder={t("pay.promoPlaceholder")}
+          aria-label={t("pay.promoCode")}
+          autoCapitalize="characters"
+          autoComplete="off"
+          spellCheck={false}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-err` : undefined}
+          className={cn(
+            "h-11 min-w-0 flex-1 rounded-full border bg-card px-comfortable text-md uppercase placeholder:normal-case placeholder:text-muted",
+            error ? "border-danger" : "border-line",
+          )}
+        />
+        <button
+          type="button"
+          onClick={onApply}
+          disabled={!input.trim()}
+          className="h-11 shrink-0 rounded-full border-2 border-line bg-card px-section text-md font-semibold text-fg transition-transform duration-quick active:scale-[0.98] disabled:opacity-50"
+        >
+          {t("pay.apply")}
+        </button>
+      </div>
+      {error && (
+        <p id={`${id}-err`} role="alert" className="mt-tight text-sm text-danger">
+          {error}
+        </p>
+      )}
+    </SaleRow>
   );
 }
 

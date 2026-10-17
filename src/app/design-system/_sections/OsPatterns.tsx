@@ -219,6 +219,13 @@ export function OsPatternsSection() {
         </Preview>
         <Callout>Every record page has one primary action; secondary ones live under “⋯”. A destructive one is last, separated, and confirmed.</Callout>
       </DocSection>
+
+      <DocSection id="phone" title="On a phone">
+        <P>
+          The top bar holds the page name, one labelled primary pill (an icon disc when the label is too long), &ldquo;⋯&rdquo; and the account. Figures are a 2-column grid of compact cells (<Code>FigureBand</Code>): none is cut, none hides behind a sideways scroll. Lists are one card of two-line rows; a status chip marks only the exception, and a name wraps to two lines before it truncates. Filters live in a sheet whose controls state their current value. Developer tools come last in the menu sheet.
+        </P>
+        <Callout>The full research and audit behind these rules is in <Code>docs/mobile.md</Code>.</Callout>
+      </DocSection>
     </>
   );
 }

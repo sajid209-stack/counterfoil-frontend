@@ -215,7 +215,7 @@ function OrdersPageInner() {
           </Notice>
         )}
 
-        <section aria-label={t("figures.label")} className="card-surface p-card">
+        <section aria-label={t("figures.label")} className="card-surface max-md:overflow-hidden md:p-card">
           <SalesFigures summary={summary} loading={firstLoad} />
         </section>
 

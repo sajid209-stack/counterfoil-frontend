@@ -58,7 +58,7 @@
     "archiveSoldOne": "{count} tickets are sold for {date}. If you archive it, sales stop, but those tickets still work at the gate.",
     "archiveSoldMany": "{count, plural, one {# of these has} other {# of these have}} tickets sold for future dates. If you archive them, sales stop, but those tickets still work at the gate."
   },
-  "searchPlaceholder": "Search what you sell",
+  "searchPlaceholder": "Search catalog",
   "sortBy": "Sort",
   "sort": {
     "smart": "What needs you first",

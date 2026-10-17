@@ -172,11 +172,6 @@ function MenuBody({ onClose }: { onClose: () => void }) {
       <div className="px-comfortable empty:hidden">
         <LocationSwitcher full />
       </div>
-      {/* The page-state preview, next to the venue: a lens on the whole shell. */}
-      <div className="mt-2 px-comfortable">
-        <PageStatePicker full />
-      </div>
-
       <nav aria-label={t("main")} className="mt-2">
         <ul className="flex flex-col gap-0.5">{NAV_MAIN.map((d) => row(d))}</ul>
       </nav>
@@ -251,6 +246,16 @@ function MenuBody({ onClose }: { onClose: () => void }) {
           {t("signOut")}
         </Link>
       </section>
+
+      {/* The page-state preview is a developer's tool, so it sits at the very
+          foot: below every destination and the account, where nobody who came
+          to do something reaches it by accident. It used to be second in the
+          sheet, above Dashboard. The venue stays first — it qualifies every
+          list behind this sheet. */}
+      {hairline}
+      <div className="px-comfortable pb-1">
+        <PageStatePicker full />
+      </div>
     </div>
   );
 }

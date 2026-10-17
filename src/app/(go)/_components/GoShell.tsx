@@ -21,7 +21,6 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { ModeButton } from "@/components/ThemeProvider";
 import { LocaleToggle } from "@/components/LocaleProvider";
 import { Modal, Sheet } from "@/components/ui";
 import { PageStatePicker, PreviewChip, ScreenPreview } from "@/components/screens";
@@ -70,24 +69,27 @@ const TABS = [
   { href: "/checkin", key: "checkin", icon: UserCheck },
 ] as const;
 
+/* In the order a shift reaches for them: the day's tools first, then the
+   till's settings and help, and the design tools — which are for whoever is
+   setting the till up, not for the person selling — last. */
 const MORE_ITEMS = [
-  // The till-design chooser. It lives in More rather than in the tab bar
-  // because the tab bar is the shift's muscle memory, and it is the phone's
-  // route to the switcher the header shows from `sm` up.
-  { key: "tillDesign", icon: Layers, href: "/tills" },
-  /* The design system's reference, opened on the Go configuration. */
-  { key: "designSystem", icon: Palette, href: "/design-system?product=go" },
-  { key: "shift", icon: Clock, href: "/shift/close" },
   { key: "mySales", icon: Banknote, href: "/my-sales" },
+  { key: "shift", icon: Clock, href: "/shift/close" },
   { key: "quickPass", icon: Ticket, href: "/quick-pass" },
-  { key: "myProfile", icon: UserRound, href: "/profile" },
   { key: "switchUser", icon: Users, href: "/login" },
+  { key: "myProfile", icon: UserRound, href: "/profile" },
   /* The TILL's settings, not the business's. This used to open
      /settings/business — the whole admin app, mid-shift, in front of a cashier
      who wanted to turn the number pad off. The business settings are one
      explicit link away on that page. */
   { key: "settings", icon: Settings, href: "/till-settings" },
   { key: "help", icon: CircleHelp, action: "help" },
+  /* The till-design chooser. It lives in More rather than in the tab bar
+     because the tab bar is the shift's muscle memory, and it is the phone's
+     route to the switcher the header shows from `sm` up. */
+  { key: "tillDesign", icon: Layers, href: "/tills" },
+  /* The design system's reference, opened on the Go configuration. */
+  { key: "designSystem", icon: Palette, href: "/design-system?product=go" },
 ] as const;
 
 export function GoShell({ children }: { children: React.ReactNode }) {
@@ -262,7 +264,6 @@ export function GoShell({ children }: { children: React.ReactNode }) {
         {/* Only on a till, and only where there is room for it. */}
         <TillSwitcher />
         <span className="flex shrink-0 items-center gap-tight">
-          <ModeButton shape="round" />
           {!bare && <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse text-base font-semibold text-inverse-fg" title={tp("shell.myProfile", { name: myName })} aria-label={tp("shell.myProfile", { name: myName })}>{myInitial}</Link>}
         </span>
       </header>

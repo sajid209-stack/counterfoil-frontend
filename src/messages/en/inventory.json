@@ -177,5 +177,6 @@
   "returnedAtDesk": "Returned at the desk",
   "filterKind": "Kind",
   "filterSold": "Sold with",
-  "soldAll": "All items"
+  "soldAll": "All items",
+  "stockCount": "{unitKey, select, each {{count, number} in stock} bottle {{count, plural, one {# bottle} other {# bottles}}} pair {{count, plural, one {# pair} other {# pairs}}} set {{count, plural, one {# set} other {# sets}}} box {{count, plural, one {# box} other {# boxes}}} hour {{count, plural, one {# hour} other {# hours}}} treatment {{count, plural, one {# treatment} other {# treatments}}} other {{count, number} {unit} in stock}}"
 }

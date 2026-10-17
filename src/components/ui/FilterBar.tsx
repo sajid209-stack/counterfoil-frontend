@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ListFilter, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -41,6 +41,19 @@ export function FilterSearch({
     </div>
   );
 }
+
+/**
+ * True inside the Filters panel (the popover, the phone sheet).
+ *
+ * A filter's control is drawn in two places: on a toolbar, where it must name
+ * itself ("Date") because nothing else does, and in the panel, where a heading
+ * above it already has. A control that kept its toolbar words read "Date" under
+ * a "Date" heading and said nothing about what it was set to — so inside the
+ * panel it states its VALUE instead ("Any time", "Last 30 days"). A control that
+ * does not care simply ignores this.
+ */
+const FilterPanelContext = createContext(false);
+export const useInFilterPanel = () => useContext(FilterPanelContext);
 
 export interface FilterSpec {
   key: string;
@@ -258,6 +271,7 @@ export function FilterBar({
   /* The same node the desktop popover and the phone sheet both draw, from one
      definition, so neither can fall behind the other. */
   const body = (
+    <FilterPanelContext value={true}>
     <div className="flex flex-col">
       {folded.map((f) => (
         /* Not a <label>: these controls are buttons, and a label wrapping a
@@ -268,6 +282,7 @@ export function FilterBar({
         </div>
       ))}
     </div>
+    </FilterPanelContext>
   );
 
   return (

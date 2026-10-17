@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { CalendarDays, ChevronDown, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DateRangePicker, formatRange, type RangePreset } from "@/components/ui";
+import { useInFilterPanel } from "@/components/ui/FilterBar";
 import { cn } from "@/lib/cn";
 import { DEMO_TODAY, PRESETS, presetOf } from "../_lib/filters";
 import { chipBox } from "./chip";
@@ -45,6 +46,9 @@ export function DateChip({
 }) {
   const t = useTranslations("orders.range");
   const tc = useTranslations("common");
+  /* Inside the Filters panel a heading already says "Date", so the chip says
+     what it is SET to instead — "Any time" or "Last 30 days" — not "Date" again. */
+  const inPanel = useInFilterPanel();
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const closedAt = useRef(0);
@@ -87,7 +91,7 @@ export function DateChip({
           type="button"
           aria-haspopup="dialog"
           aria-expanded={open}
-          aria-label={set ? `${t("label")}: ${text}` : t("label")}
+          aria-label={set ? `${t("label")}: ${text}` : inPanel ? `${t("label")}: ${t("anyTime")}` : t("label")}
           onClick={() => {
             if (open) return;
             if (performance.now() - closedAt.current < 400) return;
@@ -97,11 +101,19 @@ export function DateChip({
         >
           <CalendarDays size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
           <span className="min-w-0 truncate">
-            <span className="text-fg">{t("label")}</span>
-            {set && (
+            {inPanel ? (
+              <span className={cn("text-fg", set && "font-medium")} title={set && named ? formatRange(from, to) : undefined}>
+                {set ? text : t("anyTime")}
+              </span>
+            ) : (
               <>
-                <span className="text-fg">: </span>
-                <span className="font-medium text-fg" title={named ? formatRange(from, to) : undefined}>{text}</span>
+                <span className="text-fg">{t("label")}</span>
+                {set && (
+                  <>
+                    <span className="text-fg">: </span>
+                    <span className="font-medium text-fg" title={named ? formatRange(from, to) : undefined}>{text}</span>
+                  </>
+                )}
               </>
             )}
           </span>

@@ -38,6 +38,21 @@ const actorName = (staff: { id: string; name: string }[]) =>
   staff.find((x) => x.id === DEMO_STAFF_ID)?.name ?? "Counter";
 
 /**
+ * How many are on the shelf, in words a counter says out loud: "15 in stock",
+ * "120 bottles", "Out of stock". The unit decides: a real noun (bottle, pair,
+ * set) is counted as itself, while the bare "each" would read "15 each".
+ * The message holds the noun list; an operator's own unit still reads as
+ * "12 kg in stock".
+ */
+function useStockText() {
+  const t = useTranslations("inventory");
+  return (i: InventoryItemView) =>
+    i.onHand <= 0
+      ? t("badge.out")
+      : t("stockCount", { count: i.onHand, unitKey: i.unit.trim().toLowerCase() || "each", unit: i.unit.trim() });
+}
+
+/**
  * What the venue has, as opposed to what it sells.
  *
  * The catalogue answers "what can somebody buy"; this answers "what is on the
@@ -55,6 +70,7 @@ export default function InventoryPage() {
   const t = useTranslations("inventory");
   const router = useRouter();
   const toast = useToast();
+  const stockText = useStockText();
 
   const [tab, setTab] = useState<"all" | "attention" | "archived">("all");
   const [query, setQuery] = useState("");
@@ -159,13 +175,9 @@ export default function InventoryPage() {
             i.outOfStock ? "text-danger" : i.low ? "text-warning" : "text-fg",
           )}
         >
-          {t("countUnit", { count: i.onHand, unit: i.unit })}
+          {stockText(i)}
         </span>
-        {i.outOfStock ? (
-          <StatusPill tone="danger">{t("badge.out")}</StatusPill>
-        ) : i.low ? (
-          <StatusPill tone="warning">{t("badge.low")}</StatusPill>
-        ) : null}
+        {!i.outOfStock && i.low ? <StatusPill tone="warning">{t("badge.low")}</StatusPill> : null}
       </span>
     );
   };
@@ -338,12 +350,12 @@ export default function InventoryPage() {
                     <span className="flex items-baseline gap-tight">
                       <span className="min-w-0 flex-1 truncate text-base font-medium">{i.name}</span>
                       <span className={cn("shrink-0 text-sm tabular-nums", flag === "out" ? "text-danger" : flag === "low" ? "text-warning" : i.tracked ? "text-fg" : "text-muted")}>
-                        {i.tracked ? t("countUnit", { count: i.onHand, unit: i.unit }) : t("untracked")}
+                        {i.tracked ? stockText(i) : t("untracked")}
                       </span>
                     </span>
                     <span className="truncate text-sm text-muted">
                       {[t(`kind.${i.kind}`), formatMoney(i.price)].join(" · ")}
-                      {flag && <span className={flag === "out" ? "text-danger" : "text-warning"}> · {t(flag === "out" ? "badge.out" : "badge.low")}</span>}
+                      {flag === "low" && <span className="text-warning"> · {t("badge.low")}</span>}
                       {i.soldWith.length === 0 && ` · ${t("soldWithNone")}`}
                     </span>
                   </span>

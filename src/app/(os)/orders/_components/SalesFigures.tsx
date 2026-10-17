@@ -21,8 +21,11 @@ import { formatMoney } from "@/lib/format";
  * Calm, in the Shopify admin way: a small sentence-case label over a figure,
  * no rules between them — the gap does that work — and the one figure that
  * needs somebody to act, what is still owed, is the only one in colour. On a
- * phone the five become a strip that scrolls sideways and snaps to each one,
- * rather than a card three rows deep: a list page should reach its list.
+ * phone the five are one card of two-across cells divided by hairlines, with
+ * the odd last one spanning both: every figure on screen, none behind a
+ * sideways scroll, none cut mid-word ("Transa…" reads as a fault). Three rows
+ * of 18px figures is ~190px, and a list page still reaches its list. The card's
+ * own padding is the section's from md up; below it the cells carry theirs.
  *
  * `data-figure` and `data-amount` carry the exact value, for checks that must
  * not parse "৳1,234.50".
@@ -40,11 +43,11 @@ export function SalesFigures({ summary: s, loading }: { summary: SalesSummary; l
     <dl
       data-sales-figures
       aria-busy={loading || undefined}
-      className="no-scrollbar flex w-full min-w-0 snap-x snap-mandatory gap-x-major overflow-x-auto md:snap-none md:gap-x-0 md:overflow-visible lg:grid lg:grid-cols-5"
+      className="grid w-full min-w-0 grid-cols-[repeat(2,minmax(min-content,1fr))] gap-px bg-hairline md:flex md:gap-x-0 md:bg-transparent lg:grid lg:grid-cols-5"
     >
       {items.map((i) => (
-        <div key={i.key} title={i.hint} className="w-[36%] min-w-[7.5rem] shrink-0 snap-start md:w-auto md:min-w-0 md:flex-1 md:shrink">
-          <dt className="whitespace-nowrap text-sm text-muted">{i.label}</dt>
+        <div key={i.key} title={i.hint} className="min-w-0 bg-card px-comfortable py-comfortable max-md:last:odd:col-span-2 md:flex-1 md:bg-transparent md:p-0">
+          <dt className="text-xs text-muted md:whitespace-nowrap md:text-sm">{i.label}</dt>
           <dd
             data-figure={i.key}
             data-amount={i.raw}

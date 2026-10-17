@@ -22,8 +22,6 @@
   "light": "Light",
   "dark": "Dark",
   "system": "System",
-  "moreCount": "{count} more",
-  "figures": "Figures",
   "filters": "Filters",
   "clearFilter": "Clear {name}",
   "noResults": "Nothing matches. Try other filters.",

@@ -1,9 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import { setPrefs, usePrefs } from "@/lib/prefs";
 
 export interface StatItem {
   key: string;
@@ -18,7 +15,7 @@ export interface StatItem {
   /** A change against the period before. */
   delta?: React.ReactNode;
   /** Draws the figure as a problem rather than a fact. */
-  tone?: "warning";
+  tone?: "warning" | "danger";
   /** A qualifier on the figure — shown as the card's tooltip, not as a line. */
   note?: string | null;
   /** A figure that is also a filter: pressing it shows the rows it counts.
@@ -43,22 +40,21 @@ export interface StatItem {
  * and the table starts 70px sooner.
  *
  * **`tiles`** — the dashboard, unchanged: a card per metric with its tinted
- * glyph, its delta and its context, and one card of rows on a phone. It is the
- * cockpit's hero band, measured against the reference and the type spec, and
- * the owner asked for it to stay exactly as it is.
+ * glyph, its delta and its context. It is the cockpit's hero band, measured
+ * against the reference and the type spec, and the owner asked for it to stay
+ * exactly as it is.
  *
  * Both live in this file so that a page cannot invent a third.
  *
- * **On a phone the band folds.** Four figures, one per row at 390px, measured
- * 238px — and on /orders that put the first row of the list 451px down a 735px
- * screen. So the lead figure stays at full size and the rest sit behind a
- * disclosure that states how many they are: `progressive-disclosure` says
- * reveal progressively, and `chip-collection-reflow` says an overflow summary
- * has to be operable rather than a way of hiding values. It is remembered, so
- * somebody who wants all four keeps them.
- *
- * The lead figure is `items[0]`, which every page already orders by importance
- * — spend and orders lead, a count of nothing goes quiet.
+ * **On a phone every figure is on screen.** Square and Foodpanda show short
+ * figures all at once, and a number is never cut mid-word: a clipped
+ * "Transa…" reads as a fault, and a clipped figure is a different figure.
+ * Below `sm` both layouts are the same thing — one card, two cells across, a
+ * hairline between them, a 12px label over an 18px figure — and an odd last
+ * cell spans both columns. It used to fold behind a "3 more" disclosure, and a
+ * figure behind a tap is a figure most people never see; four figures in two
+ * rows cost ~140px, which is cheaper than the disclosure it replaced was
+ * worth.
  */
 export function StatStrip({
   items,
@@ -79,19 +75,11 @@ export function StatStrip({
    *  do fit in a row. Unset, the band keeps `columns` at every width. */
   wideColumns?: number;
 }) {
-  // Read here rather than inside the fold, so the grid and the disclosure
-  // cannot disagree about which state they are in.
-  const { statsOpen: open } = usePrefs();
-
   if (variant === "tiles") {
     return (
       <>
-        {/* A phone: one card, a row per figure. */}
-        <div className="card-surface overflow-hidden sm:hidden">
-          {items.map((item) => (
-            <Tile key={item.key} item={item} loading={loading} row />
-          ))}
-        </div>
+        {/* A phone: the compact grid, like every other band. */}
+        <FigureBand items={items} loading={loading} className="sm:hidden" />
         <div
           className="hidden gap-section sm:grid sm:grid-cols-2 xl:[grid-template-columns:repeat(var(--stat-n),minmax(0,1fr))]"
           style={{ "--stat-n": Math.min(items.length, 4) } as React.CSSProperties}
@@ -105,81 +93,59 @@ export function StatStrip({
   }
 
   return (
-    /* The rules between figures are the grid's own 1px gaps showing the card
-       through, so they land between cells however the row wraps — a per-cell
-       border draws a stray edge the moment two figures sit on a second row. */
-    <div className="card-surface overflow-hidden">
-      {items.length > 1 && <FoldedLead items={items} loading={loading} />}
-      {/* One figure a row on a phone, two across from sm, one column each
-          from xl. Measured, not guessed: four columns of a 768px screen leave
-          146px of cell, and "৳462,206.03" at 26px needed 150 (24px, now, needs ~138) — the card clips,
-          so the figure would be silently wrong rather than merely cramped. */}
-      <div
-        id={GRID_ID}
-        className={cn(
-          "grid gap-px bg-hairline sm:[grid-template-columns:repeat(2,minmax(0,1fr))] xl:[grid-template-columns:repeat(var(--stat-n),minmax(0,1fr))]",
-          !!wideColumns && "2xl:[grid-template-columns:repeat(var(--stat-wide),minmax(0,1fr))]",
-          // Folded on a phone only; from sm there is room for two across and
-          // the disclosure does not exist.
-          items.length > 1 && !open && "max-sm:hidden",
-        )}
-        style={{ "--stat-n": columns ?? Math.min(items.length, 4), "--stat-wide": wideColumns } as React.CSSProperties}
-      >
+    <FigureBand
+      items={items}
+      loading={loading}
+      /* Two across from sm, one column each from xl. Measured, not guessed:
+         four columns of a 768px screen leave 146px of cell, and "৳462,206.03"
+         at 26px needed 150 (24px, now, needs ~138) — the card clips, so the
+         figure would be silently wrong rather than merely cramped. */
+      gridClassName={cn(
+        "sm:[grid-template-columns:repeat(2,minmax(0,1fr))] xl:[grid-template-columns:repeat(var(--stat-n),minmax(0,1fr))]",
+        !!wideColumns && "2xl:[grid-template-columns:repeat(var(--stat-wide),minmax(0,1fr))]",
+      )}
+      gridStyle={{ "--stat-n": columns ?? Math.min(items.length, 4), "--stat-wide": wideColumns } as React.CSSProperties}
+    />
+  );
+}
+
+/**
+ * One card of figures, divided by hairlines — and the only shape a figure band
+ * takes on a phone.
+ *
+ * Two columns from the first pixel; `gridClassName` re-times them for the wider
+ * screens that ask (a band that wants four across from xl). The rules between
+ * figures are the grid's own 1px gaps showing the card through, so they land
+ * between cells however the row wraps — a per-cell border draws a stray edge
+ * the moment two figures sit on a second row.
+ *
+ * Exported so the dashboard's and Analytics' phone strips draw the same cell as
+ * the band does, instead of each page keeping its own copy that drifts.
+ */
+export function FigureBand({
+  items,
+  loading = false,
+  label,
+  className,
+  gridClassName,
+  gridStyle,
+}: {
+  items: StatItem[];
+  loading?: boolean;
+  /** Names the group for a screen reader. */
+  label?: string;
+  className?: string;
+  gridClassName?: string;
+  gridStyle?: React.CSSProperties;
+}) {
+  return (
+    <div role={label ? "group" : undefined} aria-label={label} className={cn("card-surface overflow-hidden", className)}>
+      <div data-stat-band className={cn("grid grid-cols-[repeat(2,minmax(min-content,1fr))] gap-px bg-hairline", gridClassName)} style={gridStyle}>
         {items.map((item) => (
           <Cell key={item.key} item={item} loading={loading} />
         ))}
       </div>
     </div>
-  );
-}
-
-/** The id the disclosure controls, so a screen reader is told what it opens. */
-const GRID_ID = "stat-band-figures";
-
-/**
- * The phone's folded band: the lead figure, and a count of the rest.
- *
- * It states what is hidden ("3 more") rather than offering a bare chevron — a
- * disclosure that does not say what is behind it is a control nobody presses.
- */
-function FoldedLead({ items, loading }: { items: StatItem[]; loading: boolean }) {
-  const t = useTranslations("common");
-  const { statsOpen: open } = usePrefs();
-  const lead = items[0];
-  return (
-    <button
-      type="button"
-      aria-expanded={open}
-      aria-controls={GRID_ID}
-      onClick={() => setPrefs({ statsOpen: !open })}
-      className={cn(
-        "flex w-full items-center gap-section px-card py-comfortable text-left transition-colors duration-quick active:bg-muted-wash sm:hidden",
-        open && "border-b border-hairline",
-      )}
-    >
-      <span className="min-w-0 flex-1">
-        {/* Open, the grid below draws every figure including this one, so the
-            header states what it is rather than repeating the number. */}
-        {open ? (
-          <span className="block truncate text-sm font-medium text-fg">{t("figures")}</span>
-        ) : (
-          <>
-            <span className="block truncate text-sm font-medium text-muted">{lead.label}</span>
-            {loading ? (
-              <span className="mt-inline block h-6 w-24 animate-pulse rounded-xs bg-line" />
-            ) : (
-              <span className={cn("type-figure mt-inline block truncate text-2xl font-semibold leading-tight", lead.tone === "warning" && "text-warning")}>
-                {lead.value}
-              </span>
-            )}
-          </>
-        )}
-      </span>
-      <span className="flex shrink-0 items-center gap-inline text-sm font-medium text-muted">
-        {!open && t("moreCount", { count: items.length - 1 })}
-        <ChevronDown size={16} strokeWidth={1.75} aria-hidden className={cn("transition-transform duration-quick", open && "rotate-180")} />
-      </span>
-    </button>
   );
 }
 
@@ -189,11 +155,14 @@ function Cell({ item, loading }: { item: StatItem; loading: boolean }) {
     <Tag
       title={item.note ?? undefined}
       {...(item.onClick ? { type: "button" as const, onClick: item.onClick, "aria-pressed": !!item.pressed, "data-focus-inset": "" } : {})}
+      data-metric={item.key}
       className={cn(
-        // A phone reads a cell as a row — what it is on the left, the figure
-        // hard right — which is the tightest shape and the one that cannot
-        // crowd a long figure. From sm it stacks, label over figure.
-        "grid min-w-0 grid-cols-[1fr_auto] items-baseline gap-x-section bg-card px-card py-comfortable text-left transition-colors duration-quick sm:block",
+        // A phone reads a cell as a compact stack — a 12px label, an 18px
+        // figure, the delta and its context wrapping underneath — so that two
+        // fit across 288px and nothing is ever cut. From sm it opens up to the
+        // roomier label-over-figure cell the page has always had. An odd last
+        // cell takes both columns rather than leaving the card showing through.
+        "min-w-0 bg-card px-comfortable py-comfortable text-left transition-colors duration-quick max-sm:last:odd:col-span-2 sm:block sm:px-card",
         // The ring is drawn INSIDE: the band clips its corners, so a 2px
         // outline on the first or last cell is painted outside the card and
         // thrown away — the same clip that ate the till's selected-card ring.
@@ -203,14 +172,20 @@ function Cell({ item, loading }: { item: StatItem; loading: boolean }) {
         item.pressed && "bg-ember-wash",
       )}
     >
-      <span className="col-start-1 min-w-0 truncate text-sm font-medium text-muted">{item.label}</span>
-      {/* On a phone the figure sits in the second column across both rows, so
-          a context line tucks under the label rather than under the number. */}
-      <span className="col-start-2 row-start-1 row-end-3 flex flex-wrap items-baseline justify-end gap-x-tight self-center sm:mt-inline sm:justify-start">
+      {/* Wraps on a phone rather than truncating: a label cut to "Transa…" is
+          the fault this layout exists to remove. */}
+      <span className="block text-xs text-muted sm:truncate sm:text-sm sm:font-medium sm:leading-6">{item.label}</span>
+      <span className="mt-inline flex flex-wrap items-baseline gap-x-tight gap-y-inline">
         {loading ? (
           <span className="my-1 block h-6 w-20 animate-pulse rounded-xs bg-line" />
         ) : (
-          <span className={cn("type-figure block whitespace-nowrap text-2xl font-semibold leading-tight", item.tone === "warning" && "text-warning")}>
+          <span
+            className={cn(
+              "type-figure block whitespace-nowrap text-lg font-semibold leading-tight sm:text-2xl",
+              item.tone === "warning" && "text-warning",
+              item.tone === "danger" && "text-danger",
+            )}
+          >
             {item.value}
           </span>
         )}
@@ -219,19 +194,19 @@ function Cell({ item, loading }: { item: StatItem; loading: boolean }) {
       {/* Only where there is something to say — an empty line under three of
           four figures is the white space this band exists to remove. */}
       {item.context && !loading && (
-        <span className={cn("col-start-1 mt-inline block truncate text-xs", item.contextTone ?? "text-muted")}>{item.context}</span>
+        <span className={cn("mt-inline block text-xs sm:truncate", item.contextTone ?? "text-muted")}>{item.context}</span>
       )}
     </Tag>
   );
 }
 
 /** The dashboard's tile, and only the dashboard's. */
-function Tile({ item, loading, row = false }: { item: StatItem; loading: boolean; row?: boolean }) {
+function Tile({ item, loading }: { item: StatItem; loading: boolean }) {
   const Tag = item.onClick ? "button" : "div";
   const figure = loading ? (
-    <span className={cn("block animate-pulse rounded-xs bg-line", row ? "h-6 w-28" : "h-7 w-24")} />
+    <span className="block h-7 w-24 animate-pulse rounded-xs bg-line" />
   ) : (
-    <span className={cn("type-figure block whitespace-nowrap font-semibold leading-tight", row ? "text-2xl" : "text-3xl", item.tone === "warning" && "text-warning")}>
+    <span className={cn("type-figure block whitespace-nowrap text-3xl font-semibold leading-tight", item.tone === "warning" && "text-warning", item.tone === "danger" && "text-danger")}>
       {item.value}
     </span>
   );
@@ -241,49 +216,23 @@ function Tile({ item, loading, row = false }: { item: StatItem; loading: boolean
       title={item.note ?? undefined}
       {...(item.onClick ? { type: "button" as const, onClick: item.onClick, "aria-pressed": !!item.pressed } : {})}
       className={cn(
-        "text-left",
-        row
-          ? "flex w-full items-start gap-comfortable border-b border-hairline px-card py-comfortable last:border-b-0"
-          : "card-surface flex flex-col p-card",
+        "card-surface flex flex-col p-card text-left",
         item.onClick && "transition-colors duration-quick hover:border-strong",
-        item.pressed && !row && "border-strong",
-        item.pressed && row && "bg-ember-wash",
+        item.pressed && "border-strong",
       )}
     >
       {item.icon && (
-        <span
-          className={cn(
-            "flex shrink-0 items-center justify-center rounded-sm bg-ember-wash text-brand-foreground",
-            row ? "mt-0.5 h-9 w-9" : "h-7 w-7 [&>svg]:h-4 [&>svg]:w-4",
-          )}
-        >
-          {item.icon}
-        </span>
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ember-wash text-brand-foreground [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>
       )}
-      {row ? (
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center justify-between gap-tight">
-            <span className="min-w-0 truncate text-xs font-medium text-muted">{item.label}</span>
-            {item.delta}
-          </span>
-          <span className="mt-inline flex flex-wrap items-baseline gap-x-comfortable gap-y-inline">
-            {figure}
-            {item.context && <span className={cn("text-xs", item.contextTone ?? "text-muted")}>{item.context}</span>}
-          </span>
-        </span>
-      ) : (
-        <>
-          {/* The row keeps the delta pill's height whether or not there is a
-              delta, so a tile with a comparison and one without are the same
-              size — four tiles that differ by 4px read as a mistake. */}
-          <span className="flex h-[22px] items-center gap-tight">
-            <span className="min-w-0 flex-1 truncate text-xs font-medium text-muted">{item.label}</span>
-            {item.delta}
-          </span>
-          <span className="mt-tight block">{figure}</span>
-          <span className={cn("mt-inline block text-xs", item.contextTone ?? "text-muted")}>{item.context ?? " "}</span>
-        </>
-      )}
+      {/* The row keeps the delta pill's height whether or not there is a
+          delta, so a tile with a comparison and one without are the same
+          size — four tiles that differ by 4px read as a mistake. */}
+      <span className="flex h-[22px] items-center gap-tight">
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-muted">{item.label}</span>
+        {item.delta}
+      </span>
+      <span className="mt-tight block">{figure}</span>
+      <span className={cn("mt-inline block text-xs", item.contextTone ?? "text-muted")}>{item.context ?? " "}</span>
     </Tag>
   );
 }

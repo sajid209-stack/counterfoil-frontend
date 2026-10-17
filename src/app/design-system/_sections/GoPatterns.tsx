@@ -180,8 +180,14 @@ export function GoPatternsSection() {
           <Floors />
         </Preview>
         <Callout title="The floors">
-          <Code>44px</Code> minimum target and <Code>13px</Code> minimum text on every POS screen (the one exception is the 11px tab-bar label, since five labels do not fit a phone at 14). One stepper, one method selector, one money-figure scale — <Code>text-display</Code> for the amount due.
+          <Code>44px</Code> minimum target and <Code>13px</Code> minimum text on every POS screen, the tab-bar labels included (only the classic till keeps its 11px labels). One stepper, one method selector, one money-figure scale — <Code>text-display</Code> for the amount due.
         </Callout>
+      </DocSection>
+
+      <DocSection id="phone" title="On a phone">
+        <P>
+          The header holds the counter and the person; preferences such as light and dark live in Display &amp; language. A sheet shows a question only when it has answers. Checkout shows the amount, how they pay and Complete; customer, discount and promo code are rows that open in place. The More sheet leads with daily tools (My sales, Shift, Quick pass) and puts the design tools last.
+        </P>
       </DocSection>
     </>
   );

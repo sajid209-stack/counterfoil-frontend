@@ -576,10 +576,12 @@ function Catalog() {
             onRowClick={(i) => router.push(i.href)}
             cardVariant="list"
             renderCard={(i) => (
-              /* Two lines, the way a phone reads a long index: who it is and
-                 its status, then what it is and where it is sold. A warning
-                 replaces the meta line, because that is the one thing on the
-                 row somebody has to act on. */
+              /* Two lines, the way a phone reads a long index: who it is, then
+                 what it is and where it is sold. A warning replaces the meta
+                 line, because that is the one thing on the row somebody has to
+                 act on. The status chip marks the exception only (docs/mobile.md
+                 O3): a published row carries none, and the others say why they
+                 are not selling. The name wraps to two lines before it clips. */
               <span className="flex items-center gap-comfortable">
                 {selecting && (
                   <span onClick={(e) => e.stopPropagation()} className="-my-inline -ml-tight flex shrink-0">
@@ -588,9 +590,9 @@ function Catalog() {
                 )}
                 <Thumb i={i} />
                 <span className="flex min-w-0 flex-1 flex-col gap-inline">
-                  <span className="flex items-center gap-tight">
-                    <span className="min-w-0 flex-1 truncate text-base font-medium">{i.name}</span>
-                    <StatePill i={i} />
+                  <span className="flex items-start gap-tight">
+                    <span className="line-clamp-2 min-w-0 flex-1 break-words text-base font-medium leading-snug" title={i.name}>{i.name}</span>
+                    {i.state !== "onSale" && <StatePill i={i} />}
                   </span>
                   <span className="flex min-w-0 items-center gap-tight text-sm text-muted">
                     <span className="min-w-0 flex-1"><Sub i={i} /></span>

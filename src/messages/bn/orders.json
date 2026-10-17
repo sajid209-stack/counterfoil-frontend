@@ -149,7 +149,8 @@
     "apply": "ঠিক আছে",
     "cancel": "বাতিল",
     "days": "{count, plural, one {# দিন} other {# দিন}}",
-    "pickEnd": "শেষ দিনটি বাছুন"
+    "pickEnd": "শেষ দিনটি বাছুন",
+    "anyTime": "যেকোনো সময়"
   },
   "describe": {
     "customer": "{name}-এর অর্ডার",

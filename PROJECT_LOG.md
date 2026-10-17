@@ -17957,3 +17957,103 @@ button, and it read heavier than the menu it marks.
 
 - The design-system documentation pages keep their larger 24/28px title: they are a reading layout,
   not an app page.
+
+## OS and GO on a phone — research, audit and a refinement pass (2026-10-17)
+
+The owner pasted a full brief ("CounterFoil OS & GO — Mobile UI/UX Research, Redesign & Design System
+Optimization") with screenshots of Shopify's mobile admin and Shopify POS: research the best mobile
+SaaS and POS products, audit both apps at phone size, redesign, test, refine, and keep the colour
+system. The research, the audit table and the phone rules are in **`docs/mobile.md`**.
+
+Planned, audited and reviewed on Opus; built by three Sonnet agents with separate files (OS shared
+components, OS list pages, GO), then a review round and a regression run on Opus.
+
+### What the audit found
+
+Measured first, at 390 × 844 across 21 screens plus their overlays: no page scrolled sideways, no
+text was clipped by the page, no console errors, and the only targets under 44px were six on the
+Activity log. Eight passes of mobile work had already made both apps sound. What was left was
+hierarchy and noise, so this is a refinement, not a redesign:
+
+- figure strips that scrolled sideways and cut a label or a number mid-word ("Transa…");
+- an unlabelled orange disc as the create action in the phone bar;
+- a "Published" chip on every catalog row, with names truncated to one line;
+- the developer page-state picker second in the menu, above every destination;
+- a full-width orange Today / This week bar as the loudest thing on the dashboard;
+- a "Date" button under a "Date" heading in the Filters sheet;
+- "15 each" and a red "none" for stock;
+- in GO: a light/dark button in every header, an empty "Choose a time slot" question in day-limited
+  booking sheets (a bug), an always-open promo code field in checkout, and design tools leading the
+  More sheet.
+
+### What changed
+
+**OS**
+- **Figures are never cut.** On a phone every figure band is one card: a 2-column grid of compact
+  cells (`FigureBand` in `StatStrip`, 12px label, 18px value), an odd last cell spanning both. It
+  replaces both the sideways strip (Dashboard, Analytics via `MetricStrip`, Orders via
+  `SalesFigures`) and the list pages' "N more" fold. From `sm` up nothing moved.
+- **The phone bar's create action says what it does**: "Add customer", "Add booking", "Add an item"
+  as an orange pill (36px fill, 44px target). A label too long for the bar falls back to the icon
+  disc, with the label as its name; the page name keeps at least 117px at 320.
+- **Catalog rows** show a status chip only for the exception (Not published, sold out, ended,
+  archived, needs setup); names wrap to two lines.
+- **Menu sheet**: Venue first, then the destinations; Page state moved to the foot.
+- **Dashboard**: the date line shows on a phone with a compact Today / This week control beside it.
+- **Filters sheet**: the date control states its value ("Any time", "Last 30 days").
+- **Activity log**: on a phone the whole row is the 44px toggle; the subject's link moved into the
+  opened details (a link inside a button is invalid, and a 16px link in a sentence is not a thumb
+  target). Desktop unchanged.
+- **Stock** reads "15 in stock", "120 bottles", "Out of stock" — on the list and on the item's page.
+- The catalog's search placeholder is "Search catalog"; "Search what you sell" was cut off beside
+  Filters and Select.
+
+**GO**
+- The light/dark button is gone from the header; it lives in Display & language.
+- A booking sheet asks a question only when there are answers: day-limited bookings (Yoga Session)
+  no longer show an empty "Choose a time slot".
+- Checkout's promo code is a row ("Promo code · Add ›") that opens a focused field in place, like
+  Discount; the applied code is the same removable chip.
+- More leads with My sales, Shift, Quick pass, Switch user and My profile; Settings and Help next;
+  Till design and Design System last, with Page state below the grid.
+
+**Design system**: `docs/design-system.md` §11 gains "On a phone"; the Design System page's OS and
+POS pattern sections gain "On a phone" sections (and the POS floors callout no longer claims the
+11px tab-bar exception, which ended on 2026-10-15). Two unused `common` keys (`moreCount`,
+`figures`) were removed with the fold.
+
+### Kept on purpose
+
+The floating menu button (Shopify's own pattern), the orange selected segment (the owner's decision
+of 2026-10-13), the Scan camera viewport (the owner's; drawn without a camera so nothing jumps) and
+the docked 64px tab bar.
+
+### Verified
+
+- Re-measured after the changes at 390 and 320: still no sideways scroll, no clipped text, no
+  console errors, and now **0** targets under 44px on every screen (Activity had six).
+- Regression on a production build: top cards 103, the phone audit (hidden 0 · under-44 0 ·
+  clipped 0 · errors 0), the 59-route sweeps at 390, 390 Bangla dark and 1440, grouped nav 201, the
+  till 38 and 36, round-3 25, checkout 121 / 121 / 36, schedule 31, undo 17, orders 193 and 31, the
+  order page 93, analytics 511 at both widths, activity 67, dropdowns 59, customers 102, finances
+  125, expenses 228, catalog 459, inventory 41, settings navigation 53, the till's counter picker
+  140. The POS contrast audit reports only the declared white-on-orange buttons.
+- `tsc`, `lint:tokens` (0 errors) and i18n (0 / 0) clean; `eslint` shows only the known dashboard
+  warnings.
+- **Harnesses updated to the new design, never loosened**: checkout opens the promo row before
+  typing and asserts the row, its focused field and its return after the chip is removed; Orders
+  expects 12px labels in the phone grid; the figure band is found by `data-stat-band` (its old id
+  belonged to the removed fold); catalog searches "Search catalog" and asserts an on-sale phone row
+  has no chip; inventory expects "N in stock".
+- **Found while testing, not caused by this pass**: the catalog test's "a sold-out ticket says so"
+  stopped holding on 16 Oct because the till's event sheet hides tickets whose sales window has
+  ended, using the real date, and the Early bird closed on 15 Oct (the live site behaves the same).
+  The check is now date-aware rather than removed.
+
+### Open
+
+- The event sheet's "today" is the real date while the rest of the demo is pinned to 29 Jul, so
+  seeded ticket windows age out on the real calendar.
+- The classic till still has its own light/dark button; it is a deliberate restoration.
+- Orders' phone figures are five cells (about 210px), all visible; the old strip was shorter but cut
+  three of them.

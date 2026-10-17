@@ -7,6 +7,7 @@ import { Button, EmptyState, FilterBar, FilterSearch, PageShell, Select, Skeleto
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 import { formatClockOf, formatDay } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
 import {
@@ -52,6 +53,8 @@ function ActivityView() {
   const { id: locationId, location, pending } = useActiveLocation(locationsQ.data?.data ?? []);
   const x = useActivityText();
   const { t } = x;
+  /* A phone: rows are one big toggle with no links in the sentence. */
+  const compact = !useMediaQuery(MD, true);
 
   const [search, setSearch] = useState("");
   const [q, setQ] = useState("");
@@ -308,7 +311,7 @@ function ActivityView() {
                 </h2>
                 <ul className="card-surface overflow-hidden">
                   {items.map((e) => (
-                    <Row key={e.id} e={e} x={x} expanded={!!open[e.id]} onToggle={() => setOpen((o) => ({ ...o, [e.id]: !o[e.id] }))} />
+                    <Row key={e.id} e={e} x={x} compact={compact} expanded={!!open[e.id]} onToggle={() => setOpen((o) => ({ ...o, [e.id]: !o[e.id] }))} />
                   ))}
                 </ul>
               </section>
@@ -332,55 +335,82 @@ function Row({
   x,
   expanded,
   onToggle,
+  compact,
 }: {
   e: ActivityEvent;
   x: ReturnType<typeof useActivityText>;
   expanded: boolean;
   onToggle: () => void;
+  /** A phone: the whole row is the toggle. */
+  compact: boolean;
 }) {
   const { t } = x;
   /* The venue is the one in the bar, so a row names the counter and device; a
      business-wide event (a setting) names the venue instead. */
   const where = [e.counter, e.device].filter(Boolean).join(" · ") || e.venue || "";
+  const label = `${expanded ? t("hide") : t("show")}: ${x.plain(e)}`;
   return (
     <li className={cn("border-b border-hairline last:border-0", SEVERITY_ROW_CLASS[e.severity])}>
-      {/* The row opens on a press anywhere that is not a link or a button; the
-          chevron is the keyboard's way in. */}
-      <div
-        className="flex items-start gap-comfortable px-card py-comfortable"
-        onClick={(ev) => {
-          if ((ev.target as HTMLElement).closest("a,button")) return;
-          onToggle();
-        }}
-      >
-        <span className="hidden w-[4.75rem] shrink-0 pt-1.5 text-sm tabular-nums text-muted md:block">{formatClockOf(e.at)}</span>
-        <KindBadge kind={e.kind} severity={e.severity} />
-        <div className="min-w-0 flex-1">
-          {/* Two lines on a phone: the sentence (two lines at most; the whole of
-              it is one press away) and what kind of thing it was. Where it
-              happened is in the details, and beside the kind from md up. */}
-          <p className="line-clamp-2 break-words text-sm leading-snug md:line-clamp-none">{x.sentence(e, true)}</p>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-tight gap-y-0.5 text-xs text-muted">
-            <span className="md:hidden">{formatClockOf(e.at)} ·</span>
-            <span>{x.kindLabel(e)}</span>
-            {where && <span className="hidden min-w-0 break-words md:inline">· {where}</span>}
-            <SeverityChip severity={e.severity} label={x.severityLabel(e.severity)} />
-          </p>
-        </div>
-        <span className="hidden items-center gap-inline pt-1 text-xs text-muted md:flex">
-          <Initials name={e.actor?.name ?? null} />
-        </span>
-        <Button
-          variant="tertiary"
-          size="icon"
+      {compact ? (
+        /* On a touch screen the row IS the target: one press anywhere opens it,
+           and the chevron is only the sign that it does. The sentence carries no
+           links here (a link nested in a button is not valid, and a 16px link in
+           running text is not a thumb target); the subject's link sits in the
+           details, as a 44px row of its own. */
+        <button
+          type="button"
           onClick={onToggle}
           aria-expanded={expanded}
-          aria-label={`${expanded ? t("hide") : t("show")}: ${x.plain(e)}`}
-          className="-my-1 -mr-2 shrink-0 text-muted"
+          aria-label={label}
+          data-focus-inset
+          className="flex min-h-11 w-full items-start gap-comfortable px-card py-comfortable text-left active:bg-muted-wash"
         >
-          <ChevronDown size={16} strokeWidth={1.5} aria-hidden className={cn("transition-transform duration-quick", expanded && "rotate-180")} />
-        </Button>
-      </div>
+          <KindBadge kind={e.kind} severity={e.severity} />
+          <span className="min-w-0 flex-1">
+            <span className="line-clamp-2 block break-words text-sm leading-snug">{x.sentence(e, false)}</span>
+            <span className="mt-0.5 flex flex-wrap items-center gap-x-tight gap-y-0.5 text-xs text-muted">
+              <span>{formatClockOf(e.at)} ·</span>
+              <span>{x.kindLabel(e)}</span>
+              <SeverityChip severity={e.severity} label={x.severityLabel(e.severity)} />
+            </span>
+          </span>
+          <ChevronDown size={16} strokeWidth={1.5} aria-hidden className={cn("mt-1.5 shrink-0 text-muted transition-transform duration-quick", expanded && "rotate-180")} />
+        </button>
+      ) : (
+        /* The row opens on a press anywhere that is not a link or a button; the
+           chevron is the keyboard's way in. */
+        <div
+          className="flex items-start gap-comfortable px-card py-comfortable"
+          onClick={(ev) => {
+            if ((ev.target as HTMLElement).closest("a,button")) return;
+            onToggle();
+          }}
+        >
+          <span className="w-[4.75rem] shrink-0 pt-1.5 text-sm tabular-nums text-muted">{formatClockOf(e.at)}</span>
+          <KindBadge kind={e.kind} severity={e.severity} />
+          <div className="min-w-0 flex-1">
+            <p className="break-words text-sm leading-snug">{x.sentence(e, true)}</p>
+            <p className="mt-0.5 flex flex-wrap items-center gap-x-tight gap-y-0.5 text-xs text-muted">
+              <span>{x.kindLabel(e)}</span>
+              {where && <span className="min-w-0 break-words">· {where}</span>}
+              <SeverityChip severity={e.severity} label={x.severityLabel(e.severity)} />
+            </p>
+          </div>
+          <span className="flex items-center gap-inline pt-1 text-xs text-muted">
+            <Initials name={e.actor?.name ?? null} />
+          </span>
+          <Button
+            variant="tertiary"
+            size="icon"
+            onClick={onToggle}
+            aria-expanded={expanded}
+            aria-label={label}
+            className="-my-1 -mr-2 shrink-0 text-muted"
+          >
+            <ChevronDown size={16} strokeWidth={1.5} aria-hidden className={cn("transition-transform duration-quick", expanded && "rotate-180")} />
+          </Button>
+        </div>
+      )}
       {expanded && (
         <dl className="grid gap-x-section gap-y-tight bg-muted-wash px-card py-comfortable text-sm sm:grid-cols-2 md:pl-[calc(var(--spacing-card)+4.75rem+var(--spacing-comfortable)*2+2rem)]">
           {x.details(e).map((d, i) => (
@@ -388,7 +418,10 @@ function Row({
               <dt className="text-xs font-medium text-muted">{d.label}</dt>
               <dd className={cn("break-words text-fg", d.mono && "font-mono text-xs")}>
                 {d.href ? (
-                  <Link href={d.href} className="underline decoration-line underline-offset-2 hover:decoration-fg">
+                  <Link
+                    href={d.href}
+                    className="inline-flex min-h-11 items-center underline decoration-line underline-offset-2 hover:decoration-fg md:min-h-0"
+                  >
                     {d.value}
                   </Link>
                 ) : (
