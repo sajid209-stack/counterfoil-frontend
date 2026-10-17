@@ -74,3 +74,43 @@ Scan (the owner's decision; drawn even without a camera so the layout never jump
 - Sheets show a question only when it has answers.
 - Checkout shows the amount, how they pay, and Complete; customer, discount and promo code are rows
   that open in place.
+
+## 4. The calm pass (2026-10-17, second round)
+
+The owner's review of the first pass: a phone still shows too much and does not feel relaxing.
+The first pass made every figure visible; this one decides which few deserve to be. It supersedes
+the "all figures visible" rule in §3 for phones.
+
+### Principles
+
+1. **One screen, one job.** The first screen of a page answers its one question; everything
+   else is a tap away (progressive disclosure), never deleted.
+2. **Two figures, not six.** A phone shows the two figures a person acts on. The rest sit behind a
+   quiet "Show all" text button that names how many — a disclosure, not a hidden value.
+3. **The normal state is silent.** No chip for Paid, Unused, Confirmed, Published; a chip only
+   for what needs attention (Part paid, Refunded, Used, Voided, Cancelled…).
+4. **Nothing repeats what the page already says.** No date on every row when the page is "today";
+   no legend that restates a bar's labels; no summary paragraph above a list of the same numbers.
+5. **Fewer boxes, more air.** Prefer one card of rows over a stack of cards; prefer white space
+   over borders; one accent colour per screen region.
+6. **Lists start short.** Dashboard feeds show three rows, then "View all".
+7. **POS cards are image-first.** A card is a picture, a name, a price and a round add button —
+   the way every commerce app teaches people to buy.
+8. **The POS tab bar floats.** A dark floating pill; the current tab is a light pill that names
+   itself; the others are icons in fixed positions (staff learn positions, and the current
+   tab is always named in words).
+
+### Per page (phone only; ≥ 640px unchanged)
+
+| Page | Calm change |
+|---|---|
+| Dashboard | Two figures (Sales, Places sold) + "Show all 4"; chart range is a small menu in the card header, not a 3-way bar; Activity and Recent orders show 3 rows |
+| Orders | Two figures (Sales, Still owed) + "Show all 5"; no "Paid" chip on rows |
+| Analytics | Two figures (Revenue, Orders) + "Show all 6" |
+| Finances | Available and Unsettled only, with Withdraw and Deposit; Withdrawn/Deposited behind "Show all"; the history's summary paragraph goes |
+| Issued orders | No "Unused" chip; Used and Voided keep theirs |
+| Expenses | Total and the bar; the category legend behind "Where it went" |
+| POS sell | Image-first cards with a round add button; All / Shop sized to its options |
+| POS tab bar | Floating dark pill, current tab named |
+| My sales | Payment methods with no sales are not listed |
+| Arrivals | No date on each row; no "Confirmed" chip |
