@@ -8,8 +8,8 @@ import { setPrefs, usePrefs } from "@/lib/prefs";
 
 export type StatIconTone = "ember" | "success" | "info" | "warning" | "danger" | "neutral";
 
-/** Wash and foreground for a phone figure's 32px icon. Each pair is a token the rest of the kit already uses. */
-const ICON_TONE: Record<StatIconTone, string> = {
+/** Wash and foreground for a figure's 32px icon. Each pair is a token the rest of the kit already uses. */
+export const ICON_TONE: Record<StatIconTone, string> = {
   ember: "bg-ember-wash text-brand-foreground",
   success: "bg-success-wash text-success",
   info: "bg-info-wash text-info",
@@ -235,9 +235,9 @@ function Cell({ item, loading, folded = false }: { item: StatItem; loading: bool
         item.pressed && "bg-ember-wash",
       )}
     >
-      {/* Phone only: the soft round icon, then the label under it. */}
+      {/* The soft round icon, then the label under it, at every width. */}
       {item.icon && (
-        <span aria-hidden className={cn("mb-tight flex h-8 w-8 items-center justify-center rounded-full sm:hidden [&>svg]:h-4 [&>svg]:w-4", ICON_TONE[item.iconTone ?? "neutral"])}>
+        <span aria-hidden className={cn("mb-tight flex h-8 w-8 items-center justify-center rounded-full [&>svg]:h-4 [&>svg]:w-4", ICON_TONE[item.iconTone ?? "neutral"])}>
           {item.icon}
         </span>
       )}
@@ -259,8 +259,8 @@ function Cell({ item, loading, folded = false }: { item: StatItem; loading: bool
             {item.value}
           </span>
         )}
-        {/* On a phone the pill leaves the value line for the card's top-right corner. */}
-        {item.delta && <span className="max-sm:absolute max-sm:right-comfortable max-sm:top-comfortable">{item.delta}</span>}
+        {/* Beside an icon the pill sits in the top-right corner at every width; without one it leaves the value line only on a phone. */}
+        {item.delta && <span className={item.icon ? "absolute right-comfortable top-comfortable sm:right-card" : "max-sm:absolute max-sm:right-comfortable max-sm:top-comfortable"}>{item.delta}</span>}
       </span>
       {/* Only where there is something to say — an empty line under three of
           four figures is the white space this band exists to remove. */}
@@ -292,16 +292,22 @@ function Tile({ item, loading }: { item: StatItem; loading: boolean }) {
         item.pressed && "border-strong",
       )}
     >
-      {item.icon && (
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ember-wash text-brand-foreground [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>
+      {/* The soft round icon top left and the change top right, as a phone draws them.
+          The row keeps its height whether or not there is a delta, so four tiles stay one size. */}
+      {item.icon ? (
+        <>
+          <span className="flex min-h-8 items-start justify-between gap-tight">
+            <span aria-hidden className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full [&>svg]:h-4 [&>svg]:w-4", ICON_TONE[item.iconTone ?? "neutral"])}>{item.icon}</span>
+            {item.delta}
+          </span>
+          <span className="mt-tight block truncate text-sm font-medium text-muted">{item.label}</span>
+        </>
+      ) : (
+        <span className="flex h-[22px] items-center gap-tight">
+          <span className="min-w-0 flex-1 truncate text-xs font-medium text-muted">{item.label}</span>
+          {item.delta}
+        </span>
       )}
-      {/* The row keeps the delta pill's height whether or not there is a
-          delta, so a tile with a comparison and one without are the same
-          size — four tiles that differ by 4px read as a mistake. */}
-      <span className="flex h-[22px] items-center gap-tight">
-        <span className="min-w-0 flex-1 truncate text-xs font-medium text-muted">{item.label}</span>
-        {item.delta}
-      </span>
       <span className="mt-tight block">{figure}</span>
       <span className={cn("mt-inline block text-xs", item.contextTone ?? "text-muted")}>{item.context ?? " "}</span>
     </Tag>

@@ -382,7 +382,7 @@ export default function DashboardPage() {
   ];
   /* The shared tiles take their own shape of item; `danger` and the strip's
      action slot are not part of it. */
-  const stats: StatItem[] = figures.map((m) => ({ key: m.key, label: m.label, value: m.value, context: m.context, contextTone: m.contextTone, delta: m.delta, tone: m.tone === "warning" ? "warning" : undefined }));
+  const stats: StatItem[] = figures.map((m) => ({ key: m.key, label: m.label, value: m.value, context: m.context, contextTone: m.contextTone, delta: m.delta, icon: m.icon, iconTone: m.iconTone, tone: m.tone === "warning" ? "warning" : undefined }));
 
   const ops = useMemo(() => [
     {

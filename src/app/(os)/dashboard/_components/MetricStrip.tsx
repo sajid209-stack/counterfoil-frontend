@@ -25,7 +25,7 @@ export interface Metric {
   /** A class for that line where it is a problem rather than a fact. */
   contextTone?: string;
   tone?: "warning" | "danger";
-  /** Phone only: the soft round icon on the figure's card, and its tint. */
+  /** The soft round icon on the figure's card, and its tint (every width). */
   icon?: React.ReactNode;
   iconTone?: StatIconTone;
   /** Drawn at the end of the label row (an info button). */
@@ -86,7 +86,7 @@ export function MetricStrip({
               the figure, then what the figure does not say on its own. */}
           {m.icon && (
             /* Phone: the icon at the left and the info button at the right of one line, so the figure keeps the whole card. */
-            <div className="mb-tight flex items-start justify-between gap-tight sm:hidden">
+            <div className="mb-tight flex items-start justify-between gap-tight">
               <span aria-hidden className={cn("flex h-8 w-8 items-center justify-center rounded-full [&>svg]:h-4 [&>svg]:w-4", ICON_TONE[m.iconTone ?? "neutral"])}>
                 {m.icon}
               </span>
@@ -110,7 +110,7 @@ export function MetricStrip({
               >
                 {m.value}
               </p>
-              <span className={cn(!!m.icon && "max-sm:hidden")}>{m.action}</span>
+              {!m.icon && <span>{m.action}</span>}
             </div>
           )}
           {!loading && m.context && <p className={cn("mt-inline text-xs leading-snug", m.contextTone ?? "text-muted")}>{m.context}</p>}

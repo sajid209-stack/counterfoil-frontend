@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import type { SalesSummary } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
-import { FIGURES_SHOWN, FigureBand, FigureToggle, useFigureFold } from "@/components/ui/StatStrip";
+import { FIGURES_SHOWN, FigureBand, FigureToggle, ICON_TONE, useFigureFold } from "@/components/ui/StatStrip";
 import { SM, useMediaQuery } from "@/lib/useMedia";
 import { CircleDollarSign, Clock, Package, ReceiptText, Wallet } from "lucide-react";
 
@@ -49,8 +49,8 @@ export function SalesFigures({ summary: s, loading }: { summary: SalesSummary; l
   const fold = useFigureFold(items.length);
   /* A phone draws the shared figure cards (docs/mobile.md section 6); from sm the band below is unchanged. */
   const phone = !useMediaQuery(SM);
+  const icons = { sales: [<CircleDollarSign key="i" />, "ember"], owed: [<Clock key="i" />, "warning"], orders: [<ReceiptText key="i" />, "info"], items: [<Package key="i" />, "neutral"], paid: [<Wallet key="i" />, "success"] } as const;
   if (phone) {
-    const icons = { sales: [<CircleDollarSign key="i" />, "ember"], owed: [<Clock key="i" />, "warning"], orders: [<ReceiptText key="i" />, "info"], items: [<Package key="i" />, "neutral"], paid: [<Wallet key="i" />, "success"] } as const;
     return (
       <FigureBand
         loading={loading}
@@ -64,23 +64,29 @@ export function SalesFigures({ summary: s, loading }: { summary: SalesSummary; l
       id={fold.id}
       data-sales-figures
       aria-busy={loading || undefined}
-      className="grid w-full min-w-0 grid-cols-[repeat(2,minmax(min-content,1fr))] gap-px bg-hairline md:flex md:gap-x-0 md:bg-transparent lg:grid lg:grid-cols-5"
+      className="grid w-full min-w-0 grid-cols-[repeat(2,minmax(min-content,1fr))] gap-px bg-hairline md:grid-cols-3 md:gap-x-comfortable md:gap-y-comfortable md:bg-transparent lg:grid-cols-5 lg:gap-x-0"
     >
       {items.map((i, n) => (
         <div
           key={i.key}
           title={i.hint}
           className={cn(
-            "min-w-0 bg-card px-comfortable py-comfortable max-md:last:odd:col-span-2 md:flex-1 md:bg-transparent md:p-0",
+            "min-w-0 bg-card xl:grid xl:grid-cols-[auto_minmax(0,1fr)] xl:items-center xl:gap-x-tight px-comfortable py-comfortable max-md:last:odd:col-span-2 md:bg-transparent md:p-0",
             fold.folds && !fold.open && n >= FIGURES_SHOWN && "max-sm:hidden",
           )}
         >
-          <dt className="text-xs text-muted md:whitespace-nowrap md:text-sm">{i.label}</dt>
+          {/* The figure card's soft round icon, beside the figure so the row stays one line tall.
+              From xl only: below it five figures share too little width and money would be cut.
+              It lives in the dt (shown as contents) so the list stays dt/dd only. */}
+          <dt className="contents">
+            <span aria-hidden className={cn("hidden h-8 w-8 xl:row-span-2 xl:flex shrink-0 items-center justify-center rounded-full [&>svg]:h-4 [&>svg]:w-4", ICON_TONE[icons[i.key as keyof typeof icons][1]])}>{icons[i.key as keyof typeof icons][0]}</span>
+            <span className="block min-w-0 text-xs xl:col-start-2 text-muted md:whitespace-nowrap md:text-sm">{i.label}</span>
+          </dt>
           <dd
             data-figure={i.key}
             data-amount={i.raw}
             className={cn(
-              "type-figure mt-inline whitespace-nowrap text-lg font-semibold leading-tight xl:text-2xl",
+              "type-figure mt-inline xl:col-start-2 whitespace-nowrap text-lg font-semibold leading-tight xl:text-2xl",
               i.tone === "warning" && "text-warning",
               loading && "opacity-50",
             )}

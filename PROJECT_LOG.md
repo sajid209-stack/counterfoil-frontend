@@ -18293,3 +18293,28 @@ An independent review scored OS on a phone **5 → 7** and the till **6.5 → 7.
 - The orders phone figure cards lost their `data-amount` hooks; nothing reads them now.
 - `tk1`'s "new code admits" check failed once and passed in eight runs since (timing).
 - The Bangla strings added in this pass are drafts.
+
+## Figure-card icons on desktop too (2026-10-18)
+
+Owner, with a screenshot of the phone dashboard's figure cards: *"add those icons on cards, in desktop view too, for those pages u had add icons."*
+
+- **The soft round icon in its tone now shows at every width**, on the four pages that have it.
+  - **Dashboard**: the four tiles now carry the same icons as the phone, with the change pill on the icon's row.
+  - **Analytics**: the figure band.
+  - **Finances**: the four balance cards.
+  - **Orders**: the five figures.
+- **How each layout places it.**
+  - On the dashboard tiles and the analytics band, the icon sits above the label, with the change pill top-right.
+  - On Finances, the icon sits above the label.
+  - On Orders, the icon sits beside each figure, so the toolbar card stays one row tall. Orders shows the icons only from 1280px; below that, five figures leave too little width, and money was cut off at 1024.
+- **One tone map.** `ICON_TONE` is exported from `StatStrip`, so all four pages draw the same tones.
+- **Fixed on the way** (pre-existing; production showed it too): at 768–1023px the five Orders figures were squeezed into one row and ran into each other ("৳175,861.4৳30,388.75"). They are three across now.
+- **Verified**:
+  - Orders at 800, 1024, 1280 and 1440, light and dark: nothing clipped, no sideways scroll.
+  - Test suites: top cards 117, Orders 193 / 36, Analytics 511, Finances 147 at 1440 and 1280 and 134 at 390.
+  - The 59-route sweep at 1440 is clean.
+  - `tsc`, `lint:tokens` and `eslint` are clean.
+  - Three tests that asserted the old design were updated to the new one:
+    - the dashboard tiles now carry a 32px icon and are 167px tall;
+    - the finance cards may be up to 180px;
+    - the Orders label check reads the label text.
