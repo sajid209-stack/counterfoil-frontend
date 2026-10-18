@@ -18336,3 +18336,12 @@ The owner sent a reference: a small plain icon beside each label, with no tinted
   - Finances: 147 / 134.
   - `tsc`, `lint:tokens` and `eslint`: clean.
   - The icon checks in topcards, ord and fin now assert a plain 16px glyph on the label line, where they asserted a 32px tinted circle.
+
+## Phone figure cards: label and figure only (2026-10-18)
+
+Owner, with a screenshot of the phone dashboard: remove the change pill and the line under each figure, and keep labels like "Sales today" on one line.
+
+- Below 640px a figure card (dashboard, analytics, orders) is the icon, the label on one line and the figure. The change pill and the context line still show from 640px up.
+- Labels never wrap: measured in English and Bangla at 390 and 320px on all three pages, none is cut. Cards are 80px tall at 390.
+- Finances keeps its own phone cards (next payout, withdraw/deposit), which carry what to do next.
+- Verified: top cards 117, orders 36, analytics 511, the phone audit hidden 0 · under-44 0 · clipped 0 · errors 0.

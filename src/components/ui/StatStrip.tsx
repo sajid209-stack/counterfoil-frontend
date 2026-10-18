@@ -226,13 +226,12 @@ function Cell({ item, loading, folded = false }: { item: StatItem; loading: bool
         item.pressed && "bg-ember-wash",
       )}
     >
-      {/* Wraps on a phone rather than truncating: a label cut to "Transa…" is
-          the fault this layout exists to remove. With no icon the delta pill
-          sits where the icon would be, so the label keeps clear of it. */}
-      <span className={cn("flex min-w-0 items-center gap-1.5 text-sm text-muted sm:font-medium sm:leading-6", !!item.delta && "max-sm:pr-14")}>
+      {/* One line at every width (owner, 2026-10-18): the phone card has no change
+          pill beside the label, so a short label like "Sales today" fits whole. */}
+      <span className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-sm text-muted sm:font-medium sm:leading-6">
         {/* A small plain icon on the label's own line: it names the figure without costing a row. */}
         {item.icon && <span aria-hidden className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-fg-secondary [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>}
-        <span className="min-w-0 sm:truncate">{item.label}</span>
+        <span className="min-w-0 truncate">{item.label}</span>
       </span>
       <span className="mt-inline flex flex-wrap items-baseline gap-x-tight gap-y-inline">
         {loading ? (
@@ -248,13 +247,13 @@ function Cell({ item, loading, folded = false }: { item: StatItem; loading: bool
             {item.value}
           </span>
         )}
-        {/* On a phone the pill leaves the value line for the card's top-right corner. */}
-        {item.delta && <span className="max-sm:absolute max-sm:right-comfortable max-sm:top-comfortable">{item.delta}</span>}
+        {/* A phone card is the label and the figure only: the change and the context line wait for a wider screen. */}
+        {item.delta && <span className="max-sm:hidden">{item.delta}</span>}
       </span>
       {/* Only where there is something to say — an empty line under three of
           four figures is the white space this band exists to remove. */}
       {item.context && !loading && (
-        <span className={cn("mt-inline block text-xs sm:truncate", item.contextTone ?? "text-muted")}>{item.context}</span>
+        <span className={cn("mt-inline hidden text-xs sm:block sm:truncate", item.contextTone ?? "text-muted")}>{item.context}</span>
       )}
     </Tag>
   );
