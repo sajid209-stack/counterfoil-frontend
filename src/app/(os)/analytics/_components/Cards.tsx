@@ -649,7 +649,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
           )}
         </Section>
 
-        <Section id="guests" title={t("guests.title")} summary={sum.guests} info={t("info.guests")} view={{ href: "/calendar", where: tn("calendar") }} className="self-start">
+        <Section id="guests" title={t("guests.title")} summary={sum.guests} info={t("info.guests")} view={{ href: "/calendar", where: tn("calendar") }} className="self-start max-sm:self-stretch">
           {g.guests === 0 ? (
             <Empty>{t("guests.empty")}</Empty>
           ) : (

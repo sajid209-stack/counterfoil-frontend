@@ -3,7 +3,7 @@
 import { ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import { MD, useMediaQuery } from "@/lib/useMedia";
+import { MD, SM, useMediaQuery } from "@/lib/useMedia";
 import { Pagination } from "./Pagination";
 import { Skeleton } from "./Skeleton";
 
@@ -93,6 +93,8 @@ export interface DataTableProps<T> {
    *  a phone wants it. Opt-in: a toolbar that is not asked into the card keeps
    *  sitting above it. */
   toolbarInCard?: boolean;
+  /** A titled header drawn above the rows of a phone's list (below sm), e.g. "Orders" and a count pill. Not drawn from sm. */
+  phoneHeader?: React.ReactNode;
 }
 
 /** Deterministic block width for a loading cell — see the note at the call site. */
@@ -124,6 +126,7 @@ export function DataTable<T>({
   layout = "auto",
   height = "box",
   toolbarInCard = false,
+  phoneHeader,
 }: DataTableProps<T>) {
   const tc = useTranslations("common");
   const showEmpty = !loading && rows.length === 0;
@@ -132,20 +135,25 @@ export function DataTable<T>({
      never carries a second invisible copy of its search box. */
   const wide = useMediaQuery(MD);
   const inCard = toolbarInCard && wide && !!toolbar;
+  /* A phone (below sm) draws a list as calm separate cards, 12px apart, not one
+     card of hairline rows (docs/mobile.md section 6). A tablet keeps the rows. */
+  const phone = !useMediaQuery(SM);
+  const cards = list && phone;
 
   return (
     <div className="flex flex-col gap-section">
       {toolbar && !inCard && <div>{toolbar}</div>}
 
       {/* Mobile (<768px): rows become tappable cards — primary line + labelled meta. */}
-      <div className={cn("md:hidden", list ? "card-surface overflow-hidden" : "flex flex-col gap-section")}>
+      <div className={cn("md:hidden", cards ? "flex flex-col gap-comfortable" : list ? "card-surface overflow-hidden" : "flex flex-col gap-section")}>
+        {cards && phoneHeader}
         {loading &&
           Array.from({ length: list ? 6 : 3 }).map((_, i) => (
             <div
               key={`csk-${i}`}
               className={cn(
                 "flex flex-col gap-tight",
-                list ? "border-b border-hairline px-card py-comfortable last:border-0" : "card-surface p-card",
+                cards ? "card-surface p-section" : list ? "border-b border-hairline px-card py-comfortable last:border-0" : "card-surface p-card",
               )}
             >
               <Skeleton h={16} w="66%" />
@@ -162,14 +170,16 @@ export function DataTable<T>({
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               onKeyDown={onRowClick ? (e) => e.key === "Enter" && onRowClick(row) : undefined}
               className={cn(
-                list
+                cards
+                  ? "card-surface min-h-11 p-section"
+                  : list
                   /* A row, not a card: no gap, no second border, and the lift
                      goes with them — a row that rises out of its own list reads
                      as a card that has come loose. */
                   ? "border-b border-hairline px-card py-comfortable last:border-0"
                   : "card-surface p-card",
                 onRowClick && "cursor-pointer active:bg-muted-wash",
-                isSelected?.(row) && (list ? "bg-ember-wash" : "border-ember bg-ember-wash"),
+                isSelected?.(row) && (list && !cards ? "bg-ember-wash" : "border-ember bg-ember-wash"),
               )}
             >
               {renderCard ? (

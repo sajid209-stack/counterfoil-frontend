@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Info } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Clock, Info, Wallet } from "lucide-react";
 import { Button, Sheet, Skeleton } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatDay, formatMoney } from "@/lib/format";
@@ -120,6 +120,8 @@ export function Balances({
         tone: owing ? "danger" : undefined,
         context: summary ? nextLine : undefined,
         contextTone: owing ? "font-medium text-danger" : undefined,
+        icon: <Wallet aria-hidden />,
+        iconTone: owing ? "danger" : "ember",
         action: hasBalanceInfo ? <PhoneInfo label={t("available.infoLabel")}>{availableInfo}</PhoneInfo> : undefined,
       },
       {
@@ -127,6 +129,8 @@ export function Balances({
         label: t("unsettled.label"),
         value: loading ? "" : formatMoney(summary?.unsettled ?? 0),
         context: unsettledLine,
+        icon: <Clock aria-hidden />,
+        iconTone: "warning",
         action: <PhoneInfo label={t("unsettled.infoLabel")}>{unsettledInfo}</PhoneInfo>,
       },
       {
@@ -134,12 +138,16 @@ export function Balances({
         label: t("withdrawn.label"),
         value: loading ? "" : formatMoney(p?.paidOut ?? 0),
         context: summary ? `${periodLabel} · ${withdrawnLine}` : undefined,
+        icon: <ArrowUpFromLine aria-hidden />,
+        iconTone: "info",
       },
       {
         key: "deposited",
         label: t("deposited.label"),
         value: loading ? "" : formatMoney(p?.deposited ?? 0),
         context: summary ? `${periodLabel} · ${depositedLine}` : undefined,
+        icon: <ArrowDownToLine aria-hidden />,
+        iconTone: "success",
       },
     ];
     return (
@@ -162,7 +170,7 @@ export function Balances({
         )}
         {/* Withdrawn and Deposited are the period's totals - useful, not urgent -
             so they wait behind the same "Show all" every figure band has. */}
-        <FigureToggle fold={fold} total={4} />
+        {fold.folds && <FigureToggle fold={fold} total={4} />}
       </div>
     );
   }

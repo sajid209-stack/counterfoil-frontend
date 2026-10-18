@@ -9,56 +9,75 @@
  * every line.
  *
  * Here the sale IS the page. Each thing added stays where it was configured,
- * as a block in one scroll; finished blocks collapse into a line stating what
- * was decided. There is no cart, no drawer and no sheet over the selection —
- * only the payment pad, which appears at the bottom of the same scroll.
+ * as a card in one scroll; finished cards collapse into a calm summary row.
+ * There is no cart, no drawer and no sheet over the selection.
  *
- * What that buys, concretely: nothing is ever hidden behind an affordance you
- * have to know about, the running total is always the last thing on screen,
- * and changing the third item does not mean opening and closing two things.
- *
- * What it costs: the page is long. That is the trade, and it is the right one
- * on a touch screen, where scrolling is free and tapping is not.
+ * It is drawn in the cart till's card language (docs/mobile.md §5): the page
+ * is the ground, every group is its own white card 12px from the next, every
+ * choice is its own rounded tile, headings are 16px semibold, and the orange
+ * button is bottom-right with the "not now" action on its left.
  *
  * IMPORTANT: this is v2. The v1 till at /pos is untouched — this shares the
- * DATA layer (lib/api, lib/orderMath, lib/duration) and nothing else, so a
- * change here cannot regress the audited surface.
+ * DATA layer (lib/api, lib/orderMath, lib/duration) and nothing else.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
-import { Banknote, Check, ChevronDown, CreditCard, Plus, QrCode, Send, Trash2, Wallet, type LucideIcon } from "lucide-react";
-import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
+import { Banknote, CreditCard, Plus, QrCode, Send, Trash2, Wallet, type LucideIcon } from "lucide-react";
+import { EmptyState, FormField, Modal, useToast, Button } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveCounterNow } from "@/lib/activeCounter";
 import {
   tillMethods,
   advanceMinimum,
   checkout,
+  counterItems,
   getAdvancePolicy,
   getManualDiscountPolicy,
   getOperator,
+  inventoryItem,
+  inventoryLineId,
   listLocations,
   listPaymentAccounts,
   listProducts,
   listResources,
   listRoles,
   listStaff,
+  quoteCart,
+  releaseHold,
+  activeHolds,
+  HOLDS_EVENT,
+  CHECKOUT_HELD_FOR,
+  type AppliedPromotion,
+  type HoldView,
+  type InventoryItemView,
   type PaymentMethod,
   type Product,
+  type QuoteLine,
 } from "@/lib/api";
 import type { DiscountMode } from "@/components/ui";
 import { CustomerPicker, type AttachedCustomer } from "../pos/CustomerPicker";
-import { ChromeBackdrop } from "../_components/ActionBar";
-import { ActionTile, Tile, TileGrid, TileLabel } from "../_components/Tiles";
+import { HeldSheet } from "../pos/HeldSheet";
+import type { PayChoice } from "../pos/CheckoutParts";
+import { ActionBar, secondaryButton } from "../_components/ActionBar";
+import { ActionTile, Tile, TileGrid, TileLabel, GoCard } from "../_components/Tiles";
+import { BookingGlyph } from "../_components/WallTile";
+import { Thumb } from "../_components/Thumb";
+import { Stepper } from "../_components/Stepper";
 import { SaleRows, type RowKey } from "./_components/SaleRows";
-import { formatClock, formatDay, formatMoney } from "@/lib/format";
+import { ShopGlyph, productNeedsSheet } from "./_lib/wall";
+import { formatClock, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { useMediaQuery } from "@/lib/useMedia";
+import { toMinutes, toTime } from "@/lib/schedule";
 import { Catalogue } from "./_components/Catalogue";
 import { SelectionInline } from "./_components/SelectionInline";
 import { Keypad } from "../_components/Keypad";
+import { usePrefs } from "@/lib/prefs";
+import { cn } from "@/lib/cn";
+import { itemBalance, itemSeats, itemSlotISO, itemTotal, priceSale, type SaleItem } from "@/lib/sale/saleMath";
+import { draftFrom, newDraft, patternOf, resolveDraft, type Draft } from "@/lib/sale/selection";
 
 /** A way of paying is recognised as an object, not a word: cash is a note, bKash
  *  is a send, the QR is a code, the terminal is a card. */
@@ -68,10 +87,6 @@ const METHOD_ICON: Partial<Record<PaymentMethod, LucideIcon>> = {
   bangla_qr: QrCode,
   card_terminal: CreditCard,
 };
-import { Pencil } from "lucide-react";
-import { usePrefs } from "@/lib/prefs";
-import { itemBalance, itemSeats, itemSlotISO, itemTotal, priceSale, type SaleItem } from "@/lib/sale/saleMath";
-import { draftFrom, newDraft, patternOf, resolveDraft, type Draft } from "@/lib/sale/selection";
 
 /** One thing in the sale, and the questions it is still answering.
  *
@@ -88,12 +103,84 @@ interface Block {
 const SIGNED_IN_STAFF_ID = "stf_nadia";
 
 const newId = () => `item_${globalThis.crypto.randomUUID().slice(0, 8)}`;
+const noSubscribe = () => () => {};
+
+/** Notes a customer hands over for this amount: the next round hundred, five
+ *  hundred and thousand above it, never one that is too small. */
+const quickNotes = (dueMinor: number) => {
+  const due = Math.ceil(dueMinor / 100);
+  const out: number[] = [];
+  for (const step of [100, 500, 1000, 2000, 5000]) {
+    const n = Math.ceil(due / step) * step;
+    if (n > due && !out.includes(n)) out.push(n);
+    if (out.length === 3) break;
+  }
+  return out;
+};
+
+/** A finished thing in the sale as one calm row: a 48px picture, a bold name,
+ *  a quiet line, the price. The left part is the control that opens it. */
+/** The block's Done once something is chosen: filled ink. Orange stays with the
+ *  dock's Complete, the screen's one primary. */
+const DONE_FILLED =
+  "inline-flex h-13 w-full min-w-0 items-center justify-center rounded-control bg-ink px-comfortable text-md font-semibold text-paper transition-transform duration-quick active:scale-[0.98]";
+
+function SummaryRow({
+  thumb,
+  name,
+  line,
+  price,
+  onOpen,
+  open,
+  onRemove,
+  removeLabel,
+}: {
+  thumb: React.ReactNode;
+  name: string;
+  line: string;
+  price: string;
+  onOpen?: () => void;
+  open?: boolean;
+  onRemove: () => void;
+  removeLabel: string;
+}) {
+  const body = (
+    <>
+      {thumb}
+      <span className="min-w-0 flex-1">
+        <span className="block break-words text-md font-semibold leading-snug">{name}</span>
+        {line && <span className="block break-words text-sm text-muted">{line}</span>}
+      </span>
+    </>
+  );
+  return (
+    <div className="flex items-center gap-tight">
+      {onOpen ? (
+        <button type="button" onClick={onOpen} aria-expanded={open} className="flex min-h-12 min-w-0 flex-1 items-center gap-comfortable text-left">
+          {body}
+        </button>
+      ) : (
+        <div className="flex min-h-12 min-w-0 flex-1 items-center gap-comfortable">{body}</div>
+      )}
+      {price && <span className="shrink-0 whitespace-nowrap text-md font-bold tabular-nums">{price}</span>}
+      <button
+        type="button"
+        aria-label={removeLabel}
+        onClick={onRemove}
+        className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted active:bg-muted-wash"
+      >
+        <Trash2 size={18} strokeWidth={1.75} aria-hidden />
+      </button>
+    </div>
+  );
+}
 
 export default function SellPage() {
   const router = useRouter();
   const toast = useToast();
   const t = useTranslations("sell");
   const tp = useTranslations("pos");
+  const tr = useTranslations();
   const enumL = useEnumLabels();
 
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
@@ -108,12 +195,8 @@ export default function SellPage() {
   const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
 
   /* The wall has two homes — a column on a tablet, a section of the scroll on
-     a phone — and it must exist in exactly ONE of them at a time. Rendering it
-     into both and hiding one with `lg:` puts two copies in the DOM: twice the
-     work, two search fields for a screen reader to find, and the hidden copy
-     first in document order, so anything selecting "the search box" gets the
-     invisible one. This project has been bitten by that before (the page-header
-     portal, 2026-09-03); `useMediaQuery` is the mechanism it settled on. */
+     a phone — and it must exist in exactly ONE of them at a time (two copies
+     in the DOM means two search fields and the hidden one first). */
   const wide = useMediaQuery("(min-width: 64rem)");
 
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -121,13 +204,9 @@ export default function SellPage() {
   const [browsing, setBrowsing] = useState(true);
   const [query, setQuery] = useState("");
   const [method, setMethod] = useState<PaymentMethod>("cash");
-  /* Empty reads as the exact amount — see the note on the v1 till. Here it
-     matters twice over: the cash block is drawn inline on a scrolling page
-     rather than in a sheet opened per sale, so a derived default follows the
-     cart as lines are added instead of going stale the moment it does. */
+  /* Empty reads as the exact amount: a derived default follows the sale as
+     lines are added instead of going stale the moment it does. */
   const [tenderTaka, setTenderTaka] = useState("");
-  /* Whether the pad is on screen for this sale. The till's own setting decides
-     whether it is drawn at rest; this is the way to it when it is not. */
   const [padOpen, setPadOpen] = useState(false);
   const prefs = usePrefs();
   const [walletRef, setWalletRef] = useState("");
@@ -136,6 +215,8 @@ export default function SellPage() {
   const [customName, setCustomName] = useState("");
   const [customAmount, setCustomAmount] = useState("");
   const [customItems, setCustomItems] = useState<SaleItem[]>([]);
+  /** Shop items in the sale: item id → how many. */
+  const [shopQty, setShopQty] = useState<Record<string, number>>({});
   const [attached, setAttached] = useState<AttachedCustomer | null>(null);
   const [customerOpen, setCustomerOpen] = useState(false);
   const [openRow, setOpenRow] = useState<RowKey | null>(null);
@@ -143,6 +224,9 @@ export default function SellPage() {
   const [discountPct, setDiscountPct] = useState(0);
   const [discountAmt, setDiscountAmt] = useState(0);
   const [discountReason, setDiscountReason] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedPromotion | null>(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponError, setCouponError] = useState<string | null>(null);
   const [advance, setAdvance] = useState<number | null>(null);
   const [payInFull, setPayInFull] = useState(false);
 
@@ -157,6 +241,36 @@ export default function SellPage() {
   // Non-cash tender needs a live PSP account. Cash always works.
   const nonCashOk = (payAcctsQ.data?.data ?? []).some((a) => a.status === "active" && a.chargesEnabled);
   const methods: PaymentMethod[] = tillMethods(nonCashOk);
+
+  /* The shelf at this counter's venue — the same venue the sale will be filed
+     at and its stock taken from. Read once the browser has taken over: the
+     store can hold a different business in the browser than the server drew. */
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const tillLocationId = activeCounter.locationId || (locationsQ.data?.data[0]?.id ?? "loc_fort");
+  const shop = useMemo(
+    () => (hydrated ? counterItems(tillLocationId) : []),
+    [hydrated, tillLocationId],
+  );
+
+  /* Places held for people at this venue (not the till's own ten-minute
+     checkout holds). Followed through the holds event, and re-read now and then
+     because a hold with an end time lapses by itself. */
+  const heldSig = useSyncExternalStore(
+    (cb) => {
+      window.addEventListener(HOLDS_EVENT, cb);
+      const id = window.setInterval(cb, 20000);
+      return () => { window.removeEventListener(HOLDS_EVENT, cb); window.clearInterval(id); };
+    },
+    () => activeHolds().map((h) => `${h.id}:${h.heldFor === CHECKOUT_HELD_FOR ? 0 : 1}`).join(","),
+    () => "",
+  );
+  const heldHere = useMemo(() => {
+    void heldSig;
+    return activeHolds().filter(
+      (h) => h.heldFor !== CHECKOUT_HELD_FOR && (h.locationId === tillLocationId || (productsQ.data?.data ?? []).find((p) => p.id === h.productId)?.locationIds.includes(tillLocationId)),
+    );
+  }, [heldSig, tillLocationId, productsQ.data]);
+  const [heldOpen, setHeldOpen] = useState(false);
 
   /* ── Resolving every block ───────────────────────────────────────────────
      Done in one pass so the blocks, the totals and the eventual payload can
@@ -173,9 +287,29 @@ export default function SellPage() {
     [blocks, products, resources, team],
   );
 
+  /* A shop item is one line, one unit: nothing to configure, so it never has a
+     block of its own — a count and a stepper are the whole of it. */
+  const shopLines = useMemo(
+    () =>
+      shop
+        .filter((i) => (shopQty[i.id] ?? 0) > 0)
+        .map((i): { item: InventoryItemView; sale: SaleItem } => ({
+          item: i,
+          sale: {
+            id: `shop_${i.id}`,
+            productId: inventoryLineId(i.id),
+            productName: i.name,
+            /* Its own rate: an item carries the tax it is sold at. */
+            taxRatePct: i.taxClass === "exempt" ? 0 : i.taxClass === "reduced" ? (operator?.reducedRatePct ?? 0) : (operator?.taxRatePct ?? 0),
+            items: [{ tierId: i.id, tierName: i.unit, unitPrice: i.price, qty: shopQty[i.id] }],
+          },
+        })),
+    [shop, shopQty, operator],
+  );
+
   const items: SaleItem[] = useMemo(
-    () => [...resolved.flatMap((r) => r.lines), ...customItems],
-    [resolved, customItems],
+    () => [...resolved.flatMap((r) => r.lines), ...customItems, ...shopLines.map((s) => s.sale)],
+    [resolved, customItems, shopLines],
   );
 
   /* ── The money ───────────────────────────────────────────────────────────
@@ -193,13 +327,14 @@ export default function SellPage() {
       : Math.min(Math.max(0, discountBase), discountAmt);
 
   const totals = useMemo(
-    () => priceSale(items, { products, operator, manualDiscount }),
-    [items, products, operator, manualDiscount],
+    () => priceSale(items, { products, operator, manualDiscount, couponDiscount: appliedCoupon?.discount ?? 0 }),
+    [items, products, operator, manualDiscount, appliedCoupon],
   );
 
   /* The cashier's discount is capped by the business policy, falling back to
      the signed-in staff's role limit where no policy is set. The cap is on the
-     EFFECTIVE rate — what actually came off, not what was typed. */
+     EFFECTIVE rate — what actually came off, not what was typed. A promo code
+     is an entitlement, not a cashier discount, so it is not counted here. */
   const roleLimit =
     rolesQ.data?.data.find((r) => r.id === (teamQ.data?.data.find((x) => x.id === SIGNED_IN_STAFF_ID)?.roleId))
       ?.discountLimitPct ?? 100;
@@ -210,7 +345,7 @@ export default function SellPage() {
 
   /* ── Part payment ────────────────────────────────────────────────────────
      A booking's DEPOSIT policy says what the booking requires; an ADVANCE says
-     what this customer actually handed over. The advance sits on top. */
+     what this customer actually handed over. Shown as Full · Half · Minimum. */
   const depositBalance = items.reduce((sum, e) => sum + itemBalance(e, products), 0);
   const advanceRule = advanceQ.data?.counter;
   const advanceAllowed = !!advanceRule?.enabled && items.length > 0 && totals.total > 0;
@@ -219,6 +354,37 @@ export default function SellPage() {
   const balance = advanceValid ? totals.total - advance! : payInFull ? 0 : depositBalance;
   const dueNow = totals.total - balance;
 
+  const partAllowed = totals.total > 0 && (advanceAllowed || depositBalance > 0);
+  const requiredNow = depositBalance > 0 ? totals.total - depositBalance : 0;
+  const minNow = advanceAllowed ? Math.max(advanceMin, requiredNow) : requiredNow;
+  const halfNow = Math.round(totals.total / 2);
+  const payOptions: { id: PayChoice; label: string; amount: number }[] = partAllowed
+    ? [
+        { id: "full", label: tp("pay.full"), amount: totals.total },
+        ...(advanceAllowed && halfNow >= minNow && halfNow < totals.total ? [{ id: "half" as const, label: tp("pay.half"), amount: halfNow }] : []),
+        ...(minNow > 0 && minNow < totals.total ? [{ id: "minimum" as const, label: tp("pay.minimum"), amount: minNow }] : []),
+      ]
+    : [];
+  const payChoice: PayChoice = advanceValid
+    ? advance === halfNow && halfNow !== minNow
+      ? "half"
+      : "minimum"
+    : payInFull || depositBalance === 0
+      ? "full"
+      : "minimum";
+  const choosePay = (c: PayChoice) => {
+    if (c === "full") {
+      setAdvance(null);
+      setPayInFull(true);
+    } else if (c === "half") {
+      setAdvance(halfNow);
+      setPayInFull(false);
+    } else {
+      setPayInFull(false);
+      setAdvance(advanceAllowed && minNow >= advanceMin && minNow < totals.total ? minNow : null);
+    }
+  };
+
   /** Seats already spoken for elsewhere in this sale, so a session cannot be
    *  oversold by adding it twice. The block being edited excludes itself. */
   const seatsElsewhere = (productId: string, slotStart: string) =>
@@ -226,8 +392,37 @@ export default function SellPage() {
       .filter((e) => e.id !== openId && e.productId === productId && itemSlotISO(e) === slotStart)
       .reduce((s, e) => s + itemSeats(e, products), 0);
 
+  /** How many of this are in the sale, as the wall's tile counts them. */
+  const countOf = (productId: string) =>
+    resolved
+      .filter((r) => r.block.productId === productId)
+      .reduce(
+        (n, r) =>
+          n +
+          r.lines.reduce(
+            (a, l) => a + (l.fixedPrice != null || l.seatLabels?.length ? Math.max(1, l.seatLabels?.length ?? 1) : l.items.reduce((x, i) => x + i.qty, 0)),
+            0,
+          ),
+        0,
+      );
+
   /* ── Adding, opening, removing ───────────────────────────────────────── */
+  /** One tap on a "+" tile adds it (a second tap is one more); a "›" tile opens
+      its questions in a block of its own. */
   const pick = (p: Product) => {
+    if (!productNeedsSheet(p) && p.bookingType !== "BT-02") {
+      const tier = p.tiers.find((x) => x.active);
+      if (tier) {
+        const existing = blocks.find((b) => b.productId === p.id && (b.draft.qty[tier.id] ?? 0) > 0);
+        if (existing) {
+          setDraft(existing.id, { ...existing.draft, qty: { ...existing.draft.qty, [tier.id]: (existing.draft.qty[tier.id] ?? 0) + 1 } });
+        } else {
+          const id = newId();
+          setBlocks((b) => [...b, { id, productId: p.id, draft: { ...newDraft(p), qty: { [tier.id]: 1 } } }]);
+        }
+        return;
+      }
+    }
     const id = newId();
     setBlocks((b) => [...b, { id, productId: p.id, draft: newDraft(p) }]);
     setOpenId(id);
@@ -252,15 +447,78 @@ export default function SellPage() {
   const setDraft = (id: string, draft: Draft) =>
     setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, draft } : b)));
 
+  const heldName = (h: HoldView) => h.productName || productById(h.productId)?.name || "";
+  const putBackHeld = async (h: HoldView) => {
+    if (heldHere.length <= 1) setHeldOpen(false);
+    await releaseHold(h.id);
+    toast.success(tp("held.putBackToast", { name: h.heldFor }));
+  };
+  /* The person it was held for is here: the hold goes, and exactly what was
+     kept becomes a block in the sale, already on that day, time, place and
+     number of places — the /sell equivalent of putting it in the cart. */
+  const sellHeld = async (h: HoldView) => {
+    const product = productById(h.productId);
+    await releaseHold(h.id);
+    setHeldOpen(false);
+    if (!product) return;
+    const time = (h.slotStart ?? "").slice(11, 16);
+    const draft: Draft = { ...newDraft(product), date: h.date, slotTime: time || undefined };
+    const pattern = patternOf(product);
+    if (h.kind === "resource" && h.resourceId && time) {
+      draft.resourceId = h.resourceId;
+      const end = (h.slotEnd ?? "").slice(11, 16);
+      const span = end ? toMinutes(end) - toMinutes(time) : 0;
+      if (pattern === "flexible") {
+        if (span > 0) draft.durationMinutes = span;
+      } else {
+        const step = product.schedule?.sessionMinutes ?? 60;
+        const slots: { date: string; time: string; resourceId: string }[] = [];
+        for (let m = toMinutes(time); m < toMinutes(time) + Math.max(span, step); m += step) slots.push({ date: h.date, time: toTime(m), resourceId: h.resourceId });
+        draft.slots = slots;
+        draft.slotTime = undefined;
+      }
+    } else if (h.kind === "capacity" && h.quantity > 0) {
+      const tier = product.tiers.find((x) => x.active);
+      if (tier) draft.qty = { [tier.id]: h.quantity };
+    }
+    const id = newId();
+    setBlocks((b) => [...b, { id, productId: product.id, draft }]);
+    setOpenId(id);
+    setBrowsing(false);
+  };
+
+  /** One tap sells a shelf item; a second is one more, up to what is on it. */
+  const tapItem = (i: InventoryItemView) => {
+    const have = shopQty[i.id] ?? 0;
+    if (i.tracked && have >= i.onHand) {
+      toast.error(i.onHand <= 0 ? tp("shop.none", { name: i.name }) : tp("shop.allOfIt", { count: i.onHand, unit: i.unit, name: i.name }));
+      return;
+    }
+    setShopQty((q) => ({ ...q, [i.id]: have + 1 }));
+  };
+  const setShop = (id: string, n: number) =>
+    setShopQty((q) => {
+      const next = { ...q };
+      if (n <= 0) delete next[id];
+      else next[id] = n;
+      return next;
+    });
+
   /* Bring a newly opened block into view. Scrolling is not state, so this is
-     an effect that reads the DOM and nothing else — the codebase forbids
-     setState in an effect, not effects. */
+     an effect that reads the DOM and nothing else. */
   const openRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (openId && openRef.current) {
       openRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [openId]);
+
+  const wallRef = useRef<HTMLDivElement | null>(null);
+  const addMore = () => {
+    setBrowsing(true);
+    setOpenId(null);
+    requestAnimationFrame(() => wallRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
 
   const addCustom = () => {
     const minor = Math.round((parseFloat(customAmount) || 0) * 100);
@@ -279,6 +537,36 @@ export default function SellPage() {
     setCustomName("");
     setCustomAmount("");
     setBrowsing(false);
+  };
+
+  /* ── A promo code ───────────────────────────────────────────────────────
+     Asked of the promotions engine with what is in the sale. Only a promotion
+     that came in BY the typed code counts. */
+  const quoteLines = (): QuoteLine[] =>
+    items.flatMap((e) => [
+      ...(e.fixedPrice != null && e.fixedPrice > 0 ? [{ lineId: `${e.id}|booking`, quantity: 1, unitAmount: e.fixedPrice }] : []),
+      ...e.items.filter((i) => i.unitPrice > 0).map((i) => ({ lineId: `${e.id}|${i.tierId}`, quantity: i.qty, unitAmount: i.unitPrice })),
+    ]);
+  const quoteCode = async (code: string): Promise<{ applied: AppliedPromotion } | { error: string }> => {
+    const res = await quoteCart({ channel: "counter", lines: quoteLines(), couponCodes: [code] });
+    if (!res.ok) return { error: "not_found" };
+    const hit = res.data.applied.find((a) => a.source === "coupon");
+    if (hit) return { applied: hit };
+    const why = res.data.rejected.find((r) => r.code.toLowerCase() === code.toLowerCase())?.reason;
+    return { error: why ?? "not_found" };
+  };
+  const applyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+    setCouponError(null);
+    const r = await quoteCode(code);
+    if ("applied" in r) {
+      setAppliedCoupon(r.applied);
+      setCouponInput("");
+    } else {
+      setAppliedCoupon(null);
+      setCouponError(r.error);
+    }
   };
 
   /* ── What the footer should say ──────────────────────────────────────────
@@ -304,16 +592,35 @@ export default function SellPage() {
         : reasonNeeded
           ? t("footer.needReason")
           : method === "cash" && !cashReady
-            ? t("footer.takeAmount", { amount: formatMoney(dueNow, currency) })
-            : t("footer.completeAmount", { amount: formatMoney(dueNow, currency) });
+            ? t("footer.takeAmount", { amount: formatPriceShort(dueNow, currency) })
+            : t("footer.completeAmount", { amount: formatPriceShort(dueNow, currency) });
 
   /* ── The sale ───────────────────────────────────────────────────────────
      The SAME lines that priced the footer are the lines handed to checkout.
      Rebuilding the payload here would be how a till shows one number and
      charges another. */
   const complete = async () => {
-    if (!canComplete) return;
+    if (!canComplete || saving) return;
     setSaving(true);
+    /* A code taken off before the sale changed was quoted against the OLD sale:
+       it is asked again, and a changed figure is shown before any money moves. */
+    if (appliedCoupon?.code) {
+      const r = await quoteCode(appliedCoupon.code);
+      if ("applied" in r) {
+        if (r.applied.discount !== appliedCoupon.discount) {
+          setAppliedCoupon(r.applied);
+          setSaving(false);
+          toast.error(t("rows.codeUpdated"));
+          return;
+        }
+      } else {
+        setAppliedCoupon(null);
+        setCouponError(r.error);
+        setSaving(false);
+        toast.error(tr(`pos.rejected.${r.error}` as never));
+        return;
+      }
+    }
     const bookings = items
       .filter((e) => e.slotDate)
       .map((e) => ({
@@ -323,14 +630,22 @@ export default function SellPage() {
         slotEnd: e.slotEnd,
         partySize: itemSeats(e, products),
       }));
+    /* A shelf line is a thing handed over, not a way in: it admits nobody, or
+       it would mint a ticket for a tote bag. */
+    const lines = totals.lines.map((l) => {
+      if (!l.productId.startsWith("inv_")) return l;
+      /* ...and it is reported at its own tax class, not the booking default. */
+      const shelf = inventoryItem(l.productId.slice(4));
+      return { ...l, admits: 0, taxClass: shelf?.taxClass ?? l.taxClass };
+    });
     const res = await checkout({
       channel: "counter",
-      locationId: activeCounter.locationId || (locationsQ.data?.data[0]?.id ?? "loc_fort"),
+      locationId: tillLocationId,
       counterId: activeCounter.counter?.id ?? null,
       staffId: null,
       customerName: attached?.name ?? null,
       customerId: attached?.id ?? null,
-      lines: totals.lines,
+      lines,
       orderDiscount: totals.orderDiscount,
       bookings,
       taxPct: operator?.taxRatePct ?? 0,
@@ -360,7 +675,7 @@ export default function SellPage() {
           lines: totals.lines.map((l) => ({
             name: [
               l.tierName && l.tierName !== l.productName ? `${l.productName} · ${l.tierName}` : l.productName,
-              l.booking?.startTime,
+              l.booking?.startTime ? formatClock(l.booking.startTime) : null,
               l.booking?.date ? formatDay(l.booking.date, { weekday: true }) : null,
             ]
               .filter(Boolean)
@@ -416,33 +731,50 @@ export default function SellPage() {
       products={products}
       resources={resources}
       team={team}
+      shop={shop}
       currency={currency}
       query={query}
       onQuery={setQuery}
       onPick={pick}
+      onTapItem={tapItem}
       onCustom={() => setCustomOpen(true)}
+      countOf={countOf}
+      shopCountOf={(id) => shopQty[id] ?? 0}
+      heldCount={heldHere.length}
+      onHeld={() => setHeldOpen(true)}
       loading={productsQ.loading}
     />
   );
 
+  const saleEmpty = items.length === 0 && blocks.length === 0;
+
+  /* The sale's total bar. Phone: the docked pair above the tab bar — "not now"
+     (add more) on the left, the orange button on the right. Wide: the same pair
+     in flow at the foot of the sale column. */
+  const bar = (
+    <ActionBar
+      docked={wide ? "panel" : "dock"}
+      tone="ground"
+      label={t("footer.barLabel")}
+      secondary={wide ? null : { label: t("block.addMore"), icon: <Plus size={20} strokeWidth={2} aria-hidden />, onClick: addMore }}
+      primary={{
+        label: footerLabel,
+        icon: canComplete ? <Banknote size={20} strokeWidth={2} aria-hidden /> : undefined,
+        onClick: () => void complete(),
+        disabled: !canComplete || saving,
+      }}
+    />
+  );
+
   /* On a phone the PAGE scrolls, which is the whole idea — one scroll from
-     the wall to the money.
-     On a wide screen the two columns have to scroll independently, or reading
-     the sale means scrolling past the catalogue. The Go shell hands its
-     children no height to resolve against, so the height is stated here:
-     the viewport less the 64px header, less the 88px the shell reserves for
-     the bottom tab bar — which a tablet in landscape does not have, because
-     there the nav is the left rail. `dvh` rather than `vh` so a phone browser
-     collapsing its address bar does not leave the footer stranded. */
+     the wall to the money. On a wide screen the two columns scroll
+     independently; the height is stated here because the Go shell hands its
+     children none. */
   return (
     <div className="grid grid-cols-1 gap-comfortable p-comfortable lg:h-[calc(100dvh-152px)] lg:grid-cols-[minmax(0,1fr)_30rem] lg:overflow-hidden rail:h-[calc(100dvh-64px)]">
       <h1 className="sr-only">{t("srTitle")}</h1>
 
-      {/* The wall, as a column of its own on a tablet.
-          overflow-x-hidden as well as -y: overflow-y:auto implies
-          overflow-x:auto, and the chip row bleeds 16px past the column to put
-          its cut on the screen edge — which handed this column a horizontal
-          scrollbar. */}
+      {/* The wall, as a column of its own on a tablet. */}
       {wide && <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">{catalogue}</div>}
 
       {/* The sale — one scroll, ending in the money. */}
@@ -450,133 +782,106 @@ export default function SellPage() {
         <div className="flex flex-col gap-comfortable pb-44 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-0">
           {/* Phone: the wall lives here, above the sale. */}
           {!wide && (
-          <div>
-            {browsing ? (
-              catalogue
-            ) : (
-              /* Folded. Leaving twenty bookings above the block being
-                 configured means scrolling a screenful to check what was just
-                 added — which is the round trip the cart used to be. */
-              <button
-                type="button"
-                onClick={() => setBrowsing(true)}
-                className="flex h-14 w-full items-center justify-center gap-tight rounded-card border border-dashed border-strong text-base font-medium text-muted active:bg-muted-wash"
-              >
-                <Plus size={18} strokeWidth={1.75} />
-                {t("block.addAnother")}
-              </button>
-            )}
-          </div>
+            <div ref={wallRef} className="scroll-mt-comfortable">
+              {browsing && catalogue}
+            </div>
           )}
 
-          {wide && blocks.length === 0 && customItems.length === 0 && (
-            <EmptyState title={t("sale.empty")} message={t("sale.emptyHint")} />
-          )}
+          {wide && saleEmpty && <EmptyState title={t("sale.empty")} message={t("sale.emptyHint")} />}
 
           {resolved.map(({ block, product, lines, missing, amount }) => {
             const open = openId === block.id;
             if (!product) return null;
             return (
-              <div
-                key={block.id}
-                ref={open ? openRef : undefined}
-                className={`card-surface ${open ? "border-ember" : ""}`}
-              >
-                <div className="flex items-start gap-tight p-comfortable">
-                  <button
-                    type="button"
-                    onClick={() => (open ? setOpenId(null) : openBlock(block.id))}
-                    aria-expanded={open}
-                    className="flex min-h-11 min-w-0 flex-1 items-start gap-tight text-left"
-                  >
-                    <span
-                      className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${lines.length ? "bg-success-wash text-success" : "bg-line text-muted"}`}
-                      aria-hidden
-                    >
-                      {lines.length ? <Check size={13} strokeWidth={2.5} /> : <ChevronDown size={13} strokeWidth={2.5} className={open ? "rotate-180" : ""} />}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block break-words text-md font-semibold leading-snug">{product.name}</span>
-                      <span className="mt-inline block text-sm text-muted">
-                        {lines.length ? summaryOf(lines) : missing ? t(`missing.${missing}` as never) : ""}
-                      </span>
-                    </span>
-                  </button>
-                  <span className="flex shrink-0 items-center gap-tight">
-                    <span className="whitespace-nowrap text-md font-semibold tabular-nums">
-                      {formatMoney(amount, currency)}
-                    </span>
-                    <button
-                      type="button"
-                      aria-label={t("block.remove")}
-                      onClick={() => removeBlock(block.id)}
-                      className="flex h-11 w-11 items-center justify-center rounded-full text-danger active:bg-muted-wash"
-                    >
-                      <Trash2 size={16} strokeWidth={1.5} />
-                    </button>
-                  </span>
-                </div>
-
-                {open && (
-                  <div className="border-t border-line p-comfortable">
-                    <SelectionInline
-                      product={product}
-                      draft={block.draft}
-                      onDraft={(d) => setDraft(block.id, d)}
-                      currency={currency}
-                      team={team}
-                      resources={resources}
-                      seatsElsewhere={seatsElsewhere}
-                    />
-                    {patternOf(product) !== "unsupported" && (
-                      <Button
-                        variant="secondary"
-                        fullWidth
-                        className="mt-section h-12"
-                        disabled={lines.length === 0}
-                        onClick={() => setOpenId(null)}
-                      >
-                        {t("block.done")}
-                      </Button>
-                    )}
-                  </div>
-                )}
+              <div key={block.id} ref={open ? openRef : undefined}>
+                <GoCard className="gap-comfortable">
+                  <SummaryRow
+                    thumb={<Thumb image={product.images?.[0]?.url} glyph={<BookingGlyph bookingType={product.bookingType} />} />}
+                    name={product.name}
+                    line={lines.length ? summaryOf(lines) : missing ? t(`missing.${missing}` as never) : ""}
+                    price={amount > 0 ? formatPriceShort(amount, currency) : ""}
+                    onOpen={() => (open ? setOpenId(null) : openBlock(block.id))}
+                    open={open}
+                    onRemove={() => removeBlock(block.id)}
+                    removeLabel={t("block.remove")}
+                  />
+                  {open && (
+                    <>
+                      <SelectionInline
+                        product={product}
+                        draft={block.draft}
+                        onDraft={(d) => setDraft(block.id, d)}
+                        currency={currency}
+                        team={team}
+                        resources={resources}
+                        seatsElsewhere={seatsElsewhere}
+                      />
+                      {patternOf(product) !== "unsupported" && (
+                        <button
+                          type="button"
+                          className={lines.length > 0 ? DONE_FILLED : secondaryButton("h-13", "w-full")}
+                          disabled={lines.length === 0}
+                          onClick={() => setOpenId(null)}
+                        >
+                          {t("block.done")}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </GoCard>
               </div>
             );
           })}
 
+          {shopLines.map(({ item, sale }) => {
+            const n = shopQty[item.id] ?? 0;
+            return (
+              <GoCard key={sale.id}>
+                <SummaryRow
+                  thumb={<Thumb glyph={<ShopGlyph kind={item.kind} />} />}
+                  name={item.name}
+                  line={`${n} × ${formatPriceShort(item.price, currency)}`}
+                  price={formatPriceShort(itemTotal(sale), currency)}
+                  onRemove={() => setShop(item.id, 0)}
+                  removeLabel={t("block.remove")}
+                />
+                <div className="flex justify-end">
+                  <Stepper
+                    variant="round"
+                    value={n}
+                    min={0}
+                    max={item.tracked ? item.onHand : undefined}
+                    onChange={(v) => setShop(item.id, v)}
+                    lessLabel={t("qty.less", { tier: item.name })}
+                    moreLabel={t("qty.more", { tier: item.name })}
+                  />
+                </div>
+              </GoCard>
+            );
+          })}
+
           {customItems.map((c) => (
-            <div key={c.id} className="flex items-center gap-tight card-surface p-comfortable">
-              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-success-wash text-success" aria-hidden>
-                <Check size={13} strokeWidth={2.5} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block break-words text-md font-semibold leading-snug">{c.productName}</span>
-                <span className="mt-inline block text-sm text-muted">{t("custom.lineLabel")}</span>
-              </span>
-              <span className="whitespace-nowrap text-md font-semibold tabular-nums">
-                {formatMoney(itemTotal(c), currency)}
-              </span>
-              <button
-                type="button"
-                aria-label={t("block.remove")}
-                onClick={() => setCustomItems((x) => x.filter((y) => y.id !== c.id))}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-danger active:bg-muted-wash"
-              >
-                <Trash2 size={16} strokeWidth={1.5} />
-              </button>
-            </div>
+            <GoCard key={c.id}>
+              <SummaryRow
+                thumb={<Thumb glyph={<Plus strokeWidth={1.5} aria-hidden />} />}
+                name={c.productName}
+                line={t("custom.lineLabel")}
+                price={formatPriceShort(itemTotal(c), currency)}
+                onRemove={() => setCustomItems((x) => x.filter((y) => y.id !== c.id))}
+                removeLabel={t("block.remove")}
+              />
+            </GoCard>
           ))}
 
-          {/* Add another — on a tablet the wall is always there, so this is a
-              phone affordance only; it appears above on that breakpoint. */}
-          {items.length > 0 && !openId && (
+          {/* Add another - below the last block. On a tablet the wall is always
+              there, so this is a phone affordance only. */}
+          {!wide && !browsing && (
             <button
               type="button"
-              onClick={() => setBrowsing(true)}
-              className={`h-12 w-full items-center justify-center gap-tight rounded-card border border-dashed border-strong text-base font-medium text-muted active:bg-muted-wash ${wide ? "flex" : "hidden"}`}
+              onClick={addMore}
+              className="card-surface flex min-h-14 w-full items-center justify-center gap-tight px-comfortable text-md font-medium text-fg active:bg-muted-wash"
             >
-              <Plus size={18} strokeWidth={1.75} />
+              <Plus size={18} strokeWidth={2} aria-hidden />
               {t("block.addAnother")}
             </button>
           )}
@@ -589,6 +894,7 @@ export default function SellPage() {
               onOpenRow={setOpenRow}
               attached={attached}
               onPickCustomer={() => setCustomerOpen(true)}
+              onRemoveCustomer={() => setAttached(null)}
               discountMode={discountMode}
               onDiscountMode={setDiscountMode}
               discountValue={discountMode === "percent" ? discountPct : discountAmt}
@@ -599,52 +905,63 @@ export default function SellPage() {
               reasonRequired={!!policyQ.data?.requireReason}
               overLimit={overLimit}
               capPct={capPct}
-              advanceAllowed={advanceAllowed}
-              advance={advance}
-              onAdvance={setAdvance}
-              advanceMin={advanceMin}
-              total={totals.total}
-              depositBalance={depositBalance}
-              payInFull={payInFull}
-              onPayInFull={setPayInFull}
+              appliedCoupon={appliedCoupon}
+              couponTaken={totals.couponDiscount}
+              couponInput={couponInput}
+              onCouponInput={(v) => { setCouponInput(v); setCouponError(null); }}
+              onApplyCoupon={() => void applyCoupon()}
+              onRemoveCoupon={() => { setAppliedCoupon(null); setCouponError(null); }}
+              couponError={couponError ? tr(`pos.rejected.${couponError}` as never) : null}
+              payOptions={payOptions}
+              payChoice={payChoice}
+              onPayChoice={choosePay}
+              dueNow={dueNow}
+              balance={balance}
             />
           )}
 
           {/* ── Pay ──────────────────────────────────────────────────────── */}
           {payable && (
             <>
-              {/* How they are paying: each way is its own tile, a picture in a
-                  soft round and a word; chosen is solid orange with a tick, the
-                  till's one look for it. */}
-              {methods.length > 1 && (
-              <div className="flex flex-col gap-tight">
-                <TileLabel>{t("pay.label")}</TileLabel>
-                <TileGrid
-                  cols={methods.length >= 4 ? 4 : (Math.max(2, methods.length) as 2 | 3)}
-                  role="radiogroup"
-                  aria-label={t("pay.label")}
-                  className={methods.length >= 4 ? "grid-cols-2 min-[360px]:grid-cols-4" : undefined}
-                >
-                  {methods.map((m) => {
-                    const Icon = METHOD_ICON[m] ?? Wallet;
-                    return (
-                      <ActionTile
-                        key={m}
-                        role="radio"
-                        aria-checked={method === m}
-                        selected={method === m}
-                        icon={<Icon strokeWidth={1.75} />}
-                        label={enumL.method(m)}
-                        onClick={() => setMethod(m)}
-                      />
-                    );
-                  })}
-                </TileGrid>
+              {/* What is being paid, as large as the screen allows: it is the
+                  number the customer is told. */}
+              <div className="text-center">
+                <p className="text-base font-medium text-muted">{balance > 0 ? t("pay.collectNow") : t("pay.collect")}</p>
+                <p className="mt-inline text-[clamp(2rem,10vw,2.75rem)] font-bold leading-tight tabular-nums text-fg">{formatMoney(dueNow, currency)}</p>
               </div>
+
+              {/* How they are paying: each way is its own tile, a picture in a
+                  soft round and a word; chosen is solid orange. */}
+              {methods.length > 1 && (
+                <div className="flex flex-col gap-tight">
+                  <TileLabel>{t("pay.label")}</TileLabel>
+                  <TileGrid
+                    cols={methods.length >= 4 ? 4 : (Math.max(2, methods.length) as 2 | 3)}
+                    role="radiogroup"
+                    aria-label={t("pay.label")}
+                    className={methods.length >= 4 ? "grid-cols-2 min-[360px]:grid-cols-4" : undefined}
+                  >
+                    {methods.map((m) => {
+                      const Icon = METHOD_ICON[m] ?? Wallet;
+                      return (
+                        <ActionTile
+                          key={m}
+                          role="radio"
+                          aria-checked={method === m}
+                          selected={method === m}
+                          icon={<Icon strokeWidth={1.75} />}
+                          label={enumL.method(m)}
+                          className="[&>svg]:hidden"
+                          onClick={() => { setMethod(m); setTenderTaka(""); setPadOpen(false); }}
+                        />
+                      );
+                    })}
+                  </TileGrid>
+                </div>
               )}
 
-              <div className="card-surface p-comfortable">
-              <div className="mt-section flex flex-col gap-inline text-sm">
+              {/* The sums behind the figure. */}
+              <GoCard className="gap-inline text-sm">
                 <div className="flex justify-between text-muted">
                   <span>{t("pay.subtotal")}</span>
                   <span className="tabular-nums">{formatMoney(totals.subtotal, currency)}</span>
@@ -654,22 +971,20 @@ export default function SellPage() {
                     <span className="min-w-0 truncate">
                       {discountMode === "percent" ? t("pay.discountPct", { pct: discountPct }) : t("pay.discountFlat")}
                     </span>
-                    <span className="shrink-0 text-danger tabular-nums">
-                      −{formatMoney(totals.manualDiscount, currency)}
-                    </span>
+                    <span className="shrink-0 text-danger tabular-nums">−{formatMoney(totals.manualDiscount, currency)}</span>
+                  </div>
+                )}
+                {totals.couponDiscount > 0 && (
+                  <div className="flex justify-between text-muted">
+                    <span className="min-w-0 truncate">{appliedCoupon?.code ?? appliedCoupon?.name}</span>
+                    <span className="shrink-0 text-danger tabular-nums">−{formatMoney(totals.couponDiscount, currency)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-muted">
                   <span>{t("pay.vat")}</span>
                   <span className="tabular-nums">{formatMoney(totals.tax, currency)}</span>
                 </div>
-                {/* On a part-paid sale the TOTAL is context and the amount to
-                    collect is the answer, so the emphasis follows the money
-                    rather than the arithmetic: total drops to a muted row and
-                    "To collect" becomes the figure. Paid in full they are the
-                    same number, and printing it twice says nothing — so there
-                    is one loud line either way. */}
-                {balance > 0 ? (
+                {balance > 0 && (
                   <>
                     <div className="flex justify-between text-muted">
                       <span>{t("pay.total")}</span>
@@ -680,127 +995,90 @@ export default function SellPage() {
                       <span className="tabular-nums">{formatMoney(balance, currency)}</span>
                     </div>
                   </>
-                ) : null}
-              </div>
-
-              {/* The one figure the cashier reads out and takes. */}
-              <div className="mt-tight flex items-baseline justify-between gap-comfortable rounded-card bg-ember-wash px-comfortable py-tight">
-                <span className="min-w-0 text-base font-semibold text-brand-foreground">
-                  {balance > 0 ? t("pay.collectNow") : t("pay.collect")}
-                </span>
-                <span className="shrink-0 whitespace-nowrap text-2xl font-semibold tabular-nums text-brand-foreground">
-                  {formatMoney(dueNow, currency)}
-                </span>
-              </div>
+                )}
+              </GoCard>
 
               {method === "cash" && (
-                <div className="mt-section">
-                  {/* The figure is the way to the pad — Square's pattern, and
-                      the reason there is no "type an amount" button under it. */}
-                  <button
-                    type="button"
-                    onClick={() => setPadOpen(true)}
-                    aria-label={`${t("pay.received")} ${formatMoney(tenderedMinor, currency)} — ${tp("cash.tapToChange")}`}
-                    className="flex min-h-11 w-full items-baseline justify-between gap-tight rounded-inner text-left active:bg-muted-wash"
-                  >
-                    <span className="flex items-center gap-inline text-sm text-muted">
-                      {t("pay.received")}
-                      <Pencil size={12} strokeWidth={2} aria-hidden />
-                    </span>
-                    <span className="text-md font-semibold tabular-nums">{formatMoney(tenderedMinor, currency)}</span>
-                  </button>
-                  {/* Loud only when there is money to count back. */}
-                  {exactTender ? (
-                    <p className="mt-tight text-base font-medium text-success">{tp("cash.noChange")}</p>
-                  ) : (
-                    <div className={`mt-tight flex items-baseline justify-between ${cashReady ? "text-success" : "text-muted"}`}>
-                      <span className="text-base font-medium">{t("pay.change")}</span>
-                      <span className="text-3xl font-semibold tabular-nums">
-                        {cashReady ? formatMoney(Math.max(0, changeMinor), currency) : "—"}
+                <>
+                  {/* Cash: the figure handed over (the amount now, until a
+                      cashier says otherwise) and what to give back, on a card
+                      of its own. The received figure IS the way to the pad. */}
+                  <div className="card-surface divide-y divide-line overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setPadOpen(true)}
+                      aria-label={`${t("pay.received")} ${formatMoney(tenderedMinor, currency)} — ${tp("cash.tapToChange")}`}
+                      className="flex min-h-14 w-full items-center justify-between gap-tight px-comfortable py-1 text-left"
+                    >
+                      <span className="min-w-0 text-md">{t("pay.received")}</span>
+                      <span
+                        className={cn(
+                          "flex min-h-11 min-w-[8rem] shrink-0 items-center justify-end rounded-inner bg-surface px-comfortable text-lg font-semibold tabular-nums ring-inset",
+                          padOpen || tenderTaka !== "" ? "ring-2 ring-ember" : "ring-1 ring-strong",
+                        )}
+                      >
+                        {formatMoney(tenderedMinor, currency)}
                       </span>
-                    </div>
-                  )}
-                  <TileGrid cols={2} className="mt-section min-[360px]:grid-cols-4">
-                    <Tile selected={exactTender} onClick={() => setTenderTaka("")} label={tp("cash.exact")} className="h-11" />
-                    {[500, 1000, 2000].map((amt) => (
-                      <Tile key={amt} selected={tenderTaka === String(amt)} onClick={() => setTenderTaka(String(amt))} label={`৳${amt}`} className="h-11 tabular-nums" />
+                    </button>
+                    {exactTender ? (
+                      <p className="flex min-h-14 items-center px-comfortable text-md font-medium text-success">{tp("cash.noChange")}</p>
+                    ) : (
+                      <div className={cn("flex min-h-14 items-baseline justify-between gap-tight px-comfortable py-tight font-semibold", cashReady ? "text-success" : "text-muted")}>
+                        <span className="shrink-0 text-xl">{t("pay.change")}</span>
+                        <span className="min-w-0 truncate text-right text-[clamp(1.75rem,9.5vw,2.5rem)]">
+                          {cashReady ? formatMoney(Math.max(0, changeMinor), currency) : "—"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <TileGrid cols={2} className="min-[360px]:grid-cols-4">
+                    <Tile selected={exactTender} onClick={() => setTenderTaka("")} label={tp("cash.exact")} className="h-11 [&>svg]:hidden" />
+                    {quickNotes(dueNow).map((amt) => (
+                      <Tile
+                        key={amt}
+                        selected={tenderTaka === String(amt)}
+                        onClick={() => setTenderTaka(String(amt))}
+                        label={formatPriceShort(amt * 100, currency)}
+                        className="h-11 tabular-nums [&>svg]:hidden"
+                      />
                     ))}
                   </TileGrid>
                   {(prefs.posKeypad || padOpen) && (
-                    <div className="mt-section">
-                      <Keypad
-                        onKey={(d) => setTenderTaka((v) => (v + d).slice(0, 7))}
-                        onBackspace={() => setTenderTaka((v) => v.slice(0, -1))}
-                      />
-                    </div>
+                    <Keypad
+                      onKey={(d) => setTenderTaka((v) => (v + d).slice(0, 7))}
+                      onBackspace={() => setTenderTaka((v) => v.slice(0, -1))}
+                    />
                   )}
-                </div>
+                </>
               )}
 
               {method === "bkash" && (
-                <div className="mt-section">
+                <GoCard>
                   <FormField
                     label={t("pay.txnLabel")}
                     placeholder={t("pay.txnPlaceholder")}
                     value={walletRef}
                     onChange={(e) => setWalletRef(e.target.value)}
                   />
-                  <p className="mt-tight text-sm text-muted">{t("pay.txnHint")}</p>
-                </div>
+                  <p className="text-sm text-muted">{t("pay.txnHint")}</p>
+                </GoCard>
               )}
 
               {method === "bangla_qr" && (
-                <p className="mt-section text-sm text-muted">
-                  {t("pay.qrHint")}
-                </p>
+                <GoCard>
+                  <p className="text-md text-fg">{t("pay.qrHint")}</p>
+                </GoCard>
               )}
-              </div>
             </>
           )}
         </div>
 
-        {/* The one thing that never scrolls away: what this costs, and the
-            next decision. On a phone it clears the Go tab bar. */}
-        <div
-          /* 84px, matching the v1 till exactly rather than being picked by
-             eye: the Go tab bar is a floating pill whose top edge is 76px up,
-             so this bar rides 8px above it. Both tills' bottom furniture rides
-             at the same height, which is what a design comparison needs. */
-          className="fixed inset-x-comfortable bottom-[calc(84px+env(safe-area-inset-bottom))] z-30 lg:static lg:mt-comfortable"
-        >
-          <ChromeBackdrop className="lg:hidden" />
-          <div className="flex items-center gap-comfortable rounded-full bg-inverse px-section py-tight shadow-float lg:rounded-card lg:px-comfortable">
-            {/* The bar states the figure ONCE.
-                It used to read "Total ৳575.00" beside a button reading "Take
-                ৳575.00" — the same number twice, eight pixels apart, which is
-                what the owner boxed. So the left side carries a figure only
-                where it is a DIFFERENT one: on a part-paid sale the total and
-                the amount to collect genuinely differ, and both are worth
-                having. Paid in full it says what the sale is instead — the
-                count, which the button cannot say — exactly as the v1 till's
-                collapsed bar does. */}
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm text-inverse-fg">
-                {balance > 0 ? t("footer.total") : t("footer.items", { count: items.length })}
-              </span>
-              {balance > 0 && (
-                <span className="block truncate text-md font-semibold tabular-nums text-inverse-fg">
-                  {formatMoney(totals.total, currency)}
-                </span>
-              )}
-            </span>
-            <Button
-              size="lg"
-              className="h-13 shrink-0 text-md font-semibold"
-              disabled={!canComplete}
-              loading={saving}
-              onClick={complete}
-            >
-              <span className="min-w-0 truncate">{footerLabel}</span>
-            </Button>
-          </div>
-        </div>
+        {/* The one thing that never scrolls away: the next decision, with the
+            money in it. On a phone it clears the Go tab bar. */}
+        {bar}
       </div>
+
+      <HeldSheet open={heldOpen && heldHere.length > 0} holds={heldHere} nameOf={heldName} onClose={() => setHeldOpen(false)} onSell={sellHeld} onPutBack={putBackHeld} />
 
       <CustomerPicker
         open={customerOpen}

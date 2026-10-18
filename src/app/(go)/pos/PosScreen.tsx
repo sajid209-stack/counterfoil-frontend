@@ -7,7 +7,7 @@ import { useEnumLabels } from "@/lib/labels";
 import { Banknote, Check, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, CreditCard, Pause, QrCode, Send, Percent, Plus, Search, Ticket, Trash2, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, FormField, Modal, Notice, SkeletonText, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { counterEvents, counterItems, eventDays, inventoryItem, inventoryLineId, levelOf, peekTicketCodeSettings, tillMethods, advanceMinimum, checkout, getAdvancePolicy, earnPoints, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isOpenOn, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type MembershipTier, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord } from "@/lib/api";
+import { counterEvents, counterItems, eventDays, inventoryItem, inventoryLineId, levelOf, peekTicketCodeSettings, tillMethods, advanceMinimum, checkout, getAdvancePolicy, earnPoints, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isOpenOn, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, placeHold, releaseHold, activeHolds, HOLDS_EVENT, CHECKOUT_HELD_FOR, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type MembershipTier, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord, type HoldView } from "@/lib/api";
 import { eventFromPrice as sharedEventFromPrice } from "@/lib/api/eventModel";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_TILL_ID } from "@/lib/session";
@@ -34,6 +34,8 @@ import { ActionBar } from "../_components/ActionBar";
 import { ActionTile, GoCard, Tile, TileGrid, TileLabel } from "../_components/Tiles";
 import { EventSheet } from "../_components/EventSheet";
 import { Keypad } from "../_components/Keypad";
+import { HeldButton, HeldSheet } from "./HeldSheet";
+import { holdEntries } from "../schedule/_lib/toCart";
 import { useMediaQuery } from "@/lib/useMedia";
 import { usePrefs } from "@/lib/prefs";
 import { ticketSnapshot } from "./_lib/handover";
@@ -401,15 +403,61 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
      from?" — a booking OR an on-a-date booking. The jump button below the
      date and search row exists exactly when the heading does. */
   const shelfHeading = shownItems.length > 0 && shown.length + shownEvents.length > 0;
-  /** Scroll the wall to the Shop heading and put the focus on it. A jump, not
-   *  a filter: the wall keeps showing everything. Smooth, unless the person has
-   *  asked their device for less motion. */
-  const jumpToShop = () => {
-    const el = document.getElementById("wall-shop");
-    if (!el) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
-    el.focus({ preventScroll: true });
+  /* Places held for people at this venue (not the till's own ten-minute
+     checkout holds). Followed through the holds event, and re-read now and then
+     because a hold with an end time lapses by itself. The snapshot is a string
+     of ids so it only changes when the set does. */
+  const heldSig = useSyncExternalStore(
+    (cb) => {
+      window.addEventListener(HOLDS_EVENT, cb);
+      const id = window.setInterval(cb, 20000);
+      return () => { window.removeEventListener(HOLDS_EVENT, cb); window.clearInterval(id); };
+    },
+    () => activeHolds().map((h) => `${h.id}:${h.heldFor === CHECKOUT_HELD_FOR ? 0 : 1}`).join(","),
+    () => "",
+  );
+  const heldHere = useMemo(
+    () => {
+      void heldSig;
+      return activeHolds().filter(
+        (h) => h.heldFor !== CHECKOUT_HELD_FOR && (h.locationId === tillLocationId || (productsQ.data?.data ?? []).find((p) => p.id === h.productId)?.locationIds.includes(tillLocationId)),
+      );
+    },
+    [heldSig, tillLocationId, productsQ.data],
+  );
+  const [heldOpen, setHeldOpen] = useState(false);
+  const heldName = (h: HoldView) => h.productName || productById(h.productId)?.name || "";
+  const putBackHeld = async (h: HoldView) => {
+    if (heldHere.length <= 1) setHeldOpen(false);
+    await releaseHold(h.id);
+    toast.success(t("held.putBackToast", { name: h.heldFor }), {
+      label: t("held.undo"),
+      run: async () => {
+        // A release is final in the store, so Undo places the same hold again.
+        const { id: _id, createdAt: _c, updatedAt: _u, status: _s, convertedOrderId: _o, ...rest } = h;
+        void _id; void _c; void _u; void _s; void _o;
+        await placeHold(rest);
+        toast.success(t("held.restored", { name: h.heldFor }));
+      },
+    });
+  };
+  /* The person it was held for is here: the hold goes, and exactly what was
+     kept goes into the sale — the same as the schedule's "Sell to". */
+  const sellHeld = async (h: HoldView) => {
+    const product = productById(h.productId);
+    const time = (h.slotStart ?? "").slice(11, 16);
+    await releaseHold(h.id);
+    setHeldOpen(false);
+    if (product && h.kind === "resource") {
+      const resource = resources.find((r) => r.id === h.resourceId);
+      const lines = holdEntries(h, product, resource, h.date);
+      if (lines.length) {
+        setCart((c) => [...c, ...lines]);
+        openCart();
+        return;
+      }
+    }
+    if (product) setSheet({ product, initial: null, preset: { date: h.date, time: time || undefined, resourceId: h.resourceId ?? undefined } });
   };
   const customTile = (
     <WallRow onClick={() => setCustomOpen(true)} icon={<Plus size={18} strokeWidth={2} />}>{t("customAmount")}</WallRow>
@@ -1223,21 +1271,9 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               {t("parkedBadge", { count: parked.length })}
             </button>
           )}
-          {/* A way down to the shop items, which sit at the end of a long wall.
-              Only where there are shop items to go to. It is a jump: it scrolls
-              to the Shop heading and does not filter. Its name is the words,
-              since the picture alone is a bag. */}
-          {shelfHeading && (
-            <button
-              type="button"
-              onClick={jumpToShop}
-              aria-label={t("wall.jumpToShop")}
-              title={t("wall.jumpToShop")}
-              className="card-surface flex size-11 shrink-0 items-center justify-center rounded-full text-fg active:bg-muted-wash"
-            >
-              <ShoppingBag size={20} strokeWidth={1.75} aria-hidden />
-            </button>
-          )}
+          {/* Places held for people. Only while there are some; the count rides
+              on the button and the name says it in words. */}
+          {heldHere.length > 0 && <HeldButton count={heldHere.length} onClick={() => setHeldOpen(true)} />}
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {productsQ.loading ? (
@@ -1342,27 +1378,29 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
       {/* Cart — fixed right panel on tablet/desktop; bottom drawer on phones */}
       {/* Sheets cover the tab bar (z-50 over z-40) — nothing tappable behind a modal cart. */}
       <div className={`${cartOpen ? "fixed inset-0 z-50 flex pb-[env(safe-area-inset-bottom)] lg:inset-auto lg:pb-0" : "hidden"} min-h-0 flex-col bg-surface lg:z-auto lg:flex lg:rounded-card lg:pb-0 lg:shadow-card lg:sticky lg:top-comfortable lg:h-[calc(100dvh-100px)] lg:max-h-none lg:self-start`}>
-        <div className="flex items-center gap-tight p-comfortable lg:border-b lg:border-line">
-          {cartOpen && (
-            <button type="button" onClick={closeCart} className="flex h-11 shrink-0 items-center gap-inline rounded-full pl-tight pr-comfortable text-base font-medium border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active lg:hidden">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-tight p-comfortable lg:border-b lg:border-line">
+          {cartOpen ? (
+            <button type="button" onClick={closeCart} className="flex h-11 shrink-0 items-center gap-inline justify-self-start rounded-full pl-tight pr-comfortable text-base font-medium border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active lg:hidden">
               <ChevronLeft size={18} strokeWidth={2} />{t("cart.back")}
             </button>
+          ) : (
+            <span aria-hidden />
           )}
           {/* The count changes as lines come and go, so it is announced as one
               atomic status — "2 items in cart" — rather than a bare number that
               a screen reader reads out of context. */}
-          <p role="status" aria-atomic="true" className="min-w-0 flex-1 truncate text-center text-md font-semibold">
+          <p role="status" aria-atomic="true" className="min-w-0 max-w-[10rem] truncate text-center text-md font-semibold">
             {t("phoneSummary", { count: unitCount })}
           </p>
           {/* Paused sales come back from here; pausing this one is the
               foot's left button, beside Take payment. */}
           {parked.length > 0 ? (
-            <button type="button" onClick={() => setParkOpen(true)} className="flex h-11 shrink-0 items-center gap-inline rounded-full bg-ember-wash px-comfortable text-sm font-medium text-brand-foreground">
+            <button type="button" onClick={() => setParkOpen(true)} className="flex h-11 shrink-0 items-center gap-inline justify-self-end rounded-full bg-ember-wash px-comfortable text-sm font-medium text-brand-foreground">
               {t("parkedBadge", { count: parked.length })}
             </button>
-          ) : cartOpen ? (
-            <span className="w-[5.5rem] shrink-0 lg:hidden" aria-hidden />
-          ) : null}
+          ) : (
+            <span aria-hidden />
+          )}
         </div>
         {/* One scrolling region for the sale itself — the lines AND the rows
             that modify them. They used to be separate: the lines were flex-1
@@ -1511,7 +1549,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               })}
               {cart.length > 1 && (
                 <div className="flex justify-end">
-                  <button type="button" onClick={() => setClearOpen(true)} className="flex h-11 items-center rounded-full px-comfortable text-sm text-muted active:bg-muted-wash">
+                  <button type="button" onClick={() => setClearOpen(true)} className="flex h-11 min-w-11 items-center rounded-full px-comfortable text-base font-semibold text-fg-secondary hover:bg-nav-hover active:bg-muted-wash">
                     {t("cart.clearAll")}
                   </button>
                 </div>
@@ -1601,6 +1639,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           }}
         />
       )}
+      <HeldSheet open={heldOpen && heldHere.length > 0} holds={heldHere} nameOf={heldName} onClose={() => setHeldOpen(false)} onSell={sellHeld} onPutBack={putBackHeld} />
       {sheet && <ProductSheet product={sheet.product} locationId={tillLocationId} currency={currency} initial={sheet.initial} preset={sheet.preset} seatsInCart={seatsInCart} onAdd={upsertEntry} onClose={() => setSheet(null)} team={teamQ.data?.data ?? []} resources={resources} />}
 
       {/* Checkout — the payment sheet. One sheet for every way of paying, and

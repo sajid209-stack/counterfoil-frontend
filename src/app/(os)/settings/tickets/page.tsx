@@ -1,5 +1,6 @@
 "use client";
 
+import { Printer, QrCode } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PageShell, Qr, useToast } from "@/components/ui";
@@ -72,7 +73,7 @@ export default function TicketCodesPage() {
               prints it, on white, because that is where it will be read. It is
               the illustration — the row's words are its name — so it is hidden
               from the accessibility tree. */}
-          <SettingRow label={t("tickets.printLabel")} description={t("tickets.printHelp")} labelFor={false} trailing>
+          <SettingRow icon={Printer} label={t("tickets.printLabel")} description={t("tickets.printHelp")} labelFor={false} trailing>
             {() => (
               /* A quiet tile behind a white one: a QR needs its white margin to
                  be read, and the tile gives it an edge without a stroke. */
@@ -84,7 +85,7 @@ export default function TicketCodesPage() {
             )}
           </SettingRow>
 
-          <SettingRow label={t("tickets.showText")} description={t("tickets.showTextDesc")} labelFor={false} trailing>
+          <SettingRow icon={QrCode} label={t("tickets.showText")} description={t("tickets.showTextDesc")} labelFor={false} trailing>
             {({ labelId, describedBy }) => (
               <Switch checked={form.showText} onChange={(v) => set({ showText: v })} labelledBy={labelId} describedBy={describedBy} />
             )}

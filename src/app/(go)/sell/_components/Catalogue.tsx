@@ -2,62 +2,79 @@
 
 /* ── What the till can sell ────────────────────────────────────────────────
  *
- * The same wall as the v1 till — search, groups, and a card per booking with
- * its live state — extracted here as its own component because in v2 it has
- * two homes: the left column on a tablet, where it is always open, and a
- * section of the scroll on a phone, where it folds away once the sale has
- * something in it.
+ * The cart till's wall, drawn the same way: a search pill, then image-first
+ * cards in a two-column phone grid, shop items under a quiet "Shop" heading.
+ * The tap does what the glyph says — "+" adds at once, "›" opens the choices
+ * inside the sale below.
  *
- * That fold is the one behavioural difference. On a phone a grid of twenty
- * bookings between the top of the page and the sale is a screenful of
- * scrolling to check what you just added, which is exactly the trip the cart
- * used to be.
+ * It has two homes (a column on a tablet, a section of the scroll on a phone)
+ * and the page renders it in exactly one of them.
  */
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Search } from "lucide-react";
-import { ProductThumb, SkeletonText } from "@/components/ui";
-import type { Product, Resource, Staff } from "@/lib/api";
+import { Plus, Search, ShoppingBag } from "lucide-react";
+import { SkeletonText } from "@/components/ui";
+import type { InventoryItemView, Product, Resource, Staff } from "@/lib/api";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { formatClock, formatDay, formatPriceShort } from "@/lib/format";
+import { HeldButton } from "../../pos/HeldSheet";
+import { BookingGlyph, WallHeading, WallRow, WallTile } from "../../_components/WallTile";
+import { GENERIC_UNITS, ShopGlyph, productNeedsSheet, tilePrice } from "../_lib/wall";
+
+const NOW_MINUTES = 12 * 60;
 
 export function Catalogue({
   products,
   resources,
   team,
+  shop,
   currency,
   query,
   onQuery,
   onPick,
+  onTapItem,
   onCustom,
+  countOf,
+  shopCountOf,
+  heldCount,
+  onHeld,
   loading,
 }: {
   products: Product[];
   resources: Resource[];
   team: Staff[];
+  shop: InventoryItemView[];
   currency: string;
   query: string;
   onQuery: (q: string) => void;
   onPick: (p: Product) => void;
+  onTapItem: (i: InventoryItemView) => void;
   onCustom: () => void;
+  countOf: (productId: string) => number;
+  shopCountOf: (itemId: string) => number;
+  /** Places this venue is holding for people; the button shows only while > 0. */
+  heldCount: number;
+  onHeld: () => void;
   loading: boolean;
 }) {
   const t = useTranslations("sell");
-  const subtitle = useBehaviourSubtitle();
   const tp = useTranslations("pos");
+  const subtitle = useBehaviourSubtitle();
 
   // Field passes issue from Quick pass, not from the wall.
-  const sellable = useMemo(() => products.filter((p) => p.bookingType !== "BT-14"), [products]);
-
-  /* Catalogue groups are gone, so the wall is everything sellable narrowed by
-     the search box alone. */
-  const shown = sellable.filter((p) => {
-    const q = query.trim().toLowerCase();
-    return !q || p.name.toLowerCase().includes(q);
-  });
+  const q = query.trim().toLowerCase();
+  const shown = useMemo(
+    () => products.filter((p) => p.bookingType !== "BT-14").filter((p) => !q || p.name.toLowerCase().includes(q)),
+    [products, q],
+  );
+  const shownItems = useMemo(
+    () => shop.filter((i) => !q || i.name.toLowerCase().includes(q) || (i.sku ?? "").toLowerCase().includes(q)),
+    [shop, q],
+  );
+  const shelfHeading = shownItems.length > 0 && shown.length > 0;
 
   const liveWords = useMemo(
     () => ({
@@ -74,89 +91,98 @@ export function Catalogue({
     [tp],
   );
 
+  const customTile = (
+    <WallRow onClick={onCustom} icon={<Plus size={18} strokeWidth={2} />}>
+      {t("catalogue.custom")}
+    </WallRow>
+  );
+
   return (
     <div className="flex min-h-0 min-w-0 flex-col gap-comfortable">
-      <div data-focus-host className="card-surface flex h-[52px] min-w-0 items-center gap-tight rounded-full px-section focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember">
-        <Search size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
-        <input
-          value={query}
-          onChange={(e) => onQuery(e.target.value)}
-          aria-label={t("catalogue.searchPlaceholder")}
-          placeholder={t("catalogue.searchPlaceholder")}
-          className="h-full w-full bg-transparent text-base placeholder:text-faint"
-        />
-        {query && (
-          <button type="button" onClick={() => onQuery("")} className="text-sm text-muted hover:text-fg">
-            {t("catalogue.clear")}
-          </button>
-        )}
+      <div className="flex items-center gap-tight">
+        <div
+          data-focus-host
+          className="card-surface flex h-11 min-w-0 flex-1 items-center gap-tight rounded-full px-comfortable focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember"
+        >
+          <Search size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
+          <input
+            value={query}
+            onChange={(e) => onQuery(e.target.value)}
+            aria-label={t("catalogue.searchPlaceholder")}
+            placeholder={t("catalogue.searchPlaceholder")}
+            className="-my-px h-11 w-full min-w-0 text-ellipsis bg-transparent text-base placeholder:text-muted"
+          />
+          {query && (
+            <button type="button" onClick={() => onQuery("")} className="-mr-2 flex h-11 shrink-0 items-center px-tight text-sm text-muted hover:text-fg">
+              {t("catalogue.clear")}
+            </button>
+          )}
+        </div>
+        {/* Places held for people. Only while there are some; the count rides
+            on the button and the name says it in words. */}
+        {heldCount > 0 && <HeldButton count={heldCount} onClick={onHeld} />}
       </div>
-
 
       <div className="min-w-0">
         {loading ? (
-          <div aria-busy="true" className="p-section"><SkeletonText lines={3} /></div>
+          <div aria-busy="true" className="card-surface p-section"><SkeletonText lines={3} /></div>
         ) : (
           <div className="grid grid-cols-2 gap-comfortable sm:grid-cols-3 xl:grid-cols-4">
             {shown.map((p) => {
-              const live = posLiveState(p, DEMO_TODAY, 12 * 60, liveWords);
-              const from = Math.min(
-                ...p.tiers
-                  .filter((x) => x.active)
-                  .map((x) => x.price)
-                  .concat(p.sections?.map((s) => s.price) ?? [])
-                  .concat([Infinity]),
-              );
+              const live = posLiveState(p, DEMO_TODAY, NOW_MINUTES, liveWords);
+              const n = countOf(p.id);
               return (
-                <div
+                <WallTile
                   key={p.id}
-                  data-focus-host
-                  className="card-surface flex overflow-hidden transition-shadow duration-quick hover:shadow-md focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember active:scale-[0.99]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => onPick(p)}
-                    className="flex min-w-0 flex-1 flex-col gap-comfortable p-comfortable text-left transition-colors duration-quick active:bg-muted-wash"
-                  >
-                    <span className="flex w-full items-start justify-between gap-tight">
-                      <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="card" />
-                      {live && live.tone !== "ok" && (
-                        <span
-                          className={`shrink-0 whitespace-nowrap rounded-full px-tight py-inline text-sm font-medium ${live.tone === "none" ? "bg-danger-wash text-fg" : "bg-ember-wash text-brand-foreground"}`}
-                        >
-                          {live.tone === "none" ? tp("sheet.soldOut") : tp("live.limited")}
-                        </span>
-                      )}
-                    </span>
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="line-clamp-3 text-md font-semibold leading-snug">{p.name}</span>
-                      <span className="mt-inline text-xl font-bold leading-none text-ember">
-                        {formatPriceShort(from, currency)}
-                      </span>
-                      <span className="mt-tight line-clamp-2 text-sm leading-tight text-muted">
-                        {subtitle(p, { resources, team })}
-                      </span>
-                      {live && (
-                        <span
-                          className={`mt-inline flex items-center gap-inline text-sm leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-brand-foreground" : "text-success"}`}
-                        >
-                          <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
-                          <span className="min-w-0 truncate">{live.text}</span>
-                        </span>
-                      )}
-                    </span>
-                  </button>
-                </div>
+                  onClick={() => onPick(p)}
+                  opensSheet={productNeedsSheet(p)}
+                  ariaLabel={n > 0 ? tp("wall.inSaleAria", { name: p.name, count: n }) : undefined}
+                  image={p.images?.[0]?.url}
+                  glyph={<BookingGlyph bookingType={p.bookingType} />}
+                  name={p.name}
+                  price={formatPriceShort(tilePrice(p, DEMO_TODAY, NOW_MINUTES), currency)}
+                  meta={subtitle(p, { resources, team })}
+                  live={live}
+                  count={n}
+                  flag={live && live.tone === "low" ? tp("live.limited") : undefined}
+                  soldOut={!!live && live.tone === "none"}
+                  soldOutLabel={tp("sheet.soldOut")}
+                />
               );
             })}
-            <button
-              type="button"
-              onClick={onCustom}
-              className="flex min-h-[140px] flex-col items-center justify-center gap-tight rounded-card border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-muted-wash active:bg-muted-wash"
-            >
-              <Plus size={20} strokeWidth={1.5} />
-              <span className="text-sm">{t("catalogue.custom")}</span>
-            </button>
+            {shelfHeading && customTile}
+            {shelfHeading && (
+              <WallHeading icon={<ShoppingBag size={16} strokeWidth={1.75} aria-hidden />}>
+                {tp("shop.chip")}
+              </WallHeading>
+            )}
+            {shownItems.map((i) => {
+              const gone = i.tracked && i.onHand <= 0;
+              const low = i.tracked && !gone && i.onHand <= i.lowAt;
+              const inCart = shopCountOf(i.id);
+              return (
+                <WallTile
+                  key={i.id}
+                  onClick={() => onTapItem(i)}
+                  ariaLabel={inCart > 0 ? tp("wall.inSaleAria", { name: i.name, count: inCart }) : undefined}
+                  glyph={<ShopGlyph kind={i.kind} />}
+                  name={i.name}
+                  price={formatPriceShort(i.price, currency)}
+                  meta={
+                    GENERIC_UNITS.has(i.unit.trim().toLowerCase())
+                      ? i.kind === "merch"
+                        ? null
+                        : tp(`shop.kind.${i.kind}`)
+                      : tp("shop.per", { unit: i.unit })
+                  }
+                  live={low ? { tone: "low", text: tp("shop.left", { count: i.onHand, unit: i.unit }) } : null}
+                  count={inCart}
+                  soldOut={gone}
+                  soldOutLabel={tp("sheet.soldOut")}
+                />
+              );
+            })}
+            {!shelfHeading && customTile}
           </div>
         )}
       </div>

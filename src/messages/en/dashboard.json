@@ -72,5 +72,6 @@
   "showMore": "Show more",
   "showLess": "Show less",
   "floatAmount": "{amount} float",
-  "lastNDays": "Last {count} days"
+  "lastNDays": "Last {count} days",
+  "figuresLabel": "Figures"
 }

@@ -3,7 +3,6 @@
   "catalogue": {
     "searchPlaceholder": "Search bookings",
     "clear": "Clear",
-    "all": "All",
     "custom": "Other amount"
   },
   "sale": {
@@ -15,7 +14,8 @@
     "remove": "Remove",
     "done": "Done",
     "slotCount": "{count} slots",
-    "dayCount": "{count} days"
+    "dayCount": "{count} days",
+    "addMore": "Add"
   },
   "step": {
     "date": "Date",
@@ -97,13 +97,12 @@
     "collectNow": "Collect now"
   },
   "footer": {
-    "total": "Total",
     "nothingYet": "Nothing to pay yet",
     "takeAmount": "Take {amount}",
     "completeAmount": "Complete {amount}",
     "overLimit": "Needs a manager",
     "needReason": "Add a reason for the discount",
-    "items": "{count, plural, one {# item} other {# items}}"
+    "barLabel": "This sale"
   },
   "custom": {
     "title": "Other amount",
@@ -114,23 +113,10 @@
     "whatWasSold": "What was sold"
   },
   "rows": {
-    "customer": "Customer",
-    "walkIn": "Walk-in",
-    "discount": "Discount",
-    "none": "None",
     "overLimit": "More than your {limit}% limit. Ask a manager.",
     "reason": "Reason",
     "reasonPlaceholder": "Why this discount?",
-    "payNow": "Paying now",
-    "inFull": "In full",
-    "half": "Half",
-    "advanceSummary": "{now} now · {later} later",
-    "deposit": "Advance · {later} on arrival",
-    "depositExplain": "Take it all now, not {later} on arrival",
-    "advanceAmount": "Amount to take now",
-    "advancePlaceholder": "Amount",
-    "minimum": "Min {amount}",
-    "belowMin": "Take at least {amount} now."
+    "codeUpdated": "The promo code now takes off a different amount. Check the total."
   },
   "flex": {
     "any": "Any",

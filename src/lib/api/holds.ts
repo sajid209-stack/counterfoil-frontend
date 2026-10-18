@@ -48,6 +48,14 @@ const holds = createResource<Hold>("holds", "Hold", {
 
 export const peekHolds = (): Hold[] => holds.peek();
 
+/** Fired on window after any hold is placed, released, converted or extended,
+ *  so a screen showing holds (the till's Held button) can follow them. */
+export const HOLDS_EVENT = "cf-holds";
+const changed = <T,>(r: T): T => {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(HOLDS_EVENT));
+  return r;
+};
+
 /** Resolve a stored hold against the clock. */
 export function holdView(h: Hold): HoldView {
   const now = Date.now();
@@ -108,18 +116,18 @@ export function placeHold(input: HoldInput): Promise<ApiResult<Hold>> {
     heldFor: input.heldFor.trim(),
     status: "held",
     convertedOrderId: null,
-  } as Omit<Hold, "id" | "createdAt" | "updatedAt">);
+  } as Omit<Hold, "id" | "createdAt" | "updatedAt">).then(changed);
 }
 
 /** Put the capacity back on sale (§61.3). */
 export function releaseHold(id: ID): Promise<ApiResult<Hold>> {
-  return holds.update(id, { status: "released" });
+  return holds.update(id, { status: "released" }).then(changed);
 }
 
 /** Turn a hold into a real booking (§61.6). The hold is closed rather than
  *  deleted, so the calendar can still explain where the booking came from. */
 export function convertHold(id: ID, orderId: ID): Promise<ApiResult<Hold>> {
-  return holds.update(id, { status: "converted", convertedOrderId: orderId });
+  return holds.update(id, { status: "converted", convertedOrderId: orderId }).then(changed);
 }
 
 export function extendHold(id: ID, minutes: number): Promise<ApiResult<Hold>> {

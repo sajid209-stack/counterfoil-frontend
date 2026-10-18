@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ShieldCheck } from "lucide-react";
+import { Mail, Phone, ShieldCheck, UserRound } from "lucide-react";
 import { Avatar, PageShell, useToast } from "@/components/ui";
 import { LanguagePicker } from "@/components/LocaleProvider";
 import { useApiQuery } from "@/lib/useApi";
@@ -111,7 +111,7 @@ export default function MyProfilePage() {
         />
 
         <SettingsSection title={t("profile.detailsTitle")} description={t("profile.detailsDesc")}>
-          <SettingRow label={t("profile.name")} error={nameError}>
+          <SettingRow icon={UserRound} label={t("profile.name")} error={nameError}>
             {({ id, describedBy }) => (
               <input
                 id={id}
@@ -123,12 +123,12 @@ export default function MyProfilePage() {
               />
             )}
           </SettingRow>
-          <SettingRow label={t("profile.email")} description={t("profile.emailDesc")}>
+          <SettingRow icon={Mail} label={t("profile.email")} description={t("profile.emailDesc")}>
             {({ id, describedBy }) => (
               <input id={id} type="email" value={form.email} onChange={(e) => set({ email: e.target.value })} aria-describedby={describedBy} className={controlCls(false)} />
             )}
           </SettingRow>
-          <SettingRow label={t("profile.phone")} description={t("profile.phoneDesc")}>
+          <SettingRow icon={Phone} label={t("profile.phone")} description={t("profile.phoneDesc")}>
             {({ id, describedBy }) => (
               <input id={id} type="tel" inputMode="tel" value={form.phone} onChange={(e) => set({ phone: e.target.value })} aria-describedby={describedBy} className={controlCls(false)} />
             )}
@@ -149,7 +149,7 @@ export default function MyProfilePage() {
             two-step setting and the list of places you are signed in, and two
             lists of sessions is two answers to one question. */}
         <SettingsSection title={t("profile.securityTitle")} description={t("profile.securityDesc")}>
-          <SettingRow label={t("profile.securityRow")} labelFor={false}>
+          <SettingRow icon={ShieldCheck} label={t("profile.securityRow")} labelFor={false}>
             {() => (
               <Link
                 href="/settings/security"

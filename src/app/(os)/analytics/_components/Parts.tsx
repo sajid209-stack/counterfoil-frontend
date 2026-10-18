@@ -33,7 +33,7 @@ export function GroupHeading({ id, children }: { id: string; children: React.Rea
  *  desktop it is nothing at all. */
 export function Group({ children }: { children: React.ReactNode }) {
   const wide = useMediaQuery(MD);
-  return wide ? <>{children}</> : <div className="card-surface divide-y divide-hairline overflow-hidden">{children}</div>;
+  return wide ? <>{children}</> : <div className="card-surface divide-y divide-hairline overflow-hidden max-sm:contents max-sm:divide-y-0">{children}</div>;
 }
 
 /** Cards side by side from lg. Not a grid at all on a phone, where they are rows. */
@@ -111,23 +111,23 @@ export function Section({
 
   if (!wide && !pinned) {
     return (
-      <section data-card={id} aria-labelledby={`an-${id}`} className={cn("relative min-w-0", className)}>
+      <section data-card={id} aria-labelledby={`an-${id}`} className={cn("card-surface relative min-w-0 sm:rounded-none sm:border-0 sm:bg-transparent sm:shadow-none", className)}>
         <h3 className="m-0 text-md font-normal">
           <button
             type="button"
             aria-expanded={open}
             aria-controls={bodyId}
             onClick={() => setOpen((o) => !o)}
-            className="flex min-h-14 w-full items-center gap-comfortable px-card py-comfortable text-left transition-colors duration-quick active:bg-muted-wash"
+            className="flex min-h-14 w-full items-center gap-comfortable rounded-card px-card py-comfortable text-left transition-colors duration-quick active:bg-muted-wash"
           >
             <span className="min-w-0 flex-1">
-              <span id={`an-${id}`} className="block text-base font-medium">
+              <span id={`an-${id}`} className="block text-base font-medium max-sm:text-sm max-sm:text-muted">
                 {title}
               </span>
-              {summary && <span className="mt-0.5 block text-sm text-muted">{summary}</span>}
+              {summary && <span className="mt-0.5 block text-sm text-muted max-sm:mt-tight max-sm:text-lg max-sm:font-semibold max-sm:leading-tight max-sm:text-fg">{summary}</span>}
             </span>
-            <span className="flex shrink-0 items-center gap-inline text-sm font-medium text-muted">
-              {open ? t("card.hide") : t("card.show")}
+            <span className="flex shrink-0 items-center gap-inline text-sm font-medium text-muted max-sm:h-8 max-sm:w-8 max-sm:justify-center max-sm:rounded-full max-sm:bg-subtle">
+              <span className="max-sm:sr-only">{open ? t("card.hide") : t("card.show")}</span>
               <ChevronDown size={16} strokeWidth={1.75} aria-hidden className={cn("transition-transform duration-quick", open && "rotate-180")} />
             </span>
           </button>

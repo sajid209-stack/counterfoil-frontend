@@ -2,6 +2,7 @@
 
 import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { CalendarDays, Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { DatePicker } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { GoCard, TILE_CHOSEN, TILE_IDLE, TILE_OFF, Tile, TileGrid, tileClass } from "./Tiles";
@@ -60,7 +61,7 @@ export interface DateTilesLabels {
 }
 
 /** The days a sale can be for: separate tiles, then "More dates" with the
- *  calendar. A day picked from the calendar joins the row as its own tile. */
+ *  calendar. A day picked from the calendar replaces the second tile. */
 export function DateTiles({
   dates,
   value,
@@ -80,15 +81,22 @@ export function DateTiles({
   labels: DateTilesLabels;
   caption?: (date: string) => { text: string; low?: boolean } | null;
 }) {
+  const tp = useTranslations("pos");
   const [pickerOpen, setPickerOpen] = useState(false);
-  const shown = useMemo(() => (!value || dates.includes(value) ? dates : [...dates, value].sort()), [dates, value]);
+  // Always two day tiles (+ "More dates"): the first two open days, and a day
+  // picked from the calendar takes the second tile's place, shown chosen.
+  const shown = useMemo(() => {
+    const base = dates.slice(0, 2);
+    if (value && !base.includes(value)) return base.length >= 2 ? [base[0], value] : [...base, value];
+    return base;
+  }, [dates, value]);
   const label = (d: string) =>
     d === today ? labels.today : d === tomorrow ? labels.tomorrow : new Date(`${d}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short" });
   const sub = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
   return (
     <div className="flex flex-col gap-tight">
-      <TileGrid cols={3} className="sm:grid-cols-6">
+      <TileGrid cols={3}>
         {shown.map((d) => {
           const on = value === d;
           const cap = caption?.(d) ?? null;
@@ -105,10 +113,10 @@ export function DateTiles({
           type="button"
           aria-expanded={pickerOpen}
           onClick={() => setPickerOpen((v) => !v)}
-          className={tileClass({ className: "min-h-16 gap-0.5 text-sm font-medium" })}
+          className={tileClass({ className: "min-h-16" })}
         >
-          <CalendarDays size={18} strokeWidth={1.75} aria-hidden className="text-muted" />
-          {labels.pick}
+          <CalendarDays size={14} strokeWidth={2} aria-hidden className="absolute right-1.5 top-1.5 text-muted" />
+          <TileText label={labels.pick} sub={tp("dateTiles.pickDay")} />
         </button>
       </TileGrid>
       {pickerOpen && (

@@ -1,5 +1,6 @@
 "use client";
 
+import { Building2, Clock, Coins, Globe, Lock, Mail, MessageSquareText, Phone, ReceiptText } from "lucide-react";
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { PageShell, Select, controlClass, useToast } from "@/components/ui";
@@ -159,7 +160,7 @@ export default function BusinessProfilePage() {
       ) : (
         <div className="flex flex-col gap-section pb-hero">
           <SettingsSection title={t("business.profileTitle")} description={t("business.profileDesc")}>
-            <SettingRow label={t("business.businessName")} error={nameErr}>
+            <SettingRow icon={Building2} label={t("business.businessName")} error={nameErr}>
               {({ id, describedBy }) => (
                 <input
                   id={id}
@@ -172,19 +173,19 @@ export default function BusinessProfilePage() {
                 />
               )}
             </SettingRow>
-            <SettingRow label={t("business.phone")} description={t("business.phoneDesc")} error={phoneErr}>
+            <SettingRow icon={Phone} label={t("business.phone")} description={t("business.phoneDesc")} error={phoneErr}>
               {textInput("phone", phoneErr, "tel", "tel")}
             </SettingRow>
-            <SettingRow label={t("business.email")} error={emailErr}>
+            <SettingRow icon={Mail} label={t("business.email")} error={emailErr}>
               {textInput("email", emailErr, "email", "email")}
             </SettingRow>
-            <SettingRow label={t("business.website")} description={t("business.websiteDesc")} error={websiteErr}>
+            <SettingRow icon={Globe} label={t("business.website")} description={t("business.websiteDesc")} error={websiteErr}>
               {textInput("website", websiteErr, "url", "url")}
             </SettingRow>
           </SettingsSection>
 
           <SettingsSection title={t("business.receiptsTitle")} description={t("business.receiptsDesc")}>
-            <SettingRow label={t("business.footer")} description={t("business.footerDesc")} layout="stack">
+            <SettingRow icon={MessageSquareText} label={t("business.footer")} description={t("business.footerDesc")} layout="stack">
               {({ id, describedBy }) => (
                 <>
                   <textarea
@@ -203,7 +204,7 @@ export default function BusinessProfilePage() {
                 </>
               )}
             </SettingRow>
-            <SettingRow label={t("business.receiptPreview")} description={t("business.receiptPreviewDesc")} layout="stack" labelFor={false}>
+            <SettingRow icon={ReceiptText} label={t("business.receiptPreview")} description={t("business.receiptPreviewDesc")} layout="stack" labelFor={false}>
               {() => (
                 <div className="max-w-xs rounded-control bg-muted-wash px-section py-major">
                   <ReceiptHeader
@@ -223,7 +224,7 @@ export default function BusinessProfilePage() {
           </SettingsSection>
 
           <SettingsSection title={t("business.regionalTitle")} description={t("business.regionalDesc")}>
-            <SettingRow label={t("business.currency")} description={t("business.currencyDesc")}>
+            <SettingRow icon={Coins} label={t("business.currency")} description={t("business.currencyDesc")}>
               {({ id, describedBy }) => (
                 <Select
                   id={id}
@@ -234,7 +235,7 @@ export default function BusinessProfilePage() {
                 />
               )}
             </SettingRow>
-            <SettingRow label={t("common.timezone")} description={t("business.timezoneDesc")}>
+            <SettingRow icon={Clock} label={t("common.timezone")} description={t("business.timezoneDesc")}>
               {({ id, describedBy }) => (
                 <Select
                   id={id}
@@ -248,7 +249,7 @@ export default function BusinessProfilePage() {
           </SettingsSection>
 
           <SettingsSection title={t("business.historyTitle")} description={t("business.historyDesc")}>
-            <SettingRow label={t("business.pastEditLock")} description={lockHelp} error={lockErr}>
+            <SettingRow icon={Lock} label={t("business.pastEditLock")} description={lockHelp} error={lockErr}>
               {({ id, describedBy }) => (
                 <SuffixInput
                   id={id}

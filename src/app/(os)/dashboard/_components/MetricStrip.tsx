@@ -1,8 +1,18 @@
 "use client";
 
 import { Skeleton } from "@/components/ui";
-import { FIGURES_SHOWN, FigureBand, type useFigureFold } from "@/components/ui/StatStrip";
+import { FIGURES_SHOWN, FigureBand, type StatIconTone, type useFigureFold } from "@/components/ui/StatStrip";
 import { cn } from "@/lib/cn";
+
+/** Wash and foreground of a figure card's icon (the same pairs StatStrip uses). */
+const ICON_TONE: Record<StatIconTone, string> = {
+  ember: "bg-ember-wash text-brand-foreground",
+  success: "bg-success-wash text-success",
+  info: "bg-info-wash text-info",
+  warning: "bg-warning-wash text-warning",
+  danger: "bg-danger-wash text-danger",
+  neutral: "bg-subtle text-fg-secondary",
+};
 
 export interface Metric {
   key: string;
@@ -15,6 +25,9 @@ export interface Metric {
   /** A class for that line where it is a problem rather than a fact. */
   contextTone?: string;
   tone?: "warning" | "danger";
+  /** Phone only: the soft round icon on the figure's card, and its tint. */
+  icon?: React.ReactNode;
+  iconTone?: StatIconTone;
   /** Drawn at the end of the label row (an info button). */
   action?: React.ReactNode;
 }
@@ -61,7 +74,7 @@ export function MetricStrip({
       <FigureBand
         label={label}
         loading={loading}
-        items={items.map(({ key, label: l, value, delta, context, contextTone, tone }) => ({ key, label: l, value, delta, context, contextTone, tone }))}
+        items={items.map(({ key, label: l, value, delta, context, contextTone, tone, icon, iconTone }) => ({ key, label: l, value, delta, context, contextTone, tone, icon, iconTone }))}
       />
     );
   }
@@ -71,6 +84,15 @@ export function MetricStrip({
         <div key={m.key} data-metric={m.key} className={cn("card-surface min-w-0 p-comfortable", fold?.folds && !fold.open && i >= FIGURES_SHOWN && "max-sm:hidden")}>
           {/* The same anatomy the desktop tile has: label and change on one line,
               the figure, then what the figure does not say on its own. */}
+          {m.icon && (
+            /* Phone: the icon at the left and the info button at the right of one line, so the figure keeps the whole card. */
+            <div className="mb-tight flex items-start justify-between gap-tight sm:hidden">
+              <span aria-hidden className={cn("flex h-8 w-8 items-center justify-center rounded-full [&>svg]:h-4 [&>svg]:w-4", ICON_TONE[m.iconTone ?? "neutral"])}>
+                {m.icon}
+              </span>
+              {!loading && m.action}
+            </div>
+          )}
           <div className="flex min-h-[22px] items-start justify-between gap-tight">
             <p className="min-w-0 flex-1 pt-0.5 text-xs font-medium leading-snug text-muted">{m.label}</p>
             {!loading && m.delta}
@@ -88,7 +110,7 @@ export function MetricStrip({
               >
                 {m.value}
               </p>
-              {m.action}
+              <span className={cn(!!m.icon && "max-sm:hidden")}>{m.action}</span>
             </div>
           )}
           {!loading && m.context && <p className={cn("mt-inline text-xs leading-snug", m.contextTone ?? "text-muted")}>{m.context}</p>}

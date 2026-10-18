@@ -58,7 +58,9 @@
     "tiny": "<1%",
     "barLabel": "Where {total} went: {parts}",
     "filterBy": "Show only {category}",
-    "clearFilter": "Show all categories again"
+    "clearFilter": "Show all categories again",
+    "showAll": "Show all",
+    "showFewer": "Show fewer"
   },
   "table": {
     "ref": "Ref",

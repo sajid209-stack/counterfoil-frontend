@@ -6,6 +6,9 @@ import { useCallback, useSyncExternalStore } from "react";
  *  the CSS that does it agree on where the line is. */
 export const MD = "(min-width: 48rem)";
 
+/** Tailwind's sm. The phone/tablet line the OS phone rules use (docs/mobile.md). */
+export const SM = "(min-width: 40rem)";
+
 /** Wide enough that a seven-column week still leaves each day room for a
  *  second line. Below it the subtitle truncates instead of informing, which
  *  is worse than not drawing it: (1280 − sidebar − padding − gutter) / 7 is

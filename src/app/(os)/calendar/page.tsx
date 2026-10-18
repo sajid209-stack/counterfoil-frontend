@@ -8,7 +8,7 @@ import { Button, Checkbox, DateField, Notice, SegmentedControl, Select, Skeleton
 import { PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { LG, MD, XL, useMediaQuery } from "@/lib/useMedia";
+import { LG, MD, SM, XL, useMediaQuery } from "@/lib/useMedia";
 import {
   bookingEditable,
   checkInBooking,
@@ -108,6 +108,8 @@ export default function CalendarPage() {
   // A phone corrects itself on mount, before paint.
   const wide = useMediaQuery(MD, true);
   const compact = !wide;
+  /** Below sm: Today, the arrows and the view switch are drawn as rounded pills. */
+  const phone = !useMediaQuery(SM, true);
   /** Wide enough for a week block to carry a second line. */
   const roomy = useMediaQuery(XL, true);
   /* The week grid gives up its columns later than the rest of the page does.
@@ -976,11 +978,11 @@ export default function CalendarPage() {
             of that row. */}
         <div className="flex flex-wrap items-center justify-between gap-x-comfortable gap-y-tight">
           <div className="flex min-w-0 flex-wrap items-center gap-tight">
-            <Button variant="secondary" size="sm" onClick={() => setCursor(openingDate())}>
+            <Button variant="secondary" size="sm" className="max-sm:rounded-full" onClick={() => setCursor(openingDate())}>
               {t("today")}
             </Button>
             <div className="flex items-center gap-inline">
-              <Button variant="secondary" size="icon" aria-label={t("previous")} onClick={() => step(-1)}>
+              <Button variant="secondary" size="icon" className="max-sm:rounded-full" aria-label={t("previous")} onClick={() => step(-1)}>
                 <ChevronLeft size={16} strokeWidth={1.5} />
               </Button>
               {/* Between the arrows, which is where you look for it — and a
@@ -996,7 +998,7 @@ export default function CalendarPage() {
               >
                 {rangeLabel}
               </h2>
-              <Button variant="secondary" size="icon" aria-label={t("next")} onClick={() => step(1)}>
+              <Button variant="secondary" size="icon" className="max-sm:rounded-full" aria-label={t("next")} onClick={() => step(1)}>
                 <ChevronRight size={16} strokeWidth={1.5} />
               </Button>
             </div>
@@ -1045,16 +1047,32 @@ export default function CalendarPage() {
               order runs the same way the eye does. On a phone it takes the
               width of its own row and the tabs share it. */}
           <div className="flex w-full items-center gap-section md:w-auto">
-            <Tabs
-              className="w-full md:w-auto [&>button]:flex-1 md:[&>button]:flex-none max-md:[&>[aria-selected=true]]:font-semibold max-md:[&>[aria-selected=true]]:text-fg"
-              items={[
-                { value: "day", label: t("tabDay") },
-                { value: "week", label: t("tabWeek") },
-                { value: "month", label: t("tabMonth") },
-              ]}
-              value={view}
-              onChange={(v) => setView(v as View)}
-            />
+            {phone ? (
+              <SegmentedControl
+                aria-label={t("title")}
+                size="sm"
+                fullWidth
+                className="rounded-full [&>button]:rounded-full"
+                options={[
+                  { value: "day", label: t("tabDay") },
+                  { value: "week", label: t("tabWeek") },
+                  { value: "month", label: t("tabMonth") },
+                ]}
+                value={view}
+                onChange={(v) => setView(v as View)}
+              />
+            ) : (
+              <Tabs
+                className="w-full md:w-auto [&>button]:flex-1 md:[&>button]:flex-none max-md:[&>[aria-selected=true]]:font-semibold max-md:[&>[aria-selected=true]]:text-fg"
+                items={[
+                  { value: "day", label: t("tabDay") },
+                  { value: "week", label: t("tabWeek") },
+                  { value: "month", label: t("tabMonth") },
+                ]}
+                value={view}
+                onChange={(v) => setView(v as View)}
+              />
+            )}
             {/* New booking, on the calendar's own toolbar — the page has no
                 header row. On a phone it is the bar's plus. */}
             <PagePrimaryButton primary={primary} />
@@ -1192,6 +1210,7 @@ export default function CalendarPage() {
               moveSnap={moveSnap}
               blockClass={blockClass}
               dotClass={dotClass}
+              toneLabel={(tone) => t(TONE_KEY[tone])}
               chipText={chipText}
               openCount={(d, h) => weekOpen.get(`${isoDate(d)}|${h}`) ?? 0}
               isPastHour={(d, h) => isoDate(d) < today || (isoDate(d) === today && (h + 1) * 60 <= nowMin)}
@@ -1228,6 +1247,7 @@ export default function CalendarPage() {
               compact={compact}
               blockClass={blockClass}
               dotClass={dotClass}
+              toneLabel={(tone) => t(TONE_KEY[tone])}
               dayHeading={(d) =>
                 new Intl.DateTimeFormat("en-GB", {
                   weekday: "long",

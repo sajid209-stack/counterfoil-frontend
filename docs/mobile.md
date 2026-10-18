@@ -161,3 +161,51 @@ minimal, relaxing. The shared pieces are `src/app/(go)/_components/Tiles.tsx`.
 6. **Icons in a soft round** (40px, `bg-subtle`) when an action is drawn as a picture.
 7. **No category chips on the till.** The wall shows everything; shop items sit under a quiet
    "Shop" heading.
+
+### Owner update (2026-10-18, second message)
+- **Dates are three tiles: Today · Tomorrow · More dates.** A date picked from More dates takes
+  Tomorrow's place (chosen), so the row never grows past three.
+- **No shop jump. A "Held" button (lock) sits beside the search instead**, shown only while this
+  venue has places on hold (not the till's own checkout holds), carrying their count. It opens the
+  list of what is held — who for, what, when, until when — and each can be sold (released and put
+  in the cart) or put back on sale. Selling the shelf is by scrolling the wall or searching.
+- **The scrolling till (/sell) speaks the cart till's card language** (§5).
+
+## 6. OS on a phone, modern and minimal (2026-10-18)
+
+The owner's references: separate rounded KPI cards with an icon and a change pill (Apixer), and
+card-per-question dashboards with a period pill and compact tables (the dark/light Overview,
+Customers, Orders, Payments sets). Same colours, same tokens; desktop and tablet (≥ 640px)
+unchanged.
+
+1. **Head.** The bar names the page; under it one quiet line with the date or scope ("Wed 29 Jul"),
+   and the page's scope control as a small pill on the right (a menu, not a full-width bar).
+2. **Figures are separate cards** in a 2-column grid, 8px apart: a 32px soft-round icon in a tint
+   of the figure's own tone (top left), the change as a small pill (top right), the label in 13px
+   muted, the value at 22–24px semibold. Four at most on a phone; more behind "Show all N".
+3. **Charts are cards:** 16px semibold title on the left, the period as a pill menu on the right,
+   the headline figure, a legend of dots where there is more than one series, a smooth line or
+   rounded bars, dashed gridlines, quiet axes.
+4. **Lists are cards:** a title with a small icon, then either two-line rows or a compact table
+   (12px muted column heads, 14px rows, numbers right-aligned). Three to five rows, then "View all".
+5. **Air:** 16px page gutter, 12px between cards, 16px inside them. No hairline-heavy blocks, no
+   chip for a normal state, one accent per card.
+
+**Pieces** (all in `src/components/ui`, all phone-only: from `sm` up they draw what they always did):
+
+- `StatStrip` / `FigureBand` (and `MetricStrip` on the OS pages): each item takes an optional `icon` (a lucide
+  glyph, 16px is applied) and `iconTone` (`"ember" | "success" | "info" | "warning" | "danger" | "neutral"`,
+  default neutral). An item with no icon draws none. `delta` goes top-right, the label is 13px muted, the value
+  is 20px at 320px and 24px from 360px. `FIGURES_SHOWN` is 4; the "Show all N" fold starts beyond it
+  (`useFigureFold`, `FigureToggle`, which a page should draw only when `fold.folds`). The `data-stat-band`
+  hook and `data-metric` / `data-figure` attributes are unchanged. `StatItem.tone` still colours the value;
+  `iconTone` colours the icon.
+- `PageShell`: `subtitle` (a line under the stood-down heading, e.g. the date) and `scope` (a node
+  right-aligned on that line, usually a `PeriodPill`). Both are drawn below `sm` only; omit them and the page is
+  unchanged. The page should draw its own desktop control in a `!phone` branch (`const phone = !useMediaQuery(SM)`,
+  `SM` is exported from `@/lib/useMedia`).
+- `PeriodPill` `({ value, onChange, options, label, align? })`: the kit `Select` as a 36px pill with a 44px target
+  (`Select` gained `pill`, used with `bare`). `label` is its accessible name.
+- Card patterns used by the figure pages: a card title can lead with a 28px soft icon that is `sm:hidden`
+  (dashboard `CardIcon`); a card that is one block on desktop and two on a phone uses `card-surface` with
+  `sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none` on the inner blocks (Expenses summary).

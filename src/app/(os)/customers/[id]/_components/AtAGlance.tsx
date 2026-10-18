@@ -42,9 +42,9 @@ export function AtAGlance({
 
   return (
     <Panel title={t("glanceTitle")}>
-      <dl className="flex flex-col">
+      <dl className="flex flex-col max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-section max-sm:gap-y-comfortable">
         {rows.map((r) => (
-          <div key={r.key} className="flex items-baseline justify-between gap-comfortable border-b border-hairline py-tight first:pt-0 last:border-b-0 last:pb-0">
+          <div key={r.key} className="flex items-baseline justify-between gap-comfortable border-b border-hairline py-tight first:pt-0 last:border-b-0 last:pb-0 max-sm:flex-col max-sm:items-start max-sm:gap-inline max-sm:border-0 max-sm:py-0">
             <dt className="text-base text-muted">{r.label}</dt>
             <dd data-glance={r.key} className="text-base font-medium tabular-nums text-fg">
               {r.value}
@@ -52,7 +52,7 @@ export function AtAGlance({
           </div>
         ))}
         {stats.outstanding > 0 && (
-          <div className="flex items-baseline justify-between gap-comfortable py-tight last:pb-0">
+          <div className="flex items-baseline justify-between gap-comfortable py-tight last:pb-0 max-sm:col-span-2 max-sm:py-0">
             <dt className="text-base text-muted">{t("statOutstanding")}</dt>
             <dd data-glance="owes" className="text-base font-medium tabular-nums">
               <Link

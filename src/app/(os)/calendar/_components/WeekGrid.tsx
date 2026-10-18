@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Lock, Plus } from "lucide-react";
 import { MarketBadge } from "@/components/ui";
+import { AgendaCard } from "./AgendaCard";
 import { cn } from "@/lib/cn";
 import { formatClockMin } from "@/lib/format";
 import { toTime } from "@/lib/schedule";
@@ -20,6 +21,7 @@ import {
   shortClockRange,
   TONE_CLASS,
   type CalEvent,
+  type EventTone,
   type Ghost,
 } from "./model";
 
@@ -73,6 +75,7 @@ export function WeekGrid({
   compact = false,
   blockClass,
   dotClass,
+  toneLabel,
   openCount,
   onCreate,
   bookLabel,
@@ -116,6 +119,8 @@ export function WeekGrid({
      their hatching either way: blocked is blocked whatever colour means. */
   blockClass: (e: CalEvent) => string;
   dotClass: (e: CalEvent) => string;
+  /** The word for a booking's state, drawn on the phone's day list. */
+  toneLabel?: (tone: EventTone) => string;
   /** How many things can still be booked starting in this hour of this day. */
   openCount?: (day: Date, hour: number) => number;
   /** Empty time was clicked, or dragged across: open the booking panel there.
@@ -414,6 +419,7 @@ export function WeekGrid({
         emptyLabel={emptyLabel}
         blockClass={blockClass}
         dotClass={dotClass}
+        toneLabel={toneLabel}
         openHoursOf={(d) =>
           hours
             .filter((h) => !(isPastHour?.(d, h) ?? false))
@@ -1025,6 +1031,7 @@ function CompactWeek({
   emptyLabel,
   blockClass,
   dotClass,
+  toneLabel,
   openHoursOf,
   onCreate,
   chipText,
@@ -1040,6 +1047,7 @@ function CompactWeek({
   emptyLabel: string;
   blockClass: (e: CalEvent) => string;
   dotClass: (e: CalEvent) => string;
+  toneLabel?: (tone: EventTone) => string;
   openHoursOf?: (d: Date) => { hour: number; count: number }[];
   onCreate?: (day: Date, hour: number, anchor: DOMRect) => void;
   chipText?: ChipText;
@@ -1115,36 +1123,14 @@ function CompactWeek({
         <ul className="flex flex-col gap-tight p-card">
           {agenda.map((e) => (
             <li key={e.id}>
-              <button
-                type="button"
+              <AgendaCard
+                event={e}
+                time={e.allDay ? allDayLabel.slice(0, 3) : clockOf(e.start, true)}
                 onClick={onSelect ? () => onSelect(e) : undefined}
-                className={cn(
-                  "flex w-full items-start gap-comfortable rounded-control border px-comfortable py-tight text-left",
-                  blockClass(e),
-                )}
-              >
-                <span className="w-16 shrink-0 whitespace-nowrap text-xs tabular-nums opacity-70">
-                  {e.allDay ? allDayLabel.slice(0, 3) : clockOf(e.start, true)}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-0.5 text-sm font-medium leading-tight">
-                    {e.source && <MarketBadge id={e.source.id} />}
-                    {e.locked && <Lock size={11} strokeWidth={2.5} className="shrink-0" />}
-                    {e.tone === "arrived" && (
-                      <Check size={11} strokeWidth={3} className="shrink-0 text-success" />
-                    )}
-                    {/* break-words, not truncate: this is the list that exists
-                        so the name does not have to be guessed. */}
-                    <span className="min-w-0 break-words">{e.title}</span>
-                    {e.sourceLabel && <span className="sr-only">, {e.sourceLabel}</span>}
-                  </span>
-                  {e.subtitle && (
-                    <span className="mt-0.5 block break-words text-xs leading-tight opacity-70">
-                      {e.subtitle}
-                    </span>
-                  )}
-                </span>
-              </button>
+                blockClass={blockClass}
+                toneLabel={toneLabel}
+                check
+              />
             </li>
           ))}
         </ul>

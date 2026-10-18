@@ -10,6 +10,7 @@ export { Field, FormField, AffixInput, controlClass, controlShellClass } from ".
 export type { FieldVariant } from "./Field";
 export { Select } from "./Select";
 export type { SelectOption } from "./Select";
+export { PeriodPill } from "./PeriodPill";
 export { PageShell } from "./PageShell";
 export { EmptyState } from "./EmptyState";
 export { Modal, ConfirmDialog, scrimClass, useDialogBehaviour } from "./Modal";
@@ -21,7 +22,7 @@ export { ToastProvider, useToast } from "./Toast";
 export { ActionMenu } from "./ActionMenu";
 export type { ActionMenuItem } from "./ActionMenu";
 export { StatStrip, DeltaPill } from "./StatStrip";
-export type { StatItem } from "./StatStrip";
+export type { StatItem, StatIconTone } from "./StatStrip";
 export { Tabs, tabPanelProps } from "./Tabs";
 export { Switch } from "./Switch";
 export { Checkbox, Radio, RadioGroup } from "./Checkbox";

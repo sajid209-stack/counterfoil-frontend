@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Mail, PanelBottom, Phone, ReceiptText, ShoppingCart } from "lucide-react";
 import { Button, PageShell, controlClass, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -142,7 +142,7 @@ export default function PrivacyPage() {
           </SettingsSection>
 
           <SettingsSection title={t("privacy.contactTitle")} description={t("privacy.contactDesc")}>
-            <SettingRow label={t("privacy.email")} description={t("privacy.emailDesc")} error={emailErr ?? contactErr}>
+            <SettingRow icon={Mail} label={t("privacy.email")} description={t("privacy.emailDesc")} error={emailErr ?? contactErr}>
               {({ id, describedBy }) => (
                 <input
                   id={id}
@@ -157,7 +157,7 @@ export default function PrivacyPage() {
                 />
               )}
             </SettingRow>
-            <SettingRow label={t("privacy.phone")} description={t("privacy.phoneDesc")} error={phoneErr}>
+            <SettingRow icon={Phone} label={t("privacy.phone")} description={t("privacy.phoneDesc")} error={phoneErr}>
               {({ id, describedBy }) => (
                 <input
                   id={id}
@@ -175,17 +175,17 @@ export default function PrivacyPage() {
           </SettingsSection>
 
           <SettingsSection title={t("privacy.showTitle")} description={t("privacy.showDesc")}>
-            <SettingRow label={t("privacy.footer")} description={t("privacy.footerDesc")} labelFor={false} trailing>
+            <SettingRow icon={PanelBottom} label={t("privacy.footer")} description={t("privacy.footerDesc")} labelFor={false} trailing>
               {({ labelId, describedBy }) => (
                 <Switch checked={form.showInFooter} onChange={(on) => set({ showInFooter: on })} labelledBy={labelId} describedBy={describedBy} />
               )}
             </SettingRow>
-            <SettingRow label={t("privacy.checkout")} description={t("privacy.checkoutDesc")} labelFor={false} trailing>
+            <SettingRow icon={ShoppingCart} label={t("privacy.checkout")} description={t("privacy.checkoutDesc")} labelFor={false} trailing>
               {({ labelId, describedBy }) => (
                 <Switch checked={form.showAtCheckout} onChange={(on) => set({ showAtCheckout: on })} labelledBy={labelId} describedBy={describedBy} />
               )}
             </SettingRow>
-            <SettingRow label={t("privacy.receipts")} description={t("privacy.receiptsDesc")} labelFor={false} trailing>
+            <SettingRow icon={ReceiptText} label={t("privacy.receipts")} description={t("privacy.receiptsDesc")} labelFor={false} trailing>
               {({ labelId, describedBy }) => (
                 <Switch checked={false} disabled onChange={() => {}} labelledBy={labelId} describedBy={describedBy} />
               )}

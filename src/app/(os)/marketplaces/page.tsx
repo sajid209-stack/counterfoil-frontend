@@ -135,7 +135,7 @@ export default function MarketplacesPage() {
                       <Link href={`/marketplaces/${c.id}`} className="flex min-h-14 min-w-0 flex-1 flex-col gap-inline py-comfortable pl-card pr-tight">
                         <span className="flex items-center gap-tight">
                           <span className="min-w-0 truncate text-base font-medium">{meta.name}</span>
-                          <StatusPill tone={c.status === "connected" ? "success" : c.status === "attention" ? "warning" : "info"}>
+                          <StatusPill className={c.status === "connected" ? "max-sm:hidden" : undefined} tone={c.status === "connected" ? "success" : c.status === "attention" ? "warning" : "info"}>
                             {t(`status.${c.status}`)}
                           </StatusPill>
                         </span>

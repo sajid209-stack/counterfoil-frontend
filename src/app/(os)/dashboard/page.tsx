@@ -4,9 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Check, ListFilter } from "lucide-react";
-import { AreaChart, Button, DeltaPill, EmptyState, SegmentedControl, Select, Skeleton, StatStrip, StatusPill, type StatItem } from "@/components/ui";
+import { Activity, ArrowRight, CalendarClock, Check, ChevronDown, ListFilter, ShoppingBag, UserCheck, Users, Wallet } from "lucide-react";
+import { AreaChart, Button, DeltaPill, EmptyState, PeriodPill, SegmentedControl, Select, Skeleton, StatStrip, StatusPill, type StatItem } from "@/components/ui";
 import { PageShell } from "@/components/ui/PageShell";
+import { deltaShows } from "@/components/ui/StatStrip";
 import { useApiQuery } from "@/lib/useApi";
 import {
   getOperator,
@@ -32,7 +33,7 @@ import { formatClock, formatDateTime, formatDay, formatMoney, formatMoneyCompact
 import { useEnumLabels } from "@/lib/labels";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { cn } from "@/lib/cn";
-import { MD, useMediaQuery } from "@/lib/useMedia";
+import { MD, SM, useMediaQuery } from "@/lib/useMedia";
 import { ACTIVITY_ICON, SEVERITY_ICON_CLASS, useActivityText } from "../activity/_components/parts";
 import { MetricStrip, type Metric } from "./_components/MetricStrip";
 
@@ -100,6 +101,11 @@ function Marker({ kind, severity, word }: { kind: ActivityEvent["kind"]; severit
   );
 }
 
+/** The small soft icon that leads a card's title on a phone (docs/mobile.md section 6). Not drawn from sm. */
+function CardIcon({ children }: { children: React.ReactNode }) {
+  return <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-subtle text-fg-secondary sm:hidden [&>svg]:h-3.5 [&>svg]:w-3.5">{children}</span>;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const t = useTranslations("dashboard");
@@ -113,6 +119,8 @@ export default function DashboardPage() {
      has been caught by that more than once. The phone gets a different PAGE,
      not a squeezed desktop. */
   const wide = useMediaQuery(MD);
+  /* A phone is below sm (640px). `wide` (md) also covers 640-767, which keeps the layout it has always had. */
+  const phone = !useMediaQuery(SM);
   const op = useApiQuery(() => getOperator(), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100, filters: { status: "active" } }), []);
   const counters = useApiQuery(() => listCounters({ pageSize: 1 }), []);
@@ -336,8 +344,11 @@ export default function DashboardPage() {
       value: formatMoney(revenueAnimated),
       // Says what the delta beside it is measured against, which depends on
       // the scope: a week is compared with the week before, not with a day.
-      context: scope === "today" ? t("vsLastWeek") : t("vsWeekBefore"),
+      // On a phone the line goes with the pill: "vs ..." under no change reads as a dangling label.
+      context: phone && !deltaShows(revenue, revenuePrev) ? undefined : scope === "today" ? t("vsLastWeek") : t("vsWeekBefore"),
       delta: <DeltaPill now={revenue} then={revenuePrev} />,
+      icon: <Wallet aria-hidden />,
+      iconTone: "ember",
     },
     {
       key: "sold",
@@ -347,6 +358,8 @@ export default function DashboardPage() {
       // the whole rather than repeating the label ("of places sold").
       context: t("pctSold", { pct: soldPct }),
       delta: <DeltaPill now={sold} then={soldPrev} />,
+      icon: <Users aria-hidden />,
+      iconTone: "info",
     },
     {
       key: "arrived",
@@ -354,6 +367,8 @@ export default function DashboardPage() {
       value: <>{arrived} <span className="text-lg text-muted">{t("arrivedOf", { total: sold })}</span></>,
       context: t("noShow", { pct: noShowPct }),
       contextTone: noShowPct >= 30 ? "text-danger" : undefined,
+      icon: <UserCheck aria-hidden />,
+      iconTone: "success",
     },
     {
       key: "ahead",
@@ -361,6 +376,8 @@ export default function DashboardPage() {
       value: formatMoney(ahead),
       context: t("next7Days"),
       delta: <DeltaPill now={ahead} then={aheadPrev} />,
+      icon: <CalendarClock aria-hidden />,
+      iconTone: "warning",
     },
   ];
   /* The shared tiles take their own shape of item; `danger` and the strip's
@@ -445,17 +462,27 @@ export default function DashboardPage() {
       {!wide && (
         <div className="-mt-2 mb-inline flex items-center justify-between gap-tight">
           <h2 className={heading}>{t("revenueTrend")}</h2>
-          <Select
-            bare
-            align="end"
-            value={String(trendDays)}
-            onChange={(v) => setTrendDays(Number(v) as 7 | 14 | 30)}
-            aria-label={t("revenueTrend")}
-            triggerClassName="text-sm font-medium text-muted"
-            /* "Last 30 days", not "30 days": the menu is the only thing that says
-               what the chart's range is. */
-            options={([7, 14, 30] as const).map((d) => ({ value: String(d), label: t("lastNDays", { count: d }) }))}
-          />
+          {/* "Last 30 days", not "30 days": the menu is the only thing that says
+              what the chart's range is. A phone gets it as a pill (docs/mobile.md
+              section 6); 640-767 keeps the plain menu it has always had. */}
+          {phone ? (
+            <PeriodPill
+              value={String(trendDays)}
+              onChange={(v) => setTrendDays(Number(v) as 7 | 14 | 30)}
+              label={t("revenueTrend")}
+              options={([7, 14, 30] as const).map((d) => ({ value: String(d), label: t("lastNDays", { count: d }) }))}
+            />
+          ) : (
+            <Select
+              bare
+              align="end"
+              value={String(trendDays)}
+              onChange={(v) => setTrendDays(Number(v) as 7 | 14 | 30)}
+              aria-label={t("revenueTrend")}
+              triggerClassName="text-sm font-medium text-muted"
+              options={([7, 14, 30] as const).map((d) => ({ value: String(d), label: t("lastNDays", { count: d }) }))}
+            />
+          )}
         </div>
       )}
       <div className="flex flex-wrap items-start justify-between gap-tight">
@@ -582,7 +609,10 @@ export default function DashboardPage() {
   const activityCard = (
     <div className={card}>
       <div className="flex items-baseline justify-between gap-tight px-card pb-tight pt-card">
-        <h2 className={heading}>{t("activityTitle")}</h2>
+        <span className="flex min-w-0 items-center gap-tight">
+          <CardIcon><Activity aria-hidden /></CardIcon>
+          <h2 className={heading}>{t("activityTitle")}</h2>
+        </span>
         {/* One compact control: the filter glyph is the Select's own icon slot,
             so glyph and label share a flex row with a real gap and cannot
             overlap. `bare` draws no box, and the popover is a card of our own. */}
@@ -650,13 +680,18 @@ export default function DashboardPage() {
        labelled pairs, and the empty state says which window it is empty for. */
     <div className={card}>
       <div className="flex items-baseline justify-between gap-tight px-card pb-tight pt-card">
-        <h2 className={heading}>{t("recentOrders")}</h2>
+        <span className="flex min-w-0 items-center gap-tight">
+          <CardIcon><ShoppingBag aria-hidden /></CardIcon>
+          <h2 className={heading}>{t("recentOrders")}</h2>
+        </span>
         {/* The count is the scope's, not the rows' — otherwise the header would
             describe the slice rather than the day. */}
         <span className="shrink-0 whitespace-nowrap text-xs text-muted">{t("orderCount", { count: scopeOrders.length })}</span>
       </div>
 
-      {scopeOrders.length === 0 ? (
+      {scopeOrders.length === 0 && phone ? (
+        <p className="px-card pb-tight text-sm text-muted">{scope === "today" ? t("noOrdersToday") : t("noOrdersThisWeek")}</p>
+      ) : scopeOrders.length === 0 ? (
         <EmptyState title={scope === "today" ? t("noOrdersToday") : t("noOrdersThisWeek")} />
       ) : wide ? (
         /* A real table element, so each header cell is announced with its
@@ -737,7 +772,7 @@ export default function DashboardPage() {
                 <span className="min-w-0 truncate text-xs text-muted">
                   <span className="font-mono">{o.reference}</span> · {formatRelative(o.createdAt, now)}
                 </span>
-                <StatusPill status={o.status} />
+                <span className={cn(o.status === "paid" && "max-sm:hidden")}><StatusPill status={o.status} /></span>
               </span>
             </button>
           ))}
@@ -793,8 +828,32 @@ export default function DashboardPage() {
     </div>
   );
 
+  /* The date line and scope, drawn once. A phone puts them under the page name as a quiet date with a
+     small pill menu (docs/mobile.md section 6); from sm the page keeps its own row with the two-option bar. */
+  const dateLine =
+    scope === "today"
+      ? formatDay(TODAY, { weekday: true })
+      : wide
+        ? `${formatDay(dayShift(TODAY, -6), { weekday: true })} – ${formatDay(TODAY, { weekday: true })}`
+        : `${formatDay(dayShift(TODAY, -6))} – ${formatDay(TODAY)}`;
+  const scopeOptions = [
+    { value: "today", label: t("today") },
+    { value: "week", label: t("thisWeek") },
+  ];
+
   return (
-    <PageShell title={wide ? op.data?.name || t("title") : t("title")}>
+    <PageShell
+      title={wide ? op.data?.name || t("title") : t("title")}
+      subtitle={phone ? <span aria-live="polite">{dateLine}</span> : undefined}
+      scope={
+        phone ? (
+          <span className="flex items-center gap-tight">
+            <span aria-hidden className="text-sm text-muted">{t("figuresLabel")}</span>
+            <PeriodPill value={scope} onChange={(v) => setScope(v as "today" | "week")} label={t("scopeLabel")} options={scopeOptions} />
+          </span>
+        ) : undefined
+      }
+    >
       {/* The page's one control: which days it is showing, and the days in
           words beside it on the same line. "Today · Wed 29 Jul" said Today
           twice, a word apart from the toggle's own label, so the caption is
@@ -803,13 +862,10 @@ export default function DashboardPage() {
           loudest thing on the screen for the quietest decision on it — and the
           week reads as a range without weekdays, so both fit 320px. The venue
           chooser lives in the bar and governs the whole console. */}
+      {!phone && (
       <div className="mb-section flex items-center justify-between gap-section">
         <p aria-live="polite" className="min-w-0 truncate text-sm text-muted">
-          {scope === "today"
-            ? formatDay(TODAY, { weekday: true })
-            : wide
-              ? `${formatDay(dayShift(TODAY, -6), { weekday: true })} – ${formatDay(TODAY, { weekday: true })}`
-              : `${formatDay(dayShift(TODAY, -6))} – ${formatDay(TODAY)}`}
+          {dateLine}
         </p>
         {/* Scope, not actions — a dashboard is a place to look. */}
         <div className={cn("shrink-0", wide && "w-60")}>
@@ -819,13 +875,11 @@ export default function DashboardPage() {
             value={scope}
             onChange={(v) => setScope(v as "today" | "week")}
             aria-label={t("scopeLabel")}
-            options={[
-              { value: "today", label: t("today") },
-              { value: "week", label: t("thisWeek") },
-            ]}
+            options={scopeOptions}
           />
         </div>
       </div>
+      )}
 
       {loading ? (
         /* The labels are known before the figures are, so the strip states
@@ -867,9 +921,16 @@ export default function DashboardPage() {
           {trendCard}
           {activityCard}
           {ordersCard}
-          <Button variant="secondary" aria-expanded={more} aria-controls="dash-more" onClick={() => setMore((m) => !m)} className="w-full">
+          <button
+            type="button"
+            aria-expanded={more}
+            aria-controls="dash-more"
+            onClick={() => setMore((m) => !m)}
+            className="mx-auto flex h-11 items-center gap-inline rounded-full px-comfortable text-sm font-medium text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash"
+          >
             {more ? t("showLess") : t("showMore")}
-          </Button>
+            <ChevronDown size={16} strokeWidth={1.75} aria-hidden className={cn("transition-transform duration-quick", more && "rotate-180")} />
+          </button>
           {more && (
             <div id="dash-more" className="flex flex-col gap-section">
               {glanceCard}

@@ -90,8 +90,11 @@ export function SettingRow({
   layout = "inline",
   labelFor = true,
   trailing = false,
+  icon: Icon,
   children,
 }: {
+  /** Phone only: a soft 32px glyph at the row's left, like a phone's own settings list. */
+  icon?: LucideIcon;
   label: string;
   description?: React.ReactNode;
   error?: string;
@@ -126,7 +129,13 @@ export function SettingRow({
     >
       {/* The label's first line sits level with the middle of a 44px control,
           so a row reads as one line rather than a caption beside a box. */}
-      <div className={cn("min-w-0", inline && !trailing && "sm:pt-3")}>
+      <div className={cn("min-w-0", inline && !trailing && "sm:pt-3", Icon && "flex items-start gap-comfortable")}>
+        {Icon && (
+          <span aria-hidden className="mt-px flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-subtle text-fg-secondary sm:hidden">
+            <Icon size={16} strokeWidth={1.75} />
+          </span>
+        )}
+        <div className="min-w-0">
         {labelFor ? (
           <label id={labelId} htmlFor={id} className="text-base font-medium text-fg">
             {label}
@@ -141,6 +150,7 @@ export function SettingRow({
             {description}
           </p>
         )}
+        </div>
       </div>
       <div className="min-w-0">
         {children({ id, labelId, describedBy })}

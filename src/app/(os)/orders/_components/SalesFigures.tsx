@@ -4,7 +4,9 @@ import { useTranslations } from "next-intl";
 import type { SalesSummary } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
-import { FIGURES_SHOWN, FigureToggle, useFigureFold } from "@/components/ui/StatStrip";
+import { FIGURES_SHOWN, FigureBand, FigureToggle, useFigureFold } from "@/components/ui/StatStrip";
+import { SM, useMediaQuery } from "@/lib/useMedia";
+import { CircleDollarSign, Clock, Package, ReceiptText, Wallet } from "lucide-react";
 
 /**
  * The figures for whatever the filters match, as one quiet row.
@@ -45,6 +47,17 @@ export function SalesFigures({ summary: s, loading }: { summary: SalesSummary; l
     { key: "paid", label: t("paid"), value: formatMoney(s.paid), raw: s.paid },
   ];
   const fold = useFigureFold(items.length);
+  /* A phone draws the shared figure cards (docs/mobile.md section 6); from sm the band below is unchanged. */
+  const phone = !useMediaQuery(SM);
+  if (phone) {
+    const icons = { sales: [<CircleDollarSign key="i" />, "ember"], owed: [<Clock key="i" />, "warning"], orders: [<ReceiptText key="i" />, "info"], items: [<Package key="i" />, "neutral"], paid: [<Wallet key="i" />, "success"] } as const;
+    return (
+      <FigureBand
+        loading={loading}
+        items={items.map((i) => ({ key: i.key, label: i.label, value: i.value, tone: i.tone, icon: icons[i.key as keyof typeof icons][0], iconTone: icons[i.key as keyof typeof icons][1] }))}
+      />
+    );
+  }
   return (
     <>
     <dl

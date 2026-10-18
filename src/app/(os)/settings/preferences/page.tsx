@@ -1,5 +1,6 @@
 "use client";
 
+import { Contrast, Languages, PanelLeftClose, Sun, Zap } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { PageShell } from "@/components/ui";
@@ -42,16 +43,16 @@ export default function PreferencesPage() {
     <PageShell title={t("preferences.title")} description={t("preferences.description")}>
       <div className="flex flex-col gap-section pb-hero">
         <SettingsSection title={t("preferences.displayTitle")} description={t("preferences.displayDesc")}>
-          <SettingRow label={t("preferences.appearance")} description={t("preferences.appearanceDesc")} labelFor={false}>
+          <SettingRow icon={Sun} label={t("preferences.appearance")} description={t("preferences.appearanceDesc")} labelFor={false}>
             {({ labelId, describedBy }) => <AppearancePicker showLabel={false} labelledBy={labelId} describedBy={describedBy} />}
           </SettingRow>
-          <SettingRow label={t("preferences.language")} description={t("preferences.languageDesc")} labelFor={false}>
+          <SettingRow icon={Languages} label={t("preferences.language")} description={t("preferences.languageDesc")} labelFor={false}>
             {({ labelId, describedBy }) => <LanguagePicker showLabel={false} labelledBy={labelId} describedBy={describedBy} />}
           </SettingRow>
         </SettingsSection>
 
         <SettingsSection title={t("preferences.accessTitle")} description={t("preferences.accessDesc")} divided>
-          <SettingRow label={t("preferences.reduceMotion")} description={t("preferences.reduceMotionDesc")} labelFor={false} trailing>
+          <SettingRow icon={Zap} label={t("preferences.reduceMotion")} description={t("preferences.reduceMotionDesc")} labelFor={false} trailing>
             {({ labelId, describedBy }) => (
               <Switch
                 checked={prefs.reduceMotion}
@@ -61,7 +62,7 @@ export default function PreferencesPage() {
               />
             )}
           </SettingRow>
-          <SettingRow label={t("preferences.contrast")} description={t("preferences.contrastDesc")} labelFor={false} trailing>
+          <SettingRow icon={Contrast} label={t("preferences.contrast")} description={t("preferences.contrastDesc")} labelFor={false} trailing>
             {({ labelId, describedBy }) => (
               <Switch
                 checked={prefs.moreContrast}
@@ -74,7 +75,7 @@ export default function PreferencesPage() {
         </SettingsSection>
 
         <SettingsSection title={t("preferences.workspaceTitle")}>
-          <SettingRow label={t("preferences.sidebar")} description={t("preferences.sidebarDesc")} labelFor={false} trailing>
+          <SettingRow icon={PanelLeftClose} label={t("preferences.sidebar")} description={t("preferences.sidebarDesc")} labelFor={false} trailing>
             {({ labelId, describedBy }) => (
               <Switch
                 checked={prefs.sidebarCollapsed}

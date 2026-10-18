@@ -8,7 +8,9 @@ import { ActionMenu, DateRangePicker, FilterBar, FilterSearch, Select, formatRan
 import { PageAction, PageShell } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
-import { MD, useMediaQuery } from "@/lib/useMedia";
+import { MD, SM, useMediaQuery } from "@/lib/useMedia";
+import { DATE_PILL_PHONE } from "@/components/ui/PeriodPill";
+import { cn } from "@/lib/cn";
 import { formatClockOf, formatMoney } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
 import {
@@ -94,6 +96,8 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
   const router = useRouter();
   const sp = useSearchParams();
   const wide = useMediaQuery(MD);
+  /* Below sm: the card-per-thing phone layout. 640-767 keeps its earlier shape. */
+  const phone = !useMediaQuery(SM);
   const describe = useLineText();
 
   const [range, setRange] = useState(() => rangeFrom(sp.get("from"), sp.get("to")));
@@ -243,7 +247,7 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
         days: (count) => t("range.days", { count }),
         pickEnd: t("range.pickEnd"),
       }}
-      className="w-full shrink-0 md:w-auto"
+      className={cn("w-full shrink-0 md:w-auto", DATE_PILL_PHONE)}
     />
   );
   const typeFilter = {
@@ -263,6 +267,7 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
   /* Two buttons and an overflow, no more: the statement is the one thing most
      visits want to take away; the rest of what this table can do waits in the menu. */
   const menu: ActionMenuItem[] = [
+    ...(phone ? [{ key: "download", label: t("activity.download"), icon: <Download size={16} strokeWidth={1.5} />, onSelect: () => void downloadStatement() }] : []),
     {
       key: "expand",
       label: t(allOpen ? "activity.collapseAll" : "activity.expandAll"),
@@ -301,7 +306,7 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
             <div className="flex items-center justify-between gap-tight">
               <h2 id="fin-activity-title" className="min-w-0 text-md font-semibold">{t("activity.title")}</h2>
               <div className="flex shrink-0 items-center gap-tight">
-                <PageAction label={t("activity.download")} icon={<Download size={15} strokeWidth={1.5} />} onClick={() => void downloadStatement()} />
+                {!phone && <PageAction label={t("activity.download")} icon={<Download size={15} strokeWidth={1.5} />} onClick={() => void downloadStatement()} />}
                 <ActionMenu label={t("menu.more")} items={menu} />
               </div>
             </div>
@@ -324,7 +329,7 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
               </p>
             )}
             {wide && <TypeTabs value={filter} onChange={setFilter} />}
-            <FilterBar className="mt-comfortable pb-section" search={<FilterSearch value={search} onChange={setSearch} placeholder={t("activity.search")} />} lead={dateRange} filters={wide ? [] : [typeFilter]} />
+            <FilterBar className="mt-comfortable pb-section" search={<FilterSearch value={search} onChange={setSearch} placeholder={t("activity.search")} />} lead={phone ? <div className="basis-full">{dateRange}</div> : dateRange} filters={wide ? [] : [typeFilter]} />
           </div>
           <div>
             <ActivityTable

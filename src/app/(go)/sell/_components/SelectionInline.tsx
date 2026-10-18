@@ -23,15 +23,16 @@ import { useState } from "react";
 import { useApiQuery } from "@/lib/useApi";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
-import { Avatar, BlockedNotice, ChoiceCard, DateStrip, SkeletonText } from "@/components/ui";
+import { Avatar, BlockedNotice, SkeletonText } from "@/components/ui";
 import { availableSeats, explainUnavailable, type Product, type Resource, type Staff } from "@/lib/api";
 import { applyResourceRate } from "@/lib/api";
 import { productDurationPrice } from "@/lib/duration";
 import { resolveProductPrice } from "@/lib/pricing";
 import { DEMO_TODAY, demoDay, isGuided, slotISO, toMinutes } from "@/lib/schedule";
-import { formatClock, formatClockRange, formatDay, formatMoney } from "@/lib/format";
+import { formatClock, formatClockRange, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { ClockCell } from "../../_components/Clock";
 import { formatDuration } from "@/lib/duration";
+import { cn } from "@/lib/cn";
 import {
   activeTiersOf,
   basePriceOf,
@@ -50,13 +51,15 @@ import {
 import { SessionList } from "../../_components/SessionList";
 import { getResourceMatrix } from "@/lib/api";
 import { Stepper } from "../../_components/Stepper";
+import { DateTiles, OptionRow, TileText } from "../../_components/SheetParts";
+import { Tile, TileGrid, TileLabel } from "../../_components/Tiles";
 
 /** A question's heading. One shape for all of them, so the block reads as a
  *  sequence of decisions rather than as loose controls. */
 function Step({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="mt-section first:mt-0">
-      <p className="mb-tight text-base font-semibold text-fg">{label}</p>
+    <div className="flex flex-col gap-tight">
+      <TileLabel>{label}</TileLabel>
       {children}
     </div>
   );
@@ -99,7 +102,7 @@ export function SelectionInline({
 
   if (pattern === "unsupported") {
     return (
-      <div className="rounded-card border border-dashed border-strong bg-subtle p-section">
+      <div className="rounded-inner bg-subtle p-section">
         <p className="text-base font-medium">{t("unsupported.title")}</p>
         <p className="mt-inline text-sm text-muted">{t("unsupported.body")}</p>
       </div>
@@ -115,7 +118,6 @@ export function SelectionInline({
     pattern === "provider" ||
     product.bookingType === "BT-02" ||
     product.bookingType === "BT-06";
-  const chips = dated ? openDates(product) : [];
   const cap = product.schedule?.dailyCapacity ?? 0;
 
   /* ── Date ─────────────────────────────────────────────────────────────
@@ -124,14 +126,13 @@ export function SelectionInline({
      selection spanning several is legible from the picker itself. */
   const dateStrip = (
     <Step label={t("step.date")}>
-      <DateStrip
-        dates={chips}
+      <DateTiles
+        dates={openDates(product, 2)}
         value={draft.date}
         onChange={(d) => set({ date: d, slotTime: undefined, guideId: undefined, providerId: undefined })}
         today={DEMO_TODAY}
         tomorrow={TOMORROW}
         min={DEMO_TODAY}
-        marked={[...new Set((draft.slots ?? []).map((x) => x.date))]}
         labels={{
           today: t("date.today"),
           tomorrow: t("date.tomorrow"),
@@ -151,7 +152,7 @@ export function SelectionInline({
     const low = left <= Math.max(1, Math.floor(cap * 0.2));
     return (
       <Step label={t("step.allowance")}>
-        <div className="card-surface p-comfortable">
+        <div className="rounded-inner bg-subtle p-comfortable">
           <div className="flex items-baseline justify-between gap-tight">
             <span className="min-w-0 truncate text-sm text-muted">{t("allowance.remaining")}</span>
             <span className={`shrink-0 text-md font-semibold ${low ? "text-brand-foreground" : ""}`}>
@@ -172,11 +173,12 @@ export function SelectionInline({
   const sessions = pattern === "sessions" && (
     <Step label={t(guided ? "step.departure" : "step.session")}>
       {rows.length === 0 ? (
-        <p className="rounded-card border border-line bg-subtle p-comfortable text-sm text-muted">
+        <p className="rounded-inner bg-subtle p-comfortable text-sm text-muted">
           {t("session.noneToday")}
         </p>
       ) : (
         <SessionList
+          variant="tiles"
           currency={currency}
           selected={draft.slotTime}
           sessions={rows.map((r) => ({
@@ -222,23 +224,21 @@ export function SelectionInline({
     if (ids.length === 0) return null;
     return (
       <Step label={t("step.guide")}>
-        <div className="flex flex-wrap gap-tight">
+        <div className="flex flex-col gap-tight">
           {ids.map((id) => {
             const person = team.find((s) => s.id === id);
             const free = row?.freeGuideIds.includes(id) ?? false;
             return (
-              <ChoiceCard
+              <OptionRow
                 key={id}
                 selected={draft.guideId === id}
+                off={!free}
                 disabled={!free}
                 onClick={() => set({ guideId: id })}
-                className="flex min-w-[140px] flex-1 flex-col gap-inline py-tight pl-comfortable pr-7"
-              >
-                <span className="min-w-0 truncate text-base font-medium">{person?.name ?? id}</span>
-                <span className={`text-sm ${free ? "text-success" : "text-muted"}`}>
-                  {t(free ? "guide.available" : "guide.busy")}
-                </span>
-              </ChoiceCard>
+                lead={<Avatar name={person?.name ?? id} />}
+                title={person?.name ?? id}
+                sub={t(free ? "guide.available" : "guide.busy")}
+              />
             );
           })}
         </div>
@@ -273,7 +273,7 @@ export function SelectionInline({
     <>
       {matrix.length === 0 ? (
         <Step label={t("step.slot")}>
-          <p className="rounded-card border border-line bg-subtle p-comfortable text-sm text-muted">
+          <p className="rounded-inner bg-subtle p-comfortable text-sm text-muted">
             {t("session.noneToday")}
           </p>
         </Step>
@@ -287,11 +287,11 @@ export function SelectionInline({
               label={`${row.resource.name}${takenHere ? ` · ${t("slot.chosenCount", { count: takenHere })}` : ""}`}
             >
               {row.resource.outOfService ? (
-                <p className="rounded-card border border-line bg-subtle p-comfortable text-sm text-muted">
+                <p className="rounded-inner bg-subtle p-comfortable text-sm text-muted">
                   {t("flex.outOfService")}
                 </p>
               ) : (
-                <div className="grid grid-cols-4 gap-tight">
+                <TileGrid cols={4}>
                   {times.map((sl) => {
                     const on = isPicked(row.resource.id, sl.time);
                     const price = applyResourceRate(
@@ -300,10 +300,11 @@ export function SelectionInline({
                       row.resource,
                     );
                     return (
-                      <button
+                      <Tile
                         key={sl.time}
-                        type="button"
-                        aria-pressed={on}
+                        selected={on}
+                        off={!sl.available && !on}
+                        className="min-h-14"
                         onClick={() => {
                           if (!sl.available && !on) {
                             const why = explainUnavailable({
@@ -317,22 +318,15 @@ export function SelectionInline({
                           }
                           toggleSlot(row.resource.id, sl.time);
                         }}
-                        className={`flex min-h-[52px] flex-col items-center justify-center rounded-card border px-inline text-sm transition-colors duration-quick ${
-                          on
-                            ? "border-ember-solid bg-ember-solid font-medium text-on-solid"
-                            : sl.available
-                              ? "border-line bg-card active:bg-muted-wash"
-                              : "border-line bg-subtle text-muted line-through"
-                        }`}
                       >
-                        <ClockCell hhmm={sl.time} className={on || sl.available ? undefined : "line-through"} />
-                        <span className={on ? "text-sm text-on-solid" : "text-sm text-muted"}>
-                          {formatMoney(price, currency)}
+                        <ClockCell hhmm={sl.time} className={cn("text-base font-semibold", !on && !sl.available && "line-through")} />
+                        <span className={cn("text-sm", on ? "text-on-solid" : "text-muted", !on && !sl.available && "line-through")}>
+                          {formatPriceShort(price, currency)}
                         </span>
-                      </button>
+                      </Tile>
                     );
                   })}
-                </div>
+                </TileGrid>
               )}
             </Step>
           );
@@ -344,18 +338,18 @@ export function SelectionInline({
           you are no longer looking at can still be given back. */}
       {picked.length > 0 && (
         <Step label={t("slot.chosen")}>
-          <div className="overflow-hidden card-surface">
+          <div className="flex flex-col gap-tight">
             {[...picked]
               .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
-              .map((x, i) => {
+              .map((x) => {
                 const res = resources.find((r) => r.id === x.resourceId);
                 return (
                   <div
                     key={`${x.date}|${x.resourceId}|${x.time}`}
-                    className={`flex items-center gap-tight p-comfortable ${i ? "border-t border-line" : ""}`}
+                    className="flex items-center gap-tight rounded-inner bg-subtle py-tight pl-comfortable pr-tight"
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-base font-medium">
+                      <span className="block break-words text-base font-semibold">
                         {res?.name ?? x.resourceId} · {formatClock(x.time)}
                       </span>
                       <span className="block text-sm text-muted">
@@ -366,9 +360,9 @@ export function SelectionInline({
                       type="button"
                       aria-label={t("slot.remove", { time: formatClock(x.time) })}
                       onClick={() => set({ slots: picked.filter((y) => y !== x) })}
-                      className="flex size-11 shrink-0 items-center justify-center rounded-full text-danger active:bg-muted-wash"
+                      className="flex size-11 shrink-0 items-center justify-center rounded-full bg-subtle text-fg active:bg-muted-wash"
                     >
-                      <X size={16} strokeWidth={1.75} />
+                      <X size={16} strokeWidth={1.75} aria-hidden />
                     </button>
                   </div>
                 );
@@ -387,21 +381,16 @@ export function SelectionInline({
     if (options.length < 2) return null;
     return (
       <Step label={t("step.validity")}>
-        <div className="grid grid-cols-2 gap-tight sm:grid-cols-3">
-          {options.map((v) => (
-            <ChoiceCard
-              key={v.id}
-              selected={draft.validityId === v.id}
-              onClick={() => set({ validityId: v.id })}
-              className="flex min-h-[56px] flex-col justify-center gap-inline py-tight pl-comfortable pr-7"
-            >
-              <span className="min-w-0 truncate text-base font-medium">{v.label}</span>
-              {(v.priceDelta ?? 0) > 0 && (
-                <span className="text-sm text-brand-foreground">+{formatMoney(v.priceDelta ?? 0, currency)}</span>
-              )}
-            </ChoiceCard>
-          ))}
-        </div>
+        <TileGrid cols={2} className="sm:grid-cols-3">
+          {options.map((v) => {
+            const on = draft.validityId === v.id;
+            return (
+              <Tile key={v.id} selected={on} className="min-h-14" onClick={() => set({ validityId: v.id })}>
+                <TileText label={v.label} sub={(v.priceDelta ?? 0) > 0 ? `+${formatMoney(v.priceDelta ?? 0, currency)}` : undefined} selected={on} />
+              </Tile>
+            );
+          })}
+        </TileGrid>
       </Step>
     );
   })();
@@ -429,11 +418,12 @@ export function SelectionInline({
     return (
       <>
         <Step label={t("step.duration")}>
-          <div className="flex flex-wrap gap-tight">
+          <TileGrid cols={3} className="sm:grid-cols-4">
             {durations.map((d) => (
-              <button
+              <Tile
                 key={d}
-                type="button"
+                selected={minutes === d}
+                className="min-h-12"
                 onClick={() => {
                   // Changing the length can invalidate the chosen start, so it
                   // is cleared rather than left pointing at a span that no
@@ -443,72 +433,62 @@ export function SelectionInline({
                     !flexStartBlocked(product, draft.date, draft.slotTime, d, draft.resourceId, 12 * 60);
                   set({ durationMinutes: d, slotTime: stillFits ? draft.slotTime : undefined });
                 }}
-                className={`h-12 min-w-[72px] flex-1 rounded-full border px-comfortable text-base transition-colors duration-quick ${
-                  minutes === d
-                    ? "border-ember-solid bg-ember-solid font-medium text-on-solid"
-                    : "border-line bg-card active:bg-muted-wash"
-                }`}
               >
-                {formatDuration(d)}
-              </button>
+                <TileText label={formatDuration(d)} selected={minutes === d} />
+              </Tile>
             ))}
-          </div>
+          </TileGrid>
         </Step>
 
         <Step label={t("step.lane", { noun: lanes[0]?.nounSingular ?? t("slot.resource") })}>
           {/* Wraps rather than scrolls: a lane that has scrolled out of view
               is a lane nobody knows is free. */}
-          <div className="grid grid-cols-3 gap-tight sm:grid-cols-4">
-            <ChoiceCard
-              hideCheck
-              selected={!draft.resourceId}
-              onClick={() => set({ resourceId: undefined })}
-              className="flex min-h-[56px] flex-col justify-center gap-inline px-comfortable py-tight"
-            >
-              <span className="text-base font-medium">{t("flex.any")}</span>
-              <span className="text-sm text-muted">{t("flex.anyHint")}</span>
-            </ChoiceCard>
-            {lanes.map((l) => (
-              <ChoiceCard
-                key={l.id}
-                hideCheck
-                disabled={l.outOfService}
-                selected={draft.resourceId === l.id}
-                onClick={() => set({ resourceId: l.id, slotTime: undefined })}
-                className="flex min-h-[56px] flex-col justify-center gap-inline px-comfortable py-tight"
-              >
-                <span className="truncate text-base font-medium">{l.name}</span>
-                <span className="text-sm text-muted">
-                  {l.outOfService ? t("flex.outOfService") : formatMoney(price("12:00", l.id), currency)}
-                </span>
-              </ChoiceCard>
-            ))}
-          </div>
+          <TileGrid cols={3} className="sm:grid-cols-4">
+            <Tile selected={!draft.resourceId} className="min-h-14" onClick={() => set({ resourceId: undefined })}>
+              <TileText label={t("flex.any")} sub={t("flex.anyHint")} selected={!draft.resourceId} />
+            </Tile>
+            {lanes.map((l) => {
+              const on = draft.resourceId === l.id;
+              return (
+                <Tile
+                  key={l.id}
+                  selected={on}
+                  off={l.outOfService}
+                  disabled={l.outOfService}
+                  className="min-h-14"
+                  onClick={() => set({ resourceId: l.id, slotTime: undefined })}
+                >
+                  <TileText
+                    label={l.name}
+                    sub={l.outOfService ? t("flex.outOfService") : formatPriceShort(price("12:00", l.id), currency)}
+                    selected={on}
+                    struck={l.outOfService}
+                  />
+                </Tile>
+              );
+            })}
+          </TileGrid>
         </Step>
 
         <Step label={t("step.start")}>
-          <div className="grid grid-cols-4 gap-tight">
+          <TileGrid cols={4}>
             {times.map((time) => {
               const blocked = flexStartBlocked(product, draft.date, time, minutes, draft.resourceId, 12 * 60);
               const on = draft.slotTime === time;
               return (
-                <button
+                <Tile
                   key={time}
-                  type="button"
+                  selected={on}
+                  off={!!blocked && !on}
+                  aria-pressed={blocked && !on ? undefined : on}
+                  className="min-h-12"
                   onClick={() => (blocked ? setBlocked(blockWord(blocked)) : set({ slotTime: time }))}
-                  className={`flex min-h-12 flex-col items-center justify-center rounded-card border px-inline text-sm transition-colors duration-quick ${
-                    on
-                      ? "border-ember-solid bg-ember-solid font-medium text-on-solid"
-                      : blocked
-                        ? "border-line bg-subtle text-muted line-through"
-                        : "border-line bg-card active:bg-muted-wash"
-                  }`}
                 >
-                  <ClockCell hhmm={time} className={on || !blocked ? undefined : "line-through"} />
-                </button>
+                  <ClockCell hhmm={time} className={on || !blocked ? "text-base font-semibold" : "text-base font-semibold line-through"} />
+                </Tile>
               );
             })}
-          </div>
+          </TileGrid>
           {/* The end time is the thing a customer asks for, and it is never
               typed — it falls out of the start and the length. */}
           {draft.slotTime && (
@@ -532,32 +512,28 @@ export function SelectionInline({
     return (
       <>
         <Step label={t("step.appointment")}>
-          <div className="grid grid-cols-4 gap-tight">
+          <TileGrid cols={4}>
             {times.map((time) => {
               const anyFree = freeProvidersAt(product, draft.date, time).length > 0;
               const on = draft.slotTime === time;
               return (
-                <button
+                <Tile
                   key={time}
-                  type="button"
+                  selected={on}
+                  off={!anyFree && !on}
+                  aria-pressed={anyFree || on ? on : undefined}
+                  className="min-h-12"
                   onClick={() =>
                     anyFree
                       ? set({ slotTime: time, providerId: undefined })
                       : setBlocked(t("provider.noneFree", { time: formatClock(time) }))
                   }
-                  className={`flex min-h-12 items-center justify-center rounded-card border px-inline text-sm transition-colors duration-quick ${
-                    on
-                      ? "border-ember-solid bg-ember-solid font-medium text-on-solid"
-                      : anyFree
-                        ? "border-line bg-card active:bg-muted-wash"
-                        : "border-line bg-subtle text-muted line-through"
-                  }`}
                 >
-                  <ClockCell hhmm={time} className={on || anyFree ? undefined : "line-through"} />
-                </button>
+                  <ClockCell hhmm={time} className={on || anyFree ? "text-base font-semibold" : "text-base font-semibold line-through"} />
+                </Tile>
               );
             })}
-          </div>
+          </TileGrid>
           <p className="mt-tight text-sm text-muted">{t("provider.length", { length: formatDuration(mins) })}</p>
         </Step>
 
@@ -570,25 +546,17 @@ export function SelectionInline({
                 const premium = product.providerPremiums?.[pid] ?? 0;
                 const assigned = (draft.providerId ?? freeNow[0]) === pid;
                 return (
-                  <ChoiceCard
+                  <OptionRow
                     key={pid}
-                    hideCheck
-                    disabled={!free}
                     selected={assigned}
+                    off={!free}
+                    disabled={!free}
                     onClick={() => set({ providerId: pid })}
-                    className="flex items-center gap-comfortable py-tight pl-comfortable pr-comfortable"
-                  >
-                    <Avatar name={who?.name ?? pid} size={36} />
-                    <span className="min-w-0 flex-1 text-left">
-                      <span className="block truncate text-base font-medium">{who?.name ?? pid}</span>
-                      <span className={`block text-sm ${free ? "text-success" : "text-muted"}`}>
-                        {t(free ? "guide.available" : "guide.busy")}
-                      </span>
-                    </span>
-                    <span className="shrink-0 whitespace-nowrap text-sm text-muted">
-                      {premium > 0 ? t("provider.premium", { amount: formatMoney(premium, currency) }) : t("provider.standard")}
-                    </span>
-                  </ChoiceCard>
+                    lead={<Avatar name={who?.name ?? pid} size={36} />}
+                    title={who?.name ?? pid}
+                    sub={t(free ? "guide.available" : "guide.busy")}
+                    trail={premium > 0 ? t("provider.premium", { amount: formatMoney(premium, currency) }) : t("provider.standard")}
+                  />
                 );
               })}
             </div>
@@ -610,7 +578,7 @@ export function SelectionInline({
     const range = `${new Intl.DateTimeFormat("en-GB", { day: "numeric" }).format(day(dates[0]))}–${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(day(dates[dates.length - 1]))}`;
     return (
       <Step label={t("step.course")}>
-        <div className="rounded-card border border-success-line bg-success-wash p-comfortable">
+        <div className="rounded-inner bg-success-wash p-comfortable">
           <p className="text-base font-medium text-success">{t("course.ready")}</p>
           <p className="mt-inline text-sm">
             {t("course.runs", { count: dates.length, days: weekdays.join(" & "), range })}
@@ -654,7 +622,7 @@ export function SelectionInline({
     const categories = [...new Map(rows.map((r) => [r.categoryUid, r])).values()];
     return (
       <Step label={t("step.seats")}>
-        <p className="mb-tight rounded-card bg-subtle py-inline text-center text-sm font-medium text-muted">
+        <p className="rounded-inner bg-subtle py-inline text-center text-sm font-medium text-muted">
           {t("seats.screen")}
         </p>
         <div className="-mx-comfortable overflow-x-auto px-comfortable pb-1">
@@ -733,7 +701,7 @@ export function SelectionInline({
       {/* One panel of hairline-separated rows. Each row states the three
           things in the order they are decided: what it is, who it admits,
           what it costs. Four bordered cards read as four unrelated objects. */}
-      <div className="overflow-hidden card-surface">
+      <div className="flex flex-col divide-y divide-hairline">
         {countable.map((tier) => {
           const price = draft.slotTime
             ? resolveProductPrice(product, draft.date, draft.slotTime, tier.price)
@@ -742,13 +710,13 @@ export function SelectionInline({
           const admits = (tier.admits ?? 1) > 1 ? ts("sheet.admits", { count: tier.admits ?? 1 }) : null;
           const note = [admits, tier.ageNote].filter(Boolean).join(" · ");
           return (
-            <div key={tier.id} className="flex items-center gap-comfortable border-b border-line p-comfortable last:border-b-0">
+            <div key={tier.id} className="flex items-center justify-between gap-comfortable py-comfortable first:pt-0 last:pb-0">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-base font-medium">{tier.name}</p>
-                {note && <p className="mt-inline truncate text-sm text-muted">{note}</p>}
-                <p className="mt-inline text-sm font-medium text-brand-foreground">{formatMoney(price, currency)}</p>
+                <p className="break-words text-md font-semibold leading-snug">{tier.name}</p>
+                {note && <p className="mt-0.5 break-words text-sm text-muted">{note}</p>}
+                <p className="mt-0.5 text-base font-semibold tabular-nums text-fg">{formatMoney(price, currency)}</p>
               </div>
-              <Stepper value={n} min={0} onChange={(v) => set({ qty: { ...draft.qty, [tier.id]: v } })} lessLabel={t("qty.less", { tier: tier.name })} moreLabel={t("qty.more", { tier: tier.name })} />
+              <Stepper variant="round" value={n} min={0} onChange={(v) => set({ qty: { ...draft.qty, [tier.id]: v } })} lessLabel={t("qty.less", { tier: tier.name })} moreLabel={t("qty.more", { tier: tier.name })} />
             </div>
           );
         })}
@@ -757,12 +725,8 @@ export function SelectionInline({
   );
 
   return (
-    <div>
-      {blocked && (
-        <div className="mb-section">
-          <BlockedNotice message={blocked} onDismiss={() => setBlocked(null)} />
-        </div>
-      )}
+    <div className="flex flex-col gap-comfortable">
+      {blocked && <BlockedNotice message={blocked} onDismiss={() => setBlocked(null)} />}
       {dated && dateStrip}
       {capacityPanel}
       {sessions}

@@ -12,8 +12,10 @@ import {
   peekHandlers,
   sameDay,
   type CalEvent,
+  type EventTone,
   type Ghost,
 } from "./model";
+import { AgendaCard } from "./AgendaCard";
 
 /** How many chips fit in a cell before the rest collapse into "+N more". */
 const MAX_CHIPS = 3;
@@ -35,6 +37,7 @@ export function MonthGrid({
   compact = false,
   blockClass,
   dotClass,
+  toneLabel,
   dayHeading,
   emptyLabel,
   today: todayIso,
@@ -63,6 +66,8 @@ export function MonthGrid({
      their hatching either way: blocked is blocked whatever colour means. */
   blockClass: (e: CalEvent) => string;
   dotClass: (e: CalEvent) => string;
+  /** The word for a booking's state, drawn on the phone's day list. */
+  toneLabel?: (tone: EventTone) => string;
   dayHeading?: (d: Date) => string;
   emptyLabel?: string;
   /** The app's today, as an ISO date — a day before it cannot be booked. */
@@ -187,32 +192,14 @@ export function MonthGrid({
             <ul className="flex flex-col gap-tight p-card">
               {agenda.map((e) => (
                 <li key={e.id}>
-                  <button
-                    type="button"
+                  <AgendaCard
+                    event={e}
+                    time={e.allDay ? "—" : clockOf(e.start, true)}
                     onClick={onSelect ? () => onSelect(e) : undefined}
-                    {...peekHandlers(e, onPeek)}
-                    className={cn(
-                      "flex w-full items-start gap-comfortable rounded-control border px-comfortable py-tight text-left",
-                      blockClass(e),
-                    )}
-                  >
-                    <span className="w-16 shrink-0 whitespace-nowrap text-xs tabular-nums opacity-70">
-                      {e.allDay ? "—" : clockOf(e.start, true)}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-0.5 text-sm font-medium leading-tight">
-                        {e.source && <MarketBadge id={e.source.id} />}
-                        {e.locked && <Lock size={11} strokeWidth={2.5} className="shrink-0" />}
-                        <span className="min-w-0 break-words">{e.title}</span>
-                        {e.sourceLabel && <span className="sr-only">, {e.sourceLabel}</span>}
-                      </span>
-                      {e.subtitle && (
-                        <span className="mt-0.5 block break-words text-xs leading-tight opacity-70">
-                          {e.subtitle}
-                        </span>
-                      )}
-                    </span>
-                  </button>
+                    handlers={peekHandlers(e, onPeek)}
+                    blockClass={blockClass}
+                    toneLabel={toneLabel}
+                  />
                 </li>
               ))}
             </ul>

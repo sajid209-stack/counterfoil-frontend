@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Wallet } from "lucide-react";
 import { Skeleton } from "@/components/ui";
 import type { ExpenseCategory, ExpenseSummary } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
@@ -99,14 +99,16 @@ export function Summary({
   const pctOf = (s: Slice) => (s.tiny ? t("summary.tiny") : `${s.percent}%`);
 
   return (
-    <section aria-label={t("summary.label")} aria-busy={loading} className={cn("card-surface p-card transition-opacity", loading && summary && "opacity-60")}>
-      <div className="grid gap-section lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-major">
+    <section aria-label={t("summary.label")} aria-busy={loading} className={cn("card-surface p-card transition-opacity max-sm:rounded-none max-sm:border-0 max-sm:bg-transparent max-sm:p-0 max-sm:shadow-none", loading && summary && "opacity-60")}>
+      {/* A phone draws the figure and the breakdown as two separate cards, 8px apart (docs/mobile.md section 6); from sm they are one card. */}
+      <div className="grid gap-tight sm:gap-section lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-major">
         {/* Left: the figure and what it covers. */}
-        <dl className="min-w-0">
-          <dt className="text-xs font-medium text-muted">{t("summary.total")}</dt>
+        <dl className="card-surface min-w-0 p-comfortable sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+          <span aria-hidden className="mb-tight flex h-8 w-8 items-center justify-center rounded-full bg-ember-wash text-brand-foreground sm:hidden [&>svg]:h-4 [&>svg]:w-4"><Wallet /></span>
+          <dt className="text-sm font-medium text-muted sm:text-xs">{t("summary.total")}</dt>
           {summary ? (
             <>
-              <dd className="type-figure mt-inline text-3xl font-semibold leading-tight">{formatMoney(summary.total)}</dd>
+              <dd className="type-figure mt-inline text-2xl font-semibold leading-tight sm:text-3xl">{formatMoney(summary.total)}</dd>
               <dd className="mt-inline text-xs text-muted">{t("summary.context", { count: summary.count, period: periodLabel })}</dd>
             </>
           ) : (
@@ -118,20 +120,23 @@ export function Summary({
         </dl>
 
         {/* Right: where it went. */}
-        <div className="min-w-0">
-          <p className="hidden text-xs font-medium text-muted sm:block">{t("summary.whereWent")}</p>
+        <div className="card-surface min-w-0 p-comfortable sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+          <p className="text-sm font-medium text-muted sm:text-xs">{t("summary.whereWent")}</p>
           {!summary ? (
             <div className="mt-tight">
               <span role="status" className="sr-only">{t("loading")}</span>
               <Skeleton className="h-2.5 w-full" />
               {/* Rows the height of the real ones, so the card does not jump when the answer lands.
-                  A phone folds the legend behind one "Where it went" row, so it draws one. */}
+                  A phone shows the top three categories and a "Show all" pill, so it draws those. */}
               <div className="-mx-tight mt-comfortable grid gap-x-major gap-y-inline sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                 {[0, 1, 2, 3, 4].map((i) => (
-                  <div key={i} className={cn("min-h-[44px] items-center px-tight sm:flex sm:min-h-9", i === 0 ? "flex" : "hidden")}>
+                  <div key={i} className={cn("min-h-[44px] items-center px-tight sm:flex sm:min-h-9", i < 3 ? "flex" : "hidden")}>
                     <Skeleton className="h-4 w-full" />
                   </div>
                 ))}
+              </div>
+              <div className="mt-tight flex justify-center sm:hidden" aria-hidden>
+                <Skeleton className="h-11 w-24 rounded-full" />
               </div>
             </div>
           ) : empty ? (
@@ -141,7 +146,7 @@ export function Summary({
               <div
                 role="img"
                 aria-label={t("summary.barLabel", { total: formatMoney(summary.total), parts: slices.map((s) => `${nameOf(s)} ${formatMoney(s.total)} (${pctOf(s)})`).join(", ") })}
-                className="mt-tight flex h-2.5 w-full gap-0.5"
+                className="mt-comfortable flex h-2.5 w-full gap-0.5 sm:mt-tight"
               >
                 {slices.map((s, i) => (
                   <span
@@ -151,18 +156,8 @@ export function Summary({
                   />
                 ))}
               </div>
-              <button
-                type="button"
-                aria-expanded={legendOpen}
-                aria-controls="expense-legend"
-                onClick={() => setLegendOpen((o) => !o)}
-                className="-mx-tight mt-tight flex min-h-[44px] w-[calc(100%+var(--spacing-tight)*2)] items-center justify-between rounded-control px-tight text-sm text-muted transition-colors duration-quick hover:bg-muted-wash sm:hidden"
-              >
-                <span>{t("summary.whereWent")}</span>
-                <ChevronDown size={18} strokeWidth={1.5} aria-hidden className={cn("transition-transform duration-quick", legendOpen && "rotate-180")} />
-              </button>
-              <ul id="expense-legend" className={cn("-mx-tight mt-tight grid gap-x-major gap-y-inline sm:mt-comfortable sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2", !legendOpen && "hidden sm:grid")}>
-                {slices.map((s) => {
+              <ul id="expense-legend" className="-mx-tight mt-tight grid gap-x-major gap-y-inline sm:mt-comfortable sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                {slices.map((s, i) => {
                   const row = "grid min-h-[44px] w-full grid-cols-[10px_minmax(0,1fr)_auto_3rem] items-center gap-x-tight rounded-control px-tight text-left sm:min-h-9";
                   const cells = (
                     <>
@@ -174,7 +169,7 @@ export function Summary({
                   );
                   const only = s.category !== undefined && selected.length === 1 && selected[0] === s.category;
                   return (
-                    <li key={s.key} className="min-w-0">
+                    <li key={s.key} className={cn("min-w-0", !legendOpen && i >= SERIES_PHONE && "max-sm:hidden")}>
                       {s.category ? (
                         <button
                           type="button"
@@ -194,6 +189,18 @@ export function Summary({
                   );
                 })}
               </ul>
+              {slices.length > SERIES_PHONE && (
+              <button
+                type="button"
+                aria-expanded={legendOpen}
+                aria-controls="expense-legend"
+                onClick={() => setLegendOpen((o) => !o)}
+                className="mx-auto mt-tight flex min-h-[44px] items-center gap-inline rounded-full px-comfortable text-sm font-medium text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash sm:hidden"
+              >
+                <span>{legendOpen ? t("summary.showFewer") : t("summary.showAll")}</span>
+                <ChevronDown size={16} strokeWidth={1.75} aria-hidden className={cn("transition-transform duration-quick", legendOpen && "rotate-180")} />
+              </button>
+              )}
             </>
           )}
         </div>

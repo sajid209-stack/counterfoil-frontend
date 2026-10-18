@@ -65,6 +65,7 @@ export function Select({
   emptyLabel,
   align = "start",
   bare = false,
+  pill = false,
   dataAttrs,
 }: {
   value: string;
@@ -96,6 +97,12 @@ export function Select({
    * select did this for free; the popover has to be told.
    */
   bare?: boolean;
+  /**
+   * With `bare`: drawn as a small rounded pill (tinted fill, 36px tall) — the
+   * period or scope menu in a card header or under a page title. Its touch
+   * target is still 44px: an invisible band of 4px above and below.
+   */
+  pill?: boolean;
   searchPlaceholder?: string;
   emptyLabel?: string;
   align?: "start" | "end";
@@ -309,7 +316,9 @@ export function Select({
         }}
         className={cn(
           "flex min-w-0 items-center text-left transition-colors duration-quick",
-          bare
+          bare && pill
+            ? "relative h-9 max-w-[14rem] gap-inline rounded-full bg-subtle pl-comfortable pr-tight text-sm font-medium text-fg before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] hover:bg-muted-wash"
+            : bare
             ? "max-w-[14rem] gap-tight bg-transparent pl-inline pr-0 text-sm font-medium"
             : /* The chevron sits in a reserved gutter rather than floating at
                  the end of the text: every trigger's arrow then lines up down a
@@ -324,7 +333,7 @@ export function Select({
               The touch floor still applies on a phone, where the control is
               the whole target; from `sm` it collapses to its own text, which
               is what the native control it replaced did. */
-          bare ? "min-h-11 sm:min-h-0" : size === "sm" ? "h-11 md:h-9" : size === "lg" ? "h-12" : "h-11",
+          bare && pill ? "" : bare ? "min-h-11 sm:min-h-0" : size === "sm" ? "h-11 md:h-9" : size === "lg" ? "h-12" : "h-11",
           triggerClassName,
         )}
       >

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BadgeCheck, FileText, Landmark, Percent } from "lucide-react";
 import { PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getTaxConfig, listProducts, updateOperator, updateTaxConfig } from "@/lib/api";
@@ -122,17 +122,17 @@ export default function TaxPage() {
       ) : (
         <div className="flex flex-col gap-section pb-hero">
           <SettingsSection title={t("tax.ratesTitle")} description={t("tax.ratesDesc")}>
-            <SettingRow label={t("tax.standard")} description={t("tax.standardDesc", { count: usage.standard })} error={standardErr}>
+            <SettingRow icon={Percent} label={t("tax.standard")} description={t("tax.standardDesc", { count: usage.standard })} error={standardErr}>
               {({ id, describedBy }) => (
                 <SuffixInput id={id} value={form.standard} onChange={(v) => set("standard", v)} suffix="%" invalid={!!standardErr} describedBy={describedBy} />
               )}
             </SettingRow>
-            <SettingRow label={t("tax.reduced")} description={t("tax.reducedDesc", { count: usage.reduced })} error={reducedErr}>
+            <SettingRow icon={Percent} label={t("tax.reduced")} description={t("tax.reducedDesc", { count: usage.reduced })} error={reducedErr}>
               {({ id, describedBy }) => (
                 <SuffixInput id={id} value={form.reduced} onChange={(v) => set("reduced", v)} suffix="%" invalid={!!reducedErr} describedBy={describedBy} />
               )}
             </SettingRow>
-            <SettingRow label={t("tax.exempt")} description={t("tax.exemptDesc", { count: usage.exempt })} labelFor={false} trailing>
+            <SettingRow icon={BadgeCheck} label={t("tax.exempt")} description={t("tax.exemptDesc", { count: usage.exempt })} labelFor={false} trailing>
               {() => <p className="text-base text-muted">{t("tax.noTax")}</p>}
             </SettingRow>
           </SettingsSection>
@@ -175,12 +175,12 @@ export default function TaxPage() {
           </SettingsSection>
 
           <SettingsSection title={t("tax.nameTitle")} description={t("tax.nameSectionDesc")}>
-            <SettingRow label={t("tax.name")} description={t("tax.nameDesc")}>
+            <SettingRow icon={FileText} label={t("tax.name")} description={t("tax.nameDesc")}>
               {({ id, describedBy }) => (
                 <input id={id} value={form.name} onChange={(e) => set("name", e.target.value)} aria-describedby={describedBy} className={controlCls()} />
               )}
             </SettingRow>
-            <SettingRow label={t("tax.vatLinkLabel")} description={t("tax.vatLinkDesc")} labelFor={false}>
+            <SettingRow icon={Landmark} label={t("tax.vatLinkLabel")} description={t("tax.vatLinkDesc")} labelFor={false}>
               {() => (
                 <Link
                   href="/settings/vat"

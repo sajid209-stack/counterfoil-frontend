@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { CheckCircle2, ChevronRight, Clock, RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { MarketBadge } from "@/components/ui";
 import { isVoidedOrder, orderNetPaid, type Order } from "@/lib/api";
@@ -29,7 +29,12 @@ export function KeyFacts({ o, due, dir, labels, className }: { o: Order; due: nu
 
   return (
     <section aria-label={t("keyFacts")} data-keyfacts className={cn("card-surface min-w-0 p-card", className)}>
-      <p className={cn("text-sm", due > 0 ? "font-medium text-warning" : "text-muted")}>{state}</p>
+      <div className="flex items-center gap-comfortable">
+        <span aria-hidden className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full [&>svg]:h-4 [&>svg]:w-4", due > 0 ? "bg-warning-wash text-warning" : voided ? "bg-subtle text-fg-secondary" : "bg-success-wash text-success")}>
+          {due > 0 ? <Clock /> : voided ? <RotateCcw /> : <CheckCircle2 />}
+        </span>
+        <p className={cn("text-sm", due > 0 ? "font-medium text-warning" : "text-muted")}>{state}</p>
+      </div>
       <p
         data-figure={due > 0 ? "due" : "paid"}
         data-amount={lead}

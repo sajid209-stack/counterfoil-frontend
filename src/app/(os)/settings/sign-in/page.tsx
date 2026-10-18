@@ -1,5 +1,6 @@
 "use client";
 
+import { Clock, Hash, Tablet } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Notice, PageShell, RadioGroup, SegmentedControl, Select, StatusPill, useToast } from "@/components/ui";
@@ -123,7 +124,7 @@ export default function SignInRulesPage() {
         </SettingsSection>
 
         <SettingsSection title={t("signIn.sessionTitle")} description={t("signIn.sessionDesc")}>
-          <SettingRow label={t("signIn.sessionHours")} description={t("signIn.sessionHoursDesc")}>
+          <SettingRow icon={Clock} label={t("signIn.sessionHours")} description={t("signIn.sessionHoursDesc")}>
             {({ id, describedBy }) => (
               <Select
                 id={id}
@@ -186,7 +187,7 @@ export default function SignInRulesPage() {
               </div>
             )}
           </SettingRow>
-          <SettingRow label={t("signIn.pinAttempts")} description={t("signIn.pinAttemptsDesc")}>
+          <SettingRow icon={Hash} label={t("signIn.pinAttempts")} description={t("signIn.pinAttemptsDesc")}>
             {({ id, describedBy }) => (
               <Select
                 id={id}
@@ -197,7 +198,7 @@ export default function SignInRulesPage() {
               />
             )}
           </SettingRow>
-          <SettingRow label={t("signIn.deviceBound")} description={t("signIn.deviceBoundDesc")} labelFor={false} trailing>
+          <SettingRow icon={Tablet} label={t("signIn.deviceBound")} description={t("signIn.deviceBoundDesc")} labelFor={false} trailing>
             {({ labelId, describedBy }) => (
               <Switch
                 checked={form.deviceBound}

@@ -2,7 +2,9 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
+import { Ticket } from "lucide-react";
 import { DetailCard, FactGrid } from "@/components/ui";
+import { RecordHero } from "@/components/RecordHero";
 import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import type { Location, Product } from "@/lib/api";
@@ -69,7 +71,22 @@ export function Overview({
   return (
     <div className="grid gap-section lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
       <div className="flex min-w-0 flex-col gap-section">
-        <DetailCard title={ti("overview.glance")}>
+        {/* A phone leads with the one figure a booking is opened for. */}
+        <RecordHero
+          icon={<Ticket />}
+          tone="ember"
+          label={t("col.from")}
+          figure={from === null ? ti("overview.noPrice") : from === 0 ? t("free") : formatPriceShort(from)}
+          sub={
+            totals.sold === 0
+              ? ti("overview.soldNone")
+              : totals.capacity !== null
+                ? ti("overview.soldOfTotal", { sold: totals.sold, cap: totals.capacity })
+                : ti("overview.soldOnly", { count: totals.sold })
+          }
+          meta={totals.taken > 0 ? `${ti("overview.tookIn")}: ${formatPriceShort(totals.taken)}` : undefined}
+        />
+        <DetailCard title={ti("overview.glance")} className="max-sm:hidden">
           <FactGrid
             tone="primary"
             columns={3}

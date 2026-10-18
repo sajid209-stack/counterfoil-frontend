@@ -285,10 +285,19 @@ export function PageShell({
   primary,
   back,
   status,
+  subtitle,
+  scope,
   children,
 }: {
   title: string;
   description?: string;
+  /**
+   * Phone only: one quiet line under the (stood-down) heading, such as a date.
+   * Pages that do not pass it draw nothing new. From `sm` it is not drawn.
+   */
+  subtitle?: React.ReactNode;
+  /** Phone only: a small control, usually a `PeriodPill`, right-aligned on the subtitle's line. */
+  scope?: React.ReactNode;
   /**
    * The record's own buttons (Save, Print, ⋯) — drawn on the header row of a
    * record page, the right-hand side of `back` and `status`.
@@ -458,6 +467,13 @@ export function PageShell({
       {back && <BarBack href={back.href} label={back.label} />}
       {/* Phone: the heading, unless the bar already said it. */}
       {!wide && <div className={echoesBar ? "max-sm:sr-only" : undefined}>{headerText}</div>}
+      {/* Phone head line (docs/mobile.md section 6): the date or scope, quiet, and the page's scope pill at the right. */}
+      {(subtitle || scope) && (
+        <div className="-mt-1 mb-tight flex min-h-11 items-center justify-between gap-tight sm:hidden">
+          <p className="min-w-0 truncate text-sm text-muted">{subtitle}</p>
+          {scope && <div className="shrink-0">{scope}</div>}
+        </div>
+      )}
       {/* The header row — a RECORD page only. A way back and the record's
           state on the left, its own buttons and create button on the right,
           on one row that wraps. A list or dashboard has none: its buttons are

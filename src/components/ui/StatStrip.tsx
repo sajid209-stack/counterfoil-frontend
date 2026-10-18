@@ -6,6 +6,18 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { setPrefs, usePrefs } from "@/lib/prefs";
 
+export type StatIconTone = "ember" | "success" | "info" | "warning" | "danger" | "neutral";
+
+/** Wash and foreground for a phone figure's 32px icon. Each pair is a token the rest of the kit already uses. */
+const ICON_TONE: Record<StatIconTone, string> = {
+  ember: "bg-ember-wash text-brand-foreground",
+  success: "bg-success-wash text-success",
+  info: "bg-info-wash text-info",
+  warning: "bg-warning-wash text-warning",
+  danger: "bg-danger-wash text-danger",
+  neutral: "bg-subtle text-fg-secondary",
+};
+
 export interface StatItem {
   key: string;
   /** The tinted glyph beside the label. Drawn by the dashboard's tiles only. */
@@ -18,6 +30,8 @@ export interface StatItem {
   contextTone?: string;
   /** A change against the period before. */
   delta?: React.ReactNode;
+  /** The tone of the soft round icon on a phone (the wash behind it and its glyph). Defaults to neutral. */
+  iconTone?: StatIconTone;
   /** Draws the figure as a problem rather than a fact. */
   tone?: "warning" | "danger";
   /** A qualifier on the figure — shown as the card's tooltip, not as a line. */
@@ -146,19 +160,21 @@ export function FigureBand({
 }) {
   const fold = useFigureFold(items.length);
   return (
-    <div role={label ? "group" : undefined} aria-label={label} className={cn("card-surface overflow-hidden", className)}>
-      <div id={fold.id} data-stat-band className={cn("grid grid-cols-[repeat(2,minmax(min-content,1fr))] gap-px bg-hairline", gridClassName)} style={gridStyle}>
+    /* From sm: one card divided by hairlines. On a phone: no frame of its own, because each figure is a card
+       (see Cell) and the grid's gap shows the page between them. */
+    <div role={label ? "group" : undefined} aria-label={label} className={cn("card-surface overflow-hidden max-sm:overflow-visible max-sm:rounded-none max-sm:border-0 max-sm:bg-transparent max-sm:shadow-none", className)}>
+      <div id={fold.id} data-stat-band className={cn("grid grid-cols-[repeat(2,minmax(min-content,1fr))] gap-px bg-hairline max-sm:gap-tight max-sm:bg-transparent", gridClassName)} style={gridStyle}>
         {items.map((item, i) => (
           <Cell key={item.key} item={item} loading={loading} folded={fold.folds && !fold.open && i >= FIGURES_SHOWN} />
         ))}
       </div>
-      {fold.folds && <FigureToggle fold={fold} total={items.length} className="border-t border-hairline bg-card" />}
+      {fold.folds && <FigureToggle fold={fold} total={items.length} className="sm:border-t sm:border-hairline sm:bg-card" />}
     </div>
   );
 }
 
-/** How many figures a phone draws before the rest wait behind "Show all N". */
-export const FIGURES_SHOWN = 2;
+/** How many figures a phone draws before the rest wait behind "Show all N". Four cards fill a 2 x 2 grid. */
+export const FIGURES_SHOWN = 4;
 
 /**
  * The fold state for one band of figures. `statsOpen` is the app's own
@@ -204,12 +220,11 @@ function Cell({ item, loading, folded = false }: { item: StatItem; loading: bool
       {...(item.onClick ? { type: "button" as const, onClick: item.onClick, "aria-pressed": !!item.pressed, "data-focus-inset": "" } : {})}
       data-metric={item.key}
       className={cn(
-        // A phone reads a cell as a compact stack — a 12px label, an 18px
-        // figure, the delta and its context wrapping underneath — so that two
-        // fit across 288px and nothing is ever cut. From sm it opens up to the
-        // roomier label-over-figure cell the page has always had. An odd last
-        // cell takes both columns rather than leaving the card showing through.
-        "min-w-0 bg-card px-comfortable py-comfortable text-left transition-colors duration-quick max-sm:last:odd:col-span-2 sm:block sm:px-card",
+        // A phone draws each figure as its own card (docs/mobile.md section 6):
+        // an optional soft icon and the change pill on the top line, then the
+        // label, then the value. From sm it is the roomier label-over-figure
+        // cell of the one banded card. An odd last card takes both columns.
+        "card-surface relative min-w-0 p-comfortable text-left transition-colors duration-quick max-sm:last:odd:col-span-2 sm:block sm:rounded-none sm:border-0 sm:bg-card sm:px-card sm:py-comfortable sm:shadow-none",
         folded && "max-sm:hidden",
         // The ring is drawn INSIDE: the band clips its corners, so a 2px
         // outline on the first or last cell is painted outside the card and
@@ -220,16 +235,23 @@ function Cell({ item, loading, folded = false }: { item: StatItem; loading: bool
         item.pressed && "bg-ember-wash",
       )}
     >
+      {/* Phone only: the soft round icon, then the label under it. */}
+      {item.icon && (
+        <span aria-hidden className={cn("mb-tight flex h-8 w-8 items-center justify-center rounded-full sm:hidden [&>svg]:h-4 [&>svg]:w-4", ICON_TONE[item.iconTone ?? "neutral"])}>
+          {item.icon}
+        </span>
+      )}
       {/* Wraps on a phone rather than truncating: a label cut to "Transa…" is
-          the fault this layout exists to remove. */}
-      <span className="block text-xs text-muted sm:truncate sm:text-sm sm:font-medium sm:leading-6">{item.label}</span>
+          the fault this layout exists to remove. With no icon the delta pill
+          sits where the icon would be, so the label keeps clear of it. */}
+      <span className={cn("block text-sm text-muted sm:truncate sm:font-medium sm:leading-6", !!item.delta && !item.icon && "max-sm:pr-14")}>{item.label}</span>
       <span className="mt-inline flex flex-wrap items-baseline gap-x-tight gap-y-inline">
         {loading ? (
           <span className="my-1 block h-6 w-20 animate-pulse rounded-xs bg-line" />
         ) : (
           <span
             className={cn(
-              "type-figure block whitespace-nowrap text-lg font-semibold leading-tight sm:text-2xl",
+              "type-figure block whitespace-nowrap text-xl font-semibold leading-tight min-[360px]:max-sm:text-2xl sm:text-2xl",
               item.tone === "warning" && "text-warning",
               item.tone === "danger" && "text-danger",
             )}
@@ -237,7 +259,8 @@ function Cell({ item, loading, folded = false }: { item: StatItem; loading: bool
             {item.value}
           </span>
         )}
-        {item.delta}
+        {/* On a phone the pill leaves the value line for the card's top-right corner. */}
+        {item.delta && <span className="max-sm:absolute max-sm:right-comfortable max-sm:top-comfortable">{item.delta}</span>}
       </span>
       {/* Only where there is something to say — an empty line under three of
           four figures is the white space this band exists to remove. */}
@@ -295,13 +318,16 @@ function Tile({ item, loading }: { item: StatItem; loading: boolean }) {
  * no prior period — inventing one to fill the corner would be inventing the
  * comparison.
  */
+/** Whether DeltaPill would draw anything for these figures. A caller uses it to drop the "vs ..." line that explains a pill that is not there. */
+export function deltaShows(now: number, then: number, goodWhen: "up" | "down" = "up"): boolean {
+  if (then <= 0) return false;
+  if (now === 0 && goodWhen === "up") return false;
+  return Math.round(((now - then) / then) * 100) !== 0;
+}
+
 export function DeltaPill({ now, then, goodWhen = "up", since }: { now: number; then: number; goodWhen?: "up" | "down"; /** What it is measured against — "vs last week". Carried by the pill so a band of four figures does not print it four times. */ since?: string }) {
-  if (then <= 0) return null;
-  /* A red "down 100%" on a figure that is simply nothing yet is noise. Only the
-     figure whose fall is welcome (refunds, no-shows) may announce reaching zero. */
-  if (now === 0 && goodWhen === "up") return null;
+  if (!deltaShows(now, then, goodWhen)) return null;
   const pct = Math.round(((now - then) / then) * 100);
-  if (pct === 0) return null;
   const up = pct > 0;
   const good = goodWhen === "up" ? up : !up;
   return (

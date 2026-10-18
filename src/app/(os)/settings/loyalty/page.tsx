@@ -1,5 +1,6 @@
 "use client";
 
+import { CalendarClock, Coins, Gift, Sparkles, Tag } from "lucide-react";
 import { useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Notice, PageShell, Skeleton, useToast } from "@/components/ui";
@@ -127,12 +128,12 @@ function ProgramForm({
   return (
     <>
       <SettingsSection title={t("programTitle")}>
-        <SettingRow label={t("fieldEnabled")} description={t("enabledHelp")} labelFor={false} trailing>
+        <SettingRow icon={Sparkles} label={t("fieldEnabled")} description={t("enabledHelp")} labelFor={false} trailing>
           {({ labelId, describedBy }) => (
             <Switch checked={draft.enabled} onChange={(on) => set("enabled", on)} labelledBy={labelId} describedBy={describedBy} />
           )}
         </SettingRow>
-        <SettingRow label={t("fieldPointsPerUnit")} description={t("pointsPerUnitHelp")} error={errors.pointsPerUnit}>
+        <SettingRow icon={Coins} label={t("fieldPointsPerUnit")} description={t("pointsPerUnitHelp")} error={errors.pointsPerUnit}>
           {({ id, describedBy }) => (
             <input
               id={id}
@@ -147,7 +148,7 @@ function ProgramForm({
             />
           )}
         </SettingRow>
-        <SettingRow label={t("fieldPointValue")} description={t("pointValueHelp")} error={errors.pointValue}>
+        <SettingRow icon={Tag} label={t("fieldPointValue")} description={t("pointValueHelp")} error={errors.pointValue}>
           {({ id, describedBy }) => (
             <input
               id={id}
@@ -162,7 +163,7 @@ function ProgramForm({
             />
           )}
         </SettingRow>
-        <SettingRow label={t("fieldMinRedeem")} description={t("minRedeemHelp")} error={errors.minRedeemPoints}>
+        <SettingRow icon={Gift} label={t("fieldMinRedeem")} description={t("minRedeemHelp")} error={errors.minRedeemPoints}>
           {({ id, describedBy }) => (
             <input
               id={id}
@@ -177,7 +178,7 @@ function ProgramForm({
             />
           )}
         </SettingRow>
-        <SettingRow label={t("fieldExpiryMonths")} description={t("expiryMonthsHelp")} error={errors.expiryMonths}>
+        <SettingRow icon={CalendarClock} label={t("fieldExpiryMonths")} description={t("expiryMonthsHelp")} error={errors.expiryMonths}>
           {({ id, describedBy }) => (
             <input
               id={id}

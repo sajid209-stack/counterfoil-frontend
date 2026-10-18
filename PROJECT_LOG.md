@@ -18208,3 +18208,88 @@ hiding the developer tools, shrinking the camera viewport, retiring Arrivals.
 - "Shift open 3:24" in More is still the fixed demo timer.
 - The scrolling till (/sell) keeps its own catalogue cards; only its pay card moved to tiles.
 - The shared Appearance and Language pickers are segmented controls; Text size now matches them.
+
+## Three date tiles, a Held button, /sell in the card language, and the OS phone redesign (2026-10-18)
+
+Owner, with seven screenshots:
+1. the till shows only Today, Tomorrow and More dates, and a date picked from the calendar takes Tomorrow's place;
+2. a Held button (a lock) replaces the shop button, visible and active once a slot is held;
+3. the scrolling till (/sell) in the same card language as the cart till;
+4. OS on a phone, modern and minimal, less data, in the existing colours and matching the desktop, with Apixer-style KPI cards and the Overview / Customers / Orders / Payments sets as references.
+
+The brief asked for the work to be reviewed as a UX, UI and product designer and as a user, with the feedback fixed. Planned and reviewed on Opus; built by three Sonnet agents with separate files (POS, OS shared pieces, OS pages); harnesses ported by two more. The spec is `docs/mobile.md` §5 (owner update) and §6.
+
+### The till
+
+- **Three date tiles** (`DateTiles` in `SheetParts.tsx`): Today; the second tile (Tomorrow, or the picked date as weekday and date with a tick); and More dates ("Pick a day"), which opens the calendar.
+- **A Held button** in place of the shop button, on `/pos` and `/sell`. It shows only while holds exist and carries their count.
+  - It counts holds a person placed. The till's own checkout holds are left out.
+  - `holds.ts` fires a `cf-holds` event after a place, release or convert, and the button also re-reads every 20s.
+- **The held list** (`pos/HeldSheet.tsx`) is one card per hold:
+  - a 40px lock round, who it is for, what and when, and "Held for N more min";
+  - "Put back on sale" is a quiet text button with Undo;
+  - "Sell" is an outlined ink button. On `/sell` it opens a block preset to that hold.
+- **Cart header**: a centred 3-column grid; Clear all is a 44px button.
+- **/sell** (page, Catalogue, SelectionInline, SaleRows, `_lib/wall.tsx`) is redrawn in the cart till's card language:
+  - blocks have no box inside a box, and "Add another" sits below them;
+  - Done fills once something is chosen;
+  - shop lines take their VAT class from the inventory item.
+
+### OS on a phone
+
+Below 640px only; tablet and desktop draw what they always did.
+
+- **Figures are separate cards** in a 2-column grid (`FigureBand`): a soft-round icon in the figure's tone, the change as a small pill, a 13px label and a 20–24px value. Four at most, then "Show all N". A figure whose change pill is hidden also hides its "vs" line.
+- **Head**: `PageShell` takes `subtitle` (the date or scope under the page name) and `scope` (a small pill on the right, usually `PeriodPill`). The dashboard, analytics, finances, expenses and orders use them.
+- **Records**: `RecordHero` leads with the key facts.
+- **Lists and settings**:
+  - `DataTable` takes a `phoneHeader`;
+  - `SettingRow` takes an `icon`, used on about 12 settings pages;
+  - the calendar's phone agenda is `AgendaCard`.
+- **Per page**:
+  - analytics' questions are cards;
+  - finances has a header and fewer hairlines;
+  - expenses shows its top three categories with a "Show all" pill;
+  - orders has a list header and its figures;
+  - the inventory item, catalog record overview, customer At a glance and marketplaces have record heads.
+
+### Review
+
+An independent review scored OS on a phone **5 → 7** and the till **6.5 → 7.5**.
+
+- **Taken**:
+  - the Held list and button as inset cards, without orange, with a "Held" label;
+  - no box inside a box on /sell, and the date tiles' two-line structure;
+  - the cart header, and no label left dangling on a zero pill;
+  - "Figures" as the scope label, and analytics as cards rather than an accordion;
+  - finances' header and hairlines, and expenses' top three categories;
+  - the orders list header, calendar pills and segmented control, and the dashboard foot and empty state.
+- **Not taken**, because each reverses an owner decision:
+  - hiding the empty Cart bar;
+  - a "+" icon in place of the labelled create pill;
+  - moving the menu button, or adding figures to Customers;
+  - labels on every tab, or hiding the developer tools;
+  - a smaller camera viewport, or retiring Arrivals.
+
+### Found by the ported harnesses and fixed
+
+- On a phone the date pill and the expenses Download button were 42px tall. Both are 44px now (`before:-inset-y-1.5`, `before:-inset-1.5`).
+- The date pill's muted text measured 4.43:1. It now uses `fg-secondary`.
+- The expenses summary skeleton drew one legend row on a phone. The loaded card shows three plus a "Show all" pill, so the card jumped by about 150px. The skeleton now draws three rows and a pill placeholder.
+
+### Verified
+
+- `tsc`, `lint:tokens` (0 errors) and i18n (0 / 0) clean. `eslint` on every changed and new file shows only PosScreen's documented findings and the dashboard's known warnings.
+- Production build of the final tree (105 pages).
+- On it: expenses **231 / 236** and finances **134 / 147** at 390 / 1440, plus the office and till regression lists (`regress-calm.sh`, `regress-go.sh`): every run passing — among them top cards 117, nav 201, orders 193 / 36, the order page 94, analytics 511 / 511, catalog 459, checkout 122 / 122 / 36 / 36, the till 44 / 42, the counter picker 142, check-in, schedule requests, undo and refunds; the 59-route sweeps clean at 390, 390 Bangla dark and 1440; the phone audit hidden 0 · under-44 0 · clipped 0 · errors 0 (the 14 sub-12px items are the deck); the POS contrast audit only the declared white-on-orange rule at 3.50:1.
+- **Harnesses ported to the new design, not loosened**:
+  - tests that clicked the removed shop button now scroll to `#wall-shop`;
+  - tests that asserted the old phone figure strip now assert the cards.
+  - Backups of the originals are kept as `*.pre-os.mjs`.
+- At 1440, the analytics and expenses failures in the first run were in the harnesses only; desktop is unchanged.
+
+### Open
+
+- The orders phone figure cards lost their `data-amount` hooks; nothing reads them now.
+- `tk1`'s "new code admits" check failed once and passed in eight runs since (timing).
+- The Bangla strings added in this pass are drafts.

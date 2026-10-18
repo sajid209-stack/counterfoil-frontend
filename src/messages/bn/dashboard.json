@@ -72,5 +72,6 @@
   "showMore": "আরও দেখান",
   "showLess": "কম দেখান",
   "floatAmount": "{amount} ফ্লোট",
-  "lastNDays": "শেষ {count} দিন"
+  "lastNDays": "শেষ {count} দিন",
+  "figuresLabel": "সংখ্যা"
 }

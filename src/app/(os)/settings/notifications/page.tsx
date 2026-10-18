@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, RotateCcw } from "lucide-react";
+import { Eye, Mail, MessageSquareText, Plus, RotateCcw, UserRound } from "lucide-react";
 import { Button, Chip, PageShell, controlClass, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -438,7 +438,7 @@ export default function NotificationsPage() {
         </SettingsSection>
 
         <SettingsSection title={t("notifications.senderTitle")} description={t("notifications.senderDesc")}>
-          <SettingRow label={t("notifications.senderName")} description={t("notifications.senderNameDesc")} error={errors.sender}>
+          <SettingRow icon={UserRound} label={t("notifications.senderName")} description={t("notifications.senderNameDesc")} error={errors.sender}>
             {({ id, describedBy }) => (
               <div className="relative">
                 <input
@@ -462,7 +462,7 @@ export default function NotificationsPage() {
               </div>
             )}
           </SettingRow>
-          <SettingRow label={t("notifications.replyTo")} description={t("notifications.replyToDesc")} error={errors.replyTo}>
+          <SettingRow icon={Mail} label={t("notifications.replyTo")} description={t("notifications.replyToDesc")} error={errors.replyTo}>
             {({ id, describedBy }) => (
               <input
                 id={id}
@@ -490,7 +490,7 @@ export default function NotificationsPage() {
             ) : undefined
           }
         >
-          <SettingRow label={t("notifications.message")} description={t("notifications.messageDesc")} layout="stack" error={errors.template}>
+          <SettingRow icon={MessageSquareText} label={t("notifications.message")} description={t("notifications.messageDesc")} layout="stack" error={errors.template}>
             {({ id, describedBy }) => (
               <div className="flex flex-col gap-tight">
                 <textarea
@@ -508,7 +508,7 @@ export default function NotificationsPage() {
             )}
           </SettingRow>
 
-          <SettingRow label={t("notifications.preview")} description={t("notifications.previewDesc")} layout="stack" labelFor={false}>
+          <SettingRow icon={Eye} label={t("notifications.preview")} description={t("notifications.previewDesc")} layout="stack" labelFor={false}>
             {() => (
               <div className="flex flex-col gap-tight">
                 {/* The sender above the bubble, because that is the first thing
@@ -573,7 +573,7 @@ export default function NotificationsPage() {
             )}
           </SettingRow>
 
-          <SettingRow label={t("notifications.emailBody")} description={t("notifications.emailBodyDesc")} layout="stack" error={errors.emailBody}>
+          <SettingRow icon={Mail} label={t("notifications.emailBody")} description={t("notifications.emailBodyDesc")} layout="stack" error={errors.emailBody}>
             {({ id, describedBy }) => (
               <div className="flex flex-col gap-tight">
                 <textarea
@@ -591,7 +591,7 @@ export default function NotificationsPage() {
             )}
           </SettingRow>
 
-          <SettingRow label={t("notifications.emailPreview")} description={t("notifications.emailPreviewDesc")} layout="stack" labelFor={false}>
+          <SettingRow icon={Eye} label={t("notifications.emailPreview")} description={t("notifications.emailPreviewDesc")} layout="stack" labelFor={false}>
             {() => (
               <div className="flex flex-col gap-tight">
                 {/* Drawn the way an inbox draws it: who it is from, then the

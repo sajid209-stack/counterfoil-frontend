@@ -4,7 +4,8 @@ import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { PackagePlus, ScanLine } from "lucide-react";
+import { Package, PackagePlus, ScanLine } from "lucide-react";
+import { RecordHero } from "@/components/RecordHero";
 import {
   ActionMenu,
   Notice,
@@ -120,14 +121,15 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
 
   /** One row of the ledger. The sign is the fact; the words are the reason. */
   const moveRow = (m: StockMovement) => (
-    <li key={m.id} className="flex flex-wrap items-baseline gap-x-tight gap-y-inline border-b border-hairline py-comfortable last:border-0">
-      <span className="w-24 shrink-0 text-sm font-medium tabular-nums">
+    <li key={m.id} className="flex flex-wrap items-baseline gap-x-tight gap-y-inline border-b border-hairline py-comfortable last:border-0 max-sm:grid max-sm:grid-cols-[3.5rem_minmax(0,1fr)] max-sm:gap-y-0">
+      <span className="w-24 shrink-0 text-sm font-medium tabular-nums max-sm:row-span-3 max-sm:w-auto max-sm:text-base">
+        {/* sign and count */}
         <span className={cn(m.quantity > 0 ? "text-success" : "text-danger")}>
           {m.quantity > 0 ? "+" : "−"}
           {Math.abs(m.quantity)}
         </span>
       </span>
-      <span className="w-28 shrink-0 text-sm">{t(`move.${m.kind}`)}</span>
+      <span className="w-28 shrink-0 text-sm max-sm:w-auto max-sm:font-medium">{t(`move.${m.kind}`)}</span>
       <span className="min-w-0 flex-1 text-sm text-muted">
         {/* A sale needs no typed reason — being a sale IS the reason, and
             an em-dash there read as missing data. */}
@@ -170,17 +172,32 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
       <div className="flex flex-col gap-section">
         {/* The facts, before any control: what it is, and what the shelves
             say. An archived item says so here rather than by looking normal. */}
+        {/* A phone leads with one calm card: what is on the shelf, then what it is. */}
+        <RecordHero
+          icon={<Package />}
+          tone={item.outOfStock ? "danger" : item.low ? "warning" : "success"}
+          label={t(`kind.${item.kind}`)}
+          figure={
+            item.tracked
+              ? item.onHand <= 0
+                ? t("badge.out")
+                : t("stockCount", { count: item.onHand, unitKey: item.unit.trim().toLowerCase() || "each", unit: item.unit.trim() })
+              : formatMoney(item.price)
+          }
+          sub={item.tracked && item.returnable ? `${t("fact.onLoan")}: ${t("countUnit", { count: loan, unit: item.unit })}` : undefined}
+          meta={[item.sku, item.returnable ? t("returnable") : null, !item.tracked ? t("untracked") : null].filter(Boolean).join(" · ") || undefined}
+        />
         <section className="card-surface p-card">
           {/* The state is in the header row beside the way back; this card says
               what the thing is and what the shelves hold. */}
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted max-sm:hidden">
             {t(`kind.${item.kind}`)}
             {item.sku && <> · <span className="font-mono">{item.sku}</span></>}
             {item.returnable && <> · {t("returnable")}</>}
             {!item.tracked && <> · {t("untracked")}</>}
           </p>
 
-          <dl className="mt-section grid grid-cols-2 gap-section xl:grid-cols-4">
+          <dl className="grid grid-cols-2 gap-section sm:mt-section xl:grid-cols-4">
             {[
               item.tracked ? { k: "onHand", v: item.onHand <= 0 ? t("badge.out") : t("stockCount", { count: item.onHand, unitKey: item.unit.trim().toLowerCase() || "each", unit: item.unit.trim() }) } : null,
               /* A hire has a second axis that a sale does not: what is out
@@ -192,9 +209,9 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
             ]
               .filter(Boolean)
               .map((f) => (
-                <div key={f!.k} className="flex min-w-0 flex-col gap-inline">
+                <div key={f!.k} className={cn("flex min-w-0 flex-col gap-inline", (f!.k === "onHand" || (f!.k === "price" && !item.tracked)) && "max-sm:hidden")}>
                   <dt className="text-xs font-medium text-muted">{t(`fact.${f!.k}`)}</dt>
-                  <dd className="type-figure text-2xl font-semibold leading-tight">{f!.v}</dd>
+                  <dd className="type-figure text-2xl font-semibold leading-tight max-sm:text-xl">{f!.v}</dd>
                 </div>
               ))}
           </dl>

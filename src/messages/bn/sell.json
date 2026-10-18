@@ -3,7 +3,6 @@
   "catalogue": {
     "searchPlaceholder": "বুকিং খুঁজুন",
     "clear": "মুছুন",
-    "all": "সব",
     "custom": "অন্য পরিমাণ"
   },
   "sale": {
@@ -15,7 +14,8 @@
     "remove": "সরান",
     "done": "হয়ে গেছে",
     "slotCount": "{count}টি স্লট",
-    "dayCount": "{count} দিন"
+    "dayCount": "{count} দিন",
+    "addMore": "যোগ করুন"
   },
   "step": {
     "date": "তারিখ",
@@ -97,13 +97,12 @@
     "collectNow": "এখন নিন"
   },
   "footer": {
-    "total": "মোট",
     "nothingYet": "এখনো দেওয়ার কিছু নেই",
     "takeAmount": "{amount} নিন",
     "completeAmount": "{amount} সম্পন্ন করুন",
     "overLimit": "ম্যানেজারের অনুমোদন লাগবে",
     "needReason": "ছাড়ের কারণ লিখুন",
-    "items": "{count, plural, one {# আইটেম} other {# আইটেম}}"
+    "barLabel": "এই বিক্রি"
   },
   "custom": {
     "title": "অন্য পরিমাণ",
@@ -114,23 +113,10 @@
     "whatWasSold": "যা বিক্রি হয়েছে"
   },
   "rows": {
-    "customer": "গ্রাহক",
-    "walkIn": "ওয়াক-ইন",
-    "discount": "ছাড়",
-    "none": "নেই",
     "overLimit": "আপনার {limit}% সীমার বেশি। ম্যানেজারকে বলুন।",
     "reason": "কারণ",
     "reasonPlaceholder": "এই ছাড় কেন?",
-    "payNow": "এখন নেবেন",
-    "inFull": "সম্পূর্ণ",
-    "half": "অর্ধেক",
-    "advanceSummary": "এখন {now} · পরে {later}",
-    "deposit": "অগ্রিম · আসার পর {later}",
-    "depositExplain": "আসার পর {later} না রেখে এখনই সব নিন",
-    "advanceAmount": "এখন যত নেবেন",
-    "advancePlaceholder": "পরিমাণ",
-    "minimum": "সর্বনিম্ন {amount}",
-    "belowMin": "এখন কমপক্ষে {amount} নিন।"
+    "codeUpdated": "প্রোমো কোডে এখন অন্য পরিমাণ ছাড় হচ্ছে। মোট দেখে নিন।"
   },
   "flex": {
     "any": "যেকোনো",

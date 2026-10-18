@@ -142,7 +142,7 @@ export function ActionMenu({
         }}
         className={cn(
           "flex items-center justify-center text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg",
-          shape === "go" ? "h-11 w-11 rounded-full border border-line" : "h-11 w-11 rounded-control md:h-8 md:w-8",
+          shape === "go" ? "h-11 w-11 rounded-full border border-line" : "h-11 w-11 rounded-control max-sm:text-fg-secondary md:h-8 md:w-8",
           open && "bg-muted-wash text-fg",
         )}
       >

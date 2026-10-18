@@ -575,8 +575,7 @@
     "tokens": "Design system"
   },
   "wall": {
-    "inSaleAria": "{name}, {count} in this sale",
-    "jumpToShop": "Go to shop items"
+    "inSaleAria": "{name}, {count} in this sale"
   },
   "takeAmount": "Take {amount}",
   "pay": {
@@ -626,5 +625,25 @@
     "alreadyAs": "This tablet is paired as {name}. Typing a new code pairs it again.",
     "backToSignIn": "Back to sign in",
     "more": "+{count} more"
+  },
+  "held": {
+    "title": "Held places",
+    "close": "Close",
+    "buttonAria": "Held places, {count}",
+    "places": "{count, plural, one {# place} other {# places}}",
+    "allDay": "All day",
+    "until": "Held until {when}",
+    "untilPutBack": "Held until put back",
+    "putBack": "Put back on sale",
+    "sell": "Sell",
+    "putBackToast": "Back on sale — was held for {name}",
+    "undo": "Undo",
+    "restored": "On hold again for {name}",
+    "forMin": "{count, plural, one {Held for 1 more min} other {Held for # more min}}",
+    "forHours": "{count, plural, one {Held for 1 more hour} other {Held for # more hours}}",
+    "button": "Held"
+  },
+  "dateTiles": {
+    "pickDay": "Pick a day"
   }
 }

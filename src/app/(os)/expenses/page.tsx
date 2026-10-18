@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import { Download, Plus } from "lucide-react";
 import { Button, DateRangePicker, FilterBar, FilterSearch, Modal, PageShell, formatRange, useToast, type FilterSpec } from "@/components/ui";
 import { PageAction } from "@/components/ui/PageShell";
+import { DATE_PILL_PHONE } from "@/components/ui/PeriodPill";
+import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -357,9 +359,16 @@ function ExpensesView({ locationId, venueName, pending, locations }: { locationI
                   days: (count) => t("range.days", { count }),
                   pickEnd: t("range.pickEnd"),
                 }}
-                className="min-w-0 flex-1 md:w-auto md:flex-none"
+                className={cn("min-w-0 flex-1 md:w-auto md:flex-none", DATE_PILL_PHONE, "max-sm:flex-initial")}
               />
-              {!wide && <PageAction label={t("toolbar.download")} icon={<Download size={15} strokeWidth={1.5} aria-hidden />} onClick={downloadCsv} />}
+              {!wide && (
+                <PageAction
+                  label={t("toolbar.download")}
+                  icon={<Download size={15} strokeWidth={1.5} aria-hidden />}
+                  onClick={downloadCsv}
+                  className="max-sm:relative max-sm:h-9 max-sm:w-9 max-sm:rounded-full max-sm:border-transparent max-sm:bg-subtle max-sm:before:absolute max-sm:before:-inset-1.5 max-sm:before:content-['']"
+                />
+              )}
             </div>
           }
           filters={filters}

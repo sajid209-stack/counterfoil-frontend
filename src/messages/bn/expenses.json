@@ -58,7 +58,9 @@
     "tiny": "<1%",
     "barLabel": "{total} কোথায় গেছে: {parts}",
     "filterBy": "শুধু {category} দেখান",
-    "clearFilter": "আবার সব ক্যাটাগরি দেখান"
+    "clearFilter": "আবার সব ক্যাটাগরি দেখান",
+    "showAll": "সব দেখান",
+    "showFewer": "কম দেখান"
   },
   "table": {
     "ref": "রেফ",

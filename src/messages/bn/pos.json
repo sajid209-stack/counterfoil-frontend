@@ -575,8 +575,7 @@
     "tokens": "ডিজাইন সিস্টেম"
   },
   "wall": {
-    "inSaleAria": "{name}, এই বিক্রিতে {count}টি",
-    "jumpToShop": "শপের আইটেমে যান"
+    "inSaleAria": "{name}, এই বিক্রিতে {count}টি"
   },
   "takeAmount": "{amount} নিন",
   "pay": {
@@ -626,5 +625,25 @@
     "alreadyAs": "এই ট্যাবলেট {name} হিসেবে যুক্ত। নতুন কোড লিখলে আবার যুক্ত হবে।",
     "backToSignIn": "সাইন ইনে ফিরুন",
     "more": "আরও {count} জন"
+  },
+  "held": {
+    "title": "ধরে রাখা স্থান",
+    "close": "বন্ধ করুন",
+    "buttonAria": "ধরে রাখা স্থান, {count}",
+    "places": "{count, plural, one {#টি স্থান} other {#টি স্থান}}",
+    "allDay": "সারা দিন",
+    "until": "{when} পর্যন্ত ধরা",
+    "untilPutBack": "ফিরিয়ে না দেওয়া পর্যন্ত ধরা",
+    "putBack": "আবার বিক্রির জন্য রাখুন",
+    "sell": "বিক্রি করুন",
+    "putBackToast": "আবার বিক্রির জন্য — {name}-এর জন্য ধরা ছিল",
+    "undo": "পূর্বাবস্থায়",
+    "restored": "{name}-এর জন্য আবার ধরা হয়েছে",
+    "forMin": "আরও {count} মিনিট ধরা থাকবে",
+    "forHours": "আরও {count} ঘণ্টা ধরা থাকবে",
+    "button": "ধরা"
+  },
+  "dateTiles": {
+    "pickDay": "দিন বাছুন"
   }
 }

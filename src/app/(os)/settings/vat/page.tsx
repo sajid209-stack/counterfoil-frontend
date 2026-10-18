@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BarChart3, Building2, CalendarCheck, CalendarClock, MapPin } from "lucide-react";
 import { DateField, PageShell, RadioGroup, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { BIN_LENGTH, binDigits, formatBin, getVatSettings, invoiceNumber, updateVatSettings } from "@/lib/api";
@@ -156,7 +156,7 @@ export default function VatPage() {
                     />
                   )}
                 </SettingRow>
-                <SettingRow label={t("vat.legalName")} description={t("vat.legalNameDesc")}>
+                <SettingRow icon={Building2} label={t("vat.legalName")} description={t("vat.legalNameDesc")}>
                   {({ id, describedBy }) => (
                     <input
                       id={id}
@@ -167,7 +167,7 @@ export default function VatPage() {
                     />
                   )}
                 </SettingRow>
-                <SettingRow label={t("vat.address")} description={t("vat.addressDesc")}>
+                <SettingRow icon={MapPin} label={t("vat.address")} description={t("vat.addressDesc")}>
                   {({ id, describedBy }) => (
                     <textarea
                       id={id}
@@ -179,7 +179,7 @@ export default function VatPage() {
                     />
                   )}
                 </SettingRow>
-                <SettingRow label={t("vat.registeredDate")} description={t("vat.registeredDateDesc")}>
+                <SettingRow icon={CalendarCheck} label={t("vat.registeredDate")} description={t("vat.registeredDateDesc")}>
                   {({ id }) => (
                     <DateField
                       id={id}
@@ -242,7 +242,7 @@ export default function VatPage() {
               </SettingsSection>
 
               <SettingsSection title={t("vat.filingTitle")} description={t("vat.filingDesc")}>
-                <SettingRow label={t("vat.period")} layout="stack" labelFor={false}>
+                <SettingRow icon={CalendarClock} label={t("vat.period")} layout="stack" labelFor={false}>
                   {({ labelId }) => (
                     <RadioGroup
                       aria-labelledby={labelId}
@@ -255,10 +255,10 @@ export default function VatPage() {
                     />
                   )}
                 </SettingRow>
-                <SettingRow label={t("vat.nextDue")} description={t("vat.nextDueDesc")} labelFor={false} trailing>
+                <SettingRow icon={CalendarClock} label={t("vat.nextDue")} description={t("vat.nextDueDesc")} labelFor={false} trailing>
                   {() => <p className="text-base font-semibold text-fg">{formatDay(nextDue(now, form.returnPeriod), { weekday: true })}</p>}
                 </SettingRow>
-                <SettingRow label={t("vat.analyticsLabel")} description={t("vat.analyticsDesc")} labelFor={false}>
+                <SettingRow icon={BarChart3} label={t("vat.analyticsLabel")} description={t("vat.analyticsDesc")} labelFor={false}>
                   {() => (
                     <Link
                       href="/analytics#vat"

@@ -187,8 +187,8 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
         const open = isOpen(d.date, i);
         const x = info(d);
         return (
-          <div key={d.date} className="border-t border-hairline first:border-t-0">
-            <div role="presentation" onClick={() => onToggle(d.date, !open)} className="flex min-h-14 cursor-pointer items-center gap-tight py-comfortable pl-tight pr-card active:bg-muted-wash">
+          <div key={d.date} className="border-t border-hairline first:border-t-0 max-sm:border-t-0">
+            <div role="presentation" onClick={() => onToggle(d.date, !open)} className="flex min-h-14 cursor-pointer items-center gap-tight py-comfortable pl-tight pr-card active:bg-muted-wash max-sm:py-3">
               <button
                 type="button"
                 data-day={d.date}
@@ -214,7 +214,7 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
                   const rt = rowText(r);
                   const st = rowStatus(r);
                   return (
-                    <li key={r.id} className="border-t border-hairline first:border-t-0">
+                    <li key={r.id} className="border-t border-hairline first:border-t-0 max-sm:border-t-0">
                       <button
                         type="button"
                         onClick={() => onPick(r)}
@@ -237,7 +237,7 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
           </div>
         );
       })}
-      <div className="border-t border-hairline bg-subtle px-card py-comfortable">
+      <div className="border-t border-hairline bg-subtle px-card py-comfortable max-sm:border-t-0 max-sm:bg-transparent max-sm:pb-tight max-sm:pt-section">
         <p className="flex items-baseline justify-between gap-tight text-base font-semibold">
           <span>{t("table.total", { count: days.length })}</span>
           <span className={cn("tabular-nums", amountTone(totals.net))}>{signed(totals.net)}</span>
@@ -326,7 +326,7 @@ export function ActivityTable({
     <div className={cn(loading && "opacity-60 transition-opacity")} aria-busy={loading}>
       {wide ? <RowTable {...props} /> : <RowList {...props} />}
       {days.length < total && (
-        <div className="flex flex-col items-center gap-tight border-t border-hairline px-card py-section">
+        <div className="flex flex-col items-center gap-tight border-t border-hairline px-card py-section max-sm:border-t-0">
           <Button variant="secondary" loading={loadingMore} onClick={onMore}>
             {t("activity.showMore")}
           </Button>

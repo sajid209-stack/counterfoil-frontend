@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Download } from "lucide-react";
+import { Download, Gauge, Receipt, ShoppingBag, Undo2, Users, Wallet } from "lucide-react";
 import { Button, DateRangePicker, DeltaPill, Notice, PageShell, StatStrip, formatRange, type StatItem } from "@/components/ui";
 import { analyticsCsv, comparisonRange, getAnalyticsOverview, listLocations, type AnalyticsOverview } from "@/lib/api";
 import { useActiveLocation } from "@/lib/activeLocation";
@@ -249,7 +249,7 @@ function AnalyticsInner() {
           <MetricStrip
             loading={first}
             label={t("kpi.label")}
-            items={(o ? kpiItems(o, t) : placeholderItems(t)).map(({ key, label, value, delta, context }) => ({ key, label, value, delta, context }))}
+            items={(o ? kpiItems(o, t) : placeholderItems(t)).map(({ key, label, value, delta, context, icon, iconTone }) => ({ key, label, value, delta, context, icon, iconTone }))}
           />
         )}
 
@@ -294,12 +294,14 @@ function kpiItems(o: AnalyticsOverview, t: ReturnType<typeof useTranslations>): 
       ),
       delta: delta(k.revenue),
       context: was(k.revenue, formatMoney),
+      icon: <Wallet aria-hidden />,
+      iconTone: "ember",
     },
-    { key: "orders", label: t("kpi.orders"), value: num(k.orders.value), delta: delta(k.orders), context: was(k.orders, num) },
-    { key: "average", label: t("kpi.average"), value: formatMoney(k.averageOrder.value), delta: delta(k.averageOrder), context: was(k.averageOrder, formatMoney) },
-    { key: "guests", label: t("kpi.guests"), value: num(k.guests.value), delta: delta(k.guests), context: was(k.guests, num) },
-    { key: "capacity", label: t("kpi.capacity"), value: percent(k.capacityFilled.value), delta: points(k.capacityFilled), context: was(k.capacityFilled, percent) },
-    { key: "refunds", label: t("kpi.refunds"), value: formatMoney(k.refunds.value), delta: delta(k.refunds, "down"), context: was(k.refunds, formatMoney) },
+    { key: "orders", label: t("kpi.orders"), value: num(k.orders.value), delta: delta(k.orders), context: was(k.orders, num), icon: <ShoppingBag aria-hidden />, iconTone: "info" },
+    { key: "average", label: t("kpi.average"), value: formatMoney(k.averageOrder.value), delta: delta(k.averageOrder), context: was(k.averageOrder, formatMoney), icon: <Receipt aria-hidden />, iconTone: "neutral" },
+    { key: "guests", label: t("kpi.guests"), value: num(k.guests.value), delta: delta(k.guests), context: was(k.guests, num), icon: <Users aria-hidden />, iconTone: "success" },
+    { key: "capacity", label: t("kpi.capacity"), value: percent(k.capacityFilled.value), delta: points(k.capacityFilled), context: was(k.capacityFilled, percent), icon: <Gauge aria-hidden />, iconTone: "warning" },
+    { key: "refunds", label: t("kpi.refunds"), value: formatMoney(k.refunds.value), delta: delta(k.refunds, "down"), context: was(k.refunds, formatMoney), icon: <Undo2 aria-hidden />, iconTone: "danger" },
   ];
 }
 

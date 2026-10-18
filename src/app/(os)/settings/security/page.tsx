@@ -2,15 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import {
-  Copy,
-  LogOut,
-  Monitor,
-  ShieldCheck,
-  Smartphone,
-  Tablet,
-  type LucideIcon,
-} from "lucide-react";
+import { Copy, KeyRound, LifeBuoy, LogOut, Mail, Monitor, ShieldCheck, Smartphone, Tablet, type LucideIcon } from "lucide-react";
 import { Button, ConfirmDialog, Modal, Notice, PageShell, Select, StatusPill, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -107,7 +99,7 @@ export default function SecurityPage() {
     <PageShell title={t("security.title")} description={t("security.description")}>
       <div className="flex flex-col gap-section pb-hero">
         <SettingsSection title={t("security.password")} description={t("security.passwordDesc")}>
-          <SettingRow label={t("security.current")}>
+          <SettingRow icon={KeyRound} label={t("security.current")}>
             {({ id }) => (
               <input
                 id={id}
@@ -119,7 +111,7 @@ export default function SecurityPage() {
               />
             )}
           </SettingRow>
-          <SettingRow label={t("security.new")} description={t("security.newDesc")} error={tooShort ? t("security.pwTooShort") : undefined}>
+          <SettingRow icon={KeyRound} label={t("security.new")} description={t("security.newDesc")} error={tooShort ? t("security.pwTooShort") : undefined}>
             {({ id, describedBy }) => (
               <input
                 id={id}
@@ -133,7 +125,7 @@ export default function SecurityPage() {
               />
             )}
           </SettingRow>
-          <SettingRow label={t("security.repeatNew")} error={mismatch ? t("security.noMatch") : undefined}>
+          <SettingRow icon={KeyRound} label={t("security.repeatNew")} error={mismatch ? t("security.noMatch") : undefined}>
             {({ id, describedBy }) => (
               <input
                 id={id}
@@ -173,7 +165,7 @@ export default function SecurityPage() {
               </Notice>
             </div>
           )}
-          <SettingRow label={t("security.twoStepLabel")} labelFor={false} trailing>
+          <SettingRow icon={ShieldCheck} label={t("security.twoStepLabel")} labelFor={false} trailing>
             {({ labelId, describedBy }) => (
               <Switch
                 checked={twoStep}
@@ -234,7 +226,7 @@ export default function SecurityPage() {
               </Notice>
             </div>
           ) : (
-            <SettingRow label={t("security.newEmail")} description={t("security.emailChangeHelp", { email })}>
+            <SettingRow icon={Mail} label={t("security.newEmail")} description={t("security.emailChangeHelp", { email })}>
               {({ id, describedBy }) => (
                 <div className="flex gap-tight">
                   <input
@@ -264,7 +256,7 @@ export default function SecurityPage() {
         </SettingsSection>
 
         <SettingsSection title={t("security.recovery")} description={t("security.recoveryNote")}>
-          <SettingRow label={t("security.recoveryWho")}>
+          <SettingRow icon={LifeBuoy} label={t("security.recoveryWho")}>
             {({ id }) => (
               <Select
                 id={id}

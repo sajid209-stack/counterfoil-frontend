@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowDown, ArrowUp, CreditCard, QrCode, Smartphone, Wallet, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUp, Banknote, CreditCard, QrCode, Smartphone, Wallet, type LucideIcon } from "lucide-react";
 import { PageShell, Radio, SegmentedControl, Select, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -446,7 +446,7 @@ export default function PaymentsPage() {
         </SettingsSection>
 
         <SettingsSection title={t("cash.title")} description={t("cash.description")}>
-          <SettingRow label={t("cash.float")} description={t("cash.floatDesc")} error={floatErr}>
+          <SettingRow icon={Banknote} label={t("cash.float")} description={t("cash.floatDesc")} error={floatErr}>
             {({ id, describedBy }) => (
               <SuffixInput id={id} value={form.float} onChange={(v) => set({ float: v })} suffix={symbol} invalid={!!floatErr} describedBy={describedBy} />
             )}
