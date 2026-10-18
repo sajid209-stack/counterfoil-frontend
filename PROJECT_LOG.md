@@ -18345,3 +18345,13 @@ Owner, with a screenshot of the phone dashboard: remove the change pill and the 
 - Labels never wrap: measured in English and Bangla at 390 and 320px on all three pages, none is cut. Cards are 80px tall at 390.
 - Finances keeps its own phone cards (next payout, withdraw/deposit), which carry what to do next.
 - Verified: top cards 117, orders 36, analytics 511, the phone audit hidden 0 · under-44 0 · clipped 0 · errors 0.
+
+## Finances phone cards: label and figure only (2026-10-19)
+
+Owner, with a screenshot of the Finances phone cards: remove the info buttons and the lines under each figure.
+
+- Below 640px the four balance cards are the icon, the label on one line and the figure. The info button (the payout estimate, the clearing schedule) and the context lines (next payout, clears by, the period, how many payouts) are gone on a phone; the desktop cards keep them.
+- One exception: a balance below zero keeps "You owe Counterfoil" in red under the figure, because it is the only sign money is owed.
+- "Available balance" did not fit a 320px card beside its icon, so a phone shows the short label "Available" (`finances.available.short`, en and bn).
+- The unused `PhoneInfo` sheet and its `Sheet` import were removed.
+- Verified: no label cut at 390 and 320, English and Bangla; finances 124 at 390 and 147 at 1440. The phone checks now assert no info button and only the label and figure on each card; the range is checked on the table's date button.

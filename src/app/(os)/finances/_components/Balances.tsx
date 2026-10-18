@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowDownToLine, ArrowUpFromLine, Clock, Info, Wallet } from "lucide-react";
-import { Button, Sheet, Skeleton } from "@/components/ui";
+import { Button, Skeleton } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatDay, formatMoney } from "@/lib/format";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -115,29 +115,27 @@ export function Balances({
     const items: Metric[] = [
       {
         key: "available",
-        label: t("available.label"),
+        /* The short form: "Available balance" does not fit a 320px card beside its icon. */
+        label: t("available.short"),
         value: loading ? "" : formatMoney(available),
         tone: owing ? "danger" : undefined,
-        context: summary ? nextLine : undefined,
+        /* A phone card is the label and the figure (owner, 2026-10-19); only a balance below zero keeps its line, because it says money is owed. */
+        context: summary && owing ? nextLine : undefined,
         contextTone: owing ? "font-medium text-danger" : undefined,
         icon: <Wallet aria-hidden />,
         iconTone: owing ? "danger" : "ember",
-        action: hasBalanceInfo ? <PhoneInfo label={t("available.infoLabel")}>{availableInfo}</PhoneInfo> : undefined,
       },
       {
         key: "unsettled",
         label: t("unsettled.label"),
         value: loading ? "" : formatMoney(summary?.unsettled ?? 0),
-        context: unsettledLine,
         icon: <Clock aria-hidden />,
         iconTone: "warning",
-        action: <PhoneInfo label={t("unsettled.infoLabel")}>{unsettledInfo}</PhoneInfo>,
       },
       {
         key: "withdrawn",
         label: t("withdrawn.label"),
         value: loading ? "" : formatMoney(p?.paidOut ?? 0),
-        context: summary ? `${periodLabel} · ${withdrawnLine}` : undefined,
         icon: <ArrowUpFromLine aria-hidden />,
         iconTone: "info",
       },
@@ -145,7 +143,6 @@ export function Balances({
         key: "deposited",
         label: t("deposited.label"),
         value: loading ? "" : formatMoney(p?.deposited ?? 0),
-        context: summary ? `${periodLabel} · ${depositedLine}` : undefined,
         icon: <ArrowDownToLine aria-hidden />,
         iconTone: "success",
       },
@@ -335,36 +332,6 @@ function TileInfo({ label, align, children }: { label: string; align: "left" | "
         </div>
       )}
     </span>
-  );
-}
-
-/** The phone's "i": the same note as the tile's popover, in a sheet. A popover
- *  inside the sideways scroller would be clipped by it. */
-function PhoneInfo({ label, children }: { label: string; children: React.ReactNode }) {
-  const tc = useTranslations("common");
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <button
-        type="button"
-        aria-label={label}
-        aria-haspopup="dialog"
-        onClick={() => setOpen(true)}
-        className="-my-3 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-muted active:bg-muted-wash"
-      >
-        <Info size={16} strokeWidth={1.5} aria-hidden />
-      </button>
-      <Sheet open={open} onClose={() => setOpen(false)} title={label} closeLabel={tc("close")}>
-        <div
-          className="p-card text-sm leading-snug text-fg"
-          onClick={(e) => {
-            if ((e.target as HTMLElement).closest("[data-close]")) setOpen(false);
-          }}
-        >
-          {children}
-        </div>
-      </Sheet>
-    </>
   );
 }
 

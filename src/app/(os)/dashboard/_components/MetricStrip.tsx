@@ -76,9 +76,9 @@ export function MetricStrip({
           {/* The same anatomy the desktop tile has: label and change on one line,
               the figure, then what the figure does not say on its own. */}
           <div className="flex min-h-[22px] items-start justify-between gap-tight">
-            <p className="flex min-w-0 flex-1 items-center gap-1.5 pt-0.5 text-xs font-medium leading-snug text-muted">
+            <p className="flex min-w-0 flex-1 items-center gap-1.5 whitespace-nowrap pt-0.5 text-xs font-medium leading-snug text-muted">
               {m.icon && <span aria-hidden className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-fg-secondary [&>svg]:h-4 [&>svg]:w-4">{m.icon}</span>}
-              <span className="min-w-0">{m.label}</span>
+              <span className="min-w-0 truncate">{m.label}</span>
             </p>
             {!loading && m.delta}
           </div>

@@ -6,6 +6,7 @@
   },
   "available": {
     "label": "Available balance",
+    "short": "Available",
     "next": "Next payout {date} · {bank}",
     "nextNoBank": "Next payout {date}",
     "none": "Payouts go out every Monday",
