@@ -58,7 +58,6 @@ export function ProfileHeader({
           : t("lastBookedOn", { date: formatDay(profile.lastBooked.slice(0, 10)) });
   const line = [
     t("sinceLine", { when: since }),
-    profile.bookedCount > 0 ? t("bookedCount", { count: profile.bookedCount }) : t("noBookings"),
     last,
   ]
     .filter(Boolean)

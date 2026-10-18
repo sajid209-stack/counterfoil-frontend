@@ -2,7 +2,7 @@
 
 import { Button, Sheet } from "@/components/ui";
 import { useState } from "react";
-import { Check, Clock, Plus, ShoppingBag, Ticket, X } from "lucide-react";
+import { Check, Clock, Plus, ShoppingBag, X } from "lucide-react";
 import { ActionBar } from "@/app/(go)/_components/ActionBar";
 import { WallTile } from "@/app/(go)/_components/WallTile";
 import { Callout, Code, DoDont, DocSection, P, SectionHeader, Small } from "../_components/Doc";
@@ -11,12 +11,11 @@ import { Preview } from "../_components/Preview";
 function Wall() {
   const [counts, setCounts] = useState<Record<string, number>>({ ga: 1 });
   const add = (k: string) => setCounts((c) => ({ ...c, [k]: (c[k] ?? 0) + 1 }));
-  const thumb = (icon: React.ReactNode) => <span className="flex h-11 w-11 items-center justify-center rounded-go-sm bg-subtle text-muted">{icon}</span>;
   return (
     <div className="grid grid-cols-2 gap-tight sm:grid-cols-3">
       <WallTile
         onClick={() => add("ga")}
-        thumb={thumb(<Ticket size={20} strokeWidth={1.5} aria-hidden />)}
+        image="/demo/pages/admission-1.jpg"
         name="General Admission"
         price="৳500"
         meta="Any day you are open"
@@ -25,7 +24,7 @@ function Wall() {
       />
       <WallTile
         onClick={() => add("tour")}
-        thumb={thumb(<Clock size={20} strokeWidth={1.5} aria-hidden />)}
+        image="/demo/pages/gardentour-1.jpg"
         name="Heritage Walking Tour"
         price="৳800"
         meta="With a guide"
@@ -35,7 +34,7 @@ function Wall() {
       />
       <WallTile
         onClick={() => {}}
-        thumb={thumb(<ShoppingBag size={20} strokeWidth={1.5} aria-hidden />)}
+        glyph={<ShoppingBag size={32} strokeWidth={1.5} aria-hidden />}
         name="Souvenir tote bag"
         price="৳450"
         live={{ text: "Sold out", tone: "none" }}
@@ -131,7 +130,7 @@ export function GoPatternsSection() {
 
       <DocSection id="principles" title="Fast, accurate, on touch">
         <P>
-          POS is the till. It shares OS&rsquo;s colour, type and behaviour and differs in shape (18px cards, pill controls), elevation (a wide soft lift) and density (nothing smaller than a thumb). It is worked under a queue by people who remember a pattern rather than read — so the next step is always in the same place.
+          POS is the till. It shares OS&rsquo;s colour, type and behaviour and differs in shape (18px image-first cards, pill controls, a floating tab bar), elevation (a wide soft lift) and density (nothing smaller than a thumb). It is worked under a queue by people who remember a pattern rather than read — so the next step is always in the same place.
         </P>
         <Small>The till is called <strong className="font-semibold">Counterfoil GO</strong> in code: its routes live under <Code>(go)</Code> and its product token is <Code>data-product=&quot;go&quot;</Code>. This documentation calls it POS; the URL parameter stays <Code>product=go</Code>.</Small>
       </DocSection>

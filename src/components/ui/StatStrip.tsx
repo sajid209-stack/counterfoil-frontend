@@ -1,6 +1,10 @@
 "use client";
 
+import { useId } from "react";
+import { useTranslations } from "next-intl";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { setPrefs, usePrefs } from "@/lib/prefs";
 
 export interface StatItem {
   key: string;
@@ -46,15 +50,17 @@ export interface StatItem {
  *
  * Both live in this file so that a page cannot invent a third.
  *
- * **On a phone every figure is on screen.** Square and Foodpanda show short
- * figures all at once, and a number is never cut mid-word: a clipped
- * "Transa…" reads as a fault, and a clipped figure is a different figure.
- * Below `sm` both layouts are the same thing — one card, two cells across, a
- * hairline between them, a 12px label over an 18px figure — and an odd last
- * cell spans both columns. It used to fold behind a "3 more" disclosure, and a
- * figure behind a tap is a figure most people never see; four figures in two
- * rows cost ~140px, which is cheaper than the disclosure it replaced was
- * worth.
+ * **On a phone, two figures — and a button that names the rest.** A number is
+ * never cut mid-word (a clipped "Transa…" reads as a fault, and a clipped
+ * figure is a different figure), so below `sm` both layouts are one card, two
+ * cells across, a hairline between them, a 12px label over an 18px figure.
+ * The calm pass (docs/mobile.md §4) decided which few deserve the first
+ * screen: the caller orders `items` so the two that matter come first, a
+ * phone draws those, and a quiet full-width "Show all N" under them reveals
+ * the rest in the same grid. It is a disclosure, not a deletion — the button
+ * says how many there are. The open state is remembered per browser
+ * (`statsOpen`) because somebody who wants all of them wants them every time.
+ * From `sm` nothing folds.
  */
 export function StatStrip({
   items,
@@ -138,18 +144,59 @@ export function FigureBand({
   gridClassName?: string;
   gridStyle?: React.CSSProperties;
 }) {
+  const fold = useFigureFold(items.length);
   return (
     <div role={label ? "group" : undefined} aria-label={label} className={cn("card-surface overflow-hidden", className)}>
-      <div data-stat-band className={cn("grid grid-cols-[repeat(2,minmax(min-content,1fr))] gap-px bg-hairline", gridClassName)} style={gridStyle}>
-        {items.map((item) => (
-          <Cell key={item.key} item={item} loading={loading} />
+      <div id={fold.id} data-stat-band className={cn("grid grid-cols-[repeat(2,minmax(min-content,1fr))] gap-px bg-hairline", gridClassName)} style={gridStyle}>
+        {items.map((item, i) => (
+          <Cell key={item.key} item={item} loading={loading} folded={fold.folds && !fold.open && i >= FIGURES_SHOWN} />
         ))}
       </div>
+      {fold.folds && <FigureToggle fold={fold} total={items.length} className="border-t border-hairline bg-card" />}
     </div>
   );
 }
 
-function Cell({ item, loading }: { item: StatItem; loading: boolean }) {
+/** How many figures a phone draws before the rest wait behind "Show all N". */
+export const FIGURES_SHOWN = 2;
+
+/**
+ * The fold state for one band of figures. `statsOpen` is the app's own
+ * remembered preference (an earlier fold wrote it), so the choice follows the
+ * browser; the server and the first client render both see it closed.
+ */
+export function useFigureFold(total: number) {
+  const { statsOpen } = usePrefs();
+  const id = useId();
+  const folds = total > FIGURES_SHOWN;
+  return { id, folds, open: !folds || statsOpen, toggle: () => setPrefs({ statsOpen: !statsOpen }) };
+}
+
+/**
+ * The quiet button that names what is folded. Phone only (`sm:hidden`): from
+ * `sm` every figure is drawn and there is nothing to open. 44px tall, text and
+ * a chevron, no fill — it must not compete with the figures above it.
+ */
+export function FigureToggle({ fold, total, className }: { fold: ReturnType<typeof useFigureFold>; total: number; className?: string }) {
+  const t = useTranslations("common");
+  return (
+    <button
+      type="button"
+      aria-expanded={fold.open}
+      aria-controls={fold.id}
+      onClick={fold.toggle}
+      className={cn(
+        "flex h-11 w-full items-center justify-center gap-inline text-sm font-medium text-muted transition-colors duration-quick hover:text-fg sm:hidden",
+        className,
+      )}
+    >
+      {fold.open ? t("ui.figureBand.showFewer") : t("ui.figureBand.showAll", { count: total })}
+      <ChevronDown size={16} strokeWidth={1.75} aria-hidden className={cn("transition-transform duration-quick", fold.open && "rotate-180")} />
+    </button>
+  );
+}
+
+function Cell({ item, loading, folded = false }: { item: StatItem; loading: boolean; folded?: boolean }) {
   const Tag = item.onClick ? "button" : "div";
   return (
     <Tag
@@ -163,6 +210,7 @@ function Cell({ item, loading }: { item: StatItem; loading: boolean }) {
         // roomier label-over-figure cell the page has always had. An odd last
         // cell takes both columns rather than leaving the card showing through.
         "min-w-0 bg-card px-comfortable py-comfortable text-left transition-colors duration-quick max-sm:last:odd:col-span-2 sm:block sm:px-card",
+        folded && "max-sm:hidden",
         // The ring is drawn INSIDE: the band clips its corners, so a 2px
         // outline on the first or last cell is painted outside the card and
         // thrown away — the same clip that ate the till's selected-card ring.
@@ -249,6 +297,9 @@ function Tile({ item, loading }: { item: StatItem; loading: boolean }) {
  */
 export function DeltaPill({ now, then, goodWhen = "up", since }: { now: number; then: number; goodWhen?: "up" | "down"; /** What it is measured against — "vs last week". Carried by the pill so a band of four figures does not print it four times. */ since?: string }) {
   if (then <= 0) return null;
+  /* A red "down 100%" on a figure that is simply nothing yet is noise. Only the
+     figure whose fall is welcome (refunds, no-shows) may announce reaching zero. */
+  if (now === 0 && goodWhen === "up") return null;
   const pct = Math.round(((now - then) / then) * 100);
   if (pct === 0) return null;
   const up = pct > 0;

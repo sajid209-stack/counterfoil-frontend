@@ -31,5 +31,6 @@
   "backToSelling": "Back to selling",
   "loadError": "Could not load your sales.",
   "retry": "Try again",
-  "refundedLine": "Refunded"
+  "refundedLine": "Refunded",
+  "noMethods": "Nothing paid yet today."
 }

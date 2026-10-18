@@ -114,3 +114,29 @@ the "all figures visible" rule in §3 for phones.
 | POS tab bar | Floating dark pill, current tab named |
 | My sales | Payment methods with no sales are not listed |
 | Arrivals | No date on each row; no "Confirmed" chip |
+
+### Review round (2026-10-18)
+
+An independent review of the calm pass in three voices (product designer, cashier, manager)
+scored OS phone 7/10 and GO phone 6/10. Fixed after it:
+
+| Where | Fix |
+|---|---|
+| GO sell wall | The Cart/Take bar and the tab pill read as one block over an opaque page-colour backdrop with a short fade; the wall's padding clears it, so no card shows between the bars |
+| GO cards | A price never truncates (320px included); the round button is a "+" when one tap adds and a chevron when it opens a sheet; a card with no photo has a half-height plate; "Other amount" is a slim full-width row |
+| GO tab bar | The pill has a 1px edge; More lights on every page opened from More |
+| GO booking sheet | Past start times fold behind "Show N earlier times"; a booking with one court, lane or field drops the resource row; the footer states day, length and time |
+| GO shop | "42 bottles left", not "42 bottle left" |
+| OS menu button | Hides while scrolling down, returns on scroll up, at the top and bottom, and on focus |
+| Finances | Days start collapsed on a phone; the order reference has its own line; no Today/Yesterday tag beside the date |
+| Dashboard | No delta pill on a figure that is 0; the chart's menu says "Last 30 days"; no Activity filter on a phone |
+| Customer | At a glance shows spent and orders, the rest only above 0; no empty Coming up card; no duplicate booking count |
+| Booking record | Below 640px the eight tabs become one "Section" dropdown; zero-sale tickets fold into "N more with no sales"; no empty Coming up |
+| Order | No status chip when fully paid |
+| Team | The phone bar says "Invite" |
+| Payments | "Always on" sits on its own line under Cash |
+| Calendar | The selected Day/Week/Month is semibold ink |
+
+Not taken, because they reverse earlier decisions of the owner: an outlined instead of orange
+selected payment method, removing Arrivals, hiding the developer tools by role, and dropping the
+price from the Schedule's free cells.

@@ -609,7 +609,8 @@
     "accessAndDevices": "Access and devices",
     "pinErrLength": "Use 4 to 6 digits.",
     "pinErrRepeat": "Repeated digits like 1111 are too easy to guess.",
-    "pinErrRun": "Runs of digits like 1234 are too easy to guess."
+    "pinErrRun": "Runs of digits like 1234 are too easy to guess.",
+    "inviteShort": "Invite"
   },
   "roles": {
     "title": "Roles",

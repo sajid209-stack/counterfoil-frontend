@@ -8,6 +8,7 @@ import {
   orderItemCount,
   orderMethodOf,
   orderNetPaid,
+  orderWrittenOff,
   type Order,
 } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -158,7 +159,10 @@ export function OrderCard({ o, now }: { o: Order; now: Date }) {
           {o.source && <> · {o.source.marketplaceName}</>}
           {due > 0 && <span className="text-warning"> · {t("dueLabel", { amount: formatMoney(due) })}</span>}
         </span>
-        <StatusPill status={o.status} />
+        {/* The normal state is silent: a settled order carries no chip, so the
+            ones that do (part paid, refunded, cancelled, pending, written off)
+            are the ones to look at. */}
+        {o.status !== "paid" ? <StatusPill status={o.status} /> : orderWrittenOff(o) > 0 ? <StatusPill tone="neutral">{t("summary.writtenOff")}</StatusPill> : null}
       </div>
     </div>
   );

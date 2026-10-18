@@ -1,7 +1,8 @@
 {
   "search": {
     "placeholder": "Search what you sell…",
-    "clear": "Clear"
+    "clear": "Clear",
+    "short": "Search"
   },
   "counter": "Fort Main Gate",
   "parkedBadge": "{count} paused",
@@ -362,7 +363,8 @@
     "holdShort": "Hold",
     "started": "Already started",
     "back": "Back",
-    "addAmount": "Add {amount}"
+    "addAmount": "Add {amount}",
+    "showEarlier": "Show {count, plural, one {# earlier time} other {# earlier times}}"
   },
   "settle": {
     "title": "Take booking payment",
@@ -448,7 +450,7 @@
   },
   "shop": {
     "chip": "Shop",
-    "left": "{unit, select, each {{count} left} other {{count} {unit} left}}",
+    "left": "{unit, select, each {{count} left} bottle {{count, plural, one {# bottle} other {# bottles}} left} pair {{count, plural, one {# pair} other {# pairs}} left} set {{count, plural, one {# set} other {# sets}} left} box {{count, plural, one {# box} other {# boxes}} left} other {{count} {unit} left}}",
     "none": "No {name} left in stock.",
     "allOfIt": "Only {count} {unit} of {name} left.",
     "kind": {

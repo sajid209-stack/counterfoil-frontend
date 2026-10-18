@@ -31,28 +31,30 @@ export function AtAGlance({
       ? `/orders/${owingOrderIds[0]}`
       : `/orders?customerId=${customer.id}&customer=${encodeURIComponent(customer.name)}`;
 
+  /* Spent and Orders are the person's headline and always show. The rest say
+     something only when they are not nothing - a row of "0" is filler. */
   const rows: { key: string; label: string; value: string }[] = [
     { key: "spent", label: t("statSpent"), value: formatMoney(stats.spent) },
     { key: "orders", label: t("statOrders"), value: String(stats.orders) },
-    { key: "visits", label: t("statVisits"), value: String(stats.visits) },
-    { key: "noShows", label: t("statNoShows"), value: String(stats.noShows) },
+    ...(stats.visits > 0 ? [{ key: "visits", label: t("statVisits"), value: String(stats.visits) }] : []),
+    ...(stats.noShows > 0 ? [{ key: "noShows", label: t("statNoShows"), value: String(stats.noShows) }] : []),
   ];
 
   return (
     <Panel title={t("glanceTitle")}>
       <dl className="flex flex-col">
         {rows.map((r) => (
-          <div key={r.key} className="flex items-baseline justify-between gap-comfortable border-b border-hairline py-tight first:pt-0">
+          <div key={r.key} className="flex items-baseline justify-between gap-comfortable border-b border-hairline py-tight first:pt-0 last:border-b-0 last:pb-0">
             <dt className="text-base text-muted">{r.label}</dt>
             <dd data-glance={r.key} className="text-base font-medium tabular-nums text-fg">
               {r.value}
             </dd>
           </div>
         ))}
-        <div className="flex items-baseline justify-between gap-comfortable py-tight last:pb-0">
-          <dt className="text-base text-muted">{t("statOutstanding")}</dt>
-          <dd data-glance="owes" className="text-base font-medium tabular-nums">
-            {stats.outstanding > 0 ? (
+        {stats.outstanding > 0 && (
+          <div className="flex items-baseline justify-between gap-comfortable py-tight last:pb-0">
+            <dt className="text-base text-muted">{t("statOutstanding")}</dt>
+            <dd data-glance="owes" className="text-base font-medium tabular-nums">
               <Link
                 href={owesHref}
                 className="inline-flex min-h-11 items-center gap-inline text-warning hover:underline md:min-h-0"
@@ -60,11 +62,9 @@ export function AtAGlance({
                 {formatMoney(stats.outstanding)}
                 <ChevronRight size={14} strokeWidth={1.8} aria-hidden />
               </Link>
-            ) : (
-              <span className="text-fg">{formatMoney(0)}</span>
-            )}
-          </dd>
-        </div>
+            </dd>
+          </div>
+        )}
       </dl>
     </Panel>
   );

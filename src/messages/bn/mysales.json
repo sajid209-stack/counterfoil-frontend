@@ -31,5 +31,6 @@
   "backToSelling": "বিক্রিতে ফিরুন",
   "loadError": "আপনার বিক্রি লোড করা যায়নি।",
   "retry": "আবার চেষ্টা করুন",
-  "refundedLine": "ফেরত"
+  "refundedLine": "ফেরত",
+  "noMethods": "আজ এখনও কোনো মূল্য পরিশোধ হয়নি।"
 }

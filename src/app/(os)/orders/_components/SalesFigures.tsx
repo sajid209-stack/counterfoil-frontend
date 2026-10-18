@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import type { SalesSummary } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
+import { FIGURES_SHOWN, FigureToggle, useFigureFold } from "@/components/ui/StatStrip";
 
 /**
  * The figures for whatever the filters match, as one quiet row.
@@ -27,6 +28,10 @@ import { formatMoney } from "@/lib/format";
  * of 18px figures is ~190px, and a list page still reaches its list. The card's
  * own padding is the section's from md up; below it the cells carry theirs.
  *
+ * The calm pass shows two of the five on a phone — Sales, then Still owed, the
+ * two a person acts on — and a quiet "Show all 5" under them reveals the rest in
+ * the same grid (docs/mobile.md §4). From `sm` all five are drawn.
+ *
  * `data-figure` and `data-amount` carry the exact value, for checks that must
  * not parse "৳1,234.50".
  */
@@ -39,14 +44,24 @@ export function SalesFigures({ summary: s, loading }: { summary: SalesSummary; l
     { key: "items", label: t("items"), value: String(s.items), raw: s.items },
     { key: "paid", label: t("paid"), value: formatMoney(s.paid), raw: s.paid },
   ];
+  const fold = useFigureFold(items.length);
   return (
+    <>
     <dl
+      id={fold.id}
       data-sales-figures
       aria-busy={loading || undefined}
       className="grid w-full min-w-0 grid-cols-[repeat(2,minmax(min-content,1fr))] gap-px bg-hairline md:flex md:gap-x-0 md:bg-transparent lg:grid lg:grid-cols-5"
     >
-      {items.map((i) => (
-        <div key={i.key} title={i.hint} className="min-w-0 bg-card px-comfortable py-comfortable max-md:last:odd:col-span-2 md:flex-1 md:bg-transparent md:p-0">
+      {items.map((i, n) => (
+        <div
+          key={i.key}
+          title={i.hint}
+          className={cn(
+            "min-w-0 bg-card px-comfortable py-comfortable max-md:last:odd:col-span-2 md:flex-1 md:bg-transparent md:p-0",
+            fold.folds && !fold.open && n >= FIGURES_SHOWN && "max-sm:hidden",
+          )}
+        >
           <dt className="text-xs text-muted md:whitespace-nowrap md:text-sm">{i.label}</dt>
           <dd
             data-figure={i.key}
@@ -62,5 +77,7 @@ export function SalesFigures({ summary: s, loading }: { summary: SalesSummary; l
         </div>
       ))}
     </dl>
+    {fold.folds && <FigureToggle fold={fold} total={items.length} className="border-t border-hairline bg-card" />}
+    </>
   );
 }

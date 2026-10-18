@@ -74,9 +74,9 @@ type ActivityFilter = "all" | ActivityGroup;
  *  if this card's anatomy changes. A phone has no column beside it and shows
  *  five: it is a glance, and the full log is one press away. */
 const ACTIVITY_ROWS = 11;
-const ACTIVITY_ROWS_PHONE = 5;
+const ACTIVITY_ROWS_PHONE = 3;
 /** Recent orders on a phone: a short list, not a table. */
-const ORDER_ROWS_PHONE = 5;
+const ORDER_ROWS_PHONE = 3;
 
 /** Events that are about a person: their name leads the row. */
 const PERSON_KINDS = new Set<ActivityEvent["kind"]>(["staff.signed_in", "staff.signed_out", "staff.wrong_pin", "staff.locked_out", "shift.opened", "shift.closed"]);
@@ -438,10 +438,30 @@ export default function DashboardPage() {
   // ── The cards, each drawn once and placed by the layout below ────────────
   const trendCard = (
     <div className={`${card} p-card`}>
+      {/* A phone: the title and the range menu share the header line, the way a
+          phone admin draws a card's one control. The range was a full-width
+          three-way bar under the figure — the loudest thing in the card for the
+          quietest decision in it. */}
+      {!wide && (
+        <div className="-mt-2 mb-inline flex items-center justify-between gap-tight">
+          <h2 className={heading}>{t("revenueTrend")}</h2>
+          <Select
+            bare
+            align="end"
+            value={String(trendDays)}
+            onChange={(v) => setTrendDays(Number(v) as 7 | 14 | 30)}
+            aria-label={t("revenueTrend")}
+            triggerClassName="text-sm font-medium text-muted"
+            /* "Last 30 days", not "30 days": the menu is the only thing that says
+               what the chart's range is. */
+            options={([7, 14, 30] as const).map((d) => ({ value: String(d), label: t("lastNDays", { count: d }) }))}
+          />
+        </div>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-tight">
         <div className="min-w-0">
-          <h2 className={heading}>{t("revenueTrend")}</h2>
-          <div className="mt-tight flex flex-wrap items-baseline gap-tight">
+          {wide && <h2 className={heading}>{t("revenueTrend")}</h2>}
+          <div className={cn("flex flex-wrap items-baseline gap-tight", wide && "mt-tight")}>
             <span className="type-figure whitespace-nowrap text-3xl font-semibold">{formatMoney(trendTotal)}</span>
             <DeltaPill now={trendTotal} then={trendPrev} />
           </div>
@@ -460,17 +480,6 @@ export default function DashboardPage() {
           />
         )}
       </div>
-      {!wide && (
-        <SegmentedControl
-          size="sm"
-          fullWidth
-          className="mt-comfortable"
-          value={String(trendDays)}
-          onChange={(v) => setTrendDays(Number(v) as 7 | 14 | 30)}
-          aria-label={t("revenueTrend")}
-          options={([7, 14, 30] as const).map((d) => ({ value: String(d), label: t("lastDays", { count: d }) }))}
-        />
-      )}
       <div className="mt-section">
         <AreaChart
           points={trend}
@@ -577,7 +586,7 @@ export default function DashboardPage() {
         {/* One compact control: the filter glyph is the Select's own icon slot,
             so glyph and label share a flex row with a real gap and cannot
             overlap. `bare` draws no box, and the popover is a card of our own. */}
-        <div className="flex shrink-0 items-center text-muted focus-within:text-fg hover:text-fg">
+        <div className="hidden shrink-0 items-center text-muted focus-within:text-fg hover:text-fg sm:flex">
           <Select
             bare
             icon={<ListFilter size={13} strokeWidth={1.5} aria-hidden />}

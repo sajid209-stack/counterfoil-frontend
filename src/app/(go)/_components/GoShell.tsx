@@ -37,22 +37,22 @@ import { liveSaleCount, onLiveSaleChange } from "../pos/_lib/liveSale";
 import { applyTillText, usePrefs } from "@/lib/prefs";
 
 /**
- * How much of the bottom of the screen the tab bar owns: a docked bar, 64px
- * tall including its top hairline, plus whatever the device reserves for its
- * home indicator.
+ * How far the top of the tab bar stands from the bottom of the screen: the
+ * floating pill's 64px, the 12px of page it floats above, and whatever the
+ * device reserves for its home indicator.
  *
- * Material 3 draws a bottom navigation bar at 80dp and iOS a tab bar at 49pt;
- * 64 is the till's middle — a 24px icon in a 32px indicator, a 13px label, and
- * a 64px-tall target that clears the 48px touch floor with room for a thumb.
- * It is full width and flush with the edge, like both of them, rather than a
- * floating pill: a floating bar leaves a gap of page on every side that
- * content shows through, and needs a scrim to hide it.
+ * The bar is a dark pill inset 12px from the sides and the bottom, the way the
+ * grocery and delivery apps draw theirs: five tabs in fixed places, the current
+ * one a light pill that names itself and the others plain outline icons. The
+ * content slides behind the 12px of page around it, which is why nothing the
+ * till draws is parked in that band — the column's own padding is this plus
+ * 12px, and the cart button and the action bars measure from here.
  *
- * Every piece of furniture that has to clear the bar measures from here — the
- * floating cart button, the action bars — so they cannot drift apart from it
- * or from each other. The content column's own padding is this plus 24px.
+ * Every piece of furniture that has to clear the bar measures from this one
+ * number — the floating cart button, the action bars, the sale dock — so they
+ * cannot drift apart from it or from each other.
  */
-const BAR_CLEAR = "64px + env(safe-area-inset-bottom)";
+const BAR_CLEAR = "76px + env(safe-area-inset-bottom)";
 import { cn } from "@/lib/cn";
 import { NAV_SELECTED_TEXT, NAV_TAB_ACTIVE } from "@/components/ui/navStyles";
 
@@ -176,6 +176,10 @@ export function GoShell({ children }: { children: React.ReactNode }) {
 
   /* The scrolling till is the Sell tab too: it is another design of the same
      job, and a till with no tab lit leaves a cashier asking where they are. */
+  /* Pages opened from More light no tab of their own, so More wears the light
+     pill while you are on one of them: the bar always says where you are. */
+  const onMorePage = (["/my-sales", "/quick-pass", "/till-settings", "/reservations", "/profile", "/shift"] as const).some((r) => pathname === r || pathname.startsWith(`${r}/`));
+  const moreLit = moreOpen || onMorePage;
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`) || (href === "/pos" && (pathname === "/sell" || pathname.startsWith("/sell/")));
 
@@ -206,9 +210,44 @@ export function GoShell({ children }: { children: React.ReactNode }) {
       active ? NAV_TAB_ACTIVE : "group-hover:bg-muted-wash",
     );
 
+  /* The floating bar's tab. Five of them share the pill, so a tab is as wide
+     as it needs to be and no wider: an outline icon in a 44px-or-wider target,
+     and the current one grown to hold its name. The width is animated through
+     flex-grow, which a browser can interpolate and "width: auto" it cannot. */
+  const barTab = (active: boolean) =>
+    cn(
+      "flex h-12 min-w-11 basis-0 items-center justify-center gap-inline overflow-hidden rounded-full transition-[flex-grow,background-color,color] duration-standard ease-counterfoil motion-reduce:transition-none",
+      active
+        ? "bg-neutral-50 px-tight text-neutral-950"
+        : "text-neutral-300 hover:bg-neutral-800 hover:text-neutral-50 active:scale-95 dark:hover:bg-neutral-700",
+    );
+  const barTabGrow = (active: boolean) => ({ flexGrow: active ? 2.5 : 1 });
+
   const tabButton = (tab: (typeof TABS)[number], rail: boolean) => {
     const active = isActive(tab.href);
     const Icon = tab.icon;
+    if (!rail) {
+      /* The floating bar's tab: an outline icon, and — only for the current
+         tab — a light pill that holds the icon AND its name. The inactive
+         tabs are named for a screen reader by their label. While the More
+         sheet is open the pill is More's: one light pill at a time, so the bar
+         never has to find room for two labels. */
+      const lit = active && !moreLit;
+      return (
+        <Link
+          key={tab.href}
+          href={tab.href}
+          aria-current={active ? "page" : undefined}
+          aria-label={lit ? undefined : t(tab.key)}
+          onClick={() => { if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
+          className={barTab(lit)}
+          style={barTabGrow(lit)}
+        >
+          <Icon size={24} strokeWidth={lit ? 2 : 1.5} aria-hidden className="shrink-0" />
+          {lit && <span className="min-w-0 truncate text-sm font-semibold leading-none">{t(tab.key)}</span>}
+        </Link>
+      );
+    }
     return (
       <Link
         key={tab.href}
@@ -226,14 +265,29 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   };
 
   /* More lights while its sheet is open, so the bar always says where you are. */
-  const moreButton = (rail: boolean) => (
-    <button type="button" onClick={() => setMoreOpen(true)} aria-expanded={moreOpen} aria-haspopup="dialog" className={tabCell(moreOpen, rail)}>
-      <span className={tabPill(moreOpen)}>
-        <Ellipsis size={24} strokeWidth={moreOpen ? 2 : 1.75} aria-hidden />
-      </span>
-      <span className="max-w-full truncate text-sm leading-tight">{t("more")}</span>
-    </button>
-  );
+  const moreButton = (rail: boolean) =>
+    rail ? (
+      <button type="button" onClick={() => setMoreOpen(true)} aria-expanded={moreOpen} aria-haspopup="dialog" aria-current={onMorePage ? "page" : undefined} className={tabCell(moreLit, rail)}>
+        <span className={tabPill(moreLit)}>
+          <Ellipsis size={24} strokeWidth={moreLit ? 2 : 1.75} aria-hidden />
+        </span>
+        <span className="max-w-full truncate text-sm leading-tight">{t("more")}</span>
+      </button>
+    ) : (
+      <button
+        type="button"
+        onClick={() => setMoreOpen(true)}
+        aria-expanded={moreOpen}
+        aria-haspopup="dialog"
+        aria-label={moreLit ? undefined : t("more")}
+        aria-current={onMorePage ? "page" : undefined}
+        className={barTab(moreLit)}
+        style={barTabGrow(moreLit)}
+      >
+        <Ellipsis size={24} strokeWidth={moreLit ? 2 : 1.5} aria-hidden className="shrink-0" />
+        {moreLit && <span className="min-w-0 truncate text-sm font-semibold leading-none">{t("more")}</span>}
+      </button>
+    );
 
   const runItem = (item: (typeof MORE_ITEMS)[number]) => {
     setMoreOpen(false);
@@ -283,16 +337,19 @@ export function GoShell({ children }: { children: React.ReactNode }) {
         <div className={cn("min-w-0 flex-1", bare ? "pb-section" : "pb-[calc(88px+env(safe-area-inset-bottom))] rail:pb-0")}>{face ?? children}</div>
       </div>
 
-      {/* Bottom tab bar — phone + tablet portrait. Docked: full width, flush
-          with the bottom edge, a hairline on top, and the device's home-indicator
-          inset inside it. Content scrolls under nothing — the bar is opaque — so
-          there is no scrim and no gap of page showing around it. The content
-          column above reserves its height, so the bar never sits over a row. */}
+      {/* Bottom tab bar — phone + tablet portrait. A floating dark pill, 12px
+          in from the sides and the bottom (and the home indicator), 64px tall.
+          Five tabs in fixed places; the current one is a light pill holding the
+          icon and its name, the rest are outline icons. In dark mode the pill is
+          a raised neutral-800 so it still reads against the near-black page.
+          It stands off the edge, so page shows round it: the column above
+          reserves its height plus a gap, and nothing is ever parked behind it.
+          The pill is capped and centred on a tablet held upright. */}
       {!bare && (
         <nav
           aria-label={tp("shell.menu")}
-          className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-card pb-[env(safe-area-inset-bottom)] rail:hidden"
-          style={{ height: `calc(${BAR_CLEAR})` }}
+          className="fixed inset-x-comfortable z-40 mx-auto flex h-16 max-w-md items-center rounded-full border border-line bg-neutral-950 px-1.5 py-1.5 shadow-go-pop dark:bg-neutral-800 rail:hidden"
+          style={{ bottom: "calc(12px + env(safe-area-inset-bottom))" }}
         >
           {tabs.map((t) => tabButton(t, false))}
           {moreButton(false)}

@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { ChevronDown } from "lucide-react";
 import { Skeleton } from "@/components/ui";
 import type { ExpenseCategory, ExpenseSummary } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
@@ -89,6 +91,8 @@ export function Summary({
   const t = useTranslations("expenses");
   const labels = useExpenseLabels();
   const wide = useMediaQuery(MD);
+  /* Phone only: the legend restates the bar, so it sits behind a quiet row. */
+  const [legendOpen, setLegendOpen] = useState(false);
   const slices = summary ? slicesOf(summary, wide ? SERIES : SERIES_PHONE) : [];
   const empty = !!summary && (summary.count === 0 || summary.total <= 0);
   const nameOf = (s: Slice) => (s.category ? labels.category(s.category) : t("summary.other"));
@@ -115,15 +119,16 @@ export function Summary({
 
         {/* Right: where it went. */}
         <div className="min-w-0">
-          <p className="text-xs font-medium text-muted">{t("summary.whereWent")}</p>
+          <p className="hidden text-xs font-medium text-muted sm:block">{t("summary.whereWent")}</p>
           {!summary ? (
             <div className="mt-tight">
               <span role="status" className="sr-only">{t("loading")}</span>
               <Skeleton className="h-2.5 w-full" />
-              {/* Rows the height of the real ones, so the card does not jump when the answer lands. */}
+              {/* Rows the height of the real ones, so the card does not jump when the answer lands.
+                  A phone folds the legend behind one "Where it went" row, so it draws one. */}
               <div className="-mx-tight mt-comfortable grid gap-x-major gap-y-inline sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                 {[0, 1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex min-h-[44px] items-center px-tight sm:min-h-9">
+                  <div key={i} className={cn("min-h-[44px] items-center px-tight sm:flex sm:min-h-9", i === 0 ? "flex" : "hidden")}>
                     <Skeleton className="h-4 w-full" />
                   </div>
                 ))}
@@ -146,7 +151,17 @@ export function Summary({
                   />
                 ))}
               </div>
-              <ul className="-mx-tight mt-comfortable grid gap-x-major gap-y-inline sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <button
+                type="button"
+                aria-expanded={legendOpen}
+                aria-controls="expense-legend"
+                onClick={() => setLegendOpen((o) => !o)}
+                className="-mx-tight mt-tight flex min-h-[44px] w-[calc(100%+var(--spacing-tight)*2)] items-center justify-between rounded-control px-tight text-sm text-muted transition-colors duration-quick hover:bg-muted-wash sm:hidden"
+              >
+                <span>{t("summary.whereWent")}</span>
+                <ChevronDown size={18} strokeWidth={1.5} aria-hidden className={cn("transition-transform duration-quick", legendOpen && "rotate-180")} />
+              </button>
+              <ul id="expense-legend" className={cn("-mx-tight mt-tight grid gap-x-major gap-y-inline sm:mt-comfortable sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2", !legendOpen && "hidden sm:grid")}>
                 {slices.map((s) => {
                   const row = "grid min-h-[44px] w-full grid-cols-[10px_minmax(0,1fr)_auto_3rem] items-center gap-x-tight rounded-control px-tight text-left sm:min-h-9";
                   const cells = (

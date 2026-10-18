@@ -54,6 +54,10 @@
     "none": "নেই",
     "amountOff": "= {amount} ছাড়",
     "percentOff": "= {pct}% ছাড়",
-    "notRecorded": "রেকর্ড করা হয়নি"
+    "notRecorded": "রেকর্ড করা হয়নি",
+    "figureBand": {
+      "showAll": "{count, plural, one {হিসাবটি দেখান} other {সব {count} টি দেখান}}",
+      "showFewer": "কম দেখান"
+    }
   }
 }

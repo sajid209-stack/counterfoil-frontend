@@ -68,6 +68,7 @@ export default function MySalesPage() {
           : t("lessThanYesterday", { amount: money(-diff) });
   const share = Math.max(1, today.byMethod.reduce((s, m) => s + Math.max(0, m.amount), 0));
   const rows = today.recent.slice(0, shown);
+  const sold = today.byMethod.filter((m) => m.count > 0 || m.amount !== 0);
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-section px-section py-section pb-28 lg:pb-section">
@@ -121,8 +122,11 @@ export default function MySalesPage() {
 
             <section className="flex flex-col gap-comfortable p-section card-surface" aria-labelledby="ms-methods">
               <h2 id="ms-methods" className="text-base font-semibold">{t("byMethod")}</h2>
+              {sold.length === 0 ? (
+                <p className="text-sm text-muted">{t("noMethods")}</p>
+              ) : (
               <MethodBars
-                rows={today.byMethod.map((m) => ({
+                rows={sold.map((m) => ({
                   key: m.method,
                   label: labels.method(m.method),
                   amount: money(m.amount),
@@ -130,6 +134,7 @@ export default function MySalesPage() {
                   pct: Math.round((Math.max(0, m.amount) / share) * 100),
                 }))}
               />
+              )}
             </section>
           </div>
 

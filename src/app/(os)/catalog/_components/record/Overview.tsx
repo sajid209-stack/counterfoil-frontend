@@ -6,7 +6,6 @@ import { DetailCard, FactGrid } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import type { Location, Product } from "@/lib/api";
-import { bookingKindOf } from "@/lib/catalog";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { formatClock, formatClockRange, formatDay, formatPriceShort } from "@/lib/format";
 import { fromPriceOf } from "@/lib/price";
@@ -88,7 +87,8 @@ export function Overview({
                       <Bar pct={soldPct} className="mt-tight" />
                     </>
                   ) : (
-                    <span className="tabular-nums">{ti("overview.soldOnly", { count: totals.sold })}</span>
+                    /* The label already says "Sold"; "52 sold" under it said it twice. */
+                    <span className="tabular-nums">{totals.sold.toLocaleString()}</span>
                   ),
               },
               { key: "money", label: ti("overview.tookIn"), value: totals.taken > 0 ? formatPriceShort(totals.taken) : ti("overview.soldNone") },
@@ -97,6 +97,7 @@ export function Overview({
           <p className="mt-section text-sm text-muted">{subtitle(product)}</p>
         </DetailCard>
 
+        {(onDate || upcoming.length > 0) && (
         <DetailCard title={ti("overview.comingUp")}>
           {onDate ? (
             <ul className="divide-y divide-hairline">
@@ -120,8 +121,6 @@ export function Overview({
                 </li>
               ))}
             </ul>
-          ) : upcoming.length === 0 ? (
-            <p className="text-sm text-muted">{ti(`overview.noDates.${bookingKindOf(product.bookingType)}`)}</p>
           ) : (
             <ul className="divide-y divide-hairline">
               {upcoming.map((r) => {
@@ -151,8 +150,9 @@ export function Overview({
             </ul>
           )}
         </DetailCard>
+        )}
 
-        <SalesByTicket rows={rows} />
+        <SalesByTicket allRows={rows} />
       </div>
 
       <ItsLink slug={slug} online={online} counter={counter} locations={locations} locationIds={locationIds} saved={saved} onSellOnline={onSellOnline} />
@@ -163,12 +163,16 @@ export function Overview({
 /** Each ticket: its price, how many have sold (of how many), and the money it
  *  took — read from the orders, with the ones sold before Counterfoil counted
  *  but carrying no money. A table from md, two-line rows on a phone. */
-function SalesByTicket({ rows }: { rows: TicketSalesRow[] }) {
+function SalesByTicket({ allRows }: { allRows: TicketSalesRow[] }) {
   const t = useTranslations("catalog");
   const ti = useTranslations("catalog.item");
   const wide = useMediaQuery(MD);
+  /* A ticket nobody has bought is a row of zeros; say how many are left out. */
+  const rows = allRows.filter((r) => r.sold > 0);
+  const hidden = allRows.length - rows.length;
   const price = (n: number) => (n === 0 ? t("free") : formatPriceShort(n));
-  const soldText = (r: TicketSalesRow) => (r.quantity !== null ? t("soldOf", { sold: r.sold.toLocaleString(), cap: r.quantity.toLocaleString() }) : ti("overview.soldOnly", { count: r.sold }));
+  const soldText = (r: TicketSalesRow, plain = false) =>
+    r.quantity !== null ? t("soldOf", { sold: r.sold.toLocaleString(), cap: r.quantity.toLocaleString() }) : plain ? r.sold.toLocaleString() : ti("overview.soldOnly", { count: r.sold });
   const pct = (r: TicketSalesRow) => (r.quantity ? pctOf(r.sold, r.quantity) : 0);
   const extra = (r: TicketSalesRow) => (
     <>
@@ -180,8 +184,10 @@ function SalesByTicket({ rows }: { rows: TicketSalesRow[] }) {
   return (
     <section className="card-surface overflow-hidden" aria-labelledby="sales-by-ticket">
       <h2 id="sales-by-ticket" className="px-card pb-tight pt-card text-md font-semibold text-fg">{ti("overview.byTicket")}</h2>
-      {rows.length === 0 ? (
+      {allRows.length === 0 ? (
         <p className="px-card pb-card text-sm text-muted">{ti("overview.noTickets")}</p>
+      ) : rows.length === 0 ? (
+        <p className="px-card pb-card text-sm text-muted">{ti("overview.noSales", { count: hidden })}</p>
       ) : wide ? (
         <table className="w-full text-sm">
           <thead className="text-left text-sm text-muted">
@@ -202,7 +208,7 @@ function SalesByTicket({ rows }: { rows: TicketSalesRow[] }) {
                 <td className="py-comfortable pr-section text-right tabular-nums">{price(r.price)}</td>
                 <td className="w-52 py-comfortable pr-section">
                   <span className="flex items-baseline justify-between gap-tight text-sm tabular-nums">
-                    <span>{soldText(r)}</span>
+                    <span>{soldText(r, true)}</span>
                     {r.quantity !== null && <span className="text-muted">{pct(r)}%</span>}
                   </span>
                   {r.quantity !== null && <Bar pct={pct(r)} className="mt-inline" />}
@@ -230,6 +236,7 @@ function SalesByTicket({ rows }: { rows: TicketSalesRow[] }) {
           ))}
         </ul>
       )}
+      {rows.length > 0 && hidden > 0 && <p className="border-t border-hairline px-card py-comfortable text-sm text-muted">{ti("overview.moreNoSales", { count: hidden })}</p>}
     </section>
   );
 }

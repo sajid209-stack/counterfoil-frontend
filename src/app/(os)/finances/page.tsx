@@ -174,7 +174,9 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
 
   // Today and the first day open; the rest closed, until someone chooses.
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
-  const isOpen = (date: string, i: number) => openMap[date] ?? (date === DEMO_TODAY || i === 0);
+  /* Desktop opens on the newest day; a phone starts with every day closed, so the
+     history is a short list of days to choose from rather than a long one. */
+  const isOpen = (date: string, i: number) => openMap[date] ?? (wide && (date === DEMO_TODAY || i === 0));
   const allOpen = days.length > 0 && days.every((d, i) => isOpen(d.date, i));
   const toggleAll = () => setOpenMap(Object.fromEntries(days.map((d) => [d.date, !allOpen])));
 
@@ -303,19 +305,24 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
                 <ActionMenu label={t("menu.more")} items={menu} />
               </div>
             </div>
-            <p className="mt-inline min-h-5 text-sm text-muted">
-              {summary && (
-                <>
-                  <span>{periodLabel}</span>
-                  {parts.map((p, i) => (
-                    <span key={i}>
-                      {" · "}
-                      {p}
-                    </span>
-                  ))}
-                </>
-              )}
-            </p>
+            {/* "Last 30 days · ৳66,349.20 in · …" restates the cards above and the
+                rows below, so a phone - where every line is dear - leaves it out
+                (docs/mobile.md §4). A desktop keeps it. */}
+            {wide && (
+              <p className="mt-inline min-h-5 text-sm text-muted">
+                {summary && (
+                  <>
+                    <span>{periodLabel}</span>
+                    {parts.map((p, i) => (
+                      <span key={i}>
+                        {" · "}
+                        {p}
+                      </span>
+                    ))}
+                  </>
+                )}
+              </p>
+            )}
             {wide && <TypeTabs value={filter} onChange={setFilter} />}
             <FilterBar className="mt-comfortable pb-section" search={<FilterSearch value={search} onChange={setSearch} placeholder={t("activity.search")} />} lead={dateRange} filters={wide ? [] : [typeFilter]} />
           </div>

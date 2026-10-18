@@ -18057,3 +18057,80 @@ the docked 64px tab bar.
 - The classic till still has its own light/dark button; it is a deliberate restoration.
 - Orders' phone figures are five cells (about 210px), all visible; the old strip was shorter but cut
   three of them.
+
+## The calm pass: fewer things on a phone, image-first till cards, a floating tab bar (2026-10-18)
+
+Owner, with four screenshots (a dashboard with four figures, the Activity and Recent orders cards,
+grocery-app image cards with a round "+", a floating dark pill tab bar): *"in mobile screen of OS
+there is showing too much things, it doesnt feel enough relaxing … only important things will
+show, and less infos, and POS cards needs to be more relaxing … with a image on the card modern
+minimal cards … POS needs to work on Nav bar"*, reviewed as a UX designer, a UI designer, a
+product designer and a user, with the feedback fixed. Then: *"do remaining tasks properly"*.
+
+The rules and the per-page table are `docs/mobile.md` §4 (committed earlier as 42d385e); the
+review round is recorded there too. Planned and reviewed on Opus; built by Sonnet agents with
+separate file ownership; an independent Sonnet review scored the first build **OS 7/10, GO 6/10**
+and its findings were fixed in a second round.
+
+### First round
+- **Two figures, not six.** `FigureBand` (`StatStrip`) shows its first two figures below 640px and
+  a 44px "Show all N" toggle (`useFigureFold`, remembered as `statsOpen`): Dashboard (Sales, Places
+  sold), Orders (Sales, Still owed), Analytics (Revenue, Orders), Finances (Available, Unsettled,
+  then Withdraw/Deposit).
+- **The normal state is silent.** No Paid chip on phone order rows (a neutral "Written off" for a
+  paid order with a write-off), no Unused chip on issued orders, no date or Confirmed chip on
+  Arrivals. The dashboard's 7/14/30 bar is a small menu in the chart header on a phone; Activity
+  and Recent orders start at three rows. Expenses folds its legend behind "Where it went". My sales
+  lists only payment methods that were used.
+- **Image-first till cards** (`WallTile`): an 18px card, a 4:3 picture, the name, the price and a
+  round 36px button; a glyph panel when there is no photo.
+- **A floating dark tab bar** (`GoShell`): a 64px pill 12px from the edges; the current tab is a
+  light pill with its 13px label, the others icons with their names as accessible names. Action
+  bars float 8px above it.
+
+### After the review
+- **One block at the bottom of the till.** `ChromeBackdrop` (in `ActionBar`) draws the page colour
+  from the top of the Cart/Take bar to the bottom edge, with a 20px fade; the wall's padding clears
+  it, so no card shows between the bars.
+- **Prices never truncate** (checked at 320); the search placeholder is "Search" on a phone.
+- **"+" means one tap adds; a chevron means a sheet opens** — one rule, `productNeedsSheet`, decides
+  both the glyph and the tap.
+- A card with no photo has a half-height plate; "Other amount" is a slim full-width row. The tab
+  pill has a 1px edge, and More lights on every page opened from More.
+- **Booking sheet:** past start times and departures fold behind "Show N earlier times"; a booking
+  with one court, lane or field has no resource row; the footer states day, length and time.
+- **"42 bottles left"** (was "42 bottle left").
+- **OS:** the floating menu button hides while scrolling down; Finances starts with days collapsed
+  on a phone and puts the reference on its own line; no delta pill on a 0 figure; the customer
+  page drops zero rows and an empty Coming up; the booking record's eight tabs become a "Section"
+  dropdown below 640px (switched by CSS, so a desktop never paints the dropdown first); zero-sale
+  tickets fold into "N more with no sales"; no status chip on a fully paid order; "Invite" on the
+  Team page's phone bar (`PagePrimary.shortLabel`); "Always on" no longer runs into the Cash
+  description; the calendar's selected view is semibold ink.
+- **Found by the regression:** the Expenses loading skeleton drew five legend rows on a phone where
+  the loaded card has one, so the card jumped. It draws one now.
+- Not taken, because they reverse earlier decisions of the owner: an outlined instead of orange
+  selected payment method, removing Arrivals, hiding the developer tools by role, and dropping the
+  price from the Schedule's free cells.
+
+### Verified
+- Production build of the final tree. On it: top cards 103, the phone audit (hidden 0 · under-44 0 ·
+  clipped 0 · errors 0; the 14 sub-12px items are the deck), the 59-route sweeps at 390, 390 Bangla
+  dark and 1440, grouped nav 201, the till 38 / 36, round-3 26, checkout 121 / 121 / 36, schedule
+  31 / 31, undo 17, orders 193 / 31, the order page 94 / 93, analytics 511 / 511, activity 45 / 67,
+  dropdowns 59, customers 108 / 102, finances 147 / 131, expenses 236 / 230, catalog 459,
+  inventory 41, settings navigation 53, the counter picker 140, and the fix rounds' own checks
+  (record pages 58, OS static 57, the sell wall at 320 / 390 / dark / Bangla).
+- Harnesses updated to the new design, never loosened: r3 (opens "Show earlier times" first),
+  ord run and order (header chip scoped to the header row; none on a paid order), act a1 (filter
+  hidden on a phone; exactly 3 rows), cu (zero rows absent), fin (days collapsed; Show all 4),
+  exp (opens the legend), catalog2-e2e (the Section dropdown; zero-sale note), pos5 (tabs by
+  accessible name).
+- `tsc`, `lint:tokens` (0 errors) and i18n (0 / 0) clean; `eslint` shows only the documented
+  PosScreen and dashboard findings.
+
+### Open
+- The Bangla strings added in this pass are drafts.
+- The Schedule's chrome (week strip, segments) still costs ~270px on a phone; the reviewer's ideas
+  for it touch the board the owner signed off and were left for a decision.
+- Issued orders is still one row per ticket; grouping by order was not done.

@@ -185,7 +185,7 @@ export default function TeamPage() {
   };
 
 
-  const primary: PagePrimary = { label: t("team.invite"), onClick: () => router.push("/settings/team/new") };
+  const primary: PagePrimary = { label: t("team.invite"), shortLabel: t("team.inviteShort"), onClick: () => router.push("/settings/team/new") };
 
   /* Role and venue are the two cuts a manager makes of this list, and they live
      behind the one Filters button. Each control is defined once, here; the bar

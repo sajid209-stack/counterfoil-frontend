@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
-import { EmptyState, Skeleton, StatusPill } from "@/components/ui";
+import { EmptyState, Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { listBookings, listProducts } from "@/lib/api";
 import { formatClockOf, formatDate } from "@/lib/format";
@@ -29,7 +29,7 @@ export default function GoBookingsPage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-section px-section py-section">
       <div>
-        <p className="text-sm font-medium text-brand-foreground">{t("arrivalsGateLabel")}</p>
+        <p className="text-sm font-medium text-brand-foreground">{t("arrivalsGateLabel")} · {formatDate(new Date(TODAY).toISOString())}</p>
         <h1 className="type-h1 mt-tight text-xl">{t("arrivalsTitle")}</h1>
       </div>
       <div className="relative">
@@ -51,15 +51,13 @@ export default function GoBookingsPage() {
         <div className="flex flex-col gap-tight">
           {arrivals.slice(0, 40).map((b) => (
             <div key={b.id} className="flex items-center gap-section card-surface p-comfortable">
-              <div className="text-center">
+              <div className="w-[5.75rem] shrink-0 text-center">
                 <div className="whitespace-nowrap text-lg font-medium tabular-nums">{formatClockOf(b.slotStart)}</div>
-                <div className="text-sm tabular-nums text-muted">{formatDate(b.slotStart)}</div>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-base font-medium">{productName(b.productId)}</div>
                 <div className="text-sm tabular-nums text-muted">{t("partyOf", { size: b.partySize })}</div>
               </div>
-              <StatusPill status="confirmed" size="md" />
             </div>
           ))}
         </div>

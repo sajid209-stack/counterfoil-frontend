@@ -271,7 +271,7 @@ export default function CompletePage() {
           </section>
 
           {/* New sale: pinned above the tab bar on a phone, inline on a landscape tablet. Focused, so Enter starts the next sale. */}
-          <div className="fixed inset-x-comfortable z-30 rail:static rail:z-auto" style={{ bottom: "calc(72px + env(safe-area-inset-bottom))" }}>
+          <div className="fixed inset-x-comfortable z-30 rail:static rail:z-auto" style={{ bottom: "calc(84px + env(safe-area-inset-bottom))" }}>
             {/* As wide as the content above it: 48rem less the page's 16px gutters from sm. */}
             <div className="mx-auto max-w-[34rem] sm:max-w-[calc(48rem-32px)] rail:max-w-none">
               <Button

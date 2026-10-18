@@ -183,11 +183,14 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
       key: "state",
       header: t("col.status"),
       sortable: true,
-      render: (r) => (
-        <StatusPill tone={PILL[r.state].tone} shape={PILL[r.state].shape}>
-          {stateLabel(r.state)}
-        </StatusPill>
-      ),
+      render: (r) =>
+        r.state === "unused" ? (
+          <span aria-label={stateLabel(r.state)} className="text-muted">—</span>
+        ) : (
+          <StatusPill tone={PILL[r.state].tone} shape={PILL[r.state].shape}>
+            {stateLabel(r.state)}
+          </StatusPill>
+        ),
     },
     {
       key: "start",
@@ -250,9 +253,11 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
     <div className="flex min-w-0 flex-col gap-inline">
       <div className="flex items-center justify-between gap-tight">
         <span className="min-w-0 flex-1 truncate text-base font-medium">{r.bookingName}</span>
-        <StatusPill tone={PILL[r.state].tone} shape={PILL[r.state].shape} className="shrink-0">
-          {stateLabel(r.state)}
-        </StatusPill>
+        {r.state !== "unused" && (
+          <StatusPill tone={PILL[r.state].tone} shape={PILL[r.state].shape} className="shrink-0">
+            {stateLabel(r.state)}
+          </StatusPill>
+        )}
       </div>
       <span className="truncate text-xs text-muted">
         <span className="font-mono">{r.code}</span> · {r.variantName} · {startText(r)}

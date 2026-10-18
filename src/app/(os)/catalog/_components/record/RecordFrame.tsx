@@ -3,7 +3,7 @@
 import { useCallback, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ActionMenu, Button, Notice, PageShell, StatusPill, Tabs, tabPanelProps, type ActionMenuItem, type PillTone } from "@/components/ui";
+import { ActionMenu, Button, Notice, PageShell, Select, StatusPill, Tabs, tabPanelProps, type ActionMenuItem, type PillTone } from "@/components/ui";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { SaveBar } from "@/app/(os)/settings/_components/SettingsKit";
 import type { CatalogState } from "@/lib/catalog";
@@ -186,13 +186,29 @@ export function RecordFrame({
           </Notice>
         )}
 
-        <Tabs
-          id={panelBase}
-          aria-label={ti("tabsLabel")}
-          items={tabs.map((x) => ({ value: x.id, label: x.label, count: x.count }))}
-          value={current.id}
-          onChange={(v) => onTab(v as TabId)}
-        />
+        {/* Eight tabs run off a phone with nothing to say there are more, so below sm
+            they are one dropdown that switches the same tabs (same address, same state).
+            Switched by CSS, not a media query, so a desktop never paints the dropdown first. */}
+        <div className="hidden sm:block">
+          <Tabs
+            id={panelBase}
+            aria-label={ti("tabsLabel")}
+            items={tabs.map((x) => ({ value: x.id, label: x.label, count: x.count }))}
+            value={current.id}
+            onChange={(v) => onTab(v as TabId)}
+          />
+        </div>
+        <div className="flex flex-col gap-inline sm:hidden">
+          <span id={`${panelBase}-section`} className="text-sm font-medium text-muted">
+            {ti("sectionLabel")}
+          </span>
+          <Select
+            aria-labelledby={`${panelBase}-section`}
+            value={current.id}
+            onChange={(v) => onTab(v as TabId)}
+            options={tabs.map((x) => ({ value: x.id, label: x.count ? `${x.label} (${x.count})` : x.label }))}
+          />
+        </div>
 
         <div {...tabPanelProps(panelBase, current.id)} className="flex min-w-0 flex-col gap-section outline-none">
           {current.node}

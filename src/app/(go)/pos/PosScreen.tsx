@@ -27,13 +27,14 @@ import { CustomerRow, HowMuchNow, PromoCodeRow, SaleRow, type PayChoice } from "
 import { SellDateBar } from "./SellDate";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
-import { WALL_CARD, WallHeading, WallTile } from "../_components/WallTile";
+import { BookingGlyph, WallHeading, WallRow, WallTile } from "../_components/WallTile";
 import { SheetShell } from "../_components/SheetShell";
 import { Stepper } from "../_components/Stepper";
 import { ActionBar } from "../_components/ActionBar";
 import { EventSheet } from "../_components/EventSheet";
 import { Keypad } from "../_components/Keypad";
 import { Pencil } from "lucide-react";
+import { useMediaQuery } from "@/lib/useMedia";
 import { usePrefs } from "@/lib/prefs";
 import { ticketSnapshot } from "./_lib/handover";
 import { clearLiveSale, readLiveSale, takeReturnTo, writeLiveSale, writeUndoSnapshot, type LiveSale } from "./_lib/liveSale";
@@ -98,6 +99,8 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const router = useRouter();
   const toast = useToast();
   const t = useTranslations("pos");
+  /* Phones get the short search placeholder; the full words stay as the aria-label. */
+  const phone = useMediaQuery("(max-width: 39.99rem)");
   const subtitle = useBehaviourSubtitle();
   const pt = useTranslations("promotions");
   const enumL = useEnumLabels();
@@ -388,10 +391,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     return !q || e.title.toLowerCase().includes(q) || e.venueName.toLowerCase().includes(q);
   });
   const customTile = (
-    <button type="button" data-wall-tile data-focus-inset onClick={() => setCustomOpen(true)} className={cn(WALL_CARD, "min-h-[9.5rem] items-center justify-center gap-tight text-center text-muted hover:bg-muted-wash active:bg-muted-wash sm:min-h-[10.5rem]")}>
-      <span className="flex size-11 items-center justify-center rounded-full border-2 border-dashed border-strong"><Plus size={20} strokeWidth={2} aria-hidden /></span>
-      <span className="text-base font-medium">{t("customAmount")}</span>
-    </button>
+    <WallRow onClick={() => setCustomOpen(true)} icon={<Plus size={18} strokeWidth={2} />}>{t("customAmount")}</WallRow>
   );
   /* What to show. Three at most, each a KIND of thing rather than a group
      somebody named, and each only when there is something in it. */
@@ -593,9 +593,17 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     return { date: sellDate };
   };
 
+  /* Whether a tap on this product opens its sheet (there is something to
+     choose) rather than adding it — the wall draws a chevron for the first and
+     a "+" for the second. */
+  const productNeedsSheet = (p: Product) => {
+    const activeTiers = p.tiers.filter((t) => t.active);
+    return needsSchedule(p.bookingType) || isResourceType(p.bookingType) || p.bookingType === "BT-10" || p.bookingType === "BT-13" || (p.sections?.length ?? 0) > 0 || !!p.layoutId || activeTiers.some((t) => t.donation) || activeTiers.length > 1 || activeTiers.length < 1;
+  };
+
   const tapProduct = (p: Product) => {
     const activeTiers = p.tiers.filter((t) => t.active);
-    const needsSheet = needsSchedule(p.bookingType) || isResourceType(p.bookingType) || p.bookingType === "BT-10" || p.bookingType === "BT-13" || (p.sections?.length ?? 0) > 0 || !!p.layoutId || activeTiers.some((t) => t.donation) || activeTiers.length > 1;
+    const needsSheet = productNeedsSheet(p);
     if (!needsSheet && activeTiers.length >= 1) {
       const tier = activeTiers[0];
       setCart((c) => [...c, { id: `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`, productId: p.id, productName: p.name, items: [{ tierId: tier.id, tierName: tier.name, unitPrice: tier.price, qty: 1 }] }]);
@@ -1167,7 +1175,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   }), [t, onToday]);
 
   return (
-    <div className={cn("grid h-full grid-cols-1 gap-comfortable p-comfortable lg:grid-cols-[1fr_23rem] lg:pb-comfortable", "pb-18")}>
+    <div className={cn("grid h-full grid-cols-1 gap-comfortable p-comfortable lg:grid-cols-[1fr_23rem] lg:pb-comfortable", "pb-24")}>
       {/* The Go chrome names this screen visually; the heading exists so a
           screen reader lands on a named page rather than an unlabelled grid. */}
       <h1 className="sr-only">{t("posTitle")}</h1>
@@ -1195,7 +1203,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               the radius. */}
           <div data-focus-host className="card-surface flex h-11 min-w-[8rem] flex-1 items-center gap-tight rounded-full px-comfortable focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember">
             <Search size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} aria-label={t("search.placeholder")} placeholder={t("search.placeholder")} className="-my-px h-11 w-full min-w-0 text-ellipsis bg-transparent text-base placeholder:text-muted" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} aria-label={t("search.placeholder")} placeholder={phone ? t("search.short") : t("search.placeholder")} className="-my-px h-11 w-full min-w-0 text-ellipsis bg-transparent text-base placeholder:text-muted" />
             {query && <button type="button" onClick={() => setQuery("")} className="-mr-2 flex h-11 shrink-0 items-center px-tight text-sm text-muted hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
@@ -1211,8 +1219,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           <div
             role="tablist"
             aria-label={t("categoryLabel")}
-            className="card-surface grid gap-1 p-1"
-            style={{ gridTemplateColumns: `repeat(${wallGroups.length}, minmax(0, 1fr))` }}
+            className="card-surface inline-flex max-w-full gap-1 self-start p-1"
           >
             {wallGroups.map((c) => (
               <button
@@ -1223,7 +1230,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                 data-chip={c.id}
                 onClick={() => setCategory(c.id)}
                 className={cn(
-                  "flex min-h-11 items-center justify-center rounded-inner px-1 text-center text-base font-semibold leading-tight transition-colors duration-quick",
+                  "flex min-h-11 items-center justify-center whitespace-nowrap rounded-inner px-section text-center text-base font-semibold leading-tight transition-colors duration-quick",
                   category === c.id ? "bg-ember-solid text-on-solid" : "text-fg hover:bg-muted-wash",
                 )}
               >
@@ -1241,7 +1248,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                two lines, and the sheet behind the card carries the rest. Two
                columns on a phone, more as the width allows. */
             <div>
-              <div className="grid grid-cols-2 gap-tight sm:grid-cols-3 sm:gap-comfortable xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-comfortable sm:grid-cols-3 xl:grid-cols-4">
                 {shown.map((p) => {
                   const live = posLiveState(p, sellDate, nowMinutes, liveWords);
                   const n = inSale(p.id);
@@ -1249,8 +1256,10 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     <WallTile
                       key={p.id}
                       onClick={() => tapProduct(p)}
+                      opensSheet={productNeedsSheet(p)}
                       ariaLabel={n > 0 ? t("wall.inSaleAria", { name: p.name, count: n }) : undefined}
-                      thumb={<ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="card" />}
+                      image={p.images?.[0]?.url}
+                      glyph={<BookingGlyph bookingType={p.bookingType} />}
                       name={p.name}
                       price={formatPriceShort(tilePrice(p), currency)}
                       meta={subtitle(p, { resources, team: teamQ.data?.data })}
@@ -1276,8 +1285,9 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     <WallTile
                       key={e.id}
                       onClick={() => setEventSheet(e)}
+                      opensSheet
                       disabled={gone || ended}
-                      thumb={<span className="flex size-11 shrink-0 items-center justify-center rounded-inner bg-subtle text-muted"><Ticket size={20} strokeWidth={1.5} aria-hidden /></span>}
+                      glyph={<Ticket strokeWidth={1.5} aria-hidden />}
                       name={e.title}
                       price={eventFromPrice(e) === 0 ? t("event.free") : formatPriceShort(eventFromPrice(e), currency)}
                       meta={e.venueName}
@@ -1305,7 +1315,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                       key={i.id}
                       onClick={() => tapItem(i)}
                       ariaLabel={inCart > 0 ? t("wall.inSaleAria", { name: i.name, count: inCart }) : undefined}
-                      thumb={<span className="flex size-11 shrink-0 items-center justify-center rounded-inner bg-subtle text-muted"><ShopGlyph kind={i.kind} /></span>}
+                      glyph={<ShopGlyph kind={i.kind} />}
                       name={i.name}
                       price={formatPriceShort(i.price, currency)}
                       meta={
@@ -1331,7 +1341,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
 
       {/* Cart — fixed right panel on tablet/desktop; bottom drawer on phones */}
       {/* Sheets cover the tab bar (z-50 over z-40) — nothing tappable behind a modal cart. */}
-      <div className={`${cartOpen ? "fixed inset-0 z-50 flex pb-[env(safe-area-inset-bottom)] lg:inset-auto lg:pb-0" : "hidden"} min-h-0 flex-col bg-surface lg:z-auto lg:flex lg:rounded-card lg:pb-0 lg:shadow-card lg:sticky lg:top-comfortable lg:h-[calc(100dvh-88px)] lg:max-h-none lg:self-start`}>
+      <div className={`${cartOpen ? "fixed inset-0 z-50 flex pb-[env(safe-area-inset-bottom)] lg:inset-auto lg:pb-0" : "hidden"} min-h-0 flex-col bg-surface lg:z-auto lg:flex lg:rounded-card lg:pb-0 lg:shadow-card lg:sticky lg:top-comfortable lg:h-[calc(100dvh-100px)] lg:max-h-none lg:self-start`}>
         <div className="flex items-center gap-tight border-b border-line p-comfortable">
           {cartOpen && (
             <button type="button" onClick={closeCart} className="flex h-11 shrink-0 items-center gap-inline rounded-full pl-tight pr-comfortable text-base font-medium border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active lg:hidden">

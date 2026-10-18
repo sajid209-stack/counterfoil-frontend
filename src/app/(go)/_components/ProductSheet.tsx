@@ -257,6 +257,8 @@ export function ProductSheet({
     return undefined;
   });
   const [resourceId, setResourceId] = useState<string | undefined>(initial?.resourceId ?? preset?.resourceId);
+  /* Times already gone today stay out of the grids; one quiet button brings them back. */
+  const [showEarlier, setShowEarlier] = useState(false);
 
   /* Keyed on the performance — declared after the date it depends on. The same
      hall is sold again tomorrow, so seats taken for tonight must not be
@@ -1046,11 +1048,11 @@ export function ProductSheet({
                 );
               })()}
 
-              <span className="text-base font-semibold text-fg">{lanes[0]?.nounSingular ?? t("sheet.resource")}</span>
+              {lanes.length > 1 && <span className="text-base font-semibold text-fg">{lanes[0]?.nounSingular ?? t("sheet.resource")}</span>}
               {/* One card of cells, as the Schedule draws its lanes: Any, then
                   each lane with what it is doing now. Chosen is a tint with a
                   ring and a tick. */}
-              <div className="card-surface overflow-hidden">
+              {lanes.length > 1 && <div className="card-surface overflow-hidden">
                 <div className="-mb-px -mr-px grid grid-cols-3 sm:grid-cols-5">
                   {[null, ...lanes].map((r) => {
                     const on = r ? resourceId === r.id : !resourceId;
@@ -1068,14 +1070,14 @@ export function ProductSheet({
                         )}
                       >
                         {on && <Check size={13} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
-                        <span className="w-full truncate text-base font-semibold">{r ? r.name : t("sheet.any")}</span>
-                        {r && <span className={cn("w-full truncate text-sm", on ? "text-on-solid" : "text-muted")}>{liveState(r)}</span>}
+                        <span className="w-full break-words text-base font-semibold">{r ? r.name : t("sheet.any")}</span>
+                        {r && <span className={cn("w-full break-words text-sm", on ? "text-on-solid" : "text-muted")}>{liveState(r)}</span>}
                         {r && rateLabel(r) && <span className={cn("w-full truncate text-sm font-semibold tabular-nums", on ? "text-on-solid" : "text-fg")}>{rateLabel(r)}</span>}
                       </button>
                     );
                   })}
                 </div>
-              </div>
+              </div>}
 
               {/* The lane's day at a glance — selection drawn live on the strip;
                   tapping an occupied block explains, never a dead tap. */}
@@ -1095,7 +1097,7 @@ export function ProductSheet({
               {flexTimes.length > 0 && <span className="text-base font-semibold text-fg">{t("sheet.startTime")}</span>}
               {flexTimes.length > 0 && <div className="card-surface overflow-hidden">
                 <div className="-mb-px -mr-px grid grid-cols-4 sm:grid-cols-6">
-                  {flexTimes.map((tt) => {
+                  {flexTimes.filter((tt) => showEarlier || !(date === TODAY && toMinutes(tt) < NOW_MIN) || tt === slotTime).map((tt) => {
                     const st = startState(tt, duration, resourceId);
                     if (!st.ok) {
                       return <button key={tt} type="button" data-focus-inset onClick={() => setBlocked({ message: t("sheet.unavailableStart", { time: formatClock(tt), reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })} className="flex min-h-12 items-center justify-center border-b border-r border-line bg-surface px-1 py-1 text-base text-muted line-through" title={st.reason}><ClockCell hhmm={tt} className="line-through" /></button>;
@@ -1110,6 +1112,14 @@ export function ProductSheet({
                   })}
                 </div>
               </div>}
+              {!showEarlier && (() => {
+                const n = date === TODAY ? flexTimes.filter((tt) => toMinutes(tt) < NOW_MIN && tt !== slotTime).length : 0;
+                return n > 0 ? (
+                  <button type="button" onClick={() => setShowEarlier(true)} className="min-h-11 self-start text-sm font-medium text-brand-foreground underline-offset-2 hover:underline">
+                    {t("sheet.showEarlier", { count: n })}
+                  </button>
+                ) : null;
+              })()}
 
               {renderGroup()}
               {renderWaiver()}
@@ -1143,16 +1153,26 @@ export function ProductSheet({
                 return (
                   <div className="flex flex-col gap-inline">
                     {math && <p className="text-sm text-muted">{math}{premium}</p>}
-                    {/* The live selection summary — the CTA never enables without it. */}
-                    <p className="text-sm">
-                      <span className="font-medium">{lane?.name ?? t("sheet.anyLane")}</span> · <span className="tabular-nums">{formatClockRange(slotTime, toMinutes(slotTime) + duration)}</span> · {formatDuration(duration)}
-                      {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""} · <span className="tabular-nums">{formatMoney(total, currency)}</span>
-                      {!resourceId && lane ? <span className="text-muted">{t("sheet.bestFit")}</span> : null}
-                    </p>
                   </div>
                 );
               })()}
               <SheetFooter onBack={onClose}
+                summary={slotTime && endLabel ? (() => {
+                  const lane = laneOf(resourceId) ?? (chosenLaneFree ? firstFreeResource(product, date, slotTime, duration) : null);
+                  const total = priceFor(slotTime, duration, lane);
+                  const dayRaw = date === TODAY ? t("slotToday") : formatDay(date, { weekday: true });
+                  const dayWords = dayRaw.charAt(0).toUpperCase() + dayRaw.slice(1);
+                  return (
+                    <div className="flex items-baseline justify-between gap-comfortable text-sm">
+                      <span className="min-w-0 flex-1 text-muted">
+                        {dayWords} · {formatDuration(duration)} · <span className="tabular-nums">{formatClockRange(slotTime, toMinutes(slotTime) + duration)}</span>
+                        {lanes.length > 1 && lane ? <> · <span className="font-medium text-fg">{lane.name}</span>{!resourceId ? <span>{t("sheet.bestFit")}</span> : null}</> : null}
+                        {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""}
+                      </span>
+                      <span className="shrink-0 font-medium tabular-nums">{formatMoney(total, currency)}</span>
+                    </div>
+                  );
+                })() : undefined}
                 onHold={slotTime && chosenLaneFree && !holdOpen ? () => setHoldOpen(true) : undefined}
                 holdRow={slotTime && chosenLaneFree ? holdRowNode : null}
                 disabled={!slotTime || !chosenLaneFree || !waiverOk}
@@ -1299,7 +1319,7 @@ export function ProductSheet({
           <SessionList
             currency={currency}
             selected={slotTime}
-            sessions={slots.map((s) => {
+            sessions={slots.filter((s) => showEarlier || !(date === TODAY && toMinutes(s.time) < NOW_MIN) || s.time === slotTime).map((s) => {
               const left = s.remaining - seatsInCart(product.id, slotISO(date, s.time));
               // A departure needs a free guide as well as seats.
               const guideless = guided && guides.length > 0 && freeGuides(product, date, s.time).length === 0;
@@ -1351,6 +1371,14 @@ export function ProductSheet({
             }}
           />
         )}
+        {needsSchedule(bt) && !resourceMode && !flexible && openToday && !showEarlier && date === TODAY && (() => {
+          const n = slots.filter((x) => toMinutes(x.time) < NOW_MIN && x.time !== slotTime).length;
+          return n > 0 ? (
+            <button type="button" onClick={() => setShowEarlier(true)} className="-mt-tight mb-section min-h-11 text-sm font-medium text-brand-foreground underline-offset-2 hover:underline">
+              {t("sheet.showEarlier", { count: n })}
+            </button>
+          ) : null;
+        })()}
 
         {/* Guided: pick who leads — busy guides (on ANY product) can't be chosen */}
         {guided && slotTime && guides.length > 0 && openToday && (

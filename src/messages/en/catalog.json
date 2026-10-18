@@ -1059,17 +1059,6 @@
       "soldNone": "None yet",
       "tookIn": "Money in",
       "comingUp": "Coming up",
-      "noDates": {
-        "entry": "Customers come on any day you are open. There are no dates to show.",
-        "timed": "No time slots are set. Add them in When.",
-        "tour": "No tours are set. Add them in When.",
-        "space": "No open days are set. Add them in When.",
-        "appointment": "Customers choose a time with a person. There are no dates to show.",
-        "course": "The course dates are in Details.",
-        "pass": "A pass has no dates of its own.",
-        "bundle": "A combo ticket has no dates of its own.",
-        "event": "The dates are in When."
-      },
       "times": "{count, plural, one {# start time} other {# start times}}, first at {first}",
       "firstFree": "First free at {time}",
       "slotsDay": "Open all day",
@@ -1091,12 +1080,15 @@
         "price": "Price",
         "sold": "Sold",
         "taken": "Money in"
-      }
+      },
+      "noSales": "{count, plural, one {{count} ticket has} other {{count} tickets have}} no sales yet.",
+      "moreNoSales": "{count, plural, one {{count} more with no sales} other {{count} more with no sales}}"
     },
     "when": {
       "fixed": "To book it a different way, make a new booking. You can copy this one from the list."
     },
-    "ticketFallback": "This ticket type"
+    "ticketFallback": "This ticket type",
+    "sectionLabel": "Section"
   },
   "where": {
     "title": "Where it's sold",

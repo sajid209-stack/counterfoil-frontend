@@ -1,7 +1,8 @@
 {
   "search": {
     "placeholder": "যা বিক্রি করেন তা খুঁজুন…",
-    "clear": "মুছুন"
+    "clear": "মুছুন",
+    "short": "খুঁজুন"
   },
   "counter": "Fort Main Gate",
   "parkedBadge": "{count}টি থামানো",
@@ -362,7 +363,8 @@
     "holdShort": "হোল্ড",
     "started": "শুরু হয়ে গেছে",
     "back": "ফিরে যান",
-    "addAmount": "যোগ করুন {amount}"
+    "addAmount": "যোগ করুন {amount}",
+    "showEarlier": "আগের {count}টি সময় দেখান"
   },
   "settle": {
     "title": "বুকিংয়ের বাকি নিন",

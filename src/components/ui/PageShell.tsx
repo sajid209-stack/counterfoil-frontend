@@ -45,6 +45,10 @@ const pillLabelMax = ({ lead, overflow }: { lead: boolean; overflow: boolean }) 
  */
 export interface PagePrimary {
   label: string;
+  /** A shorter word for the phone's top bar only ("Invite" for "Invite a team
+   *  member"), so a long label still gets its pill instead of an icon-only
+   *  disc. The desktop button and the accessible name keep `label`. */
+  shortLabel?: string;
   /** Defaults to a plus, which is what every one of these is. */
   icon?: React.ReactNode;
   onClick?: () => void;
@@ -369,7 +373,8 @@ export function PageShell({
      takes the pill still leaves the page name room to truncate cleanly. */
   const narrowPrimary = primary
     ? (() => {
-        const pill = Array.from(primary.label.trim()).length <= pillLabelMax({ lead: leadInBar, overflow: phoneOverflow });
+        const shown = (primary.shortLabel ?? primary.label).trim();
+        const pill = Array.from(shown).length <= pillLabelMax({ lead: leadInBar, overflow: phoneOverflow });
         const cls = cn(
           "group flex h-11 items-center justify-center rounded-full",
           pill ? "shrink-0" : "w-11",
@@ -380,7 +385,7 @@ export function PageShell({
             <span aria-hidden className="flex shrink-0 items-center">
               {primary.icon ?? <Plus size={16} strokeWidth={2} />}
             </span>
-            {primary.label}
+            {shown}
           </span>
         ) : (
           <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-ember-solid text-on-solid transition-colors duration-quick group-hover:bg-ember-hover group-active:bg-ember-active">
@@ -388,11 +393,11 @@ export function PageShell({
           </span>
         );
         return primary.href && !primary.disabled ? (
-          <Link href={primary.href} aria-label={pill ? undefined : primary.label} className={cls}>
+          <Link href={primary.href} aria-label={pill && !primary.shortLabel ? undefined : primary.label} className={cls}>
             {body}
           </Link>
         ) : (
-          <button type="button" onClick={primary.onClick} aria-label={pill ? undefined : primary.label} disabled={primary.disabled} className={cls}>
+          <button type="button" onClick={primary.onClick} aria-label={pill && !primary.shortLabel ? undefined : primary.label} disabled={primary.disabled} className={cls}>
             {body}
           </button>
         );

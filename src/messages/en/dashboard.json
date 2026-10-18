@@ -71,5 +71,6 @@
   "metrics": "Key figures",
   "showMore": "Show more",
   "showLess": "Show less",
-  "floatAmount": "{amount} float"
+  "floatAmount": "{amount} float",
+  "lastNDays": "Last {count} days"
 }

@@ -1046,7 +1046,7 @@ export default function CalendarPage() {
               width of its own row and the tabs share it. */}
           <div className="flex w-full items-center gap-section md:w-auto">
             <Tabs
-              className="w-full md:w-auto [&>button]:flex-1 md:[&>button]:flex-none"
+              className="w-full md:w-auto [&>button]:flex-1 md:[&>button]:flex-none max-md:[&>[aria-selected=true]]:font-semibold max-md:[&>[aria-selected=true]]:text-fg"
               items={[
                 { value: "day", label: t("tabDay") },
                 { value: "week", label: t("tabWeek") },

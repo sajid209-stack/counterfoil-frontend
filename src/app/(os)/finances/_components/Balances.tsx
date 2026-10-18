@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { formatDay, formatMoney } from "@/lib/format";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import type { FinanceExtras, FinanceSummary } from "@/lib/api";
+import { FigureToggle, useFigureFold } from "@/components/ui/StatStrip";
 import { MetricStrip, type Metric } from "../../dashboard/_components/MetricStrip";
 
 /**
@@ -46,6 +47,7 @@ export function Balances({
 }) {
   const t = useTranslations("finances");
   const wide = useMediaQuery(MD);
+  const fold = useFigureFold(4);
   const reasonId = useId();
   const available = summary?.available ?? 0;
   const owing = available < 0;
@@ -142,7 +144,7 @@ export function Balances({
     ];
     return (
       <div className="flex flex-col gap-tight">
-        <MetricStrip grid items={items} loading={loading} label={t("balances")} />
+        <MetricStrip grid items={items} loading={loading} label={t("balances")} fold={fold} />
         {/* The two actions are not behind a scroll: they are what a thumb came
             for. The one that fixes the balance, if it is below zero, leads. */}
         <div className="grid grid-cols-2 gap-tight">
@@ -158,6 +160,9 @@ export function Balances({
             {reason}
           </p>
         )}
+        {/* Withdrawn and Deposited are the period's totals - useful, not urgent -
+            so they wait behind the same "Show all" every figure band has. */}
+        <FigureToggle fold={fold} total={4} />
       </div>
     );
   }

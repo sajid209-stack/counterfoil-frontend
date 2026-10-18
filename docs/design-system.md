@@ -362,6 +362,15 @@ records with key facts first. Desktop density: 36px controls.
 **On a phone** (both products; full research and audit in `docs/mobile.md`):
 - A figure is never cut and never behind a sideways scroll: figure bands are a
   2-column grid of compact cells (`FigureBand`), an odd last cell spanning both.
+  Below 640px a band shows its first two figures and a 44px "Show all N" toggle
+  (`useFigureFold`, remembered as `statsOpen`); the first two are the ones a person
+  acts on. See `docs/mobile.md` §4 for the calm rules.
+- The normal state is silent: no chip for Paid, Unused, Confirmed or Published.
+  Dashboard feeds start at three rows.
+- GO sell cards (`WallTile`) are image-first: a 4:3 picture (or a quiet glyph
+  panel), the name, the price and a round 36px "+". The tab bar is a floating
+  dark pill, 12px from the edges; the current tab is a light pill that names
+  itself, the rest are icons in fixed places. Action bars float 8px above it.
 - The OS top bar holds the page name, one labelled primary pill (an icon disc
   when the label is too long), "⋯" and the account.
 - A status chip marks the exception; the normal state ("Published") has none.

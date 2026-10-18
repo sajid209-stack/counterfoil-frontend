@@ -268,11 +268,14 @@ export default function PaymentsPage() {
                     <p className={cn("mt-inline text-sm leading-relaxed", hidden ? "text-warning" : "text-muted")}>
                       {isCash ? t("methods.cashLocked") : hidden ? t("methods.needsAccount") : t(`methods.${m.method}.desc`)}
                     </p>
+                    {/* On a phone the words have no room beside a sentence; they
+                        take their own line under it. */}
+                    {isCash && <p className="mt-inline text-sm font-medium text-fg sm:hidden">{t("methods.alwaysOn")}</p>}
                   </div>
                   {/* Cash says so in words: a greyed-out switch that can never be
                       moved reads as broken, not as a rule. */}
                   {isCash ? (
-                    <span className="inline-flex h-11 shrink-0 items-center whitespace-nowrap text-sm font-medium text-muted">
+                    <span className="hidden h-11 shrink-0 items-center whitespace-nowrap pl-comfortable text-sm font-medium text-muted sm:inline-flex">
                       {t("methods.alwaysOn")}
                     </span>
                   ) : (

@@ -201,7 +201,6 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
               <span className="min-w-0 flex-1">
                 <span className="block text-base font-medium text-fg">
                   {formatDay(d.date, { weekday: true })}
-                  {x.tag && <span className="ml-tight inline-block rounded-full bg-muted-wash px-tight py-inline text-xs font-medium text-muted">{x.tag}</span>}
                 </span>
                 <span className="block text-xs text-muted">
                   {t("day.transactions", { count: x.rows.length })} · {t(x.clearing ? "day.clearing" : "day.settled")}
@@ -222,10 +221,8 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
                         className="flex min-h-14 w-full items-center gap-tight py-comfortable pl-[calc(var(--spacing-card)+44px)] pr-card text-left transition-colors duration-quick active:bg-muted-wash"
                       >
                         <span className="min-w-0 flex-1">
-                          <span className="block break-words text-base text-fg">
-                            {rt.text}
-                            {rt.ref && <span className="whitespace-nowrap font-mono text-xs"> · {rt.ref}</span>}
-                          </span>
+                          <span className="block break-words text-base text-fg">{rt.text}</span>
+                          {rt.ref && <span className="block font-mono text-xs text-muted">{rt.ref}</span>}
                           <span className="block text-xs text-muted">
                             {formatClockOf(r.line.at)} · {t(`status.${st.key}`)}
                           </span>

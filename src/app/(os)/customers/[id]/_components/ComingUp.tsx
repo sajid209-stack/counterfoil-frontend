@@ -33,12 +33,13 @@ export function ComingUp({ bookings }: { bookings: Booking[] }) {
     }));
   }, [bookings]);
 
+  /* Nothing booked is not a card: an empty box titled "Coming up" says only
+     what the rest of the page already shows. */
+  if (rows.length === 0) return null;
+
   return (
     <Panel title={t("comingUp")}>
-      {rows.length === 0 ? (
-        <p className="text-base text-muted">{t("nothingBooked")}</p>
-      ) : (
-        <ul className="-mx-comfortable flex flex-col">
+      <ul className="-mx-comfortable flex flex-col">
           {rows.map((r) => (
             <li key={r.id} className="border-b border-hairline last:border-0">
               <Link
@@ -73,8 +74,7 @@ export function ComingUp({ bookings }: { bookings: Booking[] }) {
               </Link>
             </li>
           ))}
-        </ul>
-      )}
+      </ul>
     </Panel>
   );
 }

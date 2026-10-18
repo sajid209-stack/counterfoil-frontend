@@ -307,9 +307,11 @@ export default function OrderDetailPage() {
       title={o ? t("orderTitle", { reference: o.reference }) : t("order")}
       back={{ href: "/orders", label: t("backOrders") }}
       status={
-        o ? (
+        /* A paid order is the normal state, so it wears no chip; only what needs
+           attention (part paid, refunded, cancelled…) does. */
+        o && (o.status !== "paid" || o.source) ? (
           <span className="flex flex-wrap items-center gap-tight">
-            <StatusPill status={o.status} />
+            {o.status !== "paid" && <StatusPill status={o.status} />}
             {o.source && (
               <span className="inline-flex items-center gap-inline text-sm text-muted">
                 <MarketBadge id={o.source.marketplaceId} />

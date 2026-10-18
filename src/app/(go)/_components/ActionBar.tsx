@@ -59,10 +59,10 @@ export function ActionBar({
   /**
    * `screen` — floats above the tab bar (a landscape tablet has a rail
    * instead, so it sits on the floor there).
-   * `dock` — a solid footer the full width of the screen, sitting directly on
-   *   top of the tab bar. The page scrolls away cleanly above it: nothing shows
-   *   around the buttons or between them and the tab bar. The sell screen's bar
-   *   is this.
+   * `dock` — the sale's own floating pill, sitting just above the tab bar's
+   *   pill: two buttons on a card with nothing behind them and no slab reaching
+   *   to the bottom of the screen. The page scrolls under it. The sell screen's
+   *   bar is this.
    * `panel` — the foot of a sheet or a side panel, in the flow.
    */
   docked?: "screen" | "dock" | "panel";
@@ -84,31 +84,67 @@ export function ActionBar({
       )}
     </div>
   );
+  if (docked === "panel") {
+    return (
+      <section id={id} aria-label={label} className={cn("flex flex-col gap-tight border-t border-line bg-sheet px-section pb-[calc(12px+env(safe-area-inset-bottom))] pt-comfortable", className)}>
+        {summary}
+        {children}
+        {buttons}
+      </section>
+    );
+  }
   return (
-    <section
-      id={id}
-      aria-label={label}
+    /* The wrapper positions; the section draws. Behind the section (below the
+       tab pill, which is z-40) sits ONE opaque page-coloured block from the top
+       of the bar to the bottom of the screen, with a soft fade above it, so the
+       bar and the tab pill read as one piece of chrome and no card shows
+       through the gaps. Where there is no tab pill (the landscape rail) there is
+       no block. */
+    <div
       className={cn(
-        "flex flex-col gap-tight",
+        "fixed z-30",
         docked === "screen"
           ? /* Bottom in classes, not an inline style: an inline style beats
                `rail:`, and on a landscape tablet (no tab bar) the bar floated
                85px up for a tab bar that is not there. */
-            "fixed inset-x-tight bottom-[calc(76px+env(safe-area-inset-bottom))] z-40 p-comfortable go-raised sm:left-1/2 sm:right-auto sm:w-[30rem] sm:-translate-x-1/2 rail:bottom-comfortable"
-          : docked === "dock"
-            ? /* z-30: under the tab bar (z-40). It rests on the bar's top edge
-                 (64px + the device inset); on a landscape tablet there is no
-                 bar, so it sits on the floor. */
-              // ds-exception: the dock's shadow falls UPWARD onto the page; the elevation tokens only fall down
-              "fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 rounded-t-sheet border-t border-line bg-card px-section py-comfortable shadow-[0_-10px_30px_-14px_rgb(0_0_0/0.28)] rail:bottom-0 rail:pb-[calc(12px+env(safe-area-inset-bottom))] [&>*]:mx-auto [&>*]:w-full [&>*]:max-w-[32rem]"
-            : "border-t border-line bg-sheet px-section pb-[calc(12px+env(safe-area-inset-bottom))] pt-comfortable",
+            "inset-x-tight bottom-[calc(84px+env(safe-area-inset-bottom))] sm:left-1/2 sm:right-auto sm:w-[30rem] sm:-translate-x-1/2 rail:bottom-comfortable"
+          : /* z-30: under the tab bar (z-40). Its bottom edge is 8px above the
+               pill's top (76px + 8 + the device inset); on a landscape tablet
+               there is no bar, so it floats 12px off the floor. */
+            "inset-x-comfortable bottom-[calc(84px+env(safe-area-inset-bottom))] mx-auto max-w-md rail:bottom-comfortable",
         className,
       )}
     >
-      {summary}
-      {children}
-      {buttons}
-    </section>
+      <ChromeBackdrop />
+      <section
+        id={id}
+        aria-label={label}
+        className={cn(
+          "flex flex-col gap-tight",
+          docked === "screen" ? "p-comfortable go-raised" : "rounded-full go-raised p-tight",
+        )}
+      >
+        {summary}
+        {children}
+        {buttons}
+      </section>
+    </div>
+  );
+}
+
+/**
+ * The opaque page-colour block behind a docked bar and the tab pill: from the
+ * bar's top edge to the bottom of the screen (the wrapper's `bottom` is the
+ * pill's top plus 8px, so it reaches down by the same amount), full width, with
+ * a 20px fade above. Put it first inside a `fixed` wrapper that has a z-index.
+ * Not drawn on the landscape rail, which has no tab pill.
+ */
+export function ChromeBackdrop({ className }: { className?: string }) {
+  return (
+    <span aria-hidden className={cn("pointer-events-none absolute -bottom-[calc(84px+env(safe-area-inset-bottom))] left-1/2 top-0 -z-10 w-screen -translate-x-1/2 rail:hidden", className)}>
+      <span className="absolute inset-0 bg-surface" />
+      <span className="absolute inset-x-0 bottom-full h-5 bg-linear-to-t from-surface to-transparent" />
+    </span>
   );
 }
 

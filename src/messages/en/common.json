@@ -54,6 +54,10 @@
     "none": "None",
     "amountOff": "= {amount} off",
     "percentOff": "= {pct}% off",
-    "notRecorded": "Not recorded"
+    "notRecorded": "Not recorded",
+    "figureBand": {
+      "showAll": "{count, plural, one {Show the figure} other {Show all #}}",
+      "showFewer": "Show fewer"
+    }
   }
 }

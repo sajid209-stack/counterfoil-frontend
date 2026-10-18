@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui";
-import { FigureBand } from "@/components/ui/StatStrip";
+import { FIGURES_SHOWN, FigureBand, type useFigureFold } from "@/components/ui/StatStrip";
 import { cn } from "@/lib/cn";
 
 export interface Metric {
@@ -35,8 +35,27 @@ export interface Metric {
  * their own (Finances' four balances, with an action on each): a 2 x 2 of
  * separate cards, the label on one line and the "i" beside the figure, so no
  * label wraps to make room for it.
+ *
+ * Both shapes fold to the first two figures on a phone (docs/mobile.md §4): the
+ * caller orders `items` so the two that matter come first, and a "Show all N"
+ * button names the rest.
  */
-export function MetricStrip({ items, loading = false, label, grid = false }: { items: Metric[]; loading?: boolean; label: string; grid?: boolean }) {
+export function MetricStrip({
+  items,
+  loading = false,
+  label,
+  grid = false,
+  fold,
+}: {
+  items: Metric[];
+  loading?: boolean;
+  label: string;
+  grid?: boolean;
+  /** `grid` only: the owner's fold (`useFigureFold`), so the cards after the first
+   *  two wait on a phone until its "Show all" button opens them. The caller draws
+   *  the button, because where it sits is part of the page's layout. */
+  fold?: ReturnType<typeof useFigureFold>;
+}) {
   if (!grid) {
     return (
       <FigureBand
@@ -47,9 +66,9 @@ export function MetricStrip({ items, loading = false, label, grid = false }: { i
     );
   }
   return (
-    <div role="group" aria-label={label} className="grid grid-cols-2 gap-tight">
-      {items.map((m) => (
-        <div key={m.key} data-metric={m.key} className="card-surface min-w-0 p-comfortable">
+    <div id={fold?.id} role="group" aria-label={label} className="grid grid-cols-2 gap-tight">
+      {items.map((m, i) => (
+        <div key={m.key} data-metric={m.key} className={cn("card-surface min-w-0 p-comfortable", fold?.folds && !fold.open && i >= FIGURES_SHOWN && "max-sm:hidden")}>
           {/* The same anatomy the desktop tile has: label and change on one line,
               the figure, then what the figure does not say on its own. */}
           <div className="flex min-h-[22px] items-start justify-between gap-tight">

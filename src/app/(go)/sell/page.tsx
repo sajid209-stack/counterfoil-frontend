@@ -51,6 +51,7 @@ import {
 } from "@/lib/api";
 import type { DiscountMode } from "@/components/ui";
 import { CustomerPicker, type AttachedCustomer } from "../pos/CustomerPicker";
+import { ChromeBackdrop } from "../_components/ActionBar";
 import { SaleRows, type RowKey } from "./_components/SaleRows";
 import { formatClock, formatDay, formatMoney } from "@/lib/format";
 import { useMediaQuery } from "@/lib/useMedia";
@@ -769,12 +770,13 @@ export default function SellPage() {
         {/* The one thing that never scrolls away: what this costs, and the
             next decision. On a phone it clears the Go tab bar. */}
         <div
-          /* 72px, matching the v1 till exactly rather than being picked by
-             eye: the Go tab bar is docked and 64px tall, so this bar rides 8px
-             above it. Both tills' bottom furniture rides at the same height,
-             which is what a design comparison needs. */
-          className="fixed inset-x-comfortable bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 lg:static lg:mt-comfortable"
+          /* 84px, matching the v1 till exactly rather than being picked by
+             eye: the Go tab bar is a floating pill whose top edge is 76px up,
+             so this bar rides 8px above it. Both tills' bottom furniture rides
+             at the same height, which is what a design comparison needs. */
+          className="fixed inset-x-comfortable bottom-[calc(84px+env(safe-area-inset-bottom))] z-30 lg:static lg:mt-comfortable"
         >
+          <ChromeBackdrop className="lg:hidden" />
           <div className="flex items-center gap-comfortable rounded-full bg-inverse px-section py-tight shadow-float lg:rounded-card lg:px-comfortable">
             {/* The bar states the figure ONCE.
                 It used to read "Total ৳575.00" beside a button reading "Take
