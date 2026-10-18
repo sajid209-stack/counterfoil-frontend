@@ -8,15 +8,6 @@ import { setPrefs, usePrefs } from "@/lib/prefs";
 
 export type StatIconTone = "ember" | "success" | "info" | "warning" | "danger" | "neutral";
 
-/** Wash and foreground for a figure's 32px icon. Each pair is a token the rest of the kit already uses. */
-export const ICON_TONE: Record<StatIconTone, string> = {
-  ember: "bg-ember-wash text-brand-foreground",
-  success: "bg-success-wash text-success",
-  info: "bg-info-wash text-info",
-  warning: "bg-warning-wash text-warning",
-  danger: "bg-danger-wash text-danger",
-  neutral: "bg-subtle text-fg-secondary",
-};
 
 export interface StatItem {
   key: string;
@@ -235,16 +226,14 @@ function Cell({ item, loading, folded = false }: { item: StatItem; loading: bool
         item.pressed && "bg-ember-wash",
       )}
     >
-      {/* The soft round icon, then the label under it, at every width. */}
-      {item.icon && (
-        <span aria-hidden className={cn("mb-tight flex h-8 w-8 items-center justify-center rounded-full [&>svg]:h-4 [&>svg]:w-4", ICON_TONE[item.iconTone ?? "neutral"])}>
-          {item.icon}
-        </span>
-      )}
       {/* Wraps on a phone rather than truncating: a label cut to "Transa…" is
           the fault this layout exists to remove. With no icon the delta pill
           sits where the icon would be, so the label keeps clear of it. */}
-      <span className={cn("block text-sm text-muted sm:truncate sm:font-medium sm:leading-6", !!item.delta && !item.icon && "max-sm:pr-14")}>{item.label}</span>
+      <span className={cn("flex min-w-0 items-center gap-1.5 text-sm text-muted sm:font-medium sm:leading-6", !!item.delta && "max-sm:pr-14")}>
+        {/* A small plain icon on the label's own line: it names the figure without costing a row. */}
+        {item.icon && <span aria-hidden className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-fg-secondary [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>}
+        <span className="min-w-0 sm:truncate">{item.label}</span>
+      </span>
       <span className="mt-inline flex flex-wrap items-baseline gap-x-tight gap-y-inline">
         {loading ? (
           <span className="my-1 block h-6 w-20 animate-pulse rounded-xs bg-line" />
@@ -259,8 +248,8 @@ function Cell({ item, loading, folded = false }: { item: StatItem; loading: bool
             {item.value}
           </span>
         )}
-        {/* Beside an icon the pill sits in the top-right corner at every width; without one it leaves the value line only on a phone. */}
-        {item.delta && <span className={item.icon ? "absolute right-comfortable top-comfortable sm:right-card" : "max-sm:absolute max-sm:right-comfortable max-sm:top-comfortable"}>{item.delta}</span>}
+        {/* On a phone the pill leaves the value line for the card's top-right corner. */}
+        {item.delta && <span className="max-sm:absolute max-sm:right-comfortable max-sm:top-comfortable">{item.delta}</span>}
       </span>
       {/* Only where there is something to say — an empty line under three of
           four figures is the white space this band exists to remove. */}
@@ -292,22 +281,13 @@ function Tile({ item, loading }: { item: StatItem; loading: boolean }) {
         item.pressed && "border-strong",
       )}
     >
-      {/* The soft round icon top left and the change top right, as a phone draws them.
-          The row keeps its height whether or not there is a delta, so four tiles stay one size. */}
-      {item.icon ? (
-        <>
-          <span className="flex min-h-8 items-start justify-between gap-tight">
-            <span aria-hidden className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full [&>svg]:h-4 [&>svg]:w-4", ICON_TONE[item.iconTone ?? "neutral"])}>{item.icon}</span>
-            {item.delta}
-          </span>
-          <span className="mt-tight block truncate text-sm font-medium text-muted">{item.label}</span>
-        </>
-      ) : (
-        <span className="flex h-[22px] items-center gap-tight">
-          <span className="min-w-0 flex-1 truncate text-xs font-medium text-muted">{item.label}</span>
-          {item.delta}
-        </span>
-      )}
+      {/* A small plain icon, the label and the change on one line. The row keeps its
+          height whether or not there is a delta, so four tiles stay one size. */}
+      <span className="flex h-[22px] items-center gap-1.5">
+        {item.icon && <span aria-hidden className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-fg-secondary [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>}
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-muted">{item.label}</span>
+        {item.delta}
+      </span>
       <span className="mt-tight block">{figure}</span>
       <span className={cn("mt-inline block text-xs", item.contextTone ?? "text-muted")}>{item.context ?? " "}</span>
     </Tag>

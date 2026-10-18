@@ -18318,3 +18318,21 @@ Owner, with a screenshot of the phone dashboard's figure cards: *"add those icon
     - the dashboard tiles now carry a 32px icon and are 167px tall;
     - the finance cards may be up to 180px;
     - the Orders label check reads the label text.
+
+## Figure-card icons, small and inline (2026-10-18)
+
+The owner sent a reference: a small plain icon beside each label, with no tinted circle and no row of its own ("don't waste extra space"). Every figure card now follows it, at every width, on the dashboard, analytics, finances and orders.
+
+- **The icon** is 16px, in `fg-secondary`, with no fill. It sits on the label's line, 6px before the label.
+- **The cards are short again.**
+  - Dashboard tiles: 129px (167 with the circle).
+  - Finances: the balance cards are back to their earlier height.
+  - Orders: shows its icons at every width, because they no longer take width beside the money. Nothing is clipped at 800, 1024, 1280 or 1440.
+- **Removed.** The `ICON_TONE` tint map is gone. `iconTone` is still accepted on `StatItem` and `Metric` but no longer drawn.
+- **Verified.**
+  - Top cards: 117.
+  - Orders: 193 / 36.
+  - Analytics: 511 / 511.
+  - Finances: 147 / 134.
+  - `tsc`, `lint:tokens` and `eslint`: clean.
+  - The icon checks in topcards, ord and fin now assert a plain 16px glyph on the label line, where they asserted a 32px tinted circle.

@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 import { formatDay, formatMoney } from "@/lib/format";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import type { FinanceExtras, FinanceSummary } from "@/lib/api";
-import { FigureToggle, ICON_TONE, useFigureFold, type StatIconTone } from "@/components/ui/StatStrip";
+import { FigureToggle, useFigureFold } from "@/components/ui/StatStrip";
 import { MetricStrip, type Metric } from "../../dashboard/_components/MetricStrip";
 
 /**
@@ -178,7 +178,7 @@ export function Balances({
   return (
     <div className="grid grid-cols-2 gap-tight md:gap-section xl:grid-cols-4">
       {/* Available balance */}
-      <Tile labelId="fin-available" label={t("available.label")} icon={<Wallet aria-hidden />} tone={owing ? "danger" : "ember"}>
+      <Tile labelId="fin-available" label={t("available.label")} icon={<Wallet aria-hidden />}>
         {hasBalanceInfo && (
           <TileInfo label={t("available.infoLabel")} align="left">
             {availableInfo}
@@ -189,7 +189,7 @@ export function Balances({
       </Tile>
 
       {/* Unsettled funds */}
-      <Tile labelId="fin-unsettled" label={t("unsettled.label")} icon={<Clock aria-hidden />} tone="warning">
+      <Tile labelId="fin-unsettled" label={t("unsettled.label")} icon={<Clock aria-hidden />}>
         <TileInfo label={t("unsettled.infoLabel")} align="right">
           {unsettledInfo}
         </TileInfo>
@@ -198,7 +198,7 @@ export function Balances({
       </Tile>
 
       {/* Withdrawn: what went to the bank in the table's dates, and the button that sends more. */}
-      <Tile labelId="fin-withdrawn" label={t("withdrawn.label")} icon={<ArrowUpFromLine aria-hidden />} tone="info">
+      <Tile labelId="fin-withdrawn" label={t("withdrawn.label")} icon={<ArrowUpFromLine aria-hidden />}>
         <div className="col-span-2 row-start-5 md:col-span-1 md:col-start-2 md:row-span-2 md:row-start-3 md:self-end md:justify-self-end md:pl-tight max-md:mt-2 max-md:self-end">
           <Button
             variant={canWithdraw ? "primary" : "secondary"}
@@ -223,7 +223,7 @@ export function Balances({
       </Tile>
 
       {/* Deposited */}
-      <Tile labelId="fin-deposited" label={t("deposited.label")} icon={<ArrowDownToLine aria-hidden />} tone="success">
+      <Tile labelId="fin-deposited" label={t("deposited.label")} icon={<ArrowDownToLine aria-hidden />}>
         <div className="col-span-2 row-start-5 md:col-span-1 md:col-start-2 md:row-span-2 md:row-start-3 md:self-end md:justify-self-end md:pl-tight max-md:mt-2 max-md:self-end">
           <Button variant={owing ? "primary" : "secondary"} size="sm" disabled={!summary} onClick={onDeposit} className="max-md:w-full">
             {t("available.deposit")}
@@ -239,16 +239,14 @@ export function Balances({
 
 /** One tile: a grid so a button can sit beside the label on a wide tile and
  *  under everything, full width, on a phone. Children place themselves. */
-function Tile({ labelId, label, icon, tone, children }: { labelId: string; label: string; icon: React.ReactNode; tone: StatIconTone; children: React.ReactNode }) {
+function Tile({ labelId, label, icon, children }: { labelId: string; label: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <section aria-labelledby={labelId} className="group card-surface relative grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto_auto_1fr] items-center p-card">
-      {/* The soft round icon over the label, as every figure card draws it. */}
-      <div className="col-start-1 row-start-1 min-w-0">
-        <span aria-hidden className={cn("mb-tight flex h-8 w-8 items-center justify-center rounded-full [&>svg]:h-4 [&>svg]:w-4", ICON_TONE[tone])}>{icon}</span>
-        <h2 id={labelId} className="text-sm font-medium leading-[18px] text-muted">
-          {label}
-        </h2>
-      </div>
+      {/* A small plain icon on the label's line, as every figure card draws it. */}
+      <h2 id={labelId} className="col-start-1 row-start-1 flex min-w-0 items-center gap-1.5 text-sm font-medium leading-[18px] text-muted">
+        <span aria-hidden className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-fg-secondary [&>svg]:h-4 [&>svg]:w-4">{icon}</span>
+        <span className="min-w-0 truncate">{label}</span>
+      </h2>
       {children}
     </section>
   );

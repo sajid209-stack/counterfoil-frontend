@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import type { SalesSummary } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
-import { FIGURES_SHOWN, FigureBand, FigureToggle, ICON_TONE, useFigureFold } from "@/components/ui/StatStrip";
+import { FIGURES_SHOWN, FigureBand, FigureToggle, useFigureFold } from "@/components/ui/StatStrip";
 import { SM, useMediaQuery } from "@/lib/useMedia";
 import { CircleDollarSign, Clock, Package, ReceiptText, Wallet } from "lucide-react";
 
@@ -71,22 +71,20 @@ export function SalesFigures({ summary: s, loading }: { summary: SalesSummary; l
           key={i.key}
           title={i.hint}
           className={cn(
-            "min-w-0 bg-card xl:grid xl:grid-cols-[auto_minmax(0,1fr)] xl:items-center xl:gap-x-tight px-comfortable py-comfortable max-md:last:odd:col-span-2 md:bg-transparent md:p-0",
+            "min-w-0 bg-card px-comfortable py-comfortable max-md:last:odd:col-span-2 md:bg-transparent md:p-0",
             fold.folds && !fold.open && n >= FIGURES_SHOWN && "max-sm:hidden",
           )}
         >
-          {/* The figure card's soft round icon, beside the figure so the row stays one line tall.
-              From xl only: below it five figures share too little width and money would be cut.
-              It lives in the dt (shown as contents) so the list stays dt/dd only. */}
-          <dt className="contents">
-            <span aria-hidden className={cn("hidden h-8 w-8 xl:row-span-2 xl:flex shrink-0 items-center justify-center rounded-full [&>svg]:h-4 [&>svg]:w-4", ICON_TONE[icons[i.key as keyof typeof icons][1]])}>{icons[i.key as keyof typeof icons][0]}</span>
-            <span className="block min-w-0 text-xs xl:col-start-2 text-muted md:whitespace-nowrap md:text-sm">{i.label}</span>
+          {/* A small plain icon on the label's line, so it costs no width beside the money. */}
+          <dt className="flex min-w-0 items-center gap-1.5">
+            <span aria-hidden className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-fg-secondary [&>svg]:h-4 [&>svg]:w-4">{icons[i.key as keyof typeof icons][0]}</span>
+            <span className="block min-w-0 text-xs text-muted md:whitespace-nowrap md:text-sm">{i.label}</span>
           </dt>
           <dd
             data-figure={i.key}
             data-amount={i.raw}
             className={cn(
-              "type-figure mt-inline xl:col-start-2 whitespace-nowrap text-lg font-semibold leading-tight xl:text-2xl",
+              "type-figure mt-inline whitespace-nowrap text-lg font-semibold leading-tight xl:text-2xl",
               i.tone === "warning" && "text-warning",
               loading && "opacity-50",
             )}
