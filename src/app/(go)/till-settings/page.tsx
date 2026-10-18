@@ -5,8 +5,8 @@ import Link from "next/link";
 import { ArrowUpRight, Calculator, Languages, Palette, Type } from "lucide-react";
 import { AppearancePicker } from "@/components/ThemeProvider";
 import { LanguagePicker } from "@/components/LocaleProvider";
-import { Switch } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { SegmentedControl, Switch } from "@/components/ui";
+import { GoCard } from "../_components/Tiles";
 import { setPrefs, usePrefs, type TillText } from "@/lib/prefs";
 
 /**
@@ -30,7 +30,7 @@ export default function TillSettingsPage() {
 
   return (
     <div
-      className="mx-auto flex w-full max-w-2xl flex-col gap-section p-section"
+      className="mx-auto flex w-full max-w-2xl flex-col gap-comfortable p-section [&_[role=radio]]:min-h-11"
       /* The Go tab bar is docked and 64px tall, so it owns
          the bottom 64px. Without this the last card sits under it. */
       style={{ paddingBottom: "calc(88px + env(safe-area-inset-bottom))" }}
@@ -53,26 +53,13 @@ export default function TillSettingsPage() {
       </Row>
 
       <Row icon={<Type size={18} strokeWidth={1.75} />} title={t("textSize")} body={t("tillSettings.textBody")} stack>
-        <div role="radiogroup" aria-label={t("textSize")} className="flex w-full gap-tight">
-          {(["normal", "large", "largest"] as TillText[]).map((v, i) => (
-            <button
-              key={v}
-              type="button"
-              role="radio"
-              aria-checked={prefs.tillText === v}
-              onClick={() => setPrefs({ tillText: v })}
-              className={cn(
-                "flex h-12 flex-1 items-center justify-center rounded-full border transition-colors duration-quick",
-                prefs.tillText === v ? "border-ember-solid bg-ember-solid font-medium text-on-solid" : "border-line text-muted active:bg-muted-wash",
-              )}
-            >
-              {/* Each option set at the size it selects: three identical labels
-                  are a guessing game about a choice that changes every screen
-                  behind it. */}
-              <span style={{ fontSize: [15, 17, 19][i] }}>{t(`textSize_${v}`)}</span>
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          fullWidth
+          aria-label={t("textSize")}
+          value={prefs.tillText}
+          onChange={(v) => setPrefs({ tillText: v as TillText })}
+          options={(["normal", "large", "largest"] as TillText[]).map((v) => ({ value: v, label: t(`textSize_${v}`) }))}
+        />
       </Row>
 
       <Row icon={<Palette size={18} strokeWidth={1.75} />} title={t("tillSettings.appearance")} body={t("tillSettings.appearanceBody")} stack>
@@ -91,7 +78,7 @@ export default function TillSettingsPage() {
         className="card-surface flex min-h-[3.5rem] items-center justify-between gap-tight p-card text-left"
       >
         <span className="min-w-0">
-          <span className="block text-md font-medium">{t("tillSettings.business")}</span>
+          <span className="block text-md font-semibold">{t("tillSettings.business")}</span>
           <span className="mt-inline block text-sm text-muted">{t("tillSettings.businessBody")}</span>
         </span>
         <ArrowUpRight size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
@@ -103,7 +90,7 @@ export default function TillSettingsPage() {
         className="card-surface flex min-h-[3.5rem] items-center justify-between gap-tight p-card text-left"
       >
         <span className="min-w-0">
-          <span className="block text-md font-medium">{t("tillSettings.designSystem")}</span>
+          <span className="block text-md font-semibold">{t("tillSettings.designSystem")}</span>
           <span className="mt-inline block text-sm text-muted">{t("tillSettings.designSystemBody")}</span>
         </span>
         <ArrowUpRight size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
@@ -128,17 +115,17 @@ function Row({
   stack?: boolean;
 }) {
   return (
-    <section className={cn("card-surface p-card", stack ? "flex flex-col gap-comfortable" : "flex items-center gap-comfortable")}>
+    <GoCard as="div" className={stack ? undefined : "flex-row items-center"}>
       <div className="flex min-w-0 flex-1 items-start gap-comfortable">
-        <span aria-hidden className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-subtle text-brand-foreground">
+        <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-subtle text-fg">
           {icon}
         </span>
         <span className="min-w-0">
-          <span className="block text-md font-medium">{title}</span>
+          <span className="block text-md font-semibold">{title}</span>
           <span className="mt-inline block text-sm text-muted">{body}</span>
         </span>
       </div>
       {children}
-    </section>
+    </GoCard>
   );
 }

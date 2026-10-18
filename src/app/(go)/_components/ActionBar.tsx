@@ -22,7 +22,7 @@ const BASE =
   "inline-flex min-w-0 items-center justify-center gap-tight rounded-control px-comfortable text-md font-semibold transition-transform duration-quick active:scale-[0.98]";
 
 /** The orange button. `grow` is its share of the row. */
-export const primaryButton = (h = "h-13", grow = "flex-[1.4]") => `${BASE} ${h} ${grow} bg-ember-solid text-on-solid disabled:bg-line disabled:text-muted`;
+export const primaryButton = (h = "h-13", grow = "flex-[1.4]") => `${BASE} ${h} ${grow} bg-ember-solid text-on-solid disabled:border disabled:border-strong disabled:bg-subtle disabled:text-muted`;
 /** The white one beside it. */
 export const secondaryButton = (h = "h-13", grow = "flex-1") => `${BASE} ${h} ${grow} border-2 border-line bg-card text-fg disabled:opacity-50`;
 
@@ -33,6 +33,10 @@ export interface BarAction {
   disabled?: boolean;
   /** The accessible name when the label is not the whole story. */
   ariaLabel?: string;
+  /** A shorter label for a narrow bar. The row is a container: below the
+   *  width the full label needs, this shows instead, so a word is never cut
+   *  mid-letter by an ellipsis. */
+  shortLabel?: React.ReactNode;
 }
 
 export function ActionBar({
@@ -43,6 +47,7 @@ export function ActionBar({
   secondary,
   primary,
   docked = "screen",
+  tone = "sheet",
   className,
 }: {
   id?: string;
@@ -66,14 +71,26 @@ export function ActionBar({
    * `panel` — the foot of a sheet or a side panel, in the flow.
    */
   docked?: "screen" | "dock" | "panel";
+  /** `panel` only. `sheet` is a white foot with a hairline above it. `ground`
+   *  is the page's own colour with no line: the foot of a screen whose content
+   *  is cards on the page (the cart and the payment step), so the buttons sit
+   *  on the same ground as the cards above them rather than on a white slab. */
+  tone?: "sheet" | "ground";
   className?: string;
 }) {
   const buttons = (secondary || primary) && (
-    <div className="flex gap-tight">
+    <div className="@container flex gap-tight">
       {secondary && (
-        <button type="button" className={secondaryButton("h-13", primary ? "flex-1" : "flex-1")} onClick={secondary.onClick} disabled={secondary.disabled} aria-label={secondary.ariaLabel}>
+        <button type="button" className={secondaryButton("h-13", primary ? "flex-[0.8] min-[360px]:flex-1" : "flex-1")} onClick={secondary.onClick} disabled={secondary.disabled} aria-label={secondary.ariaLabel}>
           {secondary.icon}
-          <span className="truncate">{secondary.label}</span>
+          {secondary.shortLabel != null ? (
+            <>
+              <span className="hidden truncate @[21.5rem]:inline">{secondary.label}</span>
+              <span className="truncate @[21.5rem]:hidden">{secondary.shortLabel}</span>
+            </>
+          ) : (
+            <span className="truncate">{secondary.label}</span>
+          )}
         </button>
       )}
       {primary && (
@@ -86,7 +103,7 @@ export function ActionBar({
   );
   if (docked === "panel") {
     return (
-      <section id={id} aria-label={label} className={cn("flex flex-col gap-tight border-t border-line bg-sheet px-section pb-[calc(12px+env(safe-area-inset-bottom))] pt-comfortable", className)}>
+      <section id={id} aria-label={label} className={cn("flex flex-col gap-tight px-section pb-[calc(12px+env(safe-area-inset-bottom))] pt-comfortable", tone === "ground" ? "bg-surface" : "border-t border-line bg-sheet", className)}>
         {summary}
         {children}
         {buttons}
@@ -121,7 +138,10 @@ export function ActionBar({
         aria-label={label}
         className={cn(
           "flex flex-col gap-tight",
-          docked === "screen" ? "p-comfortable go-raised" : "rounded-full go-raised p-tight",
+          /* In dark the card and the page are one step apart and the lift is a
+             shadow on near-black, which is nothing: the bar's edge is a real
+             1px line there, so it reads as an object at all. */
+          docked === "screen" ? "p-comfortable go-raised dark:border dark:border-strong" : "rounded-full go-raised p-tight dark:border dark:border-strong",
         )}
       >
         {summary}

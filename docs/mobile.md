@@ -140,3 +140,24 @@ scored OS phone 7/10 and GO phone 6/10. Fixed after it:
 Not taken, because they reverse earlier decisions of the owner: an outlined instead of orange
 selected payment method, removing Arrivals, hiding the developer tools by role, and dropping the
 price from the Schedule's free cells.
+
+## 5. The till in one card language (2026-10-18)
+
+The owner: the Sell page's new look should be the look of every POS phone screen — modern,
+minimal, relaxing. The shared pieces are `src/app/(go)/_components/Tiles.tsx`.
+
+1. **The page is the ground; every group is its own white card** (`GoCard`, `card-surface`, the
+   GO card radius) with a 12px gap of page between cards. No box inside a box. No grid of cells
+   joined by hairlines (the Schedule's hour board is the one exception: it is a timetable).
+2. **Every choice is its own rounded tile** (`Tile`, `ActionTile`, `tileClass`) with 8px gaps:
+   dates, times, lengths, lanes, ways to pay, notes, print and send, More destinations, staff on
+   the sign-in screen, check-in counts.
+3. **Chosen = solid orange, white text, a small tick.** Not available = the page colour, a line,
+   no shadow, muted (struck where it is a time).
+4. **Lists are one card per item**, like the wall: a cart line, a party at check-in, a ticket, an
+   arrival — with a 48–56px picture or glyph where the thing has one.
+5. **Headings are 16px semibold, sentence case, with no coloured eyebrow above them.** Secondary
+   text is 13px muted. One orange primary per screen, bottom right or full width at the foot.
+6. **Icons in a soft round** (40px, `bg-subtle`) when an action is drawn as a picture.
+7. **No category chips on the till.** The wall shows everything; shop items sit under a quiet
+   "Shop" heading.

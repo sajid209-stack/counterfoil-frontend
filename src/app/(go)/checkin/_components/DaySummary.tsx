@@ -5,6 +5,7 @@ import { Banknote } from "lucide-react";
 import { Button } from "@/components/ui";
 import { formatMoney } from "@/lib/format";
 import type { Minor } from "@/lib/api";
+import { GoCard, TileGrid } from "../../_components/Tiles";
 
 /**
  * The day, before anyone turns up: how many are expected, how many are in, how
@@ -27,31 +28,32 @@ export function DaySummary({
 }) {
   const t = useTranslations("checkin");
   return (
-    <section data-day-summary className="card-surface flex flex-col gap-comfortable p-card">
-      <h2 className="text-md font-semibold text-fg">{t("summaryTitle")}</h2>
-      <div className="grid grid-cols-3 divide-x divide-line overflow-hidden rounded-inner border border-line text-center">
-        {(
-          [
-            ["expected", expected],
-            ["arrived", arrived],
-            ["toCome", Math.max(0, expected - arrived)],
-          ] as const
-        ).map(([key, value]) => (
-          <div key={key} className="flex flex-col items-center gap-inline py-comfortable">
-            <span className="text-xl font-semibold tabular-nums">{value}</span>
-            <span className="text-sm text-muted">{t(`stat_${key}`)}</span>
-          </div>
-        ))}
-      </div>
+    <>
+      <GoCard data-day-summary title={t("summaryTitle")}>
+        <TileGrid cols={3}>
+          {(
+            [
+              ["expected", expected],
+              ["arrived", arrived],
+              ["toCome", Math.max(0, expected - arrived)],
+            ] as const
+          ).map(([key, value]) => (
+            <div key={key} className="flex min-w-0 flex-col items-center gap-inline rounded-inner bg-subtle px-tight py-comfortable text-center">
+              <span className="text-xl font-semibold tabular-nums">{value}</span>
+              <span className="text-sm text-muted">{t(`stat_${key}`)}</span>
+            </div>
+          ))}
+        </TileGrid>
+      </GoCard>
       {owed > 0 && (
-        <div className="flex flex-col gap-tight rounded-inner border border-warning-line bg-warning-wash p-comfortable">
+        <GoCard as="div" className="bg-warning-wash">
           <p className="text-md font-semibold text-fg">{t("owedAcrossDay", { amount: formatMoney(owed) })}</p>
-          <p className="text-sm text-fg-secondary">{t("owedParties", { count: owingParties })}</p>
+          <p className="-mt-tight text-sm text-fg-secondary">{t("owedParties", { count: owingParties })}</p>
           <Button variant="secondary" icon={<Banknote size={18} strokeWidth={1.75} aria-hidden />} onClick={onShowDue}>
             {t("showDue")}
           </Button>
-        </div>
+        </GoCard>
       )}
-    </section>
+    </>
   );
 }

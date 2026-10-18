@@ -28,6 +28,7 @@ import { useScreenState } from "@/lib/screenState";
 import { useMediaQuery } from "@/lib/useMedia";
 import { TillSwitcher } from "./TillSwitcher";
 import { CounterPicker } from "./CounterPicker";
+import { ActionTile, TileGrid, tileClass } from "./Tiles";
 import { useActiveCounter } from "@/lib/activeCounter";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getStaff, listCounters, listProducts, peekCounters } from "@/lib/api";
@@ -331,10 +332,14 @@ export function GoShell({ children }: { children: React.ReactNode }) {
           </nav>
         )}
 
-        {/* Content clears the bottom bar (+ home indicator) except in rail mode */}
-        {/* BAR_CLEAR + 24px of breathing room. Kept as a class so `rail:pb-0`
-            can still reset it — an inline style would beat the variant. */}
-        <div className={cn("min-w-0 flex-1", bare ? "pb-section" : "pb-[calc(88px+env(safe-area-inset-bottom))] rail:pb-0")}>{face ?? children}</div>
+        {/* Content clears the bottom bar (+ home indicator) except in rail mode.
+            One place for every Go page: 76px of bar plus 28px of room, so the
+            last thing on any screen ends clear of the bar with space to spare
+            (it used to be 12px, which read as touching). A page with its own
+            dock above the bar adds the dock's height itself. Kept as a class so
+            `rail:pb-0` can still reset it — an inline style would beat the
+            variant. */}
+        <div className={cn("min-w-0 flex-1", bare ? "pb-section" : "pb-[calc(104px+env(safe-area-inset-bottom))] rail:pb-0")}>{face ?? children}</div>
       </div>
 
       {/* Bottom tab bar — phone + tablet portrait. A floating dark pill, 12px
@@ -346,14 +351,30 @@ export function GoShell({ children }: { children: React.ReactNode }) {
           reserves its height plus a gap, and nothing is ever parked behind it.
           The pill is capped and centred on a tablet held upright. */}
       {!bare && (
-        <nav
-          aria-label={tp("shell.menu")}
-          className="fixed inset-x-comfortable z-40 mx-auto flex h-16 max-w-md items-center rounded-full border border-line bg-neutral-950 px-1.5 py-1.5 shadow-go-pop dark:bg-neutral-800 rail:hidden"
-          style={{ bottom: "calc(12px + env(safe-area-inset-bottom))" }}
-        >
-          {tabs.map((t) => tabButton(t, false))}
-          {moreButton(false)}
-        </nav>
+        <>
+          {/* The page's own colour from the top of the pill to the bottom of the
+              screen, with a short fade above it, so a list dissolves into the
+              bar instead of showing through the 12px of page round the pill.
+              Under the pill (z-40) and under a dock (z-30), whose own backdrop
+              covers this one where there is a dock. Not drawn on the landscape
+              rail, which has no pill. */}
+          <span
+            aria-hidden
+            className="pointer-events-none fixed inset-x-0 bottom-0 z-20 rail:hidden"
+            style={{ height: `calc(${BAR_CLEAR})` }}
+          >
+            <span className="absolute inset-0 bg-surface" />
+            <span className="absolute inset-x-0 bottom-full h-6 bg-linear-to-t from-surface to-transparent" />
+          </span>
+          <nav
+            aria-label={tp("shell.menu")}
+            className="fixed inset-x-comfortable z-40 mx-auto flex h-16 max-w-md items-center rounded-full border border-line bg-neutral-950 px-1.5 py-1.5 shadow-go-pop dark:border-strong dark:bg-neutral-800 rail:hidden"
+            style={{ bottom: "calc(12px + env(safe-area-inset-bottom))" }}
+          >
+            {tabs.map((t) => tabButton(t, false))}
+            {moreButton(false)}
+          </nav>
+        </>
       )}
 
       {/* A sale in progress is reachable from anywhere.
@@ -401,31 +422,25 @@ export function GoShell({ children }: { children: React.ReactNode }) {
             <p className="min-w-0 text-sm text-muted">{tp("shell.shiftLine", { counter: activeCounter?.name ?? tp("counter"), time: "3:24" })}</p>
             <LocaleToggle />
           </div>
-          {/* One card of cells divided by hairlines, a picture over a word in
-              each — the same drawing as the sell screen, so the menu reads as
-              part of the till rather than as a different app. */}
-          <div className="card-surface overflow-hidden">
-            <div className="-mb-px -mr-px grid grid-cols-3 sm:grid-cols-4">
-              {MORE_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const inner = (
-                  <>
-                    <Icon size={24} strokeWidth={1.5} className="text-muted" aria-hidden />
-                    <span className="text-base font-medium">{t(item.key)}</span>
-                  </>
-                );
-                return "href" in item && item.href ? (
-                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} data-focus-inset className="flex h-[5.5rem] flex-col items-center justify-center gap-tight border-b border-r border-line bg-card text-fg transition-colors duration-quick active:bg-muted-wash">
-                    {inner}
-                  </Link>
-                ) : (
-                  <button key={item.key} type="button" onClick={() => runItem(item)} data-focus-inset className="flex h-[5.5rem] flex-col items-center justify-center gap-tight border-b border-r border-line bg-card text-fg transition-colors duration-quick active:bg-muted-wash">
-                    {inner}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* Every destination is its own tile, the icon in a soft round over a
+              word — the same drawing as the wall, so the menu reads as part of
+              the till. Links are composed here from the tile classes (a tile is
+              a button; a destination should stay a link). */}
+          <TileGrid cols={3} className="sm:grid-cols-4">
+            {MORE_ITEMS.map((item) => {
+              const Icon = item.icon;
+              return "href" in item && item.href ? (
+                <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} className={tileClass({ className: "h-[5.5rem] gap-tight" })}>
+                  <span aria-hidden className="flex size-10 items-center justify-center rounded-full bg-subtle text-fg [&_svg]:size-5">
+                    <Icon strokeWidth={1.5} />
+                  </span>
+                  <span className="text-sm font-medium leading-tight">{t(item.key)}</span>
+                </Link>
+              ) : (
+                <ActionTile key={item.key} icon={<Icon strokeWidth={1.5} />} label={t(item.key)} onClick={() => runItem(item)} />
+              );
+            })}
+          </TileGrid>
           {/* The page-state preview, for phones: the header has no room for it. */}
           {!roomy && <div className="mt-section"><PageStatePicker size="lg" full /></div>}
           {/* Appearance and text size live on the till settings page, which is what

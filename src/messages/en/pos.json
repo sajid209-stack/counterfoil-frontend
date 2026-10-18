@@ -6,7 +6,6 @@
   },
   "counter": "Fort Main Gate",
   "parkedBadge": "{count} paused",
-  "categoryAll": "All",
   "customAmount": "Other amount",
   "cart": {
     "close": "Close",
@@ -229,7 +228,8 @@
     "undoSale": "Undo sale",
     "undoHint": "Wrong sale? Undo within {seconds} seconds.",
     "saleUndone": "Sale undone. Nothing was charged.",
-    "saleUndoneCash": "Sale undone. Give the money back: {amount}"
+    "saleUndoneCash": "Sale undone. Give the money back: {amount}",
+    "undoCount": "{seconds}s"
   },
   "sheet": {
     "close": "Close",
@@ -364,7 +364,10 @@
     "started": "Already started",
     "back": "Back",
     "addAmount": "Add {amount}",
-    "showEarlier": "Show {count, plural, one {# earlier time} other {# earlier times}}"
+    "showEarlier": "Show {count, plural, one {# earlier time} other {# earlier times}}",
+    "holdSlotBtn": "Hold slot",
+    "holdPlaceBtn": "Hold place",
+    "ticketNoteFull": "{name}: {note}"
   },
   "settle": {
     "title": "Take booking payment",
@@ -571,9 +574,9 @@
     "osAdmin": "OS admin",
     "tokens": "Design system"
   },
-  "categoryLabel": "What to show",
   "wall": {
-    "inSaleAria": "{name}, {count} in this sale"
+    "inSaleAria": "{name}, {count} in this sale",
+    "jumpToShop": "Go to shop items"
   },
   "takeAmount": "Take {amount}",
   "pay": {

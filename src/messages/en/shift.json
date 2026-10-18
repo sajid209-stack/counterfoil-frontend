@@ -15,5 +15,7 @@
   "varianceOff": "More than the allowed difference of {amount}. Write why before you end the shift.",
   "varianceReason": "Why is it different?",
   "varianceReasonPlaceholder": "e.g. Starting cash was short, refund paid in cash",
-  "varianceOk": "Within the allowed difference of {amount}."
+  "varianceOk": "Within the allowed difference of {amount}.",
+  "closeWhyCount": "Type the total above",
+  "closeWhyReason": "Write why it is different"
 }

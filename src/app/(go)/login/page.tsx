@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, FormField, Modal, Skeleton } from "@/components/ui";
+import { Button, ButtonLink, FormField, Modal, Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveCounterNow } from "@/lib/activeCounter";
 import { resolveThisDevice, useThisDeviceId } from "@/lib/thisDevice";
@@ -163,9 +162,10 @@ export default function GoLoginPage() {
       <h1 className="sr-only">{t("signInTitle")}</h1>
       {/* Context bar — confirm you're at the right counter before signing in. */}
       <div className="w-full max-w-lg text-center">
-        <p className="text-base font-medium text-muted">
-          {[BUSINESS, counterName, deviceName].filter(Boolean).join(" · ")}
-        </p>
+        {/* The business leads, at 16px semibold; where and who is on shift are
+            quieter lines under it. */}
+        <p className="text-md font-semibold text-fg">{BUSINESS}</p>
+        <p className="mt-inline text-sm text-muted">{[counterName, deviceName].filter(Boolean).join(" · ")}</p>
         <p className="mt-inline text-sm text-muted">
           {shiftOwner ? t("login.shiftOpenBy", { name: shiftOwner.name.split(" ")[0], time: formatClock(OPEN_SHIFT.since) }) : t("login.noShift")}
           {usesDemoPin && <span className="ml-tight text-muted">· {t("login.demoPin", { pin: DEMO_PIN })}</span>}
@@ -181,6 +181,9 @@ export default function GoLoginPage() {
       </div>
 
 
+      {/* The people (or the PIN pad) sit centred in the room the header leaves,
+          not stuck under it with a hole below. */}
+      <div className="flex w-full flex-1 flex-col items-center justify-center">
       {!ready ? (
         <div aria-busy="true" className="mt-major w-full max-w-lg"><Skeleton h={256} className="rounded-card" /></div>
       ) : !who && (pairedDevice || limited) && team.length === 0 ? (
@@ -211,19 +214,17 @@ export default function GoLoginPage() {
         <>
           {/* Step 1 — who are you. Faster than a PIN that must also identify. */}
           <p className="mt-major text-md font-semibold text-fg">{t("login.whoTitle")}</p>
-          {/* The people as cells on ONE card — the till's own drawing — each a
-              face, a name and whether they are on shift. Tap yours. */}
-          {/* As many columns as there are people, up to the grid: a tablet limited to
-              one person must not draw them beside an empty half-card. */}
-          <div className={`card-surface mt-section w-full overflow-hidden ${cells === 1 ? "max-w-xs" : cells === 2 ? "max-w-sm" : "max-w-lg"}`}>
-          <div className={`-mb-px -mr-px grid ${cells === 1 ? "grid-cols-1" : cells === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}>
+          {/* The people, each on a card of their own — a face, a name and
+              whether they are on shift. Tap yours. As many columns as there are
+              people, up to the grid: a tablet limited to one person must not
+              draw them beside an empty half-card. */}
+          <div className={`mt-section grid w-full gap-comfortable ${cells === 1 ? "max-w-xs grid-cols-1" : cells === 2 ? "max-w-sm grid-cols-2" : "max-w-lg grid-cols-2 sm:grid-cols-3"}`}>
             {team.map((s) => (
               <button
                 key={s.id}
                 type="button"
                 onClick={() => { setWho(s); setPin(""); setAttempts(0); setLocked(false); }}
-                data-focus-inset
-                className="flex min-h-32 flex-col items-center justify-center gap-tight border-b border-r border-line bg-card p-comfortable transition-colors duration-quick active:bg-muted-wash"
+                className="card-surface flex min-h-32 min-w-0 flex-col items-center justify-center gap-tight p-comfortable text-center transition-colors duration-quick active:bg-muted-wash"
               >
                 <Face color={colorOf(s.id)} name={s.name} size="lg" />
                 <span className="max-w-full truncate text-md font-semibold text-fg">{s.name}</span>
@@ -237,14 +238,12 @@ export default function GoLoginPage() {
               <button
                 type="button"
                 onClick={() => setSomeoneElse(true)}
-                data-focus-inset
-                className="flex min-h-32 flex-col items-center justify-center gap-tight border-b border-r border-line bg-card p-comfortable text-muted active:bg-muted-wash"
+                className="flex min-h-32 min-w-0 flex-col items-center justify-center gap-tight rounded-card p-comfortable text-muted ring-1 ring-inset ring-line active:bg-muted-wash"
               >
                 <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-strong text-2xl leading-none">+</span>
                 <span className="text-md font-medium">{t("login.someoneElse")}</span>
               </button>
             )}
-          </div>
           </div>
         </>
       ) : (
@@ -285,15 +284,13 @@ export default function GoLoginPage() {
         </>
       )}
 
+      </div>
+
       {/* A tablet nobody has paired yet says how, quietly. */}
       {ready && !pairedDevice && !who && (
-        <Link
-          href="/login/pair"
-          data-testid="login-pair-link"
-          className="mt-major inline-flex min-h-11 items-center px-section text-base font-medium text-muted underline underline-offset-4 active:text-fg"
-        >
+        <ButtonLink href="/login/pair" variant="secondary" size="lg" data-testid="login-pair-link" className="mt-major min-h-11 px-section font-medium">
           {t("login.pairLink")}
-        </Link>
+        </ButtonLink>
       )}
 
       {/* Take over an open shift — the drawer stays attributed until now. */}

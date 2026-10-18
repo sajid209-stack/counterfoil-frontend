@@ -18134,3 +18134,77 @@ and its findings were fixed in a second round.
 - The Schedule's chrome (week strip, segments) still costs ~270px on a phone; the reviewer's ideas
   for it touch the board the owner signed off and were left for a decision.
 - Issued orders is still one row per ticket; grouping by order was not done.
+
+## The till in one card language, and no category chips (2026-10-18)
+
+Owner, with screenshots of the till's All / Shop chips, the court booking sheet and the More
+sheet: *"1. remove the category from POS 2. I want POS Sell page new redesign vibe in all other
+pages in pos mobile screen … modern-minimal vibe, cool design, and relaxing design"*, reviewed as
+a UX designer, a UI designer, a product designer and a user, with the feedback fixed.
+
+### The card language
+The Sell wall was the one screen in the new style: separate white rounded cards on the warm page,
+picture first, bold names, round controls. Every other till screen still used the earlier style
+of grids of cells joined by hairlines (dates, times, ways to pay, print and send, More, the staff
+on sign-in, check-in's counts) and boxes inside boxes, with orange eyebrows over titles. The
+rules are `docs/mobile.md` §5; the shared pieces are `src/app/(go)/_components/Tiles.tsx`:
+- `GoCard` — a group is its own white card on the page, 12px apart.
+- `Tile` / `ActionTile` / `tileClass` — every choice is its own rounded tile with 8px gaps. Chosen
+  is solid orange with a tick; not available is the page colour with a line, struck where it is a
+  time. A caller's own height wins over the default (`withHeight`), so two min-heights never
+  compete on stylesheet order.
+- `SheetParts.tsx` (`DateTiles`, `OptionRow`, `FooterSummary`) and `Thumb.tsx` (a 48px picture or
+  the booking's glyph) carry the same look into the sheets and lists.
+The Schedule's hour board stays a grid: it is a timetable.
+
+### What changed
+- **No category chips.** The All / Shop row is gone; the wall shows everything, shop items under a
+  quiet "Shop" heading. A 44px bag button beside the search ("Go to shop items") scrolls to that
+  heading — a jump, not a filter — because the review found a bottle of water had moved ~2,000px
+  down the wall.
+- **Sale flow:** cart lines are one card each with a 56px picture, a neutral Remove, a pause glyph
+  on Pause; the pay sheet's ways to pay, notes and Full / Half / Minimum are tiles and Cash received
+  is a field-like box; completion's Print and Send are tiles and Undo is a slim strip with its
+  seconds outside the button; More is separate tiles. The "›" on a card that opens a sheet is
+  outlined, the "+" that adds now is solid. Below ~344px the Cart button shows only its count.
+- **Booking sheets:** every shape (tickets, sessions, tours with guides, lanes with lengths, one
+  court, day-limited, fields, therapists, events with days, seat map, passes) uses date and time
+  tiles, ticket cards with round steppers, a 56px picture in the header and a 14px ink summary
+  above the footer, with a fade where content scrolls under it. The left button says "Hold slot"
+  or "Hold place". Fixed: the therapist sheet's summary read "today · 1 60 min".
+- **Other pages:** Check-in's counts are tiles and every session and party a card; Scan shows one
+  instruction for its state and its Check button turns orange once a code is typed; My sales labels
+  its payment bar and its Print button; Display & language uses one selected look; Quick pass
+  drops its duplicate price and marks the plate optional; shift close says why End shift waits;
+  sign-in leads with the business name and centres the staff cards, each its own card; the
+  Schedule's key gives every state a shape as well as a colour and "No place set" is a neutral chip
+  that opens the booking. **Arrivals** now shows the guest's name, the reference and whether they are
+  in, and each row opens that party in Check-in (`/checkin?q=&date=`, new).
+- Content clears the tab bar on every page, over a page-colour fade; the dock and tab bar have an
+  edge in dark.
+
+Not taken from the review, because they reverse the owner's decisions: labels on every tab,
+hiding the developer tools, shrinking the camera viewport, retiring Arrivals.
+
+### Verified
+- An independent review scored the till phone **5.5/10 before, 7/10 after the first build**; its
+  findings were fixed in a second round.
+- Production build. On it: every till screen captured at 390 light and dark with no console
+  errors; the 59-route sweeps at 390, 390 Bangla dark and 1440; the phone audit (hidden 0 ·
+  under-44 0 · clipped 0 · errors 0); top cards 103; the till 40 / 38; round-3 26; checkout
+  122 / 122 / 36 / 36; the counter picker 142; undo 17 / 17 / 5; new sale 2; refunds 17; move 12;
+  printing 4; tickets 36; schedule 31 / 31 / 4; check-in 11 / 11 / 4 / 16 / 8 / 25 / 9 / 5 / 8;
+  schedule requests 9 / 6 / 6; units 33; parties 13; the POS audit (only the declared
+  white-on-orange rule at 3.50:1).
+- Harnesses ported to the new design, never loosened: the Shop chip became the "Go to shop items"
+  jump with an assertion that the wall still shows bookings (pos-v2, r3, newsale, undo, audit-pos,
+  co, pos5); cart lines are cards; a free hour is a rounded tile; the dock count at 320; the notes
+  sit under the cash card; the "No place set" chip.
+- `tsc`, `lint:tokens` (0 errors) and i18n (0 / 0) clean; `eslint` shows only PosScreen's two
+  documented set-state-in-effect errors and its unused-variable warning.
+
+### Open
+- The new Bangla strings are drafts.
+- "Shift open 3:24" in More is still the fixed demo timer.
+- The scrolling till (/sell) keeps its own catalogue cards; only its pay card moved to tiles.
+- The shared Appearance and Language pickers are segmented controls; Text size now matches them.

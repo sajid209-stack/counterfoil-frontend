@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
 import { formatMoney } from "@/lib/format";
 import { peekPaymentSettings } from "@/lib/api";
+import { GoCard } from "../../_components/Tiles";
 
 // Expected drawer is mocked here; the real screen sums the shift's cash sales.
 const EXPECTED = 4785000; // ৳47,850.00
@@ -32,68 +33,73 @@ export default function ShiftClosePage() {
      the wording and the required note cannot disagree. */
   const TOLERANCE = peekPaymentSettings().countTolerance; // Settings → Payments — inside this, call it square.
   const tier = !entered ? "idle" : Math.abs(variance) <= TOLERANCE ? "ok" : "off";
-  const tone = tier === "idle" ? "text-muted" : tier === "ok" ? "text-success" : "text-warning";
+  const blocked = !entered || (tier === "off" && !reason.trim());
+  const why = !entered ? t("closeWhyCount") : t("closeWhyReason");
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
+    <main className="mx-auto flex max-w-md flex-col gap-comfortable px-section py-section">
       <div>
-        <p className="text-base font-semibold text-brand-foreground">{t("endLabel")}</p>
-        <h1 className="type-h1 mt-tight text-xl">{t("closeTitle")}</h1>
-        <p className="type-body mt-tight text-muted">{t("closeHint")}</p>
+        <h1 className="text-xl font-semibold tracking-title text-fg">{t("closeTitle")}</h1>
+        <p className="mt-inline text-sm text-muted">{t("closeHint")}</p>
       </div>
 
-      <div className="card-surface p-section">
-        <div className="flex justify-between text-muted"><span>{t("expected")}</span><span className="text-lg font-semibold tabular-nums">{formatMoney(EXPECTED)}</span></div>
-        <div className="mt-tight flex justify-between"><span>{t("counted")}</span><span className="text-lg font-semibold tabular-nums">{entered ? formatMoney(countedMinor) : <span className="text-muted">—</span>}</span></div>
-        <div className={`mt-tight flex justify-between text-xl font-medium ${tone}`}>
+      <GoCard>
+        <div className="flex justify-between text-muted"><span>{t("expected")}</span><span className="text-lg font-semibold tabular-nums text-fg">{formatMoney(EXPECTED)}</span></div>
+        <div className="flex justify-between"><span>{t("counted")}</span><span className="text-lg font-semibold tabular-nums">{entered ? formatMoney(countedMinor) : <span className="text-muted">—</span>}</span></div>
+        <div className="flex justify-between text-lg font-semibold text-fg">
           <span>{t("variance")}</span>
           <span className="tabular-nums">{!entered ? "—" : `${variance > 0 ? "+" : ""}${formatMoney(variance)}`}</span>
         </div>
         {/* Says what the difference means right now, not only when it is a
             problem — "square" is worth hearing at the end of a shift. */}
         {tier === "off" && (
-          <p className="mt-tight text-sm text-warning">{t("varianceOff", { amount: formatMoney(TOLERANCE) })}</p>
+          <p className="text-sm text-warning">{t("varianceOff", { amount: formatMoney(TOLERANCE) })}</p>
         )}
         {tier === "ok" && (
-          <p className="mt-tight text-sm text-success">{t("varianceOk", { amount: formatMoney(TOLERANCE) })}</p>
+          <p className="text-sm text-success">{t("varianceOk", { amount: formatMoney(TOLERANCE) })}</p>
         )}
-      </div>
+      </GoCard>
 
-      <div className="flex flex-col gap-tight">
-        <label htmlFor="counted-cash" className="text-base font-semibold text-fg">{t("countedCash")}</label>
+      <GoCard>
+        <label htmlFor="counted-cash" className="text-md font-semibold text-fg">{t("countedCash")}</label>
         <input
           id="counted-cash"
           inputMode="decimal"
           value={counted}
           onChange={(e) => setCounted(e.target.value)}
           placeholder="0.00"
-          className="h-14 rounded-inner border border-line bg-card px-section text-2xl font-semibold tabular-nums"
+          className="h-14 rounded-inner bg-subtle px-section text-2xl font-semibold tabular-nums text-fg"
         />
-      </div>
+      </GoCard>
 
       {tier === "off" && (
-        <div className="flex flex-col gap-tight">
-          <label className="text-base font-semibold text-fg" htmlFor="variance-reason">{t("varianceReason")}</label>
+        <GoCard>
+          <label className="text-md font-semibold text-fg" htmlFor="variance-reason">{t("varianceReason")}</label>
           <textarea
             id="variance-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={2}
             placeholder={t("varianceReasonPlaceholder")}
-            className="min-h-[72px] rounded-inner border border-warning-line bg-card p-section text-base"
+            className="min-h-[72px] rounded-inner bg-subtle p-section text-base text-fg"
           />
-        </div>
+        </GoCard>
       )}
 
+      {/* Never a grey ghost: while it cannot be pressed it is an outlined button
+          that still reads "End shift", with the reason under it. */}
       <Button
         size="lg"
-        className="h-13 text-md font-semibold"
+        variant={blocked ? "secondary" : "primary"}
+        className="h-13 text-md font-semibold disabled:opacity-100 disabled:text-muted"
         fullWidth
-        disabled={!entered || (tier === "off" && !reason.trim())}
+        disabled={blocked}
+        aria-describedby={blocked ? "close-why" : undefined}
         onClick={() => router.push("/login")}
       >
         {t("closeShift")}
       </Button>
+      {blocked && <p id="close-why" className="text-center text-sm text-muted">{why}</p>}
     </main>
   );
 }

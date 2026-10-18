@@ -3,6 +3,8 @@ export interface MethodRow {
   label: string;
   amount: string;
   count: string;
+  /** The bar, said in words: "100% cash". */
+  share: string;
   pct: number;
 }
 
@@ -17,10 +19,10 @@ export function MethodBars({ rows }: { rows: MethodRow[] }) {
             <span className="text-base font-medium">{r.label}</span>
             <span className="text-base font-semibold tabular-nums">{r.amount}</span>
           </div>
-          <div aria-hidden className="h-2 overflow-hidden rounded-full bg-subtle">
+          <div role="img" aria-label={r.share} className="h-2 overflow-hidden rounded-full bg-subtle">
             <div className="h-full rounded-full bg-ember-solid" style={{ width: `${r.pct}%` }} />
           </div>
-          <span className="text-sm text-muted">{r.count} · {r.pct}%</span>
+          <span className="text-sm text-muted">{r.share} · {r.count}</span>
         </li>
       ))}
     </ul>

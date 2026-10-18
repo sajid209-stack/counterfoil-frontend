@@ -185,7 +185,7 @@ export function GoPatternsSection() {
 
       <DocSection id="phone" title="On a phone">
         <P>
-          The header holds the counter and the person; preferences such as light and dark live in Display &amp; language. A sheet shows a question only when it has answers. Checkout shows the amount, how they pay and Complete; customer, discount and promo code are rows that open in place. The More sheet leads with daily tools (My sales, Shift, Quick pass) and puts the design tools last.
+          The header holds the counter and the person; preferences such as light and dark live in Display &amp; language. A sheet shows a question only when it has answers. Checkout shows the amount, how they pay and Complete; customer, discount and promo code are rows that open in place. The More sheet leads with daily tools (My sales, Shift, Quick pass) and puts the design tools last. Every screen uses the sell wall's card language: each group its own white card, every choice its own rounded tile with a gap around it (orange with a tick when chosen), one card per list item with a picture. There are no category chips; a bag button beside the search jumps to the shop items.
         </P>
       </DocSection>
     </>

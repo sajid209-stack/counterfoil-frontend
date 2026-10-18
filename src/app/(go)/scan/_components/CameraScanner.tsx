@@ -43,6 +43,7 @@ export function useCameraSupport(): boolean {
 export interface CameraLabels {
   viewfinder: string;
   aim: string;
+  idle: string;
   start: string;
   stop: string;
   starting: string;
@@ -240,9 +241,7 @@ export function CameraView({ onCode, labels }: { onCode: (code: string) => void;
                 )}
               </span>
             </>
-          ) : (
-            <p className="w-full text-center text-sm text-neutral-200">{labels.none}</p>
-          )}
+          ) : null}
         </div>
 
         {denied && (
@@ -255,7 +254,11 @@ export function CameraView({ onCode, labels }: { onCode: (code: string) => void;
           </div>
         )}
       </div>
-      <p className="text-center text-md font-semibold">{labels.aim}</p>
+      {/* ONE instruction, chosen by what the camera is doing — never "hold the QR
+          inside the square" under a message saying there is no camera. */}
+      {!denied && (
+        <p className="text-center text-md font-semibold">{!supported ? labels.none : running ? labels.aim : labels.idle}</p>
+      )}
     </section>
   );
 }

@@ -2,13 +2,14 @@
 
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { Banknote, Check, ChevronLeft, CreditCard, Pencil, QrCode, Send, Wallet, type LucideIcon } from "lucide-react";
+import { Banknote, ChevronLeft, CreditCard, Pencil, QrCode, Send, Wallet, type LucideIcon } from "lucide-react";
 import { Button, Sheet } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatMoney, formatPriceShort } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import type { Minor, PaymentMethod } from "@/lib/api";
 import { primaryButton, secondaryButton } from "../../_components/ActionBar";
+import { Tile, TileGrid } from "../../_components/Tiles";
 import { AfterMatchDiscount, discountFromState, discountReasonText, emptyDiscount, type DiscountState } from "./AfterMatchDiscount";
 
 /* ── Take what a booking still owes ───────────────────────────────────────
@@ -160,7 +161,7 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
             the guest is told. It follows the discount and any part-payment. */}
         <div className="text-center" data-pay-amount>
           <p className="text-base font-medium text-muted">{part != null ? t("pay.partNow") : t("pay.toTake")}</p>
-          <p className="mt-inline text-4xl font-bold leading-tight tabular-nums text-fg">{money}</p>
+          <p className="mt-inline text-4xl font-semibold leading-tight tabular-nums text-fg">{money}</p>
           {(calc.hasAmount && calc.valid) || left > 0 ? (
             <p className="mt-inline text-base text-muted">
               {left > 0 ? t("pay.stillOwed", { amount: formatMoney(left) }) : t("pay.owedWas", { amount: formatMoney(owed) })}
@@ -184,9 +185,9 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
                   inputMode="decimal"
                   value={part}
                   onChange={(e) => { setPart(e.target.value); setTender(""); }}
-                  className="h-11 min-w-0 flex-1 rounded-inner border border-line bg-card px-comfortable text-right text-md tabular-nums"
+                  className="h-11 min-w-0 flex-1 rounded-inner bg-subtle px-comfortable text-right text-md tabular-nums"
                 />
-                <button type="button" onClick={() => setPart(null)} className="h-11 shrink-0 rounded-full border border-line px-comfortable text-md font-semibold text-fg hover:bg-muted-wash">
+                <button type="button" onClick={() => setPart(null)} className="h-11 shrink-0 rounded-full bg-subtle px-comfortable text-md font-semibold text-fg hover:bg-muted-wash">
                   {t("pay.partAll")}
                 </button>
               </div>
@@ -197,47 +198,36 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
         {!nothingToTake && methods.length > 1 && (
           <div>
             <p className="mb-tight text-md font-semibold text-fg">{tp("pay.method")}</p>
-            {/* One row of flat cells, each a picture and a word — the till’s own
-                payment row. Chosen is solid orange, white, a tick. */}
-            <div
-              role="radiogroup"
-              aria-label={tp("pay.method")}
-              className="card-surface grid overflow-hidden"
-              style={{ gridTemplateColumns: `repeat(${methods.length}, minmax(0, 1fr))` }}
-            >
-              {methods.map((m, i) => {
+            {/* Each way to pay its own tile, a picture and a word. Chosen is
+                solid orange, white, a tick. */}
+            <TileGrid cols={Math.min(methods.length, 4) as 2 | 3 | 4} role="radiogroup" aria-label={tp("pay.method")}>
+              {methods.map((m) => {
                 const Icon = METHOD_ICON[m] ?? Wallet;
                 const on = method === m;
                 return (
-                  <button
+                  <Tile
                     key={m}
-                    type="button"
                     role="radio"
                     aria-checked={on}
+                    selected={on}
                     data-method={m}
-                    data-focus-inset
                     onClick={() => { setPicked(m); setTender(""); setTyping(false); }}
-                    className={cn(
-                      "relative flex min-h-[4.5rem] flex-col items-center justify-center gap-inline px-1 text-center text-base font-semibold leading-tight transition-colors duration-quick",
-                      i > 0 && "border-l border-line",
-                      on ? "bg-ember-solid text-on-solid" : "bg-card text-fg hover:bg-muted-wash active:bg-muted-wash",
-                    )}
+                    className="min-h-[4.5rem] gap-inline text-base font-semibold leading-tight"
                   >
                     <Icon size={22} strokeWidth={1.75} aria-hidden />
                     <span className="max-w-full break-words">{enumL.method(m)}</span>
-                    {on && <Check size={14} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
-                  </button>
+                  </Tile>
                 );
               })}
-            </div>
+            </TileGrid>
           </div>
         )}
 
         {!nothingToTake && cash && (
-          <div className="card-surface divide-y divide-line overflow-hidden">
+          <div className="flex flex-col gap-tight">
             {/* The received figure IS the way to type another: tap it. */}
             {typing ? (
-              <label className="flex min-h-14 items-center justify-between gap-tight px-comfortable">
+              <label className="flex min-h-14 items-center justify-between gap-tight rounded-inner bg-subtle px-comfortable">
                 <span className="text-md">{tp("cash.tendered")}</span>
                 <span className="flex items-center gap-1 text-lg font-semibold">
                   ৳
@@ -248,7 +238,7 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
                     placeholder={String(Math.ceil(payNow / 100))}
                     onChange={(e) => setTender(e.target.value.replace(/\D/g, "").slice(0, 7))}
                     aria-label={tp("cash.tendered")}
-                    className="h-11 w-28 rounded-inner border border-line bg-card px-tight text-right tabular-nums"
+                    className="h-11 w-28 rounded-inner bg-card px-tight text-right tabular-nums"
                   />
                 </span>
               </label>
@@ -257,7 +247,7 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
                 type="button"
                 onClick={() => setTyping(true)}
                 aria-label={`${tp("cash.tendered")} ${formatMoney(tenderedMinor)} — ${tp("cash.tapToChange")}`}
-                className="flex min-h-14 w-full items-center justify-between gap-tight px-comfortable text-left hover:bg-muted-wash active:bg-muted-wash"
+                className="flex min-h-14 w-full items-center justify-between gap-tight rounded-inner bg-subtle px-comfortable text-left active:bg-muted-wash"
               >
                 <span className="flex min-w-0 items-center gap-inline text-md">
                   {tp("cash.tendered")}
@@ -267,14 +257,14 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
               </button>
             )}
             {exact ? (
-              <p className="flex min-h-14 items-center px-comfortable text-md font-medium text-success">{tp("cash.noChange")}</p>
+              <p className="flex min-h-14 items-center rounded-inner bg-success-wash px-comfortable text-md font-medium text-success">{tp("cash.noChange")}</p>
             ) : (
-              <div className={cn("flex min-h-14 items-baseline justify-between gap-tight px-comfortable py-tight font-semibold", enough ? "text-success" : "text-muted")}>
+              <div className={cn("flex min-h-14 items-baseline justify-between gap-tight rounded-inner px-comfortable py-tight font-semibold", enough ? "bg-success-wash text-success" : "bg-subtle text-muted")}>
                 <span className="shrink-0 text-xl">{enough ? tp("complete.giveChange") : t("pay.notEnough")}</span>
                 <span className="min-w-0 truncate text-right text-3xl">{enough ? formatMoney(change) : "—"}</span>
               </div>
             )}
-            <div className="flex flex-wrap gap-tight p-comfortable" data-pay-notes>
+            <div className="flex flex-wrap gap-tight" data-pay-notes>
               <NoteChip on={exact} onClick={() => { setTender(""); setTyping(false); }}>{tp("cash.exact")}</NoteChip>
               {quickNotes(payNow).map((amt) => (
                 <NoteChip key={amt} on={tender !== "" && parseInt(tender, 10) === amt} onClick={() => { setTender(String(amt)); setTyping(false); }}>
@@ -291,17 +281,8 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
 
 function NoteChip({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) {
   return (
-    <button
-      type="button"
-      aria-pressed={on}
-      onClick={onClick}
-      className={cn(
-        "inline-flex h-11 min-w-16 flex-1 items-center justify-center gap-0.5 rounded-full border px-1 text-md font-semibold tabular-nums",
-        on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg hover:bg-muted-wash active:bg-muted-wash",
-      )}
-    >
-      {on && <Check size={14} strokeWidth={3} className="shrink-0" aria-hidden />}
+    <Tile aria-pressed={on} selected={on} onClick={onClick} className="h-11 min-w-16 flex-1 text-md font-semibold tabular-nums">
       <span className="truncate">{children}</span>
-    </button>
+    </Tile>
   );
 }

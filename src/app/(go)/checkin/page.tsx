@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowUpCircle, Ban, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, PlusCircle, RotateCcw, Search, Timer, UserCheck, UserPlus } from "lucide-react";
 import { Button, DateField, EmptyState, FormField, Modal, Skeleton, useToast, type ActionMenuItem } from "@/components/ui";
@@ -38,6 +39,8 @@ import { formatClock, formatDay, formatMoney } from "@/lib/format";
 import { pendingRefundFor, refundableFor, withdrawRefundRequest, type RefundReason } from "@/lib/api/refundRequests";
 import { pendingRescheduleFor, useRescheduleVersion, withdrawRescheduleRequest } from "@/lib/api/rescheduleRequests";
 import { Stepper } from "../_components/Stepper";
+import { Thumb } from "../_components/Thumb";
+import { BookingGlyph } from "../_components/WallTile";
 import { useActor, canRefundDirectly } from "../schedule/_lib/actor";
 import { sendOrApproveRefund } from "../schedule/_lib/refundFlow";
 import { MoveSheet, RefundSheet } from "../schedule/_components/Sheets";
@@ -63,6 +66,17 @@ const durationOf = (b: Booking, product?: Product): number => {
 };
 
 export default function CheckInPage() {
+  return (
+    <Suspense fallback={null}>
+      <CheckInScreen />
+    </Suspense>
+  );
+}
+
+/* A link can open the list on one guest and one day (?q=&date=) — the Arrivals
+   list sends a steward straight to the party they tapped. */
+function CheckInScreen() {
+  const params = useSearchParams();
   const t = useTranslations("checkin");
   const tc = useTranslations("common");
   const enumL = useEnumLabels();
@@ -70,14 +84,14 @@ export default function CheckInPage() {
   const actor = useActor();
   // A move asked for, answered or taken back changes a row's tag.
   useRescheduleVersion();
-  const [date, setDate] = useState(TODAY);
+  const [date, setDate] = useState(/^d{4}-d{2}-d{2}$/.test(params.get("date") ?? "") ? params.get("date")! : TODAY);
   /* Who is at the door is the venue this counter stands in. */
   const activeCounter = useActiveCounterNow();
   const venueId = activeCounter.locationId;
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [pending, setPending] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(params.get("q") ?? "");
   const [filter, setFilter] = useState<CheckInFilter>("all");
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), []);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100 }), []);
@@ -393,7 +407,7 @@ export default function CheckInPage() {
         <div className="flex min-w-0 flex-col gap-section">
           <div className="flex flex-wrap items-center justify-between gap-tight">
             <div className="min-w-0">
-              <h1 className="type-h1 text-xl">{t("title")}</h1>
+              <h1 className="text-xl font-semibold tracking-title text-fg">{t("title")}</h1>
               {dayLabel && <p className="text-sm text-muted">{dayLabel}</p>}
             </div>
             <Button variant="secondary" icon={<UserPlus size={16} strokeWidth={1.5} />} onClick={() => { setWalkInProduct(productsQ.data?.data.find((p) => p.bookingType === "BT-01" && p.status === "active")?.id ?? ""); setWalkInOpen(true); }}>
@@ -402,13 +416,13 @@ export default function CheckInPage() {
           </div>
 
           {/* Search leads: it is the first thing done when a guest walks up. */}
-          <div data-focus-host className="flex h-12 items-center gap-tight rounded-full border border-line bg-card px-comfortable focus-within:border-ember-solid">
+          <div data-focus-host className="flex h-12 items-center gap-tight rounded-full bg-card px-comfortable shadow-card focus-within:ring-2 focus-within:ring-ember">
             <Search size={18} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
             <input value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("searchPlaceholder")} placeholder={t("searchPlaceholder")} className="h-full w-full min-w-0 bg-transparent text-base" />
           </div>
 
           <div className="flex items-center gap-tight">
-            <button type="button" onClick={() => step(-1)} aria-label={t("prevDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted hover:bg-muted-wash active:bg-muted-wash">
+            <button type="button" onClick={() => step(-1)} aria-label={t("prevDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card text-muted shadow-card hover:bg-muted-wash active:bg-muted-wash">
               <ChevronLeft size={18} strokeWidth={1.5} />
             </button>
             <DateField
@@ -419,7 +433,7 @@ export default function CheckInPage() {
               labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
               className="min-w-0 flex-1 sm:w-[170px] sm:flex-none"
             />
-            <button type="button" onClick={() => step(1)} aria-label={t("nextDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted hover:bg-muted-wash active:bg-muted-wash">
+            <button type="button" onClick={() => step(1)} aria-label={t("nextDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card text-muted shadow-card hover:bg-muted-wash active:bg-muted-wash">
               <ChevronRight size={18} strokeWidth={1.5} />
             </button>
           </div>
@@ -429,7 +443,7 @@ export default function CheckInPage() {
           {/* The Due view opens on the one number a steward collecting is
               working toward: everything still to take, and from how many. */}
           {filter === "due" && dueNow.parties > 0 && (
-            <div data-due-banner className="flex flex-wrap items-baseline justify-between gap-x-comfortable gap-y-inline rounded-card border border-warning-line bg-warning-wash p-card">
+            <div data-due-banner className="flex flex-wrap items-baseline justify-between gap-x-comfortable gap-y-inline rounded-card bg-warning-wash p-card">
               <p className="text-2xl font-bold tabular-nums text-fg">{t("dueBannerAmount", { amount: formatMoney(dueNow.amount) })}</p>
               <p className="text-md font-semibold text-fg-secondary">{t("dueBannerCount", { count: dueNow.parties })}</p>
             </div>
@@ -455,18 +469,18 @@ export default function CheckInPage() {
                    row is a match nobody finds. */
                 const isOpen = search || filter !== "all" ? true : (open[g.key] ?? g.key === nowKey);
                 return (
-                  <section key={g.key} data-group className="card-surface">
+                  <section key={g.key} data-group className="flex flex-col gap-tight">
                     <button
                       type="button"
                       onClick={() => setOpen((o) => ({ ...o, [g.key]: !isOpen }))}
                       aria-expanded={isOpen}
-                      className="flex min-h-14 w-full items-center gap-comfortable px-card py-tight text-left"
+                      className="card-surface flex min-h-16 w-full items-center gap-comfortable p-comfortable text-left"
                     >
-                      {isOpen ? <ChevronDown size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" /> : <ChevronRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
+                      <Thumb image={productOf(g.productId)?.images?.[0]?.url} glyph={<BookingGlyph bookingType={productOf(g.productId)?.bookingType} />} />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-baseline gap-tight">
                           <span className="shrink-0 whitespace-nowrap text-md font-semibold tabular-nums">{formatClock(time(g.start))}</span>
-                          <span className="min-w-0 break-words text-base">{productName(g.productId)}</span>
+                          <span className="min-w-0 break-words text-md font-semibold">{productName(g.productId)}</span>
                         </span>
                         <span className="mt-inline flex items-center gap-tight">
                           <span aria-hidden className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-line">
@@ -475,10 +489,11 @@ export default function CheckInPage() {
                           <span className={cn("text-sm", full ? "font-semibold text-success" : "text-muted")}>{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
                         </span>
                       </span>
+                      {isOpen ? <ChevronDown size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" /> : <ChevronRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
                     </button>
 
                     {isOpen && (
-                      <ul className="flex flex-col divide-y divide-line border-t border-line">
+                      <ul className="flex flex-col gap-tight pl-tight">
                         {g.parties.map((p) => (
                           <PartyRow
                             key={p.booking.id}
@@ -555,7 +570,7 @@ export default function CheckInPage() {
         <div className="flex flex-col gap-section">
           <FormField label={t("productLabel")} variant="select" value={walkInProduct} onChange={(e) => setWalkInProduct(e.target.value)} options={(productsQ.data?.data ?? []).filter((p) => p.status === "active" && (p.bookingType === "BT-01" || p.bookingType === "BT-06")).map((p) => ({ value: p.id, label: p.name }))} />
           <FormField label={t("nameLabel")} placeholder={t("walkInDefaultName")} value={walkInName} onChange={(e) => setWalkInName(e.target.value)} />
-          <div className="flex items-center justify-between card-surface p-comfortable">
+          <div className="flex items-center justify-between rounded-inner bg-subtle p-comfortable">
             <span className="text-base">{t("partySize")}</span>
             <Stepper value={walkInParty} min={1} onChange={setWalkInParty} lessLabel={t("fewer")} moreLabel={t("more")} />
           </div>

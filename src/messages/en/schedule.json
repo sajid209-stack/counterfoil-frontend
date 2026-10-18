@@ -15,7 +15,7 @@
   "reasonHelp": "No bookings while it is out of service.",
   "arrivalsGateLabel": "Gate",
   "arrivalsTitle": "Arrivals",
-  "arrivalsSearchPlaceholder": "Search by booking…",
+  "arrivalsSearchPlaceholder": "Search by guest, booking or code…",
   "noArrivals": "Nobody else is due",
   "partyOf": "Group of {size}",
   "prevWeek": "Previous week",
@@ -51,7 +51,8 @@
     "noPlaceMore": "+{count} more",
     "keyMarket": "Marketplace",
     "bookedOn": "Booked on {name}",
-    "bookedOnRef": "Booked on {name} · {reference}"
+    "bookedOnRef": "Booked on {name} · {reference}",
+    "noPlaceOpen": "Open"
   },
   "sheet": {
     "hold": "Hold",

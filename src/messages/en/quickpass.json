@@ -12,5 +12,6 @@
   "issuePass": "Sell pass · {amount}",
   "shorter": "Shorter",
   "longer": "Longer",
-  "deal": "special price"
+  "deal": "special price",
+  "optional": "Optional"
 }

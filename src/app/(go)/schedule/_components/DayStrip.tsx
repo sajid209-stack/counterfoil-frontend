@@ -7,6 +7,7 @@ import { DatePicker, Sheet } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { shiftDay } from "@/lib/dayModel";
 import { MD, useMediaQuery } from "@/lib/useMedia";
+import { tileClass } from "../../_components/Tiles";
 
 /* ── The days, as one strip that scrolls sideways ─────────────────────────
  *
@@ -152,17 +153,17 @@ export function DayStrip({
   return (
     <>
       <div className="flex items-center gap-inline">
-        <button type="button" onClick={() => pick(shiftDay(date, -7), true)} aria-label={t("prevWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-muted-wash">
+        <button type="button" onClick={() => pick(shiftDay(date, -7), true)} aria-label={t("prevWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card shadow-card hover:bg-muted-wash">
           <ChevronLeft size={20} strokeWidth={2} aria-hidden />
         </button>
         <p className="min-w-0 truncate text-center text-md font-semibold text-fg">{monthLabel}</p>
-        <button type="button" onClick={() => pick(shiftDay(date, 7), true)} aria-label={t("nextWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-muted-wash">
+        <button type="button" onClick={() => pick(shiftDay(date, 7), true)} aria-label={t("nextWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card shadow-card hover:bg-muted-wash">
           <ChevronRight size={20} strokeWidth={2} aria-hidden />
         </button>
         {middle ? <div className="hidden min-w-0 flex-1 px-tight lg:block">{middle}</div> : null}
         <span className={cn("flex-1", Boolean(middle) && "lg:hidden")} />
         {date !== today && (
-          <button type="button" onClick={() => pick(today, true)} className="inline-flex h-11 shrink-0 items-center rounded-full border-2 border-line px-comfortable text-base font-semibold text-fg">
+          <button type="button" onClick={() => pick(today, true)} className="inline-flex h-11 shrink-0 items-center rounded-full bg-card px-comfortable text-base font-semibold text-fg shadow-card hover:bg-muted-wash">
             {t("today")}
           </button>
         )}
@@ -178,7 +179,7 @@ export function DayStrip({
             suppressHydrationWarning
             title={t("chooseDate")}
             className={cn(
-              "inline-flex h-11 items-center justify-center gap-tight rounded-full border border-line bg-card text-base font-semibold text-fg hover:bg-muted-wash",
+              "inline-flex h-11 items-center justify-center gap-tight rounded-full bg-card text-base font-semibold text-fg shadow-card hover:bg-muted-wash",
               showChosen ? "px-comfortable" : "w-11",
             )}
           >
@@ -199,7 +200,7 @@ export function DayStrip({
         aria-label={t("daysLabel")}
         onScroll={measure}
         onKeyDown={onKeyDown}
-        className="relative -mx-tight flex snap-x snap-proximity gap-1 overflow-x-auto scroll-px-tight px-tight [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="relative -mx-gutter flex snap-x snap-proximity gap-tight overflow-x-auto scroll-px-gutter px-gutter py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {days.map((iso) => {
           const on = iso === date;
@@ -217,11 +218,10 @@ export function DayStrip({
               aria-current={isToday ? "date" : undefined}
               tabIndex={on ? 0 : -1}
               aria-label={format.dateTime(dt, { weekday: "long", day: "numeric", month: "long", ...latn })}
-              className={cn(
-                "flex min-h-14 w-12 shrink-0 snap-start flex-col items-center justify-center gap-0.5 rounded-inner transition-colors duration-quick",
-                monthStart && "ml-1 border-l-2 border-line",
-                on ? "bg-ember-solid text-on-solid" : isToday ? "ring-2 ring-inset ring-ember-solid text-fg" : "text-fg hover:bg-muted-wash",
-              )}
+              className={tileClass({
+                selected: on,
+                className: cn("min-h-14 w-12 shrink-0 snap-start gap-0.5 px-0", monthStart && "ml-1", !on && isToday && "ring-2 ring-inset ring-ember-solid"),
+              })}
             >
               {/* Node and Chromium abbreviate some Bangla months differently, so the short month may differ after hydration. */}
               <span suppressHydrationWarning className={cn("text-sm font-medium", on ? "text-on-solid" : "text-muted")}>

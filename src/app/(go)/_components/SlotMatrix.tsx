@@ -1,12 +1,12 @@
 "use client";
 
-import { Check } from "lucide-react";
-
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { formatClock, formatPriceShort } from "@/lib/format";
 import { ClockCell } from "./Clock";
+import { Tile, TileGrid, TileLabel } from "./Tiles";
+import { TileText } from "./SheetParts";
 
 export interface MatrixCell {
   time: string;
@@ -78,114 +78,82 @@ export function SlotMatrix({
   for (const r of rows) for (const c of r.cells) counts.set(c.price, (counts.get(c.price) ?? 0) + 1);
   const base = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0;
 
-  /* Drawn the way the Schedule draws its day: cells on ONE card, divided by
-     hairlines. A free hour is white with its price, the chosen one is solid
-     orange with a tick, and an hour that is gone sits on the page colour —
-     the same three grounds, so a cashier who knows one screen reads the
-     other. */
+  /* The till's card language: every resource and every hour is its own
+     rounded tile with an 8px gap. A free hour is white with its price, the
+     chosen one is solid orange with a tick, and an hour that is gone is the
+     page's colour with a line and a struck time. */
   return (
     <div className="mb-section flex flex-col gap-tight">
       {rows.length > 1 && (
         <>
-          <span className="text-base font-semibold text-fg">{resourceNoun}</span>
-          <div className="card-surface overflow-hidden">
-            <div className="-mb-px -mr-px grid" style={{ gridTemplateColumns: `repeat(${Math.min(rows.length, 4)}, minmax(0, 1fr))` }}>
-              {rows.map((row) => {
-                const on = row.id === active.id;
-                const free = row.cells.filter((c) => c.available).length;
-                return (
-                  <button
-                    key={row.id}
-                    type="button"
-                    aria-pressed={on}
-                    data-focus-inset
-                    onClick={() => {
-                      if (row.outOfService) return onBlocked(t("sheet.outOfService"));
-                      setViewId(row.id);
-                      if (selectedTime && row.cells.some((c) => c.time === selectedTime && c.available)) {
-                        onSelect(row.id, selectedTime);
-                      }
-                    }}
-                    className={cn(
-                      "relative flex min-h-14 flex-col items-center justify-center border-b border-r border-line px-inline py-tight text-center transition-colors duration-quick",
-                      row.outOfService
-                        ? "bg-surface text-muted line-through"
-                        : on
-                          ? "bg-ember-solid text-on-solid"
-                          : "bg-card text-fg active:bg-muted-wash",
-                    )}
-                  >
-                    {on && <Check size={13} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
-                    <span className="w-full truncate text-base font-semibold">{row.name}</span>
-                    {!row.outOfService && (
-                      <span className={cn("w-full truncate text-sm", on ? "text-on-solid" : "text-muted")}>
-                        {free > 0 ? t("sheet.slotsFree", { count: free }) : t("sheet.fullyBooked")}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <TileLabel>{resourceNoun}</TileLabel>
+          <TileGrid cols={rows.length <= 2 ? 2 : rows.length === 3 ? 3 : 4}>
+            {rows.map((row) => {
+              const on = row.id === active.id;
+              const free = row.cells.filter((c) => c.available).length;
+              return (
+                <Tile
+                  key={row.id}
+                  selected={on}
+                  off={!!row.outOfService}
+                  className="min-h-14"
+                  onClick={() => {
+                    if (row.outOfService) return onBlocked(t("sheet.outOfService"));
+                    setViewId(row.id);
+                    if (selectedTime && row.cells.some((c) => c.time === selectedTime && c.available)) {
+                      onSelect(row.id, selectedTime);
+                    }
+                  }}
+                >
+                  <TileText
+                    label={row.name}
+                    sub={row.outOfService ? undefined : free > 0 ? t("sheet.slotsFree", { count: free }) : t("sheet.fullyBooked")}
+                    selected={on}
+                    struck={!!row.outOfService}
+                  />
+                </Tile>
+              );
+            })}
+          </TileGrid>
         </>
       )}
 
-      <span className="mt-tight text-base font-semibold text-fg">{t("sheet.time")}{rows.length === 1 ? ` · ${active.name}` : ""}</span>
-      <div className="card-surface overflow-hidden">
-        <div className="-mb-px -mr-px grid grid-cols-4">
-          {active.cells.map((cell) => {
-            const selected = active.id === selectedResourceId && selectedTime === cell.time;
-            if (!cell.available) {
-              return (
-                <button
-                  key={cell.time}
-                  type="button"
-                  data-focus-inset
-                  onClick={() =>
-                    onBlocked(
-                      active.outOfService
-                        ? t("sheet.outOfService")
-                        : t("sheet.slotTaken", { time: formatClock(cell.time), name: active.name }),
-                    )
-                  }
-                  className="flex min-h-14 items-center justify-center border-b border-r border-line bg-surface px-1 py-1 text-base text-muted line-through"
-                >
-                  <ClockCell hhmm={cell.time} className="line-through" />
-                </button>
-              );
-            }
+      <TileLabel className="mt-tight">{t("sheet.time")}{rows.length === 1 ? ` · ${active.name}` : ""}</TileLabel>
+      <TileGrid cols={4}>
+        {active.cells.map((cell) => {
+          const selected = active.id === selectedResourceId && selectedTime === cell.time;
+          if (!cell.available) {
             return (
-              <button
+              <Tile
                 key={cell.time}
-                type="button"
-                aria-pressed={selected}
-                data-focus-inset
-                onClick={() => onSelect(active.id, cell.time)}
-                className={cn(
-                  "relative flex min-h-14 flex-col items-center justify-center gap-0.5 border-b border-r border-line px-1 py-1 transition-colors duration-quick",
-                  selected ? "bg-ember-solid text-on-solid" : "bg-card text-fg active:bg-muted-wash",
-                )}
+                off
+                aria-pressed={undefined}
+                className="min-h-14"
+                onClick={() =>
+                  onBlocked(
+                    active.outOfService
+                      ? t("sheet.outOfService")
+                      : t("sheet.slotTaken", { time: formatClock(cell.time), name: active.name }),
+                  )
+                }
               >
-                {selected && <Check size={12} strokeWidth={3} className="absolute right-1 top-1" aria-hidden />}
-                <ClockCell hhmm={cell.time} className="text-md font-semibold tabular-nums" />
-                <span
-                  className={cn(
-                    "whitespace-nowrap text-sm tabular-nums",
-                    selected ? "font-medium" : cell.price === base ? "text-muted" : "font-semibold text-fg",
-                  )}
-                >
-                  {formatPriceShort(cell.price, currency)}
-                </span>
-              </button>
+                <ClockCell hhmm={cell.time} className="text-base font-semibold line-through" />
+              </Tile>
             );
-          })}
-        </div>
-      </div>
+          }
+          return (
+            <Tile key={cell.time} selected={selected} className="min-h-14 gap-0.5" onClick={() => onSelect(active.id, cell.time)}>
+              <ClockCell hhmm={cell.time} className="text-md font-semibold tabular-nums" />
+              <span className={cn("whitespace-nowrap text-sm tabular-nums", selected ? "text-on-solid" : cell.price === base ? "text-muted" : "font-semibold text-fg")}>
+                {formatPriceShort(cell.price, currency)}
+              </span>
+            </Tile>
+          );
+        })}
+      </TileGrid>
 
-      {/* What the figure on each cell is the price OF. */}
-      <p className="text-sm text-muted">
-        {t("sheet.ratePer", { noun: resourceNoun.toLowerCase() })}
-      </p>
+      {/* What the figure on each tile is the price OF. */}
+      <p className="text-sm text-muted">{t("sheet.ratePer", { noun: resourceNoun.toLowerCase() })}</p>
     </div>
   );
 }

@@ -35,29 +35,33 @@ export function Stepper({
   max?: number;
   lessLabel: string;
   moreLabel: string;
-  variant?: "pair" | "pill";
+  /** `round`: the wall's drawing, a soft round "−" and a dark round "+", no borders. */
+  variant?: "pair" | "pill" | "round";
   className?: string;
 }) {
   const atMin = value <= min;
   const atMax = max !== undefined && value >= max;
   const button = cn(
-    "flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-fg transition-colors duration-quick",
-    "active:bg-muted-wash disabled:text-faint disabled:active:bg-transparent",
+    "flex h-11 w-11 shrink-0 items-center justify-center rounded-control transition-colors duration-quick",
     variant === "pair" && "border border-line",
   );
+  const minus = cn(button, "text-fg active:bg-muted-wash disabled:text-faint disabled:active:bg-transparent", variant === "round" && "bg-subtle");
+  const plus = variant === "round"
+    ? cn(button, "bg-inverse text-inverse-fg disabled:bg-subtle disabled:text-faint")
+    : cn(button, "text-fg active:bg-muted-wash disabled:text-faint disabled:active:bg-transparent");
   return (
     <span
       className={cn(
         "inline-flex shrink-0 items-center",
-        variant === "pill" ? "rounded-control border border-line" : "gap-tight",
+        variant === "pill" ? "rounded-control border border-line" : variant === "round" ? "gap-comfortable" : "gap-tight",
         className,
       )}
     >
-      <button type="button" aria-label={lessLabel} disabled={atMin} onClick={() => onChange(Math.max(min, value - 1))} className={button}>
+      <button type="button" aria-label={lessLabel} disabled={atMin} onClick={() => onChange(Math.max(min, value - 1))} className={minus}>
         <Minus size={16} strokeWidth={2} aria-hidden />
       </button>
       <span className="min-w-6 text-center text-md font-semibold tabular-nums text-fg">{value}</span>
-      <button type="button" aria-label={moreLabel} disabled={atMax} onClick={() => onChange(max === undefined ? value + 1 : Math.min(max, value + 1))} className={button}>
+      <button type="button" aria-label={moreLabel} disabled={atMax} onClick={() => onChange(max === undefined ? value + 1 : Math.min(max, value + 1))} className={plus}>
         <Plus size={16} strokeWidth={2} aria-hidden />
       </button>
     </span>

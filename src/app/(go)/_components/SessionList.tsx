@@ -3,7 +3,9 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { formatClock, formatMoney } from "@/lib/format";
+import { Check } from "lucide-react";
 import { sessionPressure } from "@/lib/schedule";
+import { rowTileClass } from "./SheetParts";
 
 export interface SessionRowData {
   time: string;
@@ -45,6 +47,7 @@ export function SessionList({
   onSelect,
   onBlocked,
   onWaitlist,
+  variant = "rows",
 }: {
   sessions: SessionRowData[];
   selected?: string;
@@ -52,6 +55,10 @@ export function SessionList({
   onSelect: (time: string) => void;
   onBlocked: (time: string, reason: string) => void;
   onWaitlist?: (time: string) => void;
+  /** `rows` (default): one card of hairline-divided rows, the Schedule's old drawing,
+   *  which the scrolling till still uses. `tiles`: each session its own rounded
+   *  tile with a gap between, the till's card language, for the booking sheets. */
+  variant?: "rows" | "tiles";
 }) {
   const t = useTranslations("pos");
 
@@ -67,6 +74,65 @@ export function SessionList({
     for (const [price, n] of tally) if (n > seen) { best = price; seen = n; }
     return best;
   })();
+
+  if (variant === "tiles") {
+    return (
+      <div className="mb-section flex flex-col gap-tight">
+        {sessions.map((s) => {
+          const full = s.left <= 0 || !!s.blockedReason;
+          const closed = !!s.blockedReason;
+          const pressure = sessionPressure(s.left, s.capacity);
+          const on = selected === s.time;
+          const tone = on
+            ? "text-on-solid"
+            : closed
+              ? "text-muted"
+              : pressure === "gone"
+                ? "text-danger"
+                : pressure === "critical"
+                  ? "text-brand-foreground"
+                  : pressure === "low"
+                    ? "text-warning"
+                    : "text-success";
+          return (
+            <button
+              key={s.time}
+              type="button"
+              aria-pressed={on}
+              className={rowTileClass({ selected: on, off: full && !on, className: "min-h-16 flex-col justify-center" })}
+              onClick={() => {
+                if (full && s.waitlist && onWaitlist) return onWaitlist(s.time);
+                if (full) return onBlocked(s.time, s.blockedReason ?? t("sheet.full"));
+                onSelect(s.time);
+              }}
+            >
+              {on && <Check size={14} strokeWidth={2.5} aria-hidden className="absolute right-2 top-2" />}
+              <span className="flex items-baseline gap-comfortable pr-5">
+                <span className={cn("shrink-0 text-md font-semibold", full && !on && "line-through")}>{formatClock(s.time)}</span>
+                {s.meta && <span className={cn("min-w-0 flex-1 truncate text-sm", on ? "text-on-solid" : "text-muted")}>{s.meta}</span>}
+                <span className={cn("ml-auto shrink-0 whitespace-nowrap text-sm font-semibold", tone)}>
+                  {closed
+                    ? (s.blockedReason ?? t("sheet.closedSession"))
+                    : pressure === "gone"
+                      ? t("sheet.soldOut")
+                      : pressure === "critical"
+                        ? t("sheet.leftCount", { count: s.left })
+                        : t("sheet.seatsLeft", { count: s.left })}
+                </span>
+              </span>
+              <span className={cn("mt-0.5 text-base tabular-nums", on ? "text-on-solid" : s.price === basePrice ? "text-muted" : "font-semibold text-fg")}>
+                {formatMoney(s.price, currency)}
+              </span>
+              {full && !closed && s.waitlist && (
+                <span className="mt-0.5 text-sm font-medium text-brand-foreground">{t("sheet.joinWaitlist")} →</span>
+              )}
+            </button>
+          );
+        })}
+        {basePrice > 0 && <p className="text-sm text-muted">{t("sheet.pricePerTicket", { amount: formatMoney(basePrice, currency) })}</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="mb-section flex flex-col gap-tight">

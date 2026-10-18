@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronLeft, Clock, Lock, Plus, X } from "lucide-react";
+import { Check, ChevronLeft, Clock, Lock, Minus, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Avatar, BlockedNotice, Button, ChoiceCard, FormField, PlanView, ProductThumb, ResourceTimeline, useToast, DateStrip } from "@/components/ui";
+import { Avatar, BlockedNotice, Button, FormField, PlanView, ProductThumb, ResourceTimeline, useToast } from "@/components/ui";
 import { seatMap } from "@/lib/api";
 import { SessionList } from "./SessionList";
 import { SlotMatrix } from "./SlotMatrix";
@@ -45,6 +45,8 @@ import { planWeekly, type OccurrenceBlock } from "@/lib/recurrence";
 import { formatClock, formatClockMin, formatClockRange, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { ClockCell } from "./Clock";
 import { ActionBar } from "./ActionBar";
+import { DateTiles, FooterSummary, OptionRow, StickyFoot, TileText, capitalFirst, summaryLead } from "./SheetParts";
+import { Tile, TileLabel } from "./Tiles";
 import { Stepper } from "./Stepper";
 import { SheetShell } from "./SheetShell";
 
@@ -113,6 +115,7 @@ function SheetFooter({
   onAdd,
   label,
   onHold,
+  holdKind = "place",
   holdRow,
   onBack,
 }: {
@@ -128,6 +131,9 @@ function SheetFooter({
   /** Hold these places instead — the bar's left button, where "not now" always
    *  is on this till. Absent where there is nothing to hold. */
   onHold?: () => void;
+  /** What is being held, for the button's words: a `slot` (a court, a lane, a
+   *  start time) or a `place` (seats on a session). */
+  holdKind?: "slot" | "place";
   /** Who a hold is for, once Hold has been pressed. */
   holdRow?: React.ReactNode;
   /** The left button when there is nothing to hold: the way out, in the
@@ -140,27 +146,30 @@ function SheetFooter({
      Sticky, because the sheets that need it most are the long ones, where the
      total and the action would otherwise scroll away mid-decision. */
   return (
-    <div className="sticky bottom-0 z-10 -mx-section mt-section">
+    <StickyFoot>
       <ActionBar
         docked="panel"
-        className="bg-surface"
+        tone="ground"
         summary={
           <>
             {note}
-            {summary && <div className="text-sm">{summary}</div>}
+            {summary}
             {holdRow}
           </>
         }
         secondary={
           onHold
-            ? { label: t("sheet.holdShort"), icon: <Lock size={20} strokeWidth={2} aria-hidden />, onClick: onHold }
+            ? (() => {
+                const full = t(holdKind === "slot" ? "sheet.holdSlotBtn" : "sheet.holdPlaceBtn");
+                return { label: full, shortLabel: t("sheet.holdShort"), ariaLabel: full, icon: <Lock size={20} strokeWidth={2} aria-hidden />, onClick: onHold };
+              })()
             : onBack
               ? { label: t("sheet.back"), icon: <ChevronLeft size={20} strokeWidth={2} aria-hidden />, onClick: onBack }
               : null
         }
         primary={{ label, icon: disabled ? undefined : <Plus size={20} strokeWidth={2.5} aria-hidden />, onClick: () => onAdd(false), disabled }}
       />
-    </div>
+    </StickyFoot>
   );
 }
 
@@ -395,7 +404,7 @@ export function ProductSheet({
     flatBasis ? (
       <div className="flex items-center justify-between card-surface p-comfortable">
         <span className="text-base">{t("sheet.groupSize")}</span>
-        <Stepper value={group} min={partyMin} max={partyMax} onChange={setGroup} lessLabel={t("sheet.fewer")} moreLabel={t("sheet.morePeople")} />
+        <Stepper variant="round" value={group} min={partyMin} max={partyMax} onChange={setGroup} lessLabel={t("sheet.fewer")} moreLabel={t("sheet.morePeople")} />
       </div>
     ) : null;
   const addOnItems = () => (product.addOns ?? []).filter((a) => (addOnQty[a.id] ?? 0) > 0).map((a) => ({ tierId: a.id, tierName: a.perPerson ? t("sheet.eachSuffix", { name: a.name }) : a.name, unitPrice: a.price, qty: addOnQty[a.id] }));
@@ -420,9 +429,9 @@ export function ProductSheet({
   const renderAddOns = () =>
     (product.addOns?.length ?? 0) > 0 ? (
       <div className="mt-section flex flex-col gap-tight">
-        <span className="text-base font-semibold text-fg">{t("sheet.addOns")}</span>
-        {/* One card, divided rows — the rest of the till's drawing. */}
-        <div className="card-surface divide-y divide-line overflow-hidden">
+        <TileLabel>{t("sheet.addOns")}</TileLabel>
+        {/* Each extra its own card, with the round + the wall uses. */}
+        <div className="flex flex-col gap-tight">
         {(product.addOns ?? []).map((a) => {
           const n = addOnQty[a.id] ?? 0;
           /* An extra that hands over a counted thing can only sell what is on
@@ -433,18 +442,18 @@ export function ProductSheet({
           const cap = stock ? stock.onHand : Infinity;
           const out = cap <= 0;
           return (
-            <div key={a.id} className={cn("flex min-h-14 items-center gap-tight px-comfortable py-tight", out ? "bg-surface" : "bg-card")}>
+            <div key={a.id} className={cn("card-surface flex min-h-14 items-center gap-tight px-comfortable py-tight", out && "bg-transparent shadow-none ring-1 ring-inset ring-line")}>
               <div className="min-w-0 flex-1">
-                <span className={cn("block truncate text-base", out && "text-muted")}>{a.name}</span>
+                <span className={cn("block truncate text-md font-semibold", out && "text-muted")}>{a.name}</span>
                 <span className="text-sm text-muted">
                   {formatMoney(a.price, currency)}{a.perPerson ? t("sheet.perHead") : ""}{n > 0 ? ` × ${n} = ${formatMoney(a.price * n, currency)}` : ""}
                   {stock && (out ? ` · ${t("sheet.stockOut")}` : ` · ${t("sheet.stockLeft", { count: cap, unit: stock.unit })}`)}
                 </span>
               </div>
               {n === 0 ? (
-                <button type="button" disabled={out} aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.min(cap, a.perPerson ? headsFor() : 1) }))} className="h-11 w-11 shrink-0 rounded-control border border-line text-lg disabled:border-line disabled:text-faint active:bg-muted-wash">+</button>
+                <button type="button" disabled={out} aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.min(cap, a.perPerson ? headsFor() : 1) }))} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-inverse text-inverse-fg transition-colors duration-quick disabled:bg-subtle disabled:text-faint"><Plus size={18} strokeWidth={2} aria-hidden /></button>
               ) : (
-                <Stepper value={n} min={0} max={cap} onChange={(v) => setAddOnQty((q) => ({ ...q, [a.id]: v }))} lessLabel={t("sheet.less")} moreLabel={t("sheet.more")} />
+                <Stepper variant="round" value={n} min={0} max={cap} onChange={(v) => setAddOnQty((q) => ({ ...q, [a.id]: v }))} lessLabel={t("sheet.less")} moreLabel={t("sheet.more")} />
               )}
             </div>
           );
@@ -474,6 +483,9 @@ export function ProductSheet({
   // ── Guided (BT-09): guides are capacity owners, shared across products ─────
   const guides = guided ? team.filter((m) => (product.schedule?.guideIds ?? []).includes(m.id)) : [];
   const slotGuides = guided && slotTime ? freeGuides(product, date, slotTime) : [];
+
+  /** A day as it opens a summary: "Today", "Thu 30 Jul" — capitalised. */
+  const dayWordsOf = (d: string) => capitalFirst(d === TODAY ? t("slotToday") : formatDay(d, { weekday: true }));
 
   // ── Provider (BT-10): appointment times + per-provider conflict/premium ────
   const premiumOf = (id: string) => product.providerPremiums?.[id] ?? 0;
@@ -589,7 +601,7 @@ export function ProductSheet({
         onKeyDown={(e) => { if (e.key === "Enter") void doHold(); }}
         placeholder={t("sheet.holdFor")}
         aria-label={t("sheet.holdFor")}
-        className="h-12 min-w-0 flex-1 rounded-inner border border-line bg-card px-comfortable text-sm"
+        className="h-12 min-w-0 flex-1 rounded-control border border-line bg-card px-comfortable text-sm"
       />
       {/* Secondary: the sale is what this screen is for, and
           an ember Hold beside a grey Add says the exception is
@@ -738,10 +750,10 @@ export function ProductSheet({
             sheet is going to ask for. The subtitle is the SAME derived
             behaviour line the till tile shows, so the sheet opens on the words
             the operator just tapped rather than restating the name alone. */}
-        <div className="mb-section flex items-start gap-comfortable">
+        <div className="mb-section flex items-center gap-comfortable">
           <ProductThumb images={product.images} name={product.name} bookingType={product.bookingType} size="thumb" />
           <div className="min-w-0 flex-1">
-            <h2 id="sheet-title" className="type-h2 break-words text-2xl">{product.name}</h2>
+            <h2 id="sheet-title" className="break-words text-lg font-semibold leading-snug text-fg sm:text-xl">{product.name}</h2>
             <p className="mt-inline text-sm text-muted">{subtitle(product, { resources, team })}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-subtle text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash"><X size={20} strokeWidth={1.75} /></button>
@@ -763,7 +775,7 @@ export function ProductSheet({
 
         {(needsSchedule(bt) || provider || bt === "BT-02") && !course && (
           <div className="mb-section">
-            <p className="mb-tight text-base font-semibold text-fg">{t(bt === "BT-02" ? "sheet.whenLabel" : "sheet.dateLabel")}</p>
+            <TileLabel className="mb-tight">{t(bt === "BT-02" ? "sheet.whenLabel" : "sheet.dateLabel")}</TileLabel>
             {/* A wrapping grid with the calendar beneath it — never a row
                 that scrolls sideways. A chip that has scrolled out of view is
                 a day nobody knows is on offer, and parking the calendar at the
@@ -776,8 +788,7 @@ export function ProductSheet({
                 if (isOpenOn(product, d)) chips.push(d);
               }
               return (
-                <DateStrip
-                  flat
+                <DateTiles
                   dates={chips}
                   value={date}
                   onChange={(d) => { setDate(d); setSlotTime(undefined); setResourceId(undefined); }}
@@ -810,24 +821,14 @@ export function ProductSheet({
             that moves with no visible cause is the thing to avoid. */}
         {validityOptions.length > 1 && (
           <div className="mb-section flex flex-col gap-tight">
-            <span className="text-base font-semibold text-fg">{t("sheet.validFor")}</span>
-            <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <TileLabel>{t("sheet.validFor")}</TileLabel>
+            <div className={cn("grid gap-tight", validityOptions.length === 3 ? "grid-cols-3" : "grid-cols-2")}>
               {validityOptions.map((v) => {
                 const on = v.id === validityId;
                 return (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => setValidityId(v.id)}
-                    className={`flex min-h-12 shrink-0 flex-col items-center justify-center whitespace-nowrap rounded-full border px-comfortable py-tight text-base transition-colors duration-quick ${on ? "border-ember-solid bg-ember-solid font-medium text-on-solid" : "border-line bg-card active:bg-muted-wash"}`}
-                  >
-                    <span>{v.label}</span>
-                    {(v.priceDelta ?? 0) > 0 && (
-                      <span className={`text-sm ${on ? "opacity-80" : "text-muted"}`}>
-                        +{formatMoney(v.priceDelta ?? 0, currency)}
-                      </span>
-                    )}
-                  </button>
+                  <Tile key={v.id} selected={on} className="min-h-14" onClick={() => setValidityId(v.id)}>
+                    <TileText label={v.label} sub={(v.priceDelta ?? 0) > 0 ? `+${formatMoney(v.priceDelta ?? 0, currency)}` : undefined} selected={on} />
+                  </Tile>
                 );
               })}
             </div>
@@ -844,14 +845,14 @@ export function ProductSheet({
           const left = getDailyRemaining(product, date);
           const low = left <= Math.max(1, Math.floor(total * 0.2));
           return (
-            <div className="mb-section rounded-card border border-line bg-subtle p-comfortable">
+            <div className="card-surface mb-section p-comfortable">
               <div className="flex items-baseline justify-between gap-tight">
                 <span className="text-sm text-muted">{t("sheet.dailyCapacity")}</span>
                 <span className={`shrink-0 whitespace-nowrap text-sm font-medium ${left <= 0 ? "text-danger" : low ? "text-warning" : "text-success"}`}>
                   {t("sheet.remainingCount", { count: left })}
                 </span>
               </div>
-              <div className="mt-tight flex h-1.5 w-full overflow-hidden rounded-full bg-line" aria-hidden>
+              <div className="mt-tight flex h-1.5 w-full overflow-hidden rounded-full bg-subtle" aria-hidden>
                 <div
                   className={`h-full rounded-full ${left <= 0 ? "bg-danger" : low ? "bg-warning" : "bg-success"}`}
                   // Fills to show what is LEFT, because that is what the figure
@@ -926,18 +927,20 @@ export function ProductSheet({
                   <div className="mt-tight flex flex-col gap-tight">{renderGroup()}{renderWaiver()}</div>
                   <SheetFooter onBack={onClose}
                     onHold={!holdOpen ? () => setHoldOpen(true) : undefined}
+                    holdKind="slot"
                     holdRow={holdRowNode}
                     summary={
-                      <span className="flex items-baseline justify-between gap-comfortable">
-                        <span className="min-w-0 flex-1 text-muted">
-                          <span className="font-medium text-fg">{row?.resource.name}</span> · {formatClock(slotTime)} · {formatDuration(minutes)}
-                          {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""}
-                          {dates.length > 1 ? ` · ${t("repeat.datesCount", { count: dates.length })}` : ""}
-                        </span>
-                        <span className="shrink-0 font-medium tabular-nums">
-                          {formatMoney(price * Math.max(1, dates.length) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0), currency)}
-                        </span>
-                      </span>
+                      <FooterSummary
+                        lead={summaryLead([
+                          dayWordsOf(dates[0] ?? date),
+                          formatDuration(minutes),
+                          formatClockRange(slotTime, toMinutes(slotTime) + minutes),
+                          row?.resource.name,
+                          flatBasis ? t("cart.groupOf", { count: group }) : null,
+                          dates.length > 1 ? t("repeat.datesCount", { count: dates.length }) : null,
+                        ])}
+                        price={formatMoney(price * Math.max(1, dates.length) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0), currency)}
+                      />
                     }
                     disabled={!waiverOk || dates.length === 0}
                     onAdd={addAll}
@@ -980,7 +983,7 @@ export function ProductSheet({
           const priceFor = (t: string, dur: number, lane?: Resource | null) =>
             applyResourceRate(productDurationPrice(product, date, t, dur, basePrice), dur, lane);
           const rateLabel = (l: Resource) =>
-            l.rateOverride ? (l.rateOverride.kind === "premium" ? `+${formatMoney(l.rateOverride.amount, currency)}` : `${formatMoney(l.rateOverride.amount, currency)}/hr`) : null;
+            l.rateOverride ? (l.rateOverride.kind === "premium" ? `+${formatPriceShort(l.rateOverride.amount, currency)}` : `${formatPriceShort(l.rateOverride.amount, currency)}/hr`) : null;
           const liveState = (l: Resource): string => {
             const spans = ownerBusyDetailed(l.id, date);
             if (l.outOfService) return t("sheet.outOfService");
@@ -1011,7 +1014,7 @@ export function ProductSheet({
                   the operator's own rule expressed as a control — and the one
                   price that matters, the price of THIS duration, is on the
                   summary line above the button where the decision is made. */}
-              <span className="text-base font-semibold text-fg">{t("sheet.duration")}</span>
+              <TileLabel>{t("sheet.duration")}</TileLabel>
               {(() => {
                 const i = flexOptions.indexOf(duration);
                 const prev = i > 0 ? flexOptions[i - 1] : null;
@@ -1023,61 +1026,56 @@ export function ProductSheet({
                       aria-label={t("sheet.shorter")}
                       disabled={prev == null}
                       onClick={() => prev != null && pickDuration(prev)}
-                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-xl disabled:opacity-40 active:bg-muted-wash"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-subtle text-fg transition-colors duration-quick active:bg-muted-wash disabled:bg-subtle disabled:text-faint"
                     >
-                      −
+                      <Minus size={18} strokeWidth={2} aria-hidden />
                     </button>
                     <div className="flex min-w-0 flex-1 flex-col items-center justify-center card-surface py-tight">
                       <span className="text-md font-medium">{formatDuration(duration)}</span>
-                      {slotTime && (
-                        <span className="text-sm tabular-nums text-muted">
-                          {formatMoney(priceFor(slotTime, duration, laneOf(resourceId)), currency)}
-                        </span>
-                      )}
+                      {/* The footer states this duration's total. The stepper
+                          repeats it only when it would say something else (an
+                          "Any" lane whose best fit costs a different rate). */}
+                      {slotTime && (() => {
+                        const here = priceFor(slotTime, duration, laneOf(resourceId));
+                        const total = priceFor(slotTime, duration, laneOf(resourceId) ?? (chosenLaneFree ? firstFreeResource(product, date, slotTime, duration) : null));
+                        return here !== total ? <span className="text-sm tabular-nums text-muted">{formatMoney(here, currency)}</span> : null;
+                      })()}
                     </div>
                     <button
                       type="button"
                       aria-label={t("sheet.longer")}
                       disabled={next == null}
                       onClick={() => next != null && pickDuration(next)}
-                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-xl disabled:opacity-40 active:bg-muted-wash"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-inverse text-inverse-fg transition-colors duration-quick disabled:bg-subtle disabled:text-faint"
                     >
-                      +
+                      <Plus size={18} strokeWidth={2} aria-hidden />
                     </button>
                   </div>
                 );
               })()}
 
-              {lanes.length > 1 && <span className="text-base font-semibold text-fg">{lanes[0]?.nounSingular ?? t("sheet.resource")}</span>}
+              {lanes.length > 1 && <TileLabel>{lanes[0]?.nounSingular ?? t("sheet.resource")}</TileLabel>}
               {/* One card of cells, as the Schedule draws its lanes: Any, then
                   each lane with what it is doing now. Chosen is a tint with a
                   ring and a tick. */}
-              {lanes.length > 1 && <div className="card-surface overflow-hidden">
-                <div className="-mb-px -mr-px grid grid-cols-3 sm:grid-cols-5">
+              {lanes.length > 1 && (
+                <div className="grid grid-cols-3 gap-tight sm:grid-cols-5">
                   {[null, ...lanes].map((r) => {
                     const on = r ? resourceId === r.id : !resourceId;
                     return (
-                      <button
-                        key={r?.id ?? "any"}
-                        type="button"
-                        aria-pressed={on}
-                        disabled={!!r?.outOfService}
-                        data-focus-inset
-                        onClick={() => setResourceId(r?.id)}
-                        className={cn(
-                          "relative flex min-h-14 flex-col items-center justify-center border-b border-r border-line px-inline py-tight text-center transition-colors duration-quick",
-                          r?.outOfService ? "bg-surface text-muted line-through" : on ? "bg-ember-solid text-on-solid" : "bg-card text-fg active:bg-muted-wash",
-                        )}
-                      >
-                        {on && <Check size={13} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
-                        <span className="w-full break-words text-base font-semibold">{r ? r.name : t("sheet.any")}</span>
-                        {r && <span className={cn("w-full break-words text-sm", on ? "text-on-solid" : "text-muted")}>{liveState(r)}</span>}
-                        {r && rateLabel(r) && <span className={cn("w-full truncate text-sm font-semibold tabular-nums", on ? "text-on-solid" : "text-fg")}>{rateLabel(r)}</span>}
-                      </button>
+                      <Tile key={r?.id ?? "any"} selected={on} off={!!r?.outOfService} disabled={!!r?.outOfService} className="min-h-14" onClick={() => setResourceId(r?.id)}>
+                        <TileText
+                          label={r ? r.name : t("sheet.any")}
+                          sub={r ? liveState(r) : undefined}
+                          extra={r && rateLabel(r) ? rateLabel(r) : undefined}
+                          selected={on}
+                          struck={!!r?.outOfService}
+                        />
+                      </Tile>
                     );
                   })}
                 </div>
-              </div>}
+              )}
 
               {/* The lane's day at a glance — selection drawn live on the strip;
                   tapping an occupied block explains, never a dead tap. */}
@@ -1094,24 +1092,27 @@ export function ProductSheet({
 
               {blocked && <BlockedNotice message={blocked.message} onDismiss={() => setBlocked(null)} />}
 
-              {flexTimes.length > 0 && <span className="text-base font-semibold text-fg">{t("sheet.startTime")}</span>}
-              {flexTimes.length > 0 && <div className="card-surface overflow-hidden">
-                <div className="-mb-px -mr-px grid grid-cols-4 sm:grid-cols-6">
+              {flexTimes.length > 0 && <TileLabel>{t("sheet.startTime")}</TileLabel>}
+              {flexTimes.length > 0 && (
+                <div className="grid grid-cols-4 gap-tight sm:grid-cols-6">
                   {flexTimes.filter((tt) => showEarlier || !(date === TODAY && toMinutes(tt) < NOW_MIN) || tt === slotTime).map((tt) => {
                     const st = startState(tt, duration, resourceId);
                     if (!st.ok) {
-                      return <button key={tt} type="button" data-focus-inset onClick={() => setBlocked({ message: t("sheet.unavailableStart", { time: formatClock(tt), reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })} className="flex min-h-12 items-center justify-center border-b border-r border-line bg-surface px-1 py-1 text-base text-muted line-through" title={st.reason}><ClockCell hhmm={tt} className="line-through" /></button>;
+                      return (
+                        <Tile key={tt} off aria-pressed={undefined} className="min-h-12" title={st.reason} onClick={() => setBlocked({ message: t("sheet.unavailableStart", { time: formatClock(tt), reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })}>
+                          <ClockCell hhmm={tt} className="text-base font-semibold line-through" />
+                        </Tile>
+                      );
                     }
                     const on = slotTime === tt;
                     return (
-                      <button key={tt} type="button" aria-pressed={on} data-focus-inset onClick={() => { setSlotTime(tt); setBlocked(null); }} className={cn("relative flex min-h-12 items-center justify-center border-b border-r border-line px-1 py-1 text-md font-semibold tabular-nums transition-colors duration-quick", on ? "bg-ember-solid text-on-solid" : "bg-card text-fg active:bg-muted-wash")}>
-                        {on && <Check size={12} strokeWidth={3} className="absolute right-1 top-1" aria-hidden />}
+                      <Tile key={tt} selected={on} className="min-h-12 text-md font-semibold tabular-nums" onClick={() => { setSlotTime(tt); setBlocked(null); }}>
                         <ClockCell hhmm={tt} />
-                      </button>
+                      </Tile>
                     );
                   })}
                 </div>
-              </div>}
+              )}
               {!showEarlier && (() => {
                 const n = date === TODAY ? flexTimes.filter((tt) => toMinutes(tt) < NOW_MIN && tt !== slotTime).length : 0;
                 return n > 0 ? (
@@ -1160,20 +1161,21 @@ export function ProductSheet({
                 summary={slotTime && endLabel ? (() => {
                   const lane = laneOf(resourceId) ?? (chosenLaneFree ? firstFreeResource(product, date, slotTime, duration) : null);
                   const total = priceFor(slotTime, duration, lane);
-                  const dayRaw = date === TODAY ? t("slotToday") : formatDay(date, { weekday: true });
-                  const dayWords = dayRaw.charAt(0).toUpperCase() + dayRaw.slice(1);
                   return (
-                    <div className="flex items-baseline justify-between gap-comfortable text-sm">
-                      <span className="min-w-0 flex-1 text-muted">
-                        {dayWords} · {formatDuration(duration)} · <span className="tabular-nums">{formatClockRange(slotTime, toMinutes(slotTime) + duration)}</span>
-                        {lanes.length > 1 && lane ? <> · <span className="font-medium text-fg">{lane.name}</span>{!resourceId ? <span>{t("sheet.bestFit")}</span> : null}</> : null}
-                        {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""}
-                      </span>
-                      <span className="shrink-0 font-medium tabular-nums">{formatMoney(total, currency)}</span>
-                    </div>
+                    <FooterSummary
+                      lead={summaryLead([
+                        dayWordsOf(date),
+                        formatDuration(duration),
+                        formatClockRange(slotTime, toMinutes(slotTime) + duration),
+                        lanes.length > 1 && lane ? <>{lane.name}{!resourceId ? <span>{t("sheet.bestFit")}</span> : null}</> : null,
+                        flatBasis ? t("cart.groupOf", { count: group }) : null,
+                      ])}
+                      price={formatMoney(total, currency)}
+                    />
                   );
                 })() : undefined}
                 onHold={slotTime && chosenLaneFree && !holdOpen ? () => setHoldOpen(true) : undefined}
+                holdKind="slot"
                 holdRow={slotTime && chosenLaneFree ? holdRowNode : null}
                 disabled={!slotTime || !chosenLaneFree || !waiverOk}
                 onAdd={submitFlexible}
@@ -1205,32 +1207,37 @@ export function ProductSheet({
                 name, when they are next free and what they cost, and those
                 three want a consistent left edge to be comparable. */}
             <div className="flex flex-col gap-tight">
+              {product.providerPickable && <TileLabel>{t("sheet.provider")}</TileLabel>}
               {product.providerPickable && providers.map((p) => {
                 const nextFree = providerTimes.find((t) => (date !== TODAY || toMinutes(t) >= NOW_MIN) && isOwnerFree(p.id, date, t, providerDuration));
+                const prem = premiumOf(p.id);
                 return (
-                  <ChoiceCard key={p.id} raised selected={providerId === p.id} onClick={() => setProviderId(p.id)} className="flex w-full items-center gap-tight py-comfortable pl-comfortable pr-7">
-                    <Avatar name={p.name} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-base font-medium">{p.name}</span>
-                      <span className="block text-sm text-muted">{nextFree ? t("sheet.nextFree", { time: formatClock(nextFree) }) : t("sheet.fullyBooked")}</span>
-                    </span>
-                    <span className={`shrink-0 whitespace-nowrap text-sm ${premiumOf(p.id) > 0 ? "font-medium text-brand-foreground" : "text-muted"}`}>
-                      {premiumOf(p.id) > 0 ? t("sheet.premiumAmount", { amount: formatMoney(premiumOf(p.id), currency) }) : t("sheet.standardRate")}
-                    </span>
-                  </ChoiceCard>
+                  <OptionRow
+                    key={p.id}
+                    selected={providerId === p.id}
+                    onClick={() => setProviderId(p.id)}
+                    lead={<Avatar name={p.name} />}
+                    title={p.name}
+                    sub={nextFree ? t("sheet.nextFree", { time: formatClock(nextFree) }) : t("sheet.fullyBooked")}
+                    trail={prem > 0 ? t("sheet.premiumAmount", { amount: formatMoney(prem, currency) }) : t("sheet.standardRate")}
+                  />
                 );
               })}
-              <ChoiceCard raised selected={!providerId} onClick={() => setProviderId(undefined)} className="flex w-full items-center justify-center px-7 py-comfortable text-base">{t("sheet.firstAvailable")}</ChoiceCard>
+              <OptionRow center selected={!providerId} onClick={() => setProviderId(undefined)} title={t("sheet.firstAvailable")} />
             </div>
-            {providerTimes.length > 0 && <span className="mt-tight text-base font-semibold text-fg">{t("sheet.startTimeDuration", { minutes: providerDuration })}</span>}
-            {providerTimes.length > 0 && <div className="flex flex-wrap gap-inline">
-              {providerTimes.map((t) => {
-                const free = providerTimeFree(t);
-                return (
-                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-full border px-comfortable text-sm ${!free ? "border-line bg-subtle text-muted line-through" : slotTime === t ? "border-ember-solid bg-ember-solid font-medium text-on-solid" : "border-line bg-card"}`}>{formatClock(t)}</button>
-                );
-              })}
-            </div>}
+            {providerTimes.length > 0 && <TileLabel className="mt-tight">{t("sheet.startTimeDuration", { minutes: providerDuration })}</TileLabel>}
+            {providerTimes.length > 0 && (
+              <div className="grid grid-cols-4 gap-tight sm:grid-cols-5">
+                {providerTimes.map((tm) => {
+                  const free = providerTimeFree(tm);
+                  return (
+                    <Tile key={tm} selected={slotTime === tm} off={!free} disabled={!free} aria-pressed={free ? slotTime === tm : undefined} className="min-h-12" onClick={() => setSlotTime(tm)}>
+                      <TileText label={formatClock(tm)} selected={slotTime === tm} struck={!free} />
+                    </Tile>
+                  );
+                })}
+              </div>
+            )}
             {slotTime && assignedProvider && !providerId && (
               <p className="text-sm text-muted">{t("sheet.firstAvailableAt", { time: formatClock(slotTime), name: `${assignedProvider.name}${premiumOf(assignedProvider.id) > 0 ? ` (+${formatMoney(premiumOf(assignedProvider.id), currency)})` : ""}` })}</p>
             )}
@@ -1254,7 +1261,7 @@ export function ProductSheet({
             ? `${new Intl.DateTimeFormat("en-GB", { day: "numeric" }).format(d(dates[0]))}–${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(d(dates[dates.length - 1]))}`
             : "";
           return (
-            <div className="mb-section rounded-card border border-success-line bg-success-wash p-comfortable">
+            <div className="card-surface mb-section p-comfortable">
               <p className="flex items-center gap-inline text-base font-medium text-success">
                 <Check size={14} strokeWidth={2.5} />
                 {t("sheet.readyToAdd")}
@@ -1311,12 +1318,13 @@ export function ProductSheet({
             departure, and the operator's word for it is the one that should
             appear above the rows. */}
         {needsSchedule(bt) && !resourceMode && !flexible && openToday && slots.length > 0 && (
-          <p className="mb-tight text-base font-semibold text-fg">
+          <TileLabel className="mb-tight">
             {t(guided ? "sheet.departureLabel" : "sheet.sessionLabel")}
-          </p>
+          </TileLabel>
         )}
         {needsSchedule(bt) && !resourceMode && !flexible && openToday && slots.length > 0 && (
           <SessionList
+            variant="tiles"
             currency={currency}
             selected={slotTime}
             sessions={slots.filter((s) => showEarlier || !(date === TODAY && toMinutes(s.time) < NOW_MIN) || s.time === slotTime).map((s) => {
@@ -1383,20 +1391,21 @@ export function ProductSheet({
         {/* Guided: pick who leads — busy guides (on ANY product) can't be chosen */}
         {guided && slotTime && guides.length > 0 && openToday && (
           <div className="mb-section flex flex-col gap-tight">
-            <span className="text-base font-semibold text-fg">{t("sheet.ledBy")}</span>
+            <TileLabel>{t("sheet.ledBy")}</TileLabel>
             <div className="flex flex-col gap-tight">
               {guides.map((g) => {
                 const free = slotGuides.includes(g.id);
                 return (
-                  <ChoiceCard key={g.id} raised selected={guideId === g.id} disabled={!free} onClick={() => setGuideId(g.id)} className="flex w-full items-center gap-tight py-comfortable pl-comfortable pr-7">
-                    <Avatar name={g.name} size={32} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-base font-medium">{g.name}</span>
-                      <span className={`block text-sm ${free ? "text-success" : "text-muted"}`}>
-                        {free ? t("sheet.guideAvailable") : t("sheet.guideBusy")}
-                      </span>
-                    </span>
-                  </ChoiceCard>
+                  <OptionRow
+                    key={g.id}
+                    selected={guideId === g.id}
+                    off={!free}
+                    disabled={!free}
+                    onClick={() => setGuideId(g.id)}
+                    lead={<Avatar name={g.name} />}
+                    title={g.name}
+                    sub={free ? t("sheet.guideAvailable") : t("sheet.guideBusy")}
+                  />
                 );
               })}
             </div>
@@ -1485,20 +1494,20 @@ export function ProductSheet({
               })()
             ) : (
             <div className="flex flex-col">
-              <span className="mb-tight text-base font-semibold text-fg">{t("sheet.pickTickets")}</span>
+              <TileLabel className="mb-tight">{t("sheet.pickTickets")}</TileLabel>
               {/* One panel of hairline-separated rows, not four separate cards.
                   Each row says the three things in the order they are decided:
                   what it is, who it admits, what it costs — the price on its
                   own line in the brand colour, because it is the number the
                   operator reads back to the customer. Cramming price, capacity
                   and age note into one grey run-on line buried all three. */}
-              <div className="overflow-hidden card-surface">
-              {(sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: `${s.name}`, price: s.price, cap: s.capacity, note: "", donation: false })) : activeTiers.map((tier) => ({ id: tier.id, name: tier.name, price: tier.price, cap: undefined as number | undefined, note: [(tier.admits ?? 1) > 1 ? t("sheet.admits", { count: tier.admits ?? 1 }) : "", tier.ageNote ?? ""].filter(Boolean).join(" · "), donation: !!tier.donation }))).map((row, rowIdx) => (
-                <div key={row.id} className={`flex items-center justify-between gap-comfortable p-comfortable ${rowIdx > 0 ? "border-t border-line" : ""}`}>
+              <div className="flex flex-col gap-tight">
+              {(sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: `${s.name}`, price: s.price, cap: s.capacity, note: "", donation: false })) : activeTiers.map((tier) => ({ id: tier.id, name: tier.name, price: tier.price, cap: undefined as number | undefined, note: [(tier.admits ?? 1) > 1 ? t("sheet.admits", { count: tier.admits ?? 1 }) : "", tier.ageNote ?? ""].filter(Boolean).join(" · "), donation: !!tier.donation }))).map((row) => (
+                <div key={row.id} role="group" aria-label={row.note ? t("sheet.ticketNoteFull", { name: row.name, note: row.note }) : row.name} className="card-surface flex items-center justify-between gap-comfortable p-comfortable">
                   <div className="min-w-0 flex-1">
-                    <div className="text-base font-medium">{row.name}</div>
+                    <div className="text-md font-semibold leading-snug">{row.name}</div>
                     {(row.cap != null || row.note) && (
-                      <div className="mt-0.5 text-sm text-muted">
+                      <div className="mt-0.5 line-clamp-2 break-words text-sm text-muted" title={row.note || undefined}>
                         {[row.cap != null ? t("sheet.seatsCount", { count: row.cap }) : "", row.note].filter(Boolean).join(" · ")}
                       </div>
                     )}
@@ -1523,7 +1532,7 @@ export function ProductSheet({
                       />
                     </div>
                   ) : (
-                    <Stepper value={qty[row.id] ?? 0} min={0} onChange={(v) => setQty((q) => ({ ...q, [row.id]: v }))} lessLabel={t("sheet.less")} moreLabel={t("sheet.more")} />
+                    <Stepper variant="round" value={qty[row.id] ?? 0} min={0} onChange={(v) => setQty((q) => ({ ...q, [row.id]: v }))} lessLabel={t("sheet.less")} moreLabel={t("sheet.more")} />
                   )}
                 </div>
               ))}
@@ -1561,7 +1570,12 @@ export function ProductSheet({
               /* What will be added, beside the button that adds it: on a long
                  sheet the ticket steppers are below the fold, and "Add ৳600"
                  alone did not say what ৳600 buys. */
-              summary={partySize > 0 ? (() => {
+              summary={hasLayout ? (selectedSeats.length > 0 ? (
+                <FooterSummary
+                  lead={selectedSeats.join(" · ")}
+                  price={formatMoney(seatTotal + addOnItems().reduce((x, i) => x + i.unitPrice * i.qty, 0), currency)}
+                />
+              ) : undefined) : partySize > 0 ? (() => {
               const list = sectioned ? (product.sections ?? []) : activeTiers;
               const itemsLabel = list.filter((x) => (qty[x.id] ?? 0) > 0).map((x) => `${qty[x.id]} ${x.name}`).join(" · ");
               const owner = guided ? guides.find((g) => g.id === guideId)?.name : provider ? assignedProvider?.name : undefined;
@@ -1569,23 +1583,29 @@ export function ProductSheet({
               const tickets = list.reduce((a, x) => a + (qty[x.id] ?? 0), 0);
               const validityExtra = validity && (validity.priceDelta ?? 0) > 0 ? (validity.priceDelta ?? 0) * tickets : 0;
               const total = list.reduce((s, x) => s + (qty[x.id] ?? 0) * x.price, 0) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0) + prem + validityExtra;
-              // The chosen day, said the way a person says it. It printed the
-              // raw ISO ("2026-08-01") for any day that was not today, which is
-              // a machine's date format in a line read aloud to a customer.
-              const dayWords = date === TODAY
-                ? t("slotToday")
-                : formatDay(date, { weekday: true });
-              const when = slotTime ? `${formatClock(slotTime)} ${dayWords}` : course ? null : (needsSchedule(bt) || provider) ? dayWords : null;
+              // Said the way a person says it, and in one order for every
+              // shape: the day, how long, when, then what and who. The day
+              // used to follow the clock in lower case ("12:00 PM today") and
+              // an appointment printed its tier name as a quantity ("1 60
+              // min") - the length is a duration, not a count of tickets.
+              const showDay = slotTime ? true : course ? false : needsSchedule(bt) || provider;
+              const when = slotTime
+                ? provider
+                  ? formatClockRange(slotTime, toMinutes(slotTime) + providerDuration)
+                  : formatClock(slotTime)
+                : null;
               return (
-                <div className="flex items-baseline justify-between gap-comfortable text-sm">
-                  <span className="min-w-0 flex-1 text-muted">
-                    {when && <><span className="tabular-nums">{when}</span> · </>}
-                    {bt === "BT-02" && validity ? t("sheet.passCount", { count: tickets }) : itemsLabel}
-                    {validity ? <> · <span className="font-medium text-fg">{validity.label}</span></> : null}
-                    {owner ? <> · <span className="font-medium text-fg">{owner}</span>{provider ? ` · ${formatDuration(providerDuration)}` : ""}</> : null}
-                  </span>
-                  <span className="shrink-0 font-medium tabular-nums">{formatMoney(total, currency)}</span>
-                </div>
+                <FooterSummary
+                  lead={summaryLead([
+                    showDay ? dayWordsOf(date) : null,
+                    provider ? formatDuration(providerDuration) : null,
+                    when,
+                    provider ? null : bt === "BT-02" && validity ? t("sheet.passCount", { count: tickets }) : itemsLabel,
+                    validity ? validity.label : null,
+                    owner,
+                  ])}
+                  price={formatMoney(total, currency)}
+                />
               );
             })() : undefined}
               disabled={hasLayout ? selectedSeats.length === 0 || !waiverOk : !canAddTiered}
@@ -1618,7 +1638,7 @@ export function ProductSheet({
                         onKeyDown={(e) => { if (e.key === "Enter") void doHold(); }}
                         placeholder={t("sheet.holdFor")}
                         aria-label={t("sheet.holdFor")}
-                        className="h-12 min-w-0 flex-1 rounded-inner border border-line bg-card px-comfortable text-sm"
+                        className="h-12 min-w-0 flex-1 rounded-control border border-line bg-card px-comfortable text-sm"
                       />
                       {/* Secondary: the sale is what this screen is for, and
                           an ember Hold beside a grey Add says the exception is

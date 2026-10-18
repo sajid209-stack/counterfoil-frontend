@@ -371,6 +371,12 @@ records with key facts first. Desktop density: 36px controls.
   panel), the name, the price and a round 36px "+". The tab bar is a floating
   dark pill, 12px from the edges; the current tab is a light pill that names
   itself, the rest are icons in fixed places. Action bars float 8px above it.
+- Every GO screen speaks the sell wall's card language (`(go)/_components/Tiles.tsx`,
+  `docs/mobile.md` §5): each group its own white card on the page; every choice its own
+  rounded tile with 8px gaps (`Tile`, `ActionTile`) — chosen is orange with a tick, not
+  available is the page colour with a line; one card per list item with a 48–56px picture
+  or glyph; no coloured eyebrows. The till has no category chips; a bag button beside the
+  search jumps to the Shop heading.
 - The OS top bar holds the page name, one labelled primary pill (an icon disc
   when the label is too long), "⋯" and the account.
 - A status chip marks the exception; the normal state ("Published") has none.

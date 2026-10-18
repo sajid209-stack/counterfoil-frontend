@@ -15,7 +15,7 @@
   "reasonHelp": "সার্ভিসের বাইরে থাকলে বুকিং বন্ধ থাকবে।",
   "arrivalsGateLabel": "গেট",
   "arrivalsTitle": "যাঁরা আসছেন",
-  "arrivalsSearchPlaceholder": "বুকিং দিয়ে খুঁজুন…",
+  "arrivalsSearchPlaceholder": "অতিথি, বুকিং বা কোড দিয়ে খুঁজুন…",
   "noArrivals": "আর কারও আসার কথা নেই",
   "partyOf": "{size} জনের দল",
   "prevWeek": "আগের সপ্তাহ",
@@ -51,7 +51,8 @@
     "noPlaceMore": "আরও {count}টি",
     "keyMarket": "মার্কেটপ্লেস",
     "bookedOn": "{name}-এ বুক করা",
-    "bookedOnRef": "{name}-এ বুক করা · {reference}"
+    "bookedOnRef": "{name}-এ বুক করা · {reference}",
+    "noPlaceOpen": "খুলুন"
   },
   "sheet": {
     "hold": "হোল্ড",

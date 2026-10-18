@@ -15,5 +15,7 @@
   "varianceOff": "অনুমোদিত পার্থক্য {amount}-এর বেশি। শিফট শেষের আগে কারণ লিখুন।",
   "varianceReason": "পার্থক্য কেন?",
   "varianceReasonPlaceholder": "যেমন শুরুর নগদ কম ছিল, নগদে রিফান্ড দেওয়া হয়েছে",
-  "varianceOk": "অনুমোদিত পার্থক্য {amount}-এর মধ্যে।"
+  "varianceOk": "অনুমোদিত পার্থক্য {amount}-এর মধ্যে।",
+  "closeWhyCount": "উপরে মোট টাকা লিখুন",
+  "closeWhyReason": "কেন আলাদা তা লিখুন"
 }

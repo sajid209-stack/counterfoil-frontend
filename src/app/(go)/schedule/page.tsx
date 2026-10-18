@@ -3,7 +3,7 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
-import { Check, Lock, ShoppingBag, TriangleAlert, X } from "lucide-react";
+import { Check, ChevronRight, Lock, MapPinOff, ShoppingBag, X } from "lucide-react";
 import { Button, Checkbox, EmptyState, FormField, Modal, Notice, ProductThumb, Skeleton, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClockMin, formatClockRange, formatDay, formatMoney } from "@/lib/format";
@@ -49,6 +49,7 @@ import { Board } from "./_components/Board";
 import { BlockSheet, HoldSheet, MoveSheet, RefundSheet, SessionSheet, TakeBalanceSheet, type HoldRequest } from "./_components/Sheets";
 import { pendingRefundFor, refundableFor, refundRequestsForOrder, withdrawRefundRequest, type RefundReason } from "@/lib/api/refundRequests";
 import { ActionBar, BarSummary } from "../_components/ActionBar";
+import { Tile, TileGrid } from "../_components/Tiles";
 import { DayStrip } from "./_components/DayStrip";
 
 type SessionBlock = Extract<Block, { type: "session" }>;
@@ -587,32 +588,29 @@ export default function SchedulePage() {
   const wide = useMediaQuery(LG);
   const showTabs = groups.length > 1;
   const groupTabs = (frame: string) => (
-    <div
+    <TileGrid
       role="tablist"
       aria-label={t("board.whatLabel")}
-      className={cn("grid gap-1 rounded-card p-1", frame)}
+      className={cn(frame)}
       style={{ gridTemplateColumns: `repeat(${Math.min(groups.length, 4)}, minmax(0, 1fr))` }}
     >
       {groups.map((g) => {
         const on = g.key === group?.key;
         return (
-          <button
+          <Tile
             key={g.key}
-            type="button"
             role="tab"
             aria-selected={on}
+            selected={on}
             aria-label={t("board.groupAria", { name: g.label, count: g.freeCount })}
             onClick={() => setGroupKey(g.key)}
-            className={cn(
-              "flex min-h-12 items-center justify-center rounded-inner px-1 text-center text-base font-semibold leading-tight transition-colors duration-quick",
-              on ? "bg-ember-solid text-on-solid" : "text-fg hover:bg-muted-wash",
-            )}
+            className="min-h-12 px-1 text-base font-semibold leading-tight"
           >
             {g.label}
-          </button>
+          </Tile>
         );
       })}
-    </div>
+    </TileGrid>
   );
 
   return (
@@ -623,17 +621,17 @@ export default function SchedulePage() {
           One row of controls (which week, back to today, the calendar) over one
           strip of days that scrolls sideways. Every pixel above the board is an
           hour the cashier cannot see, so nothing here takes a line of its own. */}
-      <section className="card-surface flex flex-col gap-inline p-tight">
+      <section className="flex flex-col gap-tight">
         <DayStrip
           date={date}
           today={DEMO_TODAY}
           load={hydrated ? loadOf : () => 0}
           onChange={setDate}
-          middle={showTabs && wide ? groupTabs("border border-line bg-subtle") : undefined}
+          middle={showTabs && wide ? groupTabs("") : undefined}
         />
       </section>
 
-      {showTabs && !wide && groupTabs("card-surface")}
+      {showTabs && !wide && groupTabs("")}
 
       {loading ? (
         <Skeleton h="60dvh" className="rounded-card" />
@@ -649,20 +647,21 @@ export default function SchedulePage() {
           corner={[format.dateTime(dayDate, { weekday: "short" }), format.dateTime(dayDate, { day: "numeric", ...latn })]}
           hideKey={picks.length > 0}
           notice={unassigned.length > 0 && (
-          <div className="flex flex-wrap items-center gap-tight border-b border-line px-comfortable py-tight">
+          <div className="flex flex-wrap items-center gap-tight px-comfortable pt-tight">
             {unassigned.slice(0, 3).map(({ column, block }) => (
               <button
                 key={block.key}
                 type="button"
                 onClick={() => setBlockPick({ column, block })}
-                className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-warning-line bg-warning-wash px-comfortable text-left text-base text-fg"
+                className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-line bg-card px-comfortable text-left text-base text-fg"
               >
-                <TriangleAlert size={16} strokeWidth={2} className="shrink-0 text-warning" aria-hidden />
+                <MapPinOff size={16} strokeWidth={2} className="shrink-0 text-muted" aria-hidden />
                 <span className="min-w-0 truncate">
-                  <span className="font-semibold">{t("board.noPlaceShort")}</span>
-                  {" · "}
-                  {block.guest ?? t("board.walkIn")} {formatClockMin(block.start)}
+                  <span className="font-semibold">{block.guest ?? t("board.walkIn")} {formatClockMin(block.start)}</span>
+                  <span className="text-muted"> · {t("board.noPlaceShort")}</span>
                 </span>
+                <span className="shrink-0 font-semibold">{t("board.noPlaceOpen")}</span>
+                <ChevronRight size={16} strokeWidth={2} className="shrink-0 text-muted" aria-hidden />
               </button>
             ))}
             {unassigned.length > 3 && <span className="text-base text-muted">{t("board.noPlaceMore", { count: unassigned.length - 3 })}</span>}
@@ -720,8 +719,8 @@ export default function SchedulePage() {
                     aria-checked={on}
                     onClick={() => setChoice(p.id)}
                     className={cn(
-                      "inline-flex h-11 items-center gap-tight rounded-full border-2 pl-1 pr-comfortable text-md font-semibold",
-                      on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg",
+                      "inline-flex h-11 items-center gap-tight rounded-full pl-1 pr-comfortable text-md font-semibold",
+                      on ? "bg-ember-solid text-on-solid" : "bg-card text-fg shadow-card",
                     )}
                   >
                     {/* The booking's own picture, so the choice can be made by

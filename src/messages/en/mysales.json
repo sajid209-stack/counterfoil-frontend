@@ -32,5 +32,7 @@
   "loadError": "Could not load your sales.",
   "retry": "Try again",
   "refundedLine": "Refunded",
-  "noMethods": "Nothing paid yet today."
+  "noMethods": "Nothing paid yet today.",
+  "share": "{pct}% {method}",
+  "printShort": "Print"
 }

@@ -1,12 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Check, Percent, X } from "lucide-react";
+import { Percent, X } from "lucide-react";
 import { Notice } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 import type { Minor } from "@/lib/api";
 import { discountMinorFrom, withinDiscountLimit, type DiscountMode } from "../_lib/discount";
+import { Tile, TileGrid } from "../../_components/Tiles";
 
 /* ── The after-match discount ─────────────────────────────────────────────
  *
@@ -94,7 +95,7 @@ export function AfterMatchDiscount({
         type="button"
         data-after-match="closed"
         onClick={() => setState({ ...state, open: true })}
-        className="flex min-h-11 w-full items-center justify-center gap-tight rounded-card border-2 border-dashed border-line text-md font-semibold text-fg hover:bg-muted-wash active:bg-muted-wash"
+        className="flex min-h-11 w-full items-center justify-center gap-tight rounded-card bg-subtle text-md font-semibold text-fg hover:bg-muted-wash active:bg-muted-wash"
       >
         <Percent size={18} strokeWidth={2} aria-hidden />
         {t("discount.give")}
@@ -105,7 +106,7 @@ export function AfterMatchDiscount({
   const take = Math.max(0, owed - calc.minor);
 
   return (
-    <div data-after-match="open" className="flex flex-col gap-tight rounded-card border border-line bg-surface p-comfortable">
+    <div data-after-match="open" className="flex flex-col gap-tight rounded-card bg-subtle p-comfortable">
       <div className="flex items-start justify-between gap-tight">
         <div className="min-w-0">
           <p className="text-md font-semibold text-fg">{t("discount.title")}</p>
@@ -117,7 +118,7 @@ export function AfterMatchDiscount({
       </div>
 
       <div className="flex items-stretch gap-tight">
-        <div role="radiogroup" aria-label={t("discount.modeLabel")} className="flex shrink-0 overflow-hidden rounded-inner border border-line">
+        <div role="radiogroup" aria-label={t("discount.modeLabel")} className="flex shrink-0 gap-tight">
           {(["amount", "percent"] as DiscountMode[]).map((m) => (
             <button
               key={m}
@@ -126,7 +127,7 @@ export function AfterMatchDiscount({
               aria-checked={state.mode === m}
               aria-label={m === "amount" ? t("discount.modeAmount") : t("discount.modePercent")}
               onClick={() => setState({ ...state, mode: m })}
-              className={cn("flex h-11 w-11 items-center justify-center text-md font-semibold", state.mode === m ? "bg-ember-solid text-on-solid" : "bg-card text-fg")}
+              className={cn("flex h-11 w-11 items-center justify-center rounded-inner text-md font-semibold", state.mode === m ? "bg-ember-solid text-on-solid" : "bg-card text-fg shadow-card")}
             >
               {m === "amount" ? "৳" : "%"}
             </button>
@@ -138,31 +139,24 @@ export function AfterMatchDiscount({
           value={state.raw}
           onChange={(e) => setState({ ...state, raw: e.target.value })}
           placeholder="0"
-          className="h-11 min-w-0 flex-1 rounded-inner border border-line bg-card px-comfortable text-md"
+          className="h-11 min-w-0 flex-1 rounded-inner bg-card px-comfortable text-md"
         />
       </div>
 
-      <div role="radiogroup" aria-label={t("discount.reasonLabel")} className="grid grid-cols-2 gap-tight">
-        {DISCOUNT_REASONS.map((r) => {
-          const on = state.reasonKey === r;
-          return (
-            <button
-              key={r}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              onClick={() => setState({ ...state, reasonKey: r })}
-              className={cn(
-                "flex min-h-11 items-center justify-center rounded-inner border-2 px-tight text-center text-base font-semibold",
-                on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg",
-              )}
-            >
-              {on && <Check size={14} strokeWidth={3} className="mr-1 shrink-0" aria-hidden />}
-              {t(`discount.reasons.${r}`)}
-            </button>
-          );
-        })}
-      </div>
+      <TileGrid cols={2} role="radiogroup" aria-label={t("discount.reasonLabel")}>
+        {DISCOUNT_REASONS.map((r) => (
+          <Tile
+            key={r}
+            role="radio"
+            aria-checked={state.reasonKey === r}
+            selected={state.reasonKey === r}
+            onClick={() => setState({ ...state, reasonKey: r })}
+            className="min-h-11 text-base font-semibold"
+          >
+            {t(`discount.reasons.${r}`)}
+          </Tile>
+        ))}
+      </TileGrid>
 
       {state.reasonKey === "other" && (
         <input
@@ -170,7 +164,7 @@ export function AfterMatchDiscount({
           value={state.note}
           onChange={(e) => setState({ ...state, note: e.target.value })}
           placeholder={t("discount.notePlaceholder")}
-          className="h-11 rounded-inner border border-line bg-card px-comfortable text-md"
+          className="h-11 rounded-inner bg-card px-comfortable text-md"
         />
       )}
 

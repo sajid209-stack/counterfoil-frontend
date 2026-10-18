@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import {
   Banknote,
   CalendarClock,
-  Check,
   ChevronLeft,
   Clock,
   Lock,
@@ -15,7 +14,7 @@ import {
   Unlock,
   UserCheck,
 } from "lucide-react";
-import { DateStrip, MarketBadge, Notice, Sheet, useToast } from "@/components/ui";
+import { MarketBadge, Notice, Sheet, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClock, formatClockOf, formatClockRange, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay, slotISO, toMinutes, toTime } from "@/lib/schedule";
@@ -35,6 +34,8 @@ import { PaymentSheet } from "./PaymentSheet";
 import { type Block, type Column } from "../_lib/board";
 import { ClockCell } from "../../_components/Clock";
 import { Stepper } from "../../_components/Stepper";
+import { Tile, TileGrid, TileLabel } from "../../_components/Tiles";
+import { DateTiles } from "../../_components/SheetParts";
 
 /* The two big buttons every sheet here ends on, always in the same places:
    Hold on the LEFT, Add to sale on the RIGHT. A cashier who cannot read the
@@ -49,7 +50,7 @@ export const SHEET_WIDTH = "mx-auto max-w-xl";
  *  call site: `cn` does not merge conflicting utilities, so "h-14 h-13" is
  *  decided by stylesheet order, not by intent. */
 export const primary = (h = "h-13", grow = "flex-1") => `${BASE} ${h} ${grow} bg-ember-solid text-on-solid`;
-export const secondary = (h = "h-13", grow = "flex-1") => `${BASE} ${h} ${grow} border-2 border-line bg-card text-fg`;
+export const secondary = (h = "h-13", grow = "flex-1") => `${BASE} ${h} ${grow} bg-card text-fg shadow-card ring-1 ring-inset ring-line`;
 const PRIMARY = primary();
 const SECONDARY = secondary();
 /** Add to sale gets the larger share of the row: it is the common answer. */
@@ -89,7 +90,7 @@ function HoldForm({
       {/* The field draws its own ember border when focused; the app-wide ring
           on top of it read as two rings. The opt-out is on the host. */}
       <div data-focus-host className="flex flex-col gap-inline">
-        <label htmlFor="hold-name" className="text-base font-semibold text-fg">{t("sheet.holdName")}</label>
+        <label htmlFor="hold-name" className="text-md font-semibold text-fg">{t("sheet.holdName")}</label>
         <input
           id="hold-name"
           autoFocus
@@ -99,33 +100,26 @@ function HoldForm({
           placeholder={t("sheet.holdNamePh")}
           aria-invalid={missing || undefined}
           aria-describedby={missing ? "hold-name-err" : undefined}
-          className={cn("h-14 rounded-inner border-2 bg-card px-comfortable text-md focus:border-ember", missing ? "border-danger" : "border-line")}
+          className={cn("h-14 rounded-inner bg-subtle px-comfortable text-md focus:ring-2 focus:ring-ember", missing && "ring-2 ring-danger")}
         />
         {missing && <p id="hold-name-err" className="text-base text-danger">{t("sheet.holdNameMissing")}</p>}
       </div>
       <div role="radiogroup" aria-label={t("sheet.holdLength")} className="flex flex-col gap-tight">
-        <p className="text-base font-semibold text-fg">{t("sheet.holdLength")}</p>
-        <div className="grid grid-cols-2 gap-tight sm:grid-cols-4">
+        <TileLabel>{t("sheet.holdLength")}</TileLabel>
+        <TileGrid cols={4} className="max-[400px]:grid-cols-2">
           {LENGTHS.map((l) => (
-            <button
+            <Tile
               key={String(l)}
-              type="button"
               role="radio"
               aria-checked={length === l}
+              selected={length === l}
               onClick={() => setLength(l)}
-              /* Chosen reads as a tint with a tick, the way every other
-                 choice in the till reads — solid orange belongs to the one
-                 button that does the thing. */
-              className={cn(
-                "inline-flex h-12 items-center justify-center gap-1 rounded-full border-2 px-tight text-md font-semibold",
-                length === l ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg",
-              )}
+              className="h-12 text-md font-semibold"
             >
-              {length === l && <Check size={16} strokeWidth={3} className="shrink-0" aria-hidden />}
               {l === "day" ? t("sheet.holdDay") : l === 60 ? t("sheet.hold1h") : t("sheet.holdMin", { count: l })}
-            </button>
+            </Tile>
           ))}
-        </div>
+        </TileGrid>
         <p className="text-base text-muted">{t("sheet.holdHelp")}</p>
       </div>
     </>
@@ -293,11 +287,11 @@ export function SessionSheet({
         <p className="-mt-tight text-base text-muted">{when}</p>
         {mode === "tickets" ? (
           <>
-            <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-inner border border-line">
+            <ul className="flex flex-col gap-tight">
               {tiers.map((x) => {
                 const n = qty[x.id] ?? 0;
                 return (
-                  <li key={x.id} className="flex min-h-16 items-center gap-comfortable bg-card px-comfortable py-tight">
+                  <li key={x.id} className="flex min-h-16 items-center gap-comfortable rounded-inner bg-subtle px-comfortable py-tight">
                     <span className="min-w-0 flex-1">
                       <span className="block text-md font-semibold text-fg">{x.name}</span>
                       <span className="block text-base tabular-nums text-muted">
@@ -636,37 +630,27 @@ export function RefundSheet({
       }
     >
       <div className="flex flex-col gap-section p-card">
-        <div className="rounded-inner border border-line bg-surface p-comfortable">
+        <div className="rounded-inner bg-subtle p-comfortable">
           <p className="text-base text-muted">{t("refund.amountLabel")}</p>
-          <p className="text-3xl font-bold tabular-nums leading-tight text-fg">{formatMoney(amount)}</p>
+          <p className="text-3xl font-semibold tabular-nums leading-tight text-fg">{formatMoney(amount)}</p>
           <p className="text-sm text-muted">{t("refund.amountNote")}</p>
         </div>
         <fieldset>
           <legend className="mb-tight text-md font-semibold text-fg">{t("refund.reasonLabel")}</legend>
-          <div role="radiogroup" aria-label={t("refund.reasonLabel")} className="grid grid-cols-2 overflow-hidden rounded-inner border border-line">
-            {REFUND_REASONS.map((r, i) => {
-              const on = reason === r;
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  onClick={() => { setReason(r); setErr(null); }}
-                  className={cn(
-                    "relative flex min-h-14 items-center justify-center px-tight text-center text-md font-semibold",
-                    i % 2 === 1 && "border-l border-line",
-                    i >= 2 && "border-t border-line",
-                    i === REFUND_REASONS.length - 1 && REFUND_REASONS.length % 2 === 1 && "col-span-2",
-                    on ? "bg-ember-solid text-on-solid" : "bg-card text-fg",
-                  )}
-                >
-                  {on && <Check size={16} strokeWidth={3} className="absolute right-2 top-2" aria-hidden />}
-                  {t(`refund.reasons.${r}`)}
-                </button>
-              );
-            })}
-          </div>
+          <TileGrid cols={2} role="radiogroup" aria-label={t("refund.reasonLabel")}>
+            {REFUND_REASONS.map((r, i) => (
+              <Tile
+                key={r}
+                role="radio"
+                aria-checked={reason === r}
+                selected={reason === r}
+                onClick={() => { setReason(r); setErr(null); }}
+                className={cn("min-h-14 text-md font-semibold", i === REFUND_REASONS.length - 1 && REFUND_REASONS.length % 2 === 1 && "col-span-2")}
+              >
+                {t(`refund.reasons.${r}`)}
+              </Tile>
+            ))}
+          </TileGrid>
         </fieldset>
         <label data-focus-host className="flex flex-col gap-tight">
           <span className="text-md font-semibold text-fg">{reason === "other" ? t("refund.noteLabelRequired") : t("refund.noteLabel")}</span>
@@ -678,7 +662,7 @@ export function RefundSheet({
             placeholder={t("refund.notePlaceholder")}
             aria-invalid={!!err}
             aria-describedby={err ? "refund-note-err" : undefined}
-            className="min-h-[5.5rem] rounded-inner border border-line bg-card px-comfortable py-tight text-md text-fg focus:border-ember focus:ring-2 focus:ring-ember"
+            className="min-h-[5.5rem] rounded-inner bg-subtle px-comfortable py-tight text-md text-fg focus:ring-2 focus:ring-ember"
           />
           {err && <span id="refund-note-err" className="text-base font-medium text-danger">{err}</span>}
         </label>
@@ -832,8 +816,7 @@ export function MoveSheet({
       }
     >
       <div className="flex flex-col gap-section p-card">
-        <DateStrip
-          flat
+        <DateTiles
           dates={dates}
           value={selDate}
           onChange={(d) => { setSelDate(d); setSelTime(null); }}
@@ -846,70 +829,59 @@ export function MoveSheet({
         {times.length === 0 ? (
           <p className="text-base text-muted">{t("sheet.moveClosed")}</p>
         ) : (
-          <div className="card-surface overflow-hidden">
-            <div className="-mb-px -mr-px grid grid-cols-4">
-              {times.map((cell) => {
-                if (cell.isNow) {
-                  return (
-                    <div key={cell.time} className="flex min-h-14 flex-col items-center justify-center gap-0.5 border-b border-r border-line bg-surface px-1 py-1 text-muted">
-                      <ClockCell hhmm={cell.time} className="text-md font-semibold tabular-nums" />
-                      <span className="text-sm font-medium">{t("sheet.moveNow")}</span>
-                    </div>
-                  );
-                }
-                if (!cell.free) {
-                  return (
-                    <span key={cell.time} className="flex min-h-14 items-center justify-center border-b border-r border-line bg-surface px-1 py-1 text-base text-muted line-through">
-                      <ClockCell hhmm={cell.time} className="line-through" />
-                    </span>
-                  );
-                }
-                const chosen = selTime === cell.time;
+          <TileGrid cols={4}>
+            {times.map((cell) => {
+              if (cell.isNow) {
                 return (
-                  <button
-                    key={cell.time}
-                    type="button"
-                    aria-pressed={chosen}
-                    data-focus-inset
-                    onClick={() => setSelTime(cell.time)}
-                    className={cn(
-                      "relative flex min-h-14 items-center justify-center border-b border-r border-line px-1 py-1 text-md font-semibold transition-colors duration-quick",
-                      chosen ? "bg-ember-solid text-on-solid" : "bg-card text-fg active:bg-muted-wash",
-                    )}
-                  >
-                    {chosen && <Check size={12} strokeWidth={3} className="absolute right-1 top-1" aria-hidden />}
-                    <ClockCell hhmm={cell.time} />
-                  </button>
+                  <div key={cell.time} className="flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-inner bg-transparent px-1 py-1 text-muted ring-1 ring-inset ring-line">
+                    <ClockCell hhmm={cell.time} className="text-md font-semibold tabular-nums" />
+                    <span className="text-sm font-medium">{t("sheet.moveNow")}</span>
+                  </div>
                 );
-              })}
-            </div>
-          </div>
+              }
+              if (!cell.free) {
+                return (
+                  <span key={cell.time} className="flex min-h-14 items-center justify-center rounded-inner bg-transparent px-1 py-1 text-base text-muted line-through ring-1 ring-inset ring-line">
+                    <ClockCell hhmm={cell.time} className="line-through" />
+                  </span>
+                );
+              }
+              const chosen = selTime === cell.time;
+              return (
+                <Tile
+                  key={cell.time}
+                  aria-pressed={chosen}
+                  selected={chosen}
+                  onClick={() => setSelTime(cell.time)}
+                  className="min-h-14 text-md font-semibold"
+                >
+                  <ClockCell hhmm={cell.time} />
+                </Tile>
+              );
+            })}
+          </TileGrid>
         )}
 
         {asking && changed && (
           <div className="flex flex-col gap-tight">
             <p className="text-md font-semibold text-fg">{t("sheet.moveWhy")}</p>
-            <div role="radiogroup" aria-label={t("sheet.moveWhy")} className="grid grid-cols-2 gap-tight">
+            <TileGrid cols={2} role="radiogroup" aria-label={t("sheet.moveWhy")}>
               {(["customer_asked", "weather", "venue_problem", "other"] as RescheduleReason[]).map((r) => {
                 const on = reason === r;
                 return (
-                  <button
+                  <Tile
                     key={r}
-                    type="button"
                     role="radio"
                     aria-checked={on}
+                    selected={on}
                     onClick={() => { setReason(on ? null : r); setErr(null); }}
-                    className={cn(
-                      "flex min-h-11 items-center justify-center rounded-inner border-2 px-tight text-center text-base font-semibold",
-                      on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line bg-card text-fg",
-                    )}
+                    className="min-h-11 text-base font-semibold"
                   >
-                    {on && <Check size={14} strokeWidth={3} className="mr-1 shrink-0" aria-hidden />}
                     {t(`refund.moveReasons.${r}`)}
-                  </button>
+                  </Tile>
                 );
               })}
-            </div>
+            </TileGrid>
             <input
               id="move-note"
               value={note}
@@ -917,7 +889,7 @@ export function MoveSheet({
               aria-label={reason === "other" ? t("sheet.moveNoteRequired") : t("sheet.moveNoteLabel")}
               aria-invalid={!!err}
               placeholder={reason === "other" ? t("sheet.moveNoteRequired") : t("sheet.moveNoteLabel")}
-              className={cn("h-11 rounded-inner border bg-card px-comfortable text-md", err ? "border-danger" : "border-line")}
+              className={cn("h-11 rounded-inner bg-subtle px-comfortable text-md", err && "ring-2 ring-danger")}
             />
             {err && <p role="alert" className="text-base font-medium text-danger">{err}</p>}
           </div>
@@ -976,7 +948,7 @@ export function TakeBalanceSheet({
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-comfortable border-b border-line py-tight last:border-b-0">
+    <div className="flex items-baseline justify-between gap-comfortable py-tight">
       <dt className="text-base text-muted">{label}</dt>
       <dd className="text-right font-semibold text-fg">{value}</dd>
     </div>

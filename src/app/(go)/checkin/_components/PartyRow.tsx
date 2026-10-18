@@ -1,10 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { CalendarClock, RotateCcw } from "lucide-react";
+import { CalendarClock, RotateCcw, User, Users } from "lucide-react";
 import { ActionMenu, Button, type ActionMenuItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
+import { Thumb } from "../../_components/Thumb";
 import type { Party } from "../_lib/parties";
 
 /**
@@ -45,11 +46,15 @@ export function PartyRow({
   const remaining = p.size - p.arrived;
 
   return (
-    <li data-party data-state={p.state} className="flex flex-wrap items-center gap-x-comfortable gap-y-tight px-card py-comfortable">
+    <li data-party data-state={p.state} className="card-surface flex flex-wrap items-center gap-x-comfortable gap-y-tight p-comfortable">
+      <Thumb
+        glyph={p.size > 1 ? <Users strokeWidth={1.5} /> : <User strokeWidth={1.5} />}
+        className={p.state === "in" ? "bg-success-wash text-success" : undefined}
+      />
       {/* On the narrowest phones the actions drop under the name, right-aligned
           — still the last thing on the row — instead of squeezing the name into
           a column three letters wide. */}
-      <div className="min-w-28 flex-1">
+      <div className="min-w-24 flex-1">
         <p className={cn("break-words text-md font-semibold text-fg", p.nameIsReference && "font-mono text-base")}>{p.name || t("walkInDefaultName")}</p>
         <p className="mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline text-sm text-muted">
           <span>{t("guests", { count: p.size })}</span>

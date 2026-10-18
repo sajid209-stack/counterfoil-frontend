@@ -29,7 +29,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
-import { Check, ChevronDown, Plus, Trash2 } from "lucide-react";
+import { Banknote, Check, ChevronDown, CreditCard, Plus, QrCode, Send, Trash2, Wallet, type LucideIcon } from "lucide-react";
 import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveCounterNow } from "@/lib/activeCounter";
@@ -52,12 +52,22 @@ import {
 import type { DiscountMode } from "@/components/ui";
 import { CustomerPicker, type AttachedCustomer } from "../pos/CustomerPicker";
 import { ChromeBackdrop } from "../_components/ActionBar";
+import { ActionTile, Tile, TileGrid, TileLabel } from "../_components/Tiles";
 import { SaleRows, type RowKey } from "./_components/SaleRows";
 import { formatClock, formatDay, formatMoney } from "@/lib/format";
 import { useMediaQuery } from "@/lib/useMedia";
 import { Catalogue } from "./_components/Catalogue";
 import { SelectionInline } from "./_components/SelectionInline";
 import { Keypad } from "../_components/Keypad";
+
+/** A way of paying is recognised as an object, not a word: cash is a note, bKash
+ *  is a send, the QR is a code, the terminal is a card. */
+const METHOD_ICON: Partial<Record<PaymentMethod, LucideIcon>> = {
+  cash: Banknote,
+  bkash: Send,
+  bangla_qr: QrCode,
+  card_terminal: CreditCard,
+};
 import { Pencil } from "lucide-react";
 import { usePrefs } from "@/lib/prefs";
 import { itemBalance, itemSeats, itemSlotISO, itemTotal, priceSale, type SaleItem } from "@/lib/sale/saleMath";
@@ -602,43 +612,38 @@ export default function SellPage() {
 
           {/* ── Pay ──────────────────────────────────────────────────────── */}
           {payable && (
-            <div className="card-surface p-comfortable">
-              <p className="mb-tight text-base font-semibold">{t("pay.label")}</p>
-
-              <div
-                className="relative grid h-14 rounded-full bg-line p-inline"
-                style={{ gridTemplateColumns: `repeat(${methods.length}, minmax(0, 1fr))` }}
-              >
-                {methods.length > 1 && (
-                  <span
-                    aria-hidden
-                    /* `ember-solid`, not `ember`: the plain token brightens to
-                       #FF7A3D in dark so that ember-as-TEXT stays legible on
-                       ink — and under WHITE as a fill that lift measured
-                       2.59:1 here, materially worse than light mode. Pinned it
-                       is 3.50:1 either way, which is the declared exception
-                       rather than two different readings. The app swept fifteen
-                       of these in September; this thumb was missed. */
-                    className="absolute inset-y-inline rounded-full bg-ember-solid transition-[left] duration-quick ease-counterfoil"
-                    style={{
-                      width: `calc(${100 / methods.length}% - 8px)`,
-                      left: `calc(${Math.max(0, methods.indexOf(method)) * (100 / methods.length)}% + 4px)`,
-                    }}
-                  />
-                )}
-                {methods.map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    aria-pressed={method === m}
-                    onClick={() => setMethod(m)}
-                    className={`relative z-10 min-w-0 truncate px-inline text-sm transition-colors duration-quick ${method === m ? "font-medium text-on-solid" : "text-fg"}`}
-                  >
-                    {enumL.method(m)}
-                  </button>
-                ))}
+            <>
+              {/* How they are paying: each way is its own tile, a picture in a
+                  soft round and a word; chosen is solid orange with a tick, the
+                  till's one look for it. */}
+              {methods.length > 1 && (
+              <div className="flex flex-col gap-tight">
+                <TileLabel>{t("pay.label")}</TileLabel>
+                <TileGrid
+                  cols={methods.length >= 4 ? 4 : (Math.max(2, methods.length) as 2 | 3)}
+                  role="radiogroup"
+                  aria-label={t("pay.label")}
+                  className={methods.length >= 4 ? "grid-cols-2 min-[360px]:grid-cols-4" : undefined}
+                >
+                  {methods.map((m) => {
+                    const Icon = METHOD_ICON[m] ?? Wallet;
+                    return (
+                      <ActionTile
+                        key={m}
+                        role="radio"
+                        aria-checked={method === m}
+                        selected={method === m}
+                        icon={<Icon strokeWidth={1.75} />}
+                        label={enumL.method(m)}
+                        onClick={() => setMethod(m)}
+                      />
+                    );
+                  })}
+                </TileGrid>
               </div>
+              )}
 
+              <div className="card-surface p-comfortable">
               <div className="mt-section flex flex-col gap-inline text-sm">
                 <div className="flex justify-between text-muted">
                   <span>{t("pay.subtotal")}</span>
@@ -715,26 +720,12 @@ export default function SellPage() {
                       </span>
                     </div>
                   )}
-                  <div className="mt-section flex gap-tight">
-                    <button
-                      type="button"
-                      aria-pressed={exactTender}
-                      onClick={() => setTenderTaka("")}
-                      className={`h-12 flex-1 rounded-full border text-base active:bg-muted-wash ${exactTender ? "border-ember-solid bg-ember-solid font-medium text-on-solid" : "border-inverse bg-card"}`}
-                    >
-                      {tp("cash.exact")}
-                    </button>
+                  <TileGrid cols={2} className="mt-section min-[360px]:grid-cols-4">
+                    <Tile selected={exactTender} onClick={() => setTenderTaka("")} label={tp("cash.exact")} className="h-11" />
                     {[500, 1000, 2000].map((amt) => (
-                      <button
-                        key={amt}
-                        type="button"
-                        onClick={() => setTenderTaka(String(amt))}
-                        className="h-12 flex-1 rounded-full border border-line bg-card text-base active:bg-muted-wash"
-                      >
-                        ৳{amt}
-                      </button>
+                      <Tile key={amt} selected={tenderTaka === String(amt)} onClick={() => setTenderTaka(String(amt))} label={`৳${amt}`} className="h-11 tabular-nums" />
                     ))}
-                  </div>
+                  </TileGrid>
                   {(prefs.posKeypad || padOpen) && (
                     <div className="mt-section">
                       <Keypad
@@ -759,11 +750,12 @@ export default function SellPage() {
               )}
 
               {method === "bangla_qr" && (
-                <p className="mt-section rounded-card border border-line bg-subtle p-comfortable text-sm text-muted">
+                <p className="mt-section text-sm text-muted">
                   {t("pay.qrHint")}
                 </p>
               )}
-            </div>
+              </div>
+            </>
           )}
         </div>
 

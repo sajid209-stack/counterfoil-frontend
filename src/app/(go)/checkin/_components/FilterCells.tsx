@@ -1,12 +1,11 @@
 "use client";
 
 import { useRef } from "react";
-import { Check } from "lucide-react";
-import { cn } from "@/lib/cn";
+import { Tile, TileGrid } from "../../_components/Tiles";
 import { FILTERS, type CheckInFilter } from "../_lib/parties";
 
 /**
- * All · Due · Not in yet · In — one row of flat cells, each saying how many.
+ * All · Due · Not in yet · In — four separate tiles, each saying how many.
  *
  * A segmented choice that fits a 320px phone: a word on top and the number
  * under it, so a steward who does not read the word reads the count. The chosen
@@ -34,35 +33,31 @@ export function FilterCells({
     group.current?.querySelectorAll<HTMLElement>('[role="radio"]')[to]?.focus();
   };
   return (
-    <div ref={group} role="radiogroup" aria-label={label} className="card-surface grid grid-cols-4 overflow-hidden">
+    <div ref={group}>
+    <TileGrid cols={4} role="radiogroup" aria-label={label}>
       {FILTERS.map((f, i) => {
         const on = f === value;
         return (
-          <button
+          <Tile
             key={f}
-            type="button"
             role="radio"
             aria-checked={on}
+            selected={on}
             tabIndex={on ? 0 : -1}
             data-filter={f}
-            data-focus-inset
             onClick={() => onChange(f)}
             onKeyDown={(e) => {
               if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); move(i, 1); }
               else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); move(i, -1); }
             }}
-            className={cn(
-              "relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-center transition-colors duration-quick",
-              i > 0 && "border-l border-line",
-              on ? "bg-ember-solid text-on-solid" : "bg-card text-fg hover:bg-muted-wash active:bg-muted-wash",
-            )}
+            className="min-h-16 gap-0.5 px-1"
           >
             <span className="text-xl font-semibold tabular-nums leading-none">{counts[f]}</span>
-            <span className={cn("max-w-full text-sm font-medium leading-tight", on ? "text-on-solid" : "text-muted")}>{labels[f]}</span>
-            {on && <Check size={14} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
-          </button>
+            <span className={`max-w-full text-sm font-medium leading-tight ${on ? "text-on-solid" : "text-muted"}`}>{labels[f]}</span>
+          </Tile>
         );
       })}
+    </TileGrid>
     </div>
   );
 }

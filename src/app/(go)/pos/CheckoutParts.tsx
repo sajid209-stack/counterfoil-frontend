@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { formatMoney, formatPriceShort } from "@/lib/format";
 import type { AppliedPromotion } from "@/lib/api";
 import type { AttachedCustomer } from "./CustomerPicker";
+import { Tile, TileGrid } from "../_components/Tiles";
 
 /* ── The pieces the payment step is made of ───────────────────────────────
  *
@@ -17,9 +18,10 @@ import type { AttachedCustomer } from "./CustomerPicker";
  * in the cart — a cart that offers a discount and a customer on every sale is
  * a cart whose lines are harder to read.
  *
- * Each of these is a row of ONE card, divided by hairlines, the way the
- * Schedule draws things. They hold no sale state of their own: the till passes
- * in what is true and what to do about it.
+ * The three rows (customer, discount, promo code) are rows of ONE card, divided
+ * by hairlines: they are one question's worth of small decisions. How much to
+ * pay now is a choice, so it is its own tiles. None of them hold sale state:
+ * the till passes in what is true and what to do about it.
  */
 
 /** A row that says what it currently IS — "None", "10%", "Add" — and opens its
@@ -208,9 +210,10 @@ export type PayChoice = "full" | "half" | "minimum";
 
 /** How much of the total the customer pays now: Full, Half or Minimum.
  *
- *  The amount sits in each cell, so a cashier who does not read the word
- *  reads the money. The chosen cell is the till's one look for "chosen" — solid
- *  orange, white, a tick — the same as a chosen payment method. */
+ *  Each choice is its own tile, with the amount under the word, so a cashier who
+ *  does not read the word reads the money. The chosen tile is the till's one
+ *  look for "chosen": solid orange, white, a tick, the same as a chosen payment
+ *  method. */
 export function HowMuchNow({
   options,
   value,
@@ -224,35 +227,20 @@ export function HowMuchNow({
 }) {
   const t = useTranslations("pos");
   return (
-    <div
-      role="radiogroup"
-      aria-label={t("pay.howMuch")}
-      className="card-surface grid overflow-hidden"
-      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
-    >
-      {options.map((o, i) => {
-        const on = value === o.id;
-        return (
-          <button
-            key={o.id}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            data-pay-choice={o.id}
-            data-focus-inset
-            onClick={() => onChange(o.id)}
-            className={cn(
-              "relative flex min-h-[4.25rem] flex-col items-center justify-center gap-0.5 px-inline text-center transition-colors duration-quick",
-              i > 0 && "border-l border-line",
-              on ? "bg-ember-solid text-on-solid" : "bg-card text-fg active:bg-muted-wash",
-            )}
-          >
-            <span className="text-md font-semibold">{o.label}</span>
-            <span className={cn("text-sm font-medium tabular-nums", on ? "text-on-solid" : "text-muted")}>{formatPriceShort(o.amount, currency)}</span>
-            {on && <Check size={14} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
-          </button>
-        );
-      })}
-    </div>
+    <TileGrid cols={options.length >= 3 ? 3 : 2} role="radiogroup" aria-label={t("pay.howMuch")}>
+      {options.map((o) => (
+        <Tile
+          key={o.id}
+          role="radio"
+          aria-checked={value === o.id}
+          data-pay-choice={o.id}
+          selected={value === o.id}
+          onClick={() => onChange(o.id)}
+          label={o.label}
+          sub={<span className="tabular-nums">{formatPriceShort(o.amount, currency)}</span>}
+          className="h-[4.25rem]"
+        />
+      ))}
+    </TileGrid>
   );
 }

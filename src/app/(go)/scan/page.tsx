@@ -37,6 +37,7 @@ const REFUSAL: Record<RefuseReason, ScanRefusal | undefined> = {
 };
 import { CameraView } from "./_components/CameraScanner";
 import { Verdict } from "./_components/Verdict";
+import { GoCard, TileGrid, TileLabel } from "../_components/Tiles";
 
 /* A hardware scanner is a keyboard: it types the code fast and presses Enter.
    Everything at a gate follows from that — the field is focused on arrival and
@@ -268,6 +269,7 @@ export default function ScanPage() {
   const camLabels = {
     viewfinder: t("viewfinder"),
     aim: t("aimInstruction"),
+    idle: t("idleInstruction"),
     start: t("startCamera"),
     stop: t("stopCamera"),
     starting: t("startingCamera"),
@@ -281,23 +283,23 @@ export default function ScanPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col px-section py-section pb-28 lg:pb-section">
-      <div className="flex w-full flex-col gap-section lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-        <div className="flex min-w-0 flex-col gap-section">
+      <div className="flex w-full flex-col gap-comfortable lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-comfortable">
           <div>
-            <h1 className="type-h1 text-xl">{t("title")}</h1>
-            <p className="text-sm text-muted">{t("subtitle")}</p>
+            <h1 className="text-xl font-semibold tracking-title text-fg">{t("title")}</h1>
+            <p className="mt-inline text-sm text-muted">{t("subtitle")}</p>
           </div>
 
           {/* The camera view is always here, so the scanning area never moves. */}
           <CameraView onCode={(value) => void submit(value)} labels={camLabels} />
 
           {/* The field a hardware scanner types into: always armed. */}
-          <section className="flex flex-col gap-comfortable p-section card-surface">
+          <section className="flex flex-col gap-comfortable p-card card-surface">
             <p className="flex items-center gap-tight">
               <span aria-hidden className={cn("h-2 w-2 shrink-0 rounded-full", busy ? "bg-muted" : "bg-ember-solid")} />
-              <span className="text-sm font-semibold text-brand-foreground">{busy ? t("checking") : t("armed")}</span>
+              <span className="text-sm font-medium text-muted">{busy ? t("checking") : t("armed")}</span>
             </p>
-            <label htmlFor="scan-code" className="text-sm font-semibold">{t("codeFieldLabel")}</label>
+            <label htmlFor="scan-code" className="text-md font-semibold">{t("codeFieldLabel")}</label>
             <div className="flex gap-tight">
               <span data-focus-host className="block min-w-0 flex-1">
                 <input
@@ -313,10 +315,10 @@ export default function ScanPage() {
                   inputMode="text"
                   autoComplete="off"
                   spellCheck={false}
-                  className="h-14 w-full min-w-0 rounded-card border-2 border-line bg-card px-section font-mono text-lg tracking-wide transition-colors duration-quick focus:border-ember-solid"
+                  className="h-14 w-full min-w-0 rounded-inner bg-subtle px-section font-mono text-lg tracking-wide transition-colors duration-quick focus:ring-2 focus:ring-ember"
                 />
               </span>
-              <Button size="lg" className="h-14 shrink-0 text-md font-semibold" disabled={!code.trim() || busy} onClick={() => void submit(code)}>
+              <Button size="lg" variant={code.trim() ? "primary" : "secondary"} className="h-14 shrink-0 text-md font-semibold" disabled={!code.trim() || busy} onClick={() => void submit(code)}>
                 {t("check")}
               </Button>
             </div>
@@ -326,11 +328,10 @@ export default function ScanPage() {
 
         {/* What this device has done since the screen was opened, then the
             example screens. */}
-        <aside className="flex flex-col gap-section">
-          <section className="flex flex-col gap-comfortable p-section card-surface">
-            <h2 className="text-base font-semibold">{t("sessionTitle")}</h2>
+        <aside className="flex flex-col gap-comfortable">
+          <GoCard title={t("sessionTitle")}>
             {log.length > 0 && (
-              <div className="grid grid-cols-3 gap-tight text-center">
+              <TileGrid cols={3} className="text-center">
                 {(
                   [
                     ["admit", tally.admit, Check],
@@ -338,45 +339,46 @@ export default function ScanPage() {
                     ["balance", tally.balance, Wallet],
                   ] as const
                 ).map(([key, value, Icon]) => (
-                  <div key={key} className="flex flex-col items-center gap-inline rounded-inner border border-line py-comfortable">
+                  <div key={key} className="flex flex-col items-center gap-inline rounded-inner bg-subtle py-comfortable">
                     <Icon size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
                     <span className="text-xl font-semibold tabular-nums">{value}</span>
                     <span className="text-sm text-muted">{t(`tally_${key}`)}</span>
                   </div>
                 ))}
-              </div>
+              </TileGrid>
             )}
+            {log.length === 0 && <p className="text-sm text-muted">{t("noScansYet")}</p>}
+          </GoCard>
 
-            {log.length > 0 && <h3 className="text-sm font-semibold text-muted">{t("recentTitle")}</h3>}
-            {log.length === 0 ? (
-              <p className="text-sm text-muted">{t("noScansYet")}</p>
-            ) : (
-              <ul className="flex flex-col">
-                {log.map((e, i) => (
-                  <li key={e.id} className={cn("flex items-center gap-tight py-tight", i > 0 && "border-t border-line")}>
+          {log.length > 0 && (
+            <section className="flex flex-col gap-tight">
+              <TileLabel className="px-inline">{t("recentTitle")}</TileLabel>
+              <ul className="flex flex-col gap-tight">
+                {log.map((e) => (
+                  <li key={e.id} className="card-surface flex items-center gap-comfortable p-comfortable">
                     <span
                       aria-hidden
                       className={cn(
-                        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
+                        "flex size-10 shrink-0 items-center justify-center rounded-full",
                         e.verdict === "refuse" ? "bg-danger-solid text-on-solid" : e.verdict === "balance" ? "bg-warning-wash text-fg" : "bg-inverse text-inverse-fg",
                       )}
                     >
-                      {e.verdict === "refuse" ? <X size={13} strokeWidth={3} /> : e.verdict === "balance" ? <Wallet size={12} strokeWidth={2} /> : <Check size={13} strokeWidth={3} />}
+                      {e.verdict === "refuse" ? <X size={16} strokeWidth={3} /> : e.verdict === "balance" ? <Wallet size={16} strokeWidth={2} /> : <Check size={16} strokeWidth={3} />}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-mono text-sm">{e.code}</span>
+                      <span className="block truncate font-mono text-sm font-semibold">{e.code}</span>
                       <span className="block truncate text-sm text-muted">{e.title || t(`tally_${e.verdict === "refuse" ? "refuse" : e.verdict === "balance" ? "balance" : "admit"}`)}</span>
                     </span>
                     <span className="shrink-0 text-sm text-muted">{formatClockOf(e.at)}</span>
                   </li>
                 ))}
               </ul>
-            )}
-          </section>
+            </section>
+          )}
 
           {screens.length > 0 && (
             <section className="flex flex-col gap-tight">
-              <h2 className="text-sm font-semibold text-muted">{t("screensTitle")}</h2>
+              <TileLabel className="px-inline">{t("screensTitle")}</TileLabel>
               {/* Each button wears the treatment of the screen it opens, so the
                   row doubles as the key to the three. */}
               <div className="flex flex-wrap gap-tight">
@@ -385,7 +387,7 @@ export default function ScanPage() {
                     key={sc.key}
                     type="button"
                     onClick={() => void submit(sc.code, { preview: true })}
-                    className="flex min-h-12 items-center gap-tight rounded-full border border-line bg-card py-inline pl-inline pr-comfortable text-base font-medium active:bg-muted-wash"
+                    className="flex min-h-12 items-center gap-tight rounded-full bg-card py-inline pl-inline pr-comfortable shadow-card text-base font-medium active:bg-muted-wash"
                   >
                     <span aria-hidden className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", sc.tone)}>
                       <sc.Icon size={16} strokeWidth={2.5} />

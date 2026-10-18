@@ -204,9 +204,20 @@ export function WallTile({
           ) : (
             <span />
           )}
-          {/* A drawing of what a tap does. aria-hidden: the card is the button. */}
+          {/* A drawing of what a tap does. aria-hidden: the card is the button.
+              Two different answers, drawn as two different things, in the same
+              size and the same spot: "+" is SOLID ink (one tap adds it now);
+              "›" is an OUTLINED round — card fill, a line, an ink glyph — (a
+              sheet opens to choose something first). A cashier who does not
+              read learns the difference by shape and weight, not by glyph. */}
           {!soldOut && (
-            <span aria-hidden className="ml-auto flex size-9 shrink-0 items-center justify-center rounded-full bg-inverse text-inverse-fg max-[360px]:size-8">
+            <span
+              aria-hidden
+              className={cn(
+                "ml-auto flex size-9 shrink-0 items-center justify-center rounded-full max-[360px]:size-8",
+                opensSheet ? "bg-card text-fg ring-1 ring-inset ring-strong" : "bg-inverse text-inverse-fg",
+              )}
+            >
               {opensSheet ? <ChevronRight size={18} strokeWidth={2} /> : <Plus size={18} strokeWidth={2} />}
             </span>
           )}
@@ -227,10 +238,26 @@ export function WallRow({ onClick, icon, children }: { onClick: () => void; icon
   );
 }
 
-/** A section heading across the whole wall — Event tickets, Shop. */
-export function WallHeading({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
+/** A section heading across the whole wall — Event tickets, Shop. When it is a
+ *  jump target (`id`, `tabIndex={-1}`) the caller scrolls to it and focuses it,
+ *  so a screen reader lands on the section rather than on the button it left. */
+export function WallHeading({
+  icon,
+  children,
+  id,
+  tabIndex,
+}: {
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+  id?: string;
+  tabIndex?: number;
+}) {
   return (
-    <p className="col-span-full flex min-h-11 items-center gap-tight px-inline pt-tight text-base font-semibold text-muted">
+    <p
+      id={id}
+      tabIndex={tabIndex}
+      className="col-span-full flex min-h-11 scroll-mt-3 items-center gap-tight px-inline pt-tight text-base font-semibold text-muted"
+    >
       {icon}
       {children}
     </p>

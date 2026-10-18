@@ -99,16 +99,16 @@ function PairScreen() {
 
             {already && (
               <p
-                className="mt-section card-surface px-section py-tight text-center text-sm text-muted"
+                className="mt-comfortable card-surface px-section py-tight text-center text-sm text-muted"
                 data-testid="pair-already"
               >
                 {t("pair.alreadyAs", { name: already.name })}
               </p>
             )}
 
-            <form onSubmit={submit} className="mt-major flex flex-col gap-section" noValidate>
-              <div>
-                <label htmlFor="pair-code" className="block text-md font-medium text-fg">
+            <form onSubmit={submit} className="mt-major flex flex-col gap-comfortable" noValidate>
+              <div className="card-surface p-card">
+                <label htmlFor="pair-code" className="block text-md font-semibold text-fg">
                   {t("pair.codeLabel")}
                 </label>
                 <input
@@ -129,7 +129,7 @@ function PairScreen() {
                   aria-invalid={!!error || undefined}
                   aria-describedby={error ? "pair-error" : "pair-hint"}
                   // ds-exception: a spaced-out pairing code is read character by character; 0.18em has no scale token
-                  className={`mt-tight h-16 w-full rounded-card border bg-card px-section text-center font-mono text-4xl font-medium tracking-[0.18em] text-fg placeholder:text-muted ${error ? "border-danger" : "border-line"}`}
+                  className={`mt-tight h-16 w-full rounded-inner bg-subtle px-section text-center font-mono text-4xl font-medium tracking-[0.18em] text-fg placeholder:text-muted ${error ? "ring-2 ring-danger" : ""}`}
                 />
                 {error ? (
                   <p id="pair-error" role="alert" data-testid="pair-error" className="mt-tight text-base font-medium text-danger">
@@ -190,19 +190,19 @@ function Done({
       <h1 className="mt-section text-2xl font-semibold leading-tight">{t("pair.successTitle")}</h1>
       <p className="mt-tight text-md text-muted">{t("pair.successLine", { name: device.name })}</p>
 
-      <dl className="card-surface mt-major w-full overflow-hidden text-left">
+      <dl className="card-surface mt-major flex w-full flex-col gap-comfortable p-card text-left">
         {[
           { k: "counter", label: t("pair.counter"), value: counter?.name ?? "—" },
           { k: "venue", label: t("pair.venue"), value: venue?.name ?? "—" },
         ].map((row) => (
-          <div key={row.k} className="flex items-baseline justify-between gap-section border-b border-line px-section py-comfortable">
+          <div key={row.k} className="flex items-baseline justify-between gap-section">
             <dt className="text-sm text-muted">{row.label}</dt>
             <dd data-testid={`pair-${row.k}`} className="min-w-0 text-right text-md font-medium text-fg">
               {row.value}
             </dd>
           </div>
         ))}
-        <div className="px-section py-comfortable">
+        <div>
           <dt className="text-sm text-muted">{t("pair.who")}</dt>
           <dd data-testid="pair-who" className="mt-inline text-md font-medium text-fg">
             {loading ? (

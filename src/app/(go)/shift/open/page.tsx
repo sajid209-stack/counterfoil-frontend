@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
 import { peekPaymentSettings } from "@/lib/api";
+import { GoCard } from "../../_components/Tiles";
 
 export default function ShiftOpenPage() {
   const router = useRouter();
@@ -13,23 +14,22 @@ export default function ShiftOpenPage() {
   const [float, setFloat] = useState(() => (peekPaymentSettings().defaultFloat / 100).toFixed(2));
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
+    <main className="mx-auto flex max-w-md flex-col gap-comfortable px-section py-section">
       <div>
-        <p className="text-base font-semibold text-brand-foreground">{t("startLabel")}</p>
-        <h1 className="type-h1 mt-tight text-xl">{t("openingTitle")}</h1>
-        <p className="type-body mt-tight text-muted">{t("openingHint")}</p>
+        <h1 className="text-xl font-semibold tracking-title text-fg">{t("openingTitle")}</h1>
+        <p className="mt-inline text-sm text-muted">{t("openingHint")}</p>
       </div>
 
-      <div className="flex flex-col gap-tight">
-        <label htmlFor="opening-cash" className="text-base font-semibold text-fg">{t("openingCash")}</label>
+      <GoCard>
+        <label htmlFor="opening-cash" className="text-md font-semibold text-fg">{t("openingCash")}</label>
         <input
           id="opening-cash"
           inputMode="decimal"
           value={float}
           onChange={(e) => setFloat(e.target.value)}
-          className="h-14 rounded-inner border border-line bg-card px-section text-2xl font-semibold tabular-nums"
+          className="h-14 rounded-inner bg-subtle px-section text-2xl font-semibold tabular-nums text-fg"
         />
-      </div>
+      </GoCard>
 
       <Button size="lg" fullWidth className="h-13 text-md font-semibold" onClick={() => router.push("/pos")}>
         {t("openShift")}

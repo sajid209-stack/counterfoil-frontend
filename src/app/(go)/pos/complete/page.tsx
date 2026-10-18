@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Check, ChevronRight, Clock, Mail, MessageSquare, Plus, Printer, ReceiptText, RotateCcw, Send, Ticket as TicketIcon } from "lucide-react";
 import { Button, Modal, Qr, useToast } from "@/components/ui";
+import { ActionTile, GoCard, TileGrid, TileLabel, tileClass } from "../../_components/Tiles";
+import { ChromeBackdrop } from "../../_components/ActionBar";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { cancelSale, getOperator, UNDO_SALE_SECONDS } from "@/lib/api";
@@ -22,10 +24,10 @@ import { takeReturnTo, takeUndoSnapshot, writeLiveSale } from "../_lib/liveSale"
  *
  * One figure leads — the change to hand back, or what was paid — set large and
  * centred on the page itself rather than boxed in a card. Under it the guest
- * gets their tickets in one of two ways, each its own group: printed (all of
- * it, just the tickets, just the receipt) or sent (SMS, email, or both). New
- * sale stays pinned in reach and focused. The tickets and the sale sit below
- * as quiet lists, for checking.
+ * gets their tickets in one of two ways, each its own group of separate tiles:
+ * printed (all of it, just the tickets, just the receipt) or sent (SMS, email,
+ * or both). New sale stays pinned in reach and focused. The tickets (a card
+ * each) and the sale (a card) sit below, for checking.
  *
  * Everything drawn here comes from the sale's own handover, so nothing waits on
  * the network and a reload loses nothing.
@@ -180,7 +182,7 @@ export default function CompletePage() {
         };
 
   return (
-    <main className="mx-auto w-full max-w-xl px-section pb-40 pt-major sm:max-w-3xl rail:max-w-6xl rail:px-major rail:pb-major">
+    <main className="mx-auto w-full max-w-xl px-section pb-24 pt-major sm:max-w-3xl rail:max-w-6xl rail:px-major rail:pb-major">
       {/* The 5-second Undo, above everything else: a cashier who has just
           tapped the wrong sale needs it before "Sale complete" even, not
           after reading past it. Gone entirely on a handover written before
@@ -220,58 +222,61 @@ export default function CompletePage() {
             )}
           </section>
 
-          {/* Hand-over, as two decisions rather than six loose buttons: printed or sent. Each group is one card of
-              three joined segments, so what belongs together reads together — side by side once there is room,
-              stacked on a phone. The visible word is short; each button's name says the whole action. */}
-          <section aria-labelledby="hand-over" className={cn("flex flex-col gap-section", hasTickets && "sm:grid sm:grid-cols-2 sm:gap-comfortable")}>
+          {/* Hand-over, as two decisions: printed or sent. Each way is its own
+              tile, in a group under a heading, so what belongs together reads
+              together; side by side once there is room, stacked on a phone. The
+              visible word is short; each tile's name says the whole action. */}
+          <section aria-labelledby="hand-over" className={cn("flex flex-col gap-comfortable", hasTickets && "sm:grid sm:grid-cols-2")}>
             <h2 id="hand-over" className="sr-only">
               {hasTickets ? t("complete.handOverTitle") : t("complete.handOverReceiptTitle")}
             </h2>
-            <HandOverGroup label={t("complete.printGroup")}>
+            <HandOverGroup label={t("complete.printGroup")} cols={hasTickets ? 3 : 2}>
               {hasTickets && (
-                <HandOver icon={<Printer size={20} strokeWidth={1.8} />} label={t("complete.handOverAll")} name={tk("printAll")} disabled={!orderId} onClick={() => router.push(`/print/order/${orderId}`)} />
+                <HandOver icon={<Printer />} label={t("complete.handOverAll")} name={tk("printAll")} disabled={!orderId} onClick={() => router.push(`/print/order/${orderId}`)} />
               )}
               {hasTickets && (
-                <HandOver icon={<TicketIcon size={20} strokeWidth={1.8} />} label={t("complete.handOverTickets")} name={tk("printTickets")} disabled={!orderId} onClick={() => router.push(`/print/tickets/${orderId}`)} />
+                <HandOver icon={<TicketIcon />} label={t("complete.handOverTickets")} name={tk("printTickets")} disabled={!orderId} onClick={() => router.push(`/print/tickets/${orderId}`)} />
               )}
               <HandOver
-                icon={<ReceiptText size={20} strokeWidth={1.8} />}
+                icon={<ReceiptText />}
                 label={t("complete.handOverReceipt")}
                 name={tk("printReceipt")}
                 disabled={!orderId}
-                row={!hasTickets}
+                wide={!hasTickets}
                 onClick={() => router.push(`/print/receipt/${orderId}`)}
               />
             </HandOverGroup>
             {hasTickets && (
-              <HandOverGroup label={t("complete.sendGroup")}>
+              <HandOverGroup label={t("complete.sendGroup")} cols={3}>
                 <HandOver
-                  icon={smsSentTo ? <Check size={20} strokeWidth={2.4} /> : <MessageSquare size={20} strokeWidth={1.8} />}
+                  icon={smsSentTo ? <Check className="text-success" /> : <MessageSquare />}
                   label={t("complete.handOverSms")}
                   name={sentName(t("complete.sendSms"), !!smsSentTo)}
-                  done={!!smsSentTo}
                   onClick={() => openSend("sms")}
                 />
                 <HandOver
-                  icon={emailSentTo ? <Check size={20} strokeWidth={2.4} /> : <Mail size={20} strokeWidth={1.8} />}
+                  icon={emailSentTo ? <Check className="text-success" /> : <Mail />}
                   label={t("complete.handOverEmail")}
                   name={sentName(t("complete.sendEmail"), !!emailSentTo)}
-                  done={!!emailSentTo}
                   onClick={() => openSend("email")}
                 />
                 <HandOver
-                  icon={smsSentTo && emailSentTo ? <Check size={20} strokeWidth={2.4} /> : <Send size={20} strokeWidth={1.8} />}
+                  icon={smsSentTo && emailSentTo ? <Check className="text-success" /> : <Send />}
                   label={t("complete.handOverBoth")}
                   name={sentName(t("complete.sendBoth"), !!smsSentTo && !!emailSentTo)}
-                  done={!!smsSentTo && !!emailSentTo}
                   onClick={() => openSend("both")}
                 />
               </HandOverGroup>
             )}
           </section>
 
-          {/* New sale: pinned above the tab bar on a phone, inline on a landscape tablet. Focused, so Enter starts the next sale. */}
-          <div className="fixed inset-x-comfortable z-30 rail:static rail:z-auto" style={{ bottom: "calc(84px + env(safe-area-inset-bottom))" }}>
+          {/* New sale: pinned above the tab bar on a phone, inline on a landscape tablet. Focused, so Enter starts the next sale.
+              It floats over the page, so the page colour runs behind it down to
+              the tab bar (with a short fade above), and the page is padded by
+              the button's height: the first ticket scrolls clear of it rather
+              than sitting under it. */}
+          <div className="fixed inset-x-comfortable z-30 pt-tight rail:static rail:z-auto rail:pt-0" style={{ bottom: "calc(84px + env(safe-area-inset-bottom))" }}>
+            <ChromeBackdrop />
             {/* As wide as the content above it: 48rem less the page's 16px gutters from sm. */}
             <div className="mx-auto max-w-[34rem] sm:max-w-[calc(48rem-32px)] rail:max-w-none">
               <Button
@@ -292,21 +297,20 @@ export default function CompletePage() {
         {/* ── The tickets and the sale, for checking ── */}
         <div className="flex flex-col gap-major">
           {ticketsKnown && tickets.length > 0 && (
-            <section aria-labelledby="tickets-title">
-              <h2 id="tickets-title" className="px-1 text-base font-semibold text-fg">
-                {t("complete.ticketsTitle")}
-              </h2>
-              <ul className="card-surface mt-tight overflow-hidden">
+            <section aria-labelledby="tickets-title" className="flex flex-col gap-tight">
+              <TileLabel id="tickets-title">{t("complete.ticketsTitle")}</TileLabel>
+              {/* One card per ticket, a gap of page between: the wall's drawing. */}
+              <ul className="flex flex-col gap-comfortable">
                 {visibleTickets.map((ticket) => (
-                  <li key={ticket.code} className="border-t border-line first:border-t-0">
-                    {/* The whole row opens the QR large, for the guest to photograph or the gate to scan. */}
+                  <li key={ticket.code}>
+                    {/* The whole card opens the QR large, for the guest to photograph or the gate to scan. */}
                     <button
                       type="button"
                       onClick={() => setShown(ticket)}
-                      className="flex w-full items-center gap-comfortable px-section py-comfortable text-left transition-colors duration-quick active:bg-muted-wash"
+                      className="card-surface flex w-full items-center gap-comfortable p-comfortable text-left transition-colors duration-quick active:bg-muted-wash"
                     >
                       {/* The QR is what the gate scans, so it is dark on white in either theme. */}
-                      <span className="shrink-0 rounded-inner bg-white p-1 ring-1 ring-line">
+                      <span className="shrink-0 rounded-md bg-white p-1 ring-1 ring-line">
                         <Qr value={ticket.code} size={44} />
                       </span>
                       <span className="min-w-0 flex-1">
@@ -319,11 +323,11 @@ export default function CompletePage() {
                   </li>
                 ))}
                 {!allTickets && tickets.length > TICKETS_SHOWN && (
-                  <li className="border-t border-line">
+                  <li>
                     <button
                       type="button"
                       onClick={() => setAllTickets(true)}
-                      className="flex min-h-[48px] w-full items-center justify-center px-section text-base font-medium text-brand-foreground transition-colors duration-quick active:bg-muted-wash"
+                      className={tileClass({ className: "min-h-12 w-full text-base font-medium text-brand-foreground" })}
                     >
                       {t("complete.showAllTickets", { count: tickets.length })}
                     </button>
@@ -334,46 +338,41 @@ export default function CompletePage() {
           )}
 
           {info.receipt && (
-            <section aria-labelledby="sale-title">
-              <div className="flex items-baseline justify-between gap-comfortable px-1">
-                <h2 id="sale-title" className="text-base font-semibold text-fg">
-                  {t("complete.saleTitle")}
-                </h2>
-                {info.reference && <span className="min-w-0 truncate font-mono text-sm text-muted">{info.reference}</span>}
-              </div>
-              <div className="card-surface mt-tight p-section">
-                <ul className="flex flex-col gap-tight">
-                  {info.receipt.lines.map((line, i) => (
-                    <li key={i} className={cn("flex items-baseline justify-between gap-comfortable text-base", line.child && "pl-section")}>
-                      <span className="min-w-0 text-fg">
-                        <span className={cn(line.child && "text-muted")}>{clockify(line.name)}</span>
-                        <span className="text-muted"> × {line.qty}</span>
-                      </span>
-                      <span className="shrink-0 tabular-nums text-fg">{formatMoney(line.amount)}</span>
-                    </li>
-                  ))}
-                </ul>
-                <dl className="mt-comfortable flex flex-col gap-1.5 border-t border-line pt-comfortable text-base">
-                  <Row label={t("complete.subtotal")} value={formatMoney(info.receipt.subtotal)} />
-                  {info.receipt.lineDiscountTotal > 0 && <Row label={t("complete.lineDiscounts")} value={`−${formatMoney(info.receipt.lineDiscountTotal)}`} />}
-                  {info.receipt.orderDiscount > 0 && <Row label={t("complete.discount")} value={`−${formatMoney(info.receipt.orderDiscount)}`} />}
-                  <Row label={t("complete.vat")} value={formatMoney(info.receipt.tax)} />
-                  <Row label={t("complete.total")} value={formatMoney(info.receipt.total)} strong />
+            <GoCard
+              title={t("complete.saleTitle")}
+              aside={info.reference ? <span className="min-w-0 truncate font-mono text-sm text-muted">{info.reference}</span> : undefined}
+            >
+              <ul className="flex flex-col gap-tight">
+                {info.receipt.lines.map((line, i) => (
+                  <li key={i} className={cn("flex items-baseline justify-between gap-comfortable text-base", line.child && "pl-section")}>
+                    <span className="min-w-0 text-fg">
+                      <span className={cn(line.child && "text-muted")}>{clockify(line.name)}</span>
+                      <span className="text-muted"> × {line.qty}</span>
+                    </span>
+                    <span className="shrink-0 tabular-nums text-fg">{formatMoney(line.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+              <dl className="flex flex-col gap-1.5 border-t border-line pt-comfortable text-base">
+                <Row label={t("complete.subtotal")} value={formatMoney(info.receipt.subtotal)} />
+                {info.receipt.lineDiscountTotal > 0 && <Row label={t("complete.lineDiscounts")} value={`−${formatMoney(info.receipt.lineDiscountTotal)}`} />}
+                {info.receipt.orderDiscount > 0 && <Row label={t("complete.discount")} value={`−${formatMoney(info.receipt.orderDiscount)}`} />}
+                <Row label={t("complete.vat")} value={formatMoney(info.receipt.tax)} />
+                <Row label={t("complete.total")} value={formatMoney(info.receipt.total)} strong />
+              </dl>
+              {payment && (
+                <dl className="flex flex-col gap-1.5 border-t border-line pt-comfortable text-base">
+                  <Row label={t("complete.paidMethod", { method })} value={formatMoney(paidNow)} />
+                  {payment.tendered !== undefined && change > 0 && (
+                    <>
+                      <Row label={t("complete.receivedLabel")} value={formatMoney(payment.tendered)} />
+                      <Row label={t("complete.changeLabel")} value={formatMoney(change)} />
+                    </>
+                  )}
+                  {balance > 0 && <Row label={t("complete.balanceDueAtArrival")} value={formatMoney(balance)} />}
                 </dl>
-                {payment && (
-                  <dl className="mt-comfortable flex flex-col gap-1.5 border-t border-line pt-comfortable text-base">
-                    <Row label={t("complete.paidMethod", { method })} value={formatMoney(paidNow)} />
-                    {payment.tendered !== undefined && change > 0 && (
-                      <>
-                        <Row label={t("complete.receivedLabel")} value={formatMoney(payment.tendered)} />
-                        <Row label={t("complete.changeLabel")} value={formatMoney(change)} />
-                      </>
-                    )}
-                    {balance > 0 && <Row label={t("complete.balanceDueAtArrival")} value={formatMoney(balance)} />}
-                  </dl>
-                )}
-              </div>
-            </section>
+              )}
+            </GoCard>
           )}
         </div>
       </div>
@@ -586,40 +585,44 @@ function UndoBar({
   return (
     <div
       className={cn(
-        "mb-wide grid transition-[grid-template-rows] duration-considered ease-counterfoil",
+        "mb-major grid transition-[grid-template-rows] duration-considered ease-counterfoil",
         collapsing ? "grid-rows-[0fr]" : "grid-rows-[1fr]",
       )}
     >
       <div className="overflow-hidden">
+        {/* A slim strip, not a card: one line of words, the seconds left, and a
+            secondary button, with a thin bar draining underneath. The offer is
+            a quiet one and it stands for five seconds; orange here would be
+            New sale's. The count sits OUTSIDE the button, so the button reads
+            as one action and the number as the clock. */}
         <div
           className={cn(
-            "overflow-hidden rounded-card border border-warning-line bg-warning-wash transition-opacity duration-considered ease-counterfoil",
+            "overflow-hidden rounded-inner ring-1 ring-inset ring-line transition-opacity duration-considered ease-counterfoil",
             collapsing && "opacity-0",
           )}
         >
-          <div className="flex flex-wrap items-center justify-between gap-comfortable p-comfortable">
-            <p className="min-w-0 flex-1 text-sm font-medium text-fg">{t("complete.undoHint", { seconds: UNDO_SALE_SECONDS })}</p>
+          <div className="flex items-center gap-tight py-1 pl-comfortable pr-1">
+            <p className="min-w-0 flex-1 py-tight text-sm text-muted">{t("complete.undoHint", { seconds: UNDO_SALE_SECONDS })}</p>
+            <span aria-hidden className="w-8 shrink-0 text-right text-sm font-medium tabular-nums text-fg">
+              {t("complete.undoCount", { seconds })}
+            </span>
             <Button
               variant="secondary"
-              size="lg"
               icon={<RotateCcw size={18} strokeWidth={2} aria-hidden />}
               loading={undoing}
               onClick={undo}
               className="shrink-0"
             >
               {t("complete.undoSale")}
-              <span aria-hidden className="tabular-nums text-muted">
-                {seconds}
-              </span>
             </Button>
           </div>
           {/* The draining line: it empties over the window on its own, via a
               CSS transition rather than a per-frame width calculation — smooth
               with no extra JS, and instant under reduced motion like every
               other transition in this app. */}
-          <div aria-hidden className="h-1 bg-line">
+          <div aria-hidden className="h-1 bg-subtle">
             <div
-              className="h-full bg-ember-solid"
+              className="h-full bg-muted"
               style={{ width: draining ? "0%" : "100%", transition: draining ? `width ${totalMs}ms linear` : "none" }}
             />
           </div>
@@ -629,40 +632,22 @@ function UndoBar({
   );
 }
 
-/** A group of hand-over actions: a label, then one card of joined segments — shared edges say these are one decision. */
-function HandOverGroup({ label, children }: { label: string; children: React.ReactNode }) {
+/** A group of hand-over actions: a heading, then each way as its own tile. */
+function HandOverGroup({ label, cols, children }: { label: string; cols: 2 | 3; children: React.ReactNode }) {
   const id = useId();
   return (
-    <div role="group" aria-labelledby={id} className="min-w-0">
-      <p id={id} className="px-1 text-base font-semibold text-fg">
-        {label}
-      </p>
-      <div className="card-surface mt-tight flex">{children}</div>
+    <div role="group" aria-labelledby={id} className="flex min-w-0 flex-col gap-tight">
+      <TileLabel id={id}>{label}</TileLabel>
+      <TileGrid cols={cols}>{children}</TileGrid>
     </div>
   );
 }
 
-/** One way to hand the tickets over: an icon over a short word on screen, the whole action as its name.
- *  Segments carry their own end radii rather than the card clipping them, so a keyboard focus ring is never cut off.
- *  `row` is for a segment that has the card to itself, where the icon sits beside its word instead. */
-function HandOver({ icon, label, name, done, disabled, row, onClick }: { icon: React.ReactNode; label: string; name: string; done?: boolean; disabled?: boolean; row?: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      aria-label={name}
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "flex min-w-0 flex-1 items-center justify-center border-l border-line font-medium text-fg transition-colors duration-quick first:rounded-l-go first:border-l-0 last:rounded-r-go active:bg-muted-wash disabled:opacity-40",
-        row ? "h-12 gap-1.5 px-comfortable text-base" : "h-16 flex-col gap-1 px-1 text-sm",
-      )}
-    >
-      <span aria-hidden className={cn("grid shrink-0 place-items-center", done ? "text-success" : "text-muted")}>
-        {icon}
-      </span>
-      <span className="max-w-full truncate">{label}</span>
-    </button>
-  );
+/** One way to hand the tickets over: an icon in a soft round over a short word,
+ *  the whole action as the tile's name. `wide` is for a tile that has its group
+ *  to itself (the receipt, when no tickets were issued). */
+function HandOver({ icon, label, name, disabled, wide, onClick }: { icon: React.ReactNode; label: string; name: string; disabled?: boolean; wide?: boolean; onClick: () => void }) {
+  return <ActionTile icon={icon} label={label} aria-label={name} disabled={disabled} onClick={onClick} className={cn("disabled:opacity-40", wide && "col-span-full")} />;
 }
 
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {

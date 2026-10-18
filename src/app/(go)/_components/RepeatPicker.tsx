@@ -5,6 +5,9 @@ import { Check, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { formatClock, formatMoney } from "@/lib/format";
 import type { Occurrence } from "@/lib/recurrence";
+import { Tile, TileLabel } from "./Tiles";
+import { TileText } from "./SheetParts";
+import { Stepper } from "./Stepper";
 
 /** Quick counts that FILL the stepper rather than limit it — the app's own
  *  rule for duration chips, applied to weeks. */
@@ -46,81 +49,35 @@ export function RepeatPicker({
 
   return (
     <div className="mb-section flex flex-col gap-tight">
-      <span className="text-base font-semibold text-fg">{t("repeat.title")}</span>
+      <TileLabel>{t("repeat.title")}</TileLabel>
 
-      {/* One row at rest, one control per row when engaged.
-       *
-       *  It used to show a stepper reading "Just this one" next to three preset
-       *  chips — two controls for one value, wrapping onto two ragged rows, and
-       *  a stepper whose displayed value was a phrase rather than a number.
-       *  Most sales are not repeats, so at rest this is a single row of choices
-       *  with the off state as its own chip; the stepper only appears once
-       *  someone has actually asked to repeat, which is the only time a count
-       *  between the presets is worth reaching for. */}
-      <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <button
-          type="button"
-          onClick={() => onCount(1)}
-          className={cn(
-            "flex min-h-12 shrink-0 items-center whitespace-nowrap rounded-full border px-comfortable text-base transition-colors duration-quick",
-            count === 1 ? "border-ember-solid bg-ember-solid font-medium text-on-solid" : "border-line bg-card active:bg-muted-wash",
-          )}
-        >
-          {t("repeat.offChip")}
-        </button>
+      {/* One row of separate tiles at rest, the off state its own tile; the
+          round stepper only appears once someone has asked to repeat, which
+          is the only time a count between the presets is worth reaching for. */}
+      <div className="grid grid-cols-2 gap-tight sm:grid-cols-4">
+        <Tile selected={count === 1} onClick={() => onCount(1)} className="min-h-12">
+          <TileText label={t("repeat.offChip")} selected={count === 1} />
+        </Tile>
         {CHIPS.map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => onCount(n)}
-            className={cn(
-              "flex min-h-12 shrink-0 items-center whitespace-nowrap rounded-full border px-comfortable text-base transition-colors duration-quick",
-              count === n ? "border-ember-solid bg-ember-solid font-medium text-on-solid" : "border-line bg-card active:bg-muted-wash",
-            )}
-          >
-            {t("repeat.weeks", { count: n })}
-          </button>
+          <Tile key={n} selected={count === n} onClick={() => onCount(n)} className="min-h-12">
+            <TileText label={t("repeat.weeks", { count: n })} selected={count === n} />
+          </Tile>
         ))}
       </div>
 
-      {/* Fine adjustment, only once repeating is on. The chips FILL this — the
-       *  rule the duration and percent controls already follow. */}
+      {/* Fine adjustment, only once repeating is on. The tiles FILL this. */}
       {count > 1 && (
-        <div className="flex items-center gap-tight">
-          <span className="flex-1 text-base font-semibold text-fg">{t("repeat.fine")}</span>
-          <button
-            type="button"
-            aria-label={t("repeat.fewer")}
-            onClick={() => onCount(Math.max(1, count - 1))}
-            disabled={count <= 1}
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-lg disabled:text-muted disabled:opacity-40 active:bg-muted-wash"
-          >
-            −
-          </button>
-          <span className="min-w-12 text-center text-base font-medium tabular-nums">{count}</span>
-          <button
-            type="button"
-            aria-label={t("repeat.more")}
-            onClick={() => onCount(Math.min(max, count + 1))}
-            disabled={count >= max}
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-lg disabled:text-muted disabled:opacity-40 active:bg-muted-wash"
-          >
-            +
-          </button>
+        <div className="card-surface flex items-center justify-between gap-comfortable p-comfortable">
+          <span className="text-base font-semibold text-fg">{t("repeat.fine")}</span>
+          <Stepper variant="round" value={count} min={1} max={max} onChange={onCount} lessLabel={t("repeat.fewer")} moreLabel={t("repeat.more")} />
         </div>
       )}
 
       {count > 1 && (
         <>
-          <ul className="flex flex-col overflow-hidden rounded-card border border-line">
+          <ul className="card-surface flex flex-col p-comfortable">
             {plan.map((o) => (
-              <li
-                key={o.date}
-                className={cn(
-                  "flex items-center gap-comfortable border-b border-line px-comfortable py-tight last:border-0",
-                  !o.ok && "bg-subtle",
-                )}
-              >
+              <li key={o.date} className="flex min-h-11 items-center gap-comfortable">
                 <span className={cn("shrink-0", o.ok ? "text-success" : "text-muted")}>
                   {o.ok ? <Check size={14} strokeWidth={2} /> : <X size={14} strokeWidth={2} />}
                 </span>

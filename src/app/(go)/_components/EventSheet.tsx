@@ -23,13 +23,17 @@
  */
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button, Sheet } from "@/components/ui";
+import { ChevronLeft, Plus, X } from "lucide-react";
+import { ProductThumb } from "@/components/ui";
 import { formatDay, formatMoney } from "@/lib/format";
 import { dayFill, eventDays, isBundleTier, tierDays, type EventRecord, type EventTier } from "@/lib/api";
 import { dayName } from "@/lib/events/days";
-import { cn } from "@/lib/cn";
 import type { CartEntry } from "./ProductSheet";
+import { ActionBar } from "./ActionBar";
+import { SheetShell } from "./SheetShell";
 import { Stepper } from "./Stepper";
+import { Tile, TileGrid, TileLabel } from "./Tiles";
+import { FooterSummary, StickyFoot, TileText, summaryLead } from "./SheetParts";
 
 export function EventSheet({
   event,
@@ -100,103 +104,91 @@ export function EventSheet({
     );
   };
 
-  /* The shared Sheet owns the dialog role, the focus trap, Escape, the scrim and
-     the drag-down; this file only says what is in it. */
+  const dayTitle = multi && dayId ? labelOfDay(dayId) : "";
+  const total$ = formatMoney(total, currency);
+
+  /* The same sheet as every booking sheet: a paper ground, each choice its own
+     tile or card, and the till's one pair at the foot — back on the left, the
+     orange Add on the right. */
   return (
-    <Sheet
-      open
-      onClose={onClose}
-      title={event.title}
-      closeLabel={t("sheet.close")}
-      footer={
-        <div className="flex w-full flex-col gap-tight">
-          <div className="flex items-center justify-between text-base">
-            <span className="text-muted">
-              {count > 0 ? t("event.summary", { count }) : t("event.pickTickets")}
-              {multi && dayId ? ` · ${labelOfDay(dayId)}` : ""}
-            </span>
-            <span className="font-semibold tabular-nums">{formatMoney(total, currency)}</span>
+    <SheetShell label={event.title} labelledBy="sheet-title" onClose={onClose} frameClassName="inset-y-0 left-0 right-0 lg:right-96" className="max-h-[88vh] overflow-y-auto bg-surface p-section pb-0">
+      <div className="mx-auto w-full max-w-[680px]">
+        <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-line" aria-hidden />
+        <div className="mb-section flex items-center gap-comfortable">
+          <ProductThumb name={event.title} bookingType="BT-15" size="thumb" />
+          <div className="min-w-0 flex-1">
+            <h2 id="sheet-title" className="break-words text-lg font-semibold leading-snug text-fg sm:text-xl">{event.title}</h2>
+            <p className="mt-inline text-sm text-muted">
+              {formatDay(event.startsAt.slice(0, 10), { weekday: true })}
+              {multi ? ` · ${t("event.runsDays", { count: days.length })}` : ""} · {event.venueName}
+            </p>
           </div>
-          <div className="flex gap-tight">
-            <Button size="lg" variant="secondary" className="h-13 flex-1 text-md font-semibold" disabled={!count} onClick={() => submit(true)}>
-              {count ? t("sheet.buyNow", { amount: formatMoney(total, currency) }) : t("sheet.buyNowShort")}
-            </Button>
-            <Button size="lg" className="h-13 flex-[1.4] text-md font-semibold" disabled={!count} onClick={() => submit(false)}>
-              {count ? t("event.add", { count }) : t("event.pickTickets")}
-            </Button>
-          </div>
+          <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-subtle text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash"><X size={20} strokeWidth={1.75} /></button>
         </div>
-      }
-    >
-      <div className="p-section">
-        <p className="mb-section text-sm text-muted">
-          {formatDay(event.startsAt.slice(0, 10), { weekday: true })}
-          {multi ? ` · ${t("event.runsDays", { count: days.length })}` : ""} · {event.venueName}
-        </p>
 
         {/* WHICH DAY — only where there is a choice to make. */}
         {multi && (
-          <section className="mb-section">
-            <h3 className="mb-tight text-base font-semibold">{t("event.whichDay")}</h3>
-            <div className="flex flex-wrap gap-tight">
+          <section className="mb-section flex flex-col gap-tight">
+            <TileLabel>{t("event.whichDay")}</TileLabel>
+            <TileGrid cols={days.length >= 3 ? 3 : 2}>
               {days.map((d) => {
                 const f = dayFill(event, d.id);
                 const left = Math.max(0, f.cap - f.sold);
                 const on = d.id === dayId;
                 return (
-                  <button
-                    key={d.id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => setDayId(d.id)}
-                    className={cn(
-                      "min-h-12 rounded-inner border px-comfortable py-inline text-left",
-                      on ? "border-ember-solid bg-ember-solid text-on-solid" : "border-line",
-                    )}
-                  >
-                    <span className="block text-base font-medium">{dayName(d, days.indexOf(d), (n) => t("event.dayN", { n }))}</span>
-                    <span className={cn("block text-sm", on ? "text-on-solid" : "text-muted")}>
-                      {formatDay(d.date)} · {t("event.left", { count: left })}
-                    </span>
-                  </button>
+                  <Tile key={d.id} selected={on} className="min-h-16" onClick={() => setDayId(d.id)}>
+                    <TileText label={dayName(d, days.indexOf(d), (n) => t("event.dayN", { n }))} sub={formatDay(d.date)} extra={t("event.left", { count: left })} selected={on} />
+                  </Tile>
                 );
               })}
-            </div>
+            </TileGrid>
           </section>
         )}
 
-        {/* WHICH TICKET */}
-        <section className="mb-section">
-          <h3 className="mb-tight text-base font-semibold">{t("event.whichTicket")}</h3>
-          <div className="overflow-hidden rounded-inner border border-line">
-            {offered.map((tier, i) => {
-              const room = roomFor(tier);
-              const n = qty[tier.id] ?? 0;
-              const bundle = multi && isBundleTier(event, tier);
-              return (
-                <div key={tier.id} className={cn("flex items-center gap-tight p-comfortable", i > 0 && "border-t border-line")}>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-md font-medium">
-                      {tier.name}
-                      {bundle && <span className="ml-inline text-sm font-normal text-muted">· {t("event.allDays")}</span>}
-                    </p>
-                    <p className="text-sm text-brand-foreground">
-                      {tier.price === 0 ? t("event.free") : formatMoney(tier.price, currency)}
-                    </p>
-                    {room <= 0 ? (
-                      <p className="text-sm text-muted">{t("event.soldOut")}</p>
-                    ) : room <= 10 ? (
-                      <p className="text-sm text-warning">{t("event.left", { count: room })}</p>
-                    ) : null}
-                  </div>
-                  <Stepper value={n} min={0} max={room} onChange={(v) => setQty((q) => ({ ...q, [tier.id]: v }))} lessLabel={t("sheet.less")} moreLabel={t("sheet.more")} />
+        {/* WHICH TICKET — each its own card with the round stepper. */}
+        <section className="mb-section flex flex-col gap-tight">
+          <TileLabel>{t("event.whichTicket")}</TileLabel>
+          {offered.map((tier) => {
+            const room = roomFor(tier);
+            const n = qty[tier.id] ?? 0;
+            const bundle = multi && isBundleTier(event, tier);
+            return (
+              <div key={tier.id} className="card-surface flex items-center justify-between gap-comfortable p-comfortable">
+                <div className="min-w-0 flex-1">
+                  <p className="text-md font-semibold leading-snug">
+                    {tier.name}
+                    {bundle && <span className="ml-inline text-sm font-normal text-muted">· {t("event.allDays")}</span>}
+                  </p>
+                  <p className="mt-0.5 text-base font-semibold tabular-nums text-fg">
+                    {tier.price === 0 ? t("event.free") : formatMoney(tier.price, currency)}
+                  </p>
+                  {room <= 0 ? (
+                    <p className="text-sm text-muted">{t("event.soldOut")}</p>
+                  ) : room <= 10 ? (
+                    <p className="text-sm text-warning">{t("event.left", { count: room })}</p>
+                  ) : null}
                 </div>
-              );
-            })}
-          </div>
+                <Stepper variant="round" value={n} min={0} max={room} onChange={(v) => setQty((q) => ({ ...q, [tier.id]: v }))} lessLabel={t("sheet.less")} moreLabel={t("sheet.more")} />
+              </div>
+            );
+          })}
         </section>
 
+        <StickyFoot>
+          <ActionBar
+            docked="panel"
+            tone="ground"
+            summary={<FooterSummary lead={summaryLead([dayTitle, count > 0 ? t("event.summary", { count }) : t("event.pickTickets")])} price={total$} />}
+            secondary={{ label: t("sheet.back"), icon: <ChevronLeft size={20} strokeWidth={2} aria-hidden />, onClick: onClose }}
+            primary={{
+              label: count ? t("event.add", { count }) : t("event.pickTickets"),
+              icon: count ? <Plus size={20} strokeWidth={2.5} aria-hidden /> : undefined,
+              onClick: () => submit(false),
+              disabled: !count,
+            }}
+          />
+        </StickyFoot>
       </div>
-    </Sheet>
+    </SheetShell>
   );
 }

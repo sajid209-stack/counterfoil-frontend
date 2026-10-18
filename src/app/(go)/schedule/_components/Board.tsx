@@ -310,22 +310,29 @@ export function Board({
 
       {/* The key, drawn with the same grounds the board uses, always under
           it — the board scrolls, the key never does. */}
-      <div data-board-foot hidden={hideKey} className="shrink-0 border-t border-line bg-card">
+      <div data-board-foot hidden={hideKey} className="shrink-0 bg-card pb-inline">
       {notice}
-      <ul aria-label={t("board.keyLabel")} className="flex flex-wrap items-center gap-x-tight gap-y-1 px-comfortable py-tight text-sm text-muted">
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden className="flex h-4 w-5 items-center justify-center border border-line bg-card text-muted"><Plus size={11} strokeWidth={3} /></span>
+      {/* One line where it fits, wrapping at the items when it does not. Each
+          item is told apart by SHAPE as well as colour: a plus (free), a stripe
+          (booked), a stripe with a dot (marketplace), hatching (held), plain
+          page colour (cannot be booked). */}
+      <ul aria-label={t("board.keyLabel")} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-comfortable py-1.5 text-sm text-muted">
+        <li className="flex items-center gap-1">
+          <span aria-hidden className="flex h-4 w-4 items-center justify-center border border-line bg-card text-muted"><Plus size={11} strokeWidth={3} /></span>
           {t("board.keyFree")}
         </li>
-        <li className="flex items-center gap-1.5"><span aria-hidden className="h-4 w-5 border-l-[3px] border-l-ember-solid bg-ember-wash" />{t("board.keyBooked")}</li>
-        <li className="flex items-center gap-1.5"><span aria-hidden className="h-4 w-5 border-l-[3px] border-l-market bg-market-wash" />{t("board.keyMarket")}</li>
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden className="flex h-4 w-5 items-center justify-center border border-dashed border-strong" style={{ background: "repeating-linear-gradient(135deg, var(--color-muted-wash) 0 3px, var(--color-card) 3px 6px)" }}>
+        <li className="flex items-center gap-1"><span aria-hidden className="h-4 w-4 border-l-[3px] border-l-ember-solid bg-ember-wash" />{t("board.keyBooked")}</li>
+        <li className="flex items-center gap-1">
+          <span aria-hidden className="flex h-4 w-4 items-center justify-center border-l-[3px] border-l-market bg-market-wash"><span className="size-1.5 rounded-full bg-market" /></span>
+          {t("board.keyMarket")}
+        </li>
+        <li className="flex items-center gap-1">
+          <span aria-hidden className="flex h-4 w-4 items-center justify-center border border-dashed border-strong" style={{ background: "repeating-linear-gradient(135deg, var(--color-muted-wash) 0 3px, var(--color-card) 3px 6px)" }}>
             <Lock size={9} />
           </span>
           {t("board.onHold")}
         </li>
-        <li className="flex items-center gap-1.5"><span aria-hidden className="h-4 w-5 border border-line bg-surface" />{t("board.keyClosed")}</li>
+        <li className="flex items-center gap-1"><span aria-hidden className="h-4 w-4 border border-line bg-surface" />{t("board.keyClosed")}</li>
       </ul>
       </div>
     </div>

@@ -10,6 +10,8 @@ import { useApiQuery } from "@/lib/useApi";
 import { useActiveCounterNow } from "@/lib/activeCounter";
 import { durationOptions, formatDuration, isDealDuration, productDurationPrice } from "@/lib/duration";
 import { formatMoney } from "@/lib/format";
+import { cn } from "@/lib/cn";
+import { GoCard } from "../_components/Tiles";
 
 // BT-14 — field-issued pass. Quick issue on the spot: duration, price and the
 // identifier the product's config asks for ("Plate number"). Not in the grid.
@@ -64,51 +66,54 @@ export default function QuickPassPage() {
 
   if (code) {
     return (
-      <main className="mx-auto flex max-w-md flex-col items-center gap-major px-section py-hero text-center">
-        <CircleCheck size={48} strokeWidth={1.5} className="text-success" />
-        <h1 className="type-h1 text-2xl">{t("passIssuedTitle")}</h1>
-        <div className="w-full rounded-card bg-inverse px-section py-major"><span className="font-mono text-2xl text-inverse-fg">{code}</span></div>
+      <main className="mx-auto flex max-w-md flex-col gap-comfortable px-section py-section">
+        <GoCard className="items-center py-major text-center" bodyClassName="flex flex-col items-center gap-comfortable">
+          <CircleCheck size={48} strokeWidth={1.5} aria-hidden className="text-success" />
+          <h1 className="text-xl font-semibold tracking-title text-fg">{t("passIssuedTitle")}</h1>
+          <span className="break-all font-mono text-2xl text-fg">{code}</span>
+        </GoCard>
         <Button size="lg" fullWidth className="h-13 text-md font-semibold" onClick={() => { setCode(null); setIdentifier(""); }}>{t("issueAnother")}</Button>
       </main>
     );
   }
 
+  const i = durations.indexOf(duration);
+  const prev = i > 0 ? durations[i - 1] : null;
+  const next = i >= 0 && i < durations.length - 1 ? durations[i + 1] : null;
+  const pickDuration = (d: number) => { setDuration(d); setPriceEdit(null); };
+  /* One filled, one quiet: "+" is the stronger move (a longer pass is the
+     usual ask), "−" is the quiet way back. */
+  const stepBtn = "flex size-14 shrink-0 items-center justify-center rounded-full text-xl disabled:opacity-40";
+  const minusCls = cn(stepBtn, "bg-subtle text-muted active:bg-nav-selected");
+  const plusCls = cn(stepBtn, "bg-inverse text-inverse-fg");
+
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
+    <main className="mx-auto flex max-w-md flex-col gap-comfortable px-section py-section">
       <div>
-        <p className="text-sm font-medium text-brand-foreground">{t("gateLabel")}</p>
-        <h1 className="type-h1 mt-tight text-xl">{t("title")}</h1>
-        <p className="type-body mt-tight text-muted">{t("subtitle")}</p>
+        <h1 className="text-xl font-semibold tracking-title text-fg">{t("title")}</h1>
+        <p className="mt-inline text-sm text-muted">{t("subtitle")}</p>
       </div>
 
-      <div className="flex flex-col gap-tight">
-        <span className="text-sm font-medium text-muted">{t("duration")}</span>
-          {/* The till's stepper, not a row of chips — same control for the same
-              decision, and it walks the increment the booking is configured
-              with instead of a list this screen invented. */}
-          {(() => {
-            const i = durations.indexOf(duration);
-            const prev = i > 0 ? durations[i - 1] : null;
-            const next = i >= 0 && i < durations.length - 1 ? durations[i + 1] : null;
-            const pick = (d: number) => { setDuration(d); setPriceEdit(null); };
-            return (
-              <div className="flex items-center gap-tight">
-                <button type="button" aria-label={t("shorter")} disabled={prev == null} onClick={() => prev != null && pick(prev)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-xl disabled:opacity-40 active:bg-muted-wash">−</button>
-                <div className="flex min-w-0 flex-1 flex-col items-center justify-center card-surface py-tight">
-                  <span className="text-md font-medium">{formatDuration(duration)}</span>
-                  <span className="text-sm tabular-nums text-muted">
-                    {formatMoney(enginePrice, "BDT")}
-                    {cfg && isDealDuration(cfg, duration) ? ` · ${t("deal")}` : ""}
-                  </span>
-                </div>
-                <button type="button" aria-label={t("longer")} disabled={next == null} onClick={() => next != null && pick(next)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-xl disabled:opacity-40 active:bg-muted-wash">+</button>
-              </div>
-            );
-          })()}
-      </div>
+      <GoCard title={t("duration")}>
+        {/* The till's stepper, not a row of chips — same control for the same
+            decision, and it walks the increment the booking is configured
+            with instead of a list this screen invented. */}
+        <div className="flex items-center gap-tight">
+          <button type="button" aria-label={t("shorter")} disabled={prev == null} onClick={() => prev != null && pickDuration(prev)} className={minusCls}>−</button>
+          <div className="flex min-w-0 flex-1 flex-col items-center justify-center py-tight">
+            <span className="text-lg font-semibold">{formatDuration(duration)}</span>
+            {/* The price is stated once, in the field below. */}
+            {cfg && isDealDuration(cfg, duration) && <span className="text-sm text-muted">{t("deal")}</span>}
+          </div>
+          <button type="button" aria-label={t("longer")} disabled={next == null} onClick={() => next != null && pickDuration(next)} className={plusCls}>+</button>
+        </div>
+      </GoCard>
 
-      <FormField label={t("priceLabel")} variant="number" value={price} onChange={(e) => setPriceEdit(e.target.value)} help={priceEdit == null ? t("priceHelp") : undefined} />
-      <FormField label={idLabel} placeholder={idLabel} value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
+      <GoCard>
+        <FormField label={t("priceLabel")} variant="number" value={price} onChange={(e) => setPriceEdit(e.target.value)} />
+        {priceEdit == null && <p className="-mt-tight text-sm text-muted">{t("priceHelp")}</p>}
+        <FormField label={`${idLabel} (${t("optional")})`} placeholder={idLabel} value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
+      </GoCard>
 
       <Button size="lg" fullWidth className="h-13 text-md font-semibold" loading={issuing} onClick={issue}>{t("issuePass", { amount: formatMoney(Math.round((parseFloat(price) || 0) * 100)) })}</Button>
     </main>
