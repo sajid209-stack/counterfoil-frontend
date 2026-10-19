@@ -1321,7 +1321,13 @@
     "whichNoneChosen": "অন্তত একটি বুকিং বেছে নিন, নয়তো সবকিছু দেখান।",
     "add": "স্টোরফ্রন্ট যোগ করুন",
     "editorDescriptionAt": "{venue}-এ। আসার আগে গ্রাহক যা দেখবেন।",
-    "moreTitle": "যোগাযোগ ও লিংক"
+    "moreTitle": "যোগাযোগ ও লিংক",
+    "accentReplacedByStyle": "নিচে লুক অ্যান্ড ফিল-এ প্রাইমারি রং বাছলে এটি বদলে যাবে।",
+    "lookAndFeelTitle": "লুক অ্যান্ড ফিল",
+    "lookAndFeelDesc": "এই স্টোরফ্রন্টের রং, ফন্ট, আকৃতি ও লেআউট।",
+    "previewWhat": "কী দেখবেন",
+    "previewVenue": "স্টোরফ্রন্ট",
+    "previewBooking": "একটি বুকিং পেজ"
   },
   "attention": {
     "cashOnly": "শুধু নগদ নেওয়া যাচ্ছে",

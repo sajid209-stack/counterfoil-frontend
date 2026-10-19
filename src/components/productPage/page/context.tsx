@@ -3,6 +3,7 @@
 import { createContext, useContext } from "react";
 import type { EventRecord } from "@/lib/api/events";
 import type { Location, PageSectionId, Product, ProductPage } from "@/lib/api/types";
+import type { ResolvedStyle } from "@/lib/pageStyle/resolve";
 import type { usePageLabels } from "../pageText";
 import type { LookDef } from "./theme";
 
@@ -21,6 +22,12 @@ export interface PageCtx {
   /** `pageOf(product)`: the design (look, sections, countdown…). */
   page: ProductPage;
   look: LookDef;
+  /** The resolved style (docs/page-style.md §2) — the ONE source for every
+   *  colour, font, shape and layout control on the page. Read its `--ps-*`
+   *  vars / `data-ps-*` attrs (already on the root) rather than the stored
+   *  `PageStyle` fields; `style.ctaLabel` / `.priceLabel` / `.badge` are the
+   *  three word overrides read directly off it. */
+  style: ResolvedStyle;
   /** Every label the page needs (`usePageLabels`). */
   labels: ReturnType<typeof usePageLabels>;
   /** Good-to-know lines from the booking's policies. */

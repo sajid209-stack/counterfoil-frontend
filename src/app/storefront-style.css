@@ -1,0 +1,202 @@
+/* Storefront page style (docs/page-style.md, Task B).
+ *
+ * The resolved style's CSS variables (`--ps-*`, set by
+ * `src/lib/pageStyle/resolve.ts` → `styleRootProps`) are mapped here onto the
+ * app's own semantic tokens, scoped to `.sf[data-ps-mode]` — the attribute
+ * selector gives this block higher specificity than the plain `.sf` rules in
+ * globals.css (which this file is `@import`ed ABOVE, so it would otherwise
+ * lose the cascade). A storefront with no style resolves to the SAME values
+ * the old hardcoded `.sf` rules used, so an unstyled storefront is visually
+ * unchanged.
+ */
+
+.sf[data-ps-mode] {
+  /* ground */
+  --color-surface: var(--ps-bg);
+  --color-card: var(--ps-card);
+  --color-chrome: var(--ps-card);
+  --color-sheet: var(--ps-card);
+  --color-fg: var(--ps-fg);
+  --color-fg-secondary: var(--ps-fg);
+  --color-muted: var(--ps-muted);
+  --color-line: var(--ps-line);
+  --color-strong: var(--ps-line);
+  --color-hairline: var(--ps-line);
+  --color-subtle: var(--ps-panel);
+  --color-muted-wash: var(--ps-panel);
+  --color-offtime: var(--ps-panel);
+
+  /* primary */
+  --color-ember: var(--ps-accent);
+  --color-ember-solid: var(--ps-fill);
+  --color-ember-hover: var(--ps-fill);
+  --color-ember-active: var(--ps-fill);
+  --color-ember-wash: var(--ps-soft);
+  --color-on-solid: var(--ps-on-fill);
+  --color-ring: var(--ps-accent);
+  --color-brand-foreground: var(--ps-ink);
+
+  /* secondary — tags, chips, highlights, the hero badge */
+  --color-market: var(--ps-secondary);
+  --color-market-wash: var(--ps-secondary-soft);
+
+  /* shape */
+  --radius-card: var(--ps-radius-card);
+  --radius-control: var(--ps-radius-control);
+  --radius-media: var(--ps-radius-media);
+
+  background: var(--ps-bg);
+  color: var(--ps-fg);
+  font-family: var(--ps-font-body);
+}
+
+/* ── Type: headings take the heading face/weight/case/scale, body stays the
+   page font. Weight and transform fall back to the element's own when the
+   operator hasn't chosen one (the vars are only SET when chosen). */
+.sf[data-ps-mode] :where(h1, h2, h3, h4, .sf-heading) {
+  font-family: var(--ps-font-heading);
+  font-weight: var(--ps-heading-weight, inherit);
+  text-transform: var(--ps-heading-transform, none);
+}
+/* Scale is applied to the heading's OWN px/rem base (not `1em`, which is
+ * relative to the PARENT's size and would scale every heading by whatever its
+ * container happens to be set to). Each selector pairs the tag with the
+ * Tailwind size utility the component already carries, so the base comes from
+ * the same scale Tailwind itself uses. */
+.sf[data-ps-mode] .sf-hero-title { font-size: calc(1.875rem * var(--ps-scale)); }
+@media (min-width: 640px) {
+  .sf[data-ps-mode] .sf-hero-title { font-size: calc(2.25rem * var(--ps-scale)); }
+}
+@media (min-width: 1024px) {
+  .sf[data-ps-mode] .sf-hero-title { font-size: calc(2.5rem * var(--ps-scale)); }
+}
+.sf[data-ps-mode] .sf-hero-intro { font-size: calc(1rem * var(--ps-scale)); }
+@media (min-width: 640px) {
+  .sf[data-ps-mode] .sf-hero-intro { font-size: calc(1.125rem * var(--ps-scale)); }
+}
+.sf[data-ps-mode] h2.text-2xl { font-size: calc(1.5rem * var(--ps-scale)); }
+@media (min-width: 640px) {
+  .sf[data-ps-mode] h2.text-2xl.sm\:text-3xl { font-size: calc(1.875rem * var(--ps-scale)); }
+}
+.sf[data-ps-mode] h3.text-lg { font-size: calc(1.125rem * var(--ps-scale)); }
+
+/* ── Container width ───────────────────────────────────────────────────── */
+.sf[data-ps-mode] .sf-wrap { max-width: var(--ps-container); }
+
+/* ── Section gap / dividers ───────────────────────────────────────────── */
+.sf[data-ps-mode] .sf-section { padding-top: var(--ps-gap); }
+@media (min-width: 1024px) {
+  .sf[data-ps-mode] .sf-section { padding-top: var(--ps-gap-lg); }
+}
+.sf[data-ps-mode][data-ps-dividers="line"] .sf-section:not(:first-child) {
+  border-top: 1px solid var(--ps-line);
+}
+
+/* ── Buttons (docs/page-style.md §5) ──────────────────────────────────── */
+.sf[data-ps-corners="sharp"] .sf-btn-primary,
+.sf[data-ps-corners="sharp"] .sf-btn-secondary,
+.sf[data-ps-corners="round"] .sf-btn-primary,
+.sf[data-ps-corners="round"] .sf-btn-secondary {
+  /* Only when a shape was chosen: "soft" keeps the button's own corner. */
+  border-radius: var(--ps-radius-control);
+}
+.sf[data-ps-mode][data-ps-button="outline"] .sf-btn-primary {
+  background: transparent;
+  color: var(--ps-ink);
+  border: 1.5px solid var(--ps-ink);
+}
+.sf[data-ps-mode][data-ps-button="pill"] .sf-btn-primary,
+.sf[data-ps-mode][data-ps-button="pill"] .sf-btn-secondary {
+  border-radius: 999px;
+}
+.sf[data-ps-mode][data-ps-button="underline"] .sf-btn-primary {
+  background: transparent;
+  color: var(--ps-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+  box-shadow: none;
+}
+
+/* ── Cards (docs/page-style.md §5) ────────────────────────────────────── */
+.sf[data-ps-mode] .sf-card { border-radius: var(--ps-radius-card); }
+.sf[data-ps-mode][data-ps-card="flat"] .sf-card {
+  background: var(--ps-panel);
+  border-color: transparent;
+  box-shadow: none;
+}
+.sf[data-ps-mode][data-ps-card="bordered"] .sf-card {
+  background: var(--ps-card);
+  border: 1px solid var(--ps-line);
+  box-shadow: none;
+}
+.sf[data-ps-mode][data-ps-card="shadow"] .sf-card {
+  background: var(--ps-card);
+  border-color: transparent;
+  box-shadow: var(--elevation-2, 0 8px 24px -8px rgb(0 0 0 / 0.18));
+}
+.sf[data-ps-mode][data-ps-card="tinted"] .sf-card {
+  background: var(--ps-secondary-soft);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* ── Hero height cap (cover) ──────────────────────────────────────────── */
+.sf[data-ps-mode][data-ps-hero="cover"] .sf-hero-media {
+  max-height: var(--ps-hero-h);
+}
+@media (min-width: 1024px) {
+  .sf[data-ps-mode][data-ps-hero="cover"] .sf-hero-media { max-height: var(--ps-hero-h-lg); }
+}
+.sf[data-ps-mode] .sf-hero-scrim {
+  background: rgb(0 0 0 / var(--ps-overlay));
+}
+
+/* ── Texture: a subtle overlay on the ground only ─────────────────────── */
+.sf[data-ps-mode][data-ps-texture="grain"] .sf-ground::before,
+.sf[data-ps-mode][data-ps-texture="dots"] .sf-ground::before,
+.sf[data-ps-mode][data-ps-texture="lines"] .sf-ground::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+.sf[data-ps-mode][data-ps-texture="grain"] .sf-ground::before {
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.sf[data-ps-mode][data-ps-texture="dots"] .sf-ground::before {
+  opacity: 0.06;
+  background-image: radial-gradient(currentColor 1px, transparent 1px);
+  background-size: 16px 16px;
+  color: var(--ps-fg);
+}
+.sf[data-ps-mode][data-ps-texture="lines"] .sf-ground::before {
+  opacity: 0.04;
+  background-image: repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 24px);
+  color: var(--ps-fg);
+}
+
+/* ── Image tone ────────────────────────────────────────────────────────── */
+.sf[data-ps-mode][data-ps-tone="warm"] .sf-photo { filter: sepia(0.18) saturate(1.1); }
+.sf[data-ps-mode][data-ps-tone="mono"] .sf-photo { filter: grayscale(1) contrast(1.05); }
+.sf[data-ps-mode][data-ps-tone="duotone"] .sf-photo { filter: grayscale(1); }
+.sf[data-ps-mode][data-ps-tone="duotone"] :has(> .sf-photo) { position: relative; }
+.sf[data-ps-mode][data-ps-tone="duotone"] :has(> .sf-photo)::after {
+  content: "";
+  opacity: 0.55;
+  position: absolute;
+  inset: 0;
+  background: var(--ps-accent);
+  mix-blend-mode: color;
+  pointer-events: none;
+}
+
+/* ── Icon stroke ───────────────────────────────────────────────────────── */
+.sf[data-ps-icons="thin"] svg.lucide { stroke-width: 1.25; }
+.sf[data-ps-icons="bold"] svg.lucide { stroke-width: 2.25; }
+
+/* ── Dark mode: shared controls (date picker, inputs, ticket card) stay
+   readable — they already take their colours from the tokens above. */
+.sf[data-ps-mode="dark"] { color-scheme: dark; }

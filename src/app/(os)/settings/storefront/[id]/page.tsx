@@ -33,6 +33,8 @@ import {
 import { FoldOnPhone } from "../../_components/FoldOnPhone";
 import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, Switch, controlCls } from "../../_components/SettingsKit";
 import { ACCENT_COLORS, COLOR_DOT } from "../_components/ColorPicker";
+import { StylePanel, styleErrors } from "@/components/pageStyle/StylePanel";
+import type { PageStyle } from "@/lib/api/types";
 
 interface Draft {
   name: string;
@@ -45,6 +47,7 @@ interface Draft {
   heroImage: string | null;
   featured: string[];
   links: StorefrontLink[];
+  style: PageStyle;
 }
 
 type Device = "desktop" | "phone";
@@ -71,6 +74,7 @@ const fromRecord = (s: Storefront): Draft => ({
   heroImage: s.heroImage ?? null,
   featured: [...s.featured],
   links: s.links.map((l) => ({ ...l })),
+  style: { ...(s.style ?? {}) },
 });
 
 /**
@@ -116,6 +120,7 @@ export default function StorefrontEditorPage() {
      size and a desktop at a third, so it opens on the phone; in the sheet
      there is the whole width, so it opens on the desktop. */
   const [picked, setPicked] = useState<Device | null>(null);
+  const [previewOn, setPreviewOn] = useState<"venue" | "page">("venue");
   const [previewOpen, setPreviewOpen] = useState(false);
   const now = useMemo(() => demoNow(), []);
   /* Side by side only where both fit. Settings has its own menu beside the
@@ -188,6 +193,7 @@ export default function StorefrontEditorPage() {
   const label = storefrontName({ ...record, name: form.name.trim() || undefined }, location);
   const linkErrors = form.links.map(linkErr);
   const linksInvalid = linkErrors.some((e) => e.label || e.url);
+  const styleInvalid = styleErrors(form.style).length > 0;
 
   /** What the page will actually show, from the draft rather than the record,
    *  so the count under the chooser answers for what is on screen. */
@@ -230,6 +236,7 @@ export default function StorefrontEditorPage() {
       heroImage: form.heroImage,
       featured: form.featured,
       links: form.links.map((l) => ({ ...l, label: l.label.trim(), url: l.url.trim() })),
+      style: form.style,
     });
     setSaving(false);
     if (!res.ok) {
@@ -281,7 +288,12 @@ export default function StorefrontEditorPage() {
     heroImage: form.heroImage,
     featured: form.featured,
     links: form.links.filter((_, i) => !linkErrors[i].label && !linkErrors[i].url),
+    style: styleInvalid ? (record.style ?? {}) : form.style,
   };
+  /* "A booking page": the same preview, opened on one of this storefront's
+     bookings, so the brand can be judged where most customers land. */
+  const pageTarget = showing[0]?.id;
+  const previewKey = previewOn === "page" && pageTarget ? `page-${pageTarget}` : "venue";
   const preview = (d: Device) => (
     <PreviewFrame width={DEVICE[d].width} height={DEVICE[d].height} title={t("storefront.previewFrame", { name: label })}>
       <StorefrontPreviewApp
@@ -292,9 +304,24 @@ export default function StorefrontEditorPage() {
         resources={resourcesQ.data?.data ?? []}
         team={staffQ.data?.data ?? []}
         now={now}
+        key={previewKey}
+        startOn={previewOn === "page" ? pageTarget : undefined}
       />
     </PreviewFrame>
   );
+  const viewSwitch = pageTarget ? (
+    <SegmentedControl
+      size="sm"
+      className="shrink-0 self-start"
+      aria-label={t("storefront.previewWhat")}
+      value={previewOn}
+      onChange={(v) => setPreviewOn(v as "venue" | "page")}
+      options={[
+        { value: "venue", label: t("storefront.previewVenue") },
+        { value: "page", label: t("storefront.previewBooking") },
+      ]}
+    />
+  ) : null;
   const deviceSwitch = (
     <SegmentedControl
       size="sm"
@@ -441,7 +468,7 @@ export default function StorefrontEditorPage() {
                 />
               )}
             </SettingRow>
-            <SettingRow label={t("storefront.accentLabel")} description={t("storefront.accentDesc")} labelFor={false}>
+            <SettingRow label={t("storefront.accentLabel")} description={`${t("storefront.accentDesc")} ${t("storefront.accentReplacedByStyle")}`} labelFor={false}>
               {() => (
                 <div role="group" aria-label={t("storefront.accentLabel")} className="flex flex-wrap gap-tight">
                   {[null, ...ACCENT_COLORS].map((c) => (
@@ -617,7 +644,13 @@ export default function StorefrontEditorPage() {
             <p className="px-card pb-comfortable text-sm text-muted">{ts("editorLinkOnlyNote")}</p>
           </SettingsSection>
 
-          <SaveBar dirty={dirty} saving={saving} invalid={!!slugErr || !!nameErr || linksInvalid} onSave={save} onDiscard={() => setDraft(null)} />
+          <SettingsSection title={t("storefront.lookAndFeelTitle")} description={t("storefront.lookAndFeelDesc")}>
+            <div className="px-card py-section">
+              <StylePanel value={form.style} onChange={(s) => set({ style: s })} scope="storefront" />
+            </div>
+          </SettingsSection>
+
+          <SaveBar dirty={dirty} saving={saving} invalid={!!slugErr || !!nameErr || linksInvalid || styleInvalid} onSave={save} onDiscard={() => setDraft(null)} />
         </div>
 
         {wide && (
@@ -627,7 +660,10 @@ export default function StorefrontEditorPage() {
                 <h2 className="text-md font-semibold text-fg">{t("storefront.previewTitle")}</h2>
                 {previewState}
               </div>
-              {deviceSwitch}
+              <div className="flex flex-wrap gap-tight">
+                {viewSwitch}
+                {deviceSwitch}
+              </div>
             </div>
             <div className="rounded-card bg-muted-wash p-tight">
               <div className={cn("mx-auto overflow-hidden rounded-control", device === "phone" && "max-w-[390px]")}>{preview(device)}</div>
@@ -645,7 +681,10 @@ export default function StorefrontEditorPage() {
           lead={previewState}
         >
           <div className="flex flex-col gap-comfortable p-card">
-            {md && deviceSwitch}
+            <div className="flex flex-wrap gap-tight">
+              {viewSwitch}
+              {md && deviceSwitch}
+            </div>
             {previewOpen && <div className="overflow-hidden rounded-control">{preview(md ? device : "phone")}</div>}
           </div>
         </Sheet>

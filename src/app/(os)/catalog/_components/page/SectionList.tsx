@@ -24,6 +24,11 @@ import {
   Users,
   Hash,
   Handshake,
+  Quote,
+  UserRound,
+  ListOrdered,
+  AlignLeft,
+  Megaphone,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui";
@@ -48,6 +53,11 @@ const ICON: Record<PageSectionId, LucideIcon> = {
   tickets: Ticket,
   venue: MapPin,
   faq: HelpCircle,
+  quote: Quote,
+  host: UserRound,
+  steps: ListOrdered,
+  text: AlignLeft,
+  cta: Megaphone,
 };
 
 /**

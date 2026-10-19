@@ -51,6 +51,11 @@ export const ALL_PAGE_SECTIONS: PageSectionId[] = [
   "faq",
   "venue",
   "sponsors",
+  "quote",
+  "host",
+  "steps",
+  "text",
+  "cta",
   "tickets",
 ];
 

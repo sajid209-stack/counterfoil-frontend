@@ -119,8 +119,9 @@ export const hasTicketOptions = (ctx: Pick<PageCtx, "sections" | "ev" | "product
 
 /** The primary action's words: "Get tickets" where there are tickets to choose
  *  between or a date to be at, "Book now" for a single thing to book. */
-export function usePrimaryLabel(ctx: Pick<PageCtx, "ev" | "product" | "labels">): string {
+export function usePrimaryLabel(ctx: Pick<PageCtx, "ev" | "product" | "labels" | "style">): string {
   const t = useTranslations("storefront");
+  if (ctx.style?.ctaLabel) return ctx.style.ctaLabel;
   const eventLike = ctx.ev.tiers.length > 1 || isEventProduct(ctx.product);
   return eventLike ? ctx.labels.getTickets : t("pg.shell.bookNow");
 }

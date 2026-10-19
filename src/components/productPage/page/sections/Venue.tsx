@@ -20,7 +20,7 @@ export function VenueSection() {
 
   const directions = (
     <>
-      <Navigation size={18} strokeWidth={2} aria-hidden />
+      <Navigation size={18} strokeWidth={ctx.style.stroke} aria-hidden />
       {t("pg.sec.getDirections")}
     </>
   );

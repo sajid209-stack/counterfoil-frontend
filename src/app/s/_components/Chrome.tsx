@@ -12,7 +12,7 @@ import { useOptionalStorefrontFlow, useStorefrontFlow } from "@/lib/storefront/F
 import { SfRoot } from "./sf";
 
 /** The container every storefront section sits in. */
-export const WRAP = "mx-auto w-full max-w-[1200px] px-gutter";
+export const WRAP = "sf-wrap mx-auto w-full max-w-[1200px] px-gutter";
 
 /**
  * The accent a venue paints its page in. Kept as exports because the editor's
@@ -159,7 +159,7 @@ function FullChrome({
   const basketLabel = t("basket.ariaLabel", { count: flow.itemCount });
 
   return (
-    <SfRoot accent={accent ?? storefront.accent} className="flex flex-col">
+    <SfRoot storefront={accent ? { accent: storefront.accent, style: { ...storefront.style, primary: accent } } : storefront} className="flex flex-col">
       <header className={cn(bleed ? "relative" : "sticky top-0", "z-50 border-b border-hairline bg-card backdrop-blur")} data-sf-header>
         <div className={cn(WRAP, "flex h-16 items-center gap-section")}>
           {preview ? (
@@ -368,7 +368,7 @@ function LinkChrome({ storefront, location, poweredBy, showMore, accent, bleed, 
   const moreCls = "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-md px-comfortable text-base font-medium text-brand-foreground underline-offset-4 hover:underline";
 
   return (
-    <SfRoot accent={accent ?? storefront.accent} className="flex flex-col">
+    <SfRoot storefront={accent ? { accent: storefront.accent, style: { ...storefront.style, primary: accent } } : storefront} className="flex flex-col">
       <header className={cn(bleed ? "relative" : "sticky top-0", "z-50 border-b border-hairline bg-card backdrop-blur")} data-sf-header data-sf-link-header>
         <div className={cn(WRAP, "flex h-16 items-center gap-section")}>
           {moreHref && !inert ? (

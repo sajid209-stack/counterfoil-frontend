@@ -219,6 +219,16 @@ export function sectionFill(id: PageSectionId, product: Product, page: ProductPa
       return has(!!product.event?.venueName?.trim() || product.locationIds.length > 0);
     case "sponsors":
       return has(page.sponsors.some((s) => s.name.trim()));
+    case "quote":
+      return has((page.blocks?.quotes ?? []).some((q) => q.text.trim() && q.who.trim()));
+    case "host":
+      return has(!!page.blocks?.host?.name.trim());
+    case "steps":
+      return has((page.blocks?.steps?.items ?? []).some((i) => i.title.trim()));
+    case "text":
+      return has(!!page.blocks?.text?.body.trim());
+    case "cta":
+      return has(!!page.blocks?.cta?.title.trim());
     default:
       return "written";
   }

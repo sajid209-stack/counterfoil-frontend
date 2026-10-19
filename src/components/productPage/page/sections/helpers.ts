@@ -56,6 +56,31 @@ export const sponsorsOf = (ctx: PageCtx) => ctx.ev.sponsors.filter((s) => clean(
 export const faqOf = (ctx: PageCtx) => ctx.ev.faq.filter((f) => clean(f.q) && clean(f.a));
 export const videoOf = (ctx: PageCtx) => parseEventVideo(ctx.ev.videoUrl);
 
+/* ── the five style blocks (docs/page-style.md §1, §7) ──────────────────── */
+
+export const quotesOf = (ctx: PageCtx) => (ctx.page.blocks?.quotes ?? []).filter((q) => clean(q.text) && clean(q.who));
+
+export function hostOf(ctx: PageCtx) {
+  const h = ctx.page.blocks?.host;
+  return h && clean(h.name) ? h : null;
+}
+
+export function stepsOf(ctx: PageCtx) {
+  const s = ctx.page.blocks?.steps;
+  const items = (s?.items ?? []).filter((i) => clean(i.title));
+  return items.length > 0 ? { title: s?.title ? clean(s.title) : "", items } : null;
+}
+
+export function textBlockOf(ctx: PageCtx) {
+  const b = ctx.page.blocks?.text;
+  return b && clean(b.body) ? b : null;
+}
+
+export function ctaOf(ctx: PageCtx) {
+  const c = ctx.page.blocks?.cta;
+  return c && clean(c.title) ? c : null;
+}
+
 /* ── time ────────────────────────────────────────────────────────────── */
 
 const minutesOf = (at?: string): number | null => {
@@ -67,6 +92,9 @@ const minutesOf = (at?: string): number | null => {
 export const timeLabel = (at?: string): string => {
   const v = clean(at);
   if (!v) return "";
+  /* A time already written with AM/PM is shown as written; only a bare
+     24-hour "19:00" is formatted (it once turned "7:00 PM" into 7:00 AM). */
+  if (/[ap]\.?m\.?$/i.test(v)) return v;
   return minutesOf(v) === null ? v : formatClock(v);
 };
 

@@ -266,6 +266,8 @@ const PAGES: Record<string, { slug: string; page: ProductPage }> = {
     slug: "matcha-whisking",
     page: page({
       look: "arts", accent: "#4F7A3A",
+      /* Follows the studio brand; only the hero and the rules between sections are its own. */
+      styleSource: "custom", style: { hero: "collage", dividers: "line", badge: "Only 12 seats" },
       tagline: "Ninety slow minutes with a bamboo whisk.",
       sections: ["hero", "highlights", "about", "schedule", "included", "gallery", "faq", "know", "venue", "tickets"],
       highlights: [
@@ -290,6 +292,7 @@ const PAGES: Record<string, { slug: string; page: ProductPage }> = {
     slug: "sushi-making",
     page: page({
       look: "standard",
+      /* The studio brand, untouched — what most of their pages would be. */
       tagline: "Roll it, slice it, eat it.",
       sections: ["hero", "about", "included", "gallery", "faq", "know", "venue", "tickets"],
       faq: [
@@ -302,6 +305,8 @@ const PAGES: Record<string, { slug: string; page: ProductPage }> = {
     slug: "tea-tasting",
     page: page({
       look: "travel",
+      styleSource: "custom",
+      style: { palette: "sand", primary: "#8a5a2b", secondary: "#3d6b5a", background: "#fbf6ee", surface: "#fffaf2", text: "#2d2116", headingFont: "cormorant", bodyFont: "lora", headingWeight: 600, typeScale: "large", corners: "soft", buttonStyle: "outline", cardStyle: "bordered", hero: "editorial", width: "narrow", dividers: "line", imageTone: "warm", iconStroke: "thin", ctaLabel: "Save a seat" },
       tagline: "Six teas, five countries, one long table.",
       sections: ["hero", "about", "lineup", "included", "gallery", "faq", "know", "venue", "tickets"],
       lineup: [
@@ -319,6 +324,8 @@ const PAGES: Record<string, { slug: string; page: ProductPage }> = {
     slug: "social-night",
     page: page({
       look: "nightlife",
+      styleSource: "custom",
+      style: { preset: "night", palette: "night-market", primary: "#ff6b35", secondary: "#ffd166", background: "#121212", surface: "#1c1c1c", text: "#f5f5f5", headingFont: "syne", bodyFont: "inter", headingWeight: 700, corners: "round", buttonStyle: "pill", cardStyle: "tinted", hero: "cover", heroHeight: "tall", overlay: 55, gallery: "strip", badge: "Every Thursday", ctaLabel: "Get on the list" },
       tagline: "Come alone. Leave with people.",
       sections: ["hero", "countdown", "stats", "about", "schedule", "gallery", "faq", "venue", "tickets"],
       stats: [
@@ -343,6 +350,8 @@ const PAGES: Record<string, { slug: string; page: ProductPage }> = {
     slug: "doers-pass",
     page: page({
       look: "entertainment",
+      styleSource: "custom",
+      style: { palette: "clay", primary: "#a8462a", secondary: "#2f5d62", background: "#faf5ef", surface: "#ffffff", text: "#2b1d16", headingFont: "archivo-black", bodyFont: "plex", headingCase: "upper", typeScale: "compact", corners: "sharp", buttonStyle: "solid", cardStyle: "flat", hero: "text", spacing: "tight", texture: "dots", iconStroke: "bold", badge: "5 workshops, one price", ctaLabel: "Buy the pass" },
       tagline: "Five workshops. Ninety days. Your pace.",
       sections: ["hero", "stats", "highlights", "about", "faq", "know", "tickets"],
       stats: [
@@ -361,6 +370,8 @@ const PAGES: Record<string, { slug: string; page: ProductPage }> = {
     slug: "private-team-workshop",
     page: page({
       look: "business",
+      styleSource: "custom",
+      style: { preset: "editorial", palette: "paper", primary: "#161616", secondary: "#c2410c", background: "#ffffff", surface: "#f6f6f4", text: "#161616", headingFont: "instrument", bodyFont: "inter", headingWeight: 400, typeScale: "large", corners: "sharp", buttonStyle: "underline", cardStyle: "flat", hero: "split", width: "narrow", dividers: "line", imageTone: "mono", iconStroke: "thin", ctaLabel: "Book your team" },
       tagline: "The whole studio, for your people.",
       sections: ["hero", "stats", "highlights", "about", "included", "gallery", "faq", "know", "venue", "tickets"],
       stats: [
@@ -402,6 +413,10 @@ export const doersStorefronts: Storefront[] = [
       { id: "sfl_doers_fb", label: "Find us on Facebook", url: "https://www.facebook.com/profile.php?id=61592627544790" },
     ],
     accent: "green",
+    heroImage: "/demo/doers/social-1.jpg",
+    /* The studio's brand: warm paper, a matcha green and a terracotta, set in
+       Fraunces over DM Sans. Every page follows it unless it says otherwise. */
+    style: { primary: "#3f6b35", secondary: "#c2703d", background: "#f7f3ea", surface: "#fffdf8", text: "#1f2a1c", headingFont: "fraunces", bodyFont: "dm-sans", headingWeight: 500, corners: "soft", buttonStyle: "pill", cardStyle: "bordered", hero: "split", texture: "grain", imageTone: "warm" },
     createdAt: T,
     updatedAt: T,
   },

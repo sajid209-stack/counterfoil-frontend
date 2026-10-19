@@ -46,7 +46,7 @@ export function MobileBookBar() {
               <p className="tnum truncate text-[20px] font-bold leading-6" style={{ color: "var(--pg-fg)" }}>
                 {price > 0 && sum.many && (
                   <span className="mr-1.5 text-[13px] font-medium" style={{ color: muted }}>
-                    {ctx.labels.from}
+                    {ctx.style.priceLabel ?? ctx.labels.from}
                   </span>
                 )}
                 {price === 0 ? ctx.labels.free : formatPriceShort(price)}

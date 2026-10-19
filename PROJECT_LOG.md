@@ -18355,3 +18355,56 @@ Owner, with a screenshot of the Finances phone cards: remove the info buttons an
 - "Available balance" did not fit a 320px card beside its icon, so a phone shows the short label "Available" (`finances.available.short`, en and bn).
 - The unused `PhoneInfo` sheet and its `Sheet` import were removed.
 - Verified: no label cut at 390 and 320, English and Bangla; finances 124 at 390 and 147 at 1440. The phone checks now assert no info button and only the label and figure on each card; the range is checked on the table's date button.
+
+## Page style: storefronts and product pages an operator can make their own (2026-10-19)
+
+Owner: choose fonts and much more from OS, so public pages stop looking AI-made
+or templated; focus on the product page; primary and secondary colours and
+more; both the storefront and product pages; keep where things are edited; no
+excess whitespace. Spec: `docs/page-style.md`.
+
+- **One model, one reader.** `PageStyle` (types.ts) holds colours (primary,
+  secondary, background, cards, text), type (heading and body font, weight,
+  size, capitals), shape (corners, buttons, cards), layout (hero, height,
+  photo darkening, width, spacing, dividers, booking panel, gallery), details
+  (texture, photo tone, icon weight) and words (main button, price label, hero
+  badge). `Storefront.style` is a venue's brand; `ProductPage.styleSource`
+  "brand" (default) or "custom" with its own `style` layered over it.
+  `src/lib/pageStyle/resolve.ts` is the only reader: it merges look → brand →
+  page, enforces 4.5:1 for text, button labels, primary and secondary as text,
+  and emits `--ps-*` variables and `data-ps-*` attributes. **A record with no
+  style resolves to exactly the old values** (unit-checked for all seven looks
+  and the storefront).
+- **21 curated fonts** (`fontMeta.ts` data, `fonts.ts` loaders, `preload:false`,
+  Bengali falls back to Hind Siliguri), 11 tried pairings, 12 palettes and 6
+  complete presets (studio, editorial, night, bright, journal, bold), each
+  differing in type, shape and layout, not only colour.
+- **Five new blocks** for product pages: quote, host, steps, text, call-to-action
+  (`ProductPage.blocks`), with editors in the Page tab.
+- **Editors.** Settings → Storefront → a storefront has "Look and feel" (the
+  shared `components/pageStyle/StylePanel`); an unreadable text colour is
+  refused in words and blocks Save. Its preview gained "Storefront | A booking
+  page". Catalog → a booking → Page has "Use the storefront's style /
+  Customise for this page" with Reset.
+- **Renderers.** Product pages: all controls, plus collage and text heroes and
+  an inline booking panel. Storefront: all applicable controls and five hero
+  layouts; a photo-led hero with no cover takes the first booking photo.
+- **Doers Club demo**: a studio brand (warm paper, matcha green, Fraunces over
+  DM Sans, pill buttons, warm photos, a cover photo) and six pages styled
+  differently (Matcha collage on the brand, Sushi plain brand, Tea journal,
+  Social Night night, Pass bold text-hero, Private team editorial).
+- Dev-only review hook: `?ps=<preset id | url-encoded PageStyle>` on `/b/…` and
+  `/s/…` (never in production).
+
+Fixed along the way: a programme time already written "7:00 PM" was shown as
+7:00 AM; `next/font` rejects spread options (pages failed to compile).
+
+Verified: resolver identity and contrast checks; production build (105 pages);
+40 route loads at 1440 and 390 with no console errors or sideways scroll; the
+storefront editor flow 8/8 and catalog customise 3/3 on the production build;
+all six presets reviewed by screenshot at 1440 and 390 for whitespace.
+`tsc`, `eslint` on every touched file, `lint:tokens` and i18n parity clean.
+
+Open: the older standing harness scripts are not on this machine; the Bangla
+for the new strings is a draft; preset cards and shape/layout choices are
+labelled chips rather than drawn diagrams.

@@ -48,7 +48,7 @@ export function HighlightsSection() {
                 style={{ background: "var(--pg-soft)", color: "var(--pg-ink)" }}
                 aria-hidden
               >
-                <Icon size={20} strokeWidth={1.75} />
+                <Icon size={20} strokeWidth={ctx.style.stroke} />
               </span>
               <h3 className="mt-4 text-[16px] font-semibold leading-6">{h.label}</h3>
               {clean(h.description) && <p className="pg-meta mt-1">{h.description}</p>}

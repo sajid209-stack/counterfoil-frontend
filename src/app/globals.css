@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "./page-style.css";
+@import "./storefront-style.css";
 
 /* F10 — the Go left rail replaces the bottom tab bar only on a tablet held in
    landscape (thumbs live at the screen edges there, not the bottom centre). */

@@ -18,7 +18,7 @@ import { StorefrontChrome, directionsHref } from "./Chrome";
 import { QuickAddSheet } from "./flow/QuickAddSheet";
 import { QuickAddToast } from "./flow/QuickAddToast";
 import { StickyBasketBar } from "./flow/StickyBasketBar";
-import { HeroArt, Media, sfBtn } from "./sf";
+import { HeroArt, Media, sfBtn, useSfStyle } from "./sf";
 import { WEEK_ORDER, useVenueHours } from "./useVenueHours";
 
 /** Scrolls inside whichever document the click happened in. The editor's
@@ -44,6 +44,7 @@ const scrollToId = (id: string) => (e: React.MouseEvent<HTMLElement>) => {
 export function StorefrontView() {
   const flow = useStorefrontFlow();
   const sf = flow.storefront;
+  const ps = useSfStyle(sf);
   const location = flow.location;
   /* Link-only items can be priced and opened by address, but are never drawn
      on the page. */
@@ -68,48 +69,188 @@ export function StorefrontView() {
   const cheapest = prices.length ? Math.min(...prices) : null;
   const todayRow = location.openingHours.find((h) => h.dayOfWeek === flow.now.getDay());
 
-  return (
-    <StorefrontChrome storefront={sf} location={location} poweredBy={t("poweredBy")} current="venue">
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-1 items-center gap-major py-major lg:grid-cols-[1.05fr_1fr] lg:gap-hero lg:py-wide">
+  /* Up to 3 of this storefront's own booking photos, for the collage hero.
+     Collage falls back to split (below) when fewer than 3 are on offer. */
+  const collagePhotos = useMemo(
+    () =>
+      products
+        .map((p) => p.images?.[0]?.url)
+        .filter((u): u is string => !!u)
+        .slice(0, 3),
+    [products],
+  );
+  /* A photo-led hero with no cover chosen takes the first booking photo;
+     with no photos at all it falls back to split, whose designed art is
+     made to stand alone (behind a scrim it reads as a ghost). */
+  const leadPhoto = sf.heroImage ?? collagePhotos[0];
+  const wanted = ps?.hero ?? "split";
+  const heroVariant =
+    (wanted === "collage" && collagePhotos.length < 3) || ((wanted === "cover" || wanted === "editorial") && !leadPhoto) ? "split" : wanted;
+  const onCover = heroVariant === "cover";
+
+  const heroBadge = (light: boolean) => (
+    <p
+      className={cn(
+        "inline-flex min-h-8 items-center gap-tight rounded-full px-comfortable text-base font-medium",
+        light ? "bg-white/15 text-white backdrop-blur-sm" : "bg-subtle",
+      )}
+    >
+      <span aria-hidden className={cn("h-2 w-2 rounded-full", hours.isOpen ? "bg-success" : light ? "bg-white/70" : "bg-muted")} />
+      {hours.text}
+    </p>
+  );
+  const heroHeadline = (light: boolean) => (
+    <h1
+      className={cn(
+        "sf-hero-title mt-section break-words text-balance font-semibold leading-tight tracking-figure",
+        light && "text-white",
+      )}
+    >
+      {sf.headline || location.name}
+    </h1>
+  );
+  const heroIntro = (light: boolean) =>
+    sf.intro && (
+      <p className={cn("sf-hero-intro mt-section max-w-[56ch] leading-relaxed", light ? "text-white/85" : "text-muted")}>{sf.intro}</p>
+    );
+  const heroCtas = (
+    <div className="mt-major flex flex-col gap-tight sm:flex-row">
+      {products.length > 0 && (
+        <button type="button" onClick={scrollToId("whats-on")} className={sfBtn.primary}>
+          {ps?.ctaLabel ?? t("hero.book")}
+          <ArrowRight size={18} strokeWidth={2} aria-hidden />
+        </button>
+      )}
+      <button type="button" onClick={scrollToId("visit")} className={onCover ? cn(sfBtn.secondary, "border-white/40 bg-white/10 text-white hover:bg-white/20") : sfBtn.secondary}>
+        {t("hero.plan")}
+      </button>
+    </div>
+  );
+  const heroFacts = (light: boolean) => (
+    <ul className={cn("mt-major flex flex-col gap-tight text-base sm:flex-row sm:flex-wrap sm:gap-x-major", light && "text-white/85")}>
+      <li className="flex items-center gap-tight">
+        <MapPin size={16} strokeWidth={1.75} className={cn("shrink-0", light ? "text-white/70" : "text-muted")} aria-hidden />
+        <span>{[location.addressLine1, location.city].filter(Boolean).join(", ")}</span>
+      </li>
+      {todayRow && todayRow.intervals.length > 0 && (
+        <li className="flex items-center gap-tight">
+          <Clock size={16} strokeWidth={1.75} className={cn("shrink-0", light ? "text-white/70" : "text-muted")} aria-hidden />
+          <span>{t("openToday", { hours: todayRow.intervals.map((i) => formatClockRange(i.opensAt, i.closesAt)).join(", ") })}</span>
+        </li>
+      )}
+      {cheapest !== null && (
+        <li className="flex items-center gap-tight">
+          <Ticket size={16} strokeWidth={1.75} className={cn("shrink-0", light ? "text-white/70" : "text-muted")} aria-hidden />
+          <span className="tnum">{cheapest === 0 ? t("free") : `${ps?.priceLabel ?? t("from")} ${formatPriceShort(cheapest)}`}</span>
+        </li>
+      )}
+      {ps?.badge && (
+        <li className="flex items-center gap-tight">
+          <span
+            className={cn(
+              "tnum inline-flex min-h-7 items-center rounded-full px-comfortable py-inline text-sm font-medium",
+              light ? "bg-white/15 text-white" : "bg-market-wash text-brand-foreground",
+            )}
+          >
+            {ps.badge}
+          </span>
+        </li>
+      )}
+    </ul>
+  );
+
+  let heroSection: React.ReactNode;
+  if (heroVariant === "cover") {
+    /* Full-bleed cover photo, a scrim at `--ps-overlay`, height capped by
+       `--ps-hero-h`/`--ps-hero-h-lg` (§5), text bottom-left in white. */
+    heroSection = (
+      <section className="sf-section relative -mx-gutter overflow-hidden sm:mx-0 sm:rounded-lg">
+        <HeroArt
+          src={leadPhoto}
+          name={location.name}
+          city={location.city}
+          seed={sf.id}
+          stub={t("hero.stub")}
+          className="sf-hero-media aspect-[4/5] w-full sm:aspect-[16/9]"
+        />
+        <div aria-hidden className="sf-hero-scrim absolute inset-0" />
+        <div className="absolute inset-0 flex flex-col items-start justify-end p-major sm:p-wide">
+          {heroBadge(true)}
+          {heroHeadline(true)}
+          {heroIntro(true)}
+          {heroCtas}
+          {heroFacts(true)}
+        </div>
+      </section>
+    );
+  } else if (heroVariant === "editorial") {
+    /* Headline first, left-aligned; a wide photo underneath. Compact: no
+       padding band taller than its own content. */
+    heroSection = (
+      <section className="sf-section py-major lg:py-wide">
+        <div className="max-w-[56ch]">
+          {heroBadge(false)}
+          {heroHeadline(false)}
+          {heroIntro(false)}
+          {heroCtas}
+          {heroFacts(false)}
+        </div>
+        <HeroArt
+          src={leadPhoto}
+          name={location.name}
+          city={location.city}
+          seed={sf.id}
+          stub={t("hero.stub")}
+          className="mt-major aspect-[21/9] w-full rounded-lg"
+        />
+      </section>
+    );
+  } else if (heroVariant === "collage") {
+    heroSection = (
+      <section className="sf-section grid grid-cols-1 items-center gap-major py-major lg:grid-cols-[1.05fr_1fr] lg:gap-hero lg:py-wide">
         <div className="min-w-0">
-          <p className="inline-flex min-h-8 items-center gap-tight rounded-full bg-subtle px-comfortable text-base font-medium">
-            <span aria-hidden className={cn("h-2 w-2 rounded-full", hours.isOpen ? "bg-success" : "bg-muted")} />
-            {hours.text}
-          </p>
-          <h1 className="mt-section break-words text-balance text-3xl font-semibold leading-tight tracking-figure sm:text-4xl lg:text-display">
-            {sf.headline || location.name}
-          </h1>
-          {sf.intro && <p className="mt-section max-w-[56ch] text-md leading-relaxed text-muted sm:text-lg">{sf.intro}</p>}
-          <div className="mt-major flex flex-col gap-tight sm:flex-row">
-            {products.length > 0 && (
-              <button type="button" onClick={scrollToId("whats-on")} className={sfBtn.primary}>
-                {t("hero.book")}
-                <ArrowRight size={18} strokeWidth={2} aria-hidden />
-              </button>
-            )}
-            <button type="button" onClick={scrollToId("visit")} className={sfBtn.secondary}>
-              {t("hero.plan")}
-            </button>
+          {heroBadge(false)}
+          {heroHeadline(false)}
+          {heroIntro(false)}
+          {heroCtas}
+          {heroFacts(false)}
+        </div>
+        <div className="order-first grid grid-cols-2 gap-tight lg:order-none">
+          <div className="relative row-span-2 overflow-hidden rounded-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets */}
+            <img src={collagePhotos[0]} alt="" className="sf-photo absolute inset-0 h-full w-full object-cover" />
           </div>
-          <ul className="mt-major flex flex-col gap-tight text-base sm:flex-row sm:flex-wrap sm:gap-x-major">
-            <li className="flex items-center gap-tight">
-              <MapPin size={16} strokeWidth={1.75} className="shrink-0 text-muted" aria-hidden />
-              <span>{[location.addressLine1, location.city].filter(Boolean).join(", ")}</span>
-            </li>
-            {todayRow && todayRow.intervals.length > 0 && (
-              <li className="flex items-center gap-tight">
-                <Clock size={16} strokeWidth={1.75} className="shrink-0 text-muted" aria-hidden />
-                <span>{t("openToday", { hours: todayRow.intervals.map((i) => formatClockRange(i.opensAt, i.closesAt)).join(", ") })}</span>
-              </li>
-            )}
-            {cheapest !== null && (
-              <li className="flex items-center gap-tight">
-                <Ticket size={16} strokeWidth={1.75} className="shrink-0 text-muted" aria-hidden />
-                <span className="tnum">{cheapest === 0 ? t("free") : t("fromPrice", { price: formatPriceShort(cheapest) })}</span>
-              </li>
-            )}
-          </ul>
+          <div className="relative aspect-square overflow-hidden rounded-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets */}
+            <img src={collagePhotos[1]} alt="" className="sf-photo absolute inset-0 h-full w-full object-cover" />
+          </div>
+          <div className="relative aspect-square overflow-hidden rounded-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets */}
+            <img src={collagePhotos[2]} alt="" className="sf-photo absolute inset-0 h-full w-full object-cover" />
+          </div>
+        </div>
+      </section>
+    );
+  } else if (heroVariant === "text") {
+    /* No media: a compact band on the panel colour. */
+    heroSection = (
+      <section className="sf-section rounded-lg bg-subtle px-major py-section sm:px-wide">
+        {heroBadge(false)}
+        {heroHeadline(false)}
+        {heroIntro(false)}
+        {heroCtas}
+        {heroFacts(false)}
+      </section>
+    );
+  } else {
+    heroSection = (
+      <section className="sf-section grid grid-cols-1 items-center gap-major py-major lg:grid-cols-[1.05fr_1fr] lg:gap-hero lg:py-wide">
+        <div className="min-w-0">
+          {heroBadge(false)}
+          {heroHeadline(false)}
+          {heroIntro(false)}
+          {heroCtas}
+          {heroFacts(false)}
         </div>
         <HeroArt
           src={sf.heroImage}
@@ -120,6 +261,13 @@ export function StorefrontView() {
           className="order-first aspect-[16/10] rounded-lg lg:order-none lg:aspect-[4/3]"
         />
       </section>
+    );
+  }
+
+  return (
+    <StorefrontChrome storefront={sf} location={location} poweredBy={t("poweredBy")} current="venue">
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      {heroSection}
 
       {/* ── Why it is safe to book ───────────────────────────────────────── */}
       <section aria-label={t("trust.label")} className="rounded-lg border border-hairline">
@@ -143,7 +291,7 @@ export function StorefrontView() {
       </section>
 
       {/* ── What's on ────────────────────────────────────────────────────── */}
-      <section id="whats-on" className="pt-hero">
+      <section id="whats-on" className="sf-section pt-hero">
         <div className="flex flex-col gap-comfortable sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-semibold tracking-title sm:text-3xl">{t("whatsOn")}</h2>
@@ -165,7 +313,7 @@ export function StorefrontView() {
       </section>
 
       {/* ── Plan your visit ──────────────────────────────────────────────── */}
-      <section id="visit" className="pt-hero">
+      <section id="visit" className="sf-section pt-hero">
         <h2 className="text-2xl font-semibold tracking-title sm:text-3xl">{t("planVisit")}</h2>
         <div className="mt-major grid grid-cols-1 gap-major lg:grid-cols-2">
           <div className="flex flex-col rounded-lg border border-hairline p-major">
@@ -289,6 +437,7 @@ function ProductCard({
   onAdded: (p: Product) => void;
 }) {
   const flow = useStorefrontFlow();
+  const ps = useSfStyle(flow.storefront);
   const t = useTranslations("storefront");
   const locale = useLocale();
   const subtitle = useBehaviourSubtitle();
@@ -462,7 +611,7 @@ function ProductCard({
   }
 
   return (
-    <article className="group flex h-full w-full flex-col overflow-hidden rounded-lg border border-hairline bg-card transition-[transform,box-shadow] duration-quick hover:-translate-y-0.5 hover:shadow-float">
+    <article className="sf-card group flex h-full w-full flex-col overflow-hidden rounded-lg border border-hairline bg-card transition-[transform,box-shadow] duration-quick hover:-translate-y-0.5 hover:shadow-float">
       {openWith(
         <div className="relative">
           <Media src={p.images?.[0]?.url} alt="" bookingType={p.bookingType} seed={p.id} className="aspect-[16/10] w-full" />
@@ -501,7 +650,7 @@ function ProductCard({
               <span className="text-xl font-semibold">{t("free")}</span>
             ) : (
               <>
-                <span className="block text-xs text-muted">{t("from")}</span>
+                <span className="block text-xs text-muted">{ps?.priceLabel ?? t("from")}</span>
                 <span className="text-2xl font-semibold leading-none">{formatPriceShort(from)}</span>
               </>
             )}

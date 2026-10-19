@@ -360,6 +360,98 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
       );
     }
 
+    case "quote": {
+      const quotes = page.blocks?.quotes ?? [];
+      const patchQuote = (qid: string, p: Partial<NonNullable<NonNullable<ProductPage["blocks"]>["quotes"]>[number]>) =>
+        onChange({ blocks: { ...page.blocks, quotes: quotes.map((q) => (q.id === qid ? { ...q, ...p } : q)) } });
+      return (
+        <>
+          <Note>{t("quoteNote")}</Note>
+          {quotes.map((q, i) => (
+            <ItemCard
+              key={q.id}
+              title={q.who.trim() || t("quoteN", { n: i + 1 })}
+              removeLabel={t("removeQuote", { name: q.who.trim() || t("quoteN", { n: i + 1 }) })}
+              onRemove={() => onChange({ blocks: { ...page.blocks, quotes: quotes.filter((x) => x.id !== q.id) } })}
+            >
+              <FormField label={t("quoteText")} variant="textarea" rows={2} value={q.text} onChange={(e) => patchQuote(q.id, { text: e.target.value })} />
+              <FormField label={t("quoteWho")} placeholder={t("quoteWhoPlaceholder")} value={q.who} onChange={(e) => patchQuote(q.id, { who: e.target.value })} />
+              <FormField label={t("quoteDetail")} value={q.detail ?? ""} onChange={(e) => patchQuote(q.id, { detail: e.target.value })} />
+            </ItemCard>
+          ))}
+          {quotes.length < 6 && (
+            <AddButton onClick={() => onChange({ blocks: { ...page.blocks, quotes: [...quotes, { id: newId("q"), text: "", who: "" }] } })}>
+              {t("addQuote")}
+            </AddButton>
+          )}
+        </>
+      );
+    }
+
+    case "host": {
+      const host = page.blocks?.host ?? { name: "" };
+      const patchHost = (p: Partial<NonNullable<NonNullable<ProductPage["blocks"]>["host"]>>) => onChange({ blocks: { ...page.blocks, host: { ...host, ...p } } });
+      return (
+        <>
+          <Note>{t("hostNote")}</Note>
+          <FormField label={t("hostName")} value={host.name} onChange={(e) => patchHost({ name: e.target.value })} />
+          <FormField label={t("hostRole")} placeholder={t("hostRolePlaceholder")} value={host.role ?? ""} onChange={(e) => patchHost({ role: e.target.value })} />
+          <FormField label={t("hostBio")} variant="textarea" rows={3} value={host.bio ?? ""} onChange={(e) => patchHost({ bio: e.target.value })} />
+          <PortraitField name={host.name.trim() || t("hostN")} url={host.photoUrl} onChange={(photoUrl) => patchHost({ photoUrl })} />
+        </>
+      );
+    }
+
+    case "steps": {
+      const stepsBlock = page.blocks?.steps ?? { items: [] };
+      const items = stepsBlock.items;
+      const patchStep = (sid: string, p: Partial<(typeof items)[number]>) =>
+        onChange({ blocks: { ...page.blocks, steps: { ...stepsBlock, items: items.map((x) => (x.id === sid ? { ...x, ...p } : x)) } } });
+      return (
+        <>
+          <Note>{t("stepsNote")}</Note>
+          <FormField label={t("stepsTitle")} placeholder={t("stepsTitlePlaceholder")} value={stepsBlock.title ?? ""} onChange={(e) => onChange({ blocks: { ...page.blocks, steps: { ...stepsBlock, title: e.target.value } } })} />
+          {items.map((it, i) => (
+            <ItemCard
+              key={it.id}
+              title={it.title.trim() || t("stepN", { n: i + 1 })}
+              removeLabel={t("removeStep", { name: it.title.trim() || t("stepN", { n: i + 1 }) })}
+              onRemove={() => onChange({ blocks: { ...page.blocks, steps: { ...stepsBlock, items: items.filter((x) => x.id !== it.id) } } })}
+            >
+              <FormField label={t("stepTitle")} value={it.title} onChange={(e) => patchStep(it.id, { title: e.target.value })} />
+              <FormField label={t("stepDetail")} variant="textarea" rows={2} value={it.detail ?? ""} onChange={(e) => patchStep(it.id, { detail: e.target.value })} />
+            </ItemCard>
+          ))}
+          <AddButton onClick={() => onChange({ blocks: { ...page.blocks, steps: { ...stepsBlock, items: [...items, { id: newId("st"), title: "" }] } } })}>
+            {t("addStep")}
+          </AddButton>
+        </>
+      );
+    }
+
+    case "text": {
+      const textBlock = page.blocks?.text ?? { body: "" };
+      return (
+        <>
+          <Note>{t("textNote")}</Note>
+          <FormField label={t("textTitle")} value={textBlock.title ?? ""} onChange={(e) => onChange({ blocks: { ...page.blocks, text: { ...textBlock, title: e.target.value } } })} />
+          <FormField label={t("textBody")} variant="textarea" rows={5} value={textBlock.body} onChange={(e) => onChange({ blocks: { ...page.blocks, text: { ...textBlock, body: e.target.value } } })} />
+        </>
+      );
+    }
+
+    case "cta": {
+      const cta = page.blocks?.cta ?? { title: "" };
+      return (
+        <>
+          <Note>{t("ctaNote")}</Note>
+          <FormField label={t("ctaTitle")} value={cta.title} onChange={(e) => onChange({ blocks: { ...page.blocks, cta: { ...cta, title: e.target.value } } })} />
+          <FormField label={t("ctaLine")} value={cta.line ?? ""} onChange={(e) => onChange({ blocks: { ...page.blocks, cta: { ...cta, line: e.target.value } } })} />
+          <FormField label={t("ctaButton")} placeholder={t("ctaButtonPlaceholder")} value={cta.button ?? ""} onChange={(e) => onChange({ blocks: { ...page.blocks, cta: { ...cta, button: e.target.value } } })} />
+        </>
+      );
+    }
+
     default:
       return null;
   }

@@ -134,5 +134,7 @@ export function pageVars(look: LookDef, accent: string): CSSProperties {
   } as CSSProperties;
 }
 
-/** The class names for the page root. */
-export const pageRootClass = (look: LookDef) => (look.mode === "dark" ? "pg pg-dark dark" : "pg");
+/** The class names for the page root. Driven by the resolved style's mode
+ *  (`style.colours.mode`), not only the look: a custom style may change the
+ *  page's background enough to flip light/dark (docs/page-style.md §2). */
+export const pageRootClass = (mode: "light" | "dark") => (mode === "dark" ? "pg pg-dark dark" : "pg");

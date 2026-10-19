@@ -39,6 +39,7 @@ export function StorefrontPreviewApp({
   resources,
   team,
   now,
+  startOn,
 }: {
   storefront: Storefront;
   location: Location;
@@ -47,9 +48,12 @@ export function StorefrontPreviewApp({
   resources: Resource[];
   team: Staff[];
   now: Date;
+  /** Open on this booking's page instead of the venue page (the editor's
+   *  "A booking page" preview). Remount with a new `key` to change it. */
+  startOn?: string;
 }) {
   const operatorQ = useApiQuery(() => getOperator(), []);
-  const [screen, setScreen] = useState<PreviewScreen>({ name: "venue" });
+  const [screen, setScreen] = useState<PreviewScreen>(startOn ? { name: "product", productId: startOn } : { name: "venue" });
   const [basket, setBasket] = useState<BasketLine[]>([]);
 
   const nav: StorefrontFlowNav = {

@@ -24,17 +24,29 @@ export interface PanelPick {
  *
  * Money and the basket stay in the picker, untouched.
  */
-export function BookingPanel({ panelRef, pick, onAdded }: { panelRef: RefObject<HTMLDivElement | null>; pick: PanelPick; onAdded: () => void }) {
+export function BookingPanel({
+  panelRef,
+  pick,
+  onAdded,
+  inline,
+}: {
+  panelRef: RefObject<HTMLDivElement | null>;
+  pick: PanelPick;
+  onAdded: () => void;
+  /** docs/page-style.md §5: drawn full-width in the main column right after the
+   *  hero/facts, no sticky, no right rail. */
+  inline?: boolean;
+}) {
   const ctx = usePage();
   const t = useTranslations("storefront");
   return (
     <aside
-      ref={panelRef}
+      ref={inline ? undefined : panelRef}
       aria-label={t("booking.panelLabel")}
-      className="pg-card shadow-float sticky flex flex-col self-start overflow-hidden"
-      style={{ top: 88, maxHeight: "calc(100dvh - 112px)" }}
+      className={inline ? "pg-card mb-6 flex flex-col overflow-hidden" : "pg-card shadow-float sticky flex flex-col self-start overflow-hidden"}
+      style={inline ? undefined : { top: 88, maxHeight: "calc(100dvh - 112px)" }}
     >
-      <div className="flex min-h-0 flex-1 flex-col p-6">
+      <div ref={inline ? panelRef : undefined} className="flex min-h-0 flex-1 flex-col p-6">
         <BookingPicker key={pick.n} product={ctx.product} preselectTierId={pick.tierId} compact={hasTicketOptions(ctx)} onAdded={onAdded} />
       </div>
     </aside>

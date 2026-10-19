@@ -10,7 +10,7 @@
  * pattern, an icon in a white disc, and a different arrangement per booking
  * (chosen from its id) so a grid of them reads as a set, not a copy.
  */
-import { useState } from "react";
+import { createContext, useContext, useMemo, useState, useSyncExternalStore } from "react";
 import {
   Armchair,
   CalendarClock,
@@ -25,18 +25,80 @@ import {
 import { cn } from "@/lib/cn";
 import { Qr } from "@/components/ui/Qr";
 import { storefrontVars, type AccentInput } from "@/lib/storefront/theme";
-import type { BookingTypeCode } from "@/lib/api/types";
+import { storefrontStyle, styleRootProps, mergeStyles, type ResolvedStyle } from "@/lib/pageStyle/resolve";
+import { pageFontVars } from "@/lib/pageStyle/fonts";
+import { PRESETS } from "@/lib/pageStyle/presets";
+import type { BookingTypeCode, PageStyle, Storefront } from "@/lib/api/types";
 
-/** The themed root every storefront screen sits in. */
+/**
+ * Dev-only review hook (docs/page-style.md §7, Task B): `?ps=<presetId>` or
+ * `?ps=<url-encoded JSON PageStyle>` on any /s/<slug> route merges that style
+ * over the storefront's own before resolving, so every preset can be reviewed
+ * without the OS editor. Never active in production; read once per mount
+ * after hydration so it never causes a server/client mismatch.
+ */
+const noSubscribe = () => () => {};
+const readPs = () => (process.env.NODE_ENV === "production" ? null : new URLSearchParams(window.location.search).get("ps"));
+function useDevStyleOverride(): PageStyle | undefined {
+  /* The address is an external store; the server has none, so the first
+     client render matches it and the override applies right after. */
+  const raw = useSyncExternalStore(noSubscribe, readPs, () => null);
+  return useMemo(() => {
+    if (!raw) return undefined;
+    const preset = PRESETS.find((p) => p.id === raw);
+    if (preset) return preset.style;
+    try {
+      return JSON.parse(decodeURIComponent(raw)) as PageStyle;
+    } catch {
+      return undefined; /* not JSON either — ignore */
+    }
+  }, [raw]);
+}
+
+const SfStyleContext = createContext<ResolvedStyle | null>(null);
+/** The storefront's resolved style (docs/page-style.md), for reading
+ *  `ctaLabel` / `priceLabel` / `badge` and any other resolved field inside the
+ *  storefront tree. Falls back to computing it directly from `storefront` if
+ *  no `SfRoot` ancestor is found with a matching context instance (defensive:
+ *  dev-server module duplication has been observed to split the context
+ *  identity between files that otherwise import the same module). */
+export function useSfStyle(storefront?: Pick<Storefront, "accent" | "style"> | null): ResolvedStyle | null {
+  const fromContext = useContext(SfStyleContext);
+  const devStyle = useDevStyleOverride();
+  if (fromContext) return fromContext;
+  if (!storefront && !devStyle) return null;
+  const merged = mergeStyles(storefront?.style ?? undefined, devStyle);
+  return storefrontStyle({ accent: storefront?.accent ?? null, style: merged });
+}
+
+/** The themed root every storefront screen sits in. Pass `storefront` (the
+ *  whole record) to apply its full `PageStyle` brand; `accent` alone keeps the
+ *  legacy accent-only theming for screens with no storefront record (the
+ *  flow's own shells). */
 export function SfRoot({
   accent,
+  storefront,
   className,
   children,
 }: {
-  accent: AccentInput;
+  accent?: AccentInput;
+  storefront?: Pick<Storefront, "accent" | "style"> | null;
   className?: string;
   children: React.ReactNode;
 }) {
+  const devStyle = useDevStyleOverride();
+  if (storefront || devStyle) {
+    const merged = mergeStyles(storefront?.style ?? undefined, devStyle);
+    const resolved = storefrontStyle({ accent: storefront?.accent ?? ((accent ?? null) as Storefront["accent"]), style: merged });
+    const { style, ...data } = styleRootProps(resolved);
+    return (
+      <SfStyleContext.Provider value={resolved}>
+        <div className={cn("sf sf-ground relative min-h-screen", pageFontVars, className)} style={style} {...data}>
+          {children}
+        </div>
+      </SfStyleContext.Provider>
+    );
+  }
   return (
     <div className={cn("sf min-h-screen", className)} style={storefrontVars(accent)}>
       {children}
@@ -51,10 +113,12 @@ const BTN_BASE =
   "inline-flex min-h-12 items-center justify-center gap-tight rounded-md px-major text-md font-semibold leading-none transition-[background-color,box-shadow,opacity] duration-quick disabled:cursor-not-allowed";
 export const sfBtn = {
   primary: cn(
+    "sf-btn-primary",
     BTN_BASE,
     "bg-ember-solid text-on-solid hover:brightness-90 disabled:bg-line disabled:text-muted disabled:hover:brightness-100",
   ),
   secondary: cn(
+    "sf-btn-secondary",
     BTN_BASE,
     "border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover disabled:border-line disabled:text-muted",
   ),
@@ -161,7 +225,7 @@ export function Media({
     return (
       <div className={cn("relative overflow-hidden bg-subtle", className)}>
         {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets; next/image loader config avoided by design (see PROJECT_LOG) */}
-        <img src={src} alt={alt} loading="lazy" onError={() => setBroken(true)} className="absolute inset-0 h-full w-full object-cover" />
+        <img src={src} alt={alt} loading="lazy" onError={() => setBroken(true)} className="sf-photo absolute inset-0 h-full w-full object-cover" />
       </div>
     );
   }
@@ -212,7 +276,7 @@ export function HeroArt({
     return (
       <div className={cn("relative overflow-hidden bg-subtle", className)}>
         {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets */}
-        <img src={src} alt="" onError={() => setBroken(true)} className="absolute inset-0 h-full w-full object-cover" />
+        <img src={src} alt="" onError={() => setBroken(true)} className="sf-photo absolute inset-0 h-full w-full object-cover" />
       </div>
     );
   }
@@ -249,3 +313,4 @@ export function HeroArt({
     </div>
   );
 }
+// force-recompile-1792390589

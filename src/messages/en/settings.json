@@ -1321,7 +1321,13 @@
     "whichNoneChosen": "Pick at least one booking, or choose everything.",
     "add": "Add storefront",
     "editorDescriptionAt": "At {venue}. What customers see before they come.",
-    "moreTitle": "Contact and links"
+    "moreTitle": "Contact and links",
+    "accentReplacedByStyle": "A Primary colour chosen under Look and feel below replaces this.",
+    "lookAndFeelTitle": "Look and feel",
+    "lookAndFeelDesc": "Colours, fonts, shape and layout for this storefront.",
+    "previewWhat": "What to preview",
+    "previewVenue": "Storefront",
+    "previewBooking": "A booking page"
   },
   "attention": {
     "cashOnly": "Only cash can be taken",

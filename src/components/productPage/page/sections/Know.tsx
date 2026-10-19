@@ -19,7 +19,7 @@ function iconsFor(product: Product, count: number): LucideIcon[] {
 
 /** Good to know: the booking's policies as an icon list. */
 export function KnowSection() {
-  const { know, product, labels } = usePage();
+  const { know, product, labels, style } = usePage();
   if (know.length === 0) return null;
   const icons = iconsFor(product, know.length);
   return (
@@ -29,7 +29,7 @@ export function KnowSection() {
           const Icon = icons[i];
           return (
             <li key={i} className="flex items-start gap-3 text-[15px] leading-6">
-              <Icon size={20} strokeWidth={1.75} className="mt-0.5 shrink-0" style={{ color: "var(--pg-ink)" }} aria-hidden />
+              <Icon size={20} strokeWidth={style.stroke} className="mt-0.5 shrink-0" style={{ color: "var(--pg-ink)" }} aria-hidden />
               <span>{line}</span>
             </li>
           );

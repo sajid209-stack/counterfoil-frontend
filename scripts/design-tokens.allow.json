@@ -105,6 +105,20 @@
         "raw-colour"
       ],
       "reason": "§12 operator-chosen category colours: seat-layout templates seed the seat category colours"
+    },
+    {
+      "path": "src/lib/pageStyle/presets.ts",
+      "rules": [
+        "*"
+      ],
+      "reason": "Operator-facing palettes are data: named hex colours an operator applies to their public page, resolved and contrast-checked by pageStyle/resolve.ts — not app UI colours."
+    },
+    {
+      "path": "src/lib/pageStyle/resolve.ts",
+      "rules": [
+        "*"
+      ],
+      "reason": "The style resolver computes operator-chosen colours in hex and maps them to CSS variables; its literals are the old page grounds, kept exactly."
     }
   ],
   "exemptMatches": [

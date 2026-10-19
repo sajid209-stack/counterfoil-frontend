@@ -2,13 +2,18 @@ import type { PageSectionId } from "@/lib/api/types";
 import type { PageCtx } from "../context";
 import {
   aboutOf,
+  ctaOf,
   faqOf,
   galleryOf,
   highlightsOf,
+  hostOf,
   includedOf,
   peopleOf,
   programmeOf,
+  quotesOf,
   sponsorsOf,
+  stepsOf,
+  textBlockOf,
   venueOf,
   videoOf,
 } from "./helpers";
@@ -52,6 +57,16 @@ export function sectionHasContent(id: PageSectionId, ctx: PageCtx): boolean {
       return sponsorsOf(ctx).length > 0;
     case "faq":
       return faqOf(ctx).length > 0;
+    case "quote":
+      return quotesOf(ctx).length > 0;
+    case "host":
+      return hostOf(ctx) !== null;
+    case "steps":
+      return stepsOf(ctx) !== null;
+    case "text":
+      return textBlockOf(ctx) !== null;
+    case "cta":
+      return ctaOf(ctx) !== null;
     default:
       return false;
   }

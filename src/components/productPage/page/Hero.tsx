@@ -26,9 +26,14 @@ import { buildTicketRows, priceSummary, usePrimaryLabel, useTicketUnit } from ".
  */
 export function Hero() {
   const ctx = usePage();
-  const hero = ctx.look.hero;
+  /* The resolved style's hero wins — it falls back to the look's own hero when
+     nobody has chosen one (docs/page-style.md §2), so this covers every page
+     that existed before styles too. */
+  const hero = ctx.style.hero;
   if (hero === "cover") return <CoverHero ctx={ctx} />;
   if (hero === "editorial") return <EditorialHero ctx={ctx} />;
+  if (hero === "collage") return <CollageHero ctx={ctx} />;
+  if (hero === "text") return <TextHero ctx={ctx} />;
   return <SplitHero ctx={ctx} />;
 }
 
@@ -50,6 +55,21 @@ function titleStyle(ctx: PageCtx): CSSProperties {
   }
   if (long) return { fontSize: phone ? 30 : 40, lineHeight: phone ? "36px" : "48px" };
   return {};
+}
+
+/** A small chip in secondary colours (docs/page-style.md §5 "words"): the one
+ *  place the secondary colour is required to show on the hero. */
+function Badge({ ctx, onPhoto }: { ctx: PageCtx; onPhoto?: boolean }) {
+  const text = ctx.style.badge;
+  if (!text) return null;
+  return (
+    <span
+      className="inline-flex max-w-fit items-center self-start rounded-full px-3 py-1 text-[13px] font-semibold leading-5"
+      style={onPhoto ? { background: "rgb(255 255 255 / 0.16)", color: "#fff" } : { background: "var(--ps-secondary-soft)", color: "var(--ps-secondary-ink)" }}
+    >
+      {text}
+    </span>
+  );
 }
 
 function Title({ ctx }: { ctx: PageCtx }) {
@@ -135,7 +155,7 @@ function Actions({ ctx, onPhoto }: { ctx: PageCtx; onPhoto?: boolean }) {
           <div className="flex flex-col leading-tight" style={{ color: onPhoto ? "#fff" : "var(--pg-fg)" }}>
             {price > 0 && sum.many && (
               <span className="text-[13px] font-medium" style={{ color: onPhoto ? "rgb(255 255 255 / 0.8)" : "var(--pg-muted)" }}>
-                {ctx.labels.from}
+                {ctx.style.priceLabel ?? ctx.labels.from}
               </span>
             )}
             <span className="tnum text-[22px] font-bold leading-7">
@@ -217,6 +237,7 @@ function SplitHero({ ctx }: { ctx: PageCtx }) {
   const side = ctx.layout === "desktop";
   const body = (
     <div className="flex min-w-0 flex-col gap-5">
+      <Badge ctx={ctx} />
       <Title ctx={ctx} />
       {ctx.ev.subtitle && <p className="pg-body pg-muted max-w-[56ch]">{ctx.ev.subtitle}</p>}
       <FactsRow facts={facts} />
@@ -248,6 +269,7 @@ function EditorialHero({ ctx }: { ctx: PageCtx }) {
   return (
     <header className="pg-container pb-8 pt-8 md:pb-12 md:pt-12">
       <div className="flex max-w-[920px] flex-col gap-5">
+        <Badge ctx={ctx} />
         <Title ctx={ctx} />
         <FactsRow facts={facts} />
         {ctx.ev.subtitle && <p className="pg-body pg-muted max-w-[60ch]">{ctx.ev.subtitle}</p>}
@@ -297,6 +319,7 @@ function CoverHero({ ctx }: { ctx: PageCtx }) {
       />
       <div className="pg-container flex items-end" style={{ minHeight: "inherit" }}>
         <div className="flex max-w-[860px] flex-col gap-4 pb-8 pt-24 md:gap-5 md:pb-12" style={{ textShadow: "0 1px 14px rgb(0 0 0 / 0.45)" }}>
+          <Badge ctx={ctx} onPhoto />
           <Title ctx={ctx} />
           {ctx.ev.subtitle && (
             <p className="pg-body max-w-[56ch]" style={{ color: "rgb(255 255 255 / 0.9)" }}>
@@ -309,6 +332,76 @@ function CoverHero({ ctx }: { ctx: PageCtx }) {
             <Actions ctx={ctx} onPhoto />
           </div>
         </div>
+      </div>
+    </header>
+  );
+}
+
+/* ── collage ─────────────────────────────────────────────────────────────── */
+
+/** Title beside a 3-photo collage; falls back to split with fewer than 3
+ *  (docs/page-style.md §5). */
+function CollageHero({ ctx }: { ctx: PageCtx }) {
+  const facts = useHeroFacts(ctx);
+  const photos = ctx.product.images.slice(0, 3);
+  if (photos.length < 3) return <SplitHero ctx={ctx} />;
+  const side = ctx.layout === "desktop";
+  const body = (
+    <div className="flex min-w-0 flex-col gap-5">
+      <Badge ctx={ctx} />
+      <Title ctx={ctx} />
+      {ctx.ev.subtitle && <p className="pg-body pg-muted max-w-[56ch]">{ctx.ev.subtitle}</p>}
+      <FactsRow facts={facts} />
+      <CountdownRow ctx={ctx} />
+      <Actions ctx={ctx} />
+    </div>
+  );
+  const collage = (
+    <div className="grid grid-cols-2 gap-3" style={{ gridTemplateRows: "repeat(2, minmax(0,1fr))", aspectRatio: side ? "5 / 4" : "16 / 11" }}>
+      <div className="relative row-span-2 overflow-hidden " style={{ background: "var(--ps-panel)", borderRadius: "var(--ps-radius-media)" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets */}
+        <img src={photos[0].url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      </div>
+      {photos.slice(1).map((p) => (
+        <div key={p.id} className="relative overflow-hidden " style={{ background: "var(--ps-panel)", borderRadius: "var(--ps-radius-media)" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets */}
+          <img src={p.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        </div>
+      ))}
+    </div>
+  );
+  return (
+    <header className="pg-container pb-8 pt-5 md:pb-12 md:pt-8">
+      {side ? (
+        <div className="grid items-center gap-12" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }}>
+          {body}
+          {collage}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {collage}
+          {body}
+        </div>
+      )}
+    </header>
+  );
+}
+
+/* ── text ────────────────────────────────────────────────────────────────── */
+
+/** No media: title, tagline, facts, CTAs on a panel band — compact
+ *  (docs/page-style.md §5, §6: whitespace rules). */
+function TextHero({ ctx }: { ctx: PageCtx }) {
+  const facts = useHeroFacts(ctx);
+  return (
+    <header className="pg-container" style={{ background: "var(--ps-panel)" }}>
+      <div className="flex max-w-[760px] flex-col gap-4 py-8 md:py-12">
+        <Badge ctx={ctx} />
+        <Title ctx={ctx} />
+        {ctx.ev.subtitle && <p className="pg-body pg-muted max-w-[56ch]">{ctx.ev.subtitle}</p>}
+        <FactsRow facts={facts} />
+        <CountdownRow ctx={ctx} />
+        <Actions ctx={ctx} />
       </div>
     </header>
   );

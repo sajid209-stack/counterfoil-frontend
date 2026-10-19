@@ -1,11 +1,14 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { QuickAddSheet } from "@/app/s/_components/flow/QuickAddSheet";
 import { QuickAddToast } from "@/app/s/_components/flow/QuickAddToast";
 import { pageView } from "@/lib/api/events";
 import type { Product } from "@/lib/api/types";
-import { templateFontVars } from "@/lib/events/fonts";
+import { pageFontVars } from "@/lib/pageStyle/fonts";
+import { presetById } from "@/lib/pageStyle/presets";
+import { productPageStyle, styleRootProps } from "@/lib/pageStyle/resolve";
 import { fromPriceOf } from "@/lib/price";
 import { countdownOf, pageOf } from "@/lib/productPage";
 import { ACCENT_HEX } from "@/lib/storefront/theme";
@@ -20,7 +23,32 @@ import { BOOK_BAR_H, MobileBookBar } from "./MobileBookBar";
 import { SectionNav } from "./SectionNav";
 import { BODY_SECTIONS } from "./sections";
 import { TicketOptions } from "./TicketOptions";
-import { lookOf, pageRootClass, pageVars } from "./theme";
+import { lookOf, pageRootClass } from "./theme";
+
+/**
+ * Dev-only style preview hook (not part of the contract, kept for review):
+ * with `NODE_ENV !== "production"`, `?ps=<presetId>` on a product page layers
+ * that preset's whole style over the page's own, so every control can be
+ * screenshotted on a real page without wiring the OS editor. `?ps=<json>`
+ * (URL-encoded `PageStyle`) does the same for an ad-hoc style. Never read in
+ * production; harmless if left on a shared link since it only ever adds a
+ * style, never removes one.
+ */
+function useDevStyleOverride() {
+  const params = useSearchParams();
+  const raw = params.get("ps");
+  return useMemo(() => {
+    if (process.env.NODE_ENV === "production" || !raw) return undefined;
+    const preset = presetById(raw);
+    if (preset) return preset.style;
+    if (raw === "none") return {};
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return undefined;
+    }
+  }, [raw]);
+}
 
 /**
  * A booking's page — ONE renderer for every booking and every look
@@ -99,14 +127,22 @@ export function BookingPage({ product, chrome }: { product: Product; chrome: "st
     setSheet({ tierId });
   };
 
-  const accent = page.accent ?? look.accent ?? (flow.storefront.accent ? ACCENT_HEX[flow.storefront.accent] : null) ?? "#161616";
+  const devStyle = useDevStyleOverride();
   const sections = (ev.customisation.pageSections ?? page.sections).filter((s) => page.sections.includes(s));
+
+  const style = productPageStyle({
+    look,
+    page: devStyle ? { ...page, styleSource: "custom", style: { ...page.style, ...devStyle } } : page,
+    brand: flow.storefront.style,
+    venueAccent: flow.storefront.accent ? ACCENT_HEX[flow.storefront.accent] : null,
+  });
 
   const ctx: PageCtx = {
     product,
     ev,
     page,
     look,
+    style,
     labels,
     know,
     countdown,
@@ -120,34 +156,38 @@ export function BookingPage({ product, chrome }: { product: Product; chrome: "st
   };
 
   const desktop = layout === "desktop";
+  const inlinePanel = style.bookingPanel === "inline";
+  const showSidebar = desktop && !inlinePanel;
+  const rootProps = styleRootProps(style, {
+    /* The phone's bottom bar is fixed; the page reserves its height. */
+    paddingBottom: desktop ? undefined : `calc(${BOOK_BAR_H}px + env(safe-area-inset-bottom))`,
+  });
 
   return (
     <PageFrame product={product} chrome={chrome} bleed>
       <PageContext.Provider value={ctx}>
-        <div
-          ref={measure}
-          className={`${templateFontVars} ${pageRootClass(look)}`}
-          style={{
-            ...pageVars(look, accent),
-            /* The phone's bottom bar is fixed; the page reserves its height. */
-            paddingBottom: desktop ? undefined : `calc(${BOOK_BAR_H}px + env(safe-area-inset-bottom))`,
-          }}
-        >
+        <div ref={measure} className={`${pageFontVars} ${pageRootClass(style.colours.mode)}`} {...rootProps}>
           <Hero />
           <div ref={heroEnd} aria-hidden style={{ height: 1, marginTop: -1 }} />
           <SectionNav sentinelRef={heroEnd} />
           <FactsStrip />
 
           <div className="pg-container pb-16 pt-8 md:pt-10">
-            <div className={desktop ? "grid items-start" : undefined} style={desktop ? { gridTemplateColumns: "minmax(0, 1fr) 380px", columnGap: 48 } : undefined}>
+            <div
+              className={showSidebar ? "grid items-start" : inlinePanel ? "mx-auto max-w-[760px]" : undefined}
+              style={showSidebar ? { gridTemplateColumns: "minmax(0, 1fr) 380px", columnGap: 48 } : undefined}
+            >
               <div className="min-w-0">
+                {inlinePanel && (
+                  <BookingPanel inline panelRef={panelRef} pick={pick} onAdded={() => setToast({ name: product.name, key: Date.now() })} />
+                )}
                 {sections.map((id) => {
                   if (id === "tickets") return <TicketOptions key={id} />;
                   const C = BODY_SECTIONS[id];
                   return C ? <C key={id} /> : null;
                 })}
               </div>
-              {desktop && <BookingPanel panelRef={panelRef} pick={pick} onAdded={() => setToast({ name: product.name, key: Date.now() })} />}
+              {showSidebar && <BookingPanel panelRef={panelRef} pick={pick} onAdded={() => setToast({ name: product.name, key: Date.now() })} />}
             </div>
           </div>
 

@@ -426,7 +426,63 @@ export type PageLook = "standard" | CategoryId;
 /** A section of an item's page. The event sections, plus two only the
  *  standard page draws: what each ticket includes, and the good-to-know list
  *  built from the item's policies. */
-export type PageSectionId = SectionId | "included" | "know";
+export type PageSectionId = SectionId | "included" | "know" | "quote" | "host" | "steps" | "text" | "cta";
+
+/* ── Page style (docs/page-style.md) ──────────────────────────────────────
+   How a public page looks, beyond its look preset. A storefront carries one
+   (`Storefront.style`, its brand); an item's page either follows its venue's
+   storefront brand or carries its own (`ProductPage.styleSource`). Every field
+   is optional: absent means "the look's own" (product page) or "the storefront
+   default" (storefront), so a record written before this renders exactly as it
+   did. Resolved and contrast-checked by `src/lib/pageStyle/resolve.ts` — no
+   renderer reads these fields directly. */
+export type PageFontId = string; // an id from src/lib/pageStyle/fonts.ts
+export interface PageStyle {
+  /** The named palette or preset the colours came from, for the editor only. */
+  palette?: string;
+  preset?: string;
+  /** Hex colours. */
+  primary?: string; // buttons, the one action
+  secondary?: string; // tags, highlights, small marks
+  background?: string; // the page ground
+  surface?: string; // cards
+  text?: string; // body text; muted text is derived from it
+  headingFont?: PageFontId;
+  bodyFont?: PageFontId;
+  headingWeight?: 400 | 500 | 600 | 700 | 800;
+  typeScale?: "compact" | "standard" | "large";
+  headingCase?: "normal" | "upper";
+  corners?: "sharp" | "soft" | "round";
+  buttonStyle?: "solid" | "outline" | "pill" | "underline";
+  cardStyle?: "flat" | "bordered" | "shadow" | "tinted";
+  hero?: "split" | "cover" | "editorial" | "collage" | "text";
+  heroHeight?: "short" | "medium" | "tall";
+  /** Darkness of the scrim over a cover photo, 0–80 (%). */
+  overlay?: number;
+  width?: "narrow" | "standard" | "wide";
+  spacing?: "tight" | "standard" | "airy";
+  dividers?: "none" | "line";
+  /** Product pages only. */
+  bookingPanel?: "sidebar" | "inline";
+  gallery?: "mosaic" | "grid" | "strip";
+  texture?: "none" | "grain" | "dots" | "lines";
+  imageTone?: "none" | "warm" | "mono" | "duotone";
+  iconStroke?: "thin" | "regular" | "bold";
+  /** Words: the main button, the label before a price, a small badge on the hero. */
+  ctaLabel?: string;
+  priceLabel?: string;
+  badge?: string;
+}
+
+/** The content of the five operator-written blocks (section ids quote, host,
+ *  steps, text, cta). All optional; an empty block renders nothing. */
+export interface PageBlocks {
+  quotes?: { id: string; text: string; who: string; detail?: string }[];
+  host?: { name: string; role?: string; bio?: string; photoUrl?: string };
+  steps?: { title?: string; items: { id: string; title: string; detail?: string }[] };
+  text?: { title?: string; body: string };
+  cta?: { title: string; line?: string; button?: string };
+}
 
 /** An item's designed page: its look and the words in each section. */
 export interface ProductPage {
@@ -460,6 +516,11 @@ export interface ProductPage {
   /** The countdown's settings. Absent: off, except an on-a-date booking
    *  designed before this, which counts to its first day. */
   countdown?: PageCountdown;
+  /** "brand" (default): the venue's storefront style. "custom": `style`,
+   *  layered over the storefront's. */
+  styleSource?: "brand" | "custom";
+  style?: PageStyle;
+  blocks?: PageBlocks;
 }
 
 /** A countdown on a booking's page (docs/catalog.md §10.5). */
@@ -549,6 +610,9 @@ export interface Storefront {
   /** The cover photo: the address of one of this venue's own booking images.
    *  Absent means the page draws its designed cover instead. */
   heroImage?: string | null;
+  /** The storefront's brand style (colours, fonts, shape, layout). Its item
+   *  pages follow it unless they carry their own. */
+  style?: PageStyle;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }

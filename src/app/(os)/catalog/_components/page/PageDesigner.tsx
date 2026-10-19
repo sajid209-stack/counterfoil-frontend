@@ -7,7 +7,9 @@ import { Button, SegmentedControl, Sheet } from "@/components/ui";
 import { PreviewFrame } from "@/components/PreviewFrame";
 import { ProductPageView } from "@/components/productPage/ProductPageView";
 import { cn } from "@/lib/cn";
+import { getStorefrontFor } from "@/lib/api/storefront";
 import type { PageLook, Product, ProductPage } from "@/lib/api/types";
+import { StylePanel } from "@/components/pageStyle/StylePanel";
 import { CountdownSettings } from "./CountdownSettings";
 import { LookControls } from "./LookControls";
 import { SectionList } from "./SectionList";
@@ -74,6 +76,23 @@ export function PageDesigner({ product, page, onPage, onEditDetails, onEditTicke
   const patch = (p: Partial<ProductPage>) => onPage({ ...page, ...p });
   const setLook = (look: PageLook) => onPage(switchLook(page, look));
 
+  const [brandStyle, setBrandStyle] = useState<import("@/lib/api/types").PageStyle | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const loc = product.locationIds[0];
+    if (!loc) return;
+    void getStorefrontFor(loc).then((res) => {
+      if (alive && res.ok) setBrandStyle(res.data.style ?? {});
+    });
+    return () => { alive = false; };
+  }, [product.locationIds]);
+
+  const styleSource = page.styleSource ?? "brand";
+  const switchStyleSource = (next: "brand" | "custom") => {
+    if (next === "custom" && !page.style) patch({ styleSource: next, style: { ...(brandStyle ?? {}) } });
+    else patch({ styleSource: next });
+  };
+
   const switcher = (
     <SegmentedControl
       size="sm"
@@ -98,6 +117,27 @@ export function PageDesigner({ product, page, onPage, onEditDetails, onEditTicke
     <div className="card-surface flex flex-col gap-major p-card">
       <LookControls product={product} page={page} onLook={setLook} onPage={patch} />
       <CountdownSettings product={product} page={page} onPage={onPage} />
+      <div className="flex flex-col gap-tight border-t border-line pt-comfortable">
+        <h3 className="text-md font-semibold text-fg">{t("style.title")}</h3>
+        <p className="text-sm text-muted">{t("style.help")}</p>
+        <SegmentedControl
+          aria-label={t("style.title")}
+          value={styleSource}
+          onChange={(v) => switchStyleSource(v as "brand" | "custom")}
+          options={[
+            { value: "brand", label: t("style.useBrand") },
+            { value: "custom", label: t("style.customise") },
+          ]}
+        />
+        {styleSource === "custom" && (
+          <>
+            <Button variant="tertiary" size="sm" className="self-start" onClick={() => patch({ style: { ...(brandStyle ?? {}) } })}>
+              {t("style.reset")}
+            </Button>
+            <StylePanel value={page.style ?? {}} onChange={(s) => patch({ style: s })} scope="page" />
+          </>
+        )}
+      </div>
       <SectionList product={product} page={page} onPage={onPage} onDescription={onDescription} onEditDetails={onEditDetails} onEditTickets={onEditTickets} />
     </div>
   );
