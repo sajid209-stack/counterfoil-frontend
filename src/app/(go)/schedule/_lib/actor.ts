@@ -29,6 +29,7 @@ export interface Actor {
    *  spot. See `counterAction` in lib/permissions. */
   refundMode: CounterActionMode;
   rescheduleMode: CounterActionMode;
+  writeOffMode: CounterActionMode;
 }
 
 export function useActor(): Actor {
@@ -45,6 +46,7 @@ export function useActor(): Actor {
     discountLimitPct: role?.discountLimitPct ?? null,
     refundMode: counterAction(role, "refund"),
     rescheduleMode: counterAction(role, "reschedule"),
+    writeOffMode: counterAction(role, "writeOff"),
   };
 }
 

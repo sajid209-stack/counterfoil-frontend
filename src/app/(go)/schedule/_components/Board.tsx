@@ -2,9 +2,10 @@
 
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { CalendarClock, Check, Lock, Plus, RotateCcw, Wrench } from "lucide-react";
+import { CalendarClock, Check, HandCoins, Lock, Plus, RotateCcw, Wrench } from "lucide-react";
 import { MarketBadge } from "@/components/ui";
-import { pendingRefundFor } from "@/lib/api/refundRequests";
+import { pendingRefundFor, useRefundVersion } from "@/lib/api/refundRequests";
+import { pendingWriteOffFor, useWriteOffVersion } from "@/lib/api/writeOffRequests";
 import { pendingRescheduleFor, useRescheduleVersion } from "@/lib/api/rescheduleRequests";
 import { cn } from "@/lib/cn";
 import { formatClock, formatClockMin, formatPriceShort } from "@/lib/format";
@@ -416,10 +417,13 @@ function BlockView({
   onSession: (column: Column, block: Extract<Block, { type: "session" }>) => void;
 }) {
   const t = useTranslations("schedule");
+  const tr = useTranslations("refunds");
   const place = column.kind === "unassigned" ? t("board.noPlace") : column.name;
   const tall = height >= 52;
-  // Re-draws the "Move asked" mark when a request is made, answered or taken back.
+  // Re-draws the "asked" marks when a request is made, answered or taken back.
   useRescheduleVersion();
+  useRefundVersion();
+  useWriteOffVersion();
   /* A small inset so two bookings back to back read as two, and a small
      corner — a calendar block, not a card. */
   // ds-exception: in-column layer z-3 (booked blocks) under the z-10 sticky gutter
@@ -435,7 +439,10 @@ function BlockView({
        and the next person at the counter should know before they promise its
        hour to somebody else. */
     const moving = !refunding && !!pendingRescheduleFor(b.booking.id);
-    const asked = refunding ? t("refund.boardBadge") : moving ? t("refund.moveBoardBadge") : "";
+    /* Money still owed that the counter has asked to write off reads the same
+       way, after the refund (a refund waiting is the louder thing to know). */
+    const writing = !refunding && !moving && !!pendingWriteOffFor(b.booking.orderId);
+    const asked = refunding ? t("refund.boardBadge") : moving ? t("refund.moveBoardBadge") : writing ? tr("pos.markers.writeOffAsked") : "";
     const src = b.source;
     const sold = src ? (src.reference ? t("board.bookedOnRef", { name: src.marketplaceName, reference: src.reference }) : t("board.bookedOn", { name: src.marketplaceName })) : "";
     return (
@@ -473,6 +480,7 @@ function BlockView({
           {b.arrived && <Check size={13} strokeWidth={2.5} className="shrink-0 text-success" aria-hidden />}
           {refunding && <RotateCcw size={13} strokeWidth={2.5} className="shrink-0 text-warning" aria-hidden />}
           {moving && <CalendarClock size={13} strokeWidth={2.5} className="shrink-0 text-warning" aria-hidden />}
+          {writing && <HandCoins size={13} strokeWidth={2.5} className="shrink-0 text-warning" aria-hidden />}
           <span className="truncate">{who}</span>
         </span>
         {tall && (

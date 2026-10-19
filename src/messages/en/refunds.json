@@ -1,6 +1,6 @@
 {
-  "title": "{count, plural, one {# request from the counter} other {# requests from the counter}}",
-  "lead": "Check each one. A refund gives the money back and puts the slot back on sale. A move changes the day or time.",
+  "title": "{count, plural, one {# move request from the counter} other {# move requests from the counter}}",
+  "lead": "Check each one. A move changes the day or time. The place is checked again first.",
   "walkIn": "Walk-in",
   "reasons": {
     "customer_cancelled": "Guest cancelled",
@@ -43,5 +43,124 @@
     "double_booked": "Booked twice",
     "other": "Something else"
   },
-  "moveDeclinePlaceholder": "e.g. That lane is booked for an event"
+  "moveDeclinePlaceholder": "e.g. That lane is booked for an event",
+  "pos": {
+    "myRequests": "My requests",
+    "flow": {
+      "title": "Ask for a refund",
+      "titleDirect": "Refund",
+      "whatLabel": "What goes back?",
+      "cancelBooking": "Cancel the booking",
+      "cancelBookingSub": "{amount} · the slot goes back on sale",
+      "someTickets": "Some tickets",
+      "someTicketsSub": "Choose which ones",
+      "goodwill": "An amount",
+      "goodwillSub": "Tickets stay valid",
+      "ticketsLabel": "Which tickets?",
+      "ticketItem": "{tier} · {amount}",
+      "noTickets": "Choose the tickets to give back.",
+      "amountLabel": "How much goes back?",
+      "amountHint": "Up to {max}. The tickets stay valid.",
+      "amountNeed": "Enter how much to give back.",
+      "amountOver": "That is more than this sale still holds ({max}).",
+      "total": "Goes back to the guest",
+      "totalSub": {
+        "booking": "What was paid for this booking, VAT included.",
+        "tickets": "What was paid for these tickets.",
+        "goodwill": "The tickets stay valid."
+      },
+      "reasonLabel": "Why?",
+      "noteLabel": "Note for the manager (optional)",
+      "noteLabelRequired": "Note for the manager",
+      "notePlaceholder": "e.g. Rain stopped play after 20 minutes",
+      "noteRequired": "Say why, so the manager can decide.",
+      "back": "Back",
+      "send": "Send to a manager",
+      "sendNow": "Refund {amount} now",
+      "leadAsk": "A manager checks this and gives the money back. You will see the answer here.",
+      "leadDirect": "This refund happens right away. No manager needed.",
+      "sent": "Refund request sent to a manager",
+      "doneDirect": "Refunded {amount}. Give it back by {method}.",
+      "failed": "Couldn't send the request. Try again.",
+      "nothing": "Nothing is left to refund on this sale."
+    },
+    "writeOff": {
+      "action": "Write off {amount}",
+      "title": "Ask to write off",
+      "titleDirect": "Write off",
+      "owes": "Still owed",
+      "amountLabel": "How much?",
+      "amountHint": "Up to {owed}. Lower it to write off only part.",
+      "amountNeed": "Enter an amount above zero.",
+      "amountOver": "That is more than is owed ({owed}).",
+      "categoryLabel": "Why?",
+      "category": {
+        "uncollectible": "Can't be collected",
+        "customer_dispute": "Guest disputes it",
+        "business_decision": "Our decision",
+        "administrative": "Fixing a mistake"
+      },
+      "noteLabel": "What happened?",
+      "notePlaceholder": "e.g. Left without paying. Phone does not answer.",
+      "noteRequired": "Say what happened, so the manager can decide.",
+      "back": "Back",
+      "send": "Send to a manager",
+      "sendNow": "Write off {amount} now",
+      "leadAsk": "A manager checks this. Until then the guest still owes the money.",
+      "leadDirect": "This clears what is owed right away. No manager needed.",
+      "sent": "Write-off request sent to a manager",
+      "doneDirect": "Wrote off {amount}.",
+      "failed": "Couldn't send the request. Try again.",
+      "takeBack": "Take back the write-off request"
+    },
+    "markers": {
+      "refundAsked": "Refund asked",
+      "writeOffAsked": "Write-off asked"
+    },
+    "status": {
+      "refundPending": "Refund asked · {amount} · waiting for a manager",
+      "writeOffPending": "Write-off asked · {amount} · waiting for a manager",
+      "takeBack": "Take it back",
+      "takenBack": "Request taken back",
+      "refundApproved": "Refunded {amount}",
+      "refundDeclined": "Refund refused",
+      "writeOffApproved": "Written off {amount}",
+      "writeOffRejected": "Write-off refused",
+      "byLine": "{name} said:",
+      "noNote": "No note left.",
+      "expired": "Nobody answered in time. Ask again if it is still needed.",
+      "stillOwes": "Still owes {amount}"
+    },
+    "requests": {
+      "title": "My requests",
+      "subtitle": "What you asked a manager for, and what they said.",
+      "tabWaiting": "Waiting",
+      "tabAnswered": "Answered",
+      "tabAll": "All",
+      "kindRefund": "Refund",
+      "kindWriteOff": "Write-off",
+      "askedAt": "Asked {when}",
+      "noGuest": "Walk-in",
+      "yourNote": "Your note",
+      "managerNote": "Manager's note",
+      "decidedBy": "Answered by {name}",
+      "emptyWaiting": "Nothing is waiting. Anything you ask a manager for shows here.",
+      "emptyAnswered": "No answers yet.",
+      "emptyAll": "You haven't asked for anything yet. A refund or write-off you ask for will show here.",
+      "status": {
+        "pending": "Waiting",
+        "approvedRefund": "Refunded",
+        "approvedWriteOff": "Written off",
+        "declined": "Declined",
+        "rejected": "Rejected",
+        "withdrawn": "Taken back",
+        "expired": "Closed"
+      },
+      "scope": {
+        "booking": "Booking cancelled",
+        "tickets": "Some tickets",
+        "goodwill": "An amount, tickets stay valid"
+      }
+    }
+  }
 }

@@ -9,6 +9,7 @@ import {
   CircleHelp,
   Clock,
   Ellipsis,
+  Inbox,
   Palette,
   ScanLine,
   Settings,
@@ -75,6 +76,9 @@ const TABS = [
    setting the till up, not for the person selling — last. */
 const MORE_ITEMS = [
   { key: "mySales", icon: Banknote, href: "/my-sales" },
+  /* What this person asked a manager for, and what was said. Its label lives
+     with the rest of the refund words (refunds.pos.myRequests). */
+  { key: "myRequests", icon: Inbox, href: "/my-requests" },
   { key: "shift", icon: Clock, href: "/shift/close" },
   { key: "quickPass", icon: Ticket, href: "/quick-pass" },
   { key: "switchUser", icon: Users, href: "/login" },
@@ -159,6 +163,8 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   }, []);
   const t = useTranslations("nav");
   const tp = useTranslations("pos");
+  const tr = useTranslations("refunds");
+  const moreLabel = (key: (typeof MORE_ITEMS)[number]["key"]) => (key === "myRequests" ? tr("pos.myRequests") : t(key));
   const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
   const { counter: activeCounter } = useActiveCounter(countersQ.data?.data ?? peekCounters());
   const [moreOpen, setMoreOpen] = useState(false);
@@ -179,7 +185,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
      job, and a till with no tab lit leaves a cashier asking where they are. */
   /* Pages opened from More light no tab of their own, so More wears the light
      pill while you are on one of them: the bar always says where you are. */
-  const onMorePage = (["/my-sales", "/quick-pass", "/till-settings", "/reservations", "/profile", "/shift"] as const).some((r) => pathname === r || pathname.startsWith(`${r}/`));
+  const onMorePage = (["/my-sales", "/my-requests", "/quick-pass", "/till-settings", "/reservations", "/profile", "/shift"] as const).some((r) => pathname === r || pathname.startsWith(`${r}/`));
   const moreLit = moreOpen || onMorePage;
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`) || (href === "/pos" && (pathname === "/sell" || pathname.startsWith("/sell/")));
@@ -434,10 +440,10 @@ export function GoShell({ children }: { children: React.ReactNode }) {
                   <span aria-hidden className="flex size-10 items-center justify-center rounded-full bg-subtle text-fg [&_svg]:size-5">
                     <Icon strokeWidth={1.5} />
                   </span>
-                  <span className="text-sm font-medium leading-tight">{t(item.key)}</span>
+                  <span className="text-sm font-medium leading-tight">{moreLabel(item.key)}</span>
                 </Link>
               ) : (
-                <ActionTile key={item.key} icon={<Icon strokeWidth={1.5} />} label={t(item.key)} onClick={() => runItem(item)} />
+                <ActionTile key={item.key} icon={<Icon strokeWidth={1.5} />} label={moreLabel(item.key)} onClick={() => runItem(item)} />
               );
             })}
           </TileGrid>

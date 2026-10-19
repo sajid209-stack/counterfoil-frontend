@@ -70,6 +70,8 @@ const store: Record<string, Row[]> = {
   refundRequests: [],
   // Move requests work the same way (lib/api/rescheduleRequests).
   rescheduleRequests: [],
+  // Write-off requests (lib/api/writeOffRequests) — asked for at the counter.
+  writeOffRequests: [],
   // Withdrawals and deposits made this session (see lib/api/finances) — the
   // only finance lines that are written; every other line is derived.
   financeLines: [],
@@ -164,6 +166,7 @@ export function loadBusiness(name: string, currency: string, productIds: string[
   (store as Record<string, unknown[]>).ticketScans = [];
   (store as Record<string, unknown[]>).refundRequests = [];
   (store as Record<string, unknown[]>).rescheduleRequests = [];
+  (store as Record<string, unknown[]>).writeOffRequests = [];
   (store as Record<string, unknown[]>).financeLines = [];
   (store as Record<string, unknown[]>).bookings = [...sales.bookings, ...keepBookings];
 }
@@ -188,7 +191,7 @@ const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
       S.storefronts = structuredClone(doers.doersStorefronts);
       S.inventoryItems = structuredClone(doers.doersInventoryItems);
       S.stockMovements = structuredClone(doers.doersStockMovements);
-      for (const k of ["resources", "holds", "marketplaceConnections", "marketplaceListings", "ticketCredentials", "ticketScans", "refundRequests"]) S[k] = [];
+      for (const k of ["resources", "holds", "marketplaceConnections", "marketplaceListings", "ticketCredentials", "ticketScans", "refundRequests", "rescheduleRequests", "writeOffRequests"]) S[k] = [];
       const sales = generateSales({ products: doers.doersProducts, locations: doers.doersLocations, staff: seed.staff, taxRatePct: operatorState.taxRatePct, reducedRatePct: operatorState.reducedRatePct, count: 40 });
       S.orders = sales.orders;
       S.tickets = sales.tickets;

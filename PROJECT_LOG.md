@@ -18408,3 +18408,84 @@ all six presets reviewed by screenshot at 1440 and 390 for whitespace.
 Open: the older standing harness scripts are not on this machine; the Bangla
 for the new strings is a draft; preset cards and shape/layout choices are
 labelled chips rather than drawn diagrams.
+## Refunds and write-offs, in OS, Settings and the till (2026-10-19)
+
+Owner, with screenshots of the backend team's Refund requests and Write-off requests pages (orange pill filters, tall cards in a narrow column, three orange buttons on each card): new menu items for refunds and write-offs, researched against Shopify, Foodpanda and other good SaaS and POS products. A refund request can be sent from a booked slot or ticket at the counter, and OS manages the timing. The spec is `docs/refunds.md`, with an "As built" section.
+
+Planned, contract written and reviewed on Opus. Built by three Sonnet agents with separate file ownership (OS pages, Settings, POS); a fourth ported four tests.
+
+### What the research settled
+- Shopify POS: each staff action is Allowed, Denied or Approval required per role. Refunds are taken from the sale, line by line.
+- Square: partial and per-item refunds. Who may refund is a role permission.
+- Stripe: a refund has a status, the list filters by status, and the reason is one hover away.
+- Foodpanda (the customer's side): slow answers are what people hate, so every request carries a respond-by time.
+- Accounts-receivable write-off practice: a category, a note, an approver, and an amount above which a manager must approve.
+
+### The model
+- **A refund request is one of three kinds:**
+  - **Cancel the booking:** the booking's lines are refunded, the booking is cancelled and its slot goes back on sale.
+  - **Some tickets:** each ticket's share of its line, and those tickets are voided.
+  - **An amount:** goodwill; nothing is cancelled and tickets stay valid.
+- Only an amount is typed, capped at what the sale still holds, and only an amount can be approved for less. A refund never gives back more than came in.
+- **A write-off request** clears what a guest still owes: an amount up to what is owed, a category and a required note. A manager may approve it for less. No money moves.
+- **Both lifecycles:** waiting → refunded or written off / declined or rejected / taken back. Expired is derived when read, from the auto-close setting.
+- One open request per booking or sale.
+- **Timing** (Settings → Refunds & write-offs):
+  - how long the counter may ask: until the booking starts (the default), until it ends, or any time;
+  - answer within 4–72 hours, which sets each request's respond-by time and "Overdue";
+  - keep waiting, or close after N days;
+  - give refunds back the way they paid, or in cash;
+  - the write-off amount above which a manager must approve (৳0: always).
+- **Who** is per role: "Write off what a guest owes" (Off / Ask a manager / Do it) joins refunds and moves under At the counter.
+
+### OS
+- **Menu:** Refunds and Write-offs right after Orders, each with a neutral count of what is waiting at the venue in the bar. The count also shows on the collapsed rail and in the phone menu. Ctrl+K finds them by "refund", "write off" and "bad debt".
+- **Lists:**
+  - one summary line ("2 waiting · ৳1,276.50 · 1 overdue");
+  - tabs with counts: Waiting · Refunded or Written off · Declined or Rejected · All;
+  - search and one Filters button;
+  - a table with a respond-by chip ("Due in 18 h" / "Overdue"); two-line cards on a phone.
+- **Detail** is a right-hand sheet:
+  - the amount, what is refunded and the consequence in one line, the guest, the sale link, why, the respond-by line and a timeline;
+  - one orange button (Refund ৳X / Write off ৳X), "Different amount" where allowed, and a soft-red Decline or Reject that asks why;
+  - Refund confirms where the money goes back.
+- **Orders:** the big queue is replaced by one line ("2 refunds and 2 write-offs are waiting · Review"). Move requests are still answered there. The order page has a Requests card.
+
+### POS
+- **The refund sheet** is shared by the Schedule's booked-slot sheet, Check-in's menu and My sales (where it refunds by order):
+  - what goes back, as tiles;
+  - why, as tiles; "Something else" needs a note;
+  - Back, then "Send to a manager", or "Refund ৳X now" when the role may and the amount is within its limit;
+  - outside the counter's time window it shows the sentence and no orange button.
+- **Write off ৳X** wherever money is owed (the booked-slot sheet, Check-in, the take-balance sheet): amount, four category tiles and a note. It is hidden when the role is Off.
+- "Refund asked" and "Write-off asked" marks on the board and on Check-in rows. A waiting request can be taken back; an answered one shows the manager's note.
+- **My requests** (More, after My sales): what this person asked for, with status, notes and Take it back.
+
+### Found and fixed while building
+- "Cancel the booking" on a part-paid booking would have refunded the full price. Both the request and the refund itself are now capped at what was paid.
+- A goodwill refund that only wrote a negative payment would have made the order read as owing that amount. It now also reduces the sale (a negative line at the sale's VAT rate).
+- The demo notes did not match their bookings (a waterlogged field on a garden tour); they are generic now.
+
+### Verified
+- Contract unit test **56/56**:
+  - each kind approved, and goodwill approved for less;
+  - money back by exactly the amount, and the order not left owing;
+  - tickets voided only where asked;
+  - the counter window, respond-by and expiry;
+  - write-offs approved for less, rejected, and direct within the limit.
+- The agents' own runs:
+  - OS: 76 behaviour checks and 121 layout and contrast checks at 390 and 1440, light, dark and Bangla.
+  - Settings: 49 checks, plus 17/18 on Roles. The 18th (the phone Compare row) was confirmed in my review.
+  - POS: refunds 25/25, write-offs, tickets and My requests 24/24, My sales 7/7, Bangla 8/8, audit 9/9.
+- **My review by screenshot:** /refunds and its detail at 1440 and 390, /write-offs in dark, Settings at 1440 and in dark at 390, Orders, My requests. No console errors and no sideways scroll on any of them.
+- **Production build** passes. Regression on it: the till and office lists pass, apart from five tests that asserted the old screens:
+  - nav, rewritten for the two new menu items: 201/201;
+  - rf, ci6, ci7 and ci10, ported to the new refund sheet and the Refunds page.
+- Phone audit: hidden 0 · under-44 0 · clipped 0 · errors 0.
+- `tsc`, `lint:tokens` 0 and i18n 0 / 0 are clean.
+
+### Open
+- The Bangla strings are drafts.
+- Refunding from a scanned ticket at the gate was not built.
+- A refund on a booking already played needs a manager, from OS, unless the window is set to Any time.
+- Move requests in the Orders queue are not narrowed to the venue in the bar.

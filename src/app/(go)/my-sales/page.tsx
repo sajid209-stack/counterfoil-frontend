@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Printer, ReceiptText, Ticket } from "lucide-react";
+import { Printer, ReceiptText, RotateCcw, Ticket } from "lucide-react";
 import { Button, Notice, Skeleton, StatusPill } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { useEnumLabels } from "@/lib/labels";
@@ -10,8 +10,11 @@ import { formatClockOf, formatDay, formatMoney } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { getOperator, getStaff, listOrders, listProducts, peekPaymentSettings, type Order } from "@/lib/api";
+import { goodwillMaxFor, pendingRefundForOrder, useRefundVersion } from "@/lib/api/refundRequests";
 import { GoCard, TileLabel } from "../_components/Tiles";
 import { Thumb } from "../_components/Thumb";
+import { RefundFlowSheet } from "../_components/RefundFlowSheet";
+import { useActor } from "../schedule/_lib/actor";
 import { summarise, todayDays, yesterdayDays } from "./_lib/summary";
 import { MethodBars } from "./_components/MethodBars";
 
@@ -28,6 +31,12 @@ export default function MySalesPage() {
   const t = useTranslations("mysales");
   const labels = useEnumLabels();
   const [shown, setShown] = useState(PAGE);
+  /* A sale the cashier is asking to give money back on. There is no booking
+     behind a sale here, so the sheet offers some tickets or an amount. */
+  const [refundOrder, setRefundOrder] = useState<Order | null>(null);
+  const actor = useActor();
+  // A request made, answered or taken back changes which sales offer the button.
+  useRefundVersion();
   const ordersQ = useApiQuery(() => listOrders({ pageSize: 2000 }), []);
   const opQ = useApiQuery(() => getOperator(), []);
   const meQ = useApiQuery(() => getStaff(DEMO_STAFF_ID), []);
@@ -166,8 +175,12 @@ export default function MySalesPage() {
             <ul className="flex flex-col gap-tight">
               {rows.map((o) => {
                 const method = o.payments.find((p) => p.amount > 0)?.method;
+                /* Money is held on this sale and nobody has asked for it back yet. */
+                const asked = !!pendingRefundForOrder(o.id);
+                const canAsk = !asked && !actor.loading && actor.refundMode !== "off" && goodwillMaxFor(o.id) > 0;
                 return (
-                  <li key={o.id} className="card-surface flex items-center gap-comfortable p-comfortable">
+                  <li key={o.id} className="card-surface flex flex-col gap-tight p-comfortable">
+                    <div className="flex items-center gap-comfortable">
                     <Thumb glyph={<ReceiptText strokeWidth={1.5} />} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-mono text-sm font-semibold">{o.reference}</span>
@@ -180,6 +193,18 @@ export default function MySalesPage() {
                       <span className="text-md font-semibold tabular-nums">{money(o.total)}</span>
                       <StatusPill status={o.status} size="md" />
                     </span>
+                    </div>
+                    {asked ? (
+                      <p data-refund-asked className="inline-flex w-fit items-center gap-1 rounded-full bg-warning-wash px-comfortable py-inline text-sm font-semibold text-fg">
+                        <RotateCcw size={14} strokeWidth={2.25} aria-hidden />
+                        {t("refundAsked")}
+                      </p>
+                    ) : canAsk ? (
+                      <Button variant="link" data-ask-refund onClick={() => setRefundOrder(o)} className="min-h-11 self-end print:hidden">
+                        <RotateCcw size={16} strokeWidth={2} aria-hidden />
+                        {t("askRefund")}
+                      </Button>
+                    ) : null}
                   </li>
                 );
               })}
@@ -195,6 +220,18 @@ export default function MySalesPage() {
             )}
           </section>
         </>
+      )}
+
+      {refundOrder && (
+        <RefundFlowSheet
+          key={refundOrder.id}
+          open
+          onClose={() => setRefundOrder(null)}
+          title={refundOrder.reference}
+          when={formatClockOf(refundOrder.createdAt)}
+          orderId={refundOrder.id}
+          onDone={() => setRefundOrder(null)}
+        />
       )}
     </main>
   );

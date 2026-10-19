@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/format";
 import { demoNow } from "@/lib/schedule";
 import { RefundRequests } from "@/components/RefundRequests";
 import { OrderCard, firstDirection, useOrderColumns } from "./_components/columns";
+import { RequestsBanner } from "./_components/RequestsBanner";
 import { OrdersToolbar, type FacetOptions } from "./_components/OrdersToolbar";
 import { SalesFigures } from "./_components/SalesFigures";
 import { SummarySheet } from "./_components/SummarySheet";
@@ -202,8 +203,11 @@ function OrdersPageInner() {
   return (
     <PageShell title={t("title")} description={t("description")}>
       <div className="flex flex-col gap-section">
-        {/* Refunds the counter has asked for come first: each one is a guest
-            waiting on an answer. Nothing is drawn when none are waiting. */}
+        {/* Refunds and write-offs have their own pages now; this is one quiet
+            line pointing at them, drawn only while something is waiting. Move
+            requests (a guest wanting another day or time) are still answered
+            here, under it. */}
+        <RequestsBanner />
         <RefundRequests onDecided={() => report.reload()} />
 
         {f.customerId && (

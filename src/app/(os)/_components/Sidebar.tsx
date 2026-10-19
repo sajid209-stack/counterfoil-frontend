@@ -11,6 +11,7 @@ import { NAV_PARENT_OF_SELECTED, NAV_IDLE, NAV_SELECTED, NAV_SELECTED_ICON } fro
 import { cn } from "@/lib/cn";
 import pkg from "../../../../package.json";
 import { NAV_MAIN, NAV_OPEN, NAV_SETTINGS, groupOf, isAt, type NavDestination } from "./nav";
+import { NavBadge, useNavBadges } from "./navBadges";
 
 /**
  * A label for an icon, drawn beside it on hover or focus.
@@ -341,12 +342,17 @@ export function Sidebar({
   const group = groupOf(pathname);
   const appsOpen = useSyncExternalStore(subscribeApps, readApps, () => true);
   const appsId = useId();
+  const badges = useNavBadges();
 
   /* One row, for a parent with no flyout and for every other destination. 36px
      (44 under a coarse pointer), an 18px / 1.5 icon on a fixed edge so every
      label starts on one line. The look comes from NAV_* (see navStyles). */
   const row = (d: NavDestination, opts: { selected: boolean; parentOf?: boolean; leaves?: boolean }) => {
     const label = t(d.key);
+    /* What is waiting, when this row carries a count. Drawn as a pill; the
+       words travel in the accessible name so it is not just a number. */
+    const count = d.badge ? badges[d.badge] : undefined;
+    const waiting = count && count > 0 ? t("waiting", { count }) : "";
     const exact = isAt(d, pathname);
     const Icon = d.icon;
     return (
@@ -354,12 +360,16 @@ export function Sidebar({
         <Link
           href={d.href}
           data-nav={d.key}
-          aria-label={narrow ? label : undefined}
+          aria-label={narrow ? (waiting ? `${label}, ${waiting}` : label) : undefined}
           aria-current={exact ? "page" : undefined}
           className={parentRowClass(narrow, opts.selected, !!opts.parentOf)}
         >
           <Icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", opts.selected && NAV_SELECTED_ICON)} />
           {!narrow && <span className="min-w-0 flex-1 truncate">{label}</span>}
+          {/* Expanded: the count at the row's end. Collapsed: a tiny one on the
+              icon's corner. Hidden at zero. */}
+          <NavBadge count={count} corner={narrow} />
+          {!narrow && waiting && <span className="sr-only">{waiting}</span>}
           {/* Leaving the console. Collapsed, the arrow is a corner mark on the
               icon, so the other apps are still told apart from the daily list. */}
           {opts.leaves && !narrow && <ArrowUpRight size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}

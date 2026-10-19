@@ -78,6 +78,17 @@ export async function voidOrderTickets(orderId: string, productId?: string): Pro
   }
 }
 
+/** Void these tickets, if they have not been used — a refund of some tickets
+ *  on an order rather than the whole line. A used ticket stays used: the guest
+ *  has been in, and a refund does not undo that. */
+export async function voidTickets(ids: string[]): Promise<void> {
+  const hit = resource.peek().filter((t) => ids.includes(t.id) && t.status === "issued");
+  for (const t of hit) {
+    await resource.update(t.id, { status: "void" });
+    await revokeCredentials(t.id);
+  }
+}
+
 /** How many people a ticket admits — the line snapshot when present (F11),
  *  else the tier's current composition (Family = 4). */
 export function ticketAdmits(ticket: Ticket): number {

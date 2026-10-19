@@ -34,5 +34,8 @@
   "refundedLine": "Refunded",
   "noMethods": "Nothing paid yet today.",
   "share": "{pct}% {method}",
-  "printShort": "Print"
+  "printShort": "Print",
+  "askRefund": "Ask for a refund",
+  "refundAsked": "Refund asked",
+  "refundSheetTitle": "Refund for this sale"
 }

@@ -34,5 +34,8 @@
   "refundedLine": "ফেরত",
   "noMethods": "আজ এখনও কোনো মূল্য পরিশোধ হয়নি।",
   "share": "{pct}% {method}",
-  "printShort": "প্রিন্ট"
+  "printShort": "প্রিন্ট",
+  "askRefund": "টাকা ফেরত চান",
+  "refundAsked": "ফেরত চাওয়া হয়েছে",
+  "refundSheetTitle": "এই বিক্রির টাকা ফেরত"
 }

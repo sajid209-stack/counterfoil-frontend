@@ -16,6 +16,7 @@ import { NAV_IDLE, NAV_PARENT_OF_SELECTED, NAV_SELECTED, NAV_SELECTED_ICON } fro
 import { PageStatePicker } from "@/components/screens";
 import { LocationSwitcher } from "./LocationSwitcher";
 import { NAV_MAIN, NAV_OPEN, NAV_SETTINGS, isAt, type NavDestination } from "./nav";
+import { NavBadge, useNavBadges } from "./navBadges";
 
 /**
  * The phone's way around — a round menu button at the bottom-left, and the
@@ -127,6 +128,9 @@ function MenuBody({ onClose }: { onClose: () => void }) {
   const appearanceId = useId();
   const appsId = useId();
   const languageId = useId();
+  /* What is waiting, per row — read here, not in the shell, so the queries are
+     only paid for while the sheet is open (the account queries below are too). */
+  const badges = useNavBadges();
 
   const meQ = useApiQuery(() => getStaff(DEMO_STAFF_ID), []);
   const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
@@ -145,6 +149,7 @@ function MenuBody({ onClose }: { onClose: () => void }) {
     const exact = isAt(d, pathname);
     const kids = d.children ?? [];
     const parentOf = !exact && kids.some((c) => isAt(c, pathname));
+    const count = d.badge ? badges[d.badge] : undefined;
     return (
       <li key={d.key}>
         <Link
@@ -162,6 +167,8 @@ function MenuBody({ onClose }: { onClose: () => void }) {
         >
           <Icon size={20} strokeWidth={1.5} aria-hidden className={cn("shrink-0", exact && NAV_SELECTED_ICON)} />
           <span className="min-w-0 flex-1 truncate">{t(d.key)}</span>
+          <NavBadge count={count} />
+          {count ? <span className="sr-only">{t("waiting", { count })}</span> : null}
           {leaves && <ArrowUpRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
         </Link>
         {kids.length > 0 && (

@@ -32,7 +32,7 @@ export const permissionKey = (p: Permission): string => p.replace(/\.(\w)/g, (_,
 
 export const roleCan = (role: Pick<Role, "permissions">, p: Permission): boolean => role.permissions.includes(p);
 
-export type CounterAction = "refund" | "reschedule";
+export type CounterAction = "refund" | "reschedule" | "writeOff";
 
 /**
  * What a role may do at the counter for a refund or a move.
@@ -43,11 +43,12 @@ export type CounterAction = "refund" | "reschedule";
  * move was always done on the spot.
  */
 export function counterAction(
-  role: Pick<Role, "permissions" | "counterRefund" | "counterReschedule"> | null | undefined,
+  role: Pick<Role, "permissions" | "counterRefund" | "counterReschedule" | "counterWriteOff"> | null | undefined,
   action: CounterAction,
 ): CounterActionMode {
   if (!role) return "request";
   if (action === "refund") return role.counterRefund ?? (roleCan(role, "orders.refund") ? "direct" : "request");
+  if (action === "writeOff") return role.counterWriteOff ?? (roleCan(role, "orders.refund") ? "direct" : "request");
   return role.counterReschedule ?? "direct";
 }
 

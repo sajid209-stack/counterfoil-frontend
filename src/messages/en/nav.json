@@ -47,7 +47,9 @@
     "analytics": "analytics reports report sales tax vat revenue takings income dashboard charts insights busiest peak hours",
     "finances": "finances money transactions payments refunds payout payouts fees fee balance withdraw deposit bank ledger bkash cash card",
     "expenses": "expenses expense cost costs spending spend bill bills purchases supplier",
-    "issuedOrders": "issued tickets codes booking number qr used unused voided"
+    "issuedOrders": "issued tickets codes booking number qr used unused voided",
+    "refunds": "refunds refund money back return returned cancel cancelled give back",
+    "writeOffs": "write-offs write-off write off writeoff bad debt owed balance forgive unpaid"
   },
   "inventory": "Inventory",
   "cartFab": "Cart — {count, plural, one {# item} other {# items}}",
@@ -71,5 +73,8 @@
   "signOut": "Sign out",
   "backTo": "Back to {label}",
   "designSystem": "Design System",
-  "flyout": "{label} menu"
+  "flyout": "{label} menu",
+  "refunds": "Refunds",
+  "writeOffs": "Write-offs",
+  "waiting": "{count, plural, one {# waiting} other {# waiting}}"
 }

@@ -214,12 +214,12 @@ function derived(ctx: Ctx): Raw[] {
           data: { amount: r.amount, reason: r.reason, note: r.note ?? null },
         }),
       );
-      if (r.status !== "pending" && r.decidedAt) {
+      if ((r.status === "approved" || r.status === "declined") && r.decidedAt) {
         out.push(
           raw(`rd:${r.id}`, r.decidedAt, r.status === "approved" ? "refund.approved" : "refund.declined", {
             ...base,
             actor: actorOf(ctx, r.decidedBy),
-            data: { amount: r.amount, note: r.decisionNote ?? null },
+            data: { amount: r.approvedAmount ?? r.amount, note: r.decisionNote ?? null },
           }),
         );
       }

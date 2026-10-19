@@ -1,11 +1,12 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { CalendarClock, RotateCcw, User, Users } from "lucide-react";
+import { CalendarClock, HandCoins, RotateCcw, User, Users } from "lucide-react";
 import { ActionMenu, Button, type ActionMenuItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 import { Thumb } from "../../_components/Thumb";
+import { RequestNotes } from "../../_components/RequestNotes";
 import type { Party } from "../_lib/parties";
 
 /**
@@ -27,6 +28,7 @@ export function PartyRow({
   party: p,
   pending,
   refundAsked,
+  writeOffAsked,
   moveAsked,
   menu,
   menuLabel,
@@ -36,6 +38,7 @@ export function PartyRow({
   party: Party;
   pending: boolean;
   refundAsked: boolean;
+  writeOffAsked: boolean;
   moveAsked: boolean;
   menu: ActionMenuItem[];
   menuLabel: string;
@@ -43,6 +46,7 @@ export function PartyRow({
   onCheckIn: (count: number) => void;
 }) {
   const t = useTranslations("checkin");
+  const tr = useTranslations("refunds");
   const remaining = p.size - p.arrived;
 
   return (
@@ -65,6 +69,12 @@ export function PartyRow({
               {t("refundAsked")}
             </span>
           )}
+          {writeOffAsked && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
+              <HandCoins size={12} strokeWidth={2.25} aria-hidden />
+              {tr("pos.markers.writeOffAsked")}
+            </span>
+          )}
           {moveAsked && (
             <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
               <CalendarClock size={12} strokeWidth={2.25} aria-hidden />
@@ -74,6 +84,9 @@ export function PartyRow({
         </p>
         {/* The code on its own line: it is what a guest reads off their phone. */}
         {!p.nameIsReference && p.reference && <p className="mt-inline break-all font-mono text-sm text-muted">{p.reference}</p>}
+        {/* What a manager said about a refund or write-off asked for here — the
+            sentence the steward tells the guest. Only once it is answered. */}
+        <RequestNotes variant="row" orderId={p.booking.orderId} bookingId={p.booking.id} className="mt-inline flex flex-col gap-inline" />
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-tight">

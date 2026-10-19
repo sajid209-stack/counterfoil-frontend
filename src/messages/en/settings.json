@@ -687,7 +687,15 @@
     "counterLimitDesc": "The most they can refund on the spot. Leave empty for no limit.",
     "compareMode_off": "Can't",
     "compareMode_request": "Asks a manager",
-    "compareMode_direct": "On the spot"
+    "compareMode_direct": "On the spot",
+    "counterWriteOffLabel": "Write off what a guest owes",
+    "counterWriteOffDesc": "When you stop chasing money a guest still owes.",
+    "writeOff_off": "Can't write off",
+    "writeOff_off_desc": "The Write off button does not show at the counter.",
+    "writeOff_request": "Can ask a manager",
+    "writeOff_request_desc": "They send a request. A manager decides.",
+    "writeOff_direct": "Can write off on the spot",
+    "writeOff_direct_desc": "The balance is cleared at once, up to the amount set in Refunds & write-offs."
   },
   "resources": {
     "descriptionList": "The courts, lanes, fields and rooms customers book. Free times are worked out for each one.",
@@ -894,6 +902,11 @@
         "title": "Privacy policy",
         "desc": "What you tell customers about their details.",
         "keywords": "privacy policy data personal details gdpr delete terms consent customers footer"
+      },
+      "refunds": {
+        "title": "Refunds & write-offs",
+        "desc": "When the counter can ask for a refund, and how fast you answer.",
+        "keywords": "refund refunds write off write-off bad debt cancellation cancel respond answer overdue money back owed"
       }
     },
     "menu": "Settings",
@@ -1463,5 +1476,41 @@
     "previewHeading": "Privacy policy",
     "previewEmpty": "Nothing to show yet. Write your policy above.",
     "saved": "Privacy policy saved."
+  },
+  "refunds": {
+    "title": "Refunds & write-offs",
+    "description": "The rules for giving money back, and for letting go of money a guest owes.",
+    "sectionRefund": "Refunds",
+    "sectionRefundDesc": "When a guest wants their money back.",
+    "sectionWriteOff": "Write-offs",
+    "sectionWriteOffDesc": "When you stop chasing money a guest owes.",
+    "window": "Counter can ask for a refund",
+    "window_before_start": "Until the booking starts",
+    "window_until_end": "Until the booking ends",
+    "window_any_time": "Any time",
+    "windowHelp_before_start": "The counter can ask for a refund until the booking starts.",
+    "windowHelp_until_end": "The counter can ask for a refund until the booking ends.",
+    "windowHelp_any_time": "The counter can ask for a refund at any time, even after the booking.",
+    "respond": "Answer requests within",
+    "respondHours": "{hours} hours",
+    "respondHelp": "Requests not answered by then show as Overdue at the top of the list.",
+    "noAnswer": "If nobody answers",
+    "keepWaiting": "Keep waiting",
+    "closeAfter": "Close after {days} days",
+    "noAnswerHelp_wait": "A request stays open until a manager answers it.",
+    "noAnswerHelp_close": "After {days} days with no answer, the request closes and the counter is told.",
+    "refundTo": "Give refunds back",
+    "refundTo_original": "The way they paid",
+    "refundTo_cash": "Cash at the counter",
+    "refundToHelp_original": "Money goes back to the card or wallet the guest paid with.",
+    "refundToHelp_cash": "The counter hands the guest cash.",
+    "writeOffAbove": "Counter write-offs need a manager above",
+    "writeOffHelp_zero": "Every write-off from the counter goes to a manager.",
+    "writeOffHelp_some": "Write-offs of {amount} or less are done at the counter by roles allowed to write off directly.",
+    "amountInvalid": "Enter a number of taka, like 500. Use 0 for always asking a manager.",
+    "who": "Who can ask or act",
+    "whoHelp": "Set this per role, under At the counter.",
+    "whoLink": "Open roles",
+    "saved": "Refund and write-off rules saved."
   }
 }

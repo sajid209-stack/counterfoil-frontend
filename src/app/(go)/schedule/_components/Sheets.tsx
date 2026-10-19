@@ -6,7 +6,7 @@ import {
   Banknote,
   CalendarClock,
   ChevronLeft,
-  Clock,
+  HandCoins,
   Lock,
   RotateCcw,
   Send,
@@ -19,7 +19,9 @@ import { cn } from "@/lib/cn";
 import { formatClock, formatClockOf, formatClockRange, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { isOpenOn, type Minor, type PaymentMethod, type Product } from "@/lib/api";
-import { REFUND_REASONS, type RefundReason, type RefundRequest } from "@/lib/api/refundRequests";
+import type { RefundRequest } from "@/lib/api/refundRequests";
+import { pendingWriteOffFor, useWriteOffVersion } from "@/lib/api/writeOffRequests";
+import { RequestNotes } from "../../_components/RequestNotes";
 import {
   pendingRescheduleFor,
   requestReschedule,
@@ -343,7 +345,8 @@ export function BlockSheet({
   onSellHold,
   refund,
   onRefund,
-  onWithdrawRefund,
+  onWriteOff,
+  onRequestsChanged,
   /** Offered whenever the booking can be moved — hidden rather than disabled,
    *  the way a cashier under pressure expects a button that is not for now. */
   canMove,
@@ -368,7 +371,10 @@ export function BlockSheet({
    *  last one decided, and whether there is any money on it to give back. */
   refund?: { pending: RefundRequest | null; last: RefundRequest | null; refundable: boolean; amount?: Minor };
   onRefund?: () => void;
-  onWithdrawRefund?: () => void;
+  /** Ask to write off what is still owed. */
+  onWriteOff?: () => void;
+  /** A waiting request was taken back: the page re-reads. */
+  onRequestsChanged?: () => void;
   canMove?: boolean;
   onMove?: () => void;
   owed?: Minor;
@@ -377,12 +383,14 @@ export function BlockSheet({
 }) {
   const t = useTranslations("schedule");
   const tc = useTranslations("common");
+  const tr = useTranslations("refunds");
   const toast = useToast();
   /* What this role may do at the counter — Settings → Roles. "Off" hides the
      button, "request" asks a manager, "direct" does it on the spot. */
   const actor = useActor();
   // A move request is made and answered elsewhere; re-read it when it changes.
   useRescheduleVersion();
+  useWriteOffVersion();
   const [withdrawing, setWithdrawing] = useState(false);
   if (!block || !column) return null;
   const place = column.kind === "unassigned" ? t("board.noPlace") : column.name;
@@ -443,6 +451,9 @@ export function BlockSheet({
   const refundAllowed = !actor.loading && actor.refundMode !== "off";
   const moveAllowed = !actor.loading && actor.rescheduleMode !== "off";
   const refundDirect = canRefundDirectly(actor, refund?.amount ?? 0);
+  /* A write-off is offered only while money is owed, the role allows it and
+     one is not already waiting (one per sale). */
+  const canWriteOff = !!onWriteOff && !actor.loading && actor.writeOffMode !== "off" && !pendingWriteOffFor(b.orderId);
   return (
     <Sheet
       open={open}
@@ -518,22 +529,7 @@ export function BlockSheet({
         );
       })()}
     >
-      {refund?.pending && (
-        <Notice
-          tone="warning"
-          icon={<Clock size={18} strokeWidth={1.75} />}
-          title={t("refund.pending", { amount: formatMoney(refund.pending.amount) })}
-          action={onWithdrawRefund ? { label: t("refund.withdraw"), onClick: () => { if (!busy) onWithdrawRefund(); }, busy } : undefined}
-          className="mx-card mt-card"
-        >
-          {t(`refund.reasons.${refund.pending.reason}`)}{refund.pending.note ? ` · ${refund.pending.note}` : ""}
-        </Notice>
-      )}
-      {!refund?.pending && refund?.last?.status === "declined" && refund.last.decisionNote && refund.last.decidedBy !== refund.last.requestedBy && (
-        <Notice tone="neutral" className="mx-card mt-card">
-          {t("refund.declined", { note: refund.last.decisionNote })}
-        </Notice>
-      )}
+      <RequestNotes orderId={b.orderId} bookingId={b.id} onChanged={onRequestsChanged} />
       {pendingMove && (
         <Notice
           tone="warning"
@@ -558,116 +554,23 @@ export function BlockSheet({
           value={block.noShow ? t("board.didntCome") : allIn ? t("board.allIn") : (b.checkedIn ?? 0) > 0 ? t("board.someIn", { count: b.checkedIn ?? 0, total: b.partySize }) : t("board.notYet")}
         />
       </dl>
+      {(owed ?? 0) > 0 && (
+        <div className="flex flex-col gap-tight px-card pb-card" data-owes>
+          <p className="flex items-baseline justify-between gap-comfortable text-md">
+            <span className="text-muted">{tr("pos.writeOff.owes")}</span>
+            <span className="font-semibold tabular-nums text-fg">{formatMoney(owed ?? 0)}</span>
+          </p>
+          {canWriteOff && (
+            <button type="button" data-write-off className={secondary("min-h-11 py-2", "w-full")} onClick={onWriteOff} disabled={busy}>
+              <HandCoins size={20} strokeWidth={2} aria-hidden />
+              <span className="text-center leading-tight">{tr("pos.writeOff.action", { amount: formatMoney(owed ?? 0) })}</span>
+            </button>
+          )}
+        </div>
+      )}
       {refund && !refund.refundable && !refund.pending && (
         <p className="px-card pb-card text-sm text-muted">{t("refund.nothingToRefund")}</p>
       )}
-    </Sheet>
-  );
-}
-
-/**
- * Ask for a refund on a booking.
- *
- * The cashier does not type an amount — it is what was paid for this booking,
- * worked out from the sale — so the one thing they choose is why, as large
- * cells a non-reader can learn by position. A manager decides; this only
- * sends the request.
- */
-export function RefundSheet({
-  open,
-  onClose,
-  title,
-  when,
-  amount,
-  /** This till's role can give the money back itself, within its limit — the
-   *  primary button does it on the spot instead of asking a manager. */
-  direct = false,
-  onSend,
-  busy,
-}: {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  when: string;
-  amount: number;
-  direct?: boolean;
-  onSend: (reason: RefundReason, note: string) => void;
-  busy: boolean;
-}) {
-  const t = useTranslations("schedule");
-  const tc = useTranslations("common");
-  const [reason, setReason] = useState<RefundReason>("customer_cancelled");
-  const [note, setNote] = useState("");
-  const [err, setErr] = useState<string | null>(null);
-  const send = () => {
-    if (reason === "other" && !note.trim()) {
-      setErr(t("refund.noteRequired"));
-      document.getElementById("refund-note")?.focus();
-      return;
-    }
-    setErr(null);
-    onSend(reason, note.trim());
-  };
-  return (
-    <Sheet
-      open={open}
-      onClose={onClose}
-      title={direct ? t("refund.titleDirect") : t("refund.title")}
-      closeLabel={tc("close")}
-      className={SHEET_WIDTH}
-      lead={<p className="text-base font-medium text-muted">{title} · {when}</p>}
-      footer={
-        <div className="flex w-full gap-tight">
-          <button type="button" className={SECONDARY} onClick={onClose} disabled={busy}>
-            <ChevronLeft size={20} strokeWidth={2} aria-hidden />
-            {t("refund.back")}
-          </button>
-          <button type="button" className={primary("min-h-13 py-2", "flex-[1.4]")} onClick={send} disabled={busy}>
-            <RotateCcw size={20} strokeWidth={2} aria-hidden />
-            <span className="text-center leading-tight">{direct ? t("refund.sendNow", { amount: formatMoney(amount) }) : t("refund.send")}</span>
-          </button>
-        </div>
-      }
-    >
-      <div className="flex flex-col gap-section p-card">
-        <div className="rounded-inner bg-subtle p-comfortable">
-          <p className="text-base text-muted">{t("refund.amountLabel")}</p>
-          <p className="text-3xl font-semibold tabular-nums leading-tight text-fg">{formatMoney(amount)}</p>
-          <p className="text-sm text-muted">{t("refund.amountNote")}</p>
-        </div>
-        <fieldset>
-          <legend className="mb-tight text-md font-semibold text-fg">{t("refund.reasonLabel")}</legend>
-          <TileGrid cols={2} role="radiogroup" aria-label={t("refund.reasonLabel")}>
-            {REFUND_REASONS.map((r, i) => (
-              <Tile
-                key={r}
-                role="radio"
-                aria-checked={reason === r}
-                selected={reason === r}
-                onClick={() => { setReason(r); setErr(null); }}
-                className={cn("min-h-14 text-md font-semibold", i === REFUND_REASONS.length - 1 && REFUND_REASONS.length % 2 === 1 && "col-span-2")}
-              >
-                {t(`refund.reasons.${r}`)}
-              </Tile>
-            ))}
-          </TileGrid>
-        </fieldset>
-        <label data-focus-host className="flex flex-col gap-tight">
-          <span className="text-md font-semibold text-fg">{reason === "other" ? t("refund.noteLabelRequired") : t("refund.noteLabel")}</span>
-          <textarea
-            id="refund-note"
-            value={note}
-            onChange={(e) => { setNote(e.target.value); setErr(null); }}
-            rows={2}
-            placeholder={t("refund.notePlaceholder")}
-            aria-invalid={!!err}
-            aria-describedby={err ? "refund-note-err" : undefined}
-            className="min-h-[5.5rem] rounded-inner bg-subtle px-comfortable py-tight text-md text-fg focus:ring-2 focus:ring-ember"
-          />
-          {err && <span id="refund-note-err" className="text-base font-medium text-danger">{err}</span>}
-        </label>
-        <p className="text-sm text-muted">{direct ? t("refund.leadDirect") : t("refund.lead")}</p>
-      </div>
     </Sheet>
   );
 }
@@ -916,6 +819,7 @@ export function TakeBalanceSheet({
   owed,
   limitPct,
   methods,
+  onWriteOff,
   onConfirm,
   busy,
 }: {
@@ -927,6 +831,7 @@ export function TakeBalanceSheet({
   owed: Minor;
   limitPct: number | null;
   methods: PaymentMethod[];
+  onWriteOff?: () => void;
   onConfirm: (opts: { discountMinor: Minor; reasonText: string; method: PaymentMethod | null; payAmount: Minor }) => void;
   busy: boolean;
 }) {
@@ -940,6 +845,7 @@ export function TakeBalanceSheet({
       owed={owed}
       limitPct={limitPct}
       methods={methods}
+      onWriteOff={onWriteOff}
       onConfirm={({ discountMinor, reasonText, method, payAmount }) => onConfirm({ discountMinor, reasonText, method, payAmount })}
       busy={busy}
     />

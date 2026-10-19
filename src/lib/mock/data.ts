@@ -704,6 +704,7 @@ export const roles: Role[] = [
     discountLimitPct: 10,
     counterRefund: "request",
     counterReschedule: "request",
+    counterWriteOff: "request",
     createdAt: T,
     updatedAt: T,
   },

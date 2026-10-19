@@ -2,15 +2,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useFormatter, useTranslations } from "next-intl";
-import { ArrowRight, CalendarClock, Inbox, RotateCcw } from "lucide-react";
+import { ArrowRight, CalendarClock, Inbox } from "lucide-react";
 import { Button, Modal, controlClass, useToast } from "@/components/ui";
-import { formatClockRange, formatDay, formatMoney, formatClock } from "@/lib/format";
-import {
-  approveRefundRequest,
-  declineRefundRequest,
-  pendingRefundRequests,
-  type RefundRequest,
-} from "@/lib/api/refundRequests";
+import { formatClockRange, formatDay, formatClock } from "@/lib/format";
 import {
   approveRescheduleRequest,
   declineRescheduleRequest,
@@ -20,25 +14,21 @@ import {
 } from "@/lib/api/rescheduleRequests";
 
 /**
- * Requests from the counter, waiting for a manager — to refund a booking, or to
- * move it to another day or time.
+ * Move requests from the counter, waiting for a manager.
  *
- * A cashier asks; this is where somebody with the authority answers. Each
- * request says who, what, when and why, then offers the two answers:
+ * A cashier asks to move a booking to another day or time; this is where
+ * somebody with the authority answers. Each request says who, what, when and
+ * why, then offers the two answers: Move it (the place is checked again first,
+ * then the booking goes to the new time) or Decline (with a reason the counter
+ * can read to the guest).
  *
- *  - a refund: Refund (the money goes back and the slot goes back on sale) or
- *    Decline (with a reason the counter can read to the guest);
- *  - a move: Move it (the place is checked again first, then the booking goes
- *    to the new time) or Decline (with a reason).
+ * Refunds and write-offs are NOT here any more. They have their own pages,
+ * Refunds and Write-offs, with a list, tabs and a detail view (docs/refunds.md).
+ * The name of this file is from before that split.
  *
- * Both kinds sit in one list, oldest first, because they are one inbox: the
- * same people answer them and the same counter is waiting. Nothing is drawn
- * when nothing is waiting.
- *
- * `orderId` narrows it to one order, for the order's own page.
+ * Nothing is drawn when no move is waiting. `orderId` narrows it to one order,
+ * for the order's own page.
  */
-type Item = { kind: "refund"; r: RefundRequest } | { kind: "move"; r: RescheduleRequest };
-
 export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?: string; onDecided?: () => void; who?: string }) {
   const t = useTranslations("refunds");
   const who = whoProp ?? t("manager");
@@ -47,18 +37,15 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
   // Re-read when a move is asked for, answered or taken back anywhere.
   useRescheduleVersion();
   const [, setVersion] = useState(0);
-  const [approving, setApproving] = useState<Item | null>(null);
-  const [declining, setDeclining] = useState<Item | null>(null);
+  const [approving, setApproving] = useState<RescheduleRequest | null>(null);
+  const [declining, setDeclining] = useState<RescheduleRequest | null>(null);
   const [note, setNote] = useState("");
   const [noteErr, setNoteErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const list: Item[] = [
-    ...pendingRefundRequests().map((r): Item => ({ kind: "refund", r })),
-    ...pendingRescheduleRequests().map((r): Item => ({ kind: "move", r })),
-  ]
-    .filter((i) => !orderId || i.r.orderId === orderId)
-    .sort((a, b) => Date.parse(a.r.requestedAt) - Date.parse(b.r.requestedAt));
+  const list: RescheduleRequest[] = pendingRescheduleRequests()
+    .filter((r) => !orderId || r.orderId === orderId)
+    .sort((a, b) => Date.parse(a.requestedAt) - Date.parse(b.requestedAt));
   if (list.length === 0) return null;
 
   const dayAndTime = (start: string, end?: string | null) => {
@@ -72,13 +59,13 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
   const approve = async () => {
     if (!approving) return;
     setBusy(true);
-    const res = approving.kind === "refund" ? await approveRefundRequest(approving.r.id, who) : await approveRescheduleRequest(approving.r.id, who);
+    const res = await approveRescheduleRequest(approving.id, who);
     setBusy(false);
     if (!res.ok) {
       toast.error(res.error.message);
       return;
     }
-    toast.success(approving.kind === "refund" ? t("approved", { amount: formatMoney(approving.r.amount) }) : t("movedOk", { to: dayAndTime(approving.r.toStart, approving.r.toEnd) }));
+    toast.success(t("movedOk", { to: dayAndTime(approving.toStart, approving.toEnd) }));
     setApproving(null);
     setVersion((v) => v + 1);
     onDecided?.();
@@ -92,13 +79,13 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
       return;
     }
     setBusy(true);
-    const res = declining.kind === "refund" ? await declineRefundRequest(declining.r.id, who, note) : await declineRescheduleRequest(declining.r.id, who, note);
+    const res = await declineRescheduleRequest(declining.id, who, note);
     setBusy(false);
     if (!res.ok) {
       toast.error(res.error.message);
       return;
     }
-    toast.success(declining.kind === "refund" ? t("declined") : t("moveDeclined"));
+    toast.success(t("moveDeclined"));
     setDeclining(null);
     setNote("");
     setVersion((v) => v + 1);
@@ -119,101 +106,85 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
         </div>
       </header>
       <ul className="divide-y divide-line">
-        {list.map((item) => {
-          const r = item.r;
-          const kindTag = (
-            <span className="inline-flex items-center gap-1 rounded-full bg-subtle px-tight py-0.5 text-sm font-medium text-fg-secondary ring-1 ring-inset ring-line">
-              {item.kind === "refund" ? <RotateCcw size={12} strokeWidth={2.25} aria-hidden /> : <CalendarClock size={12} strokeWidth={2.25} aria-hidden />}
-              {item.kind === "refund" ? t("kindRefund") : t("kindMove")}
-            </span>
-          );
-          return (
-            <li key={`${item.kind}-${r.id}`} data-request={item.kind} className="flex flex-col gap-comfortable px-card py-comfortable md:flex-row md:items-center">
-              <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-center gap-x-tight gap-y-inline text-md font-semibold text-fg">
-                  {kindTag}
-                  <span>
-                    {r.customerName || t("walkIn")}
-                    <span className="font-normal text-muted"> · {what(r)}</span>
-                  </span>
-                </p>
-                {item.kind === "refund" ? (
-                  <p className="mt-inline text-base text-fg">{dayAndTime(item.r.slotStart, item.r.slotEnd)}</p>
-                ) : (
-                  <p className="mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline text-base text-fg">
-                    <span>{dayAndTime(item.r.fromStart, item.r.fromEnd)}</span>
-                    {/* The arrow leads the second part, so a narrow screen breaks
-                        BEFORE it and never strands it at the end of a line. */}
-                    <span className="inline-flex items-center gap-tight font-semibold">
-                      <ArrowRight size={16} strokeWidth={2} aria-hidden className="shrink-0 text-muted" />
-                      {dayAndTime(item.r.toStart, item.r.toEnd)}
-                    </span>
-                  </p>
+        {list.map((r) => (
+          <li key={r.id} data-request="move" className="flex flex-col gap-comfortable px-card py-comfortable md:flex-row md:items-center">
+            <div className="min-w-0 flex-1">
+              <p className="flex flex-wrap items-center gap-x-tight gap-y-inline text-md font-semibold text-fg">
+                <span className="inline-flex items-center gap-1 rounded-full bg-subtle px-tight py-0.5 text-sm font-medium text-fg-secondary ring-1 ring-inset ring-line">
+                  <CalendarClock size={12} strokeWidth={2.25} aria-hidden />
+                  {t("kindMove")}
+                </span>
+                <span>
+                  {r.customerName || t("walkIn")}
+                  <span className="font-normal text-muted"> · {what(r)}</span>
+                </span>
+              </p>
+              <p className="mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline text-base text-fg">
+                <span>{dayAndTime(r.fromStart, r.fromEnd)}</span>
+                {/* The arrow leads the second part, so a narrow screen breaks
+                    BEFORE it and never strands it at the end of a line. */}
+                <span className="inline-flex items-center gap-tight font-semibold">
+                  <ArrowRight size={16} strokeWidth={2} aria-hidden className="shrink-0 text-muted" />
+                  {dayAndTime(r.toStart, r.toEnd)}
+                </span>
+              </p>
+              <p className="mt-inline text-base text-fg">
+                {r.reason ? (
+                  <span className="font-medium">{t(`moveReasons.${r.reason}`)}</span>
+                ) : !r.note ? (
+                  <span className="text-muted">{t("moveWaiting")}</span>
+                ) : null}
+                {r.note ? <span className="text-muted"> — “{r.note}”</span> : null}
+              </p>
+              <p className="mt-inline text-sm text-muted">
+                {t("askedBy", { name: r.requestedBy, ago: format.relativeTime(new Date(r.requestedAt), new Date()) })}
+                {!orderId && (
+                  <>
+                    <span aria-hidden className="max-sm:hidden"> · </span>
+                    <Link href={`/orders/${r.orderId}`} className="inline-flex min-h-11 items-center font-medium text-fg underline underline-offset-4 max-sm:flex sm:min-h-0">
+                      {r.orderReference}
+                    </Link>
+                  </>
                 )}
-                <p className="mt-inline text-base text-fg">
-                  {item.kind === "refund" ? (
-                    <span className="font-medium">{t(`reasons.${item.r.reason}`)}</span>
-                  ) : item.r.reason ? (
-                    <span className="font-medium">{t(`moveReasons.${item.r.reason}`)}</span>
-                  ) : !item.r.note ? (
-                    <span className="text-muted">{t("moveWaiting")}</span>
-                  ) : null}
-                  {r.note ? <span className="text-muted"> — “{r.note}”</span> : null}
-                </p>
-                <p className="mt-inline text-sm text-muted">
-                  {t("askedBy", { name: r.requestedBy, ago: format.relativeTime(new Date(r.requestedAt), new Date()) })}
-                  {!orderId && (
-                    <>
-                      <span aria-hidden className="max-sm:hidden"> · </span>
-                      <Link href={`/orders/${r.orderId}`} className="inline-flex min-h-11 items-center font-medium text-fg underline underline-offset-4 max-sm:flex sm:min-h-0">
-                        {r.orderReference}
-                      </Link>
-                    </>
-                  )}
-                </p>
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-tight md:flex-col md:items-end">
+              <p className="mr-auto text-lg font-semibold tabular-nums text-fg md:mr-0">
+                {r.partySize ? t("people", { count: r.partySize }) : ""}
+              </p>
+              <div className="flex gap-tight">
+                <Button variant="secondary" onClick={() => { setDeclining(r); setNote(""); setNoteErr(null); }}>
+                  {t("decline")}
+                </Button>
+                <Button onClick={() => setApproving(r)}>{t("approveMove")}</Button>
               </div>
-              <div className="flex shrink-0 items-center gap-tight md:flex-col md:items-end">
-                <p className="mr-auto text-lg font-semibold tabular-nums text-fg md:mr-0">
-                  {item.kind === "refund" ? formatMoney(item.r.amount) : item.r.partySize ? t("people", { count: item.r.partySize }) : ""}
-                </p>
-                <div className="flex gap-tight">
-                  <Button variant="secondary" onClick={() => { setDeclining(item); setNote(""); setNoteErr(null); }}>
-                    {t("decline")}
-                  </Button>
-                  <Button onClick={() => setApproving(item)}>
-                    {item.kind === "refund" ? t("approve", { amount: formatMoney(item.r.amount) }) : t("approveMove")}
-                  </Button>
-                </div>
-              </div>
-            </li>
-          );
-        })}
+            </div>
+          </li>
+        ))}
       </ul>
 
       <Modal
         open={!!approving}
         onClose={() => setApproving(null)}
-        title={approving ? (approving.kind === "refund" ? t("approveTitle", { amount: formatMoney(approving.r.amount) }) : t("approveMoveTitle")) : ""}
+        title={t("approveMoveTitle")}
         footer={
           <>
             <Button data-autofocus variant="secondary" onClick={() => setApproving(null)} disabled={busy}>
               {t("cancel")}
             </Button>
             <Button onClick={() => void approve()} loading={busy}>
-              {approving ? (approving.kind === "refund" ? t("approve", { amount: formatMoney(approving.r.amount) }) : t("approveMove")) : ""}
+              {t("approveMove")}
             </Button>
           </>
         }
       >
         {approving && (
           <p className="text-md text-fg">
-            {approving.kind === "refund"
-              ? t("approveBody", { what: what(approving.r), when: dayAndTime(approving.r.slotStart, approving.r.slotEnd) })
-              : t("approveMoveBody", {
-                  what: what(approving.r),
-                  from: dayAndTime(approving.r.fromStart, approving.r.fromEnd),
-                  to: dayAndTime(approving.r.toStart, approving.r.toEnd),
-                })}
+            {t("approveMoveBody", {
+              what: what(approving),
+              from: dayAndTime(approving.fromStart, approving.fromEnd),
+              to: dayAndTime(approving.toStart, approving.toEnd),
+            })}
           </p>
         )}
       </Modal>
@@ -221,7 +192,7 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
       <Modal
         open={!!declining}
         onClose={() => setDeclining(null)}
-        title={declining?.kind === "move" ? t("moveDeclineTitle") : t("declineTitle")}
+        title={t("moveDeclineTitle")}
         footer={
           <>
             <Button data-autofocus variant="secondary" onClick={() => setDeclining(null)} disabled={busy}>
@@ -240,7 +211,7 @@ export function RefundRequests({ orderId, onDecided, who: whoProp }: { orderId?:
             value={note}
             onChange={(e) => { setNote(e.target.value); setNoteErr(null); }}
             rows={3}
-            placeholder={declining?.kind === "move" ? t("moveDeclinePlaceholder") : t("declinePlaceholder")}
+            placeholder={t("moveDeclinePlaceholder")}
             aria-invalid={!!noteErr}
             aria-describedby={noteErr ? "refund-decline-err" : "refund-decline-help"}
             className={controlClass(!!noteErr, true)}

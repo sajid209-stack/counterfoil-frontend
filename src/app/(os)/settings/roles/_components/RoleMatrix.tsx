@@ -147,10 +147,10 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
                 <span className={pinned}>{t("roles.counterTitle")}</span>
               </th>
             </tr>
-            {(["refund", "reschedule"] as const).map((action) => (
+            {(["refund", "reschedule", "writeOff"] as const).map((action) => (
               <tr key={action}>
                 <th scope="row" className={`px-card py-tight text-left font-normal text-fg ${pinned}`}>
-                  {t(action === "refund" ? "roles.counterRefundLabel" : "roles.counterMoveLabel")}
+                  {t(action === "refund" ? "roles.counterRefundLabel" : action === "writeOff" ? "roles.counterWriteOffLabel" : "roles.counterMoveLabel")}
                 </th>
                 {roles.map((r) => (
                   <td key={r.id} className="px-section py-tight text-center text-sm text-fg">

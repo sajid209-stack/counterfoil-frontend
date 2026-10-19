@@ -3,7 +3,7 @@ import { itemForAddOn, recordMovement, recordSale } from "./inventory";
 import { conflictError, createResource, delay, fail, ok } from "./client";
 import { seatsTaken } from "./layouts";
 import { eventTicketWhen } from "./eventTickets";
-import { issueTicket, redeemCredits, voidOrderTickets } from "./tickets";
+import { issueTicket, peekTickets, redeemCredits, voidOrderTickets, voidTickets } from "./tickets";
 import { buildOrderLines, type LineInput } from "@/lib/orderMath";
 import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, OrderStatus, PaymentMethod, Ticket, WriteOffCategory } from "./types";
 
@@ -125,7 +125,9 @@ export async function refundOrderLines(orderId: string, lineIds: string[], reaso
   const o = resource.peek().find((x) => x.id === orderId);
   if (!o) return resource.get(orderId);
   const hit = o.lines.filter((l) => lineIds.includes(l.id));
-  const amount = hit.reduce((s, l) => s + l.total - l.refundedAmount, 0);
+  /* Never give back more than came in: on a part-paid sale the guest only
+     gets back what they paid, and the lines still leave the sale. */
+  const amount = Math.min(hit.reduce((s, l) => s + l.total - l.refundedAmount, 0), Math.max(0, orderNetPaid(o)));
   const lines = o.lines.map((l) =>
     lineIds.includes(l.id) ? { ...l, refundedQuantity: l.quantity, refundedAmount: l.total } : l,
   );
@@ -153,6 +155,107 @@ export async function refundOrderLines(orderId: string, lineIds: string[], reaso
     payments: [...o.payments, { id: `${o.reference}-R${o.payments.length}`, method: o.payments[0]?.method ?? "cash", amount: -amount, status: "confirmed", createdAt: new Date().toISOString() }],
     status: all ? "refunded" : "partly_refunded",
     history: withHistory(o, who, `Refunded ${hit.map((l) => l.tierName).join(", ")} — ${reason}`),
+  });
+}
+
+/** What each of these tickets is worth: its line's total split across the
+ *  line's tickets, less anything already refunded on that line. A ticket with
+ *  no line (older seed rows) is matched to the first line of its booking. */
+export function ticketShares(order: Order, ticketIds: string[]): { ticketId: string; lineId: string; amount: Minor }[] {
+  const tickets = peekTickets().filter((t) => t.orderId === order.id && ticketIds.includes(t.id));
+  const out: { ticketId: string; lineId: string; amount: Minor }[] = [];
+  const used = new Map<string, number>();
+  for (const t of tickets) {
+    const line =
+      order.lines.find((l) => l.id === t.lineId) ??
+      order.lines.find((l) => !l.parentLineId && l.productId === t.productId && l.total > 0);
+    if (!line || line.quantity <= 0) continue;
+    const per = Math.floor(line.total / line.quantity);
+    const remainder = line.total - per * line.quantity;
+    const n = (used.get(line.id) ?? 0) + 1;
+    used.set(line.id, n);
+    // The last ticket of a fully refunded line carries the rounding remainder,
+    // so a line refunded ticket by ticket gives back exactly its total.
+    const already = line.refundedQuantity + n;
+    const amount = per + (already === line.quantity ? remainder : 0);
+    if (line.refundedAmount + per * n > line.total) continue;
+    out.push({ ticketId: t.id, lineId: line.id, amount });
+  }
+  return out;
+}
+
+/** Refund some tickets on an order: each ticket gives back its share of its
+ *  line, the tickets are voided, the money goes back as a negative payment.
+ *  Used tickets are refused — the guest has been in. */
+export async function refundOrderTickets(
+  orderId: string,
+  ticketIds: string[],
+  reason: string,
+  who = "Counter",
+  method?: PaymentMethod,
+): Promise<ApiResult<Order>> {
+  const o = resource.peek().find((x) => x.id === orderId);
+  if (!o) return resource.get(orderId);
+  const live = peekTickets().filter((t) => t.orderId === orderId && ticketIds.includes(t.id) && t.status === "issued").map((t) => t.id);
+  if (live.length === 0) return fail(conflictError("These tickets have been used or cancelled already, so there is nothing to refund."));
+  const shares = ticketShares(o, live);
+  if (shares.length === 0) return fail(conflictError("Nothing is left to refund on these tickets."));
+  const byLine = new Map<string, { n: number; amount: Minor }>();
+  for (const s of shares) {
+    const cur = byLine.get(s.lineId) ?? { n: 0, amount: 0 };
+    byLine.set(s.lineId, { n: cur.n + 1, amount: cur.amount + s.amount });
+  }
+  const amount = shares.reduce((s, x) => s + x.amount, 0);
+  const lines = o.lines.map((l) => {
+    const hit = byLine.get(l.id);
+    return hit
+      ? { ...l, refundedQuantity: Math.min(l.quantity, l.refundedQuantity + hit.n), refundedAmount: Math.min(l.total, l.refundedAmount + hit.amount) }
+      : l;
+  });
+  await voidTickets(shares.map((s) => s.ticketId));
+  const all = lines.filter((l) => l.subtotal > 0).every((l) => l.refundedQuantity >= l.quantity);
+  return resource.update(orderId, {
+    lines,
+    payments: [...o.payments, { id: `${o.reference}-R${o.payments.length}`, method: method ?? o.payments[0]?.method ?? "cash", amount: -amount, status: "confirmed", createdAt: new Date().toISOString() }],
+    status: all ? "refunded" : "partly_refunded",
+    history: withHistory(o, who, `Refunded ${shares.length} ticket${shares.length === 1 ? "" : "s"} — ${reason}`),
+  });
+}
+
+/** Give back an amount without cancelling anything — a goodwill refund. The
+ *  money goes back as a negative payment and the sale is reduced by the same
+ *  amount (a negative line at the sale's VAT rate), so the order does not then
+ *  read as owing what was given back. Capped at what the venue still holds. */
+export async function refundOrderAmount(
+  orderId: string,
+  amount: Minor,
+  reason: string,
+  who = "Counter",
+  method?: PaymentMethod,
+): Promise<ApiResult<Order>> {
+  const o = resource.peek().find((x) => x.id === orderId);
+  if (!o) return resource.get(orderId);
+  if (!(amount > 0)) return fail(conflictError("Enter an amount above zero."));
+  const held = orderNetPaid(o);
+  if (amount > held) return fail(conflictError("A refund cannot be more than what is still held on this sale."));
+  const base = o.lines.find((l) => !l.parentLineId && l.total > 0) ?? o.lines[0];
+  const rate = base?.taxRate ?? 0;
+  const net = Math.round(amount / (1 + rate));
+  const { lines: added, totals } = buildOrderLines(
+    [{ productId: "adj_goodwill", productName: "Goodwill refund", tierName: reason.trim() || "Goodwill", admits: 0, quantity: 1, unitPrice: -net, taxClass: base?.taxClass, taxRate: rate }],
+    0,
+    `${o.reference}-G${o.lines.length}`,
+  );
+  // The line's own rounding can land a paisa off; the money back is what was approved.
+  const back = amount;
+  return resource.update(orderId, {
+    lines: [...o.lines, ...added],
+    subtotal: o.subtotal + totals.subtotal,
+    taxTotal: o.taxTotal + totals.taxTotal,
+    total: o.total + totals.total,
+    payments: [...o.payments, { id: `${o.reference}-R${o.payments.length}`, method: method ?? o.payments[0]?.method ?? "cash", amount: -back, status: "confirmed", createdAt: new Date().toISOString() }],
+    status: o.status === "refunded" ? o.status : "partly_refunded",
+    history: withHistory(o, who, `Refunded ${back / 100} as goodwill — ${reason.trim() || "Goodwill"}`),
   });
 }
 

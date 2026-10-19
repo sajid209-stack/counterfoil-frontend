@@ -58,6 +58,7 @@ import { CustomerCard } from "./_components/CustomerCard";
 import { FactsCard } from "./_components/FactsCard";
 import { MoneyCard, parseTaka } from "./_components/MoneyCard";
 import { PaymentsCard } from "./_components/PaymentsCard";
+import { RequestsCard } from "./_components/RequestsCard";
 import { HistoryCard, NotesCard, TicketsCard, WriteOffsCard } from "./_components/RecordCards";
 import { ReservationsCard } from "./_components/ReservationsCard";
 import { Section } from "./_components/Section";
@@ -361,6 +362,7 @@ export default function OrderDetailPage() {
            details. */
         <div className="flex flex-col gap-section pb-hero">
           <KeyFacts o={o} due={due} dir={dir} labels={L} />
+          <RequestsCard orderId={o.id} />
           {due > 0 && !voided && <MoneyCard o={o} due={due} methods={methods} onCollect={collect} hideLead />}
           <Section title={t("cardItems")} id="order-items">
             <OrderLinesDetail order={o} hidePayments />
@@ -396,6 +398,7 @@ export default function OrderDetailPage() {
           {/* The money and the people. */}
           <div className="contents xl:flex xl:min-w-0 xl:flex-col xl:gap-section">
             <MoneyCard o={o} due={due} methods={methods} onCollect={collect} className="order-2" />
+            <RequestsCard orderId={o.id} className="order-2" />
             <CustomerCard o={o} customer={customer} stats={stats} onAdd={openAddCustomer} className="order-3" />
             <WriteOffsCard o={o} className="order-7" />
             <TicketsCard tickets={ticketsQ.data?.data ?? []} loading={ticketsQ.loading && !ticketsQ.data} className="order-8" />

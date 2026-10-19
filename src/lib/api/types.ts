@@ -658,6 +658,10 @@ export interface Role {
    *  existed — see `counterAction` in lib/permissions. */
   counterRefund?: CounterActionMode;
   counterReschedule?: CounterActionMode;
+  /** Writing off a balance a guest still owes, from the counter. Absent reads
+   *  as "request" for a role that cannot refund orders, "direct" for one that
+   *  can — the same reading `counterRefund` has. */
+  counterWriteOff?: CounterActionMode;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }

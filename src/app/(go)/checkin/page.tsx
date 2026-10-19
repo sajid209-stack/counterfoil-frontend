@@ -3,7 +3,7 @@
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowUpCircle, Ban, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, PlusCircle, RotateCcw, Search, Timer, UserCheck, UserPlus } from "lucide-react";
+import { ArrowUpCircle, Ban, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, HandCoins, PlusCircle, RotateCcw, Search, Timer, UserCheck, UserPlus } from "lucide-react";
 import { Button, DateField, EmptyState, FormField, Modal, Skeleton, useToast, type ActionMenuItem } from "@/components/ui";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay } from "@/lib/schedule";
 import { cn } from "@/lib/cn";
@@ -36,14 +36,16 @@ import {
 } from "@/lib/api";
 import { toMinutes, toTime } from "@/lib/schedule";
 import { formatClock, formatDay, formatMoney } from "@/lib/format";
-import { pendingRefundFor, refundableFor, withdrawRefundRequest, type RefundReason } from "@/lib/api/refundRequests";
+import { pendingRefundFor, refundableFor, withdrawRefundRequest } from "@/lib/api/refundRequests";
+import { pendingWriteOffFor, useWriteOffVersion, withdrawWriteOff } from "@/lib/api/writeOffRequests";
 import { pendingRescheduleFor, useRescheduleVersion, withdrawRescheduleRequest } from "@/lib/api/rescheduleRequests";
 import { Stepper } from "../_components/Stepper";
 import { Thumb } from "../_components/Thumb";
 import { BookingGlyph } from "../_components/WallTile";
 import { useActor, canRefundDirectly } from "../schedule/_lib/actor";
-import { sendOrApproveRefund } from "../schedule/_lib/refundFlow";
-import { MoveSheet, RefundSheet } from "../schedule/_components/Sheets";
+import { RefundFlowSheet } from "../_components/RefundFlowSheet";
+import { WriteOffSheet } from "../_components/WriteOffSheet";
+import { MoveSheet } from "../schedule/_components/Sheets";
 import { PaymentSheet, type PaymentResult } from "../schedule/_components/PaymentSheet";
 import { DaySummary } from "./_components/DaySummary";
 import { FilterCells } from "./_components/FilterCells";
@@ -79,11 +81,13 @@ function CheckInScreen() {
   const params = useSearchParams();
   const t = useTranslations("checkin");
   const tc = useTranslations("common");
+  const tr = useTranslations("refunds");
   const enumL = useEnumLabels();
   const toast = useToast();
   const actor = useActor();
   // A move asked for, answered or taken back changes a row's tag.
   useRescheduleVersion();
+  useWriteOffVersion();
   const [date, setDate] = useState(/^d{4}-d{2}-d{2}$/.test(params.get("date") ?? "") ? params.get("date")! : TODAY);
   /* Who is at the door is the venue this counter stands in. */
   const activeCounter = useActiveCounterNow();
@@ -110,6 +114,7 @@ function CheckInScreen() {
   const [noShowFor, setNoShowFor] = useState<Booking | null>(null);
   const [noShowReason, setNoShowReason] = useState("");
   const [refundFor, setRefundFor] = useState<Booking | null>(null);
+  const [writeOffFor, setWriteOffFor] = useState<Booking | null>(null);
   const [moveFor, setMoveFor] = useState<Booking | null>(null);
   const [walkInOpen, setWalkInOpen] = useState(false);
   const [walkInProduct, setWalkInProduct] = useState("");
@@ -276,29 +281,23 @@ function CheckInScreen() {
     return { pending: pendingRefundFor(b.id), refundable: !!found && found.amount > 0, amount: found?.amount ?? 0, order: found?.order };
   };
 
-  const sendRefund = async (reason: RefundReason, note: string) => {
-    if (!refundFor) return;
-    const info = refundInfoFor(refundFor);
-    const direct = canRefundDirectly(actor, info.amount);
-    setBusy(true);
-    const res = await sendOrApproveRefund({ bookingId: refundFor.id, reason, note, requestedBy: actor.name, place: resourceName(refundFor.resourceId), direct });
-    setBusy(false);
-    if (!res.ok) { toast.error(res.error.message || t("refundFailed")); return; }
-    setRefundFor(null);
-    if (res.data.status === "approved") {
-      const method = info.order?.payments[0]?.method ?? "cash";
-      toast.success(t("refundedNow", { amount: formatMoney(res.data.amount), method: enumL.method(method) }));
-    } else {
-      toast.success(t("refundSent"));
-    }
-    reload();
-  };
+  /* The refund and write-off sheets send their own requests and close through
+     here: the list reads again. */
+  const requestSent = () => { setRefundFor(null); setWriteOffFor(null); reload(); };
 
   const withdrawRefund = async (b: Booking) => {
     const req = pendingRefundFor(b.id);
     if (!req) return;
     await withdrawRefundRequest(req.id);
     toast.success(t("refundWithdrawn"));
+    reload();
+  };
+
+  const withdrawWriteOffFor = async (b: Booking) => {
+    const req = pendingWriteOffFor(b.orderId);
+    if (!req) return;
+    await withdrawWriteOff(req.id);
+    toast.success(tr("pos.status.takenBack"));
     reload();
   };
 
@@ -390,6 +389,15 @@ function CheckInScreen() {
         items.push({ key: "refund-back", label: t("refundWithdrawBtn"), icon: icon(RotateCcw), onSelect: () => void withdrawRefund(b) });
       } else if (info.refundable) {
         items.push({ key: "refund", label: canRefundDirectly(actor, info.amount) ? t("refundBtn") : t("refundAskBtn"), icon: icon(RotateCcw), onSelect: () => setRefundFor(b) });
+      }
+    }
+    /* Write off what is still owed — hidden when nothing is owed or the role may
+       not; a request already waiting can be taken back. */
+    if (!noShow && !actor.loading && actor.writeOffMode !== "off") {
+      if (pendingWriteOffFor(b.orderId)) {
+        items.push({ key: "writeoff-back", label: tr("pos.writeOff.takeBack"), icon: icon(HandCoins), onSelect: () => void withdrawWriteOffFor(b) });
+      } else if (p.due > 0) {
+        items.push({ key: "writeoff", label: tr("pos.writeOff.action", { amount: formatMoney(p.due) }), icon: icon(HandCoins), onSelect: () => setWriteOffFor(b) });
       }
     }
     if (!noShow && p.state === "notin") {
@@ -500,6 +508,7 @@ function CheckInScreen() {
                             party={p}
                             pending={pending === p.booking.id}
                             refundAsked={!!pendingRefundFor(p.booking.id)}
+                            writeOffAsked={!!pendingWriteOffFor(p.booking.orderId)}
                             moveAsked={!!pendingRescheduleFor(p.booking.id)}
                             menu={menuFor(p)}
                             menuLabel={t("rowMenu", { name: p.name || t("walkInDefaultName") })}
@@ -536,6 +545,7 @@ function CheckInScreen() {
           methods={payMethods}
           checkIn={!(payParty?.state === "in")}
           allowPart
+          onWriteOff={actor.writeOffMode !== "off" && !pendingWriteOffFor(payFor.orderId) ? () => { setWriteOffFor(payFor); setPayFor(null); } : undefined}
           onConfirm={(r) => void takePayment(r)}
           busy={busy}
         />
@@ -579,15 +589,28 @@ function CheckInScreen() {
       </Modal>
 
       {refundFor && (
-        <RefundSheet
-          open={!!refundFor}
+        <RefundFlowSheet
+          key={refundFor.id}
+          open
           onClose={() => setRefundFor(null)}
           title={dayParties.find((p) => p.booking.id === refundFor.id)?.name ?? ""}
           when={whenFor(refundFor)}
-          amount={refundInfoFor(refundFor).amount}
-          direct={canRefundDirectly(actor, refundInfoFor(refundFor).amount)}
-          onSend={(reason, note) => void sendRefund(reason, note)}
-          busy={busy}
+          bookingId={refundFor.id}
+          place={resourceName(refundFor.resourceId)}
+          onDone={requestSent}
+        />
+      )}
+
+      {writeOffFor && (
+        <WriteOffSheet
+          key={writeOffFor.id}
+          open
+          onClose={() => setWriteOffFor(null)}
+          title={dayParties.find((p) => p.booking.id === writeOffFor.id)?.name ?? ""}
+          when={whenFor(writeOffFor)}
+          orderId={writeOffFor.orderId}
+          bookingId={writeOffFor.id}
+          onDone={requestSent}
         />
       )}
 

@@ -43,11 +43,13 @@ import { buildOrderLines } from "@/lib/orderMath";
 import { taxRateFor } from "@/lib/tax";
 import { buildBoard, dayLoad, toTimeOfDay, type Block, type Column } from "./_lib/board";
 import { entriesFor, entryPrice, guideFor, holdEntries, needsWaiver, productsIn, sessionEntry, spansOf, type Pick } from "./_lib/toCart";
-import { useActor, canRefundDirectly } from "./_lib/actor";
-import { sendOrApproveRefund } from "./_lib/refundFlow";
+import { useActor } from "./_lib/actor";
+import { RefundFlowSheet } from "../_components/RefundFlowSheet";
+import { WriteOffSheet } from "../_components/WriteOffSheet";
+import { pendingWriteOffFor, useWriteOffVersion } from "@/lib/api/writeOffRequests";
 import { Board } from "./_components/Board";
-import { BlockSheet, HoldSheet, MoveSheet, RefundSheet, SessionSheet, TakeBalanceSheet, type HoldRequest } from "./_components/Sheets";
-import { pendingRefundFor, refundableFor, refundRequestsForOrder, withdrawRefundRequest, type RefundReason } from "@/lib/api/refundRequests";
+import { BlockSheet, HoldSheet, MoveSheet, SessionSheet, TakeBalanceSheet, type HoldRequest } from "./_components/Sheets";
+import { pendingRefundFor, refundableFor, refundRequestsForOrder } from "@/lib/api/refundRequests";
 import { ActionBar, BarSummary } from "../_components/ActionBar";
 import { Tile, TileGrid } from "../_components/Tiles";
 import { DayStrip } from "./_components/DayStrip";
@@ -125,6 +127,10 @@ export default function SchedulePage() {
   const [version, setVersion] = useState(0);
   /* The refund form, open over the booking it is for. */
   const [refundOpen, setRefundOpen] = useState(false);
+  /* Ask to write off what the booking's order still owes. */
+  const [writeOffOpen, setWriteOffOpen] = useState(false);
+  // A write-off asked for or answered elsewhere changes what the sheet offers.
+  useWriteOffVersion();
   /* Move and Take ৳X, each open over the same booking sheet. */
   const [moveOpen, setMoveOpen] = useState(false);
   const [takeOpen, setTakeOpen] = useState(false);
@@ -376,43 +382,14 @@ export default function SchedulePage() {
     const amount = found?.amount ?? 0;
     return { pending, last, refundable: !!found && amount > 0, amount, order: found?.order };
   })();
-  const refundDirect = !actor.loading && refundInfo != null && canRefundDirectly(actor, refundInfo.amount);
-
-  const sendRefund = async (reason: RefundReason, note: string) => {
-    if (!blockPick || blockPick.block.type !== "booking") return;
-    const b = blockPick.block.booking;
-    setBusy(true);
-    const res = await sendOrApproveRefund({
-      bookingId: b.id,
-      reason,
-      note,
-      requestedBy: actor.name,
-      place: blockPick.column.kind === "resource" ? blockPick.column.name : null,
-      direct: refundDirect,
-    });
-    setBusy(false);
-    if (!res.ok) {
-      toast.error(t("refund.failed"));
-      return;
-    }
+  /* The refund and the write-off sheets close themselves when they have sent
+     a request (or done the thing); this closes what is under them and asks
+     the board to read again. */
+  const requestSent = () => {
     setRefundOpen(false);
+    setWriteOffOpen(false);
     setBlockPick(null);
     setVersion((v) => v + 1);
-    if (res.data.status === "approved") {
-      const method = refundInfo?.order?.payments[0]?.method ?? "cash";
-      toast.success(t("refund.doneDirect", { amount: formatMoney(res.data.amount), method: enumL.method(method) }));
-    } else {
-      toast.success(t("refund.sent"));
-    }
-  };
-
-  const withdrawRefund = async () => {
-    if (!refundInfo?.pending) return;
-    setBusy(true);
-    await withdrawRefundRequest(refundInfo.pending.id);
-    setBusy(false);
-    setVersion((v) => v + 1);
-    toast.success(t("refund.withdrawn"));
   };
 
   /* Move: the booking's own place, a different day or hour, same price. */
@@ -787,7 +764,7 @@ export default function SchedulePage() {
       )}
 
       <BlockSheet
-        open={!!blockPick && !refundOpen && !moveOpen && !takeOpen}
+        open={!!blockPick && !refundOpen && !writeOffOpen && !moveOpen && !takeOpen}
         onClose={() => setBlockPick(null)}
         column={blockPick?.column ?? null}
         block={blockPick?.block ?? null}
@@ -797,7 +774,8 @@ export default function SchedulePage() {
         onSellHold={sellHold}
         refund={refundInfo}
         onRefund={() => setRefundOpen(true)}
-        onWithdrawRefund={withdrawRefund}
+        onWriteOff={() => setWriteOffOpen(true)}
+        onRequestsChanged={() => setVersion((v) => v + 1)}
         canMove={blockPick?.block.type === "booking" && !!blockPick.block.product?.schedule && !blockPick.block.noShow}
         onMove={openMove}
         owed={takeOwed}
@@ -805,16 +783,29 @@ export default function SchedulePage() {
         busy={busy}
       />
 
-      {blockPick?.block.type === "booking" && (
-        <RefundSheet
-          open={refundOpen}
+      {blockPick?.block.type === "booking" && refundOpen && (
+        <RefundFlowSheet
+          key={blockPick.block.booking.id}
+          open
           onClose={() => setRefundOpen(false)}
           title={blockPick.block.guest ?? t("board.walkIn")}
           when={`${blockPick.column.kind === "unassigned" ? t("board.noPlace") : blockPick.column.name} · ${formatClockRange(blockPick.block.start, blockPick.block.end)}`}
-          amount={refundInfo?.amount ?? 0}
-          direct={refundDirect}
-          onSend={sendRefund}
-          busy={busy}
+          bookingId={blockPick.block.booking.id}
+          place={blockPick.column.kind === "resource" ? blockPick.column.name : null}
+          onDone={requestSent}
+        />
+      )}
+
+      {blockPick?.block.type === "booking" && writeOffOpen && (
+        <WriteOffSheet
+          key={blockPick.block.booking.id}
+          open
+          onClose={() => setWriteOffOpen(false)}
+          title={blockPick.block.guest ?? t("board.walkIn")}
+          when={`${blockPick.column.kind === "unassigned" ? t("board.noPlace") : blockPick.column.name} · ${formatClockRange(blockPick.block.start, blockPick.block.end)}`}
+          orderId={blockPick.block.booking.orderId}
+          bookingId={blockPick.block.booking.id}
+          onDone={requestSent}
         />
       )}
 
@@ -847,6 +838,7 @@ export default function SchedulePage() {
           owed={takeOwed}
           limitPct={actor.discountLimitPct}
           methods={payMethods}
+          onWriteOff={actor.writeOffMode !== "off" && !pendingWriteOffFor(takeOrder.id) ? () => { setTakeOpen(false); setWriteOffOpen(true); } : undefined}
           onConfirm={doTake}
           busy={busy}
         />

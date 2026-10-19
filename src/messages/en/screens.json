@@ -455,6 +455,21 @@
       "title": "No tablet paired yet",
       "body": "Type the code your manager gave you.",
       "action": "Type the code"
+    },
+    "myRequests": {
+      "title": "No requests yet",
+      "body": "A refund or write-off you ask a manager for will show here.",
+      "action": "Back to selling"
+    },
+    "refunds": {
+      "title": "No refund requests yet",
+      "body": "When the counter asks for a refund, it shows up here for you to answer.",
+      "action": "Open orders"
+    },
+    "write-offs": {
+      "title": "No write-off requests yet",
+      "body": "When the counter asks to write off a balance, it shows up here for you to answer.",
+      "action": "Open orders"
     }
   }
 }

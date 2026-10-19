@@ -73,6 +73,9 @@ export function PaymentSheet(props: {
   checkIn?: boolean;
   /** Let the cashier take less than the whole balance (two phones, two tenders). */
   allowPart?: boolean;
+  /** Offer "Write off ৳X" beside the discount — giving up on the balance rather
+   *  than taking it. Omitted when the role may not, or one is already waiting. */
+  onWriteOff?: () => void;
   onConfirm: (result: PaymentResult) => void;
   busy: boolean;
 }) {
@@ -80,10 +83,11 @@ export function PaymentSheet(props: {
   return props.open ? <PaymentSheetBody {...props} /> : null;
 }
 
-function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, methods, checkIn = false, allowPart = false, onConfirm, busy }: Parameters<typeof PaymentSheet>[0]) {
+function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, methods, checkIn = false, allowPart = false, onWriteOff, onConfirm, busy }: Parameters<typeof PaymentSheet>[0]) {
   const t = useTranslations("schedule");
   const tp = useTranslations("pos");
   const tc = useTranslations("common");
+  const tr = useTranslations("refunds");
   const enumL = useEnumLabels();
 
   const [discount, setDiscount] = useState<DiscountState>(emptyDiscount());
@@ -170,6 +174,11 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
         </div>
 
         <AfterMatchDiscount state={discount} setState={setDiscount} orderTotal={orderTotal} owed={owed} limitPct={limitPct} />
+        {onWriteOff && owed > 0 && (
+          <Button variant="link" data-write-off onClick={onWriteOff} disabled={busy} className="min-h-11 self-start">
+            {tr("pos.writeOff.action", { amount: formatMoney(owed) })}
+          </Button>
+        )}
 
         {allowPart && afterDiscount > 0 && (
           part == null ? (

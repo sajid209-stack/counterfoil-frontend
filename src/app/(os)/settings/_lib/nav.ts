@@ -10,6 +10,7 @@ import {
   MapPin,
   MessageSquare,
   MonitorSmartphone,
+  HandCoins,
   Percent,
   ReceiptText,
   ScrollText,
@@ -34,6 +35,7 @@ export type SettingsItemKey =
   | "storefront"
   | "tickets"
   | "payments"
+  | "refunds"
   | "tax"
   | "vat"
   | "privacy"
@@ -94,6 +96,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     key: "money",
     items: [
       { key: "payments", href: "/settings/payments", icon: CreditCard },
+      { key: "refunds", href: "/settings/refunds", icon: HandCoins },
       { key: "tax", href: "/settings/tax", icon: Percent },
       { key: "vat", href: "/settings/vat", icon: ReceiptText },
       ...(FEATURES.memberships ? [{ key: "memberships" as const, href: "/settings/memberships", icon: BadgeCheck }] : []),

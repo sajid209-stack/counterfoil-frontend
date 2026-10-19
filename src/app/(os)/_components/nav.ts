@@ -3,6 +3,7 @@ import {
   Boxes,
   CalendarDays,
   ChartNoAxesColumn,
+  FileX,
   Gavel,
   Globe,
   HandCoins,
@@ -10,6 +11,7 @@ import {
   Palette,
   Percent,
   ReceiptText,
+  RotateCcw,
   Settings,
   SquareStack,
   Store,
@@ -50,6 +52,13 @@ export interface NavDestination {
    * One level deep — a menu inside a menu inside a menu is a site map.
    */
   children?: readonly NavDestination[];
+  /**
+   * A count drawn on the row — what is WAITING for the venue in the top bar.
+   * Names the figure (see `navBadges.ts`); the row draws it as a small
+   * neutral pill and nothing at all while it is zero. Neutral, not orange:
+   * orange means act, and a number on a menu row is information.
+   */
+  badge?: "refunds" | "writeOffs";
 }
 
 /**
@@ -78,6 +87,11 @@ export const NAV_MAIN: readonly NavDestination[] = [
     icon: ReceiptText,
     children: [{ href: "/issued-orders", key: "issuedOrders", icon: TicketCheck }],
   },
+  /* Money going back, and balances nobody will chase: two inboxes a manager
+     answers, each with its own count of what is waiting. Top level and right
+     after Orders, because they are about the same sales (docs/refunds.md §4). */
+  { href: "/refunds", key: "refunds", icon: RotateCcw, badge: "refunds" },
+  { href: "/write-offs", key: "writeOffs", icon: FileX, badge: "writeOffs" },
   { href: "/customers", key: "customers", icon: UsersRound },
   {
     href: "/catalog",
@@ -158,6 +172,8 @@ export const PAGES: readonly PageMeta[] = [
   { prefix: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { prefix: "/calendar", key: "calendar", icon: CalendarDays },
   { prefix: "/orders", key: "orders", icon: ReceiptText },
+  { prefix: "/refunds", key: "refunds", icon: RotateCcw },
+  { prefix: "/write-offs", key: "writeOffs", icon: FileX },
   { prefix: "/issued-orders", key: "issuedOrders", icon: TicketCheck },
   /* /tickets redirects to Issued orders, and a ticket record is one of its rows. */
   { prefix: "/tickets", key: "issuedOrders", icon: TicketCheck },

@@ -17,6 +17,7 @@ import {
   CalendarDays,
   ClipboardList,
   Clock,
+  Inbox,
   KeyRound,
   ReceiptText,
   ScanLine,
@@ -46,6 +47,7 @@ export const GO_ENTRIES: readonly ScreenEntry[] = [
   { pattern: "/checkin", surface: "go", shape: "pos-list", empty: { id: "go-checkin", icon: UserCheck, action: "/schedule" } },
   { pattern: "/reservations", surface: "go", shape: "pos-list", empty: { id: "go-reservations", icon: ClipboardList, action: "/pos" } },
   { pattern: "/my-sales", surface: "go", shape: "pos-list", empty: { id: "go-my-sales", icon: Banknote, action: "/pos" } },
+  { pattern: "/my-requests", surface: "go", shape: "pos-list", empty: { id: "myRequests", icon: Inbox, action: "/pos" } },
 
   /* The gate. */
   { pattern: "/scan", surface: "go", shape: "pos-scan", empty: { id: "go-scan", icon: ScanLine, action: "self" } },

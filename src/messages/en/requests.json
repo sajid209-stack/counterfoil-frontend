@@ -1,0 +1,328 @@
+{
+  "span": {
+    "min": "{n} min",
+    "hr": "{n} h",
+    "day": "{n} d"
+  },
+  "ago": "{span} ago",
+  "justNow": "Just now",
+  "dueIn": "Due in {span}",
+  "overdue": "Overdue",
+  "walkIn": "Walk-in",
+  "manager": "Manager",
+  "close": "Close",
+  "cancel": "Cancel",
+  "noNote": "No note left.",
+  "reset": "Clear filters",
+  "loadError": "We couldn't load the requests. Try again.",
+  "retry": "Try again",
+  "refunds": {
+    "title": "Refunds",
+    "description": "Money going back to guests. The counter asks and you decide.",
+    "summary": {
+      "none": "Nothing is waiting",
+      "waiting": "{count} waiting",
+      "overdue": "{count} overdue"
+    },
+    "tabsLabel": "Refund requests",
+    "tabs": {
+      "waiting": "Waiting",
+      "done": "Refunded",
+      "declined": "Declined",
+      "all": "All"
+    },
+    "search": "Search guest, booking or sale",
+    "filters": {
+      "reason": "Reason",
+      "what": "What",
+      "askedBy": "Asked by",
+      "anyReason": "Any reason",
+      "anyWhat": "Anything",
+      "anyone": "Anyone"
+    },
+    "col": {
+      "guest": "Guest and booking",
+      "amount": "Amount",
+      "reason": "Reason",
+      "askedBy": "Asked by",
+      "asked": "Asked",
+      "respondBy": "Respond by",
+      "status": "Status"
+    },
+    "status": {
+      "pending": "Waiting",
+      "approved": "Refunded",
+      "declined": "Declined",
+      "withdrawn": "Taken back",
+      "expired": "Closed"
+    },
+    "reasons": {
+      "customer_cancelled": "Guest cancelled",
+      "weather": "Bad weather",
+      "venue_problem": "Problem at our venue",
+      "double_booked": "Booked twice",
+      "other": "Something else"
+    },
+    "scope": {
+      "booking": "Cancel the booking",
+      "tickets": "{count, plural, one {# ticket} other {# tickets}}",
+      "goodwill": "Goodwill — tickets stay valid"
+    },
+    "scopeShort": {
+      "booking": "Booking",
+      "tickets": "Some tickets",
+      "goodwill": "Goodwill"
+    },
+    "consequence": {
+      "booking": "Cancels the booking and its tickets. The slot goes back on sale.",
+      "tickets": "{count, plural, one {Cancels # ticket.} other {Cancels # tickets.}}",
+      "goodwill": "Nothing is cancelled. Tickets stay valid."
+    },
+    "empty": {
+      "waiting": {
+        "title": "Nothing is waiting",
+        "body": "When the counter asks for a refund, it shows up here for you to answer."
+      },
+      "done": {
+        "title": "No refunds yet",
+        "body": "Refunds you approve are listed here."
+      },
+      "declined": {
+        "title": "Nothing declined",
+        "body": "Requests you decline, or that the counter takes back, are listed here."
+      },
+      "all": {
+        "title": "No refund requests yet",
+        "body": "Counter staff can ask for a refund from a booked slot. Their requests show up here."
+      },
+      "filtered": {
+        "title": "No requests match",
+        "body": "Try a different search, or clear the filters."
+      }
+    },
+    "detail": {
+      "title": "Refund request",
+      "missing": "We can't find this request. It may belong to another venue.",
+      "what": "What",
+      "booking": "Booking",
+      "when": "When",
+      "sale": "Sale",
+      "openSale": "Open sale {reference}",
+      "why": "Why",
+      "askedBy": "Asked by {name}",
+      "askedLine": "{name} · {ago}",
+      "askedOf": "of {asked} asked",
+      "respondBy": "Respond by",
+      "respondByLine": "Answer by {when}",
+      "overdueLine": "It was due {when}.",
+      "expiredLine": "Nobody answered in time, so this request closed on its own.",
+      "timeline": "What happened",
+      "tAsked": "Asked by {name}",
+      "tApproved": "Refunded by {name}",
+      "tApprovedAmount": "Refunded {amount} by {name}",
+      "tDeclined": "Declined by {name}",
+      "tWithdrawn": "Taken back by the counter",
+      "tExpired": "Closed with no answer",
+      "decision": "Decision",
+      "decisionApproved": "Refunded {amount}",
+      "decisionApprovedLess": "Refunded {amount} of the {asked} asked",
+      "via": {
+        "original": "Back the way they paid",
+        "cash": "Cash at the counter"
+      },
+      "decisionDeclined": "Declined",
+      "decisionWithdrawn": "The counter took this request back.",
+      "decisionExpired": "Closed with no answer.",
+      "decidedBy": "Decided by {name} · {when}",
+      "guest": "Guest",
+      "place": "Where",
+      "walkIn": "Walk-in"
+    },
+    "actions": {
+      "refund": "Refund {amount}",
+      "different": "Different amount",
+      "decline": "Decline"
+    },
+    "approve": {
+      "title": "Refund {amount}?",
+      "body": "{consequence} This can't be undone.",
+      "methodLabel": "Where does the money go?",
+      "original": "The way they paid",
+      "originalHint": "Back to their card or bKash. A cash sale goes back as cash.",
+      "cash": "Cash at the counter",
+      "cashHint": "Hand them the cash now.",
+      "methodHelp": "This starts from your Refunds & write-offs settings.",
+      "confirm": "Refund {amount}",
+      "differentTitle": "Refund a different amount",
+      "differentLead": "The counter asked for {asked}. You can give back less, but not more.",
+      "amountLabel": "Amount to refund",
+      "amountHelp": "Up to {max}.",
+      "amountNeed": "Enter an amount above zero.",
+      "amountBad": "Enter an amount like 250 or 250.50.",
+      "amountOver": "That is more than was asked. Enter {max} or less.",
+      "doneBooking": "Refunded {amount}. The slot is back on sale.",
+      "doneTickets": "Refunded {amount}. The tickets are cancelled.",
+      "doneGoodwill": "Refunded {amount}. Tickets stay valid."
+    },
+    "decline": {
+      "title": "Decline this refund?",
+      "noteLabel": "Why not?",
+      "placeholder": "e.g. The guest played the full hour.",
+      "help": "The counter sees this, so they can tell the guest.",
+      "required": "Say why, so the counter can tell the guest.",
+      "confirm": "Decline",
+      "done": "Declined. The counter can see why."
+    }
+  },
+  "writeOffs": {
+    "title": "Write-offs",
+    "description": "Balances nobody will chase any more. The counter asks and you decide.",
+    "summary": {
+      "none": "Nothing is waiting",
+      "waiting": "{count} waiting",
+      "overdue": "{count} overdue"
+    },
+    "tabsLabel": "Write-off requests",
+    "tabs": {
+      "waiting": "Waiting",
+      "done": "Written off",
+      "rejected": "Rejected",
+      "all": "All"
+    },
+    "search": "Search guest, sale or note",
+    "filters": {
+      "category": "Why",
+      "askedBy": "Asked by",
+      "anyCategory": "Any reason",
+      "anyone": "Anyone"
+    },
+    "col": {
+      "guest": "Guest and sale",
+      "amount": "Amount",
+      "category": "Why",
+      "askedBy": "Asked by",
+      "asked": "Asked",
+      "respondBy": "Respond by",
+      "status": "Status"
+    },
+    "ofOwed": "of {owed} owed",
+    "status": {
+      "pending": "Waiting",
+      "approved": "Written off",
+      "rejected": "Rejected",
+      "withdrawn": "Taken back",
+      "expired": "Closed"
+    },
+    "categories": {
+      "uncollectible": "Can't be collected",
+      "customer_dispute": "Guest disputes it",
+      "business_decision": "Our decision",
+      "administrative": "Fixing a mistake"
+    },
+    "consequence": {
+      "owes": "The guest will owe {amount} after this.",
+      "none": "Nothing will be owed."
+    },
+    "empty": {
+      "waiting": {
+        "title": "Nothing is waiting",
+        "body": "When the counter asks to write off a balance, it shows up here for you to answer."
+      },
+      "done": {
+        "title": "Nothing written off yet",
+        "body": "Balances you write off are listed here."
+      },
+      "rejected": {
+        "title": "Nothing rejected",
+        "body": "Requests you reject, or that the counter takes back, are listed here."
+      },
+      "all": {
+        "title": "No write-off requests yet",
+        "body": "Counter staff can ask to write off a balance a guest still owes. Their requests show up here."
+      },
+      "filtered": {
+        "title": "No requests match",
+        "body": "Try a different search, or clear the filters."
+      }
+    },
+    "detail": {
+      "title": "Write-off request",
+      "missing": "We can't find this request. It may belong to another venue.",
+      "what": "What",
+      "sale": "Sale",
+      "booking": "Booking",
+      "openSale": "Open sale {reference}",
+      "why": "Why",
+      "owedThen": "Owed when asked",
+      "owedNow": "Owed now",
+      "askedOf": "of {owed} owed",
+      "respondBy": "Respond by",
+      "respondByLine": "Answer by {when}",
+      "overdueLine": "It was due {when}.",
+      "expiredLine": "Nobody answered in time, so this request closed on its own.",
+      "nothingOwed": "Nothing is owed on this sale any more, so there is nothing to write off. You can still reject the request.",
+      "timeline": "What happened",
+      "tAsked": "Asked by {name}",
+      "tApproved": "Written off by {name}",
+      "tApprovedAmount": "Wrote off {amount} · {name}",
+      "tRejected": "Rejected by {name}",
+      "tWithdrawn": "Taken back by the counter",
+      "tExpired": "Closed with no answer",
+      "decision": "Decision",
+      "decisionApproved": "Wrote off {amount}",
+      "decisionApprovedLess": "Wrote off {amount} of the {asked} asked",
+      "decisionRejected": "Rejected",
+      "decisionWithdrawn": "The counter took this request back.",
+      "decisionExpired": "Closed with no answer.",
+      "decidedBy": "Decided by {name} · {when}",
+      "guest": "Guest",
+      "after": "If you write it off"
+    },
+    "actions": {
+      "writeOff": "Write off {amount}",
+      "different": "Different amount",
+      "reject": "Reject"
+    },
+    "approve": {
+      "title": "Write off {amount}?",
+      "body": "{consequence} No money moves. This can't be undone.",
+      "confirm": "Write off {amount}",
+      "differentTitle": "Write off a different amount",
+      "differentLead": "The counter asked for {asked}. The guest owes {owed} now. You can write off less, but not more than either.",
+      "amountLabel": "Amount to write off",
+      "amountHelp": "Up to {max}.",
+      "amountNeed": "Enter an amount above zero.",
+      "amountBad": "Enter an amount like 250 or 250.50.",
+      "amountOverAsked": "That is more than was asked ({asked}).",
+      "amountOverOwed": "That is more than is owed now ({owed}).",
+      "done": "Wrote off {amount}."
+    },
+    "reject": {
+      "title": "Reject this write-off?",
+      "noteLabel": "Why not?",
+      "placeholder": "e.g. Collect it at their next visit.",
+      "help": "The counter sees this, so they know to collect it.",
+      "required": "Say why, so the counter knows to collect it.",
+      "confirm": "Reject",
+      "done": "Rejected. The counter can see why."
+    }
+  },
+  "banner": {
+    "nRefunds": "{count, plural, one {# refund} other {# refunds}}",
+    "nWriteOffs": "{count, plural, one {# write-off} other {# write-offs}}",
+    "refundsOnly": "{count, plural, one {# refund is waiting} other {# refunds are waiting}}",
+    "writeOffsOnly": "{count, plural, one {# write-off is waiting} other {# write-offs are waiting}}",
+    "both": "{refunds} and {writeOffs} are waiting",
+    "review": "Review",
+    "reviewRefunds": "Review refunds",
+    "reviewWriteOffs": "Review write-offs"
+  },
+  "card": {
+    "title": "Requests",
+    "refund": "Refund",
+    "writeOff": "Write-off",
+    "open": "Open",
+    "openAria": "Open the {kind} request for {amount}",
+    "askedLine": "{name} · {ago}"
+  }
+}

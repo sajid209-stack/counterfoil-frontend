@@ -19,6 +19,7 @@ interface Draft {
   /** What this role does at the counter. Null means it follows the default for the role. */
   counterRefund: CounterActionMode | null;
   counterReschedule: CounterActionMode | null;
+  counterWriteOff: CounterActionMode | null;
 }
 
 /** Permissions in registry order, so a toggle off and on again is not a change. */
@@ -31,9 +32,10 @@ const fromRole = (r: Role): Draft => ({
   refund: r.refundLimit == null ? "" : String(r.refundLimit / 100),
   counterRefund: r.counterRefund ?? null,
   counterReschedule: r.counterReschedule ?? null,
+  counterWriteOff: r.counterWriteOff ?? null,
 });
 
-const BLANK: Draft = { name: "", permissions: [], discount: "", refund: "", counterRefund: null, counterReschedule: null };
+const BLANK: Draft = { name: "", permissions: [], discount: "", refund: "", counterRefund: null, counterReschedule: null, counterWriteOff: null };
 const PCT = /^\d{1,3}$/;
 const AMOUNT = /^\d{1,7}(\.\d{1,2})?$/;
 
@@ -78,7 +80,7 @@ export function RoleEditor({
   /** What the role does now: its own choice, or the default its permissions give it. */
   const effective = (action: CounterAction): CounterActionMode =>
     counterAction(
-      { permissions: form.permissions, counterRefund: form.counterRefund ?? undefined, counterReschedule: form.counterReschedule ?? undefined },
+      { permissions: form.permissions, counterRefund: form.counterRefund ?? undefined, counterReschedule: form.counterReschedule ?? undefined, counterWriteOff: form.counterWriteOff ?? undefined },
       action,
     );
   const toggle = (p: string, on: boolean) =>
@@ -100,6 +102,7 @@ export function RoleEditor({
       // Only a choice somebody made is stored; the rest keeps following the role.
       ...(form.counterRefund ? { counterRefund: form.counterRefund } : {}),
       ...(form.counterReschedule ? { counterReschedule: form.counterReschedule } : {}),
+      ...(form.counterWriteOff ? { counterWriteOff: form.counterWriteOff } : {}),
     };
     const res = mode === "create" ? await createRole(input) : await updateRole(role!.id, input);
     setSaving(false);
@@ -276,6 +279,20 @@ export function RoleEditor({
                 value: m,
                 label: t(`roles.move_${m}`),
                 description: t(`roles.move_${m}_desc`),
+              }))}
+            />
+          )}
+        </SettingRow>
+        <SettingRow label={t("roles.counterWriteOffLabel")} description={form.counterWriteOff ? t("roles.counterWriteOffDesc") : t("roles.counterDefault")} layout="stack" labelFor={false}>
+          {({ labelId }) => (
+            <RadioGroup
+              aria-labelledby={labelId}
+              value={effective("writeOff")}
+              onChange={(v) => set({ counterWriteOff: v as CounterActionMode })}
+              options={COUNTER_ACTION_MODES.map((m) => ({
+                value: m,
+                label: t(`roles.writeOff_${m}`),
+                description: t(`roles.writeOff_${m}_desc`),
               }))}
             />
           )}
