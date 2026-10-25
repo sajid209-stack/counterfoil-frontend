@@ -38,6 +38,7 @@ const REFUSAL: Record<RefuseReason, ScanRefusal | undefined> = {
 import { CameraView } from "./_components/CameraScanner";
 import { Verdict } from "./_components/Verdict";
 import { GoCard, TileGrid, TileLabel } from "../_components/Tiles";
+import { GoPage, GoPageHeader } from "../_components/GoPage";
 
 /* A hardware scanner is a keyboard: it types the code fast and presses Enter.
    Everything at a gate follows from that — the field is focused on arrival and
@@ -282,19 +283,27 @@ export default function ScanPage() {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col px-section py-section pb-28 lg:pb-section">
-      <div className="flex w-full flex-col gap-comfortable lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-        <div className="flex min-w-0 flex-col gap-comfortable">
-          <div>
-            <h1 className="text-xl font-semibold tracking-title text-fg">{t("title")}</h1>
-            <p className="mt-inline text-sm text-muted">{t("subtitle")}</p>
-          </div>
+    <GoPage width="wide">
+    <main className="mx-auto flex w-full max-w-248 flex-col pt-tight pb-28 lg:pb-section rail:max-w-none rail:py-0 rail:pb-0">
+      {/* Phone and tablet-upright: as before. From the desktop up both columns
+          step aside (display: contents) so every card is a cell of one grid:
+          the camera on the left, tall, and on the right the field, what this
+          device has done, and the example screens under the log. */}
+      <div className="flex w-full flex-col gap-comfortable lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start rail:grid-cols-12 rail:gap-section">
+        <div className="flex min-w-0 flex-col gap-comfortable rail:contents">
+          <GoPageHeader
+            title={t("title")}
+            subtitle={t("subtitle")}
+            className="mb-0! rail:col-span-12 rail:col-start-1 rail:row-start-1 rail:mb-inline!"
+          />
 
           {/* The camera view is always here, so the scanning area never moves. */}
-          <CameraView onCode={(value) => void submit(value)} labels={camLabels} />
+          <div className="min-w-0 rail:col-span-7 rail:col-start-1 rail:row-span-4 rail:row-start-2">
+            <CameraView onCode={(value) => void submit(value)} labels={camLabels} />
+          </div>
 
           {/* The field a hardware scanner types into: always armed. */}
-          <section className="flex flex-col gap-comfortable p-card card-surface">
+          <section className="flex flex-col gap-comfortable p-card card-surface rail:col-span-5 rail:col-start-8">
             <p className="flex items-center gap-tight">
               <span aria-hidden className={cn("h-2 w-2 shrink-0 rounded-full", busy ? "bg-muted" : "bg-ember-solid")} />
               <span className="text-sm font-medium text-muted">{busy ? t("checking") : t("armed")}</span>
@@ -328,10 +337,10 @@ export default function ScanPage() {
 
         {/* What this device has done since the screen was opened, then the
             example screens. */}
-        <aside className="flex flex-col gap-comfortable">
-          <GoCard title={t("sessionTitle")}>
+        <aside className="flex flex-col gap-comfortable rail:contents">
+          <GoCard title={t("sessionTitle")} className="rail:col-span-5 rail:col-start-8">
             {log.length > 0 && (
-              <TileGrid cols={3} className="text-center">
+              <TileGrid cols={3} className="text-center rail:gap-0">
                 {(
                   [
                     ["admit", tally.admit, Check],
@@ -339,7 +348,7 @@ export default function ScanPage() {
                     ["balance", tally.balance, Wallet],
                   ] as const
                 ).map(([key, value, Icon]) => (
-                  <div key={key} className="flex flex-col items-center gap-inline rounded-inner bg-subtle py-comfortable">
+                  <div key={key} className="flex flex-col items-center gap-inline rounded-inner bg-subtle py-comfortable rail:rounded-none rail:border-l rail:border-line rail:bg-transparent rail:first:border-l-0">
                     <Icon size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
                     <span className="text-xl font-semibold tabular-nums">{value}</span>
                     <span className="text-sm text-muted">{t(`tally_${key}`)}</span>
@@ -351,11 +360,11 @@ export default function ScanPage() {
           </GoCard>
 
           {log.length > 0 && (
-            <section className="flex flex-col gap-tight">
+            <section className="flex flex-col gap-tight rail:col-span-5 rail:col-start-8">
               <TileLabel className="px-inline">{t("recentTitle")}</TileLabel>
-              <ul className="flex flex-col gap-tight">
+              <ul className="flex flex-col gap-tight rail:rounded-card rail:bg-card rail:shadow-card rail:gap-0 rail:overflow-hidden">
                 {log.map((e) => (
-                  <li key={e.id} className="card-surface flex items-center gap-comfortable p-comfortable">
+                  <li key={e.id} className="card-surface flex items-center gap-comfortable p-comfortable rail:rounded-none rail:border-t rail:border-line rail:bg-transparent rail:px-card rail:shadow-none rail:first:border-t-0">
                     <span
                       aria-hidden
                       className={cn(
@@ -377,7 +386,7 @@ export default function ScanPage() {
           )}
 
           {screens.length > 0 && (
-            <section className="flex flex-col gap-tight">
+            <section className="flex flex-col gap-tight rail:col-span-5 rail:col-start-8">
               <TileLabel className="px-inline">{t("screensTitle")}</TileLabel>
               {/* Each button wears the treatment of the screen it opens, so the
                   row doubles as the key to the three. */}
@@ -417,5 +426,6 @@ export default function ScanPage() {
         />
       )}
     </main>
+    </GoPage>
   );
 }

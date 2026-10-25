@@ -22,7 +22,9 @@ import { Tile, TileGrid } from "./Tiles";
  * role may do it on the spot and the amount is within the business's limit.
  */
 
-const WIDTH = "mx-auto max-w-xl";
+/* A phone and a tablet held upright keep the bottom sheet; from the desktop up
+   it is a dialog, centred on the screen at about 560px. */
+const WIDTH = "mx-auto max-w-xl rail:inset-y-0 rail:my-auto rail:h-fit rail:rounded-sheet rail:[animation-name:sf-fade-in]";
 const toMinor = (raw: string): Minor => Math.round((parseFloat(raw.replace(/,/g, "")) || 0) * 100);
 
 export function WriteOffSheet({

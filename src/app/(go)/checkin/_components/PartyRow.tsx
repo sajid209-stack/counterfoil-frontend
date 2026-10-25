@@ -50,7 +50,7 @@ export function PartyRow({
   const remaining = p.size - p.arrived;
 
   return (
-    <li data-party data-state={p.state} className="card-surface flex flex-wrap items-center gap-x-comfortable gap-y-tight p-comfortable">
+    <li data-party data-state={p.state} className="card-surface flex flex-wrap items-center gap-x-comfortable gap-y-tight p-comfortable rail:rounded-none rail:border-t rail:border-line rail:bg-transparent rail:py-comfortable rail:pl-hero rail:pr-card rail:shadow-none rail:first:border-t-0 rail:hover:bg-nav-hover">
       <Thumb
         glyph={p.size > 1 ? <Users strokeWidth={1.5} /> : <User strokeWidth={1.5} />}
         className={p.state === "in" ? "bg-success-wash text-success" : undefined}

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { CalendarCheck, CalendarDays, ChevronDown } from "lucide-react";
 import { DatePicker, Sheet } from "@/components/ui";
 import { formatDay } from "@/lib/format";
+import { SHEET_AS_DIALOG } from "../_components/SheetParts";
 
 /* ── The day the wall is selling for ──────────────────────────────────────
  *
@@ -79,7 +80,7 @@ export function SellDateBar({
         </button>
       )}
 
-      <Sheet open={open} onClose={() => setOpen(false)} title={t("sellDate.choose")} closeLabel={t("cash.close")}>
+      <Sheet open={open} onClose={() => setOpen(false)} title={t("sellDate.choose")} closeLabel={t("cash.close")} className={`${SHEET_AS_DIALOG} rail:max-w-md`}>
         {/* The calendar's weekday letters are 12px in the shared picker, under
             the till's floor of 13, and its Today link is as wide as its word —
             41px in Bangla. Both are fixed here rather than in the shared file,

@@ -87,7 +87,7 @@ export default function SellCompletePage() {
   });
 
   return (
-    <main className="mx-auto flex max-w-md flex-col items-center gap-major px-section py-hero text-center">
+    <main className="mx-auto flex max-w-md flex-col items-center gap-major px-section py-hero text-center rail:max-w-[40rem]">
       <div className="flex items-center gap-tight text-success">
         <CircleCheck size={28} strokeWidth={1.5} />
         <h1 className="type-h1 text-2xl text-fg">{t("complete.ticketIssued")}</h1>

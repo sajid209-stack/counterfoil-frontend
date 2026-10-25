@@ -12,6 +12,7 @@ import { cn } from "@/lib/cn";
 import { useActiveCounterNow } from "@/lib/activeCounter";
 import { BookingGlyph } from "../_components/WallTile";
 import { Thumb } from "../_components/Thumb";
+import { GoPage, GoPageHeader } from "../_components/GoPage";
 
 const TODAY = Date.parse("2026-07-29T00:00:00+06:00");
 
@@ -49,8 +50,9 @@ export default function GoBookingsPage() {
   }, [bookingsQ.data, productsQ.data, ordersQ.data, search, venueId]);
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-comfortable px-section py-section">
-      <h1 className="text-xl font-semibold tracking-title text-fg">{t("arrivalsTitle")}</h1>
+    <GoPage width="narrow">
+    <main className="mx-auto flex max-w-160 flex-col gap-comfortable pb-section pt-tight rail:max-w-none rail:gap-section rail:py-0">
+      <GoPageHeader title={t("arrivalsTitle")} className="mb-0! rail:mb-0!" />
       <div className="relative">
         <Search size={18} strokeWidth={1.5} aria-hidden className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
         <input
@@ -58,7 +60,7 @@ export default function GoBookingsPage() {
           onChange={(e) => setSearch(e.target.value)}
           aria-label={t("arrivalsSearchPlaceholder")}
           placeholder={t("arrivalsSearchPlaceholder")}
-          className="h-12 w-full rounded-full bg-card pl-10 pr-section text-base shadow-card"
+          className="h-12 w-full rounded-full bg-card pl-10 pr-section text-base shadow-card rail:rounded-md"
         />
       </div>
 
@@ -67,14 +69,14 @@ export default function GoBookingsPage() {
       ) : arrivals.length === 0 ? (
         <EmptyState title={t("noArrivals")} />
       ) : (
-        <ul className="flex flex-col gap-comfortable">
+        <ul className="flex flex-col gap-comfortable rail:rounded-card rail:bg-card rail:shadow-card rail:gap-0 rail:overflow-hidden">
           {arrivals.slice(0, 40).map(({ b, guest, reference }) => {
             const p = productOf(b.productId);
             const isIn = (b.checkedIn ?? 0) >= b.partySize;
             const href = `/checkin?${new URLSearchParams({ q: reference || guest, date: b.slotStart.slice(0, 10) }).toString()}`;
             return (
-              <li key={b.id}>
-                <Link href={href} className="card-surface flex min-h-14 items-center gap-comfortable p-comfortable">
+              <li key={b.id} className="rail:border-t rail:border-line rail:first:border-t-0">
+                <Link href={href} className="card-surface flex min-h-14 items-center gap-comfortable p-comfortable rail:rounded-none rail:bg-transparent rail:px-card rail:py-comfortable rail:shadow-none rail:hover:bg-nav-hover">
                   <Thumb image={p?.images?.[0]?.url} glyph={<BookingGlyph bookingType={p?.bookingType} />} />
                   <div className="min-w-0 flex-1">
                     <div className="break-words text-md font-semibold text-fg">{guest || tc("walkInDefaultName")}</div>
@@ -96,5 +98,6 @@ export default function GoBookingsPage() {
         </ul>
       )}
     </main>
+    </GoPage>
   );
 }

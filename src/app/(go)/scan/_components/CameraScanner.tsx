@@ -187,7 +187,7 @@ export function CameraView({ onCode, labels }: { onCode: (code: string) => void;
   return (
     <section aria-label={labels.viewfinder} className="flex flex-col gap-tight">
       <style>{SCAN_CSS}</style>
-      <div className="relative mx-auto aspect-square w-full max-w-xl overflow-hidden rounded-card bg-inverse sm:aspect-[4/3]">
+      <div className="relative mx-auto aspect-square w-full max-w-xl overflow-hidden rounded-card bg-inverse sm:aspect-[4/3] rail:max-w-none">
         <video ref={video} playsInline muted className={cn("absolute inset-0 h-full w-full object-cover", !running && "invisible")} />
 
         {/* The calm placeholder, where there is no picture. */}

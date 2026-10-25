@@ -111,9 +111,9 @@ export function EventSheet({
      tile or card, and the till's one pair at the foot — back on the left, the
      orange Add on the right. */
   return (
-    <SheetShell label={event.title} labelledBy="sheet-title" onClose={onClose} frameClassName="inset-y-0 left-0 right-0 lg:right-96" className="max-h-[88vh] overflow-y-auto bg-surface p-section pb-0">
-      <div className="mx-auto w-full max-w-[680px]">
-        <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-line" aria-hidden />
+    <SheetShell label={event.title} labelledBy="sheet-title" onClose={onClose} desktop="drawer" frameClassName="inset-y-0 left-0 right-0 lg:right-96" className="max-h-[88vh] overflow-y-auto bg-surface p-section pb-0">
+      <div className="mx-auto w-full max-w-[680px] rail:flex rail:min-h-full rail:max-w-none rail:flex-col">
+        <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-line rail:hidden" aria-hidden />
         <div className="mb-section flex items-center gap-comfortable">
           <ProductThumb name={event.title} bookingType="BT-15" size="thumb" />
           <div className="min-w-0 flex-1">

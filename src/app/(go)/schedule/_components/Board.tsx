@@ -122,7 +122,7 @@ export function Board({
         el.style.height = `${Math.max(floor, limit - top)}px`;
         return;
       }
-      const reserve = window.matchMedia(RAIL).matches ? 16 : TAB_RESERVE;
+      const reserve = window.matchMedia(RAIL).matches ? 24 : TAB_RESERVE;
       /* …but never taller than the day itself: a four-hour day of shows
          left a white band under its last departure. */
       /* From the numbers this component drew, not from measuring the grid:

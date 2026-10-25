@@ -12,6 +12,7 @@ import { durationOptions, formatDuration, isDealDuration, productDurationPrice }
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { GoCard } from "../_components/Tiles";
+import { GoPage, GoPageHeader } from "../_components/GoPage";
 
 // BT-14 — field-issued pass. Quick issue on the spot: duration, price and the
 // identifier the product's config asks for ("Plate number"). Not in the grid.
@@ -66,7 +67,8 @@ export default function QuickPassPage() {
 
   if (code) {
     return (
-      <main className="mx-auto flex max-w-md flex-col gap-comfortable px-section py-section">
+      <GoPage width="narrow">
+      <main className="mx-auto flex max-w-104 flex-col gap-comfortable pb-section pt-tight rail:max-w-lg rail:py-0">
         <GoCard className="items-center py-major text-center" bodyClassName="flex flex-col items-center gap-comfortable">
           <CircleCheck size={48} strokeWidth={1.5} aria-hidden className="text-success" />
           <h1 className="text-xl font-semibold tracking-title text-fg">{t("passIssuedTitle")}</h1>
@@ -74,6 +76,7 @@ export default function QuickPassPage() {
         </GoCard>
         <Button size="lg" fullWidth className="h-13 text-md font-semibold" onClick={() => { setCode(null); setIdentifier(""); }}>{t("issueAnother")}</Button>
       </main>
+      </GoPage>
     );
   }
 
@@ -88,12 +91,13 @@ export default function QuickPassPage() {
   const plusCls = cn(stepBtn, "bg-inverse text-inverse-fg");
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-comfortable px-section py-section">
-      <div>
-        <h1 className="text-xl font-semibold tracking-title text-fg">{t("title")}</h1>
-        <p className="mt-inline text-sm text-muted">{t("subtitle")}</p>
-      </div>
+    <GoPage width="narrow">
+    <div className="mx-auto max-w-104 pb-section pt-tight rail:max-w-none rail:py-0">
+      <GoPageHeader title={t("title")} subtitle={t("subtitle")} className="mb-comfortable! rail:mb-major!" />
 
+    {/* Phone: one column. Desktop: how long on the left, the details on the
+        right, and the one orange button under them, bottom-right. */}
+    <main className="flex flex-col gap-comfortable rail:grid rail:grid-cols-2 rail:items-start rail:gap-section">
       <GoCard title={t("duration")}>
         {/* The till's stepper, not a row of chips — same control for the same
             decision, and it walks the increment the booking is configured
@@ -115,7 +119,9 @@ export default function QuickPassPage() {
         <FormField label={`${idLabel} (${t("optional")})`} placeholder={idLabel} value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
       </GoCard>
 
-      <Button size="lg" fullWidth className="h-13 text-md font-semibold" loading={issuing} onClick={issue}>{t("issuePass", { amount: formatMoney(Math.round((parseFloat(price) || 0) * 100)) })}</Button>
+      <Button size="lg" fullWidth className="h-13 text-md font-semibold rail:col-span-2 rail:ml-auto rail:w-auto rail:min-w-72" loading={issuing} onClick={issue}>{t("issuePass", { amount: formatMoney(Math.round((parseFloat(price) || 0) * 100)) })}</Button>
     </main>
+    </div>
+    </GoPage>
   );
 }

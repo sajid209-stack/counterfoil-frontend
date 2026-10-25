@@ -742,9 +742,9 @@ export function ProductSheet({
     waiverOk;
 
   return (
-    <SheetShell label={product.name} labelledBy="sheet-title" onClose={onClose} frameClassName="inset-y-0 left-0 right-0 lg:right-96" className="max-h-[88vh] overflow-y-auto bg-surface p-section pb-0">
-        <div className="mx-auto w-full max-w-[680px]">
-        <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-line" aria-hidden />
+    <SheetShell label={product.name} labelledBy="sheet-title" onClose={onClose} desktop="drawer" frameClassName="inset-y-0 left-0 right-0 lg:right-96" className="max-h-[88vh] overflow-y-auto bg-surface p-section pb-0">
+        <div className="mx-auto w-full max-w-[680px] rail:flex rail:min-h-full rail:max-w-none rail:flex-col">
+        <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-line rail:hidden" aria-hidden />
         {/* The reference leads with the product: a real thumbnail rather than a
             40px chip, the name at display size, and one line saying what this
             sheet is going to ask for. The subtitle is the SAME derived
@@ -1004,7 +1004,7 @@ export function ProductSheet({
           const chosenLaneFree = slotTime ? startState(slotTime, duration, resourceId).ok : false;
 
           return (
-            <div className="mb-section flex flex-col gap-tight">
+            <div className="mb-section flex flex-col gap-tight rail:mb-0 rail:flex-1">
 
               {/* Duration is a stepper, not a wall of chips.
                   Nine buttons each carrying their own price was nine prices to
@@ -1202,7 +1202,7 @@ export function ProductSheet({
 
         {/* Provider cards + appointment times (conflict-aware per provider) */}
         {provider && (
-          <div className="mb-section flex flex-col gap-tight">
+          <div className="mb-section flex flex-col gap-tight rail:mb-0 rail:flex-1">
             {/* Stacked full-width rows, not a wrap grid: each row carries a
                 name, when they are next free and what they cost, and those
                 three want a consistent left edge to be comparable. */}

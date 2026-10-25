@@ -30,7 +30,7 @@ export function DaySummary({
   return (
     <>
       <GoCard data-day-summary title={t("summaryTitle")}>
-        <TileGrid cols={3}>
+        <TileGrid cols={3} className="rail:gap-0">
           {(
             [
               ["expected", expected],
@@ -38,8 +38,8 @@ export function DaySummary({
               ["toCome", Math.max(0, expected - arrived)],
             ] as const
           ).map(([key, value]) => (
-            <div key={key} className="flex min-w-0 flex-col items-center gap-inline rounded-inner bg-subtle px-tight py-comfortable text-center">
-              <span className="text-xl font-semibold tabular-nums">{value}</span>
+            <div key={key} className="flex min-w-0 flex-col items-center gap-inline rounded-inner bg-subtle px-tight py-comfortable text-center rail:rounded-none rail:border-l rail:border-line rail:bg-transparent rail:first:border-l-0">
+              <span className="text-xl font-semibold tabular-nums rail:text-2xl">{value}</span>
               <span className="text-sm text-muted">{t(`stat_${key}`)}</span>
             </div>
           ))}

@@ -755,6 +755,7 @@ export default function SellPage() {
     <ActionBar
       docked={wide ? "panel" : "dock"}
       tone="ground"
+      className="rail:border-t rail:border-line rail:px-card"
       label={t("footer.barLabel")}
       secondary={wide ? null : { label: t("block.addMore"), icon: <Plus size={20} strokeWidth={2} aria-hidden />, onClick: addMore }}
       primary={{
@@ -771,15 +772,15 @@ export default function SellPage() {
      independently; the height is stated here because the Go shell hands its
      children none. */
   return (
-    <div className="grid grid-cols-1 gap-comfortable p-comfortable lg:h-[calc(100dvh-152px)] lg:grid-cols-[minmax(0,1fr)_30rem] lg:overflow-hidden rail:h-[calc(100dvh-64px)]">
+    <div className="grid grid-cols-1 gap-comfortable p-comfortable lg:h-[calc(100dvh-152px)] lg:grid-cols-[minmax(0,1fr)_30rem] lg:overflow-hidden rail:h-dvh rail:gap-0 rail:p-0">
       <h1 className="sr-only">{t("srTitle")}</h1>
 
       {/* The wall, as a column of its own on a tablet. */}
-      {wide && <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">{catalogue}</div>}
+      {wide && <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden rail:px-major rail:pb-major rail:pt-section">{catalogue}</div>}
 
       {/* The sale — one scroll, ending in the money. */}
-      <div className="flex min-h-0 min-w-0 flex-col">
-        <div className="flex flex-col gap-comfortable pb-44 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-0">
+      <div className="flex min-h-0 min-w-0 flex-col rail:border-l rail:border-line">
+        <div className="flex flex-col gap-comfortable pb-44 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-0 rail:px-card rail:pt-section">
           {/* Phone: the wall lives here, above the sale. */}
           {!wide && (
             <div ref={wallRef} className="scroll-mt-comfortable">

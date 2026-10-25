@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Sheet } from "@/components/ui";
 import type { HoldView } from "@/lib/api";
 import { formatClock, formatClockRange, formatDay } from "@/lib/format";
+import { SHEET_AS_DIALOG } from "../_components/SheetParts";
 import { GoCard } from "../_components/Tiles";
 
 /** "17:00" from an ISO date-time written with the venue's own offset. */
@@ -40,7 +41,7 @@ export function HeldSheet({
 }) {
   const t = useTranslations("pos");
   return (
-    <Sheet open={open} onClose={onClose} title={t("held.title")} closeLabel={t("held.close")} className="mx-auto max-w-xl">
+    <Sheet open={open} onClose={onClose} title={t("held.title")} closeLabel={t("held.close")} className={`${SHEET_AS_DIALOG} max-w-xl`}>
       <ul className="flex flex-col gap-comfortable px-section pb-section pt-comfortable">
         {holds.map((h) => {
           const place = h.kind === "resource" ? h.resourceName : h.kind === "seats" ? (h.seatLabels ?? []).join(", ") : null;

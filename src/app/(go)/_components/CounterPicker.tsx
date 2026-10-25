@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { Modal } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -33,10 +33,28 @@ import { counterIsOpen, setActiveCounter, useActiveCounter } from "@/lib/activeC
  * as a form field sitting in it. The venue is not on the trigger: it is the
  * group heading inside the list, and it is in the button's accessible name.
  * 44px tall; the name truncates with an ellipsis and never wraps.
+ *
+ * On a desktop the same picker is the first row of the sidebar
+ * (`variant="sidebar"`): a tile with the counter's initial, the name in
+ * semibold with the venue under it in muted, and an up-down chevron — the way
+ * Linear, Shopify and Square draw a workspace switcher. Folded to the 72px icon
+ * rail (`iconOnly`) it is the tile alone; the accessible name is the same
+ * either way. The list drops over the page from the row's left edge, so the
+ * sidebar must not clip its own overflow (it does not).
  */
 const noSubscribe = () => () => {};
 
-export function CounterPicker({ saleCount }: { saleCount: number }) {
+export function CounterPicker({
+  saleCount,
+  variant = "header",
+  iconOnly = false,
+}: {
+  saleCount: number;
+  variant?: "header" | "sidebar";
+  /** Sidebar only: the 72px icon rail, which has room for the tile and no more. */
+  iconOnly?: boolean;
+}) {
+  const side = variant === "sidebar";
   const t = useTranslations("pos.shell");
   const router = useRouter();
   const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
@@ -99,7 +117,7 @@ export function CounterPicker({ saleCount }: { saleCount: number }) {
   const venue = active ? venueName(active.locationId) : "";
 
   return (
-    <div className="min-w-0 flex-1 sm:relative sm:max-w-[20rem] sm:flex-none">
+    <div className={side ? "relative w-full min-w-0" : "min-w-0 flex-1 sm:relative sm:max-w-[20rem] sm:flex-none"}>
       <button
         ref={chip}
         type="button"
@@ -108,10 +126,38 @@ export function CounterPicker({ saleCount }: { saleCount: number }) {
         aria-expanded={open}
         aria-label={active ? t("counterChipAria", { name, venue }) : t("counterNone")}
         data-counter-chip
-        className="flex h-11 max-w-full items-center gap-1 rounded-full px-3 text-left transition-colors duration-quick hover:bg-muted-wash active:bg-muted-wash"
+        title={side && iconOnly ? name : undefined}
+        className={
+          side
+            ? cn(
+                "flex h-14 w-full items-center rounded-control text-left transition-colors duration-quick hover:bg-muted-wash active:bg-muted-wash",
+                iconOnly ? "justify-center" : "gap-comfortable px-tight",
+                open && "bg-muted-wash",
+              )
+            : "flex h-11 max-w-full items-center gap-1 rounded-full px-3 text-left transition-colors duration-quick hover:bg-muted-wash active:bg-muted-wash"
+        }
       >
-        <span className="truncate text-md font-semibold leading-tight text-fg">{name}</span>
-        <ChevronDown size={14} strokeWidth={2.25} aria-hidden className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-180")} />
+        {side ? (
+          <>
+            <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-control bg-subtle text-md font-semibold text-fg">
+              {name.trim().charAt(0).toUpperCase() || "•"}
+            </span>
+            {!iconOnly && (
+              <>
+                <span className="flex min-w-0 flex-1 flex-col leading-tight">
+                  <span className="truncate text-base font-semibold text-fg">{name}</span>
+                  {venue && <span className="truncate text-sm text-muted">{venue}</span>}
+                </span>
+                <ChevronsUpDown size={16} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            <span className="truncate text-md font-semibold leading-tight text-fg">{name}</span>
+            <ChevronDown size={14} strokeWidth={2.25} aria-hidden className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-180")} />
+          </>
+        )}
       </button>
 
       {open && (
@@ -121,7 +167,12 @@ export function CounterPicker({ saleCount }: { saleCount: number }) {
             ref={panel}
             role="dialog"
             aria-label={t("counterTitle")}
-            className="go-raised fixed inset-x-tight top-15 z-50 max-h-[calc(100dvh-76px)] overflow-y-auto p-1.5 sm:absolute sm:inset-x-auto sm:left-0 sm:top-[calc(100%+4px)] sm:w-[20rem]"
+            className={cn(
+              "go-raised z-50 overflow-y-auto p-1.5",
+              side
+                ? "absolute left-0 top-[calc(100%+4px)] max-h-[calc(100dvh-96px)] w-[20rem]"
+                : "fixed inset-x-tight top-15 max-h-[calc(100dvh-76px)] sm:absolute sm:inset-x-auto sm:left-0 sm:top-[calc(100%+4px)] sm:w-[20rem]",
+            )}
           >
             {groups.length === 0 && <p className="px-3 py-3 text-md text-muted">{t("counterNone")}</p>}
             {groups.map((g) => (

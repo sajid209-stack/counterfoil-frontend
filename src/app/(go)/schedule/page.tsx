@@ -52,6 +52,7 @@ import { BlockSheet, HoldSheet, MoveSheet, SessionSheet, TakeBalanceSheet, type 
 import { pendingRefundFor, refundableFor, refundRequestsForOrder } from "@/lib/api/refundRequests";
 import { ActionBar, BarSummary } from "../_components/ActionBar";
 import { Tile, TileGrid } from "../_components/Tiles";
+import { GoPage } from "../_components/GoPage";
 import { DayStrip } from "./_components/DayStrip";
 
 type SessionBlock = Extract<Block, { type: "session" }>;
@@ -568,7 +569,7 @@ export default function SchedulePage() {
     <TileGrid
       role="tablist"
       aria-label={t("board.whatLabel")}
-      className={cn(frame)}
+      className={cn(frame, "rail:rounded-card rail:bg-card rail:shadow-card rail:gap-inline rail:p-inline")}
       style={{ gridTemplateColumns: `repeat(${Math.min(groups.length, 4)}, minmax(0, 1fr))` }}
     >
       {groups.map((g) => {
@@ -581,7 +582,7 @@ export default function SchedulePage() {
             selected={on}
             aria-label={t("board.groupAria", { name: g.label, count: g.freeCount })}
             onClick={() => setGroupKey(g.key)}
-            className="min-h-12 px-1 text-base font-semibold leading-tight"
+            className="min-h-12 px-1 text-base font-semibold leading-tight rail:min-h-11 rail:rounded-sm rail:aria-[selected=false]:bg-transparent rail:aria-[selected=false]:shadow-none rail:aria-[selected=false]:hover:bg-nav-hover"
           >
             {g.label}
           </Tile>
@@ -591,8 +592,9 @@ export default function SchedulePage() {
   );
 
   return (
-    <main className={cn("mx-auto flex w-full max-w-5xl flex-col gap-comfortable px-gutter pt-comfortable", "pb-0")}>
-      <h1 className="sr-only">{t("title")}</h1>
+    <GoPage width="full" className="sm:px-gutter">
+    <main className="-mx-section flex w-auto flex-col gap-comfortable px-section pb-0 pt-inline sm:-mx-gutter sm:px-gutter rail:-mx-major rail:px-major rail:pt-0">
+      <h1 className="sr-only rail:hidden">{t("title")}</h1>
 
       {/* ── the days, with how busy each is ──
           One row of controls (which week, back to today, the calendar) over one
@@ -600,6 +602,7 @@ export default function SchedulePage() {
           hour the cashier cannot see, so nothing here takes a line of its own. */}
       <section className="flex flex-col gap-tight">
         <DayStrip
+          title={t("title")}
           date={date}
           today={DEMO_TODAY}
           load={hydrated ? loadOf : () => 0}
@@ -866,6 +869,7 @@ export default function SchedulePage() {
         )}
       </Modal>
     </main>
+    </GoPage>
   );
 }
 

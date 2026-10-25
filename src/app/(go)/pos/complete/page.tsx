@@ -182,7 +182,7 @@ export default function CompletePage() {
         };
 
   return (
-    <main className="mx-auto w-full max-w-xl px-section pb-24 pt-major sm:max-w-3xl rail:max-w-6xl rail:px-major rail:pb-major">
+    <main className="mx-auto w-full max-w-xl px-section pb-24 pt-major sm:max-w-3xl rail:max-w-[40rem] rail:px-major rail:pb-major rail:pt-hero">
       {/* The 5-second Undo, above everything else: a cashier who has just
           tapped the wrong sale needs it before "Sale complete" even, not
           after reading past it. Gone entirely on a handover written before
@@ -190,7 +190,7 @@ export default function CompletePage() {
       {info.completedAt && orderId && (
         <UndoBar orderId={orderId} completedAt={info.completedAt} payment={payment} onUndoing={() => { leavingOnPurpose.current = true; }} />
       )}
-      <div className="flex flex-col gap-wide rail:grid rail:grid-cols-[minmax(0,1fr)_minmax(0,440px)] rail:items-start rail:gap-wide">
+      <div className="flex flex-col gap-wide">
         {/* ── What just happened, and what to do now ── */}
         <div className="flex flex-col gap-major">
           <section className="flex flex-col items-center text-center" aria-labelledby="sale-complete">
@@ -226,7 +226,7 @@ export default function CompletePage() {
               tile, in a group under a heading, so what belongs together reads
               together; side by side once there is room, stacked on a phone. The
               visible word is short; each tile's name says the whole action. */}
-          <section aria-labelledby="hand-over" className={cn("flex flex-col gap-comfortable", hasTickets && "sm:grid sm:grid-cols-2")}>
+          <section aria-labelledby="hand-over" className={cn("flex flex-col gap-comfortable", hasTickets && "sm:grid sm:grid-cols-2 rail:grid-cols-1")}>
             <h2 id="hand-over" className="sr-only">
               {hasTickets ? t("complete.handOverTitle") : t("complete.handOverReceiptTitle")}
             </h2>

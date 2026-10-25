@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
 import { Banknote, Check, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, CreditCard, Pause, QrCode, Send, Percent, Plus, Search, Ticket, Trash2, Wallet, X, type LucideIcon } from "lucide-react";
-import { BlockedNotice, Button, DiscountInput, FormField, Modal, Notice, SkeletonText, useToast, type DiscountMode } from "@/components/ui";
+import { ActionMenu, BlockedNotice, Button, DiscountInput, FormField, Modal, Notice, SkeletonText, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { counterEvents, counterItems, eventDays, inventoryItem, inventoryLineId, levelOf, peekTicketCodeSettings, tillMethods, advanceMinimum, checkout, getAdvancePolicy, earnPoints, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isOpenOn, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, placeHold, releaseHold, activeHolds, HOLDS_EVENT, CHECKOUT_HELD_FOR, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type MembershipTier, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord, type HoldView } from "@/lib/api";
 import { eventFromPrice as sharedEventFromPrice } from "@/lib/api/eventModel";
@@ -30,7 +30,7 @@ import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 import { BookingGlyph, WallHeading, WallRow, WallTile } from "../_components/WallTile";
 import { SheetShell } from "../_components/SheetShell";
 import { Stepper } from "../_components/Stepper";
-import { ActionBar } from "../_components/ActionBar";
+import { ActionBar, primaryButton } from "../_components/ActionBar";
 import { ActionTile, GoCard, Tile, TileGrid, TileLabel } from "../_components/Tiles";
 import { EventSheet } from "../_components/EventSheet";
 import { Keypad } from "../_components/Keypad";
@@ -42,6 +42,9 @@ import { ticketSnapshot } from "./_lib/handover";
 import { clearLiveSale, readLiveSale, takeReturnTo, writeLiveSale, writeUndoSnapshot, type LiveSale } from "./_lib/liveSale";
 
 const TODAY = DEMO_TODAY;
+/** A desktop: 1024px and wider, held landscape — Tailwind's `rail:` variant (globals.css). The sell screen
+ *  becomes the wall | the sale panel there (docs/pos-desktop.md §2 rule 4). */
+const RAIL = "(min-width: 64rem) and (orientation: landscape)";
 // Payment methods this counter takes (would come from counter config).
 // The signed-in staff member (mock session): Nadia, whose role sets her limits.
 /** A method is recognised at the counter as an object, not a word: cash is a
@@ -93,13 +96,13 @@ function ShopGlyph({ kind }: { kind: "merch" | "food" | "equipment" | "service" 
 /** The 56px picture on a cart line: the item's photograph, or a soft panel with
  *  its glyph where it has none. The wall tile's own rule, so a line and the
  *  tile it came from show the same thing. */
-function CartThumb({ image, glyph }: { image?: string; glyph: React.ReactNode }) {
+function CartThumb({ image, glyph, small = false }: { image?: string; glyph: React.ReactNode; small?: boolean }) {
   const [broken, setBroken] = useState(false);
   return image && !broken ? (
     // eslint-disable-next-line @next/next/no-img-element -- bundled/local assets, as on the wall
-    <img src={image} alt="" decoding="async" onError={() => setBroken(true)} className="size-14 shrink-0 rounded-md object-cover" />
+    <img src={image} alt="" decoding="async" onError={() => setBroken(true)} className={cn(small ? "size-12" : "size-14", "shrink-0 rounded-md object-cover")} />
   ) : (
-    <span aria-hidden className="flex size-14 shrink-0 items-center justify-center rounded-md bg-subtle text-fg-secondary [&_svg]:size-6">
+    <span aria-hidden className={cn(small ? "size-12 ring-1 ring-inset ring-line" : "size-14", "flex shrink-0 items-center justify-center rounded-md bg-subtle text-fg-secondary [&_svg]:size-6")}>
       {glyph}
     </span>
   );
@@ -118,6 +121,10 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const t = useTranslations("pos");
   /* Phones get the short search placeholder; the full words stay as the aria-label. */
   const phone = useMediaQuery("(max-width: 39.99rem)");
+  /* One copy of the sale panel in the document: the desktop's, or the phone's and
+     tablet's. A hidden second copy would come first in document order and
+     answer to a screen reader and a test before the real one does. */
+  const rail = useMediaQuery(RAIL);
   const subtitle = useBehaviourSubtitle();
   const pt = useTranslations("promotions");
   const enumL = useEnumLabels();
@@ -1237,17 +1244,225 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     providersFree: (free: number, total: number) => t("live.providersFree", { free, total }),
   }), [t, onToday]);
 
+  /** One line of a sale in words: what was bought, for whom, where, when. The
+   *  sale panel's rows and the checkout's summary read it the same way. */
+  const lineDetail = (e: CartEntry) => {
+    const slot = slotLabel(e).replace(/^ · /, "");
+    return [
+      /* The stepper already says how many of a plain line. */
+      simpleQty(e) ? "" : e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "),
+      e.seatLabels?.length ? e.seatLabels.join(", ") : "",
+      e.eventDayLabel,
+      e.resourceLabel,
+      e.providerLabel,
+      e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : "",
+      slot,
+    ].filter(Boolean).join(" · ");
+  };
+
+  /** The sale's arithmetic, one row per thing that changed it. Drawn in the
+   *  sale panel's foot and in the checkout's summary, so they cannot disagree. */
+  const totalsRows = (
+    <div className="flex flex-col gap-inline">
+      <div className="flex justify-between text-sm text-muted"><span>{t("summary.subtotal")}</span><span className="tabular-nums">{formatMoney(subtotal, currency)}</span></div>
+      {lineDiscountTotal > 0 && <div className="flex justify-between text-sm text-muted"><span>{t("summary.lineDiscounts")}</span><span className="tabular-nums text-danger">−{formatMoney(lineDiscountTotal, currency)}</span></div>}
+      {manualDiscount > 0 && <div className="flex justify-between text-sm text-muted"><span>{discountMode === "percent" ? t("summary.discountPct", { pct: discountPct }) : t("summary.discountFlat")}</span><span className="tabular-nums text-danger">−{formatMoney(manualDiscount, currency)}</span></div>}
+      {couponDiscount > 0 && <div className="flex justify-between text-sm text-muted"><span>{appliedCoupon?.code ?? appliedCoupon?.name}</span><span className="tabular-nums text-danger">−{formatMoney(couponDiscount, currency)}</span></div>}
+      {memberDiscount > 0 && <div className="flex justify-between text-sm text-muted"><span className="min-w-0 truncate">{t("summary.memberDiscount", { tier: benefit?.tierName ?? "" })}</span><span className="shrink-0 tabular-nums text-danger">−{formatMoney(memberDiscount, currency)}</span></div>}
+      {pointsDiscount > 0 && <div className="flex justify-between text-sm text-muted"><span>{t("summary.pointsSpent", { count: pointsToSpend })}</span><span className="tabular-nums text-danger">−{formatMoney(pointsDiscount, currency)}</span></div>}
+      <div className="flex justify-between text-sm text-muted"><span>{vatRatePct != null ? t("summary.vatRate", { pct: vatRatePct }) : t("summary.vat")}</span><span className="tabular-nums">{formatMoney(tax, currency)}</span></div>
+      <div className="mt-tight flex items-baseline justify-between border-t border-line pt-tight text-lg font-semibold"><span>{t("summary.total")}</span><AnimatedMoney value={total} currency={currency} /></div>
+      {balance > 0 && (
+        <>
+          <div className="flex justify-between text-sm"><span>{t("summary.dueNow")}</span><span className="tabular-nums">{formatMoney(dueNow, currency)}</span></div>
+          <div className="flex justify-between text-sm text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="tabular-nums">{formatMoney(balance, currency)}</span></div>
+        </>
+      )}
+    </div>
+  );
+
+  /** A line in the desktop sale panel: a 48px picture, what it is, its price;
+   *  under it the stepper (where a number is all there is to change) and the
+   *  line's own two quiet actions. Tapping the words opens it in its sheet. */
+  const railLine = (e: CartEntry) => {
+    const prod = productById(e.productId);
+    const shelf = shopItems.find((i) => inventoryLineId(i.id) === e.productId);
+    /* Guarded on the PRODUCT: a custom amount and something off the shelf have
+       no booking behind them. */
+    const reopen = prod && prod.bookingType !== "BT-15" ? () => setSheet({ product: prod, initial: e }) : undefined;
+    const detail = lineDetail(e);
+    const words = (
+      <>
+        <span className="block break-words text-base font-semibold leading-snug">{e.productName}</span>
+        {detail && <span className="block text-sm text-muted">{detail}</span>}
+        {e.lineDiscountAmount ? (
+          <span className="block text-sm text-danger">−{formatMoney(e.lineDiscountAmount, currency)}</span>
+        ) : (e.lineDiscountPct ?? 0) > 0 ? (
+          <span className="block text-sm text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</span>
+        ) : null}
+        {entryBalance(e) > 0 && <span className="block text-sm text-muted">{t("cart.depositNow", { pct: prod?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</span>}
+      </>
+    );
+    return (
+      <li key={e.id} className="py-comfortable">
+        <div className="flex items-start gap-comfortable">
+          <CartThumb small image={prod?.images?.[0]?.url} glyph={prod ? <BookingGlyph bookingType={prod.bookingType} /> : shelf ? <ShopGlyph kind={shelf.kind} /> : <Plus strokeWidth={1.5} />} />
+          {reopen ? (
+            <button type="button" onClick={reopen} className="flex min-h-12 min-w-0 flex-1 flex-col justify-center text-left">{words}</button>
+          ) : (
+            <div className="flex min-h-12 min-w-0 flex-1 flex-col justify-center">{words}</div>
+          )}
+          <span className="shrink-0 text-right">
+            <span className="block whitespace-nowrap text-base font-semibold tabular-nums">{formatMoney(entryTotal(e), currency)}</span>
+            {e.items.length === 1 && e.fixedPrice == null && e.items[0].qty > 1 && (
+              <span className="block whitespace-nowrap text-sm text-muted">{e.items[0].qty} × {formatMoney(e.items[0].unitPrice, currency)}</span>
+            )}
+          </span>
+        </div>
+        {/* Aligned with the words, not the picture: the picture is 48px and the
+            gap 12, so the controls start 60px in. */}
+        <div className="mt-tight flex items-center gap-inline pl-15">
+          {simpleQty(e) && (
+            <Stepper variant="pill" value={e.items[0].qty} min={1} onChange={(v) => bumpQty(e.id, v - e.items[0].qty)} lessLabel={t("sheet.fewer")} moreLabel={t("sheet.more")} />
+          )}
+          <button
+            type="button"
+            aria-label={t("cart.lineDiscountLabel")}
+            aria-expanded={lineDiscEdit === e.id}
+            onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
+            className={cn(
+              "flex h-11 min-w-11 items-center justify-center gap-inline rounded-full px-tight text-sm font-medium hover:bg-nav-hover active:bg-muted-wash",
+              (e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "text-brand-foreground" : "text-muted",
+            )}
+          >
+            <Percent size={16} strokeWidth={2} aria-hidden />
+            {(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? <span className="whitespace-nowrap">{e.lineDiscountAmount ? formatMoney(e.lineDiscountAmount, currency) : `−${e.lineDiscountPct}%`}</span> : null}
+          </button>
+          {prod?.durationConfig && e.fixedPrice != null && e.slotEnd && (
+            <button type="button" onClick={() => extendEntry(e)} className="flex h-11 items-center gap-inline rounded-full px-tight text-sm font-medium text-muted hover:bg-nav-hover active:bg-muted-wash">
+              <Plus size={16} strokeWidth={2} aria-hidden />
+              <span className="whitespace-nowrap">{t("cart.extend")} {prod.durationConfig.incrementMinutes}m</span>
+            </button>
+          )}
+          <button
+            type="button"
+            aria-label={t("cart.remove")}
+            onClick={() => {
+              const at = cart.findIndex((x) => x.id === e.id);
+              const line = e;
+              setCart((c) => c.filter((x) => x.id !== e.id));
+              toast.success(t("cart.removed", { name: e.productName }), {
+                label: t("cart.undo"),
+                run: () => setCart((c) => {
+                  if (c.some((x) => x.id === line.id)) return c;
+                  const next = [...c];
+                  next.splice(Math.min(at, next.length), 0, line);
+                  return next;
+                }),
+              });
+            }}
+            className="ml-auto flex h-11 min-w-11 items-center justify-center rounded-full text-muted hover:bg-nav-hover active:bg-muted-wash"
+          >
+            <Trash2 size={16} strokeWidth={2} aria-hidden />
+          </button>
+        </div>
+        {lineDiscEdit === e.id && (
+          <div className="mt-tight pl-15">
+            <DiscountInput
+              shape="go"
+              compact
+              label={t("cart.lineDiscountLabel")}
+              mode={e.lineDiscountAmount != null ? "amount" : "percent"}
+              onMode={(m) =>
+                setCart((c) =>
+                  c.map((x) =>
+                    x.id === e.id
+                      ? m === "amount"
+                        ? { ...x, lineDiscountAmount: x.lineDiscountAmount ?? 0, lineDiscountPct: undefined }
+                        : { ...x, lineDiscountPct: x.lineDiscountPct ?? 0, lineDiscountAmount: undefined }
+                      : x,
+                  ),
+                )
+              }
+              value={e.lineDiscountAmount != null ? e.lineDiscountAmount : (e.lineDiscountPct ?? 0)}
+              base={entryTotal(e)}
+              currency={currency}
+              onChange={(v) =>
+                setCart((c) =>
+                  c.map((x) =>
+                    x.id === e.id
+                      ? x.lineDiscountAmount != null
+                        ? { ...x, lineDiscountAmount: v }
+                        : { ...x, lineDiscountPct: v }
+                      : x,
+                  ),
+                )
+              }
+            />
+          </div>
+        )}
+      </li>
+    );
+  };
+
+  /** The desktop's sale panel: white, full height, docked to the right edge.
+   *  Head: the sale and how many things are in it, with Pause and Clear all
+   *  behind one menu. Lines scroll on their own. The foot is pinned — the sums
+   *  and ONE orange button the width of the panel, where the hand ends every
+   *  sale. Who it is for, a discount and a promo code are asked at checkout. */
+  const railPanel = (
+    <>
+      <div className="flex items-center gap-tight border-b border-line px-card py-comfortable">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-md font-semibold text-fg">{t("cart.title")}</h2>
+          {/* One atomic status — "2 items" — not a bare number read out of context. */}
+          <p role="status" aria-atomic="true" className="text-sm text-muted">{t("phoneSummary", { count: unitCount })}</p>
+        </div>
+        {cart.length > 0 && (
+          <ActionMenu
+            shape="go"
+            label={t("cart.menu")}
+            items={[
+              { key: "park", label: t("cart.park"), icon: <Pause size={16} strokeWidth={2} aria-hidden />, onSelect: () => { setParkName(customer); setParkOpen(true); } },
+              { key: "clear", label: t("cart.clearAll"), icon: <Trash2 size={16} strokeWidth={2} aria-hidden />, destructive: true, onSelect: () => setClearOpen(true) },
+            ]}
+          />
+        )}
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-card">
+        {cartNotice && <div className="pt-comfortable"><BlockedNotice message={cartNotice} onDismiss={() => setCartNotice(null)} /></div>}
+        {cart.length === 0 ? (
+          <div className="flex flex-col items-center gap-inline px-section py-wide text-center">
+            <ShoppingBag size={24} strokeWidth={1.5} className="text-muted" aria-hidden />
+            <p className="text-md font-semibold text-fg">{t("cart.noItems")}</p>
+            <p className="text-sm text-muted">{t("cart.noItemsHint")}</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-line">{cart.map(railLine)}</ul>
+        )}
+      </div>
+      <section aria-label={t("cart.barLabel")} className="flex flex-col gap-comfortable border-t border-line px-card py-section">
+        {cart.length > 0 && totalsRows}
+        {cart.length > 0 && overLimit && <Notice tone="warning" size="sm">{pt("pos.overPolicy", { limit: manualCapPct })}</Notice>}
+        <button type="button" className={primaryButton("h-13", "w-full")} onClick={() => void charge()} disabled={cart.length === 0}>
+          <Banknote size={20} strokeWidth={2} aria-hidden />
+          <span className="truncate">{t("takeAmount", { amount: formatPriceShort(dueNow, currency) })}</span>
+        </button>
+      </section>
+    </>
+  );
+
   return (
-    <div className={cn("grid h-full grid-cols-1 gap-comfortable p-comfortable lg:grid-cols-[1fr_23rem] lg:pb-comfortable", "pb-24")}>
+    <div className={cn("grid h-full grid-cols-1 gap-comfortable p-comfortable lg:grid-cols-[1fr_23rem] lg:pb-comfortable", "pb-24", "rail:h-dvh rail:grid-cols-[minmax(0,1fr)_24rem] rail:gap-0 rail:p-0 rail:pb-0")}>
       {/* The Go chrome names this screen visually; the heading exists so a
           screen reader lands on a named page rather than an unlabelled grid. */}
       <h1 className="sr-only">{t("posTitle")}</h1>
       {/* min-w-0, or this column sizes to its own min-content and the page
           scrolls sideways: the same mechanism the dashboard was fixed with. The
           wall shows everything — there are no category chips on the till. */}
-      <div className="flex min-h-0 min-w-0 flex-col gap-comfortable">
+      <div className="flex min-h-0 min-w-0 flex-col gap-comfortable rail:gap-section rail:pt-section">
         {/* Header zone: the day · search · parked badge */}
-        <div className="flex flex-wrap items-center gap-tight">
+        <div className="flex flex-wrap items-center gap-tight rail:px-major">
           {/* The day the wall is selling for: a quiet pill reading "Today · Wed
               29 Jul", and across the wall in orange once it is anything else.
               Only where something on the wall has a day to choose — a
@@ -1275,7 +1490,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               on the button and the name says it in words. */}
           {heldHere.length > 0 && <HeldButton count={heldHere.length} onClick={() => setHeldOpen(true)} />}
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto rail:px-major rail:pb-major">
           {productsQ.loading ? (
             <div aria-busy="true" className="card-surface p-section"><SkeletonText lines={3} /></div>
           ) : (
@@ -1284,7 +1499,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                two lines, and the sheet behind the card carries the rest. Two
                columns on a phone, more as the width allows. */
             <div>
-              <div className="grid grid-cols-2 gap-comfortable sm:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-comfortable sm:grid-cols-3 xl:grid-cols-4 rail:grid-cols-[repeat(auto-fill,minmax(min(100%,11.5rem),1fr))] rail:gap-section">
                 {shown.map((p) => {
                   const live = posLiveState(p, sellDate, nowMinutes, liveWords);
                   const n = inSale(p.id);
@@ -1377,7 +1592,12 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
 
       {/* Cart — fixed right panel on tablet/desktop; bottom drawer on phones */}
       {/* Sheets cover the tab bar (z-50 over z-40) — nothing tappable behind a modal cart. */}
-      <div className={`${cartOpen ? "fixed inset-0 z-50 flex pb-[env(safe-area-inset-bottom)] lg:inset-auto lg:pb-0" : "hidden"} min-h-0 flex-col bg-surface lg:z-auto lg:flex lg:rounded-card lg:pb-0 lg:shadow-card lg:sticky lg:top-comfortable lg:h-[calc(100dvh-100px)] lg:max-h-none lg:self-start`}>
+      <div
+        role={rail ? "complementary" : undefined}
+        aria-label={rail ? t("cart.title") : undefined}
+        className={`${cartOpen ? "fixed inset-0 z-50 flex pb-[env(safe-area-inset-bottom)] lg:inset-auto lg:pb-0" : "hidden"} min-h-0 flex-col bg-surface lg:z-auto lg:flex lg:rounded-card lg:pb-0 lg:shadow-card lg:sticky lg:top-comfortable lg:h-[calc(100dvh-100px)] lg:max-h-none lg:self-start rail:static rail:h-full rail:self-stretch rail:rounded-none rail:border-l rail:border-line rail:bg-card rail:shadow-none`}
+      >
+        {rail ? railPanel : (<>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-tight p-comfortable lg:border-b lg:border-line">
           {cartOpen ? (
             <button type="button" onClick={closeCart} className="flex h-11 shrink-0 items-center gap-inline justify-self-start rounded-full pl-tight pr-comfortable text-base font-medium border border-btn-secondary-line bg-btn-secondary text-fg shadow-sm hover:bg-btn-secondary-hover active:bg-btn-secondary-active lg:hidden">
@@ -1605,6 +1825,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
             }}
           />
         )}
+        </>)}
       </div>
 
       {/* The phone's sale dock — one solid footer from the top of the buttons
@@ -1659,25 +1880,21 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
            read where it can be fixed, and cannot be folded away. */
         const discountOpen = discOpen || blocked;
         const discountValue = manualDiscount > 0 ? (discountMode === "percent" ? `${discountPct}%` : formatMoney(manualDiscount, currency)) : t("summary.none");
-        return (
-          <SheetShell label={t("pay.title")} onClose={() => { if (!cashSaving) setCashOpen(false); }} className="mx-auto flex max-h-[92vh] w-full max-w-[560px] flex-col bg-surface">
-              <div className="flex items-center justify-between gap-tight px-section pb-tight pt-tight">
-                <span className="w-11" aria-hidden />
-                <span className="h-1 w-10 rounded-full bg-line" aria-hidden />
-                {/* 44px: Go is touch at every width. */}
-                <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-muted-wash"><X size={20} strokeWidth={1.5} /></button>
-              </div>
-              <div className="flex min-h-0 flex-1 flex-col gap-comfortable overflow-y-auto px-section pb-section [&>*]:shrink-0">
-                {/* What is being paid, as large as the screen allows: it is the
+
+        /* The payment step's pieces, as values, so the same pieces make the
+           phone's single column and the desktop's two. Each is written once. */
+        const amountBlock = (<>
+          {/* What is being paid, as large as the screen allows: it is the
                     number the customer is told. It follows the discount, the
                     code and how much is paid now — all of which come from the
                     sale engine, not from arithmetic here. */}
-                <div className="text-center" data-pay-amount>
+                <div className="text-center rail:text-left" data-pay-amount>
                   <p className="text-base font-medium text-muted">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</p>
                   <p className="mt-inline text-[clamp(2rem,10vw,2.75rem)] font-bold leading-tight tabular-nums text-fg">{formatMoney(dueNow, currency)}</p>
                 </div>
-
-                {/* Who it is for, what comes off, and a promo code: one card of
+        </>);
+        const rowsCard = (<>
+          {/* Who it is for, what comes off, and a promo code: one card of
                     rows, each saying where it stands. */}
                 <div className="card-surface overflow-hidden px-comfortable">
                   <CustomerRow attached={attached} onOpen={() => setCustomerOpen(true)} onRemove={() => setAttached(null)} />
@@ -1746,8 +1963,9 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     currency={currency}
                   />
                 </div>
-
-                {/* How they are paying: each way is its own tile, a picture in a
+        </>);
+        const methodBlock = (<>
+          {/* How they are paying: each way is its own tile, a picture in a
                     soft round and a word. Chosen is the till's one look for it:
                     solid orange, white, a tick. Four across; two by two on the
                     narrowest phones, where four would crowd the words. */}
@@ -1781,8 +1999,9 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     </TileGrid>
                   </div>
                 )}
-
-                {/* How much of it now. Only where the business takes part
+        </>);
+        const howMuchBlock = (<>
+          {/* How much of it now. Only where the business takes part
                     payment, and only the choices that are really different:
                     Minimum is left out when it is the whole amount or there is
                     none. */}
@@ -1797,8 +2016,9 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     )}
                   </div>
                 )}
-
-                {cash ? (
+        </>);
+        const cashBlock = (<>
+          {cash ? (
                   <>
                     {/* Cash: the figure handed over (the amount now, until a
                         cashier says otherwise) and what to give back, on a card
@@ -1860,10 +2080,12 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     {method === "card_terminal" ? t("pay.cardHint") : t("pay.walletHint")}
                   </p>
                 )}
-              </div>
-              <ActionBar
+        </>);
+        const footBar = (
+          <ActionBar
                 docked="panel"
                 tone="ground"
+                className="rail:px-card"
                 label={t("pay.title")}
                 secondary={{ label: t("cart.back"), icon: <ChevronLeft size={20} strokeWidth={2} aria-hidden />, onClick: () => setCashOpen(false), disabled: cashSaving }}
                 primary={{
@@ -1873,6 +2095,77 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                   disabled: (cash && !enough) || cashSaving || blocked,
                 }}
               />
+        );
+        const closeButton = (
+          /* 44px: Go is touch at every width. */
+          <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-muted-wash"><X size={20} strokeWidth={1.5} /></button>
+        );
+        return (
+          <SheetShell
+            label={t("pay.title")}
+            labelledBy="pay-title"
+            desktop="dialog"
+            onClose={() => { if (!cashSaving) setCashOpen(false); }}
+            className="mx-auto flex max-h-[92vh] w-full max-w-[560px] flex-col bg-surface rail:max-w-[55rem]"
+          >
+            {/* On a desktop the grabber gives way to a title; the heading is
+                always in the document, drawn only where it has the room. */}
+            <div className="flex items-center justify-between gap-tight px-section pb-tight pt-tight rail:px-card rail:py-section">
+              <span className="w-11 rail:hidden" aria-hidden />
+              <span className="h-1 w-10 rounded-full bg-line rail:hidden" aria-hidden />
+              <h2 id="pay-title" className="sr-only rail:not-sr-only rail:text-xl rail:font-semibold rail:text-fg">{t("pay.title")}</h2>
+              {closeButton}
+            </div>
+            {rail ? (
+              <div className="grid min-h-0 flex-1 grid-cols-2 border-t border-line">
+                {/* The sale: what is being sold, who it is for, what comes off,
+                    and what it adds up to. */}
+                <div className="flex min-h-0 flex-col gap-comfortable overflow-y-auto border-r border-line p-card [&>*]:shrink-0">
+                  <TileLabel>{t("pay.summaryTitle")}</TileLabel>
+                  <div className="card-surface px-comfortable" data-pay-summary>
+                    <ul className="divide-y divide-line">
+                      {cart.map((e) => {
+                        const prod = productById(e.productId);
+                        const shelf = shopItems.find((i) => inventoryLineId(i.id) === e.productId);
+                        return (
+                          <li key={e.id} className="flex items-center gap-comfortable py-comfortable">
+                            <CartThumb small image={prod?.images?.[0]?.url} glyph={prod ? <BookingGlyph bookingType={prod.bookingType} /> : shelf ? <ShopGlyph kind={shelf.kind} /> : <Plus strokeWidth={1.5} />} />
+                            <div className="min-w-0 flex-1">
+                              <p className="line-clamp-2 text-base font-semibold leading-snug">{e.productName}</p>
+                              {lineDetail(e) && <p className="truncate text-sm text-muted">{lineDetail(e)}</p>}
+                            </div>
+                            <span className="shrink-0 text-base font-semibold tabular-nums">{formatMoney(entryTotal(e), currency)}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                  {rowsCard}
+                  <div className="card-surface p-card">{totalsRows}</div>
+                </div>
+                {/* How they pay: the amount, the way, how much now, the cash. */}
+                <div className="flex min-h-0 flex-col">
+                  <div className="flex min-h-0 flex-1 flex-col gap-comfortable overflow-y-auto p-card [&>*]:shrink-0">
+                    {amountBlock}
+                    {methodBlock}
+                    {howMuchBlock}
+                    {cashBlock}
+                  </div>
+                  {footBar}
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex min-h-0 flex-1 flex-col gap-comfortable overflow-y-auto px-section pb-section [&>*]:shrink-0">
+                  {amountBlock}
+                  {rowsCard}
+                  {methodBlock}
+                  {howMuchBlock}
+                  {cashBlock}
+                </div>
+                {footBar}
+              </>
+            )}
           </SheetShell>
         );
       })()}

@@ -16,6 +16,17 @@ import { cn } from "@/lib/cn";
  *
  * Mount it only while open; the behaviour hook runs for as long as it is
  * mounted.
+ *
+ * On a desktop (the `rail:` variant — 1024px and wider, held landscape) a
+ * bottom sheet is the wrong shape for a screen that is wider than it is tall,
+ * so the shell changes form there and only there:
+ *  - `drawer`  a panel docked to the right edge of the frame, full height,
+ *              sliding in from the right — the booking sheets. The frame
+ *              (`frameClassName`) leaves the sale panel uncovered so the sale
+ *              stays in view while a booking is made.
+ *  - `dialog`  a centred dialog over a scrim — the payment step.
+ * Below that nothing changes: a phone and a tablet held upright keep the
+ * bottom sheet.
  */
 export function SheetShell({
   onClose,
@@ -23,6 +34,7 @@ export function SheetShell({
   labelledBy,
   className,
   frameClassName = "inset-0",
+  desktop,
   children,
 }: {
   onClose: () => void;
@@ -35,13 +47,22 @@ export function SheetShell({
   /** Where the overlay sits. Defaults to the whole screen; the booking sheet
    *  leaves the tablet's cart panel uncovered. */
   frameClassName?: string;
+  /** What the sheet becomes on a desktop. Omitted: it stays a bottom sheet. */
+  desktop?: "drawer" | "dialog";
   children: React.ReactNode;
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const ownTitle = useId();
   useDialogBehaviour(true, panel, onClose, { initialFocus: "panel", captureEscape: true });
   return (
-    <div className={cn("fixed z-50 flex flex-col justify-end", frameClassName)}>
+    <div
+      className={cn(
+        "fixed z-50 flex flex-col justify-end",
+        desktop === "drawer" && "rail:flex-row rail:items-stretch rail:justify-end",
+        desktop === "dialog" && "rail:items-center rail:justify-center rail:p-major",
+        frameClassName,
+      )}
+    >
       <div className={cn("go-sheet-scrim absolute inset-0", scrimClass)} onClick={onClose} aria-hidden />
       <div
         ref={panel}
@@ -50,7 +71,16 @@ export function SheetShell({
         aria-label={label}
         aria-labelledby={labelledBy ?? ownTitle}
         tabIndex={-1}
-        className={cn("go-sheet-panel relative z-10 rounded-t-sheet outline-none", className)}
+        className={cn(
+          "go-sheet-panel relative z-10 rounded-t-sheet outline-none",
+          /* `go-sheet-panel` is unlayered CSS, so a utility cannot beat its
+             animation — the desktop shapes name their own with `!`. The
+             keyframes (sf-drawer-in, sf-fade-in) already exist for the
+             storefront's sheet; reduced motion collapses their duration. */
+          desktop === "drawer" && "rail:h-full rail:max-h-none rail:w-[32.5rem] rail:max-w-full rail:rounded-none rail:border-l rail:border-line rail:shadow-float rail:[animation-name:sf-drawer-in]!",
+          desktop === "dialog" && "rail:max-h-[90dvh] rail:rounded-sheet rail:shadow-float rail:[animation-name:sf-fade-in]!",
+          className,
+        )}
       >
         {!labelledBy && <h2 id={ownTitle} className="sr-only">{label}</h2>}
         {children}

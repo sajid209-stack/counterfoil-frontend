@@ -13,6 +13,10 @@
  * Hidden below `sm`, where the header has room for the logo and two 44px
  * controls and nothing else. The phone route in is More → Till design, which
  * is the same responsive-by-form-factor rule the nav itself follows.
+ *
+ * On a desktop the same choice is three checked items in the sidebar's account
+ * menu (shell/AccountMenu), so the foot stays calm. This component is the
+ * header strip only.
  */
 
 import Link from "next/link";
@@ -39,9 +43,7 @@ export function TillSwitcher() {
             href={t.href}
             aria-current={active ? "page" : undefined}
             title={t.name}
-            className={`flex h-11 items-center rounded-full px-comfortable text-sm transition-colors duration-quick ${
-              active ? "bg-card font-medium text-fg shadow-card" : "text-muted hover:text-fg"
-            }`}
+            className={`flex h-11 items-center justify-center rounded-full px-comfortable text-sm transition-colors duration-quick ${active ? "bg-card font-medium text-fg shadow-card" : "text-muted hover:text-fg"}`}
           >
             {t.short}
           </Link>

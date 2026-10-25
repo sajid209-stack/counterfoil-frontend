@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
 import { peekPaymentSettings } from "@/lib/api";
 import { GoCard } from "../../_components/Tiles";
+import { GoPage, GoPageHeader } from "../../_components/GoPage";
 
 export default function ShiftOpenPage() {
   const router = useRouter();
@@ -14,11 +15,10 @@ export default function ShiftOpenPage() {
   const [float, setFloat] = useState(() => (peekPaymentSettings().defaultFloat / 100).toFixed(2));
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-comfortable px-section py-section">
-      <div>
-        <h1 className="text-xl font-semibold tracking-title text-fg">{t("openingTitle")}</h1>
-        <p className="mt-inline text-sm text-muted">{t("openingHint")}</p>
-      </div>
+    <GoPage width="narrow">
+    <div className="mx-auto max-w-104 pb-section pt-tight rail:max-w-lg rail:pb-0 rail:pt-major">
+    <GoPageHeader title={t("openingTitle")} subtitle={t("openingHint")} className="mb-comfortable! rail:mb-major!" />
+    <main className="flex flex-col gap-comfortable rail:gap-section">
 
       <GoCard>
         <label htmlFor="opening-cash" className="text-md font-semibold text-fg">{t("openingCash")}</label>
@@ -35,5 +35,7 @@ export default function ShiftOpenPage() {
         {t("openShift")}
       </Button>
     </main>
+    </div>
+    </GoPage>
   );
 }

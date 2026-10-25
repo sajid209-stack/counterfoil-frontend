@@ -10,6 +10,7 @@ import { getStaff, listCounters, listLocations, listRoles, peekCounters } from "
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { useActiveCounter } from "@/lib/activeCounter";
 import { GoCard } from "../_components/Tiles";
+import { GoPage, GoPageHeader } from "../_components/GoPage";
 
 /**
  * My profile, at the counter.
@@ -41,9 +42,12 @@ export default function GoProfilePage() {
   const venue = locationsQ.data?.data.find((l) => l.id === counter?.locationId);
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-comfortable px-section py-section">
-      <h1 className="text-xl font-semibold tracking-title">{t("title")}</h1>
-
+    <GoPage width="narrow">
+    <div className="mx-auto w-full max-w-136 pb-section pt-tight rail:max-w-none rail:py-0">
+    <GoPageHeader title={t("title")} className="mb-comfortable! rail:mb-major!" />
+    {/* Phone: one column. Desktop: who and where on the left, language and
+        details on the right, equal height row by row. */}
+    <div className="flex flex-col gap-comfortable rail:grid rail:grid-cols-2 rail:items-stretch rail:gap-section">
       <GoCard as="div" className="flex-row items-center">
         <Avatar name={me?.name ?? "?"} size={56} />
         <div className="min-w-0">
@@ -94,16 +98,18 @@ export default function GoProfilePage() {
           people actually come here for at the end of a shift. */}
       <Link
         href="/login"
-        className="card-surface flex min-h-14 items-center justify-center gap-tight text-md font-semibold text-brand-foreground active:scale-[0.99]"
+        className="card-surface flex min-h-14 items-center justify-center gap-tight text-md font-semibold text-brand-foreground active:scale-[0.99] rail:col-span-2 rail:hover:bg-nav-hover"
       >
         <LogOut size={18} strokeWidth={1.75} aria-hidden />
         {t("switchUser")}
       </Link>
 
-      <p className="flex items-center justify-center gap-inline text-sm text-muted">
+      <p className="flex items-center justify-center gap-inline text-sm text-muted rail:col-span-2">
         <ShieldCheck size={14} strokeWidth={1.5} aria-hidden />
         {t("pinNote")}
       </p>
     </div>
+    </div>
+    </GoPage>
   );
 }

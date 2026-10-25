@@ -56,14 +56,16 @@ import { applyTillText, usePrefs } from "@/lib/prefs";
  */
 const BAR_CLEAR = "76px + env(safe-area-inset-bottom)";
 import { cn } from "@/lib/cn";
-import { NAV_SELECTED_TEXT, NAV_TAB_ACTIVE } from "@/components/ui/navStyles";
+import { DesktopSidebar } from "./shell/DesktopSidebar";
+import { RAIL_QUERY, useRailCollapsed } from "./shell/rail";
 
 /** Tailwind's sm: where the header has room for the page-state picker. */
 const SM = "(min-width: 40rem)";
 
 // F10 — nav is responsive by form factor, not fixed. Phone + tablet portrait
-// get a bottom tab bar (thumb zone); a tablet held in landscape gets an 88px
-// left rail (thumbs sit at the screen edges there). No top tab strip anywhere.
+// get a bottom tab bar (thumb zone); a tablet held in landscape, a laptop or a
+// monitor (the `rail:` variant) gets a white sidebar with the counter at its
+// head (shell/DesktopSidebar). No top tab strip anywhere.
 const TABS = [
   { href: "/pos", key: "sell", icon: Store },
   { href: "/schedule", key: "schedule", icon: CalendarDays },
@@ -144,6 +146,11 @@ export function GoShell({ children }: { children: React.ReactNode }) {
      in the DOM, the invisible one first — the trap the admin shell avoids the
      same way. */
   const roomy = useMediaQuery(SM);
+  /* The desktop shell. The phone header and the bottom bar are drawn below it
+     only, the sidebar's pickers on it only: a counter picker or a page-state
+     picker is in the DOM once, never twice with one hidden. */
+  const rail = useMediaQuery(RAIL_QUERY);
+  const collapsed = useRailCollapsed();
 
   const prefs = usePrefs();
   useEffect(() => {
@@ -190,33 +197,6 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`) || (href === "/pos" && (pathname === "/sell" || pathname.startsWith("/sell/")));
 
-  /* One tab, in one anatomy, for the bottom bar and the landscape rail:
-       a 24px icon inside a 56 x 32 pill, a 13px label under it, 4px apart —
-       Material 3 Expressive's bar (64 tall, a 56-wide indicator).
-
-       The current tab is the one thing that reads at a glance, the way iOS and
-       Material both mark it: the indicator is SOLID — ink, with the icon
-       knocked out in white (the light pill and dark icon in dark mode) — and
-       the label is ink at 600. Every other tab is a grey outline icon over a
-       grey label. A pale grey wash was the first version here and on a white
-       bar it measured about 1.2:1: a cashier who cannot read the labels could
-       not see which tab they were on either. Ink rather than orange, because
-       on the till orange means "act": the primary button and what is chosen
-       in a sale.
-
-       The whole cell is the target; pressing it presses the pill in. */
-  const tabCell = (active: boolean, rail: boolean) =>
-    cn(
-      "group flex min-w-0 flex-1 flex-col items-center justify-center gap-inline",
-      rail ? "h-16 flex-none" : "h-full",
-      active ? NAV_SELECTED_TEXT : "font-medium text-muted hover:text-fg",
-    );
-  const tabPill = (active: boolean) =>
-    cn(
-      "flex h-8 w-14 items-center justify-center rounded-full transition-[background-color,color,transform] duration-quick group-active:scale-95",
-      active ? NAV_TAB_ACTIVE : "group-hover:bg-muted-wash",
-    );
-
   /* The floating bar's tab. Five of them share the pill, so a tab is as wide
      as it needs to be and no wider: an outline icon in a 44px-or-wider target,
      and the current one grown to hold its name. The width is animated through
@@ -230,71 +210,47 @@ export function GoShell({ children }: { children: React.ReactNode }) {
     );
   const barTabGrow = (active: boolean) => ({ flexGrow: active ? 2.5 : 1 });
 
-  const tabButton = (tab: (typeof TABS)[number], rail: boolean) => {
+  /* The floating bar's tab: an outline icon, and — only for the current
+     tab — a light pill that holds the icon AND its name. The inactive tabs
+     are named for a screen reader by their label. While the More sheet is
+     open the pill is More's: one light pill at a time, so the bar never has
+     to find room for two labels. (A desktop has the sidebar instead.) */
+  const tabButton = (tab: (typeof TABS)[number]) => {
     const active = isActive(tab.href);
     const Icon = tab.icon;
-    if (!rail) {
-      /* The floating bar's tab: an outline icon, and — only for the current
-         tab — a light pill that holds the icon AND its name. The inactive
-         tabs are named for a screen reader by their label. While the More
-         sheet is open the pill is More's: one light pill at a time, so the bar
-         never has to find room for two labels. */
-      const lit = active && !moreLit;
-      return (
-        <Link
-          key={tab.href}
-          href={tab.href}
-          aria-current={active ? "page" : undefined}
-          aria-label={lit ? undefined : t(tab.key)}
-          onClick={() => { if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
-          className={barTab(lit)}
-          style={barTabGrow(lit)}
-        >
-          <Icon size={24} strokeWidth={lit ? 2 : 1.5} aria-hidden className="shrink-0" />
-          {lit && <span className="min-w-0 truncate text-sm font-semibold leading-none">{t(tab.key)}</span>}
-        </Link>
-      );
-    }
+    const lit = active && !moreLit;
     return (
       <Link
         key={tab.href}
         href={tab.href}
         aria-current={active ? "page" : undefined}
+        aria-label={lit ? undefined : t(tab.key)}
         onClick={() => { if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
-        className={tabCell(active, rail)}
+        className={barTab(lit)}
+        style={barTabGrow(lit)}
       >
-        <span className={tabPill(active)}>
-          <Icon size={24} strokeWidth={active ? 2 : 1.75} aria-hidden />
-        </span>
-        <span className="max-w-full truncate text-sm leading-tight">{t(tab.key)}</span>
+        <Icon size={24} strokeWidth={lit ? 2 : 1.5} aria-hidden className="shrink-0" />
+        {lit && <span className="min-w-0 truncate text-sm font-semibold leading-none">{t(tab.key)}</span>}
       </Link>
     );
   };
 
   /* More lights while its sheet is open, so the bar always says where you are. */
-  const moreButton = (rail: boolean) =>
-    rail ? (
-      <button type="button" onClick={() => setMoreOpen(true)} aria-expanded={moreOpen} aria-haspopup="dialog" aria-current={onMorePage ? "page" : undefined} className={tabCell(moreLit, rail)}>
-        <span className={tabPill(moreLit)}>
-          <Ellipsis size={24} strokeWidth={moreLit ? 2 : 1.75} aria-hidden />
-        </span>
-        <span className="max-w-full truncate text-sm leading-tight">{t("more")}</span>
-      </button>
-    ) : (
-      <button
-        type="button"
-        onClick={() => setMoreOpen(true)}
-        aria-expanded={moreOpen}
-        aria-haspopup="dialog"
-        aria-label={moreLit ? undefined : t("more")}
-        aria-current={onMorePage ? "page" : undefined}
-        className={barTab(moreLit)}
-        style={barTabGrow(moreLit)}
-      >
-        <Ellipsis size={24} strokeWidth={moreLit ? 2 : 1.5} aria-hidden className="shrink-0" />
-        {moreLit && <span className="min-w-0 truncate text-sm font-semibold leading-none">{t("more")}</span>}
-      </button>
-    );
+  const moreButton = () => (
+    <button
+      type="button"
+      onClick={() => setMoreOpen(true)}
+      aria-expanded={moreOpen}
+      aria-haspopup="dialog"
+      aria-label={moreLit ? undefined : t("more")}
+      aria-current={onMorePage ? "page" : undefined}
+      className={barTab(moreLit)}
+      style={barTabGrow(moreLit)}
+    >
+      <Ellipsis size={24} strokeWidth={moreLit ? 2 : 1.5} aria-hidden className="shrink-0" />
+      {moreLit && <span className="min-w-0 truncate text-sm font-semibold leading-none">{t("more")}</span>}
+    </button>
+  );
 
   const runItem = (item: (typeof MORE_ITEMS)[number]) => {
     setMoreOpen(false);
@@ -302,43 +258,56 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-full flex-col bg-surface">
-      {/* Context bar — counter · shift state. Nav does NOT live here. */}
-      {/* One compact row, 56px, and no logo at any width: the till is the
-          cashier's, and the counter they are selling at is what the top left
-          should say. The counter chip is the FIRST thing in the row and takes
-          the room that is left; the theme and the cashier sit on the right.
-          The chip truncates; nothing else flexes.
+    <div className="flex min-h-full flex-col bg-surface rail:flex-row">
+      {/* The desktop shell (the `rail:` variant): a white sidebar that carries
+          the counter, the destinations, the shift and the person. It replaces
+          the header row and the icon rail below. Not on /login, which is a
+          door and gets nothing. */}
+      {!bare && (
+        <DesktopSidebar
+          tabs={tabs}
+          isActive={isActive}
+          collapsed={collapsed}
+          saleCount={liveCount}
+          showSaleRow={liveCount > 0 && !onATill}
+          onHelp={() => setHelpOpen(true)}
+          myName={myName}
+          myRoleId={staffQ.data?.roleId}
+          rail={rail}
+        />
+      )}
 
-          The row's inset is the page's, so the chip's edge is the edge of what
-          is under it: the till's wall is inset 12px, every other Go screen 16.
-          On the landscape rail the chip lines up with the rail's own tabs
-          (8px) instead, because that is the column it sits above. */}
-      <header className={cn("flex items-center gap-tight py-inline rail:px-tight", onATill ? "px-comfortable" : "px-section")}>
-        {bare ? <span className="flex-1" /> : <CounterPicker saleCount={liveCount} />}
-        {/* Beside the counter, 48px like every other control on the till. */}
-        {roomy ? <PageStatePicker size="lg" /> : <PreviewChip compact />}
-        {!bare && (
-          <span className="hidden shrink-0 text-sm tabular-nums text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Context bar — counter · shift state. Nav does NOT live here.
+            Phones and tablets held upright only: on a desktop the sidebar
+            carries the counter and the person, and each page draws its own
+            title. (Sign-in keeps this bar at every width, as a bare row.) */}
+        {/* One compact row, 56px, and no logo at any width: the till is the
+            cashier's, and the counter they are selling at is what the top left
+            should say. The counter chip is the FIRST thing in the row and takes
+            the room that is left; the theme and the cashier sit on the right.
+            The chip truncates; nothing else flexes.
+
+            The row's inset is the page's, so the chip's edge is the edge of what
+            is under it: the till's wall is inset 12px, every other Go screen 16. */}
+        {(bare || !rail) && (
+          <header className={cn("flex items-center gap-tight py-inline", onATill ? "px-comfortable" : "px-section", !bare && "rail:hidden")}>
+            {bare ? <span className="flex-1" /> : <CounterPicker saleCount={liveCount} />}
+            {/* Beside the counter, 48px like every other control on the till. */}
+            {roomy ? <PageStatePicker size="lg" /> : <PreviewChip compact />}
+            {!bare && (
+              <span className="hidden shrink-0 text-sm tabular-nums text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
+            )}
+            <span className="flex-1 max-sm:hidden" />
+            {/* Only on a till, and only where there is room for it. */}
+            <TillSwitcher />
+            <span className="flex shrink-0 items-center gap-tight">
+              {!bare && <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse text-base font-semibold text-inverse-fg" title={tp("shell.myProfile", { name: myName })} aria-label={tp("shell.myProfile", { name: myName })}>{myInitial}</Link>}
+            </span>
+          </header>
         )}
-        <span className="flex-1 max-sm:hidden" />
-        {/* Only on a till, and only where there is room for it. */}
-        <TillSwitcher />
-        <span className="flex shrink-0 items-center gap-tight">
-          {!bare && <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse text-base font-semibold text-inverse-fg" title={tp("shell.myProfile", { name: myName })} aria-label={tp("shell.myProfile", { name: myName })}>{myInitial}</Link>}
-        </span>
-      </header>
 
-      <div className="flex min-h-0 flex-1">
-        {/* Tablet-landscape left rail (88px, icon over label) */}
-        {!bare && (
-          <nav aria-label={tp("shell.menu")} className="sticky top-0 hidden h-[calc(100dvh-64px)] w-[88px] shrink-0 flex-col gap-tight p-tight rail:flex">
-            {tabs.map((t) => tabButton(t, true))}
-            {moreButton(true)}
-          </nav>
-        )}
-
-        {/* Content clears the bottom bar (+ home indicator) except in rail mode.
+        {/* Content clears the bottom bar (+ home indicator) below the sidebar.
             One place for every Go page: 76px of bar plus 28px of room, so the
             last thing on any screen ends clear of the bar with space to spare
             (it used to be 12px, which read as touching). A page with its own
@@ -356,7 +325,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
           It stands off the edge, so page shows round it: the column above
           reserves its height plus a gap, and nothing is ever parked behind it.
           The pill is capped and centred on a tablet held upright. */}
-      {!bare && (
+      {!bare && !rail && (
         <>
           {/* The page's own colour from the top of the pill to the bottom of the
               screen, with a short fade above it, so a list dissolves into the
@@ -377,8 +346,8 @@ export function GoShell({ children }: { children: React.ReactNode }) {
             className="fixed inset-x-comfortable z-40 mx-auto flex h-16 max-w-md items-center rounded-full border border-line bg-neutral-950 px-1.5 py-1.5 shadow-go-pop dark:border-strong dark:bg-neutral-800 rail:hidden"
             style={{ bottom: "calc(12px + env(safe-area-inset-bottom))" }}
           >
-            {tabs.map((t) => tabButton(t, false))}
-            {moreButton(false)}
+            {tabs.map((t) => tabButton(t))}
+            {moreButton()}
           </nav>
         </>
       )}
@@ -395,11 +364,11 @@ export function GoShell({ children }: { children: React.ReactNode }) {
           clearance from BAR_CLEAR, because stacking fixed furniture without
           accounting for what is already there is how a control ends up
           untappable. */}
-      {liveCount > 0 && !onATill && !bare && (
+      {liveCount > 0 && !onATill && !bare && !rail && (
         <Link
           href="/pos/cart"
           aria-label={t("cartFab", { count: liveCount })}
-          className="fixed right-comfortable z-30 flex h-14 w-14 items-center justify-center rounded-full bg-ember-solid text-on-solid go-raised active:scale-95 rail:bottom-comfortable"
+          className="fixed right-comfortable z-30 flex h-14 w-14 items-center justify-center rounded-full bg-ember-solid text-on-solid go-raised active:scale-95 rail:hidden"
           style={{ bottom: `calc(${BAR_CLEAR} + 12px)` }}
         >
           <ShoppingBag size={22} strokeWidth={1.75} aria-hidden />
@@ -416,7 +385,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
           drag-down all come from the kit, so this menu behaves like every other
           sheet in the product. */}
       <Sheet
-        open={moreOpen}
+        open={moreOpen && !rail}
         onClose={() => setMoreOpen(false)}
         title={operatorQ.data?.name ?? t("more")}
         closeLabel={tp("shell.close")}

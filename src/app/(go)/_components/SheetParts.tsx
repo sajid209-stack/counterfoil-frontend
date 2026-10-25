@@ -219,9 +219,14 @@ export const capitalFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1
  * the footer instead of being cut by a hard edge. The gap above it is larger
  * than the fade, so the last row at the end of the scroll is never tinted.
  */
+/** A kit `Sheet` that becomes a centred dialog on a desktop (`rail:`) and stays
+ *  a bottom sheet below it — for the small pickers (the sell date, the held
+ *  list) that sit over the wall. */
+export const SHEET_AS_DIALOG = "mx-auto rail:bottom-auto rail:top-1/2 rail:-translate-y-1/2 rail:animate-none rail:rounded-sheet";
+
 export function StickyFoot({ children }: { children: ReactNode }) {
   return (
-    <div className="sticky bottom-0 z-10 -mx-section mt-7">
+    <div className="sticky bottom-0 z-10 -mx-section mt-7 rail:mt-auto">
       <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-full h-5 bg-linear-to-t from-surface to-transparent" />
       {children}
     </div>

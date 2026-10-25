@@ -99,7 +99,8 @@ export function Catalogue({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-col gap-comfortable">
-      <div className="flex items-center gap-tight">
+      {/* On a desktop the wall scrolls under its own toolbar, which stays put. */}
+      <div className="flex items-center gap-tight rail:sticky rail:-top-section rail:z-10 rail:-mx-major rail:-mt-section rail:bg-surface rail:px-major rail:pb-comfortable rail:pt-section">
         <div
           data-focus-host
           className="card-surface flex h-11 min-w-0 flex-1 items-center gap-tight rounded-full px-comfortable focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember"
@@ -127,7 +128,7 @@ export function Catalogue({
         {loading ? (
           <div aria-busy="true" className="card-surface p-section"><SkeletonText lines={3} /></div>
         ) : (
-          <div className="grid grid-cols-2 gap-comfortable sm:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-comfortable sm:grid-cols-3 xl:grid-cols-4 rail:grid-cols-[repeat(auto-fill,minmax(min(100%,11.5rem),1fr))] rail:gap-section">
             {shown.map((p) => {
               const live = posLiveState(p, DEMO_TODAY, NOW_MINUTES, liveWords);
               const n = countOf(p.id);

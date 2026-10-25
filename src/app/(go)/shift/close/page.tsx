@@ -7,6 +7,7 @@ import { Button } from "@/components/ui";
 import { formatMoney } from "@/lib/format";
 import { peekPaymentSettings } from "@/lib/api";
 import { GoCard } from "../../_components/Tiles";
+import { GoPage, GoPageHeader } from "../../_components/GoPage";
 
 // Expected drawer is mocked here; the real screen sums the shift's cash sales.
 const EXPECTED = 4785000; // ৳47,850.00
@@ -37,13 +38,14 @@ export default function ShiftClosePage() {
   const why = !entered ? t("closeWhyCount") : t("closeWhyReason");
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-comfortable px-section py-section">
-      <div>
-        <h1 className="text-xl font-semibold tracking-title text-fg">{t("closeTitle")}</h1>
-        <p className="mt-inline text-sm text-muted">{t("closeHint")}</p>
-      </div>
-
-      <GoCard>
+    <GoPage width="narrow">
+    <div className="mx-auto max-w-104 pb-section pt-tight rail:max-w-none rail:py-0">
+    <GoPageHeader title={t("closeTitle")} subtitle={t("closeHint")} className="mb-comfortable! rail:mb-major!" />
+    {/* Phone: one column. Desktop: the sum on the left, the count (and the
+        reason, when the drawer is out) on the right, and the one orange button
+        bottom-right under them. */}
+    <main className="flex flex-col gap-comfortable rail:grid rail:grid-cols-2 rail:items-start rail:gap-section">
+      <GoCard className="rail:row-span-2">
         <div className="flex justify-between text-muted"><span>{t("expected")}</span><span className="text-lg font-semibold tabular-nums text-fg">{formatMoney(EXPECTED)}</span></div>
         <div className="flex justify-between"><span>{t("counted")}</span><span className="text-lg font-semibold tabular-nums">{entered ? formatMoney(countedMinor) : <span className="text-muted">—</span>}</span></div>
         <div className="flex justify-between text-lg font-semibold text-fg">
@@ -73,7 +75,7 @@ export default function ShiftClosePage() {
       </GoCard>
 
       {tier === "off" && (
-        <GoCard>
+        <GoCard className="rail:col-start-2">
           <label className="text-md font-semibold text-fg" htmlFor="variance-reason">{t("varianceReason")}</label>
           <textarea
             id="variance-reason"
@@ -91,7 +93,7 @@ export default function ShiftClosePage() {
       <Button
         size="lg"
         variant={blocked ? "secondary" : "primary"}
-        className="h-13 text-md font-semibold disabled:opacity-100 disabled:text-muted"
+        className="h-13 text-md font-semibold disabled:opacity-100 disabled:text-muted rail:col-span-2 rail:ml-auto rail:min-w-72 rail:w-auto"
         fullWidth
         disabled={blocked}
         aria-describedby={blocked ? "close-why" : undefined}
@@ -99,7 +101,9 @@ export default function ShiftClosePage() {
       >
         {t("closeShift")}
       </Button>
-      {blocked && <p id="close-why" className="text-center text-sm text-muted">{why}</p>}
+      {blocked && <p id="close-why" className="text-center text-sm text-muted rail:col-span-2 rail:text-right">{why}</p>}
     </main>
+    </div>
+    </GoPage>
   );
 }

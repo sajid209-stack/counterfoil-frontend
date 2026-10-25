@@ -81,5 +81,6 @@
   "showPages": "{name} পেজ দেখান",
   "menuWaiting": "মেনু, {count}টি অপেক্ষায়",
   "venueNow": "ভেন্যু: {name}। বদলান",
-  "venueChoose": "ভেন্যু বেছে নিন"
+  "venueChoose": "ভেন্যু বেছে নিন",
+  "reservations": "রিজার্ভেশন"
 }

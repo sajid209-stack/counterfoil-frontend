@@ -18531,3 +18531,60 @@ Owner, with two screenshots (the phone menu sheet with Orders and Issued orders 
 - Bangla strings added here are drafts.
 - The audit's other findings were left: activity rows repeat the counter, the marketplace summary reads doubled, and Analytics has 15 cards.
 - The stale checks named above (activity, customer banner, catalog section count) still assert pre-refunds-pass designs.
+
+## The till on a desktop, redesigned as a SaaS POS (2026-10-26)
+
+Owner, with three food-POS references (Ember, D.CC, a café POS): research Shopify POS, foodpanda's POS and the best SaaS and POS desktops, plus UI/UX theory; then redesign every POS (Go) desktop screen for a booking and ticketing business, modern, minimal and calm, keeping the colour system and the phone design. Research, theories and rules are in `docs/pos-desktop.md`. Planned and reviewed on Opus. Built by three Sonnet agents with separate file ownership (shell, sell, other pages), plus one fix round on the shell. "Desktop" is the `rail:` variant (≥1024px, landscape). Phone and tablet-upright are unchanged; that was checked by pixel diff at 390 and 768.
+
+### Shell (`(go)/_components/shell/`)
+- A white sidebar replaces the 88px icon rail and the top header row.
+  - At the top, the counter picker. There is no logo, per the owner's earlier decision.
+  - Destinations, each with an icon and a word: Sell, Schedule, Scan, Check in. After a hairline: My sales, My requests, Shift, Quick pass, Reservations, Settings, Help.
+  - The OS selected-row style.
+  - A "Current sale · N items" row on screens away from the till; the floating cart button is gone on desktop.
+  - The foot holds the shift card, the page-state picker and the fold toggle, and the person row.
+- 248px wide from 1280; a 72px icon rail with tooltips from 1024 to 1279. The fold is remembered (`cf_go_rail`).
+- The person row opens `shell/AccountMenu`, with My profile, Switch user, Till design (Cart / Scrolling / Classic as radio items), and Design System.
+- All destinations fit without scrolling at 1280×800 and 1024×768.
+
+### Sell (`pos/PosScreen.tsx`, the sheets)
+- The wall and the sale panel scroll separately; the document never scrolls.
+- The wall has one toolbar row: sell date, a wide search, and Held. Cards sit in an auto-fill grid at least 184px wide.
+- The sale panel is 384px, white and full height, docked right.
+  - Its head reads "Current sale" with the count, and a ⋯ menu holds Pause and Clear all.
+  - Lines are compact rows.
+  - The foot is pinned: subtotal, VAT, total, and one orange "Take ৳X".
+- A booking opens in a 520px right-hand drawer (`SheetShell desktop="drawer"`) that stops at the sale panel, so the sale stays in view.
+- Checkout is a centred 880px dialog in two columns: the sale summary (lines, customer, discount, promo, totals) and the payment (to pay, method, how much now, cash and change, Back / Complete sale).
+- The completion screen is a centred 640px column. The date picker and the Held list are centred dialogs.
+- The scrolling till (`/sell`) gets the same desktop columns.
+
+### Other pages (`GoPage` / `GoPageHeader` in `(go)/_components/GoPage.tsx`)
+- **Schedule:** one header line (title, month, place types, calendar), the day strip running to the edge, and the board filling the height.
+- **Check in:** search, date controls and Add a walk-in in the header; a segmented count filter; sessions as one card of rows; a sticky "At the door" card.
+- **Scan:** camera on the left, code field and device log on the right.
+- **My sales:** a band of three cards, then recent sales beside best sellers.
+- **My requests:** count cards, then one list card.
+- **Till settings, Quick pass, Reservations, Shift open/close and Profile:** calm centred forms.
+- **Sign-in:** staff cards wrap centred.
+- **Refund and write-off:** centred 576px dialogs.
+- The scan caption no longer says "below".
+
+### Verified
+- `tsc`, `lint:tokens` (0) and i18n (0 / 0) are clean. `eslint` shows only PosScreen's documented 2 errors and 1 warning.
+- Production build passes.
+- Regression on the production build:
+  - till list: 40 runs, all passing;
+  - shell check: 104/104;
+  - office list: only the failures that also fail on the live site (activity a1/a3, the customer banner check, catalog "twelve sections").
+- The 59-route sweep found one new fault: Schedule's day strip bled 24px past its `<main>`. It is fixed, and the schedule checks pass again (31/31 at 390 and 1440, 4/4).
+- Harnesses updated to the new desktop design, never loosened:
+  - `h3/pos-v2`, `co/co`, `pos5/run` (backups `*.pre-posd.mjs`);
+  - `w/setup.mjs` (opens More only where it exists);
+  - `posd/shell/chk.mjs`.
+
+### Open
+- The shift timer is still the fixed 3:24.
+- Till-design names come from the English `TILLS` registry.
+- New Bangla strings are drafts.
+- Below 1280 the sidebar is icons only by design.

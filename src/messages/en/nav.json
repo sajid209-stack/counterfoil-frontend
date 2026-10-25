@@ -81,5 +81,6 @@
   "showPages": "Show {name} pages",
   "menuWaiting": "Menu, {count} waiting",
   "venueNow": "Venue: {name}. Change venue",
-  "venueChoose": "Choose a venue"
+  "venueChoose": "Choose a venue",
+  "reservations": "Reservations"
 }

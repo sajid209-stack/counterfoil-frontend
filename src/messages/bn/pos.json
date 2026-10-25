@@ -38,7 +38,10 @@
     "barLabel": "এই বিক্রি",
     "open": "কার্ট",
     "openCount": "কার্ট · {count}",
-    "openAria": "কার্ট, {count}টি"
+    "openAria": "কার্ট, {count}টি",
+    "menu": "বিক্রির অপশন",
+    "noItems": "এখনও কিছু যোগ হয়নি",
+    "noItemsHint": "যোগ করতে বামের কিছুতে ট্যাপ করুন।"
   },
   "added": "{name} যোগ হয়েছে",
   "cartParked": "বিক্রি থামিয়ে রাখা হয়েছে।",
@@ -526,7 +529,12 @@
     "counterClosedHelp": "সেটিংস, কাউন্টারে গিয়ে খুলুন।",
     "counterBusyTitle": "আগে এই বিক্রি শেষ করুন",
     "counterBusyBody": "এই বিক্রি {name}-এর। টাকা নিন বা বিক্রি থামিয়ে রাখুন, তারপর {other}-এ যান।",
-    "counterBusyBack": "বিক্রিতে ফিরুন"
+    "counterBusyBack": "বিক্রিতে ফিরুন",
+    "currentSale": "চলমান বিক্রি · {count, plural, one {# আইটেম} other {# আইটেম}}",
+    "endShift": "শিফট শেষ করুন",
+    "collapse": "সাইডবার ছোট করুন",
+    "expand": "সাইডবার বড় করুন",
+    "accountMenu": "অ্যাকাউন্ট মেনু"
   },
   "login": {
     "whoTitle": "কে সাইন ইন করছেন?",
@@ -594,7 +602,8 @@
     "half": "অর্ধেক",
     "minimum": "সর্বনিম্ন",
     "partSummary": "এখন {now} দিন · আসার সময় {later}",
-    "promoAdd": "যোগ করুন"
+    "promoAdd": "যোগ করুন",
+    "summaryTitle": "বিক্রির সারাংশ"
   },
   "sellDate": {
     "today": "আজ",

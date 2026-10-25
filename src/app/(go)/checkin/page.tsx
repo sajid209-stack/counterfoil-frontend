@@ -47,6 +47,8 @@ import { RefundFlowSheet } from "../_components/RefundFlowSheet";
 import { WriteOffSheet } from "../_components/WriteOffSheet";
 import { MoveSheet } from "../schedule/_components/Sheets";
 import { PaymentSheet, type PaymentResult } from "../schedule/_components/PaymentSheet";
+import { useMediaQuery } from "@/lib/useMedia";
+import { GoPage, GoPageHeader } from "../_components/GoPage";
 import { DaySummary } from "./_components/DaySummary";
 import { FilterCells } from "./_components/FilterCells";
 import { PartyRow } from "./_components/PartyRow";
@@ -55,6 +57,10 @@ import { buildParties, countByFilter, groupBySession, inFilter, matchesSearch, t
 /* The app's one date, not a private copy of it — the token's own doc
    comment warns that two components each holding their own is how a hold
    lands in a different month from the schedule it blocks. */
+/* Desktop = the Tailwind `rail` variant: a tablet held sideways, a laptop, a
+   monitor. Below it the screen is exactly what it was. */
+const RAIL = "(min-width: 64rem) and (orientation: landscape)";
+
 const TODAY = DEMO_TODAY;
 const TOMORROW = demoDay(1);
 const time = (iso: string) => iso.slice(11, 16);
@@ -116,6 +122,7 @@ function CheckInScreen() {
   const [refundFor, setRefundFor] = useState<Booking | null>(null);
   const [writeOffFor, setWriteOffFor] = useState<Booking | null>(null);
   const [moveFor, setMoveFor] = useState<Booking | null>(null);
+  const rail = useMediaQuery(RAIL);
   const [walkInOpen, setWalkInOpen] = useState(false);
   const [walkInProduct, setWalkInProduct] = useState("");
   const [walkInParty, setWalkInParty] = useState(2);
@@ -409,42 +416,60 @@ function CheckInScreen() {
   const filterLabels = { all: t("filterAll"), due: t("filterDue"), notin: t("filterNotIn"), in: t("filterIn") };
   const emptyFor: Record<CheckInFilter, string> = { all: t("noBookingsSearch"), due: t("emptyDue"), notin: t("emptyNotIn"), in: t("emptyIn") };
 
+  /* The same three controls on every screen; where they sit is the only thing
+     that changes. A phone: title and walk-in, then the search, then the days.
+     A desktop: all of them on the header's one line (search wide, the days,
+     "Add a walk-in" rightmost) — each drawn once, never in both places. */
+  const walkInBtn = (
+    <Button variant="secondary" icon={<UserPlus size={16} strokeWidth={1.5} />} onClick={() => { setWalkInProduct(productsQ.data?.data.find((p) => p.bookingType === "BT-01" && p.status === "active")?.id ?? ""); setWalkInOpen(true); }}>
+      {t("addWalkIn")}
+    </Button>
+  );
+  /* Search leads: it is the first thing done when a guest walks up. */
+  const searchEl = (
+    <div data-focus-host className={cn("flex h-12 items-center gap-tight rounded-full bg-card px-comfortable shadow-card focus-within:ring-2 focus-within:ring-ember", rail && "w-96 max-w-full")}>
+      <Search size={18} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
+      <input value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("searchPlaceholder")} placeholder={t("searchPlaceholder")} className="h-full w-full min-w-0 bg-transparent text-base" />
+    </div>
+  );
+  const dateEl = (
+    <div className="flex items-center gap-tight">
+      <button type="button" onClick={() => step(-1)} aria-label={t("prevDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card text-muted shadow-card hover:bg-muted-wash active:bg-muted-wash">
+        <ChevronLeft size={18} strokeWidth={1.5} />
+      </button>
+      <DateField
+        value={date}
+        today={TODAY}
+        onChange={setDate}
+        shape="go"
+        labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
+        className="min-w-0 flex-1 sm:w-[170px] sm:flex-none"
+      />
+      <button type="button" onClick={() => step(1)} aria-label={t("nextDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card text-muted shadow-card hover:bg-muted-wash active:bg-muted-wash">
+        <ChevronRight size={18} strokeWidth={1.5} />
+      </button>
+    </div>
+  );
+
   return (
-    <main className="mx-auto w-full max-w-5xl px-section py-section">
-      <div className="flex flex-col gap-section lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+    <GoPage width="wide">
+    <main className="mx-auto w-full max-w-248 pb-section pt-tight rail:max-w-none rail:py-0">
+      {rail && <GoPageHeader title={t("title")} subtitle={dayLabel || undefined} actions={<>{searchEl}{dateEl}{walkInBtn}</>} />}
+      <div className="flex flex-col gap-section lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start rail:grid-cols-[minmax(0,1fr)_320px] rail:gap-major">
         <div className="flex min-w-0 flex-col gap-section">
-          <div className="flex flex-wrap items-center justify-between gap-tight">
-            <div className="min-w-0">
-              <h1 className="text-xl font-semibold tracking-title text-fg">{t("title")}</h1>
-              {dayLabel && <p className="text-sm text-muted">{dayLabel}</p>}
-            </div>
-            <Button variant="secondary" icon={<UserPlus size={16} strokeWidth={1.5} />} onClick={() => { setWalkInProduct(productsQ.data?.data.find((p) => p.bookingType === "BT-01" && p.status === "active")?.id ?? ""); setWalkInOpen(true); }}>
-              {t("addWalkIn")}
-            </Button>
-          </div>
-
-          {/* Search leads: it is the first thing done when a guest walks up. */}
-          <div data-focus-host className="flex h-12 items-center gap-tight rounded-full bg-card px-comfortable shadow-card focus-within:ring-2 focus-within:ring-ember">
-            <Search size={18} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("searchPlaceholder")} placeholder={t("searchPlaceholder")} className="h-full w-full min-w-0 bg-transparent text-base" />
-          </div>
-
-          <div className="flex items-center gap-tight">
-            <button type="button" onClick={() => step(-1)} aria-label={t("prevDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card text-muted shadow-card hover:bg-muted-wash active:bg-muted-wash">
-              <ChevronLeft size={18} strokeWidth={1.5} />
-            </button>
-            <DateField
-              value={date}
-              today={TODAY}
-              onChange={setDate}
-              shape="go"
-              labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
-              className="min-w-0 flex-1 sm:w-[170px] sm:flex-none"
-            />
-            <button type="button" onClick={() => step(1)} aria-label={t("nextDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card text-muted shadow-card hover:bg-muted-wash active:bg-muted-wash">
-              <ChevronRight size={18} strokeWidth={1.5} />
-            </button>
-          </div>
+          {!rail && (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-tight">
+                <div className="min-w-0">
+                  <h1 className="text-xl font-semibold tracking-title text-fg">{t("title")}</h1>
+                  {dayLabel && <p className="text-sm text-muted">{dayLabel}</p>}
+                </div>
+                {walkInBtn}
+              </div>
+              {searchEl}
+              {dateEl}
+            </>
+          )}
 
           <FilterCells value={filter} onChange={setFilter} counts={counts} labels={filterLabels} label={t("filterLabel")} />
 
@@ -468,7 +493,7 @@ function CheckInScreen() {
           ) : groups.length === 0 ? (
             <EmptyState title={filter === "all" ? t("noBookingsTitle") : filterLabels[filter]} message={search && filter === "all" ? t("noBookingsSearch") : emptyFor[filter]} />
           ) : (
-            <div className="flex flex-col gap-comfortable">
+            <div className="flex flex-col gap-comfortable rail:rounded-card rail:bg-card rail:shadow-card rail:gap-0 rail:overflow-hidden">
               {groups.map((g) => {
                 const totals = sessionTotals.get(g.key) ?? { expected: 0, inCount: 0 };
                 const full = totals.inCount >= totals.expected;
@@ -477,12 +502,12 @@ function CheckInScreen() {
                    row is a match nobody finds. */
                 const isOpen = search || filter !== "all" ? true : (open[g.key] ?? g.key === nowKey);
                 return (
-                  <section key={g.key} data-group className="flex flex-col gap-tight">
+                  <section key={g.key} data-group className="flex flex-col gap-tight rail:gap-0 rail:border-t rail:border-line rail:first:border-t-0">
                     <button
                       type="button"
                       onClick={() => setOpen((o) => ({ ...o, [g.key]: !isOpen }))}
                       aria-expanded={isOpen}
-                      className="card-surface flex min-h-16 w-full items-center gap-comfortable p-comfortable text-left"
+                      className="card-surface flex min-h-16 w-full items-center gap-comfortable p-comfortable text-left rail:rounded-none rail:bg-transparent rail:px-card rail:shadow-none rail:hover:bg-nav-hover"
                     >
                       <Thumb image={productOf(g.productId)?.images?.[0]?.url} glyph={<BookingGlyph bookingType={productOf(g.productId)?.bookingType} />} />
                       <span className="min-w-0 flex-1">
@@ -501,7 +526,7 @@ function CheckInScreen() {
                     </button>
 
                     {isOpen && (
-                      <ul className="flex flex-col gap-tight pl-tight">
+                      <ul className="flex flex-col gap-tight pl-tight rail:gap-0 rail:bg-surface rail:pl-0">
                         {g.parties.map((p) => (
                           <PartyRow
                             key={p.booking.id}
@@ -525,7 +550,7 @@ function CheckInScreen() {
           )}
         </div>
 
-        <aside className="flex flex-col gap-section">
+        <aside className="flex flex-col gap-section rail:sticky rail:top-section">
           <DaySummary expected={day.expected} arrived={day.arrived} owed={day.owed} owingParties={day.owingParties} onShowDue={() => { setFilter("due"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
         </aside>
       </div>
@@ -637,5 +662,6 @@ function CheckInScreen() {
         );
       })()}
     </main>
+    </GoPage>
   );
 }

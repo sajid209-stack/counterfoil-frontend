@@ -29,12 +29,16 @@ const latn = { numberingSystem: "latn" } as const;
 const dateOf = (iso: string) => new Date(`${iso}T12:00:00`);
 
 export function DayStrip({
+  title,
   date,
   today,
   load,
   onChange,
   middle,
 }: {
+  /** The page's title, drawn on the header's one line from the desktop up
+   *  (below it the page keeps its screen-reader-only heading). */
+  title?: React.ReactNode;
   date: string;
   today: string;
   /** How many bookings a day holds — the dots under it. */
@@ -152,7 +156,8 @@ export function DayStrip({
 
   return (
     <>
-      <div className="flex items-center gap-inline">
+      <div className="flex items-center gap-inline rail:gap-comfortable">
+        {title ? <h1 className="mr-section hidden shrink-0 text-2xl font-semibold tracking-title text-fg rail:block">{title}</h1> : null}
         <button type="button" onClick={() => pick(shiftDay(date, -7), true)} aria-label={t("prevWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card shadow-card hover:bg-muted-wash">
           <ChevronLeft size={20} strokeWidth={2} aria-hidden />
         </button>
@@ -200,7 +205,7 @@ export function DayStrip({
         aria-label={t("daysLabel")}
         onScroll={measure}
         onKeyDown={onKeyDown}
-        className="relative -mx-gutter flex snap-x snap-proximity gap-tight overflow-x-auto scroll-px-gutter px-gutter py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="relative -mx-gutter flex snap-x snap-proximity gap-tight overflow-x-auto scroll-px-gutter px-gutter py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rail:-mx-major rail:scroll-px-major rail:px-major"
       >
         {days.map((iso) => {
           const on = iso === date;

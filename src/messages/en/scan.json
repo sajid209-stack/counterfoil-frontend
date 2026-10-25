@@ -61,7 +61,7 @@
   "stopCamera": "Stop camera",
   "switchCamera": "Switch camera",
   "startingCamera": "Starting the camera…",
-  "noCameraHere": "Camera scanning isn't available on this device. Use a scanner or type the code below.",
+  "noCameraHere": "Camera scanning isn't available on this device. Use a scanner or type the code.",
   "codeFieldLabel": "Type or scan a code",
   "fieldHint": "A scanner types into this box. You can also type the code.",
   "idleInstruction": "Tap Start camera, then hold the ticket QR code inside the square."

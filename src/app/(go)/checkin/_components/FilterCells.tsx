@@ -33,8 +33,8 @@ export function FilterCells({
     group.current?.querySelectorAll<HTMLElement>('[role="radio"]')[to]?.focus();
   };
   return (
-    <div ref={group}>
-    <TileGrid cols={4} role="radiogroup" aria-label={label}>
+    <div ref={group} className="rail:rounded-card rail:bg-card rail:shadow-card rail:p-inline">
+    <TileGrid cols={4} role="radiogroup" aria-label={label} className="rail:gap-inline">
       {FILTERS.map((f, i) => {
         const on = f === value;
         return (
@@ -50,10 +50,10 @@ export function FilterCells({
               if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); move(i, 1); }
               else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); move(i, -1); }
             }}
-            className="min-h-16 gap-0.5 px-1"
+            className="min-h-16 gap-0.5 px-1 rail:min-h-12 rail:flex-row-reverse rail:gap-tight rail:rounded-sm rail:aria-[checked=false]:bg-transparent rail:aria-[checked=false]:shadow-none rail:aria-[checked=false]:hover:bg-nav-hover"
           >
-            <span className="text-xl font-semibold tabular-nums leading-none">{counts[f]}</span>
-            <span className={`max-w-full text-sm font-medium leading-tight ${on ? "text-on-solid" : "text-muted"}`}>{labels[f]}</span>
+            <span className="text-xl font-semibold tabular-nums leading-none rail:text-md">{counts[f]}</span>
+            <span className={`max-w-full text-sm font-medium leading-tight rail:text-base ${on ? "text-on-solid" : "text-muted"}`}>{labels[f]}</span>
           </Tile>
         );
       })}

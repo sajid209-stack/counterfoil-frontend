@@ -81,8 +81,8 @@ function PairScreen() {
   };
 
   return (
-    <main className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center bg-surface px-section py-major text-fg">
-      <div className="w-full max-w-md">
+    <main className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center bg-surface px-section py-major text-fg rail:min-h-[calc(100vh-4.5rem)] rail:justify-center rail:px-major rail:py-wide">
+      <div className="w-full max-w-md rail:max-w-lg">
         {paired ? (
           <Done
             device={paired}

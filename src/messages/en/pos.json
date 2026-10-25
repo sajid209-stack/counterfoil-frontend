@@ -38,7 +38,10 @@
     "barLabel": "This sale",
     "open": "Cart",
     "openCount": "Cart · {count}",
-    "openAria": "{count, plural, one {Cart, # item} other {Cart, # items}}"
+    "openAria": "{count, plural, one {Cart, # item} other {Cart, # items}}",
+    "menu": "Sale options",
+    "noItems": "No items yet",
+    "noItemsHint": "Tap something on the left to add it."
   },
   "added": "Added {name}",
   "cartParked": "Sale paused.",
@@ -526,7 +529,12 @@
     "counterClosedHelp": "Open it in Settings, Counters.",
     "counterBusyTitle": "Finish this sale first",
     "counterBusyBody": "This sale belongs to {name}. Take payment or pause it, then switch to {other}.",
-    "counterBusyBack": "Back to the sale"
+    "counterBusyBack": "Back to the sale",
+    "currentSale": "Current sale · {count, plural, one {# item} other {# items}}",
+    "endShift": "End shift",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
+    "accountMenu": "Account menu"
   },
   "login": {
     "whoTitle": "Who is signing in?",
@@ -594,7 +602,8 @@
     "half": "Half",
     "minimum": "Minimum",
     "partSummary": "Pay {now} now · {later} at arrival",
-    "promoAdd": "Add"
+    "promoAdd": "Add",
+    "summaryTitle": "Sale summary"
   },
   "sellDate": {
     "today": "Today",
