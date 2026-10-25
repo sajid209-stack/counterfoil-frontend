@@ -43,6 +43,22 @@ export function useWaitingTotal(): number {
 }
 
 /**
+ * The count a row draws: its own, or — for a parent whose children are not on
+ * screen — the sum of what waits under it, so a closed group still says that
+ * something inside it needs answering.
+ */
+export function badgeCount(
+  d: NavDestination,
+  badges: Partial<Record<NonNullable<NavDestination["badge"]>, number>>,
+  childrenShown: boolean,
+): number | undefined {
+  if (d.badge) return badges[d.badge];
+  if (childrenShown || !d.children) return undefined;
+  const sum = d.children.reduce((n, c) => n + (c.badge ? badges[c.badge] ?? 0 : 0), 0);
+  return sum > 0 ? sum : undefined;
+}
+
+/**
  * A small neutral pill with a number. Hidden at 0.
  *
  * Neutral on purpose — a white pill with a hairline ring, not orange. In this

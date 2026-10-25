@@ -11,7 +11,7 @@ import { NAV_PARENT_OF_SELECTED, NAV_IDLE, NAV_SELECTED, NAV_SELECTED_ICON } fro
 import { cn } from "@/lib/cn";
 import pkg from "../../../../package.json";
 import { NAV_MAIN, NAV_OPEN, NAV_SETTINGS, groupOf, isAt, type NavDestination } from "./nav";
-import { NavBadge, useNavBadges } from "./navBadges";
+import { NavBadge, useNavBadges, badgeCount } from "./navBadges";
 
 /**
  * A label for an icon, drawn beside it on hover or focus.
@@ -144,6 +144,8 @@ function RailFlyout({ d, group }: { d: NavDestination; group: NavDestination | u
   const id = useId();
   const kids = d.children ?? [];
   const label = t(d.key);
+  const badges = useNavBadges();
+  const sum = badgeCount(d, badges, false);
   const [at, setAt] = useState<{ top: number; left: number } | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLDivElement>(null);
@@ -225,7 +227,7 @@ function RailFlyout({ d, group }: { d: NavDestination; group: NavDestination | u
         ref={icon}
         href={d.href}
         data-nav={d.key}
-        aria-label={label}
+        aria-label={sum ? `${label}, ${t("waiting", { count: sum })}` : label}
         aria-current={parentHere ? "page" : undefined}
         aria-haspopup="true"
         aria-expanded={!!at}
@@ -233,6 +235,7 @@ function RailFlyout({ d, group }: { d: NavDestination; group: NavDestination | u
         className={parentRowClass(true, here, false)}
       >
         <d.icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", here && NAV_SELECTED_ICON)} />
+        <NavBadge count={sum} corner />
       </Link>
       {at &&
         createPortal(
@@ -272,9 +275,10 @@ function RailFlyout({ d, group }: { d: NavDestination; group: NavDestination | u
                         data-flyout-item={c.key}
                         aria-current={sel ? "page" : undefined}
                         onClick={closeNow}
-                        className={itemClass(sel, false)}
+                        className={cn(itemClass(sel, false), "gap-tight")}
                       >
-                        {t(c.key)}
+                        <span className="flex-1">{t(c.key)}</span>
+                        <NavBadge count={c.badge ? badges[c.badge] : undefined} />
                       </Link>
                     </li>
                   );
@@ -347,11 +351,11 @@ export function Sidebar({
   /* One row, for a parent with no flyout and for every other destination. 36px
      (44 under a coarse pointer), an 18px / 1.5 icon on a fixed edge so every
      label starts on one line. The look comes from NAV_* (see navStyles). */
-  const row = (d: NavDestination, opts: { selected: boolean; parentOf?: boolean; leaves?: boolean }) => {
+  const row = (d: NavDestination, opts: { selected: boolean; parentOf?: boolean; leaves?: boolean; childrenShown?: boolean }) => {
     const label = t(d.key);
     /* What is waiting, when this row carries a count. Drawn as a pill; the
        words travel in the accessible name so it is not just a number. */
-    const count = d.badge ? badges[d.badge] : undefined;
+    const count = badgeCount(d, badges, !!opts.childrenShown);
     const waiting = count && count > 0 ? t("waiting", { count }) : "";
     const exact = isAt(d, pathname);
     const Icon = d.icon;
@@ -388,7 +392,7 @@ export function Sidebar({
     if (narrow) return <li key={d.key}>{row(d, { selected: here })}</li>;
     return (
       <li key={d.key}>
-        {row(d, { selected: exact, parentOf: here && !exact && kids.length > 0 })}
+        {row(d, { selected: exact, parentOf: here && !exact && kids.length > 0, childrenShown: here })}
         {here && kids.length > 0 && (
           <ul className="mt-0.5 flex flex-col gap-0.5">
             {kids.map((c) => {
@@ -406,6 +410,8 @@ export function Sidebar({
                     )}
                   >
                     <span className="min-w-0 flex-1 truncate">{t(c.key)}</span>
+                    <NavBadge count={c.badge ? badges[c.badge] : undefined} />
+                    {c.badge && badges[c.badge] ? <span className="sr-only">{t("waiting", { count: badges[c.badge]! })}</span> : null}
                   </Link>
                 </li>
               );

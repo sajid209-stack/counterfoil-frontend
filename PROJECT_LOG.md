@@ -18588,3 +18588,10 @@ Owner, with three food-POS references (Ember, D.CC, a café POS): research Shopi
 - Till-design names come from the English `TILLS` registry.
 - New Bangla strings are drafts.
 - Below 1280 the sidebar is icons only by design.
+
+## Refunds and Write-offs move under Orders (2026-10-26)
+
+Owner, with a screenshot of the rail: Refunds and Write-offs become sub-menus of Orders.
+- `nav.ts`: Orders' children are Issued orders, Refunds, Write-offs. The routes are unchanged.
+- Counts: each child keeps its own waiting count, shown on its row in the rail, the collapsed-rail flyout and the phone menu. While the Orders group is closed, Orders carries their sum (`badgeCount` in `navBadges.tsx`): a pill on the open rail and the phone menu, a corner count on the collapsed rail, and the words in its accessible name.
+- Verified: the menu harness `sn/nav-adapted` 201/201, updated for the new order (backup `nav-adapted.pre-ordersub.mjs`); `fixC/static` 59/59; the phone shell probe 49/49; and the phone audit with hidden 0, under-44 0, clipped 0, errors 0. `tsc`, `lint:tokens`, and `eslint` (only the known OsShell error) are clean.

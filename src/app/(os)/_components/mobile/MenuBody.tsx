@@ -12,7 +12,7 @@ import { LOCALE_COOKIE, LOCALE_LABELS, LOCALES, type Locale } from "@/i18n/local
 import type { Location, Staff } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { NAV_MAIN, NAV_OPEN, NAV_SETTINGS, groupOf, isAt, type NavDestination } from "../nav";
-import { NavBadge, useNavBadges } from "../navBadges";
+import { NavBadge, useNavBadges, badgeCount } from "../navBadges";
 import { IconTile, initialsOf } from "./shared";
 import { VenueSheet } from "./VenueSheet";
 
@@ -77,8 +77,8 @@ export function MenuBody({
     const exact = isAt(d, pathname);
     const kids = d.children ?? [];
     const parentOf = !exact && kids.some((c) => isAt(c, pathname));
-    const count = d.badge ? badges[d.badge] : undefined;
     const expanded = open.has(d.key);
+    const count = badgeCount(d, badges, expanded);
     const listId = `${baseId}-${d.key}`;
     return (
       <li key={d.key}>
@@ -145,6 +145,8 @@ export function MenuBody({
                     )}
                   >
                     <span className="min-w-0 flex-1 truncate">{t(c.key)}</span>
+                    <NavBadge count={c.badge ? badges[c.badge] : undefined} />
+                    {c.badge && badges[c.badge] ? <span className="sr-only">{t("waiting", { count: badges[c.badge]! })}</span> : null}
                   </Link>
                 </li>
               );

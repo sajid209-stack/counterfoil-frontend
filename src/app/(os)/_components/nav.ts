@@ -85,13 +85,16 @@ export const NAV_MAIN: readonly NavDestination[] = [
     href: "/orders",
     key: "orders",
     icon: ReceiptText,
-    children: [{ href: "/issued-orders", key: "issuedOrders", icon: TicketCheck }],
+    /* Money going back, and balances nobody will chase, are answers about
+       the same sales, so they sit under Orders (the owner's call, 2026-10-26).
+       Each keeps its own count; while the group is closed Orders carries
+       their sum (`badgeCount`). */
+    children: [
+      { href: "/issued-orders", key: "issuedOrders", icon: TicketCheck },
+      { href: "/refunds", key: "refunds", icon: RotateCcw, badge: "refunds" },
+      { href: "/write-offs", key: "writeOffs", icon: FileX, badge: "writeOffs" },
+    ],
   },
-  /* Money going back, and balances nobody will chase: two inboxes a manager
-     answers, each with its own count of what is waiting. Top level and right
-     after Orders, because they are about the same sales (docs/refunds.md §4). */
-  { href: "/refunds", key: "refunds", icon: RotateCcw, badge: "refunds" },
-  { href: "/write-offs", key: "writeOffs", icon: FileX, badge: "writeOffs" },
   { href: "/customers", key: "customers", icon: UsersRound },
   {
     href: "/catalog",
