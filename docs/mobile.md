@@ -209,3 +209,50 @@ unchanged.
 - Card patterns used by the figure pages: a card title can lead with a 28px soft icon that is `sm:hidden`
   (dashboard `CardIcon`); a card that is one block on desktop and two on a phone uses `card-surface` with
   `sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none` on the inner blocks (Expenses summary).
+
+## 7. Phone shell v4 — the bar and the menu (2026-10-19)
+
+The owner: the phone's top bar and the menu with its sub-menus look basic; every OS phone page
+should be more modern and minimal. Desktop and tablet (≥ 768px) are unchanged.
+
+### What the research says
+
+| Source | What it does | What we take |
+|---|---|---|
+| Linear (iOS), Notion, Slack | The drawer opens on the workspace (a tile with its initials), groups destinations, and shows hierarchy as a disclosure: a chevron opens nested rows on a thin guide line | Workspace head; parents with a chevron; children on a guide line, shown only when the group is open |
+| Shopify admin (mobile) | The bar always says which store you are looking at | The bar's second line names the venue on venue-scoped pages, and opens the venue picker |
+| Apple HIG (inset grouped lists, navigation bars) | Rows live in white rounded groups on a grey ground; the bar gains its separator only once content scrolls under it | The menu is white cards on the paper ground; the bar's hairline appears on scroll |
+| Material 3 navigation drawer | The current destination is marked by a filled indicator, not only by weight | The current page's icon tile is solid ink with a white glyph — the language of the till's tab bar, which the owner approved |
+| Stripe / Mercury mobile | Account and preferences are one compact block at the foot, not a list of form fields | "You" card: avatar, name and role; Appearance and Language as two small segmented controls |
+
+### Rules
+
+1. **Bar** (53px, unchanged). Left: the page glyph in a 32px soft tile (`rounded-sm bg-subtle`, 6px corners),
+   or the back arrow. Then two lines — the page name (15px/600) and, on venue-scoped pages, the
+   venue (12px muted with a small chevron), which opens the venue picker. Right: the page's
+   actions, unchanged. At rest no line; once the window has scrolled it gains a hairline and a
+   soft shadow (`data-scrolled`).
+2. **Menu sheet**: the paper ground with white rounded cards, 12px apart.
+   - **Head**: a 40px business tile (initials, solid ink, white text), the business name (16/600)
+     and "Counterfoil OS · N venues" (13px muted); a 40px round close button.
+   - **Venue**: one row in a card — pin, "Venue", the venue's name, chevron — opening the picker.
+   - **Destinations** (one card): parents are 48px rows — a 32px icon tile, the 15px label, the
+     badge, and for a parent with children a separate 44px chevron button. The current page: its
+     icon tile is solid ink with a white glyph and the label is 600; no row fill. Children are
+     hidden until their group is open; the group holding the current page opens itself. Open
+     children are 44px rows indented to the label column with a 1px guide line on the left; the
+     current child has the light `nav-selected` fill and 600.
+   - **Other apps**: three tiles in a 3-column grid (icon tile, label, ↗).
+   - **Settings**: its own card row with a chevron.
+   - **You**: avatar, name and role; Appearance and Language side by side as compact segmented
+     controls; My profile and Sign out as rows.
+   - Page state stays at the very foot, quiet.
+3. **Menu button**: unchanged position and hide-on-scroll; 52px, frosted, with a small ink dot when
+   a refund or write-off is waiting at the venue.
+4. **Settings' phone section sheet** uses the same anatomy as the menu (icon tiles, ink tile for the
+   current section, attention dots kept).
+5. **Settings form rows**: the soft glyph is drawn only where the control sits at the row's right
+   (a switch, a short value). A row whose field stacks under the label has no glyph, so the label
+   and its field share one left edge.
+6. **Calendar agenda**: a day is one white card of rows divided by hairlines — the time on the left,
+   a 3px tone bar, then what and who. No grey boxes inside the card.

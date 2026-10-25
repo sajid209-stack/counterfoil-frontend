@@ -136,7 +136,7 @@ export function MonthGrid({
         </div>
 
         {visible.map((week, wi) => (
-          <div key={wi} className="grid grid-cols-7 border-b border-hairline last:border-0">
+          <div key={wi} className="grid grid-cols-7">
             {week.map((d) => {
               const key = isoDate(d);
               const list = byDay.get(key) ?? [];
@@ -151,9 +151,8 @@ export function MonthGrid({
                   aria-label={dayHeading?.(d)}
                   onClick={() => setPicked(key)}
                   className={cn(
-                    "flex min-h-13 flex-col items-center gap-1 border-r border-hairline py-tight last:border-r-0",
-                    outside && "bg-subtle",
-                    on && "bg-ember-wash",
+                    "flex min-h-13 flex-col items-center gap-1 py-tight",
+                    on && "rounded-sm bg-ember-wash",
                   )}
                 >
                   <span
@@ -189,7 +188,7 @@ export function MonthGrid({
           {agenda.length === 0 ? (
             <p className="px-card py-comfortable text-sm text-muted">{emptyLabel}</p>
           ) : (
-            <ul className="flex flex-col gap-tight p-card">
+            <ul className="flex flex-col divide-y divide-hairline sm:gap-tight sm:divide-y-0 sm:p-card">
               {agenda.map((e) => (
                 <li key={e.id}>
                   <AgendaCard

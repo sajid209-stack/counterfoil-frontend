@@ -466,6 +466,14 @@ function Catalog() {
     );
   };
 
+  /** The phone's version of the marks: words, not two tiny glyphs. The usual
+   *  case (storefront and counter) is silent; only an exception gets a line. */
+  const WhereWords = ({ w }: { w: CatalogItem["where"] }) => {
+    if (w.storefront && w.counter && !w.link) return null;
+    const words = [w.storefront && t("where.storefront"), w.link && t("where.link"), w.counter && t("where.counter")].filter(Boolean);
+    return <span className="truncate text-xs text-muted">{words.length ? words.join(" · ") : t("where.nowhere")}</span>;
+  };
+
   const somePicked = pageRows.some((r) => selected.has(r.key)) && !allOnPage;
   const allColumns: Column<CatalogItem>[] = [
     {
@@ -596,8 +604,8 @@ function Catalog() {
                   </span>
                   <span className="flex min-w-0 items-center gap-tight text-sm text-muted">
                     <span className="min-w-0 flex-1"><Sub i={i} /></span>
-                    <Marks w={i.where} size={14} />
                   </span>
+                  <WhereWords w={i.where} />
                 </span>
                 <span className="-mr-tight shrink-0" onClick={(e) => e.stopPropagation()}>
                   <ActionMenu items={actionsFor(i)} label={t("rowActions", { name: i.name })} />

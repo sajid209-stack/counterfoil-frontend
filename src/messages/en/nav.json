@@ -76,5 +76,10 @@
   "flyout": "{label} menu",
   "refunds": "Refunds",
   "writeOffs": "Write-offs",
-  "waiting": "{count, plural, one {# waiting} other {# waiting}}"
+  "waiting": "{count, plural, one {# waiting} other {# waiting}}",
+  "menuHeadSub": "Counterfoil OS · {count, plural, one {# venue} other {# venues}}",
+  "showPages": "Show {name} pages",
+  "menuWaiting": "Menu, {count} waiting",
+  "venueNow": "Venue: {name}. Change venue",
+  "venueChoose": "Choose a venue"
 }

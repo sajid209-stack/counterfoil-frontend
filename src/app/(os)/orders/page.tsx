@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Button, DataTable, EmptyState, Notice, PageShell, Pagination, useToast } from "@/components/ui";
 import { NO_ONE, orderMethodOf } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
@@ -44,7 +44,6 @@ function OrdersPageInner() {
   const router = useRouter();
   const params = useSearchParams();
   const t = useTranslations("orders");
-  const locale = useLocale();
   const toast = useToast();
   /* One clock, the app's own — the same pinned demo instant the till and the
      calendar use, so "2h ago" here and "today" in the calendar agree. */
@@ -237,12 +236,6 @@ function OrdersPageInner() {
           cardVariant="list"
           toolbar={toolbar}
           toolbarInCard
-          phoneHeader={
-            <div className="flex items-center gap-tight px-tight">
-              <h2 className="text-md font-semibold">{t("title")}</h2>
-              <span className="rounded-full bg-subtle px-comfortable py-inline text-xs font-medium tabular-nums text-fg-secondary">{rows.length.toLocaleString(locale)}</span>
-            </div>
-          }
           renderCard={(o) => <OrderCard o={o} now={now} />}
           emptyState={
             <EmptyState

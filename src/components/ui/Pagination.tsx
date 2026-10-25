@@ -60,7 +60,7 @@ export function Pagination({
             onChange={(v) => onPageSizeChange(Number(v))}
             options={pageSizeOptions.map((n) => ({ value: String(n), label: String(n) }))}
             disabled={loading}
-            className="w-20"
+            className="w-20 max-sm:hidden"
           />
         )}
         <button

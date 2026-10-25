@@ -32,6 +32,17 @@ export function useNavBadges(): Partial<Record<NonNullable<NavDestination["badge
 }
 
 /**
+ * How many things are waiting across every counted row — refunds and write-offs
+ * — for the menu button's dot. Zero while the venues are still loading, which
+ * is the same "nothing until the browser has taken over" rule as above, so the
+ * server's first paint and the browser's agree.
+ */
+export function useWaitingTotal(): number {
+  const badges = useNavBadges();
+  return (badges.refunds ?? 0) + (badges.writeOffs ?? 0);
+}
+
+/**
  * A small neutral pill with a number. Hidden at 0.
  *
  * Neutral on purpose — a white pill with a hairline ring, not orange. In this

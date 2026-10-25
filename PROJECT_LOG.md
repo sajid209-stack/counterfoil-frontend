@@ -18489,3 +18489,45 @@ Planned, contract written and reviewed on Opus. Built by three Sonnet agents wit
 - Refunding from a scanned ticket at the gate was not built.
 - A refund on a booking already played needs a manager, from OS, unless the window is set to Any time.
 - Move requests in the Orders queue are not narrowed to the venue in the bar.
+
+## The phone's top bar and menu, redesigned (2026-10-25)
+
+Owner, with two screenshots (the phone menu sheet with Orders and Issued orders boxed, and the phone dashboard's top bar boxed): the bar and the menu with its sub-menus look basic; every OS phone page should be more modern and minimal, researched like a senior UI designer. The plan, research and rules are `docs/mobile.md` §7. Planned and reviewed on Opus; built by Sonnet agents with separate file ownership (shell, settings + calendar, pages). Desktop and tablet are unchanged.
+
+### The bar (`_components/mobile/PhoneBar.tsx`)
+- Still 53px. The page glyph sits in a 32px soft tile. Beside it, two lines: the page name and, on pages the venue filters, the venue with a small chevron.
+- The whole title block is one 44px button that opens the venue picker (`VenueSheet`). With one venue it is plain text.
+- No line at rest; a hairline appears once the page has scrolled (`data-scrolled`, written by a scroll listener, no state).
+- Rendered only below md (`venueScoped && !wide`), so the hidden copy never comes first in the DOM at desktop. It did once, and broke the date-picker lookups on Analytics and Expenses.
+
+### The menu (`MobileNav`, `mobile/MenuBody.tsx`, `mobile/PhoneSheet.tsx`)
+- A paper sheet of white cards. The head is the business tile (initials on ink), the business name and "Counterfoil OS · N venues".
+- Then a Venue row, and the pages in one card. The current page's icon tile is solid ink with a white glyph, and its label is semibold, with no row fill.
+- Sub-pages sit behind a separate 44px chevron (`aria-expanded`). The group holding the current page opens itself. Open children sit on a thin guide line, and the current child has the light selected fill.
+- Other apps are three tiles, then Settings. The "You" card holds the avatar, name and role, Appearance and Language as small segmented controls, My profile, and Sign out. Page state stays at the foot.
+- Own sheet shell (`PhoneSheet`, on `useDialogBehaviour`), because the kit Sheet always draws its own title row. The venue picker opened from the menu renders inside the menu's panel, so the two focus traps don't fight.
+- The menu button is frosted, 52px, with a small ink dot and "Menu, N waiting" when refunds or write-offs wait (`useWaitingTotal`).
+- Settings' phone section list uses the same anatomy (`mobile/SettingsSheetList.tsx`).
+
+### Pages
+- Settings rows: the soft glyph only on rows whose control sits at the right (a switch or a value). A stacked field has none, so label and field share one edge.
+- Payments: on a phone, only the chosen account shows its long terms. A duplicate React key in the storefront editor's cover picker is fixed.
+- Calendar agenda: one white card per day of hairline rows. Each row has the time, a 3px tone bar, then what and who. The status shows only when it is not Booked. The month day strip is borderless.
+- Orders: the requests notice puts its sentence on its own line, and the "Orders 56" heading that repeated the bar is gone.
+- Catalog: a phone card says where it is sold in words ("Link only · Counter") instead of two tiny icons, and stays silent for the usual storefront + counter case.
+- Pagination: the rows-per-page select is hidden on phones.
+
+### Verified
+- `tsc`, `lint:tokens` (0), i18n (0 / 0) clean. `eslint` shows only OsShell's documented error.
+- Production build passes.
+- Regression on it:
+  - till list: 40 runs, all passing;
+  - office list: green apart from failures that also fail on the live site (activity a1/a3, the customer banner check, catalog's "twelve sections"; all from the refunds and page-style passes);
+  - three real regressions found and fixed: the hidden phone venue button picked by Analytics/Expenses (1440) and by the Orders phone Filters check.
+- Harnesses updated to the new design, never loosened: `ord/run.mjs` (the bar's venue button is not the page's Filters; backup `run.pre-shell4.mjs`); `catalog2-e2e.mjs` (phone cards read the words line; backup `.pre-shell4.mjs`); `ord/run.mjs` heading check (backup `run.pre-mob7.mjs`).
+
+### Open
+- The demo's seeded refunds and write-offs put the menu button's dot on every page.
+- Bangla strings added here are drafts.
+- The audit's other findings were left: activity rows repeat the counter, the marketplace summary reads doubled, and Analytics has 15 cards.
+- The stale checks named above (activity, customer banner, catalog section count) still assert pre-refunds-pass designs.

@@ -1120,7 +1120,7 @@ function CompactWeek({
         // With open hours below, an empty day is not the end of the page.
         <p className={cn("px-card text-center text-sm text-muted", openToday.length ? "py-section" : "py-hero")}>{emptyLabel}</p>
       ) : (
-        <ul className="flex flex-col gap-tight p-card">
+        <ul className="flex flex-col divide-y divide-hairline sm:gap-tight sm:divide-y-0 sm:p-card">
           {agenda.map((e) => (
             <li key={e.id}>
               <AgendaCard

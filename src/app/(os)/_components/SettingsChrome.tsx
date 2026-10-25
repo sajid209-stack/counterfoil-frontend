@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Sheet, Skeleton } from "@/components/ui";
+import { Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getStaff, listLocations, listRoles } from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
@@ -14,6 +14,9 @@ import { NAV_IDLE, NAV_SELECTED } from "@/components/ui/navStyles";
 import { SettingsSectionList } from "../settings/_components/SettingsNav";
 import { useResourceNoun } from "../settings/_lib/nav";
 import { useSettingsAttention } from "../settings/_lib/attention";
+import { BusinessTile, PhoneSheet, PhoneSheetHead } from "./mobile/PhoneSheet";
+import { SettingsSheetList } from "./mobile/SettingsSheetList";
+import { initialsOf } from "./mobile/shared";
 
 /** Where the last page outside Settings was — written by the shell, read here. */
 export const LAST_APP_KEY = "cf_last_app";
@@ -25,14 +28,6 @@ const readLastApp = () => {
   } catch {
     return "/dashboard";
   }
-};
-
-/** Up to two letters for a tile: "Lalbagh Heritage Attractions" → "LH". */
-const initialsOf = (name: string | undefined) => {
-  const words = (name ?? "").trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return "C";
-  const first = (w: string) => Array.from(w)[0] ?? "";
-  return (words.length > 1 ? first(words[0]) + first(words[1]) : Array.from(words[0]).slice(0, 2).join("")).toUpperCase();
 };
 
 /**
@@ -156,10 +151,26 @@ export function SettingsChrome({ open, onClose }: { open: boolean; onClose: () =
         </Link>
       </aside>
 
-      {/* Phone: the same list, as a sheet over the page. */}
-      <Sheet open={open} onClose={onClose} title={t("settingsSections")} closeLabel={tCommon("close")} className="md:hidden">
-        <SettingsSectionList pathname={pathname} noun={noun} attention={attention} variant="sheet" onNavigate={onClose} />
-      </Sheet>
+      {/* Phone: the same sections, as a sheet over the page — white cards on the
+          paper ground, drawn like the menu (docs/mobile.md §7, rule 4). The
+          dialog is named by what it is, "Settings sections". */}
+      <PhoneSheet
+        open={open}
+        onClose={onClose}
+        label={t("settingsSections")}
+        className="max-h-[88dvh]"
+        head={
+          <PhoneSheetHead
+            tile={<BusinessTile initials={initialsOf(business)} />}
+            title={t("settings")}
+            sub={business ?? <Skeleton className="h-3 w-28" />}
+            onClose={onClose}
+            closeLabel={tCommon("close")}
+          />
+        }
+      >
+        <SettingsSheetList pathname={pathname} noun={noun} attention={attention} onNavigate={onClose} />
+      </PhoneSheet>
     </>
   );
 }

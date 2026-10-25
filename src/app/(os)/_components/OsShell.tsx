@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, LayoutDashboard } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
@@ -10,11 +10,12 @@ import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { BarTitleContext } from "@/lib/barTitle";
 import { useScreenState } from "@/lib/screenState";
-import { PageStatePicker, PreviewChip, ScreenPreview } from "@/components/screens";
+import { PageStatePicker, ScreenPreview } from "@/components/screens";
 import { AccountMenu } from "./AccountMenu";
 import { LocationSwitcher } from "./LocationSwitcher";
 import { CommandPalette } from "./CommandPalette";
 import { MenuButton, MobileNav } from "./MobileNav";
+import { PhoneBar } from "./mobile/PhoneBar";
 import { LAST_APP_KEY, SettingsChrome } from "./SettingsChrome";
 import { Sidebar } from "./Sidebar";
 import { DESTINATIONS, pageFor } from "./nav";
@@ -185,7 +186,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
      in each put two comboboxes named "Venue" on every page, with the invisible
      one FIRST in document order. This app has been caught by that four times;
      the gate is the one PageShell already uses for the same reason. (On a phone
-     the venue lives in the menu sheet instead.) */
+     the venue is the bar's second line and the menu sheet's Venue row.) */
   const wide = useMediaQuery(MD);
 
   /* The developer's page-state preview: when it is anything but Live, the page
@@ -216,39 +217,16 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             way but creates no scroll container, so overflow-y stays visible and
             sticky resolves against the viewport. */}
         <main className="flex min-w-0 flex-1 flex-col overflow-x-clip md:h-dvh md:overflow-hidden">
-          {/* Phone — where you are, then the page's actions.
-              Left: the page's glyph and its name (on a settings page the glyph
-              is a back chevron that opens the list of sections). Right: the
-              page's one create action as an ink "+", and a round "⋯" holding
-              its other actions — both portalled in by PageShell. No logo and no
-              account: they are in the menu. A <p>, not a heading — the page's
-              own <h1> renders in the content below it.
-
-              53px, and it must stay 53: sticky headers further down the page
-              (the activity log's day headings) pin themselves to exactly that. */}
-          <div data-os-bar="phone" className="glass-navbar sticky top-0 z-30 flex h-[53px] shrink-0 items-center gap-tight bg-chrome px-gutter md:hidden">
-            {/* A page with a way back puts it here as an arrow (PageShell's BarBack),
-                and the glyph or chevron beside it steps aside — see `peer`. */}
-            <div id="os-page-back-mobile" className="peer flex shrink-0 items-center empty:hidden" />
-            {isSettings ? (
-              <button
-                type="button"
-                onClick={() => setSettingsOpen(true)}
-                aria-label={t("settingsSections")}
-                aria-haspopup="dialog"
-                data-settings-back-phone
-                className="-ml-tight flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-muted-wash active:bg-secondary-hover peer-[:not(:empty)]:hidden"
-              >
-                <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
-              </button>
-            ) : (
-              <PageIcon size={20} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted peer-[:not(:empty)]:hidden" />
-            )}
-            <p className="min-w-0 flex-1 truncate text-md font-semibold text-fg">{pageName}</p>
-            {/* A phone has no picker in the bar: this says a preview is running, and ends it. */}
-            <PreviewChip />
-            <div id="os-page-actions-mobile" className="flex shrink-0 items-center gap-0.5 empty:hidden" />
-          </div>
+          {/* Phone — where you are, which venue, then the page's actions. See
+              `PhoneBar` (mobile/): 53px, and it must stay 53 — sticky headers
+              further down the page pin themselves to exactly that. */}
+          <PhoneBar
+            pageName={pageName}
+            PageIcon={PageIcon}
+            isSettings={isSettings}
+            venueScoped={venueScoped && !wide}
+            onOpenSettings={() => setSettingsOpen(true)}
+          />
 
           {/* Desktop — the page's name on the left; the venue and the account on
               the right; one row on the chrome, with no line under it.

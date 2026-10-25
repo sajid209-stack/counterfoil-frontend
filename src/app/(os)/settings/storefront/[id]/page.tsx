@@ -489,11 +489,11 @@ export default function StorefrontEditorPage() {
             <SettingRow label={ts("editor.heroLabel")} description={ts("editor.heroDesc")} layout="stack" labelFor={false}>
               {() => (
                 <div role="group" aria-label={ts("editor.heroLabel")} className="grid grid-cols-2 gap-tight sm:grid-cols-3">
-                  {[null, ...heroChoices].map((c) => {
+                  {[null, ...heroChoices].map((c, i) => {
                     const on = (form.heroImage ?? null) === (c?.url ?? null);
                     return (
                       <ChoiceCard
-                        key={c?.url ?? "none"}
+                        key={`${i}-${c?.url ?? "none"}`}
                         selected={on}
                         onClick={() => set({ heroImage: c?.url ?? null })}
                         className="flex flex-col overflow-hidden text-sm"

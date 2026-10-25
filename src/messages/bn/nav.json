@@ -76,5 +76,10 @@
   "flyout": "{label} মেনু",
   "refunds": "রিফান্ড",
   "writeOffs": "বাকি মাফ",
-  "waiting": "{count, plural, one {# টি অপেক্ষায়} other {# টি অপেক্ষায়}}"
+  "waiting": "{count, plural, one {# টি অপেক্ষায়} other {# টি অপেক্ষায়}}",
+  "menuHeadSub": "Counterfoil OS · {count, plural, one {#টি ভেন্যু} other {#টি ভেন্যু}}",
+  "showPages": "{name} পেজ দেখান",
+  "menuWaiting": "মেনু, {count}টি অপেক্ষায়",
+  "venueNow": "ভেন্যু: {name}। বদলান",
+  "venueChoose": "ভেন্যু বেছে নিন"
 }

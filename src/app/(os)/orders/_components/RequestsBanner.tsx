@@ -44,14 +44,14 @@ export function RequestsBanner() {
   return (
     <Notice tone="info" size="sm">
       <p data-requests-banner className="flex flex-wrap items-center gap-x-tight">
-        <span>{text}</span>
-        <span aria-hidden className="text-muted">·</span>
+        <span className="max-sm:basis-full">{text}</span>
+        <span aria-hidden className="text-muted max-sm:hidden">·</span>
         {refunds > 0 && (
           <Link href="/refunds" className={LINK}>
             {writeOffs > 0 ? t("reviewRefunds") : t("review")}
           </Link>
         )}
-        {refunds > 0 && writeOffs > 0 && <span aria-hidden className="text-muted">·</span>}
+        {refunds > 0 && writeOffs > 0 && <span aria-hidden className="text-muted max-sm:mx-tight">·</span>}
         {writeOffs > 0 && (
           <Link href="/write-offs" className={LINK}>
             {refunds > 0 ? t("reviewWriteOffs") : t("review")}

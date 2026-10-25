@@ -1,22 +1,18 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ArrowUpRight, LogOut, Menu } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Menu } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Sheet, Skeleton } from "@/components/ui";
-import { AppearancePicker } from "@/components/ThemeProvider";
-import { LanguagePicker } from "@/components/LocaleProvider";
+import { Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { getStaff, listRoles } from "@/lib/api";
+import { getStaff, listLocations, listRoles } from "@/lib/api";
+import { useActiveLocation } from "@/lib/activeLocation";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { cn } from "@/lib/cn";
-import { NAV_IDLE, NAV_PARENT_OF_SELECTED, NAV_SELECTED, NAV_SELECTED_ICON } from "@/components/ui/navStyles";
-import { PageStatePicker } from "@/components/screens";
-import { LocationSwitcher } from "./LocationSwitcher";
-import { NAV_MAIN, NAV_OPEN, NAV_SETTINGS, isAt, type NavDestination } from "./nav";
-import { NavBadge, useNavBadges } from "./navBadges";
+import { useWaitingTotal } from "./navBadges";
+import { MenuBody } from "./mobile/MenuBody";
+import { BusinessTile, PhoneSheet, PhoneSheetHead } from "./mobile/PhoneSheet";
+import { initialsOf } from "./mobile/shared";
 
 /**
  * The phone's way around — a round menu button at the bottom-left, and the
@@ -28,11 +24,13 @@ import { NavBadge, useNavBadges } from "./navBadges";
  * reach away in a single sheet, rather than four favourite pages on a bar and
  * the rest behind a fifth button.
  *
- * The button is 56px, white (the chrome), lifted by a soft shadow, and sits 12px
- * off the corner plus the device's safe area, so a home indicator never covers
- * it. Its top is 68px up — exactly where the sticky save bars already sit — and
- * every page reserves `--os-fab-clear` at its foot, so it never covers a last
- * row either.
+ * The button is 52px, frosted (the chrome at 90% over a blur) with a hairline
+ * ring and a soft float, and sits 12px off the corner plus the device's safe
+ * area, so a home indicator never covers it. Its top is 68px up — exactly where
+ * the sticky save bars already sit — and every page reserves `--os-fab-clear`
+ * at its foot, so it never covers a last row either. When a refund or a
+ * write-off is waiting at the venue it wears a small ink dot, and its name says
+ * so: a menu you can see needs something from you is a menu you open.
  *
  * It is on the LEFT because the right-hand side of a phone's bottom edge is
  * where a page's own floating action lands, and a thumb reaching for the menu
@@ -40,6 +38,7 @@ import { NavBadge, useNavBadges } from "./navBadges";
  */
 export function MenuButton({ open, onOpen }: { open: boolean; onOpen: () => void }) {
   const t = useTranslations("nav");
+  const waiting = useWaitingTotal();
   /* It rides over the start of list rows, so it steps aside while the page is
      being read: hidden on a scroll DOWN, back on a scroll UP and at either end
      of the page. The state is worked out in the scroll handler (never in an
@@ -72,227 +71,71 @@ export function MenuButton({ open, onOpen }: { open: boolean; onOpen: () => void
       type="button"
       onClick={onOpen}
       onFocus={() => setAway(false)}
-      aria-label={t("menu")}
+      aria-label={waiting > 0 ? t("menuWaiting", { count: waiting }) : t("menu")}
       aria-haspopup="dialog"
       aria-expanded={open}
       data-menu-button
       data-away={away || undefined}
+      data-waiting={waiting > 0 ? waiting : undefined}
       className={cn(
-        "fixed bottom-[calc(12px+env(safe-area-inset-bottom))] left-[calc(12px+env(safe-area-inset-left))] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-chrome text-fg transition-[transform,opacity] duration-standard active:scale-95 motion-reduce:transition-none md:hidden",
-        "shadow-float",
+        "fixed bottom-[calc(12px+env(safe-area-inset-bottom))] left-[calc(12px+env(safe-area-inset-left))] z-30 flex h-13 w-13 items-center justify-center rounded-full bg-chrome/90 text-fg shadow-float ring-1 ring-line backdrop-blur transition-[transform,opacity] duration-standard active:scale-95 motion-reduce:transition-none md:hidden",
         away && !open && "pointer-events-none translate-y-[calc(100%+24px)] opacity-0 focus-visible:pointer-events-auto",
       )}
     >
       <Menu size={24} strokeWidth={1.5} aria-hidden />
+      {/* Something is waiting. Ink, not orange — orange means act, and this only
+          says there is something to look at; the ring cuts it out of the button. */}
+      {waiting > 0 && <span aria-hidden data-menu-dot className="absolute right-2 top-2 h-2 w-2 rounded-full bg-fg ring-2 ring-chrome" />}
     </button>
   );
 }
-
-/** Up to two letters for a disc: "Nadia Islam" → "NI". */
-const initialsOf = (name: string | undefined) => {
-  const words = (name ?? "").trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return "C";
-  const first = (w: string) => Array.from(w)[0] ?? "";
-  return (words.length > 1 ? first(words[0]) + first(words[1]) : Array.from(words[0]).slice(0, 2).join("")).toUpperCase();
-};
 
 /**
  * The sheet. Mounted by the shell, but its body only exists while it is open,
  * so the account queries are not paid for on every page of every phone.
  */
 export function MobileNav({ open, onClose, business }: { open: boolean; onClose: () => void; business?: string }) {
-  const t = useTranslations("nav");
-  const tCommon = useTranslations("common");
-  return (
-    <Sheet
-      open={open}
-      onClose={onClose}
-      title={t("menu")}
-      closeLabel={tCommon("close")}
-      lead={business ? <p className="truncate text-xs text-muted">{business}</p> : undefined}
-      /* Full height: the menu is a place you go, not a note over the page. The
-         `!` is deliberate — `cn` does not merge conflicting utilities, so a
-         plain max-h-none would be decided by stylesheet order against the
-         sheet's own cap. */
-      className="h-[calc(100dvh-0.5rem)] max-h-none! md:hidden"
-    >
-      <MenuBody onClose={onClose} />
-    </Sheet>
-  );
+  if (!open) return null;
+  return <MenuSurface onClose={onClose} business={business} />;
 }
 
-function MenuBody({ onClose }: { onClose: () => void }) {
+function MenuSurface({ onClose, business }: { onClose: () => void; business?: string }) {
   const t = useTranslations("nav");
   const tCommon = useTranslations("common");
-  const pathname = usePathname();
-  const appearanceId = useId();
-  const appsId = useId();
-  const languageId = useId();
-  /* What is waiting, per row — read here, not in the shell, so the queries are
-     only paid for while the sheet is open (the account queries below are too). */
-  const badges = useNavBadges();
+  const [venuesOpen, setVenuesOpen] = useState(false);
 
+  const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
+  const locations = locationsQ.data?.data ?? [];
+  const { location } = useActiveLocation(locations);
   const meQ = useApiQuery(() => getStaff(DEMO_STAFF_ID), []);
   const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
   const me = meQ.data;
   const role = me ? rolesQ.data?.data.find((r) => r.id === me.roleId)?.name : undefined;
 
-  /* One row, the rail's own states (NAV_*) at a thumb's height. A child is the
-     rail's nested row: label only, indented to its parent's label (the row's
-     padding, the 20px icon and the gap), and always listed — a sheet is the
-     full map, where the rail shows children only for the page you are in. */
-  const state = (selected: boolean, parentOf: boolean) =>
-    selected ? NAV_SELECTED : parentOf ? NAV_PARENT_OF_SELECTED : cn("font-medium active:bg-nav-selected", NAV_IDLE);
-
-  const row = (d: NavDestination, leaves = false) => {
-    const Icon = d.icon;
-    const exact = isAt(d, pathname);
-    const kids = d.children ?? [];
-    const parentOf = !exact && kids.some((c) => isAt(c, pathname));
-    const count = d.badge ? badges[d.badge] : undefined;
-    return (
-      <li key={d.key}>
-        <Link
-          href={d.href}
-          data-menu-item={d.key}
-          aria-current={exact ? "page" : undefined}
-          /* Focus lands on the page you are on when the sheet opens, so a keyboard
-             or screen-reader user starts inside the dialog, where they are. */
-          data-autofocus={exact ? "" : undefined}
-          onClick={onClose}
-          className={cn(
-            "flex h-12 items-center gap-section rounded-control px-comfortable text-md transition-colors duration-quick",
-            state(exact, parentOf),
-          )}
-        >
-          <Icon size={20} strokeWidth={1.5} aria-hidden className={cn("shrink-0", exact && NAV_SELECTED_ICON)} />
-          <span className="min-w-0 flex-1 truncate">{t(d.key)}</span>
-          <NavBadge count={count} />
-          {count ? <span className="sr-only">{t("waiting", { count })}</span> : null}
-          {leaves && <ArrowUpRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
-        </Link>
-        {kids.length > 0 && (
-          <ul className="mt-0.5 flex flex-col gap-0.5">
-            {kids.map((c) => {
-              const sel = isAt(c, pathname);
-              return (
-                <li key={c.key}>
-                  <Link
-                    href={c.href}
-                    data-menu-item={c.key}
-                    aria-current={sel ? "page" : undefined}
-                    data-autofocus={sel ? "" : undefined}
-                    onClick={onClose}
-                    style={{ paddingLeft: "calc(var(--spacing-comfortable) + 20px + var(--spacing-section))" }}
-                    className={cn(
-                      "flex h-11 items-center rounded-control pr-comfortable text-md transition-colors duration-quick",
-                      state(sel, false),
-                    )}
-                  >
-                    <span className="min-w-0 flex-1 truncate">{t(c.key)}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </li>
-    );
-  };
-
-  const hairline = <div aria-hidden className="mx-comfortable my-2 border-t border-hairline" />;
-
   return (
-    <div className="flex flex-col px-tight pb-4 pt-tight">
-      {/* The venue first: it qualifies every list behind this sheet. Draws
-          nothing for an operator with one venue. */}
-      <div className="px-comfortable empty:hidden">
-        <LocationSwitcher full />
-      </div>
-      <nav aria-label={t("main")} className="mt-2">
-        <ul className="flex flex-col gap-0.5">{NAV_MAIN.map((d) => row(d))}</ul>
-      </nav>
-
-      {hairline}
-
-      {/* The group's own heading, as the rail's "Other apps" — not collapsible
-          here: the sheet is the whole map. */}
-      <p id={appsId} className="px-comfortable pb-1 pt-1 text-sm font-medium text-muted">
-        {t("otherApps")}
-      </p>
-      <ul aria-labelledby={appsId} className="flex flex-col gap-0.5">
-        {NAV_OPEN.map((d) => row(d, true))}
-      </ul>
-
-      {hairline}
-
-      <ul className="flex flex-col gap-0.5">{row(NAV_SETTINGS)}</ul>
-
-      {hairline}
-
-      {/* The account: who is signed in, how it looks, what language, and the
-          way out. The two pickers are the same components Settings →
-          Preferences renders, so the places agree by construction. */}
-      <section aria-label={t("account")} className="flex flex-col gap-section px-comfortable pt-2">
-        <div className="flex items-center gap-comfortable">
-          <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-subtle text-sm font-semibold text-fg ring-1 ring-line">
-            {initialsOf(me?.name)}
-          </span>
-          <span className="min-w-0 flex-1">
-            {me ? (
-              <>
-                <span className="block truncate text-base font-semibold leading-tight text-fg">{me.name}</span>
-                <span className="mt-0.5 block truncate text-xs leading-tight text-muted">{role ?? me.email ?? ""}</span>
-              </>
-            ) : (
-              <>
-                <Skeleton className="h-3.5 w-28" />
-                <Skeleton className="mt-1 h-3 w-16" />
-              </>
-            )}
-          </span>
-          <Link
-            href="/settings/profile"
-            onClick={onClose}
-            className="flex h-11 shrink-0 items-center rounded-control px-comfortable text-sm font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg"
-          >
-            {t("myProfile")}
-          </Link>
-        </div>
-
-        <div>
-          <p id={appearanceId} className="pb-1 text-xs font-medium text-muted">
-            {tCommon("appearance")}
-          </p>
-          <AppearancePicker showLabel={false} labelledBy={appearanceId} />
-        </div>
-
-        <div>
-          <p id={languageId} className="pb-1 text-xs font-medium text-muted">
-            {tCommon("language")}
-          </p>
-          <LanguagePicker showLabel={false} labelledBy={languageId} />
-        </div>
-
-        <Link
-          href="/sign-in"
-          data-menu-item="signOut"
-          className="flex h-12 items-center gap-section rounded-control px-comfortable text-md font-medium text-fg transition-colors duration-quick hover:bg-nav-hover active:bg-nav-selected"
-        >
-          <LogOut size={20} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
-          {t("signOut")}
-        </Link>
-      </section>
-
-      {/* The page-state preview is a developer's tool, so it sits at the very
-          foot: below every destination and the account, where nobody who came
-          to do something reaches it by accident. It used to be second in the
-          sheet, above Dashboard. The venue stays first — it qualifies every
-          list behind this sheet. */}
-      {hairline}
-      <div className="px-comfortable pb-1">
-        <PageStatePicker full />
-      </div>
-    </div>
+    <PhoneSheet
+      open
+      /* Escape closes the top layer: the venue picker if it is up, else the menu. */
+      onClose={() => (venuesOpen ? setVenuesOpen(false) : onClose())}
+      label={t("menu")}
+      /* Full height: the menu is a place you go, not a note over the page. */
+      className="h-[calc(100dvh-0.5rem)]"
+      head={
+        <PhoneSheetHead
+          tile={<BusinessTile initials={initialsOf(business)} />}
+          title={business ?? "Counterfoil"}
+          sub={locationsQ.data ? t("menuHeadSub", { count: locations.length }) : <Skeleton className="h-3 w-28" />}
+          onClose={onClose}
+          closeLabel={tCommon("close")}
+        />
+      }
+    >
+      <MenuBody
+        data={{ locations, location, me, role }}
+        onClose={onClose}
+        venuesOpen={venuesOpen}
+        setVenuesOpen={setVenuesOpen}
+      />
+    </PhoneSheet>
   );
 }

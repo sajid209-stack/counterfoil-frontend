@@ -179,9 +179,12 @@ export function PaymentAccounts() {
                   label={<span className="font-medium">{accountLabel(c)}</span>}
                   description={
                     rates
-                      ? c === "counterfoil"
-                        ? t("settings.counterfoilDisclosure", { platform: percentLabel(rates.platformFeeBp), gateway: percentLabel(rates.platformGatewayFeeBp), cadence })
-                        : t("settings.ownDisclosure", { platform: percentLabel(rates.platformFeeBp) })
+                      ? // On a phone only the chosen account spells out its terms; the other waits to be chosen.
+                        <span className={checked ? undefined : "max-sm:hidden"}>
+                          {c === "counterfoil"
+                            ? t("settings.counterfoilDisclosure", { platform: percentLabel(rates.platformFeeBp), gateway: percentLabel(rates.platformGatewayFeeBp), cadence })
+                            : t("settings.ownDisclosure", { platform: percentLabel(rates.platformFeeBp) })}
+                        </span>
                       : undefined
                   }
                 />
