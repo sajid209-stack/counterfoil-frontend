@@ -18680,3 +18680,7 @@ Owner: remove the line under the till's header and make the header smoother.
   - the sale panel is a white surface.
 - The wall toolbar (date, search, Held: one family of 44px pills on one centre line) is a glass bar, `bg-surface/80` with a backdrop blur. A soft shadow fades in only once the wall scrolls; the scroll handler writes `data-scrolled` through a ref (no state). `GoPageHeader`'s desktop bottom gap is 16px.
 - Verified on the dev server: shell chk 109/109, pos5 144/144 (one 390 failure on a slow OS page did not repeat), pos-v2 44/44 at 390 and 1280, and co 122/122 at 1280. `tsc` and `lint:tokens` are clean, and phone layouts are unchanged.
+
+## Menu counts in the primary colour (2026-10-26)
+
+Owner: the waiting-count circle on menu rows (Orders, Refunds, Write-offs) should be the primary colour with white figures and no stroke. `NavBadge` is now `bg-ember-solid` with `text-on-solid` at 600 and no ring, in the rail, the collapsed-rail corner and the phone menu. Verified: #F94A00 under white in light and dark, no box-shadow; `sn/nav-adapted` 201/201; `lint:tokens` and `eslint` clean.

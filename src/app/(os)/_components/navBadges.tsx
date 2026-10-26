@@ -59,11 +59,11 @@ export function badgeCount(
 }
 
 /**
- * A small neutral pill with a number. Hidden at 0.
+ * A small pill with a number. Hidden at 0.
  *
- * Neutral on purpose — a white pill with a hairline ring, not orange. In this
- * product orange means "act here", and a count on a menu row is only
- * information. Expanded it sits at the right end of the row. Collapsed (the 64px
+ * Solid primary with white figures and no ring (the owner's call, 2026-10-26):
+ * a count here is something waiting for a manager's answer, so it is allowed to
+ * stand out. Expanded it sits at the right end of the row. Collapsed (the 64px
  * rail) it is a tiny count on the icon's corner, so the rail still tells you
  * something is waiting. The number is `aria-hidden`; the row's own accessible
  * name carries the words ("3 waiting").
@@ -78,7 +78,7 @@ export function NavBadge({ count, corner = false, className }: { count: number |
       title={t("waiting", { count })}
       data-nav-badge={count}
       className={cn(
-        "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-card px-1.5 text-xs font-medium leading-none tabular-nums text-fg-secondary ring-1 ring-inset ring-line",
+        "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-ember-solid px-1.5 text-xs font-semibold leading-none tabular-nums text-on-solid",
         corner && "absolute -right-1 -top-1 h-4 min-w-4 px-1",
         className,
       )}
