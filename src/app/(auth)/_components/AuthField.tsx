@@ -41,14 +41,14 @@ export function AuthField({
   } as const;
 
   return (
-    <div className={cn("flex flex-col gap-tight", className)}>
+    <div className={cn("flex flex-col gap-1.5", className)}>
       <div className="flex items-center justify-between gap-section">
         <label htmlFor={id} className="text-sm font-medium text-fg">{label}</label>
         {labelAside}
       </div>
       <div className="relative isolate">
       {isPw ? (
-        <div data-focus-host="" className={cn(controlShellClass(!!error, true), "peer items-center")}>
+        <div data-focus-host="" className={cn(controlShellClass(!!error, true), "peer h-10 items-center max-sm:h-11 [@media(pointer:coarse)]:h-11")}>
           <input
             id={id}
             {...input}
@@ -61,13 +61,13 @@ export function AuthField({
             onClick={() => setShown((s) => !s)}
             aria-label={shown ? t("hide") : t("show")}
             aria-pressed={shown}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-muted hover:text-fg"
+            className="flex h-10 w-10 shrink-0 max-sm:h-11 [@media(pointer:coarse)]:h-11 max-sm:w-11 [@media(pointer:coarse)]:w-11 items-center justify-center rounded-sm text-muted hover:text-fg"
           >
-            {shown ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+            {shown ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
           </button>
         </div>
       ) : (
-        <input id={id} {...input} {...described} type={type} className={cn(controlClass(!!error), "peer")} />
+        <input id={id} {...input} {...described} type={type} className={cn(controlClass(!!error), "peer h-10 max-sm:h-11 [@media(pointer:coarse)]:h-11")} />
       )}
       {!error && <span aria-hidden className="pointer-events-none absolute -inset-1 -z-10 rounded-md bg-ember-wash max-sm:inset-x-0 opacity-0 transition-opacity duration-standard ease-counterfoil peer-focus-within:opacity-100" />}
       </div>

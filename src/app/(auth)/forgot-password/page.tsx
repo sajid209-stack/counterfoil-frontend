@@ -6,7 +6,7 @@ import { MailCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
 import { AuthField } from "../_components/AuthField";
-import { AuthHeading, linkClass, quietLinkClass } from "../_components/AuthHeading";
+import { AuthHeading, authButtonClass, linkClass, quietLinkClass } from "../_components/AuthHeading";
 
 // Account recovery — the response NEVER reveals whether an account exists.
 export default function ForgotPasswordPage() {
@@ -18,8 +18,8 @@ export default function ForgotPasswordPage() {
   if (sent) {
     return (
       <div className="flex flex-col gap-major">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-success-wash text-success">
-          <MailCheck size={24} aria-hidden />
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-success-wash text-success">
+          <MailCheck size={20} aria-hidden />
         </span>
         <AuthHeading title={t("sentTitle")} lead={t("sentLead", { contact: contact.trim() })} />
         <p className="text-sm text-muted">{t("sentHelp")}</p>
@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
         onChange={(e) => { setContact(e.target.value); setMissing(false); }}
         error={missing ? t("contactMissing") : undefined}
       />
-      <Button type="submit" size="lg" fullWidth>{t("submit")}</Button>
+      <Button type="submit" size="md" className={authButtonClass} fullWidth>{t("submit")}</Button>
       <Link href="/sign-in" className={quietLinkClass + " self-center"}>{t("back")}</Link>
     </form>
   );

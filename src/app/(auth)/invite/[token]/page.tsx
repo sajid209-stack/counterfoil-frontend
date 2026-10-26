@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
 import { AuthField } from "../../_components/AuthField";
-import { AuthHeading } from "../../_components/AuthHeading";
+import { AuthHeading, authButtonClass } from "../../_components/AuthHeading";
 
 /* Accepting an invitation. The token is read by the (future) auth call, not
    shown: it used to be printed under the heading, which is a developer's line
@@ -36,7 +36,7 @@ export default function InviteAcceptPage() {
         <AuthField label={t("password")} type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} error={shortErr} />
         <AuthField label={t("repeat")} type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} error={matchErr} />
       </div>
-      <Button type="submit" fullWidth size="lg">{t("submit")}</Button>
+      <Button type="submit" fullWidth size="md" className={authButtonClass}>{t("submit")}</Button>
     </form>
   );
 }

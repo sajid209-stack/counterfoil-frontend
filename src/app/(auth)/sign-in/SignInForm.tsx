@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, Checkbox } from "@/components/ui";
 import { AuthField } from "../_components/AuthField";
-import { AuthHeading, linkClass, quietLinkClass } from "../_components/AuthHeading";
+import { AuthHeading, authButtonClass, linkClass, quietLinkClass } from "../_components/AuthHeading";
 import m from "../_components/auth-motion.module.css";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -60,12 +60,12 @@ export function SignInForm() {
           error={pwErr}
           labelAside={<Link href="/forgot-password" className={linkClass}>{t("forgot")}</Link>}
         />
-        <Checkbox label={t("remember")} name="remember" defaultChecked className="-my-tight" />
+        <Checkbox label={t("remember")} name="remember" defaultChecked className="-my-2 [&_span.block]:text-sm" />
       </div>
 
-      <Button type="submit" fullWidth size="lg" loading={loading}>{t("submit")}</Button>
+      <Button type="submit" fullWidth size="md" className={authButtonClass} loading={loading}>{t("submit")}</Button>
 
-      <div className="flex flex-col items-center gap-inline border-t border-dashed border-line pt-major text-center text-sm text-muted">
+      <div className="flex flex-col items-center gap-inline border-t border-dashed border-line pt-section text-center text-sm text-muted">
         <p>
           {t("noAccount")}{" "}
           <Link href="/sign-up" className="font-medium text-brand-foreground underline-offset-4 hover:underline">{t("createAccount")}</Link>

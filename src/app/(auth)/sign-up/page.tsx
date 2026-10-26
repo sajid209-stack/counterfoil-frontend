@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
 import { AuthField } from "../_components/AuthField";
-import { AuthHeading, linkClass, quietLinkClass } from "../_components/AuthHeading";
+import { AuthHeading, authButtonClass, linkClass, quietLinkClass } from "../_components/AuthHeading";
 import { CodeBoxes } from "../_components/CodeBoxes";
 import { Strength } from "../_components/Strength";
 
@@ -91,10 +91,10 @@ export default function SignUpPage() {
           <CodeBoxes value={code} onChange={setCode} invalid={!!codeErr} describedBy={codeErr ? "code-msg" : undefined} />
           {codeErr && <p id="code-msg" className="text-sm text-danger">{codeErr}</p>}
         </div>
-        <Button type="submit" fullWidth size="lg" loading={loading}>{t("confirm")}</Button>
+        <Button type="submit" fullWidth size="md" className={authButtonClass} loading={loading}>{t("confirm")}</Button>
         <div className="flex flex-col items-center gap-inline text-center text-sm text-muted">
           {seconds > 0 ? (
-            <p className="inline-flex min-h-11 items-center">{t("resendIn", { time: mm })}</p>
+            <p className="inline-flex items-center max-sm:min-h-11 [@media(pointer:coarse)]:min-h-11">{t("resendIn", { time: mm })}</p>
           ) : (
             <button type="button" onClick={resend} className={linkClass}>{t("resend")}</button>
           )}
@@ -125,7 +125,7 @@ export default function SignUpPage() {
         />
       </div>
       <div className="flex flex-col gap-section">
-        <Button type="submit" fullWidth size="lg">{t("submit")}</Button>
+        <Button type="submit" fullWidth size="md" className={authButtonClass}>{t("submit")}</Button>
         <p className="text-center text-sm text-muted">{t("terms")}</p>
       </div>
       <p className="border-t border-hairline pt-major text-center text-sm text-muted">

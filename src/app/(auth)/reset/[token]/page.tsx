@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { TimerOff, ShieldCheck } from "lucide-react";
 import { Button, useToast } from "@/components/ui";
 import { AuthField } from "../../_components/AuthField";
-import { AuthHeading } from "../../_components/AuthHeading";
+import { AuthHeading, authButtonClass } from "../../_components/AuthHeading";
 
 // Set a new password. Expired or used tokens get a clear state, not an error.
 export default function ResetPasswordPage() {
@@ -23,11 +23,11 @@ export default function ResetPasswordPage() {
   if (dead) {
     return (
       <div className="flex flex-col gap-major">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-warning-wash text-warning">
-          {token === "used" ? <ShieldCheck size={24} aria-hidden /> : <TimerOff size={24} aria-hidden />}
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-warning-wash text-warning">
+          {token === "used" ? <ShieldCheck size={20} aria-hidden /> : <TimerOff size={20} aria-hidden />}
         </span>
         <AuthHeading title={token === "used" ? t("usedTitle") : t("expiredTitle")} lead={token === "used" ? t("usedLead") : t("expiredLead")} />
-        <Link href="/forgot-password"><Button size="lg" fullWidth>{t("again")}</Button></Link>
+        <Link href="/forgot-password"><Button size="md" className={authButtonClass} fullWidth>{t("again")}</Button></Link>
       </div>
     );
   }
@@ -54,7 +54,7 @@ export default function ResetPasswordPage() {
         <AuthField label={t("password")} type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} error={shortErr} />
         <AuthField label={t("repeat")} type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} error={matchErr} />
       </div>
-      <Button type="submit" size="lg" fullWidth>{t("submit")}</Button>
+      <Button type="submit" size="md" className={authButtonClass} fullWidth>{t("submit")}</Button>
     </form>
   );
 }

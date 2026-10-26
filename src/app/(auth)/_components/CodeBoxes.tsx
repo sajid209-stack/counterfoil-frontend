@@ -83,7 +83,7 @@ export function CodeBoxes({
             }
           }}
           className={cn(
-            "h-12 min-w-0 flex-1 rounded-control border bg-card text-center text-xl font-semibold text-fg transition-colors duration-quick ease-counterfoil",
+            "h-10 min-w-0 flex-1 max-sm:h-11 [@media(pointer:coarse)]:h-11 rounded-control border bg-card text-center text-lg font-semibold text-fg transition-colors duration-quick ease-counterfoil",
             invalid ? "border-danger" : "border-line hover:border-strong focus:border-ember",
           )}
         />

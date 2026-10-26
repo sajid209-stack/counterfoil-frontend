@@ -18648,3 +18648,18 @@ Owner, with three screenshots: make sign-in more modern and replace the product 
 ### Open
 - Bangla scene strings are drafts.
 - The checkout dialog, booking drawer, `/profile`, `/my-requests` and `/shift/open` had no second designer pass this round.
+
+## Sign-in: a smaller form, and animations of the real screens (2026-10-26)
+
+Owner: the sign-in form and fields are too large, and the motion should look like the real product.
+- **Form, smaller** (shared by sign-in, sign-up, forgot, reset and invite):
+  - Content is 360px wide inside the card. The logo is 22px tall, the heading 24px and the lead 13px.
+  - Inputs and the main button are 40px on a mouse, and stay 44px under a coarse pointer and on phones. The gaps are tighter, and the 6-digit code boxes are 40px.
+  - Sign-up now fits a 900px-tall screen.
+- **Scenes, rebuilt as miniatures of the real screens**, drawn with the product's own tokens and components inside a dark token island, using the app's money and 12-hour clock formatting:
+  - **Sell** mirrors Go `/pos`: the sidebar, the date pill and Held, wall cards, and the Current sale panel. A tap adds a line, the totals roll, and "Take ৳1,840" is pressed.
+  - **Scan** mirrors Go `/scan`: the camera viewport with ember corners and the code field, ending on the real "Let in" verdict.
+  - **Know** mirrors OS `/dashboard`: the sidebar, stat tiles counting up, the Sales over time chart and the Activity card.
+  - **Fill** mirrors Go `/schedule`: lanes against hours, where a free 2:00 PM cell becomes a booked block, then a toast confirms it.
+- Verified on a production build: auth 212/212, motion 15/15, and the 59-route sweep clean at 390 and 1440. `tsc`, `lint:tokens`, `eslint` and i18n are clean.
+- Open: the mini scenes use 11–12px decorative text (`aria-hidden`); the Bangla strings are drafts.

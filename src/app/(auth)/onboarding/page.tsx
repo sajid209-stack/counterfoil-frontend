@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, FormField } from "@/components/ui";
 import { updateOperator } from "@/lib/api";
+import { authButtonClass } from "../_components/AuthHeading";
 
 const COUNTRIES = ["Bangladesh", "Malaysia", "United States", "Canada"];
 const CURRENCIES = ["BDT", "MYR", "USD", "CAD"];
@@ -35,7 +36,7 @@ export default function OnboardingPage() {
     <div className="w-full">
       <p className="text-sm font-medium text-brand-foreground">{t("eyebrow")}</p>
       <h1 className="mt-inline text-2xl font-semibold tracking-title">{t("title")}</h1>
-      <p className="mt-tight text-base text-muted">{t("lead")}</p>
+      <p className="mt-tight text-sm text-muted">{t("lead")}</p>
 
       <div className="mt-major flex flex-col gap-section">
         <FormField
@@ -52,7 +53,7 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      <Button fullWidth size="lg" className="mt-major" loading={saving} onClick={submit}>
+      <Button fullWidth size="md" className={`mt-major ${authButtonClass}`} loading={saving} onClick={submit}>
         {t("submit")}
       </Button>
     </div>

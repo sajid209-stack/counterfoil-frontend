@@ -11,7 +11,7 @@
    it becomes current, so its animations start from zero by themselves. */
 
 .story {
-  --dur: 5600ms;
+  --dur: 4800ms;
   --e: var(--ease-counterfoil, cubic-bezier(0.32, 0.72, 0, 1));
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   display: flex;
@@ -87,8 +87,9 @@
   to   { transform: translate3d(-7%, 6%, 0) scale(1.12); }
 }
 
-/* ── Stage: scenes are drawn at 480 x 340 and scaled down by zoom when the
-   panel is short or narrow, up when it is large. ──────────────────────── */
+/* ── Stage: scenes are drawn at 720 x 440 (a miniature of the real app window)
+   and scaled by zoom to fit the panel. The width steps and the height steps
+   each set a factor; the scene takes the smaller, so it is never cropped. ── */
 .stage {
   position: relative;
   flex: 1 1 0;
@@ -98,202 +99,157 @@
   container: stage / size;
 }
 .scene {
+  --zw: 1.3;
+  --zh: 1.3;
   grid-area: 1 / 1;
   position: relative;
-  width: 480px;
-  height: 340px;
-  zoom: 1;
+  width: 720px;
+  height: 440px;
+  zoom: min(var(--zw), var(--zh));
 }
-@container stage (max-height: 350px) { .scene { zoom: 0.9; } }
-@container stage (max-height: 306px) { .scene { zoom: 0.8; } }
-@container stage (max-height: 262px) { .scene { zoom: 0.68; } }
-@container stage (max-width: 450px)  { .scene { zoom: 0.86; } }
-@container stage (min-width: 580px) and (min-height: 430px) { .scene { zoom: 1.12; } }
-@container stage (min-width: 760px) and (min-height: 540px) { .scene { zoom: 1.3; } }
-@container stage (min-width: 840px) and (min-height: 640px) { .scene { zoom: 1.5; } }
+@container stage (max-width: 935px) { .scene { --zw: 1.18; } }
+@container stage (max-width: 849px) { .scene { --zw: 1.08; } }
+@container stage (max-width: 777px) { .scene { --zw: 1; } }
+@container stage (max-width: 719px) { .scene { --zw: 0.91; } }
+@container stage (max-width: 654px) { .scene { --zw: 0.83; } }
+@container stage (max-width: 597px) { .scene { --zw: 0.75; } }
+@container stage (max-width: 539px) { .scene { --zw: 0.67; } }
+@container stage (max-width: 481px) { .scene { --zw: 0.58; } }
+@container stage (max-width: 417px) { .scene { --zw: 0.5; } }
+@container stage (max-height: 571px) { .scene { --zh: 1.18; } }
+@container stage (max-height: 519px) { .scene { --zh: 1.08; } }
+@container stage (max-height: 475px) { .scene { --zh: 1; } }
+@container stage (max-height: 439px) { .scene { --zh: 0.93; } }
+@container stage (max-height: 409px) { .scene { --zh: 0.86; } }
+@container stage (max-height: 379px) { .scene { --zh: 0.78; } }
+@container stage (max-height: 344px) { .scene { --zh: 0.7; } }
+@container stage (max-height: 309px) { .scene { --zh: 0.62; } }
+@container stage (max-height: 269px) { .scene { --zh: 0.55; } }
 
 .in  { animation: sceneIn 700ms var(--e) both; }
 .out { animation: sceneOut 460ms var(--e) forwards; pointer-events: none; }
 @keyframes sceneIn  { from { opacity: 0; transform: translateY(16px) scale(0.985); } }
 @keyframes sceneOut { to   { opacity: 0; transform: translateY(-10px) scale(1.012); } }
 
-/* Layers: an element enters, and a child floats forever at its own pace. */
-.float { animation: float 7s ease-in-out infinite alternate; animation-delay: var(--fd, 0s); }
-@keyframes float {
-  from { transform: translateY(0); }
-  to   { transform: translateY(-5px); }
-}
-.pop { animation: pop 420ms var(--spring) var(--t, 0ms) backwards; }
+/* Shared motion: an element's natural style is its END state, and the
+   keyframes only describe how it gets there. */
+.pop  { animation: pop 420ms var(--spring) var(--t, 0ms) backwards; }
 @keyframes pop { from { opacity: 0; transform: scale(0.4); } }
 .rise { animation: rise 640ms var(--e) var(--t, 0ms) backwards; }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+@keyframes fadeIn { from { opacity: 0; } }
 
-.card {
-  background: var(--color-card);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
+/* Two stacked values in a one-line window; the strip slides up to the second. */
+.roll { display: inline-block; height: var(--lh); line-height: var(--lh); overflow: hidden; vertical-align: top; font-variant-numeric: tabular-nums; }
+.rollStrip { display: flex; flex-direction: column; transform: translateY(calc(var(--lh) * -1)); animation: rollTo 560ms var(--e) var(--t) backwards; }
+.rollStrip > span { height: var(--lh); white-space: nowrap; }
+@keyframes rollTo { from { transform: translateY(0); } }
+
+/* A tap ring, on a card or a cell. */
+.ripple { position: absolute; inset: 0; border-radius: inherit; border: 2px solid var(--color-ember-solid); opacity: 0; animation: ripple 640ms var(--e) var(--t) forwards; pointer-events: none; }
+@keyframes ripple { from { opacity: 0.9; transform: scale(1); } to { opacity: 0; transform: scale(1.08); } }
+
+/* The pointer. Each scene gives it its own path. */
+.cursor { position: absolute; left: 0; top: 0; z-index: 20; width: 24px; height: 24px; opacity: 0; transform-origin: 3px 2px; filter: drop-shadow(0 4px 6px color-mix(in srgb, black 45%, transparent)); pointer-events: none; }
+.cursorSell { animation: cursorSell var(--dur) linear both; }
+.cursorFill { animation: cursorFill var(--dur) linear both; }
+@keyframes cursorSell {
+  0%, 5%     { opacity: 0; transform: translate(580px, 340px) scale(1); }
+  9%         { opacity: 1; transform: translate(560px, 310px) scale(1); animation-timing-function: var(--e); }
+  25%, 26.5% { opacity: 1; transform: translate(412px, 122px) scale(1); }
+  27.6%      { transform: translate(412px, 122px) scale(0.8); }
+  29.5%      { transform: translate(412px, 122px) scale(1); }
+  51%, 51.6% { opacity: 1; transform: translate(412px, 122px) scale(1); }
+  52.7%      { transform: translate(412px, 122px) scale(0.8); }
+  54.6%      { transform: translate(412px, 122px) scale(1); animation-timing-function: var(--e); }
+  68%, 74%   { opacity: 1; transform: translate(623px, 408px) scale(1); }
+  75.3%      { transform: translate(623px, 408px) scale(0.8); }
+  77.3%      { opacity: 1; transform: translate(623px, 408px) scale(1); }
+  90%, 100%  { opacity: 0; transform: translate(650px, 420px) scale(1); }
+}
+@keyframes cursorFill {
+  0%, 5%     { opacity: 0; transform: translate(620px, 400px) scale(1); }
+  9%         { opacity: 1; transform: translate(600px, 380px) scale(1); animation-timing-function: var(--e); }
+  26%, 30.5% { opacity: 1; transform: translate(288px, 268px) scale(1); }
+  31.6%      { transform: translate(288px, 268px) scale(0.8); }
+  33.6%      { opacity: 1; transform: translate(288px, 268px) scale(1); animation-timing-function: var(--e); }
+  50%, 100%  { opacity: 0; transform: translate(330px, 330px) scale(1); }
 }
 
 /* ── Scene 1 · Sell ───────────────────────────────────────────────────── */
-.till  { position: absolute; left: 0; top: 32px; width: 264px; height: 276px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.sale  { position: absolute; left: 284px; top: 32px; width: 196px; height: 276px; padding: 16px; display: flex; flex-direction: column; }
-.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.tile  { position: relative; height: 96px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--color-line); border-radius: var(--radius-sm); background: var(--color-subtle); }
-.tapped { animation: tap 360ms var(--e) var(--t) backwards; }
-@keyframes tap { 45% { transform: scale(0.955); } }
-.sel { position: absolute; inset: -1px; border-radius: inherit; border: 1px solid var(--color-ember-line); background: var(--color-ember-wash); animation: selIn 320ms var(--e) var(--t) backwards; }
-@keyframes selIn { from { opacity: 0; } }
-.ripple { position: absolute; inset: -1px; border-radius: inherit; border: 2px solid var(--color-ember-solid); opacity: 0; animation: ripple 640ms var(--e) var(--t) forwards; pointer-events: none; }
-@keyframes ripple { from { opacity: 0.9; transform: scale(1); } to { opacity: 0; transform: scale(1.14); } }
-.tileBody { position: relative; display: flex; flex-direction: column; }
-.badge { position: absolute; right: 8px; top: 8px; width: 18px; height: 18px; border-radius: 9999px; display: grid; place-items: center; background: var(--color-ember-solid); color: var(--color-on-solid); animation: pop 380ms var(--spring) calc(var(--t) + 120ms) backwards; }
-
-.saleRows { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
-.saleRow  { height: 32px; display: flex; align-items: center; justify-content: space-between; animation: rowIn 480ms var(--e) calc(var(--t) + 140ms) backwards; }
-@keyframes rowIn { from { opacity: 0; transform: translateX(-16px) scale(0.98); } }
-.divider  { margin-top: auto; border-top: 1px dashed var(--color-strong); }
-.totalRow { display: flex; align-items: flex-end; justify-content: space-between; padding: 10px 0 12px; }
-.roll     { height: 28px; overflow: hidden; line-height: 28px; font-variant-numeric: tabular-nums; }
-.rollStrip { display: flex; flex-direction: column; transform: translateY(-84px); animation: rollTotal var(--dur) linear backwards; }
-.rollStrip > span { height: 28px; text-align: right; }
-@keyframes rollTotal {
-  0%, 22.3%   { transform: translateY(0);     animation-timing-function: var(--e); }
-  30.4%, 40.2% { transform: translateY(-28px); animation-timing-function: var(--e); }
-  48.2%, 54.5% { transform: translateY(-56px); animation-timing-function: var(--e); }
-  62.5%, 100%  { transform: translateY(-84px); }
-}
-.charge { position: relative; height: 40px; border-radius: var(--radius-sm); background: var(--color-ember-solid); color: var(--color-on-solid); display: grid; place-items: center; }
-.charge::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid var(--color-ember-solid); opacity: 0; animation: ready 900ms var(--e) 3000ms 1 forwards; }
-@keyframes ready { from { opacity: 0.8; transform: scale(1); } to { opacity: 0; transform: scale(1.14); } }
-.chargePress { animation: press 300ms var(--e) 3850ms backwards; }
+.count { position: absolute; right: 6px; top: 6px; display: grid; place-items: center; min-width: 28px; height: 28px; padding: 0 6px; border-radius: 9999px; background: var(--color-ember-solid); color: var(--color-on-solid); font-size: var(--text-base); font-weight: 600; font-variant-numeric: tabular-nums; box-shadow: var(--shadow-sm); animation: pop 380ms var(--spring) calc(var(--t) + 80ms) backwards; }
+.count > * { grid-area: 1 / 1; }
+.count1 { opacity: 0; animation: count1 var(--dur) linear both; }
+.count2 { animation: count2 var(--dur) linear both; }
+@keyframes count1 { 0%, 52% { opacity: 1; } 52.5%, 100% { opacity: 0; } }
+@keyframes count2 { 0%, 52% { opacity: 0; transform: scale(0.6); } 56%, 100% { opacity: 1; transform: scale(1); } }
+.pick { position: absolute; inset: 0; border-radius: var(--radius-card); box-shadow: inset 0 0 0 2px var(--color-ember-solid); background: color-mix(in srgb, var(--color-ember-solid) 8%, transparent); pointer-events: none; animation: fadeIn 300ms var(--e) var(--t) backwards; }
+.itemsOld, .items1, .items2 { position: absolute; left: 0; top: 0; white-space: nowrap; }
+.itemsOld { opacity: 0; animation: itemsOld var(--dur) linear both; }
+.items1 { opacity: 0; animation: items1 var(--dur) linear both; }
+.items2 { animation: items2 var(--dur) linear both; }
+@keyframes itemsOld { 0%, 26.5% { opacity: 1; } 27.5%, 100% { opacity: 0; } }
+@keyframes items1 { 0%, 27% { opacity: 0; } 28%, 51.5% { opacity: 1; } 52.5%, 100% { opacity: 0; } }
+@keyframes items2 { 0%, 52% { opacity: 0; } 53%, 100% { opacity: 1; } }
+.empty { opacity: 0; animation: emptyOut var(--dur) linear both; }
+@keyframes emptyOut { 0%, 26% { opacity: 1; } 29%, 100% { opacity: 0; } }
+.line { animation: lineIn 560ms var(--e) calc(var(--t) + 120ms) backwards; }
+@keyframes lineIn { from { opacity: 0; transform: translateX(-16px); } }
+.foot { animation: rise 560ms var(--e) var(--t) backwards; }
+.take { position: relative; animation: press 300ms var(--e) 3600ms backwards; }
+.take::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid var(--color-ember-solid); opacity: 0; animation: ready 900ms var(--e) 2900ms 1 forwards; }
+@keyframes ready { from { opacity: 0.8; transform: scale(1); } to { opacity: 0; transform: scale(1.1); } }
 @keyframes press { 45% { transform: scale(0.96); } }
-.paid { position: absolute; inset: 0; border-radius: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--color-success-solid); color: var(--color-on-solid); opacity: 0; animation: paidIn 420ms var(--e) 3900ms both; }
-@keyframes paidIn { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
-
-.cursor { position: absolute; left: 0; top: 0; z-index: 20; width: 24px; height: 24px; opacity: 0; transform-origin: 3px 2px; filter: drop-shadow(0 4px 6px color-mix(in srgb, black 45%, transparent)); animation: cursorPath var(--dur) linear both; pointer-events: none; }
-@keyframes cursorPath {
-  0%, 7%     { opacity: 0; transform: translate(470px, 334px) scale(1); }
-  10%        { opacity: 1; transform: translate(440px, 322px) scale(1); animation-timing-function: var(--e); }
-  17.9%, 19.6% { opacity: 1; transform: translate(76px, 132px) scale(1); }
-  20.8%      { transform: translate(76px, 132px) scale(0.8); }
-  22.3%      { transform: translate(76px, 132px) scale(1); animation-timing-function: var(--e); }
-  35.7%, 37.5% { transform: translate(76px, 238px) scale(1); }
-  38.5%      { transform: translate(76px, 238px) scale(0.8); }
-  40.2%      { transform: translate(76px, 238px) scale(1); animation-timing-function: var(--e); }
-  50%, 51.8% { transform: translate(196px, 238px) scale(1); }
-  52.8%      { transform: translate(196px, 238px) scale(0.8); }
-  54.5%      { transform: translate(196px, 238px) scale(1); animation-timing-function: var(--e); }
-  66.1%, 68.8% { transform: translate(388px, 276px) scale(1); }
-  69.9%      { transform: translate(388px, 276px) scale(0.8); }
-  71.4%      { opacity: 1; transform: translate(388px, 276px) scale(1); animation-timing-function: var(--e); }
-  86%, 100%  { opacity: 0; transform: translate(420px, 308px) scale(1); }
-}
 
 /* ── Scene 2 · Scan ───────────────────────────────────────────────────── */
-.ticketWrap { position: absolute; left: 65px; top: 46px; width: 350px; height: 176px; }
-.ghost { position: absolute; inset: 0; border-radius: var(--radius-md); background: var(--color-card); border: 1px solid var(--color-line); opacity: 0.55; transform: translate(-14px, 14px) rotate(-5deg) scale(0.96); animation: ghostIn 800ms var(--e) 200ms backwards; }
-@keyframes ghostIn { from { opacity: 0; transform: translate(40px, 30px) rotate(2deg) scale(0.92); } }
-.ticketEnter { position: absolute; inset: 0; animation: ticketIn 900ms var(--e) 300ms backwards; }
-@keyframes ticketIn { from { opacity: 0; transform: translate(90px, 40px) rotate(8deg) scale(0.94); } }
-.ticketShadow { position: absolute; inset: 0; filter: drop-shadow(0 18px 24px color-mix(in srgb, black 40%, transparent)); }
-.ticket {
-  position: absolute; inset: 0; display: flex;
-  background: var(--color-card); border: 1px solid var(--color-line); border-radius: var(--radius-md);
-  -webkit-mask: radial-gradient(circle 9px at 216px 0, transparent 97%, black) top / 100% 51% no-repeat, radial-gradient(circle 9px at 216px 100%, transparent 97%, black) bottom / 100% 51% no-repeat;
-  mask: radial-gradient(circle 9px at 216px 0, transparent 97%, black) top / 100% 51% no-repeat, radial-gradient(circle 9px at 216px 100%, transparent 97%, black) bottom / 100% 51% no-repeat;
-}
-.ticketMain { flex: 1; padding: 18px 18px 16px; display: flex; flex-direction: column; justify-content: space-between; }
-.stub { width: 134px; border-left: 1px dashed var(--color-strong); display: grid; place-items: center; }
-.qr { position: relative; width: 92px; height: 92px; padding: 6px; border-radius: var(--radius-sm); background: var(--color-fg); }
-.qr svg { display: block; width: 100%; height: 100%; fill: var(--color-surface); }
-.flash { position: absolute; inset: 0; border-radius: inherit; background: var(--color-success); opacity: 0; animation: flash 900ms var(--e) 2900ms both; }
-@keyframes flash { 0% { opacity: 0; } 25% { opacity: 0.4; } 100% { opacity: 0; } }
-.brackets { position: absolute; left: -10px; top: -10px; width: 112px; height: 112px; }
-.brackets svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.bracketsReady { color: var(--color-ember-solid); animation: lockOn 700ms var(--e) 1200ms both, bracketsOff 300ms var(--e) 2900ms forwards; opacity: 0; }
-@keyframes lockOn { from { opacity: 0; transform: scale(1.35); } to { opacity: 1; transform: scale(1); } }
-@keyframes bracketsOff { from { opacity: 1; } to { opacity: 0; } }
-.bracketsDone { color: var(--color-success); animation: lockOn 520ms var(--spring) 2900ms backwards; }
-.beam { position: absolute; left: -16px; right: -16px; top: 0; height: 2px; border-radius: 9999px; background: var(--color-ember-solid); box-shadow: 0 0 14px 3px color-mix(in srgb, var(--color-ember-solid) 60%, transparent); opacity: 0; animation: beamPass 1500ms linear 1500ms 1 both; }
+.frame { animation: lock 700ms var(--e) 700ms backwards; }
+@keyframes lock { from { opacity: 0.4; transform: scale(1.12); } }
+.ticketIn { position: absolute; inset: 20px; animation: ticketIn 900ms var(--e) 250ms backwards; }
+@keyframes ticketIn { from { opacity: 0; transform: translate(80px, 36px) rotate(8deg) scale(0.9); } }
+.qr { display: block; width: 100%; height: 100%; padding: 8px; border-radius: var(--radius-inner); background: var(--color-paper); box-shadow: var(--shadow-md); }
+.qr svg { display: block; width: 100%; height: 100%; fill: var(--color-ink); }
+.beam { position: absolute; left: -8px; right: -8px; top: 0; height: 2px; border-radius: 9999px; background: var(--color-ember-solid); box-shadow: 0 0 14px 3px color-mix(in srgb, var(--color-ember-solid) 60%, transparent); opacity: 0; animation: beamPass 1400ms linear 1250ms 1 forwards; }
 @keyframes beamPass {
-  0%   { opacity: 0; transform: translateY(0); }
-  8%   { opacity: 1; }
-  50%  { opacity: 1; transform: translateY(92px); animation-timing-function: var(--e); }
-  92%  { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(0); }
+  0%   { opacity: 0; transform: translateY(8px); }
+  10%  { opacity: 1; }
+  50%  { opacity: 1; transform: translateY(168px); animation-timing-function: var(--e); }
+  90%  { opacity: 1; transform: translateY(8px); }
+  100% { opacity: 0; transform: translateY(8px); }
 }
-.beamTwo { animation: beamPass 1100ms linear 1500ms 1 both; }
-.ripRing { position: absolute; left: 50%; top: 50%; width: 92px; height: 92px; margin: -46px 0 0 -46px; border-radius: 9999px; border: 2px solid var(--color-success); opacity: 0; animation: ring 1100ms var(--e) 2950ms forwards; pointer-events: none; }
-@keyframes ring { from { opacity: 0.7; transform: scale(0.7); } to { opacity: 0; transform: scale(2.6); } }
-.pillRow { position: absolute; left: 0; right: 0; top: 262px; display: grid; justify-items: center; }
-.pillRow > * { grid-area: 1 / 1; }
-.pill { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 9999px; border: 1px solid var(--color-line); background: var(--color-card); box-shadow: var(--shadow-md); }
-.pillReady { opacity: 0; animation: readyPill 2100ms var(--e) 900ms both; }
-@keyframes readyPill { 0% { opacity: 0; transform: translateY(10px); } 18%, 82% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-6px); } }
-.dotPulse { width: 8px; height: 8px; border-radius: 9999px; background: var(--color-ember-solid); animation: dotPulse 1s ease-in-out infinite alternate; }
-@keyframes dotPulse { from { opacity: 0.35; } to { opacity: 1; } }
-.pillOk { border-color: var(--color-success-line); background: var(--color-success-wash); color: var(--color-success); animation: pillPop 560ms var(--spring) 2950ms backwards; }
-@keyframes pillPop { from { opacity: 0; transform: scale(0.55); } }
-.check { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; animation: draw 420ms var(--e) 3150ms backwards; }
-@keyframes draw { from { stroke-dashoffset: 1; } }
+.field { box-shadow: inset 0 0 0 2px var(--color-ember-solid); }
+.field > * { position: absolute; left: 8px; }
+.ph { opacity: 0; color: var(--color-faint); animation: phOut var(--dur) linear both; }
+@keyframes phOut { 0%, 41% { opacity: 1; } 43%, 100% { opacity: 0; } }
+.typed { animation: fadeIn 380ms var(--e) 2000ms backwards; }
+.checkOn { animation: fadeIn 300ms var(--e) 2000ms backwards; }
+.readyOut { opacity: 0; animation: readyOut var(--dur) linear both; }
+@keyframes readyOut { 0%, 48% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.readyIn { position: absolute; left: 14px; animation: fadeIn 300ms var(--e) 2400ms backwards; }
+.logRow { animation: rise 460ms var(--e) 2550ms backwards; }
+.verdict { opacity: 0; animation: verdictIn 520ms var(--e) 3000ms forwards; }
+@keyframes verdictIn { from { opacity: 0; transform: scale(1.03); } to { opacity: 1; transform: scale(1); } }
+.mark { transform-box: fill-box; transform-origin: center; animation: markIn 420ms var(--spring) 3250ms backwards; }
+@keyframes markIn { from { opacity: 0; transform: scale(0.6); } }
 
 /* ── Scene 3 · Know ───────────────────────────────────────────────────── */
-.kpis { position: absolute; left: 0; right: 0; top: 6px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-.kpi  { min-width: 0; white-space: nowrap; height: 94px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; animation: rise 640ms var(--e) var(--t) backwards; }
 .odo  { display: inline-flex; height: 32px; line-height: 32px; font-variant-numeric: tabular-nums; }
 .odoCol { width: 1ch; height: 32px; overflow: hidden; }
 .odoStrip { display: flex; flex-direction: column; transform: translateY(calc(var(--d) * -32px)); animation: dig 1500ms var(--e) calc(var(--t) + 450ms + var(--i) * 120ms) backwards; }
 .odoStrip > span { height: 32px; }
 @keyframes dig { from { transform: translateY(0); } }
-.chart { position: absolute; left: 0; right: 0; top: 116px; height: 216px; padding: 14px 16px 0; animation: rise 700ms var(--e) 420ms backwards; }
-.legend { display: flex; gap: 14px; align-items: center; margin-left: 14px; margin-right: auto; }
-.legendDot { display: inline-block; width: 8px; height: 8px; border-radius: 9999px; margin-right: 6px; }
-.plot { position: relative; width: 448px; height: 140px; margin-top: 14px; }
-.plot svg { display: block; width: 448px; height: 140px; overflow: visible; }
-.gridLine { stroke: var(--color-hairline); stroke-width: 1; stroke-dasharray: 3 5; }
-.lastLine { fill: none; stroke: var(--color-strong); stroke-width: 1.6; stroke-dasharray: 4 5; animation: fadeIn 900ms var(--e) 600ms backwards; }
-@keyframes fadeIn { from { opacity: 0; } }
-.line { fill: none; stroke: var(--color-ember-solid); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.gridLine { stroke: var(--color-line); stroke-width: 1; stroke-dasharray: 3 4; }
+.line { fill: none; stroke: var(--color-ember-solid); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .reveal { transform-origin: 0 0; transform-box: fill-box; animation: revealX 1800ms var(--e) 800ms backwards; }
 @keyframes revealX { from { transform: scaleX(0); } }
-.endDot { fill: var(--color-ember-solid); transform-box: fill-box; transform-origin: center; animation: pop 420ms var(--spring) 2400ms backwards; }
-.endRing { fill: none; stroke: var(--color-ember-solid); stroke-width: 1.5; transform-box: fill-box; transform-origin: center; opacity: 0; animation: endRing 1800ms var(--e) 2600ms infinite; }
-@keyframes endRing { from { opacity: 0.7; transform: scale(0.6); } to { opacity: 0; transform: scale(2.6); } }
-.tip { position: absolute; right: 0; top: -30px; height: 28px; padding: 0 10px; display: inline-flex; align-items: center; gap: 8px; border-radius: var(--radius-sm); background: var(--color-fg); color: var(--color-surface); animation: tipIn 520ms var(--spring) 2550ms backwards; }
-@keyframes tipIn { from { opacity: 0; transform: translateY(8px) scale(0.92); } }
+.feedRow { animation: rowIn 520ms var(--e) var(--t) backwards; }
+@keyframes rowIn { from { opacity: 0; transform: translateX(18px); } }
 
 /* ── Scene 4 · Fill ───────────────────────────────────────────────────── */
-.cal { position: absolute; left: 0; top: 6px; width: 480px; height: 326px; padding: 18px; }
-.calHead { display: flex; align-items: baseline; justify-content: space-between; }
-.slots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
-.slot { position: relative; height: 62px; padding: 9px 11px; border-radius: var(--radius-sm); border: 1px solid var(--color-line); background: var(--color-card); display: flex; flex-direction: column; justify-content: space-between; animation: slotIn 560ms var(--e) calc(260ms + var(--i) * 50ms) backwards; }
-@keyframes slotIn { from { opacity: 0; transform: translateY(10px) scale(0.96); } }
-.slotFull { background: var(--color-subtle); }
-.slotTarget { background: var(--color-ember-wash); border-color: var(--color-ember-line); }
-.slotRow { white-space: nowrap; display: flex; align-items: center; justify-content: space-between; }
-.pips { display: flex; gap: 3px; }
-.pip  { position: relative; width: 10px; height: 5px; border-radius: 9999px; background: var(--color-line); overflow: hidden; }
-.pip i { position: absolute; inset: 0; background: var(--color-ember-solid); border-radius: inherit; }
-.pipNew i { animation: pipFill 520ms var(--spring) 2150ms backwards; transform-origin: left center; }
-@keyframes pipFill { from { transform: scaleX(0); } }
-.layer { position: absolute; inset: 0; }
-.fullLayer { animation: fullIn 460ms var(--spring) 2250ms backwards; }
-@keyframes fullIn { from { opacity: 0; transform: scale(0.92); } }
-.openLayer { opacity: 0; border-radius: inherit; border: 1.5px dashed var(--color-ember-solid); background: var(--color-card); padding: 9px 11px; display: flex; flex-direction: column; justify-content: space-between; animation: openOut 320ms var(--e) 2250ms both; }
-@keyframes openOut { from { opacity: 1; } to { opacity: 0; } }
-.targetRing { position: absolute; inset: -4px; border-radius: calc(var(--radius-sm) + 3px); border: 2px solid var(--color-ember-solid); opacity: 0; animation: tgt 1700ms var(--e) 900ms both; pointer-events: none; }
-@keyframes tgt { 0% { opacity: 0; transform: scale(1.1); } 22%, 80% { opacity: 0.9; transform: scale(1); } 100% { opacity: 0; transform: scale(1); } }
-.chipAnchor { position: absolute; inset: 0; display: grid; place-items: center; z-index: 5; pointer-events: none; }
-.chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 9999px; background: var(--color-fg); color: var(--color-surface); white-space: nowrap; opacity: 0; box-shadow: var(--shadow-md); animation: chipFly 1100ms var(--e) 1400ms both; }
-@keyframes chipFly {
-  0%   { opacity: 0; transform: translate(150px, 130px) scale(1); }
-  22%  { opacity: 1; }
-  72%  { opacity: 1; transform: translate(0, 0) scale(1); }
-  100% { opacity: 0; transform: translate(0, -4px) scale(0.6); }
-}
-.toastRow { position: absolute; left: 18px; right: 18px; bottom: 16px; display: flex; justify-content: center; }
-.toast { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 9999px; border: 1px solid var(--color-success-line); background: var(--color-success-wash); color: var(--color-success); animation: rise 560ms var(--e) 2500ms backwards; }
+.freeOut { opacity: 0; animation: freeOut var(--dur) linear both; }
+@keyframes freeOut { 0%, 31% { opacity: 1; } 33%, 100% { opacity: 0; } }
+.booked { animation: bookedIn 520ms var(--spring) calc(var(--t) + 60ms) backwards; }
+@keyframes bookedIn { from { opacity: 0; transform: scale(0.9); } }
+.toast { animation: rise 560ms var(--e) 2300ms backwards; }
 
 /* ── Caption + tabs ───────────────────────────────────────────────────── */
 .caption { animation: rise 600ms var(--e) 200ms backwards; }
