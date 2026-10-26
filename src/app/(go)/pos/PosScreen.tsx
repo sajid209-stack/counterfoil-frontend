@@ -1412,11 +1412,11 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
    *  sale. Who it is for, a discount and a promo code are asked at checkout. */
   const railPanel = (
     <>
-      <div className="flex items-center gap-tight border-b border-line px-card py-comfortable">
+      <div data-top-band className="flex h-16 shrink-0 items-center gap-tight px-card">
         <div className="min-w-0 flex-1">
-          <h2 className="text-md font-semibold text-fg">{t("cart.title")}</h2>
+          <h2 className="text-md font-semibold leading-tight text-fg">{t("cart.title")}</h2>
           {/* One atomic status — "2 items" — not a bare number read out of context. */}
-          <p role="status" aria-atomic="true" className="text-sm text-muted">{t("phoneSummary", { count: unitCount })}</p>
+          <p role="status" aria-atomic="true" className="text-sm leading-tight text-muted">{t("phoneSummary", { count: unitCount })}</p>
         </div>
         {cart.length > 0 && (
           <ActionMenu
@@ -1429,11 +1429,11 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           />
         )}
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-card">
+      <div className={cn("min-h-0 flex-1 overflow-y-auto px-card", cart.length === 0 && "flex flex-col")}>
         {cartNotice && <div className="pt-comfortable"><BlockedNotice message={cartNotice} onDismiss={() => setCartNotice(null)} /></div>}
         {cart.length === 0 ? (
-          <div className="flex flex-col items-center gap-inline px-section py-wide text-center">
-            <ShoppingBag size={24} strokeWidth={1.5} className="text-muted" aria-hidden />
+          <div className="my-auto flex flex-col items-center gap-inline px-section py-wide text-center">
+            <span aria-hidden className="mb-tight grid size-12 place-items-center rounded-full bg-subtle text-muted"><ShoppingBag size={22} strokeWidth={1.5} /></span>
             <p className="text-md font-semibold text-fg">{t("cart.noItems")}</p>
             <p className="text-sm text-muted">{t("cart.noItemsHint")}</p>
           </div>
@@ -1441,14 +1441,18 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           <ul className="divide-y divide-line">{cart.map(railLine)}</ul>
         )}
       </div>
-      <section aria-label={t("cart.barLabel")} className="flex flex-col gap-comfortable border-t border-line px-card py-section">
-        {cart.length > 0 && totalsRows}
-        {cart.length > 0 && overLimit && <Notice tone="warning" size="sm">{pt("pos.overPolicy", { limit: manualCapPct })}</Notice>}
-        <button type="button" className={primaryButton("h-13", "w-full")} onClick={() => void charge()} disabled={cart.length === 0}>
-          <Banknote size={20} strokeWidth={2} aria-hidden />
-          <span className="truncate">{t("takeAmount", { amount: formatPriceShort(dueNow, currency) })}</span>
-        </button>
-      </section>
+      {/* Nothing in the sale: no sums and no disabled ৳0 button to look broken.
+          The foot appears with the first line. */}
+      {cart.length > 0 && (
+        <section aria-label={t("cart.barLabel")} className="flex flex-col gap-comfortable border-t border-line px-card py-section">
+          {totalsRows}
+          {overLimit && <Notice tone="warning" size="sm">{pt("pos.overPolicy", { limit: manualCapPct })}</Notice>}
+          <button type="button" className={primaryButton("h-13", "w-full")} onClick={() => void charge()}>
+            <Banknote size={20} strokeWidth={2} aria-hidden />
+            <span className="truncate">{t("takeAmount", { amount: formatPriceShort(dueNow, currency) })}</span>
+          </button>
+        </section>
+      )}
     </>
   );
 
@@ -1460,9 +1464,11 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
       {/* min-w-0, or this column sizes to its own min-content and the page
           scrolls sideways: the same mechanism the dashboard was fixed with. The
           wall shows everything — there are no category chips on the till. */}
-      <div className="flex min-h-0 min-w-0 flex-col gap-comfortable rail:gap-section rail:pt-section">
-        {/* Header zone: the day · search · parked badge */}
-        <div className="flex flex-wrap items-center gap-tight rail:px-major">
+      <div className="flex min-h-0 min-w-0 flex-col gap-comfortable rail:gap-0">
+        {/* Header zone: the day · search · parked badge. On a desktop it is the
+            wall's top band: 64px, centred on the line the sidebar header and the
+            sale panel's header share (GoShell draws the hairline under all three). */}
+        <div data-top-band className="flex flex-wrap items-center gap-tight rail:h-16 rail:shrink-0 rail:flex-nowrap rail:px-major">
           {/* The day the wall is selling for: a quiet pill reading "Today · Wed
               29 Jul", and across the wall in orange once it is anything else.
               Only where something on the wall has a day to choose — a
@@ -1490,7 +1496,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               on the button and the name says it in words. */}
           {heldHere.length > 0 && <HeldButton count={heldHere.length} onClick={() => setHeldOpen(true)} />}
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto rail:px-major rail:pb-major">
+        <div className="min-h-0 flex-1 overflow-y-auto rail:px-major rail:pb-major rail:pt-section">
           {productsQ.loading ? (
             <div aria-busy="true" className="card-surface p-section"><SkeletonText lines={3} /></div>
           ) : (

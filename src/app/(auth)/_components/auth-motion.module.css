@@ -1,0 +1,28 @@
+/* Motion for the form column. Calm, short, and transform/opacity only. The
+   global reduced-motion rule collapses these to their end state. */
+.stagger > * {
+  animation: up 560ms var(--ease-counterfoil, cubic-bezier(0.32, 0.72, 0, 1)) backwards;
+}
+.stagger > *:nth-child(1) { animation-delay: 40ms; }
+.stagger > *:nth-child(2) { animation-delay: 110ms; }
+.stagger > *:nth-child(3) { animation-delay: 180ms; }
+.stagger > *:nth-child(4) { animation-delay: 250ms; }
+.stagger > *:nth-child(5) { animation-delay: 320ms; }
+.stagger > *:nth-child(6) { animation-delay: 390ms; }
+@keyframes up { from { opacity: 0; transform: translateY(10px); } }
+
+.page { animation: fade 320ms ease-out backwards; }
+@keyframes fade { from { opacity: 0; } }
+
+/* A thin ember glint sliding along the top edge on phone and tablet. */
+.strip { position: relative; height: 2px; overflow: hidden; background: var(--color-hairline); }
+.strip::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 38%;
+  background: linear-gradient(90deg, transparent, var(--color-ember-solid), transparent);
+  animation: glint 4.2s var(--ease-counterfoil, cubic-bezier(0.32, 0.72, 0, 1)) infinite;
+}
+@keyframes glint { from { transform: translateX(-100%); } to { transform: translateX(270%); } }
+

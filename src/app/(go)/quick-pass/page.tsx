@@ -97,12 +97,12 @@ export default function QuickPassPage() {
 
     {/* Phone: one column. Desktop: how long on the left, the details on the
         right, and the one orange button under them, bottom-right. */}
-    <main className="flex flex-col gap-comfortable rail:grid rail:grid-cols-2 rail:items-start rail:gap-section">
+    <main className="flex flex-col gap-comfortable rail:grid rail:grid-cols-2 rail:items-stretch rail:gap-section">
       <GoCard title={t("duration")}>
         {/* The till's stepper, not a row of chips — same control for the same
             decision, and it walks the increment the booking is configured
             with instead of a list this screen invented. */}
-        <div className="flex items-center gap-tight">
+        <div className="flex items-center gap-tight rail:my-auto">
           <button type="button" aria-label={t("shorter")} disabled={prev == null} onClick={() => prev != null && pickDuration(prev)} className={minusCls}>−</button>
           <div className="flex min-w-0 flex-1 flex-col items-center justify-center py-tight">
             <span className="text-lg font-semibold">{formatDuration(duration)}</span>

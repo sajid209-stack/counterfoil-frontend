@@ -18613,3 +18613,38 @@ Owner: add a sign-out option in Settings, and research and redesign the sign-in 
 - No social sign-in buttons and no Privacy or Terms links, because none of those exist yet.
 - Verified on a production build: the auth harness passed 212/212 at four widths, in dark and in Bangla (refusals, the eye toggle, both sign-up steps, code boxes, the countdown, routing, no x-scroll, 44px targets, contrast). `settings-nav` passed 53/53. The phone audit was clean. `tsc`, `lint:tokens`, `eslint` and i18n are clean.
 - Open: the new Bangla strings are drafts.
+
+## An animated sign-in, and a tidier till desktop (2026-10-26)
+
+Owner, with three screenshots: make sign-in more modern and replace the product picture with an animation, fixing the logo stranded in the corner; fix the till's desktop design flaws (three header strips at different heights, a crowded sidebar foot covering Settings); and tidy the sidebar's long list of secondary pages.
+
+### Sign-in (`src/app/(auth)/_components/ProductStory.tsx`, `scenes.tsx`, CSS modules)
+- **The right panel is now an animated product story built in code** (React, CSS keyframes and SVG; no video or libraries). Four scenes loop:
+  - **Sell:** a cursor taps tickets, they join the sale, the total rolls up, and the button turns to Paid.
+  - **Scan:** a ticket slides in, a scan beam passes, and "Let in ✓" appears.
+  - **Know:** the figures count up and a chart draws itself.
+  - **Fill:** a slot grid fills, a booking lands in 11:30 AM, and the slot reads "Full".
+- **How the loop runs:**
+  - The progress bar is the clock: each segment's fill animation advances the scene, and clicking a segment jumps to it. There are no timers and no setState in effects.
+  - It pauses while the tab is hidden or the pointer rests on the stage.
+  - With reduced motion, a static scene is shown instead.
+  - Captions change with each scene.
+- **Left column:** the logo now sits above the heading inside the form card; the field focus gets a soft halo; the divider is a perforation.
+- The old screenshot file is removed. Scene times use the 12-hour clock.
+
+### Till desktop (`(go)/_components/shell/`, `GoShell`, `GoPage`, `pos/PosScreen.tsx`, `sell`)
+- **One 64px header band across all three columns:** the sidebar head, the wall toolbar and the "Current sale" head. Page headers use it too (`GoPageHeader`), with one hairline beneath.
+- **Sidebar:**
+  - The four main pages, then one collapsible **More** group (My sales, My requests, Quick pass, Reservations, Settings). It is closed by default, opens itself on those pages, and its state is remembered (`cf_go_more`).
+  - The duplicate Shift entry is gone; Help is in the account menu.
+  - The foot is a fixed 113px (shift line, then the person with the page-state button), and the nav scrolls, so nothing is covered at 1366×768 or 1920×870.
+- **Sale panel:** an empty sale no longer shows a disabled "Take ৳0" — its foot appears only once there is a line. `/sell` gets the same header band, and `/quick-pass` gets equal-height cards.
+
+### Verified on a production build
+- auth 212/212, motion 15/15, shell 109/109, and the till list of 40 runs all passed.
+- The 59-route sweep is clean at 1440. At 390 it found one real fault: the focus halo spilled 4px past the page on sign-in and forgot-password. It is fixed, and both pages are re-checked with no overflow.
+- `tsc`, `lint:tokens` and i18n are clean; `eslint` shows only PosScreen's documented baseline.
+
+### Open
+- Bangla scene strings are drafts.
+- The checkout dialog, booking drawer, `/profile`, `/my-requests` and `/shift/open` had no second designer pass this round.

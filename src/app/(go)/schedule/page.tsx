@@ -600,7 +600,7 @@ export default function SchedulePage() {
           One row of controls (which week, back to today, the calendar) over one
           strip of days that scrolls sideways. Every pixel above the board is an
           hour the cashier cannot see, so nothing here takes a line of its own. */}
-      <section className="flex flex-col gap-tight">
+      <section className="flex flex-col gap-tight rail:gap-section">
         <DayStrip
           title={t("title")}
           date={date}

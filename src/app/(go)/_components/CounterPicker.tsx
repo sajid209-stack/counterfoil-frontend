@@ -130,8 +130,8 @@ export function CounterPicker({
         className={
           side
             ? cn(
-                "flex h-14 w-full items-center rounded-control text-left transition-colors duration-quick hover:bg-muted-wash active:bg-muted-wash",
-                iconOnly ? "justify-center" : "gap-comfortable px-tight",
+                "flex h-12 w-full items-center rounded-control text-left transition-colors duration-quick hover:bg-muted-wash active:bg-muted-wash",
+                iconOnly ? "justify-center" : "gap-tight px-inline",
                 open && "bg-muted-wash",
               )
             : "flex h-11 max-w-full items-center gap-1 rounded-full px-3 text-left transition-colors duration-quick hover:bg-muted-wash active:bg-muted-wash"

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
-import { Check, ChevronsUpDown, Palette, UserRound, Users } from "lucide-react";
+import { Check, ChevronsUpDown, CircleHelp, Palette, UserRound, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { TILLS, tillFor } from "@/lib/tills";
@@ -30,10 +30,13 @@ export function AccountMenu({
   name,
   role,
   iconOnly,
+  onHelp,
 }: {
   name: string;
   role: string | undefined;
   iconOnly: boolean;
+  /** Opens the help dialog (Help lives here, not in the sidebar list). */
+  onHelp: () => void;
 }) {
   const t = useTranslations("nav");
   const tp = useTranslations("pos");
@@ -191,6 +194,10 @@ export function AccountMenu({
             )}
 
             <div className="mt-inline border-t border-hairline pt-inline">
+              <button type="button" role="menuitem" tabIndex={-1} aria-haspopup="dialog" onClick={() => choose(onHelp)} className={itemClass}>
+                <CircleHelp size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
+                {t("help")}
+              </button>
               <button type="button" role="menuitem" tabIndex={-1} onClick={() => choose(() => router.push("/design-system?product=go"))} className={itemClass}>
                 <Palette size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
                 {t("designSystem")}

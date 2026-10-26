@@ -2,7 +2,7 @@ export function AuthHeading({ title, lead, eyebrow }: { title: string; lead?: Re
   return (
     <header className="flex flex-col gap-tight">
       {eyebrow}
-      <h1 className="text-2xl font-semibold tracking-title text-fg">{title}</h1>
+      <h1 className="text-3xl font-semibold tracking-title text-fg">{title}</h1>
       {lead && <p className="text-base text-muted">{lead}</p>}
     </header>
   );

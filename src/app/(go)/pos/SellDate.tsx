@@ -44,7 +44,7 @@ export function SellDateBar({
   return (
     <>
       {away ? (
-        <div className="flex w-full items-center gap-tight rounded-card bg-ember-solid p-1 pl-comfortable text-on-solid" data-sell-date="away">
+        <div className="flex w-full items-center gap-tight rounded-card bg-ember-solid p-1 pl-comfortable text-on-solid rail:w-auto rail:min-w-0 rail:shrink" data-sell-date="away">
           <button
             type="button"
             onClick={() => setOpen(true)}

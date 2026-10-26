@@ -25,7 +25,7 @@ export function GoPage({
   return (
     <div
       className={cn(
-        "w-full px-section pt-tight rail:px-major rail:pt-section rail:pb-major",
+        "w-full px-section pt-tight rail:px-major rail:pt-0 rail:pb-major",
         width === "wide" && "rail:mx-auto rail:max-w-[75rem]", // ds-exception: page measure, not a spacing step
         width === "narrow" && "rail:mx-auto rail:max-w-[55rem]", // ds-exception: page measure, not a spacing step
         className,
@@ -57,10 +57,10 @@ export function GoPageHeader({
   className?: string;
 }) {
   return (
-    <header className={cn("mb-section flex flex-wrap items-end justify-between gap-x-section gap-y-tight rail:mb-major", className)}>
+    <header className={cn("mb-section flex flex-wrap items-end justify-between gap-x-section gap-y-tight rail:min-h-16 rail:items-center rail:mb-major", className)}>
       <div className="min-w-0">
-        <h1 className="text-xl font-semibold tracking-title text-fg rail:text-2xl">{title}</h1>
-        {subtitle && <p className="mt-inline text-sm text-muted">{subtitle}</p>}
+        <h1 className="text-xl font-semibold tracking-title text-fg">{title}</h1>
+        {subtitle && <p className="mt-inline text-sm text-muted rail:mt-0.5">{subtitle}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-tight">{actions}</div>}
     </header>

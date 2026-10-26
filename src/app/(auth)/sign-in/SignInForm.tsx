@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Button, Checkbox } from "@/components/ui";
 import { AuthField } from "../_components/AuthField";
 import { AuthHeading, linkClass, quietLinkClass } from "../_components/AuthHeading";
+import m from "../_components/auth-motion.module.css";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -34,7 +35,7 @@ export function SignInForm() {
   };
 
   return (
-    <form onSubmit={submit} noValidate className="flex flex-col gap-major">
+    <form onSubmit={submit} noValidate className={`flex flex-col gap-major ${m.stagger}`}>
       <AuthHeading title={t("title")} lead={t("lead")} />
 
       <div className="flex flex-col gap-section">
@@ -64,7 +65,7 @@ export function SignInForm() {
 
       <Button type="submit" fullWidth size="lg" loading={loading}>{t("submit")}</Button>
 
-      <div className="flex flex-col items-center gap-inline border-t border-hairline pt-major text-center text-sm text-muted">
+      <div className="flex flex-col items-center gap-inline border-t border-dashed border-line pt-major text-center text-sm text-muted">
         <p>
           {t("noAccount")}{" "}
           <Link href="/sign-up" className="font-medium text-brand-foreground underline-offset-4 hover:underline">{t("createAccount")}</Link>

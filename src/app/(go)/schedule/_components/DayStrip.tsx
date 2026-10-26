@@ -156,8 +156,8 @@ export function DayStrip({
 
   return (
     <>
-      <div className="flex items-center gap-inline rail:gap-comfortable">
-        {title ? <h1 className="mr-section hidden shrink-0 text-2xl font-semibold tracking-title text-fg rail:block">{title}</h1> : null}
+      <div data-top-band className="flex items-center gap-inline rail:h-16 rail:gap-comfortable">
+        {title ? <h1 className="mr-section hidden shrink-0 text-xl font-semibold tracking-title text-fg rail:block">{title}</h1> : null}
         <button type="button" onClick={() => pick(shiftDay(date, -7), true)} aria-label={t("prevWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card shadow-card hover:bg-muted-wash">
           <ChevronLeft size={20} strokeWidth={2} aria-hidden />
         </button>

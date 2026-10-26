@@ -46,8 +46,9 @@ export function AuthField({
         <label htmlFor={id} className="text-sm font-medium text-fg">{label}</label>
         {labelAside}
       </div>
+      <div className="relative isolate">
       {isPw ? (
-        <div data-focus-host="" className={cn(controlShellClass(!!error, true), "items-center")}>
+        <div data-focus-host="" className={cn(controlShellClass(!!error, true), "peer items-center")}>
           <input
             id={id}
             {...input}
@@ -66,8 +67,10 @@ export function AuthField({
           </button>
         </div>
       ) : (
-        <input id={id} {...input} {...described} type={type} className={controlClass(!!error)} />
+        <input id={id} {...input} {...described} type={type} className={cn(controlClass(!!error), "peer")} />
       )}
+      {!error && <span aria-hidden className="pointer-events-none absolute -inset-1 -z-10 rounded-md bg-ember-wash max-sm:inset-x-0 opacity-0 transition-opacity duration-standard ease-counterfoil peer-focus-within:opacity-100" />}
+      </div>
       {below}
       {error ? (
         <p id={msgId} className="flex items-start gap-inline text-sm text-danger">

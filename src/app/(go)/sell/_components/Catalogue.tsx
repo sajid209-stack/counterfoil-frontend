@@ -100,7 +100,7 @@ export function Catalogue({
   return (
     <div className="flex min-h-0 min-w-0 flex-col gap-comfortable">
       {/* On a desktop the wall scrolls under its own toolbar, which stays put. */}
-      <div className="flex items-center gap-tight rail:sticky rail:-top-section rail:z-10 rail:-mx-major rail:-mt-section rail:bg-surface rail:px-major rail:pb-comfortable rail:pt-section">
+      <div data-top-band className="flex items-center gap-tight rail:sticky rail:top-0 rail:z-10 rail:-mx-major rail:mb-comfortable rail:h-16 rail:shrink-0 rail:bg-surface rail:px-major">
         <div
           data-focus-host
           className="card-surface flex h-11 min-w-0 flex-1 items-center gap-tight rounded-full px-comfortable focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember"

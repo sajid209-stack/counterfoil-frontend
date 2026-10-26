@@ -198,6 +198,8 @@ export default function SellPage() {
      a phone — and it must exist in exactly ONE of them at a time (two copies
      in the DOM means two search fields and the hidden one first). */
   const wide = useMediaQuery("(min-width: 64rem)");
+  /* The desktop (the `rail:` variant): sidebar, wall and a docked sale panel. */
+  const rail = useMediaQuery("(min-width: 64rem) and (orientation: landscape)");
 
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -776,10 +778,15 @@ export default function SellPage() {
       <h1 className="sr-only">{t("srTitle")}</h1>
 
       {/* The wall, as a column of its own on a tablet. */}
-      {wide && <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden rail:px-major rail:pb-major rail:pt-section">{catalogue}</div>}
+      {wide && <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden rail:px-major rail:pb-major rail:pt-0">{catalogue}</div>}
 
       {/* The sale — one scroll, ending in the money. */}
-      <div className="flex min-h-0 min-w-0 flex-col rail:border-l rail:border-line">
+      <div className="flex min-h-0 min-w-0 flex-col rail:border-l rail:border-line rail:bg-card">
+        {/* The sale panel's header: the 64px band the sidebar header and the wall
+            toolbar share, so the three read as one line across the screen. */}
+        <div data-top-band className="hidden h-16 shrink-0 items-center px-card rail:flex">
+          <h2 className="text-md font-semibold text-fg">{tp("cart.title")}</h2>
+        </div>
         <div className="flex flex-col gap-comfortable pb-44 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-0 rail:px-card rail:pt-section">
           {/* Phone: the wall lives here, above the sale. */}
           {!wide && (
@@ -1076,7 +1083,8 @@ export default function SellPage() {
 
         {/* The one thing that never scrolls away: the next decision, with the
             money in it. On a phone it clears the Go tab bar. */}
-        {bar}
+        {/* Nothing in the sale on a desktop: no disabled pay button to look broken. */}
+        {!(rail && saleEmpty) && bar}
       </div>
 
       <HeldSheet open={heldOpen && heldHere.length > 0} holds={heldHere} nameOf={heldName} onClose={() => setHeldOpen(false)} onSell={sellHeld} onPutBack={putBackHeld} />

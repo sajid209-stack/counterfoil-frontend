@@ -58,3 +58,46 @@ export function setRailCollapsed(next: boolean) {
   }
   window.dispatchEvent(new Event(EVENT));
 }
+
+/* ── The "More" group, remembered per browser ───────────────────────────────
+   The sidebar's secondary pages sit under one collapsible group, closed until
+   someone opens it (or the current page is inside it). Same shape as the fold:
+   a store read with useSyncExternalStore, memory as the fallback when storage
+   throws. */
+const MORE_KEY = "cf_go_more";
+const MORE_EVENT = "cf-go-more";
+let moreMemory: boolean | null = null;
+
+function readMore(): boolean {
+  try {
+    const v = localStorage.getItem(MORE_KEY);
+    if (v !== null) return v === "1";
+  } catch {
+    /* fall through to the in-memory choice */
+  }
+  return moreMemory ?? false;
+}
+
+function subscribeMore(cb: () => void) {
+  window.addEventListener(MORE_EVENT, cb);
+  window.addEventListener("storage", cb);
+  return () => {
+    window.removeEventListener(MORE_EVENT, cb);
+    window.removeEventListener("storage", cb);
+  };
+}
+
+/** Whether the person left the "More" group open. Closed on the server. */
+export function useMoreOpen(): boolean {
+  return useSyncExternalStore(subscribeMore, readMore, () => false);
+}
+
+export function setMoreOpen(next: boolean) {
+  moreMemory = next;
+  try {
+    localStorage.setItem(MORE_KEY, next ? "1" : "0");
+  } catch {
+    /* kept in memory above */
+  }
+  window.dispatchEvent(new Event(MORE_EVENT));
+}
