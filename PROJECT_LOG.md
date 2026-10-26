@@ -18663,3 +18663,10 @@ Owner: the sign-in form and fields are too large, and the motion should look lik
   - **Fill** mirrors Go `/schedule`: lanes against hours, where a free 2:00 PM cell becomes a booked block, then a toast confirms it.
 - Verified on a production build: auth 212/212, motion 15/15, and the 59-route sweep clean at 390 and 1440. `tsc`, `lint:tokens`, `eslint` and i18n are clean.
 - Open: the mini scenes use 11–12px decorative text (`aria-hidden`); the Bangla strings are drafts.
+
+## Sign-in card: smaller, centred, one-line footer (2026-10-26)
+
+Owner: the card should be a standard desktop size and centred, and the footer should drop the language switch and the start-page link, leaving only "© Counterfoil 2026" centred.
+- The card is 384px wide (`md:max-w-sm`) with 28px padding. The logo is 20px and centred, and the heading block (step indicator, title at 20px, lead) is centred on every auth page.
+- The footer reads only "© Counterfoil 2026", centred. `auth.shell.start` is removed. The language switch now lives only in the phone and tablet top bar, so a desktop has no switch before sign-in (the owner's call).
+- Verified: the card is centred in its column (offset 0) at 1440, 1920 and 390, with no x-scroll. auth 212/212 and motion 15/15 pass; `lint:tokens`, `eslint` and i18n are clean.

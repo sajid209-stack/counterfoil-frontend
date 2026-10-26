@@ -1,8 +1,8 @@
 export function AuthHeading({ title, lead, eyebrow }: { title: string; lead?: React.ReactNode; eyebrow?: React.ReactNode }) {
   return (
-    <header className="flex flex-col gap-1.5">
+    <header className="flex flex-col items-center gap-1.5 text-center">
       {eyebrow}
-      <h1 className="text-2xl font-semibold tracking-title text-fg">{title}</h1>
+      <h1 className="text-xl font-semibold tracking-title text-fg">{title}</h1>
       {lead && <p className="text-sm text-muted">{lead}</p>}
     </header>
   );
