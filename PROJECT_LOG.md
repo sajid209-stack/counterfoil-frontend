@@ -18595,3 +18595,21 @@ Owner, with a screenshot of the rail: Refunds and Write-offs become sub-menus of
 - `nav.ts`: Orders' children are Issued orders, Refunds, Write-offs. The routes are unchanged.
 - Counts: each child keeps its own waiting count, shown on its row in the rail, the collapsed-rail flyout and the phone menu. While the Orders group is closed, Orders carries their sum (`badgeCount` in `navBadges.tsx`): a pill on the open rail and the phone menu, a corner count on the collapsed rail, and the words in its accessible name.
 - Verified: the menu harness `sn/nav-adapted` 201/201, updated for the new order (backup `nav-adapted.pre-ordersub.mjs`); `fixC/static` 59/59; the phone shell probe 49/49; and the phone audit with hidden 0, under-44 0, clipped 0, errors 0. `tsc`, `lint:tokens`, and `eslint` (only the known OsShell error) are clean.
+
+## Sign out in Settings, and a new sign-in and sign-up (2026-10-26)
+
+Owner: add a sign-out option in Settings, and research and redesign the sign-in and sign-up pages, modern UI.
+- **Sign out in Settings**: on desktop, a "Sign out" row in soft-danger text sits under the signed-in person at the foot of the Settings column (`SettingsChrome`). On a phone, a last card in the Settings section sheet (`SettingsSheetList`). Both go to `/sign-in` and carry `data-settings-signout`.
+- **One auth shell** for sign-in, sign-up, forgot password, reset and invite (`src/app/(auth)/layout.tsx`, `_components/`).
+  - From 1024px it is a 50/50 split. On the left: a calm form column, with the logo, the form at max-w-sm, and a footer holding the start-page link and the language picker. On the right: a brand panel that is dark in both modes, with one line, three proof points without figures, and a fresh capture of the current dashboard (`_components/dashboard-dark.jpg`).
+  - Below 1024px it is the form only, with the logo and language picker in the top bar, so Bangla stays reachable before sign-in.
+- **Sign in**:
+  - Fields: email, and a password with a show/hide button and "Forgot password?" on the label row. "Keep me signed in" sits below.
+  - Refusals appear in words beside each field. A valid sign-in shows a loading state, then goes to `/dashboard` (demo).
+  - Below the form: "Create an account" and "Staff at a counter? Sign in with your PIN", which goes to `/login`.
+- **Sign up**:
+  - Step 1 of 2: name, business name, work email, and a password with a four-segment strength meter in words.
+  - Step 2: six code boxes. Paste fills them, typing moves forward and backspace moves back. Resend unlocks after 30 seconds. "Change email" returns to the form with its values kept. Confirm goes to `/onboarding`.
+- No social sign-in buttons and no Privacy or Terms links, because none of those exist yet.
+- Verified on a production build: the auth harness passed 212/212 at four widths, in dark and in Bangla (refusals, the eye toggle, both sign-up steps, code boxes, the countdown, routing, no x-scroll, 44px targets, contrast). `settings-nav` passed 53/53. The phone audit was clean. `tsc`, `lint:tokens`, `eslint` and i18n are clean.
+- Open: the new Bangla strings are drafts.

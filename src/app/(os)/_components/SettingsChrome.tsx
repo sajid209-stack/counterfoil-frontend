@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -148,6 +148,16 @@ export function SettingsChrome({ open, onClose }: { open: boolean; onClose: () =
               </>
             )}
           </span>
+        </Link>
+        {/* The way out of the account, last and quiet: under the person it
+            signs out, in the soft-danger text a destructive row uses. */}
+        <Link
+          href="/sign-in"
+          data-settings-signout
+          className="mx-comfortable -mt-tight mb-comfortable flex h-9 shrink-0 items-center gap-comfortable rounded-control px-comfortable text-sm font-medium text-danger-soft-fg transition-colors duration-quick hover:bg-danger-soft [@media(pointer:coarse)]:h-11"
+        >
+          <LogOut size={16} strokeWidth={1.75} aria-hidden className="ml-tight shrink-0" />
+          {t("signOut")}
         </Link>
       </aside>
 

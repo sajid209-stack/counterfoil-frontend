@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { SETTINGS_GROUPS, isCurrentSettingsHref, type SettingsItemKey } from "../../settings/_lib/nav";
@@ -34,6 +35,7 @@ export function SettingsSheetList({
   onNavigate: () => void;
 }) {
   const t = useTranslations("settings");
+  const tNav = useTranslations("nav");
   return (
     <nav
       aria-label={t("nav.label")}
@@ -76,6 +78,22 @@ export function SettingsSheetList({
           </ul>
         </section>
       ))}
+      {/* Last, on its own: the way out of the account. */}
+      <ul className="card-surface flex flex-col p-1.5">
+        <li>
+          <Link
+            href="/sign-in"
+            data-settings-signout
+            onClick={onNavigate}
+            className="flex min-h-12 items-center gap-comfortable rounded-md px-comfortable py-1 text-md font-medium text-danger-soft-fg transition-colors duration-quick active:bg-danger-soft"
+          >
+            <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-danger-soft">
+              <LogOut size={18} strokeWidth={1.75} />
+            </span>
+            {tNav("signOut")}
+          </Link>
+        </li>
+      </ul>
     </nav>
   );
 }

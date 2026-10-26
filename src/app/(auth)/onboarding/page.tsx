@@ -32,10 +32,10 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="w-full max-w-md card-surface p-card">
+    <div className="w-full">
       <p className="text-sm font-medium text-brand-foreground">{t("eyebrow")}</p>
-      <h1 className="type-h1 mt-inline text-2xl">{t("title")}</h1>
-      <p className="type-body mt-tight text-sm text-muted">{t("lead")}</p>
+      <h1 className="mt-inline text-2xl font-semibold tracking-title">{t("title")}</h1>
+      <p className="mt-tight text-base text-muted">{t("lead")}</p>
 
       <div className="mt-major flex flex-col gap-section">
         <FormField

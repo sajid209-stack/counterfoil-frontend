@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, FormField } from "@/components/ui";
+import { Button } from "@/components/ui";
+import { AuthField } from "../../_components/AuthField";
+import { AuthHeading } from "../../_components/AuthHeading";
 
 /* Accepting an invitation. The token is read by the (future) auth call, not
    shown: it used to be printed under the heading, which is a developer's line
@@ -18,7 +20,8 @@ export default function InviteAcceptPage() {
   const shortErr = (tried || pw.length > 0) && pw.length < 8 ? t("tooShort") : undefined;
   const matchErr = (tried || pw2.length > 0) && pw2 !== pw ? t("mismatch") : undefined;
 
-  const activate = () => {
+  const activate = (ev: React.FormEvent) => {
+    ev.preventDefault();
     if (pw.length < 8 || pw !== pw2) {
       setTried(true);
       return;
@@ -27,19 +30,13 @@ export default function InviteAcceptPage() {
   };
 
   return (
-    <div className="card-surface p-card">
-      <p className="text-sm font-medium text-brand-foreground">Counterfoil</p>
-      <h1 className="type-h1 mt-inline text-2xl">{t("title")}</h1>
-      <p className="type-body mt-tight text-sm text-muted">{t("lead")}</p>
-
-      <div className="mt-major flex flex-col gap-section">
-        <FormField label={t("password")} variant="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} error={shortErr} />
-        <FormField label={t("repeat")} variant="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} error={matchErr} />
+    <form onSubmit={activate} noValidate className="flex flex-col gap-major">
+      <AuthHeading title={t("title")} lead={t("lead")} />
+      <div className="flex flex-col gap-section">
+        <AuthField label={t("password")} type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} error={shortErr} />
+        <AuthField label={t("repeat")} type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} error={matchErr} />
       </div>
-
-      <Button fullWidth size="lg" className="mt-major" onClick={activate}>
-        {t("submit")}
-      </Button>
-    </div>
+      <Button type="submit" fullWidth size="lg">{t("submit")}</Button>
+    </form>
   );
 }

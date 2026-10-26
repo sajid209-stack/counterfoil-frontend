@@ -4,7 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, FormField, useToast } from "@/components/ui";
+import { TimerOff, ShieldCheck } from "lucide-react";
+import { Button, useToast } from "@/components/ui";
+import { AuthField } from "../../_components/AuthField";
+import { AuthHeading } from "../../_components/AuthHeading";
 
 // Set a new password. Expired or used tokens get a clear state, not an error.
 export default function ResetPasswordPage() {
@@ -19,9 +22,11 @@ export default function ResetPasswordPage() {
   const dead = token === "expired" || token === "used";
   if (dead) {
     return (
-      <div className="card-surface flex flex-col gap-section p-card text-center">
-        <h1 className="type-h1 text-2xl">{token === "used" ? t("usedTitle") : t("expiredTitle")}</h1>
-        <p className="type-body text-sm text-muted">{token === "used" ? t("usedLead") : t("expiredLead")}</p>
+      <div className="flex flex-col gap-major">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-warning-wash text-warning">
+          {token === "used" ? <ShieldCheck size={24} aria-hidden /> : <TimerOff size={24} aria-hidden />}
+        </span>
+        <AuthHeading title={token === "used" ? t("usedTitle") : t("expiredTitle")} lead={token === "used" ? t("usedLead") : t("expiredLead")} />
         <Link href="/forgot-password"><Button size="lg" fullWidth>{t("again")}</Button></Link>
       </div>
     );
@@ -32,7 +37,8 @@ export default function ResetPasswordPage() {
   const shortErr = (tried || pw.length > 0) && pw.length < 8 ? t("tooShort") : undefined;
   const matchErr = (tried || pw2.length > 0) && pw2 !== pw ? t("mismatch") : undefined;
 
-  const save = () => {
+  const save = (ev: React.FormEvent) => {
+    ev.preventDefault();
     if (pw.length < 8 || pw !== pw2) {
       setTried(true);
       return;
@@ -42,14 +48,13 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="card-surface flex flex-col gap-section p-card">
-      <div>
-        <h1 className="type-h1 text-2xl">{t("title")}</h1>
-        <p className="type-body mt-tight text-sm text-muted">{t("lead")}</p>
+    <form onSubmit={save} noValidate className="flex flex-col gap-major">
+      <AuthHeading title={t("title")} lead={t("lead")} />
+      <div className="flex flex-col gap-section">
+        <AuthField label={t("password")} type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} error={shortErr} />
+        <AuthField label={t("repeat")} type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} error={matchErr} />
       </div>
-      <FormField label={t("password")} variant="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} error={shortErr} />
-      <FormField label={t("repeat")} variant="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} error={matchErr} />
-      <Button size="lg" fullWidth onClick={save}>{t("submit")}</Button>
-    </div>
+      <Button type="submit" size="lg" fullWidth>{t("submit")}</Button>
+    </form>
   );
 }

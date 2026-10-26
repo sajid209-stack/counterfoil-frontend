@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { MailCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button, FormField } from "@/components/ui";
+import { Button } from "@/components/ui";
+import { AuthField } from "../_components/AuthField";
+import { AuthHeading, linkClass, quietLinkClass } from "../_components/AuthHeading";
 
 // Account recovery — the response NEVER reveals whether an account exists.
 export default function ForgotPasswordPage() {
@@ -14,20 +17,25 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="card-surface flex flex-col gap-section p-card text-center">
-        <h1 className="type-h1 text-2xl">{t("sentTitle")}</h1>
-        <p className="type-body text-sm text-muted">{t("sentLead", { contact: contact.trim() })}</p>
+      <div className="flex flex-col gap-major">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-success-wash text-success">
+          <MailCheck size={24} aria-hidden />
+        </span>
+        <AuthHeading title={t("sentTitle")} lead={t("sentLead", { contact: contact.trim() })} />
         <p className="text-sm text-muted">{t("sentHelp")}</p>
-        <Link href="/sign-in" className="inline-flex min-h-11 items-center justify-center text-sm text-brand-foreground underline-offset-4 hover:underline">{t("back")}</Link>
-        {/* demo shortcut to the reset screen */}
-        <Link href="/reset/demo-token" className="text-xs text-muted hover:text-fg">{t("demo")}</Link>
+        <div className="flex flex-col items-start gap-inline">
+          <Link href="/sign-in" className={linkClass}>{t("back")}</Link>
+          {/* demo shortcut to the reset screen */}
+          <Link href="/reset/demo-token" className={quietLinkClass}>{t("demo")}</Link>
+        </div>
       </div>
     );
   }
 
   /* The button is never greyed out: pressed with nothing typed, it says what
      is missing beside the field, which a disabled button cannot. */
-  const send = () => {
+  const send = (ev: React.FormEvent) => {
+    ev.preventDefault();
     if (!contact.trim()) {
       setMissing(true);
       return;
@@ -36,22 +44,19 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="card-surface flex flex-col gap-section p-card">
-      <div>
-        <h1 className="type-h1 text-2xl">{t("title")}</h1>
-        <p className="type-body mt-tight text-sm text-muted">{t("lead")}</p>
-      </div>
-      <FormField
+    <form onSubmit={send} noValidate className="flex flex-col gap-major">
+      <AuthHeading title={t("title")} lead={t("lead")} />
+      <AuthField
         label={t("contact")}
+        name="contact"
         placeholder={t("contactPlaceholder")}
         value={contact}
         autoComplete="username"
         onChange={(e) => { setContact(e.target.value); setMissing(false); }}
-        onKeyDown={(e) => { if (e.key === "Enter") send(); }}
         error={missing ? t("contactMissing") : undefined}
       />
-      <Button size="lg" fullWidth onClick={send}>{t("submit")}</Button>
-      <Link href="/sign-in" className="inline-flex min-h-11 items-center justify-center text-sm text-muted hover:text-fg">{t("back")}</Link>
-    </div>
+      <Button type="submit" size="lg" fullWidth>{t("submit")}</Button>
+      <Link href="/sign-in" className={quietLinkClass + " self-center"}>{t("back")}</Link>
+    </form>
   );
 }
