@@ -57,7 +57,7 @@ export function GoPageHeader({
   className?: string;
 }) {
   return (
-    <header className={cn("mb-section flex flex-wrap items-end justify-between gap-x-section gap-y-tight rail:min-h-16 rail:items-center rail:mb-major", className)}>
+    <header className={cn("mb-section flex flex-wrap items-end justify-between gap-x-section gap-y-tight rail:min-h-16 rail:items-center rail:mb-section", className)}>
       <div className="min-w-0">
         <h1 className="text-xl font-semibold tracking-title text-fg">{title}</h1>
         {subtitle && <p className="mt-inline text-sm text-muted rail:mt-0.5">{subtitle}</p>}

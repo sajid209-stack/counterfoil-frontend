@@ -188,9 +188,9 @@ export function DesktopSidebar({
       )}
     >
       {/* The header band: the counter — the first row, outside the scroll so its
-          list can open — and, from xl, the fold. 64px with its own hairline, the
+          list can open — and, from xl, the fold. 64px, no rule under it: the
           same band the wall toolbar and the sale panel's header sit in. */}
-      <div data-top-band className="flex h-16 shrink-0 items-center gap-inline border-b border-hairline px-tight">
+      <div data-top-band className="flex h-16 shrink-0 items-center gap-inline px-tight">
         <div className="min-w-0 flex-1">{rail && <CounterPicker saleCount={saleCount} variant="sidebar" iconOnly={iconOnly} />}</div>
         {!iconOnly && foldButton}
       </div>

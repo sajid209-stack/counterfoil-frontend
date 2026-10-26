@@ -18670,3 +18670,13 @@ Owner: the card should be a standard desktop size and centred, and the footer sh
 - The card is 384px wide (`md:max-w-sm`) with 28px padding. The logo is 20px and centred, and the heading block (step indicator, title at 20px, lead) is centred on every auth page.
 - The footer reads only "© Counterfoil 2026", centred. `auth.shell.start` is removed. The language switch now lives only in the phone and tablet top bar, so a desktop has no switch before sign-in (the owner's call).
 - Verified: the card is centred in its column (offset 0) at 1440, 1920 and 390, with no x-scroll. auth 212/212 and motion 15/15 pass; `lint:tokens`, `eslint` and i18n are clean.
+
+## Till desktop header: no rule, a floating toolbar (2026-10-26)
+
+Owner: remove the line under the till's header and make the header smoother.
+- The full-width hairline at 64px is gone: the `rail:before:` line on the content column in `GoShell` and the sidebar head's bottom border. The header now separates by surface:
+  - the sidebar is white chrome;
+  - the wall and page headers sit on paper;
+  - the sale panel is a white surface.
+- The wall toolbar (date, search, Held: one family of 44px pills on one centre line) is a glass bar, `bg-surface/80` with a backdrop blur. A soft shadow fades in only once the wall scrolls; the scroll handler writes `data-scrolled` through a ref (no state). `GoPageHeader`'s desktop bottom gap is 16px.
+- Verified on the dev server: shell chk 109/109, pos5 144/144 (one 390 failure on a slow OS page did not repeat), pos-v2 44/44 at 390 and 1280, and co 122/122 at 1280. `tsc` and `lint:tokens` are clean, and phone layouts are unchanged.

@@ -277,10 +277,10 @@ export function GoShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* On a desktop one hairline runs under the sidebar header, the page header
-          (or the wall toolbar) and the sale panel header: the three share a 64px
-          band, and this draws the line across the columns beside the sidebar. */}
-      <div className={cn("flex min-w-0 flex-1 flex-col", !bare && "relative rail:before:pointer-events-none rail:before:absolute rail:before:inset-x-0 rail:before:top-16 rail:before:z-10 rail:before:h-px rail:before:bg-hairline")}>
+      {/* No rule across the top: the sidebar, the page header (or the wall
+          toolbar) and the sale panel header share one 64px band and are told apart
+          by surface (white chrome, paper, white panel) and space, not by a line. */}
+      <div className="flex min-w-0 flex-1 flex-col">
         {/* Context bar — counter · shift state. Nav does NOT live here.
             Phones and tablets held upright only: on a desktop the sidebar
             carries the counter and the person, and each page draws its own

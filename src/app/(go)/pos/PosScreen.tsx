@@ -611,6 +611,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
      The handler lives in a ref because it closes over the cart and the
      shelf, and re-subscribing on every keystroke of a sale is how a listener
      misses the one it was attached for. */
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const scanBuf = useRef("");
   const scanAt = useRef(0);
   const onScan = useRef<(e: KeyboardEvent) => void>(() => {});
@@ -1466,9 +1467,9 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           wall shows everything — there are no category chips on the till. */}
       <div className="flex min-h-0 min-w-0 flex-col gap-comfortable rail:gap-0">
         {/* Header zone: the day · search · parked badge. On a desktop it is the
-            wall's top band: 64px, centred on the line the sidebar header and the
-            sale panel's header share (GoShell draws the hairline under all three). */}
-        <div data-top-band className="flex flex-wrap items-center gap-tight rail:h-16 rail:shrink-0 rail:flex-nowrap rail:px-major">
+            wall's top band: 64px, on the centre line the sidebar header and the
+            sale panel's header share. No rule; a shadow once the wall scrolls. */}
+        <div ref={toolbarRef} data-top-band className="flex flex-wrap items-center gap-tight rail:relative rail:z-10 rail:h-16 rail:shrink-0 rail:flex-nowrap rail:bg-surface/80 rail:px-major rail:backdrop-blur-md rail:transition-shadow rail:duration-standard rail:data-[scrolled]:shadow-md motion-reduce:rail:transition-none">
           {/* The day the wall is selling for: a quiet pill reading "Today · Wed
               29 Jul", and across the wall in orange once it is anything else.
               Only where something on the wall has a day to choose — a
@@ -1496,7 +1497,17 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               on the button and the name says it in words. */}
           {heldHere.length > 0 && <HeldButton count={heldHere.length} onClick={() => setHeldOpen(true)} />}
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto rail:px-major rail:pb-major rail:pt-section">
+        <div
+          onScroll={(e) => {
+            /* A shadow appears under the toolbar only once the wall has moved. A
+               data attribute written on the node: no state, no re-render. */
+            const bar = toolbarRef.current;
+            if (!bar) return;
+            if (e.currentTarget.scrollTop > 2) bar.setAttribute("data-scrolled", "");
+            else bar.removeAttribute("data-scrolled");
+          }}
+          className="min-h-0 flex-1 overflow-y-auto rail:px-major rail:pb-major rail:pt-section"
+        >
           {productsQ.loading ? (
             <div aria-busy="true" className="card-surface p-section"><SkeletonText lines={3} /></div>
           ) : (
