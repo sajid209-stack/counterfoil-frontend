@@ -18853,3 +18853,13 @@ The owner asked to drop the small pop on the mark after the tear.
 - The pop group, its animation and its CSS are removed.
 - About 3.7 s end to end.
 - Verified on a production build: the flow check 47/47, auth 212/212, settings-nav 53/53, phone shell 49/49, and `tsc` and `lint:tokens` clean.
+
+## Logo intro: letters one by one, and a larger ticket (2026-10-27)
+
+The owner asked for the wordmark's letters to appear one by one after the tear, with no pop on the mark, and for the ticket to be a little larger.
+- **Letters one by one.** Each letter has its own beat, 55 ms apart: a fade and an 8-unit step in from the mark's side, starting at 1.5 s while the mark steps into the lockup. The last letter lands at 2.38 s. The logo rests until 2.75 s, and the flight to the card runs from 2.75 to 3.75 s.
+- **No pop** (already removed in the previous change).
+- **Larger:** the stage is `min(86vw, 520px)`, up from `min(80vw, 440px)`. The ticket stays the logo's height, so the tear still leaves the exact mark.
+- The torn piece now drifts 64 units instead of 110, so it stays on screen at 390 px with the larger stage.
+- About 4.0 s end to end.
+- Verified on a production build: the flow check 47/47, auth 212/212, settings-nav 53/53, phone shell 49/49, and `tsc` and `lint:tokens` clean.
