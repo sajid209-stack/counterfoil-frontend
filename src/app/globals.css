@@ -1051,6 +1051,17 @@
   @page { margin: 12mm; }
 }
 
+/* Signing out plays the logo over the sign-in page (SignOutIntro). Until it
+   hands over, the page under it stays hidden, from the very first server-rendered
+   frame, so the form never flashes before the overlay. The intro reveals each
+   part itself; the late animation is only a failsafe if its script never runs. */
+html:has([data-signout-intro]:not([data-phase="done"])) [data-auth-reveal],
+html:has([data-signout-intro]:not([data-phase="done"])) [data-auth-logo] {
+  opacity: 0;
+  animation: auth-failsafe 400ms ease 7s forwards;
+}
+@keyframes auth-failsafe { to { opacity: 1; } }
+
 /* Respect users who prefer reduced motion — neutralise transitions,
    animations and smooth scrolling app-wide (ui-ux-pro-max flags this as a
    High-severity accessibility gap). Meaningful state changes still happen,

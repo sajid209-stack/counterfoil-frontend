@@ -8,7 +8,7 @@ import m from "./brand-motion.module.css";
 export async function BrandPanel() {
   const t = await getTranslations("auth.shell");
   return (
-    <aside className="dark relative hidden overflow-hidden border-l border-dashed border-strong bg-surface text-fg lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:p-wide xl:p-hero">
+    <aside data-auth-reveal="panel" className="dark relative hidden overflow-hidden border-l border-dashed border-strong bg-surface text-fg lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:p-wide xl:p-hero">
       <div className={m.glow} aria-hidden />
       <div className={m.grain} aria-hidden />
       <div className="relative flex min-h-0 flex-1 flex-col gap-section">

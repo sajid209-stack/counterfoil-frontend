@@ -1,0 +1,58 @@
+/* The sign-out intro overlay. Positions are in the logo's own units (viewBox
+   0 0 496 70; on an SVG element one CSS px is one unit): the ticket is 236
+   wide, so it is centred at x 130; the mark alone (70 wide) at x 213; the
+   finished lockup sits at x 0. The values here are the FIRST frame, so the
+   server-rendered page already shows it; SignOutIntro animates from there. */
+
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  color: var(--color-fg);
+  /* If the script never runs, do not leave anyone behind a blank screen. */
+  animation: failsafe 400ms ease 7s forwards;
+}
+@keyframes failsafe { to { opacity: 0; visibility: hidden; } }
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--color-surface);
+}
+
+.flight {
+  position: relative;
+  line-height: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.stage {
+  display: block;
+  width: min(80vw, 440px);
+  height: auto;
+  overflow: visible;
+}
+
+.track { transform: translateX(130px); }
+.enter { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
+.body { transform-box: fill-box; transform-origin: 0% 100%; }
+.pop { transform-box: fill-box; transform-origin: 50% 50%; }
+.cut, .hole { fill: var(--color-surface); }
+.hole { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
+.letter { opacity: 0; }
+
+/* Less motion: the finished logo, still. */
+@media (prefers-reduced-motion: reduce) {
+  .track { transform: none; }
+  .enter, .letter { opacity: 1; }
+  .body, .cut, .hole { display: none; }
+}
+:global(html[data-motion="reduce"]) .track { transform: none; }
+:global(html[data-motion="reduce"]) .enter,
+:global(html[data-motion="reduce"]) .letter { opacity: 1; }
+:global(html[data-motion="reduce"]) .body,
+:global(html[data-motion="reduce"]) .cut,
+:global(html[data-motion="reduce"]) .hole { display: none; }

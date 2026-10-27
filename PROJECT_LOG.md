@@ -18734,3 +18734,55 @@ The owner asked for a short, minimal logo motion after signing out and before th
   - a new flow check, 27/27: click Sign out → motion → `/sign-in` in about 2.6 s, light and dark; the mark ends at the logo's origin and the lockup is centred; at 390 px it fits with no side-scroll, even mid-tear; reduced motion redirects quickly with no animation; Bangla; no console errors;
   - auth 212/212, settings-nav 53/53, phone shell 49/49;
   - `tsc`, `lint:tokens`, `eslint` and i18n, clean.
+
+## Sign-out motion v2: smoother, larger, and a hand-over into sign-in (2026-10-27)
+
+The owner asked for smoother, slower motion, a larger logo, a minimal and modern ticket, and for the sign-in page to arrive with the logo (a drawer up) rather than after a cut.
+- **What made v1 feel stiff.** It was one long CSS keyframe list with one easing, so every keyframe was a stop and a start, and the steps ran one after another. v2 runs on the Web Animations API (`play()` in `SignOutIntro.tsx`), with an easing per segment and overlapping actions:
+  - the stub recoils while the body leaves;
+  - the mark starts to glide while the body is still fading;
+  - each letter starts only once the mark has cleared its space.
+
+  The blur on the wordmark is gone, because filters on SVG were the main source of jank.
+- **The ticket, redesigned.**
+  - One solid ticket with the mark's corner radius, and nothing printed on it.
+  - Notches at the tear line, and a perforation of punched holes that appears top to bottom along the mark's own zigzag.
+  - The body's left edge is cut to the complementary zigzag, so the torn piece carries the matching teeth. Before the tear it is set 1.5 units into the mark's ink, so no seam shows.
+  - The tear opens from the top first (a rotation about the bottom corner), then lets go and drifts off.
+- **Larger and longer.**
+  - The stage is `min(80vw, 440px)`, up from 360px.
+  - The sequence:
+
+    | Time | What happens |
+    |---|---|
+    | 0–0.7 s | the ticket rises in |
+    | 0.42–1.2 s | the holes punch through |
+    | 1.0–1.95 s | the tear |
+    | 1.5–2.2 s | the mark glides to the centre |
+    | 2.0–2.65 s | the landing, 96% → 102.5% → 100% |
+    | 2.6–4.0 s | the wordmark follows the mark out |
+    | 4.2–5.3 s | the hand-over |
+
+  - The whole thing takes about 5.3 s, and a key press or tap skips straight to the hand-over.
+- **The hand-over (a shared element).**
+  - `/signed-out` now lives in the `(auth)` group and renders the real sign-in form. The overlay is drawn by the auth layout (`SignOutIntro`, which reads `usePathname`), so it sits outside the card.
+  - The page under the overlay is hidden from the first server-rendered frame by one `:has()` rule in `globals.css`, so the form never flashes first.
+  - At the end, the logo flies (FLIP) onto the card's logo. The card rises exactly as far as the logo travels, on the same curve, so the logo's slot stays under it and the two meet without the logo ever crossing the form. Meanwhile the form rows stagger in, the brand panel wipes up, and the chrome fades in.
+  - Then the address is replaced with `/sign-in` through `history.replaceState`, so there is no reload and Back does not replay.
+- **The sign-in logo is now the exact vector lockup.** `components/brand/LogoLockup` and `logoArt.ts` (the paths from `Black_Logo_OS.svg`, one path per letter) replace the PNG `Logo` on the auth pages. The PNG is an older cut with a larger mark and could not be landed on exactly.
+- **Failsafes and other states.**
+  - If the script never runs, the overlay and the page each fade by CSS after 7 s.
+  - With reduced motion, the finished logo shows still for 0.7 s, then a 280 ms cross-fade.
+- Verified on a production build:
+  - a new flow check, 37/37:
+    - the overlay sits over a hidden page;
+    - nothing scrolls sideways mid-tear;
+    - the flight lands within 1 px of the card logo in light, dark and at 390 px;
+    - it ends on `/sign-in` with the form editable, in about 5.3 s, with no console errors;
+    - a tap hands over within 1.6 s;
+    - reduced motion works;
+    - plain `/sign-in` has no overlay;
+    - Bangla works;
+  - auth 212/212, settings-nav 53/53, phone shell 49/49;
+  - `tsc`, `lint:tokens`, `eslint` and i18n, clean.
+- Removed: the `src/app/signed-out` route files and the unused `auth.signedOut.metaTitle` (the page now uses the sign-in title).
