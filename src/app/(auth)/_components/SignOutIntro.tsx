@@ -10,21 +10,20 @@ import m from "./signout.module.css";
  * The sign-in intro, played over the sign-in page on every visit to /sign-in
  * and after signing out (/signed-out). A ticket tears
  * along the Counterfoil mark's own notches, and what stays in your hand is the
- * mark. It glides to the centre and pops a little larger, the full logo forms
+ * mark, already at the centre. It pops a little larger, the full logo forms
  * around it, and then the logo flies into its place on the sign-in card as the
  * card rises up under it like a drawer.
  *
- *     0 –  600  the ticket rises in
+ *     0 –  600  the ticket rises in, its stub (the mark) already at the centre
  *   300 –  800  the perforation punches through along the notches, top to bottom
  *   800 – 1000  tension: the tear opens from the top
- *  1000 – 1600  the body tears free and drifts off
- *  1150 – 1750  the counterfoil glides to the centre
- *  1550 – 1800  it pops to 108%: no bounce back
- *  1800 – 2600  the full logo forms: the mark steps left into the lockup
+ *  1000 – 1600  the body tears free and drifts off; the mark stays put
+ *  1250 – 1500  the mark pops to 108% in place: no bounce back
+ *  1550 – 2350  the full logo forms: the mark steps left into the lockup
  *               (settling to 100% as part of that move) while the wordmark
  *               slides out from behind its edge, left to right
- *  2600 – 2950  the logo rests for a beat, so it reads
- *  2950 – 3950  hand-over: the logo flies to the card's logo as the card
+ *  2350 – 2700  the logo rests for a beat, so it reads
+ *  2700 – 3700  hand-over: the logo flies to the card's logo as the card
  *               rises under it; the page comes in around it
  *
  * The page underneath is server-rendered and hidden by one rule in globals.css
@@ -37,11 +36,10 @@ import m from "./signout.module.css";
  * instead of queueing.
  */
 
-const INTRO = 2600;
-const HAND_AT = 2950;
+const INTRO = 2350;
+const HAND_AT = 2700;
 const HAND = 1000;
 const OUT = "cubic-bezier(0.16, 1, 0.3, 1)"; // expo out: arrivals
-const GLIDE = "cubic-bezier(0.45, 0, 0.2, 1)"; // a move that starts and lands softly
 const IN_OUT = "cubic-bezier(0.65, 0, 0.35, 1)";
 const FLOW = "cubic-bezier(0.5, 0, 0.15, 1)"; // the hand-over: picks up from the pop, lands softly
 const WIPE = "cubic-bezier(0.76, 0, 0.24, 1)";
@@ -177,27 +175,29 @@ export function SignOutIntro() {
     play(q("[data-part=bodyFade]"), [[0, { opacity: 1 }], [1100, { opacity: 1 }, "cubic-bezier(0.4, 0, 1, 1)"], [1520, { opacity: 0 }]], INTRO, intro);
 
     // ---- The counterfoil: to the centre, a pop, then the full logo ---------
+    // The ticket enters with its stub (the mark) already at the centre, so after
+    // the tear the mark does not travel: it pops in place, then steps left once,
+    // into the lockup.
     play(q("[data-part=track]"), [
-      [0, { transform: "translateX(130px)" }],
-      [1150, { transform: "translateX(130px)" }, GLIDE],
-      [1750, { transform: "translateX(213px)" }],
-      [1800, { transform: "translateX(213px)" }, FLOW],
-      [2600, { transform: "translateX(0px)" }],
+      [0, { transform: "translateX(213px)" }],
+      [1550, { transform: "translateX(213px)" }, FLOW],
+      [2350, { transform: "translateX(0px)" }],
     ], INTRO, intro);
     // It grows and does not bounce back: it settles to 100% only as part of
     // stepping into the lockup.
     play(q("[data-part=pop]"), [
       [0, { transform: "scale(1)" }],
-      [1550, { transform: "scale(1)" }, OUT],
-      [1800, { transform: "scale(1.08)" }, FLOW],
-      [2600, { transform: "scale(1)" }],
+      [1250, { transform: "scale(1)" }, OUT],
+      [1500, { transform: "scale(1.08)" }],
+      [1550, { transform: "scale(1.08)" }, FLOW],
+      [2350, { transform: "scale(1)" }],
     ], INTRO, intro);
     // The wordmark rides with the mark and slides out from behind its edge
     // (clipped there, so a letter can never show over or left of the mark),
     // unfolding left to right.
-    play(q("[data-part=word]"), [[0, { transform: "translateX(-56px)" }], [1850, { transform: "translateX(-56px)" }, OUT], [2600, { transform: "translateX(0px)" }]], INTRO, intro);
+    play(q("[data-part=word]"), [[0, { transform: "translateX(-56px)" }], [1600, { transform: "translateX(-56px)" }, OUT], [2350, { transform: "translateX(0px)" }]], INTRO, intro);
     el.querySelectorAll("[data-part=letter]").forEach((l, i) => {
-      const at = 1850 + i * 28;
+      const at = 1600 + i * 28;
       play(l, [[0, { opacity: 0 }], [at, { opacity: 0 }, "ease-out"], [at + 380, { opacity: 1 }]], INTRO, intro);
     });
 

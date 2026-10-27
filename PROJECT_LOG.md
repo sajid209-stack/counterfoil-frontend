@@ -18838,3 +18838,10 @@ The owner asked for the motion every time someone comes to `/sign-in`, including
   - the flow check, 47/47, including load, refresh and the sign-up → sign-in link (each plays and ends on the page), and no intro on `/sign-up`;
   - auth 212/212, settings-nav 53/53, phone shell 49/49;
   - `tsc` and `lint:tokens` clean.
+
+## Logo intro: the mark is centred before the tear (2026-10-27)
+
+The owner pointed out that the mark travelled to the centre after the tear and then moved again into the lockup: the same motion twice.
+- The ticket now enters with its stub (the mark) already at the centre, with the body extending to the right. The mark stays put through the tear, pops to 108% in place at 1.25–1.5 s, then makes one move, left into the lockup, at 1.55–2.35 s, while the wordmark slides out of its edge. The logo rests, and the flight to the card runs from 2.7 to 3.7 s.
+- About 3.8 s end to end.
+- Verified on a production build: the flow check 47/47, auth 212/212, settings-nav 53/53, phone shell 49/49, and `tsc` and `lint:tokens` clean.

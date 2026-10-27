@@ -1,6 +1,6 @@
 /* The sign-out intro overlay. Positions are in the logo's own units (viewBox
-   0 0 496 70; on an SVG element one CSS px is one unit): the ticket is 236
-   wide, so it is centred at x 130; the mark alone (70 wide) at x 213; the
+   0 0 496 70; on an SVG element one CSS px is one unit): the ticket enters
+   with its stub, the mark (70 wide), centred at x 213; the
    finished lockup sits at x 0. The values here are the FIRST frame, so the
    server-rendered page already shows it; SignOutIntro animates from there. */
 
@@ -36,7 +36,7 @@
   overflow: visible;
 }
 
-.track { transform: translateX(130px); }
+.track { transform: translateX(213px); }
 .enter { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
 .body { transform-box: fill-box; transform-origin: 0% 100%; }
 .pop { transform-box: fill-box; transform-origin: 50% 50%; }
