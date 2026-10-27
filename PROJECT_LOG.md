@@ -18786,3 +18786,25 @@ The owner asked for smoother, slower motion, a larger logo, a minimal and modern
   - auth 212/212, settings-nav 53/53, phone shell 49/49;
   - `tsc`, `lint:tokens`, `eslint` and i18n, clean.
 - Removed: the `src/app/signed-out` route files and the unused `auth.signedOut.metaTitle` (the page now uses the sign-in title).
+
+## Sign-out motion v3: the logo's own notches, a pop that holds, one flow into the card (2026-10-27)
+
+The owner's review of v2 asked for three things:
+- the tear has to follow the logo's exact notches;
+- after the tear the mark should only pop larger, with no bounce back;
+- no waiting, and no stop to show the full logo: it should go straight to the card.
+
+What changed:
+- **The tear is the logo's edge.** The ticket body's left edge is the mark's right edge copied from its path (the rounded chevrons), so the body is the mark's exact complement. The stub that stays is the logo curve for curve, and the torn piece carries the matching notches.
+  - A shared edge anti-aliases into a hairline, so a strip under both closes the seam until the instant the tear starts.
+  - The holes are punched along that same edge.
+  - The round ticket notches were dropped: they changed the mark's corner.
+- **The pop only grows.** The recoil and the 96% dip are gone. The mark grows to 108% on arrival and stays there. It eases back to 100% only inside the hand-over, where the whole logo is already shrinking towards the card.
+- **One flow, about 3 s.** The hand-over starts the moment the pop peaks (1.85 s), with no hold on the centre and no separate "full logo" beat. During the 1 s flight to the card's logo:
+  - the mark steps into the lockup;
+  - the wordmark rides with it, sliding out from behind the mark's edge (an SVG clip at the tooth tips, so a letter can never show over or left of the mark) and unfolding left to right;
+  - the card rises on the same curve.
+- Verified on a production build:
+  - the flow check, 37/37: the logo lands within 1 px in light, dark and at 390 px, in about 3.0 s end to end; skip, reduced motion and Bangla work;
+  - auth 212/212, settings-nav 53/53, phone shell 49/49;
+  - `tsc`, `lint:tokens`, `eslint` and i18n, clean.

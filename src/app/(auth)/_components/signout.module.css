@@ -40,7 +40,7 @@
 .enter { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
 .body { transform-box: fill-box; transform-origin: 0% 100%; }
 .pop { transform-box: fill-box; transform-origin: 50% 50%; }
-.cut, .hole { fill: var(--color-surface); }
+.hole { fill: var(--color-surface); }
 .hole { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
 .letter { opacity: 0; }
 
@@ -48,11 +48,11 @@
 @media (prefers-reduced-motion: reduce) {
   .track { transform: none; }
   .enter, .letter { opacity: 1; }
-  .body, .cut, .hole { display: none; }
+  .body, .seam, .hole { display: none; }
 }
 :global(html[data-motion="reduce"]) .track { transform: none; }
 :global(html[data-motion="reduce"]) .enter,
 :global(html[data-motion="reduce"]) .letter { opacity: 1; }
 :global(html[data-motion="reduce"]) .body,
-:global(html[data-motion="reduce"]) .cut,
+:global(html[data-motion="reduce"]) .seam,
 :global(html[data-motion="reduce"]) .hole { display: none; }
