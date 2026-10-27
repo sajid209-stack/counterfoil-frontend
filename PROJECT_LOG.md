@@ -18824,3 +18824,17 @@ The owner asked that, once the tear is complete, the full logo appears properly 
   While the logo forms, the mark steps left into the lockup and settles to 100% as part of that move, and the wordmark slides out from behind its edge, clipped there, left to right.
 - About 4.1 s end to end, and still skippable with a tap or key.
 - Verified on a production build: the flow check 37/37 (the logo lands within 1 px in light, dark and at 390 px), auth 212/212, settings-nav 53/53, phone shell 49/49, and `tsc` and `lint:tokens` clean.
+
+## The logo intro plays on every visit to sign-in (2026-10-27)
+
+The owner asked for the motion every time someone comes to `/sign-in`, including on a refresh.
+- `SignOutIntro` now plays on `/sign-in` as well as `/signed-out`, on:
+  - a first load or refresh (it is server-rendered, so the form never flashes first);
+  - arriving from another auth page (it replays whenever the visit changes).
+
+  `/signed-out` and `/sign-in` count as one visit, because the intro moves the address from one to the other, so a sign-out plays it once and not twice.
+- The "You are signed out" announcement is only on `/signed-out`. Sign-up, recovery and onboarding are unchanged.
+- Verified on a production build:
+  - the flow check, 47/47, including load, refresh and the sign-up → sign-in link (each plays and ends on the page), and no intro on `/sign-up`;
+  - auth 212/212, settings-nav 53/53, phone shell 49/49;
+  - `tsc` and `lint:tokens` clean.

@@ -7,7 +7,8 @@ import { LOGO_LETTERS, LOGO_MARK } from "@/components/brand/logoArt";
 import m from "./signout.module.css";
 
 /**
- * The goodbye, played over the sign-in page on /signed-out. A ticket tears
+ * The sign-in intro, played over the sign-in page on every visit to /sign-in
+ * and after signing out (/signed-out). A ticket tears
  * along the Counterfoil mark's own notches, and what stays in your hand is the
  * mark. It glides to the centre and pops a little larger, the full logo forms
  * around it, and then the logo flies into its place on the sign-in card as the
@@ -102,8 +103,18 @@ export function SignOutIntro() {
   const pathname = usePathname();
   const t = useTranslations("auth.signedOut");
   const root = useRef<HTMLDivElement>(null);
+  // It plays on every visit to sign-in (first load, refresh, or arriving from
+  // another auth page) and after signing out. /signed-out and /sign-in count as
+  // one visit, because the intro itself moves the address from one to the other.
+  const visit = pathname === "/signed-out" ? "/sign-in" : pathname;
   const [gone, setGone] = useState(false);
-  const active = pathname === "/signed-out" && !gone;
+  const [seen, setSeen] = useState(visit);
+  if (visit !== seen) {
+    setSeen(visit);
+    setGone(false);
+  }
+  const signedOut = pathname === "/signed-out";
+  const active = visit === "/sign-in" && !gone;
 
   useEffect(() => {
     const el = root.current;
@@ -253,7 +264,7 @@ export function SignOutIntro() {
   return (
     <div ref={root} className={m.root} data-signout-intro>
       <div className={m.scrim} data-part="scrim" />
-      <p className="sr-only" role="status">{t("status")}</p>
+      {signedOut && <p className="sr-only" role="status">{t("status")}</p>}
       <div className={m.flight} data-part="flight">
         <svg viewBox="0 0 496 70" className={m.stage} aria-hidden fill="currentColor" overflow="visible">
           <defs>

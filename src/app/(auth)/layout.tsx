@@ -13,7 +13,7 @@ import m from "./_components/auth-motion.module.css";
 // The logo lives INSIDE the form block, directly above the heading, so it is
 // part of the thing you are filling in rather than a mark stranded in a corner.
 //
-// After signing out, /signed-out plays the logo over this shell first
+// Every visit to sign-in (and /signed-out) plays the logo over this shell first
 // (SignOutIntro): the logo lands on the card's logo as the card rises.
 //
 // The language is chosen HERE, before anybody has an account: a cashier who
