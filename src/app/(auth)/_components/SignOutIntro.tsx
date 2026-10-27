@@ -9,19 +9,22 @@ import m from "./signout.module.css";
 /**
  * The goodbye, played over the sign-in page on /signed-out. A ticket tears
  * along the Counterfoil mark's own notches, and what stays in your hand is the
- * mark. It glides to the centre, pops a little larger, and without stopping
- * flies into its place on the sign-in card: the wordmark unfolds beside it on
- * the way, and the card rises up under it like a drawer. One continuous move
- * from the first frame to the form, with no holds.
+ * mark. It glides to the centre and pops a little larger, the full logo forms
+ * around it, and then the logo flies into its place on the sign-in card as the
+ * card rises up under it like a drawer.
  *
  *     0 –  600  the ticket rises in
  *   300 –  800  the perforation punches through along the notches, top to bottom
  *   800 – 1000  tension: the tear opens from the top
  *  1000 – 1600  the body tears free and drifts off
  *  1150 – 1750  the counterfoil glides to the centre
- *  1550 – 1800  it pops to 108% and stays there: no bounce back
- *  1850 – 2850  hand-over: the logo flies to the card's logo (easing back to
- *               100% on the way) as the wordmark unfolds and the card rises
+ *  1550 – 1800  it pops to 108%: no bounce back
+ *  1800 – 2600  the full logo forms: the mark steps left into the lockup
+ *               (settling to 100% as part of that move) while the wordmark
+ *               slides out from behind its edge, left to right
+ *  2600 – 2950  the logo rests for a beat, so it reads
+ *  2950 – 3950  hand-over: the logo flies to the card's logo as the card
+ *               rises under it; the page comes in around it
  *
  * The page underneath is server-rendered and hidden by one rule in globals.css
  * (`html:has([data-signout-intro])`), so there is no flash of the form before
@@ -33,8 +36,8 @@ import m from "./signout.module.css";
  * instead of queueing.
  */
 
-const INTRO = 1950;
-const HAND_AT = 1850;
+const INTRO = 2600;
+const HAND_AT = 2950;
 const HAND = 1000;
 const OUT = "cubic-bezier(0.16, 1, 0.3, 1)"; // expo out: arrivals
 const GLIDE = "cubic-bezier(0.45, 0, 0.2, 1)"; // a move that starts and lands softly
@@ -162,24 +165,34 @@ export function SignOutIntro() {
     ], INTRO, intro);
     play(q("[data-part=bodyFade]"), [[0, { opacity: 1 }], [1100, { opacity: 1 }, "cubic-bezier(0.4, 0, 1, 1)"], [1520, { opacity: 0 }]], INTRO, intro);
 
-    // ---- The counterfoil: to the centre, and a pop that only grows ---------
+    // ---- The counterfoil: to the centre, a pop, then the full logo ---------
     play(q("[data-part=track]"), [
       [0, { transform: "translateX(130px)" }],
       [1150, { transform: "translateX(130px)" }, GLIDE],
       [1750, { transform: "translateX(213px)" }],
+      [1800, { transform: "translateX(213px)" }, FLOW],
+      [2600, { transform: "translateX(0px)" }],
     ], INTRO, intro);
-    // It grows and stays grown: no bounce back. It only returns to 100% inside
-    // the hand-over, where the whole logo is already shrinking towards the card.
+    // It grows and does not bounce back: it settles to 100% only as part of
+    // stepping into the lockup.
     play(q("[data-part=pop]"), [
       [0, { transform: "scale(1)" }],
       [1550, { transform: "scale(1)" }, OUT],
-      [1800, { transform: "scale(1.08)" }],
+      [1800, { transform: "scale(1.08)" }, FLOW],
+      [2600, { transform: "scale(1)" }],
     ], INTRO, intro);
+    // The wordmark rides with the mark and slides out from behind its edge
+    // (clipped there, so a letter can never show over or left of the mark),
+    // unfolding left to right.
+    play(q("[data-part=word]"), [[0, { transform: "translateX(-56px)" }], [1850, { transform: "translateX(-56px)" }, OUT], [2600, { transform: "translateX(0px)" }]], INTRO, intro);
+    el.querySelectorAll("[data-part=letter]").forEach((l, i) => {
+      const at = 1850 + i * 28;
+      play(l, [[0, { opacity: 0 }], [at, { opacity: 0 }, "ease-out"], [at + 380, { opacity: 1 }]], INTRO, intro);
+    });
 
     // ---- The hand-over -----------------------------------------------------
-    // Straight from the pop: the mark steps into the lockup and the letters
-    // unfold beside it WHILE the whole logo flies to the card's logo (the same
-    // drawing, so the swap at the end is invisible) and the card rises under it.
+    // The finished logo flies to the card's logo (the same drawing, so the swap
+    // at the end is invisible) and the card rises under it.
     const reveal = (skip: boolean) => {
       if (revealing) return;
       revealing = true;
@@ -188,15 +201,6 @@ export function SignOutIntro() {
       window.removeEventListener("pointerdown", onSkip);
       if (skip) intro.forEach((a) => a.finish());
 
-      once(q("[data-part=pop]"), { transform: "scale(1.08)" }, { transform: "scale(1)" }, HAND, 0, FLOW, page);
-      once(q("[data-part=track]"), { transform: "translateX(213px)" }, { transform: "translateX(0px)" }, HAND, 0, FLOW, page);
-      // The wordmark rides with the mark and slides out from behind its edge
-      // (clipped there, so a letter can never show over or left of the mark),
-      // unfolding left to right as the logo travels.
-      once(q("[data-part=word]"), { transform: "translateX(-56px)" }, { transform: "translateX(0px)" }, 760, 100, OUT, page);
-      el.querySelectorAll("[data-part=letter]").forEach((l, i) => {
-        once(l, { opacity: 0 }, { opacity: 1 }, 380, 100 + i * 28, "ease-out", page);
-      });
 
       const flight = q("[data-part=flight]");
       const svg = q("svg");

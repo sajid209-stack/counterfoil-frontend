@@ -18808,3 +18808,19 @@ What changed:
   - the flow check, 37/37: the logo lands within 1 px in light, dark and at 390 px, in about 3.0 s end to end; skip, reduced motion and Bangla work;
   - auth 212/212, settings-nav 53/53, phone shell 49/49;
   - `tsc`, `lint:tokens`, `eslint` and i18n, clean.
+
+## Sign-out motion v4: the full logo forms before the flight (2026-10-27)
+
+The owner asked that, once the tear is complete, the full logo appears properly first and only then moves to the card.
+- **New timeline:**
+
+  | Time | What happens |
+  |---|---|
+  | 1.55–1.8 s | the pop to 108% (no bounce back) |
+  | 1.8–2.6 s | the full logo forms at the centre |
+  | 2.6–2.95 s | the finished logo rests, so it reads |
+  | 2.95–3.95 s | the flight to the card's logo, with the card rising under it |
+
+  While the logo forms, the mark steps left into the lockup and settles to 100% as part of that move, and the wordmark slides out from behind its edge, clipped there, left to right.
+- About 4.1 s end to end, and still skippable with a tap or key.
+- Verified on a production build: the flow check 37/37 (the logo lands within 1 px in light, dark and at 390 px), auth 212/212, settings-nav 53/53, phone shell 49/49, and `tsc` and `lint:tokens` clean.
