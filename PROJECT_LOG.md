@@ -18863,3 +18863,18 @@ The owner asked for the wordmark's letters to appear one by one after the tear, 
 - The torn piece now drifts 64 units instead of 110, so it stays on screen at 390 px with the larger stage.
 - About 4.0 s end to end.
 - Verified on a production build: the flow check 47/47, auth 212/212, settings-nav 53/53, phone shell 49/49, and `tsc` and `lint:tokens` clean.
+
+## Logo intro: a calm wordmark reveal (2026-10-27)
+
+The owner asked for the wordmark to appear properly and smoothly, with a relaxed feel. The cause was measured by stepping the timeline at 60 fps (scratchpad `signout/smooth.mjs`). There were three causes:
+1. The letter fades used expo-out over 330 ms, so a letter jumped 28% opacity in one frame.
+2. The fades barely overlapped, so the letters read as separate pops.
+3. Three motions ran at once (the mark, the word group and a per-letter step) on different curves, while the mark moved at up to 15 px a frame.
+
+What changed:
+- **The letters** fade by opacity alone, over 700 ms each with an even curve (0.25, 0.1, 0.25, 1), 48 ms apart. The long overlaps make them arrive one after another as one wave. The per-letter step is gone.
+- **The word** drifts out from the mark's edge in a single 40-unit move on a long quint-out.
+- **The mark** eases left over 1.1 s on (0.4, 0, 0.2, 1), up from 0.8 s.
+- **New timeline:** the lockup forms at 1.4–2.7 s, rests until 3.1 s, then the flight to the card runs 1.1 s. About 4.3 s end to end.
+- **Measured, before → after:** the largest per-frame opacity change 0.284 → 0.054; the mark's peak speed 15.3 → 9.2 px a frame; its largest change in speed between frames 2.0 → 0.74 px.
+- Verified on a production build: the flow check 47/47, auth 212/212, settings-nav 53/53, phone shell 49/49, and `tsc` and `lint:tokens` clean.

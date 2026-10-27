@@ -18,10 +18,11 @@ import m from "./signout.module.css";
  *   300 –  800  the perforation punches through along the notches, top to bottom
  *   800 – 1000  tension: the tear opens from the top
  *  1000 – 1600  the body tears free and drifts off; the mark stays still
- *  1450 – 2385  the full logo forms: the mark steps left into the lockup
- *               while the letters of the wordmark come out of its edge one by one
- *  2400 – 2750  the logo rests for a beat, so it reads
- *  2750 – 3750  hand-over: the logo flies to the card's logo as the card
+ *  1400 – 2680  the full logo forms: the mark eases left into the lockup while
+ *               the wordmark drifts out of its edge, its letters fading in one
+ *               after another as one slow wave
+ *  2700 – 3100  the logo rests for a beat, so it reads
+ *  3100 – 4200  hand-over: the logo flies to the card's logo as the card
  *               rises under it; the page comes in around it
  *
  * The page underneath is server-rendered and hidden by one rule in globals.css
@@ -34,13 +35,16 @@ import m from "./signout.module.css";
  * instead of queueing.
  */
 
-const INTRO = 2400;
-const HAND_AT = 2750;
-const HAND = 1000;
+const INTRO = 2700;
+const HAND_AT = 3100;
+const HAND = 1100;
 const OUT = "cubic-bezier(0.16, 1, 0.3, 1)"; // expo out: arrivals
 const IN_OUT = "cubic-bezier(0.65, 0, 0.35, 1)";
 const FLOW = "cubic-bezier(0.5, 0, 0.15, 1)"; // starts and lands softly
 const WIPE = "cubic-bezier(0.76, 0, 0.24, 1)";
+const SETTLE = "cubic-bezier(0.4, 0, 0.2, 1)"; // an even, unhurried move
+const DRIFT = "cubic-bezier(0.22, 1, 0.36, 1)"; // a long, gentle arrival
+const SOFT = "cubic-bezier(0.25, 0.1, 0.25, 1)"; // a fade with no snap at either end
 
 // The mark's right edge, copied from its path in logoArt (the exact notches):
 // from the top corner (63.8989, 0) down to the bottom corner (65.114, 70).
@@ -178,22 +182,18 @@ export function SignOutIntro() {
     // into the lockup.
     play(q("[data-part=track]"), [
       [0, { transform: "translateX(213px)" }],
-      [1450, { transform: "translateX(213px)" }, FLOW],
-      [2250, { transform: "translateX(0px)" }],
+      [1400, { transform: "translateX(213px)" }, SETTLE],
+      [2500, { transform: "translateX(0px)" }],
     ], INTRO, intro);
-    // The wordmark rides with the mark and slides out from behind its edge
-    // (clipped there, so a letter can never show over or left of the mark),
-    // unfolding left to right.
-    play(q("[data-part=word]"), [[0, { transform: "translateX(-56px)" }], [1500, { transform: "translateX(-56px)" }, OUT], [2250, { transform: "translateX(0px)" }]], INTRO, intro);
+    // The wordmark rides with the mark and drifts out from behind its edge
+    // (clipped there, so a letter can never show over or left of the mark).
+    // One motion for the word, and opacity alone for the letters: long fades
+    // that overlap heavily, so the letters arrive one after another as one calm
+    // wave rather than as separate pops.
+    play(q("[data-part=word]"), [[0, { transform: "translateX(-40px)" }], [1450, { transform: "translateX(-40px)" }, DRIFT], [2600, { transform: "translateX(0px)" }]], INTRO, intro);
     el.querySelectorAll("[data-part=letter]").forEach((l, i) => {
-      // One by one: each letter has its own beat, fading and stepping in from
-      // the mark's side.
-      const at = 1500 + i * 55;
-      play(l, [
-        [0, { opacity: 0, transform: "translateX(-8px)" }],
-        [at, { opacity: 0, transform: "translateX(-8px)" }, OUT],
-        [at + 330, { opacity: 1, transform: "translateX(0px)" }],
-      ], INTRO, intro);
+      const at = 1500 + i * 48;
+      play(l, [[0, { opacity: 0 }], [at, { opacity: 0 }, SOFT], [at + 700, { opacity: 1 }]], INTRO, intro);
     });
 
     // ---- The hand-over -----------------------------------------------------
