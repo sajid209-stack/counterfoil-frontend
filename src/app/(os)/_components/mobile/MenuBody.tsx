@@ -380,7 +380,7 @@ function YouCard({ me, role, onClose }: { me: Staff | undefined; role: string | 
         </li>
         <li>
           <Link
-            href="/sign-in"
+            href="/signed-out"
             data-menu-item="signOut"
             className="flex min-h-12 items-center gap-comfortable rounded-md px-comfortable text-danger-soft-fg transition-colors duration-quick active:bg-nav-hover"
           >

@@ -1,0 +1,121 @@
+/* The sign-out logo sequence. One 2.5s timeline; every element runs its own
+   keyframes over the same clock, so the steps cannot drift apart. Positions are
+   in the logo's own units (the SVG's viewBox is 0 0 496 70; one px = one unit):
+   the ticket is 260 wide, so it is centred at x 118; the mark alone (70 wide)
+   is centred at x 213; the finished lockup sits at x 0. */
+
+.stage {
+  width: min(72vw, 360px);
+  height: auto;
+  overflow: visible;
+}
+
+.track,
+.body,
+.mark,
+.perf,
+.cut,
+.word {
+  animation-duration: 2500ms;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* The ticket, then the mark alone, then the mark in the lockup. */
+.track {
+  animation-name: track;
+}
+@keyframes track {
+  0% { transform: translate(118px, 10px); opacity: 0; }
+  12% { transform: translate(118px, 0); opacity: 1; }
+  34% { transform: translate(118px, 0); }
+  44% { transform: translate(213px, 0); }
+  46% { transform: translate(213px, 0); }
+  64% { transform: translate(0, 0); }
+  100% { transform: translate(0, 0); opacity: 1; }
+}
+
+/* The body tears along the perforation: a short, controlled move away and a
+   slight turn, the way paper leaves a stub. */
+.body {
+  animation-name: body;
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+}
+@keyframes body {
+  0%, 22% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  27% { transform: translate(6px, 0) rotate(1.5deg); opacity: 1; }
+  34% { transform: translate(64px, 4px) rotate(6deg); opacity: 0; }
+  100% { transform: translate(64px, 4px) rotate(6deg); opacity: 0; }
+}
+
+/* The perforation appears as the ticket settles, and goes with the tear. */
+.print {
+  fill: var(--color-surface);
+  opacity: 0.22;
+}
+.notch {
+  fill: var(--color-surface);
+}
+.perf {
+  animation-name: perf;
+}
+.cut {
+  animation-name: cut;
+}
+@keyframes cut {
+  0%, 26% { opacity: 1; }
+  32%, 100% { opacity: 0; }
+}
+.perfLine {
+  stroke: var(--color-surface);
+  stroke-width: 1.6;
+  stroke-dasharray: 2.6 2.6;
+  stroke-linecap: round;
+}
+@keyframes perf {
+  0%, 12% { opacity: 0; }
+  20%, 25% { opacity: 1; }
+  30%, 100% { opacity: 0; }
+}
+
+/* The counterfoil lands in the centre: 96% → 102% → 100%, a precise landing,
+   not a bounce. */
+.mark {
+  animation-name: mark;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes mark {
+  0%, 34% { transform: scale(1); }
+  39% { transform: scale(0.96); }
+  44% { transform: scale(1.02); }
+  50%, 100% { transform: scale(1); }
+}
+
+/* The wordmark slides in from the right and comes into focus as the mark steps
+   left to make room for it. */
+.word {
+  animation-name: word;
+}
+@keyframes word {
+  0%, 48% { transform: translate(24px, 0); opacity: 0; filter: blur(6px); }
+  66% { transform: translate(0, 0); opacity: 1; filter: blur(0); }
+  100% { transform: translate(0, 0); opacity: 1; filter: blur(0); }
+}
+
+/* Less motion: the finished logo, still. */
+@media (prefers-reduced-motion: reduce) {
+  .track, .body, .mark, .perf, .cut, .word { animation: none; }
+  .body, .perf, .cut { opacity: 0; }
+  .word { opacity: 1; }
+}
+:global(html[data-motion="reduce"]) .track,
+:global(html[data-motion="reduce"]) .body,
+:global(html[data-motion="reduce"]) .mark,
+:global(html[data-motion="reduce"]) .perf,
+:global(html[data-motion="reduce"]) .cut,
+:global(html[data-motion="reduce"]) .word { animation: none; }
+:global(html[data-motion="reduce"]) .body,
+:global(html[data-motion="reduce"]) .perf,
+:global(html[data-motion="reduce"]) .cut { opacity: 0; }

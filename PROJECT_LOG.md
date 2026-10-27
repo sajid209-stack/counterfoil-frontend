@@ -18710,3 +18710,27 @@ Owner: a newly created account should get its own dashboard, a guided setup list
 - Open:
   - Records created in a fresh account (a venue, a booking) do not survive a full page reload, because the mock store is in memory. The fresh business itself does.
   - The Bangla strings are drafts.
+
+## Sign-out: the ticket tears down to the logo (2026-10-27)
+
+The owner asked for a short, minimal logo motion after signing out and before the sign-in page: a black ticket tears so that only the counterfoil is left, the counterfoil is the exact logo mark, it moves to the centre with a light pop, and the wordmark follows.
+- **Route** `/signed-out` (`src/app/signed-out/`: `page.tsx`, `SignOutMotion.tsx`, `signout.module.css`). All three Sign out links (desktop Settings, the phone menu, the phone settings sheet) now go there, and the page `router.replace`s to `/sign-in`, so Back does not replay it.
+- **The ticket is built around the logo.** One SVG with the logo's own viewBox (0 0 496 70). The mark and wordmark are the exact paths from `Black_Logo_OS.svg`. The ticket body starts behind the mark's zigzag edge, so the mark *is* the stub, and the dashed perforation follows that zigzag. Two notches and two print lines make it read as a ticket, not a bar.
+- **One 2.5 s timeline**, with every part on the same clock and easing `cubic-bezier(0.32,0.72,0,1)`:
+
+  | Time | What happens |
+  |---|---|
+  | 0–300 ms | the ticket glides in |
+  | 300–625 ms | it settles and the perforation draws |
+  | 550–850 ms | the body tears off to the right with a slight turn and fades |
+  | 850–1100 ms | the mark moves to the centre and pops (96% → 102% → 100%) |
+  | 1150–1650 ms | the mark steps left while the wordmark slides in and comes out of a blur |
+
+  It holds on the lockup until 2.5 s.
+- **Colour** is `currentColor` on `bg-surface`, so the ticket is black in light mode and paper in dark. The cut-outs are painted in the surface colour.
+- **Reduced motion** (the OS setting or `html[data-motion=reduce]`): the finished logo, still, and the redirect after 700 ms.
+- **Screen readers** hear "You are signed out." The SVG is `aria-hidden`. New messages are `auth.signedOut.status` and `metaTitle`, in en and bn.
+- Verified on a production build:
+  - a new flow check, 27/27: click Sign out → motion → `/sign-in` in about 2.6 s, light and dark; the mark ends at the logo's origin and the lockup is centred; at 390 px it fits with no side-scroll, even mid-tear; reduced motion redirects quickly with no animation; Bangla; no console errors;
+  - auth 212/212, settings-nav 53/53, phone shell 49/49;
+  - `tsc`, `lint:tokens`, `eslint` and i18n, clean.
