@@ -3,18 +3,6 @@
   "allLocations": "All locations",
   "today": "Today",
   "thisWeek": "This week",
-  "finishSetup": "Finish setting up",
-  "stepProgress": "{complete} of {total}",
-  "stepDone": "Done",
-  "stepSkipped": "Skipped",
-  "skip": "Skip",
-  "start": "Start",
-  "stepBusiness": "Name your business",
-  "stepLocation": "Add a venue",
-  "stepCounter": "Add a counter",
-  "stepTeam": "Invite a team member",
-  "stepProduct": "Add what you sell",
-  "stepDevice": "Add a device",
   "revenueToday": "Sales today",
   "revenueThisWeek": "Sales this week",
   "capacitySold": "Places sold",
@@ -66,12 +54,89 @@
   "orderCount": "{count, plural, =0 {No orders} one {# order} other {# orders}}",
   "vsWeekBefore": "vs the week before",
   "scopeLabel": "Show",
-  "skipStep": "Skip: {step}",
   "activityTitle": "Activity",
   "metrics": "Key figures",
   "showMore": "Show more",
   "showLess": "Show less",
   "floatAmount": "{amount} float",
   "lastNDays": "Last {count} days",
-  "figuresLabel": "Figures"
+  "figuresLabel": "Figures",
+  "setup": {
+    "welcome": "Welcome, {name}",
+    "welcomeNoName": "Welcome",
+    "lead": "Let's get {business} ready to sell.",
+    "leadNoBusiness": "Let's get your business ready to sell.",
+    "guideTitle": "Setup guide",
+    "guideLead": "Finish these steps, one at a time.",
+    "progress": "{done} of {total} done",
+    "menu": "Setup guide options",
+    "hide": "Hide setup guide",
+    "show": "Show setup guide",
+    "stepDone": "Done",
+    "stepSkipped": "Skipped",
+    "skip": "Skip for now",
+    "skipAria": "Skip for now: {step}",
+    "undoSkip": "Bring it back",
+    "stepOf": "Step {n}",
+    "needsVenue": "Add your venue first. A counter belongs to a venue.",
+    "needsCounter": "Set up a counter first. A device is paired to a counter.",
+    "goVenue": "Add your venue first",
+    "goCounter": "Set up a counter first",
+    "step": {
+      "business": {
+        "title": "Business details",
+        "body": "Your business name, currency and time zone are saved. You can change them any time.",
+        "bodyTodo": "Add your business name. Customers see it on their tickets.",
+        "action": "Review details"
+      },
+      "venue": {
+        "title": "Add your venue",
+        "body": "Add the address and opening hours of the place where you sell.",
+        "action": "Add venue"
+      },
+      "catalog": {
+        "title": "Add what you sell",
+        "body": "Add your first booking. Set a price and when people can come.",
+        "action": "Add a booking"
+      },
+      "payments": {
+        "title": "Choose how you take payment",
+        "body": "Choose how customers pay you: cash, bKash or card.",
+        "action": "Choose payments"
+      },
+      "counter": {
+        "title": "Set up a counter",
+        "body": "A counter is where you sell tickets. Give it a name and pick its venue.",
+        "action": "Add counter"
+      },
+      "team": {
+        "title": "Invite your team",
+        "body": "Add the people who sell and check in customers. Each person gets their own PIN.",
+        "action": "Invite a team member"
+      },
+      "device": {
+        "title": "Connect a counter device",
+        "body": "Link a tablet or phone to your counter so it can sell.",
+        "action": "Connect device"
+      }
+    },
+    "readyTitle": "You're ready to sell",
+    "readyBody": "Your business is set up. Open the counter and make your first sale.",
+    "readyBodySkipped": "Your business is almost set up. You skipped {count} steps, and you can finish them later.",
+    "openCounter": "Open the counter",
+    "goDashboard": "Go to the dashboard",
+    "tryTitle": "Try the counter",
+    "tryBody": "Make a practice sale and see how it works.",
+    "tryAction": "Open the counter",
+    "pageTitle": "Your web page",
+    "pageBody": "Let customers find you and book online. You can do this later.",
+    "pageAction": "Set up web page",
+    "optional": "Optional",
+    "laterTitle": "After your first sale",
+    "laterBody": "You will see today's sales, places sold and who has arrived here.",
+    "open": "Open",
+    "previewSales": "Today's sales",
+    "previewPlaces": "Places sold",
+    "previewArrived": "Arrived"
+  }
 }

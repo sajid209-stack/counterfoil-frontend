@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, FormField } from "@/components/ui";
-import { updateOperator } from "@/lib/api";
+import { getOperatorState, isFreshAccount, markFreshAccount, updateOperator } from "@/lib/api";
 import { authButtonClass } from "../_components/AuthHeading";
 
 const COUNTRIES = ["Bangladesh", "Malaysia", "United States", "Canada"];
@@ -14,7 +14,8 @@ const TIMEZONES = ["Asia/Dhaka", "Asia/Kuala_Lumpur", "America/New_York", "Ameri
 export default function OnboardingPage() {
   const router = useRouter();
   const t = useTranslations("auth.onboarding");
-  const [name, setName] = useState("");
+  // The business name was typed at sign-up; it is the first thing this page remembers.
+  const [name, setName] = useState(() => getOperatorState().name);
   const [country, setCountry] = useState("Bangladesh");
   const [currency, setCurrency] = useState("BDT");
   const [timezone, setTimezone] = useState("Asia/Dhaka");
@@ -27,7 +28,8 @@ export default function OnboardingPage() {
       return;
     }
     setSaving(true);
-    await updateOperator({ name, currency, defaultTimezone: timezone });
+    await updateOperator({ name: name.trim(), currency, defaultTimezone: timezone });
+    if (isFreshAccount()) markFreshAccount(name.trim(), { currency, defaultTimezone: timezone });
     setSaving(false);
     router.push("/dashboard");
   };

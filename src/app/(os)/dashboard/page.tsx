@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Activity, ArrowRight, CalendarClock, Check, ChevronDown, ListFilter, ShoppingBag, UserCheck, Users, Wallet } from "lucide-react";
+import { Activity, ArrowRight, CalendarClock, ChevronDown, ListChecks, ListFilter, ShoppingBag, UserCheck, Users, Wallet } from "lucide-react";
 import { AreaChart, Button, DeltaPill, EmptyState, PeriodPill, SegmentedControl, Select, Skeleton, StatStrip, StatusPill, type StatItem } from "@/components/ui";
 import { PageShell } from "@/components/ui/PageShell";
 import { deltaShows } from "@/components/ui/StatStrip";
 import { useApiQuery } from "@/lib/useApi";
 import {
+  getFreshAccount,
   getOperator,
+  isFreshAccount,
+  listPaymentAccounts,
   getResourceMatrix,
   getSlots,
   listBookings,
@@ -36,6 +39,14 @@ import { cn } from "@/lib/cn";
 import { MD, SM, useMediaQuery } from "@/lib/useMedia";
 import { ACTIVITY_ICON, SEVERITY_ICON_CLASS, useActivityText } from "../activity/_components/parts";
 import { MetricStrip, type Metric } from "./_components/MetricStrip";
+import { SetupGuide } from "./_components/SetupGuide";
+import { useSetupGuideState } from "./_components/setupStore";
+
+/* Whether this browser is on a brand-new account, and its owner's first name: both are
+   remembered in localStorage (cf_fresh), an external store, so they are read as one. */
+const noSubscribe = () => () => {};
+const readFresh = () => isFreshAccount();
+const readOwnerFirst = () => (getFreshAccount()?.ownerName ?? "").trim().split(/s+/)[0] ?? "";
 
 // The demo clock is shared, never copied: DEMO_TODAY's own comment warns
 // that two components each holding their own date is the bug.
@@ -129,6 +140,10 @@ export default function DashboardPage() {
   const devicesQ = useApiQuery(() => listDevices({ pageSize: 100 }), []);
   const ordersQ = useApiQuery(() => listOrders({ pageSize: 1000 }), []);
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), []);
+  const paymentsQ = useApiQuery(() => listPaymentAccounts({ pageSize: 1 }), []);
+  const guide = useSetupGuideState();
+  const fresh = useSyncExternalStore(noSubscribe, readFresh, () => false);
+  const ownerFirst = useSyncExternalStore(noSubscribe, readOwnerFirst, () => "");
 
   /* Read, not chosen here: the bar owns it. */
   const { id: locationId } = useActiveLocation(locationsQ.data?.data ?? []);
@@ -136,8 +151,6 @@ export default function DashboardPage() {
   const [trendDays, setTrendDays] = useState<7 | 14 | 30>(30);
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
   const [more, setMore] = useState(false);
-  const [skipped, setSkipped] = useState<Record<string, boolean>>({});
-  const skip = (key: string) => setSkipped((s) => ({ ...s, [key]: true }));
   const has = (q: { data?: { page: { total: number } } }) => (q.data?.page.total ?? 0) > 0;
 
   const loading = ordersQ.loading || bookingsQ.loading || productsQ.loading;
@@ -434,17 +447,28 @@ export default function DashboardPage() {
   // list answers is "how do these compare with each other".
   const topMax = Math.max(...top.map(([, r]) => r.rev), 1);
 
-  // ── Setup checklist (replaces the hero until finished) ───────────────────
-  const steps = [
-    { key: "business", label: t("stepBusiness"), done: !!op.data?.name, href: "/settings/business" },
-    { key: "location", label: t("stepLocation"), done: locations.length > 0, href: "/settings/locations/new" },
-    { key: "counter", label: t("stepCounter"), done: has(counters), href: "/settings/counters/new" },
-    { key: "team", label: t("stepTeam"), done: has(staffQ), href: "/settings/team/new" },
-    { key: "product", label: t("stepProduct"), done: products.length > 0, href: "/catalog/new" },
-    { key: "device", label: t("stepDevice"), done: (devicesQ.data?.page.total ?? 0) > 0, href: "/settings/devices/new" },
-  ];
-  const complete = steps.filter((s) => s.done || skipped[s.key]).length;
-  const allDone = complete === steps.length;
+  // ── Setup guide ─────────────────────────────────────────────────────────
+  // Every tick comes from a real record, never from a click. Payments counts a
+  // connected payment account: a non-cash method being switched on is the
+  // default for every business, so it says nothing about this one.
+  const setupDone = {
+    business: !!op.data?.name,
+    venue: locations.length > 0,
+    catalog: products.length > 0,
+    payments: (paymentsQ.data?.page.total ?? 0) > 0,
+    counter: has(counters),
+    team: has(staffQ),
+    device: (devicesQ.data?.page.total ?? 0) > 0,
+  };
+  const setupPending = [op, locationsQ, counters, staffQ, productsQ, devicesQ, ordersQ, paymentsQ].some((q) => q.loading);
+  /* Setup mode: the guide stands in for the whole page while nothing has been sold
+     yet (a business with orders has a dashboard worth showing - the seeded demos
+     do). "Hide setup guide" turns it off, and "Show setup guide" pins it back on
+     while steps remain. */
+  const noSales = allOrders.length === 0;
+  const setupMode = !setupPending && guide.mode !== "hidden" && (guide.mode === "shown" || noSales);
+  const stepsLeft = Object.values(setupDone).some((d) => !d);
+  const canShowGuide = !setupPending && !setupMode && fresh && stepsLeft;
 
   const card = "card-surface";
   const heading = "min-w-0 truncate text-md font-semibold";
@@ -793,41 +817,6 @@ export default function DashboardPage() {
     </div>
   );
 
-  const setupCard = (
-    <div className={`${card} p-card`}>
-      <div className="mb-section flex items-center justify-between">
-        <h2 className="type-h2 text-md">{t("finishSetup")}</h2>
-        <span className="text-xs text-muted">{t("stepProgress", { complete, total: steps.length })}</span>
-      </div>
-      <div className="mb-comfortable h-1.5 w-full overflow-hidden rounded-full bg-line">
-        <div className="h-full bg-ember transition-all" style={{ width: `${(complete / steps.length) * 100}%` }} />
-      </div>
-      {/* Rows divided by a hairline, not six boxed cards: the card around them
-          is already the box. */}
-      <div className="flex flex-col">
-        {steps.map((s, i) => {
-          const done = s.done || skipped[s.key];
-          return (
-            <div key={s.key} className="flex items-center gap-section border-b border-hairline py-comfortable last:border-0">
-              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm ${done ? "bg-success-solid text-on-solid" : "bg-muted-wash text-muted"}`}>
-                {done ? <Check size={16} strokeWidth={2} /> : i + 1}
-              </span>
-              <span className="min-w-0 flex-1 text-base font-medium">{s.label}</span>
-              {done ? (
-                <span className="text-xs text-muted">{s.done ? t("stepDone") : t("stepSkipped")}</span>
-              ) : (
-                <div className="flex items-center gap-tight">
-                  <button type="button" aria-label={t("skipStep", { step: s.label })} onClick={() => skip(s.key)} className="min-h-11 px-tight text-xs text-muted hover:text-fg sm:min-h-0">{t("skip")}</button>
-                  <Button size="sm" icon={<ArrowRight size={14} strokeWidth={1.5} />} onClick={() => router.push(s.href)}>{t("start")}</Button>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
   /* The date line and scope, drawn once. A phone puts them under the page name as a quiet date with a
      small pill menu (docs/mobile.md section 6); from sm the page keeps its own row with the two-option bar. */
   const dateLine =
@@ -841,12 +830,17 @@ export default function DashboardPage() {
     { value: "week", label: t("thisWeek") },
   ];
 
+  /* The normal page's controls and cards are drawn only outside setup mode. While the
+     setup queries are loading, a new account sees a quiet placeholder (never the demo's
+     shape for a frame), anyone else the page they always had. */
+  const showPage = !setupMode && !(fresh && setupPending);
+
   return (
     <PageShell
       title={wide ? op.data?.name || t("title") : t("title")}
-      subtitle={phone ? <span aria-live="polite">{dateLine}</span> : undefined}
+      subtitle={phone && showPage ? <span aria-live="polite">{dateLine}</span> : undefined}
       scope={
-        phone ? (
+        phone && showPage ? (
           <span className="flex items-center gap-tight">
             <span aria-hidden className="text-sm text-muted">{t("figuresLabel")}</span>
             <PeriodPill value={scope} onChange={(v) => setScope(v as "today" | "week")} label={t("scopeLabel")} options={scopeOptions} />
@@ -862,7 +856,7 @@ export default function DashboardPage() {
           loudest thing on the screen for the quietest decision on it — and the
           week reads as a range without weekdays, so both fit 320px. The venue
           chooser lives in the bar and governs the whole console. */}
-      {!phone && (
+      {!phone && showPage && (
       <div className="mb-section flex items-center justify-between gap-section">
         <p aria-live="polite" className="min-w-0 truncate text-sm text-muted">
           {dateLine}
@@ -881,21 +875,33 @@ export default function DashboardPage() {
       </div>
       )}
 
-      {loading ? (
+      {canShowGuide && (
+        <div className="mb-section flex justify-end">
+          <Button variant="tertiary" size="sm" icon={<ListChecks size={15} strokeWidth={1.5} aria-hidden />} onClick={() => guide.setMode("shown")}>
+            {t("setup.show")}
+          </Button>
+        </div>
+      )}
+
+      {!showPage ? (
+        setupMode ? (
+          <SetupGuide done={setupDone} business={op.data?.name ?? ""} firstName={ownerFirst} guide={guide} />
+        ) : (
+          <div aria-busy="true"><Skeleton className="h-72 w-full" /></div>
+        )
+      ) : loading ? (
         /* The labels are known before the figures are, so the strip states
            what it is about to say and pulses only the numbers. */
         <div aria-busy="true">
           {wide ? <StatStrip items={stats} loading variant="tiles" /> : <MetricStrip items={figures} loading label={t("metrics")} />}
         </div>
-      ) : !allDone ? (
-        setupCard
       ) : wide ? (
         <StatStrip items={stats} variant="tiles" />
       ) : (
         <MetricStrip items={figures} label={t("metrics")} />
       )}
 
-      {!loading && wide && (
+      {showPage && !loading && wide && (
         /* 16px between every card — one gap, the same as every other page. */
         <>
           <div className="mt-section grid gap-section min-[1360px]:grid-cols-3">
@@ -913,7 +919,7 @@ export default function DashboardPage() {
         </>
       )}
 
-      {!loading && !wide && (
+      {showPage && !loading && !wide && (
         /* A phone, in the order it is read: how sales are going, what just
            happened, what sold. The two cards that are about the day's shape
            rather than its news fold behind one button. */

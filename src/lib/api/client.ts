@@ -104,6 +104,56 @@ export function patchOperatorState(patch: Partial<Operator>): Operator {
   return operatorState;
 }
 
+/* ── A new account stays new ───────────────────────────────────────────────
+   The mock store lives in memory, so a reload used to drop a brand-new business
+   back onto the demo. Confirming a sign-up remembers the business (its name, and
+   later the currency and timezone from onboarding) in this browser; on the next
+   boot, when no demo was asked for, the empty business is rebuilt from it.
+   Opening any demo clears it. */
+export const FRESH_KEY = "cf_fresh";
+export interface FreshAccount { name: string; ownerName?: string; currency?: string; defaultTimezone?: string }
+/** The dashboard's setup guide keeps its own per-browser state; a new account starts it afresh. */
+const GUIDE_KEY = "cf_setup_guide";
+const forgetGuide = () => { try { localStorage.removeItem(GUIDE_KEY); window.dispatchEvent(new Event("cf-setup-guide")); } catch {} };
+let freshMemory: FreshAccount | null = null;
+/** The remembered new account, or null when this browser is not on one. */
+export function getFreshAccount(): FreshAccount | null {
+  try {
+    const raw = localStorage.getItem(FRESH_KEY);
+    if (raw) {
+      const v = JSON.parse(raw) as FreshAccount;
+      if (v && typeof v.name === "string") return v;
+    }
+  } catch {}
+  return freshMemory;
+}
+export const isFreshAccount = (): boolean => getFreshAccount() !== null;
+const freshPatch = (f: FreshAccount): Partial<Operator> => ({
+  name: f.name,
+  ...(f.currency ? { currency: f.currency } : {}),
+  ...(f.defaultTimezone ? { defaultTimezone: f.defaultTimezone } : {}),
+});
+/** Remember a new account (merging what onboarding adds later) and name the empty business. */
+export function markFreshAccount(name: string, extra?: Partial<Omit<FreshAccount, "name">>): void {
+  const before = getFreshAccount();
+  const next: FreshAccount = { ...(before ?? { name }), ...extra, name };
+  if (!before) forgetGuide();
+  freshMemory = next;
+  try { localStorage.setItem(FRESH_KEY, JSON.stringify(next)); } catch {}
+  patchOperatorState(freshPatch(next));
+}
+export function clearFreshAccount(): void {
+  freshMemory = null;
+  forgetGuide();
+  try { localStorage.removeItem(FRESH_KEY); } catch {}
+}
+function restoreFreshAccount(): void {
+  const f = getFreshAccount();
+  if (!f) return;
+  startFresh();
+  patchOperatorState(freshPatch(f));
+}
+
 // Tax config is a singleton (per settings.v2 tax-config), not a collection.
 let advancePolicyState: AdvancePolicy = structuredClone(seed.advancePolicy);
 export const getAdvancePolicyState = (): AdvancePolicy => advancePolicyState;
@@ -207,6 +257,7 @@ export const isBundleDemo = (id: string) => id in BUNDLES;
 export const bundleProductLists = (): Product[][] => [doers.doersProducts];
 /** Load a whole-business demo and remember it for this browser. */
 export function loadBundleDemo(id: string): void {
+  clearFreshAccount();
   BUNDLES[id]?.apply();
   try { localStorage.setItem(DEMO_KEY, id); } catch {}
 }
@@ -231,6 +282,7 @@ if (typeof window !== "undefined") {
     const demoHit = path.match(/^\/demo\/([a-z-]+)/);
     if (demoHit) id = Object.keys(BUNDLES).find((k) => demoHit[1].startsWith(k)) ?? id;
     if (id && BUNDLES[id]) BUNDLES[id].apply();
+    else restoreFreshAccount();
   } catch {}
 }
 

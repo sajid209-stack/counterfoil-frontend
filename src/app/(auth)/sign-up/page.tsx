@@ -9,6 +9,7 @@ import { AuthField } from "../_components/AuthField";
 import { AuthHeading, authButtonClass, linkClass, quietLinkClass } from "../_components/AuthHeading";
 import { CodeBoxes } from "../_components/CodeBoxes";
 import { Strength } from "../_components/Strength";
+import { markFreshAccount, startFreshBusiness } from "@/lib/api";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const RESEND_SECONDS = 30;
@@ -58,6 +59,9 @@ export default function SignUpPage() {
     setCodeTried(true);
     if (code.length < 6) return;
     setLoading(true);
+    // A confirmed account starts empty, and a reload keeps it that way.
+    startFreshBusiness();
+    markFreshAccount(business.trim(), { ownerName: name.trim() });
     setTimeout(() => router.push("/onboarding"), 600);
   };
 

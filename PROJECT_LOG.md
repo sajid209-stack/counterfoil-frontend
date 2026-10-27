@@ -18684,3 +18684,29 @@ Owner: remove the line under the till's header and make the header smoother.
 ## Menu counts in the primary colour (2026-10-26)
 
 Owner: the waiting-count circle on menu rows (Orders, Refunds, Write-offs) should be the primary colour with white figures and no stroke. `NavBadge` is now `bg-ember-solid` with `text-on-solid` at 600 and no ring, in the rail, the collapsed-rail corner and the phone menu. Verified: #F94A00 under white in light and dark, no box-shadow; `sn/nav-adapted` 201/201; `lint:tokens` and `eslint` clean.
+
+## A new account's first dashboard (2026-10-27)
+
+Owner: a newly created account should get its own dashboard, a guided setup list (venue, counter, staff, catalog, device…), researched and built properly. The spec is `docs/new-account.md` (Shopify's setup guide, Stripe's ordered tasks, Square's "get started", Linear-style empty states).
+- **A fresh account is really empty.**
+  - Confirming the sign-up code runs `startFreshBusiness()` and `markFreshAccount(business, { ownerName })`, which writes `cf_fresh` to localStorage.
+  - On boot with that flag and no demo, `client.ts` restores the empty business with its name, currency and timezone.
+  - Opening a demo or "Start fresh" from the landing page clears it.
+  - Onboarding pre-fills the business name.
+- **Setup mode on the dashboard** (`dashboard/_components/SetupGuide.tsx`, `SetupSide.tsx`, `setupStore.ts`):
+  - It shows while there are no orders and the guide is not hidden.
+  - It draws only a welcome ("Welcome, {name} — Let's get {business} ready to sell") and a setup guide with progress ("N of 7 done").
+  - The seven steps, each ticked from real data: business details, venue, what you sell, payment (a payment account exists), counter (needs a venue, and says so), team, counter device (needs a counter).
+  - One step is open at a time, with a sentence, an icon (desktop only), one orange action and "Skip for now". Done steps can be reopened.
+  - A side column holds "Try the counter", "Your web page" (optional) and a muted preview of the figures to come.
+  - "Hide setup guide" switches to the normal dashboard, and "Show setup guide" brings it back while steps remain. When everything is done or skipped: "You're ready to sell".
+- Removed: the old six-step `setupCard` and its messages. A "Message us" card with an invented support address was dropped; there is no real support contact in the app yet.
+- Demo businesses have orders, so their dashboards are unchanged (topcards 117/117).
+- Verified on a production build:
+  - the new-account flow, 28/28 (sign-up → onboarding prefill → setup mode only → add a venue ticks step 2 → skip → reopen → hide/show → reload keeps the fresh business → phone, dark, Bangla, demo unchanged);
+  - auth 212/212;
+  - the phone audit and the 59-route sweeps at 390 and 1440, clean;
+  - `tsc`, `lint:tokens`, `eslint` (two known dashboard warnings) and i18n, clean.
+- Open:
+  - Records created in a fresh account (a venue, a booking) do not survive a full page reload, because the mock store is in memory. The fresh business itself does.
+  - The Bangla strings are drafts.
