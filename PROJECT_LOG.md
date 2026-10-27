@@ -18845,3 +18845,11 @@ The owner pointed out that the mark travelled to the centre after the tear and t
 - The ticket now enters with its stub (the mark) already at the centre, with the body extending to the right. The mark stays put through the tear, pops to 108% in place at 1.25–1.5 s, then makes one move, left into the lockup, at 1.55–2.35 s, while the wordmark slides out of its edge. The logo rests, and the flight to the card runs from 2.7 to 3.7 s.
 - About 3.8 s end to end.
 - Verified on a production build: the flow check 47/47, auth 212/212, settings-nav 53/53, phone shell 49/49, and `tsc` and `lint:tokens` clean.
+
+## Logo intro: no pop after the tear (2026-10-27)
+
+The owner asked to drop the small pop on the mark after the tear.
+- The mark now stays still and at its own size through the tear. It then makes its single move, left into the lockup, at 1.45–2.25 s, while the wordmark slides out of its edge. It rests until 2.6 s and flies to the card from 2.6 to 3.6 s.
+- The pop group, its animation and its CSS are removed.
+- About 3.7 s end to end.
+- Verified on a production build: the flow check 47/47, auth 212/212, settings-nav 53/53, phone shell 49/49, and `tsc` and `lint:tokens` clean.

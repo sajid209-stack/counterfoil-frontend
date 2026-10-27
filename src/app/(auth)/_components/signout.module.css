@@ -39,7 +39,6 @@
 .track { transform: translateX(213px); }
 .enter { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
 .body { transform-box: fill-box; transform-origin: 0% 100%; }
-.pop { transform-box: fill-box; transform-origin: 50% 50%; }
 .hole { fill: var(--color-surface); }
 .hole { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
 .letter { opacity: 0; }
