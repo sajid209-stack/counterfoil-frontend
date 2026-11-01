@@ -9,7 +9,7 @@ import { useEnumLabels } from "@/lib/labels";
 import { formatClock, formatDay, formatMoney, formatMoneyCompact } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
-import { csvCell, major, num, pad2, percent, saveCsv } from "./helpers";
+import { csvCell, major, num, pad2, percent, saveCsv, wholeShares } from "./helpers";
 import {
   BarList,
   CardSkeleton,
@@ -30,6 +30,7 @@ import {
   Pulse,
   Section,
   Segmented,
+  ShareColumns,
   SplitBar,
   StackedColumns,
   TableTwin,
@@ -97,7 +98,6 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
   const enumL = useEnumLabels();
   const wide = useMediaQuery(MD);
   const [showAllCap, setShowAllCap] = useState(false);
-  const [chanView, setChanView] = useState<"share" | "time">("share");
   const [payView, setPayView] = useState<"share" | "time">("share");
 
   const empty = o.kpis.orders.value === 0;
@@ -199,24 +199,57 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
     };
   });
 
-  // ── where sales come from ──
-  const channels = o.channels.map((c) => ({
-    key: c.channel,
-    label: t(`channels.${c.channel}` as never),
-    value: c.revenue,
-    figure: (
-      <>
-        <span className="font-medium">{formatMoney(c.revenue)}</span>
-        <span className="text-muted">
-          {" · "}
-          {ordersText(c.orders)}
-          {" · "}
-          {percent(c.share)}
-        </span>
-      </>
-    ),
-    change: change(c.revenue, c.previousRevenue),
+  // ── where sales come from: each point's sales split by channel ──
+  // Bottom to top: the counter (the base most venues stand on), the own website,
+  // then marketplaces. Neutral, brand and the marketplace blue: the Color System
+  // has no violet, and blue is already what "came through a marketplace" means.
+  const MIX_COLOR: Record<string, string> = { counter: "var(--chart-cat-other)", online: "var(--chart-1)", marketplace: "var(--chart-2)" };
+  const mixSeries = o.channelSeries.map((c) => ({ label: t(`channels.${c.channel}` as never), color: MIX_COLOR[c.channel] }));
+  const weekdayOf = (key: string) => new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" }).format(new Date(`${key}T12:00:00Z`));
+  const mixPoints = o.channelSeries[0]?.series ?? [];
+  const mixColumns = mixPoints.map((p, i) => ({
+    key: p.key,
+    // A week or less of days reads best by weekday.
+    label: o.granularity === "day" && mixPoints.length <= 7 ? weekdayOf(p.key) : pointLabel(p.key),
+    title: pointTitle(p.key),
+    parts: o.channelSeries.map((c) => c.series[i]?.value ?? 0),
   }));
+  // Whole percents that add up to 100, as the reference reads ("26%").
+  const nowPct = wholeShares(o.channels.map((c) => c.revenue));
+  const prevParts = o.channels.map((c) => c.previousRevenue ?? 0);
+  const prevPct = showCompare && prevParts.some((v) => v > 0) ? wholeShares(prevParts) : null;
+  const mixRows = o.channels.map((c, i) => ({
+    channel: c.channel,
+    label: t(`channels.${c.channel}` as never),
+    pct: nowPct[i],
+    revenue: c.revenue,
+    prevPct: prevPct ? prevPct[i] : null,
+  }));
+  /** Change in points of share. */
+  const pts = (r: (typeof mixRows)[number]) => (r.prevPct === null ? null : r.pct - r.prevPct);
+  // What the comparison range is called in a sentence ("the week before").
+  const mixWhen = (() => {
+    if (!o.previous) return "";
+    if (o.compare === "year") return t("mix.when.year");
+    if (o.compare === "custom") return t("mix.when.range", { range: rangeText });
+    const days = Math.round((Date.parse(o.previous.to) - Date.parse(o.previous.from)) / 86400000) + 1;
+    return days === 7 ? t("mix.when.week") : days === 1 ? t("mix.when.day") : t("mix.when.days", { n: days });
+  })();
+  // The comparison, said once: whichever channel's share moved most (a tie goes
+  // to one that is not the counter, since a shift online is the usual story).
+  // When nothing moved a point, or there is nothing to compare with, the
+  // biggest channel.
+  const mixLine = (() => {
+    const top = [...mixRows].sort((a, b) => b.pct - a.pct)[0];
+    if (!top || top.revenue <= 0) return null;
+    const moved = [...mixRows]
+      .filter((r) => r.revenue > 0 || (r.prevPct ?? 0) > 0)
+      .sort((a, b) => Math.abs(pts(b) ?? 0) - Math.abs(pts(a) ?? 0) || (a.channel === "counter" ? 1 : 0) - (b.channel === "counter" ? 1 : 0))[0];
+    const d = moved ? pts(moved) : null;
+    if (!showCompare || !moved || d === null) return t("mix.only", { channel: top.label, pct: `${top.pct}%` });
+    if (d === 0) return t("mix.same", { channel: top.label, pct: `${top.pct}%`, when: mixWhen });
+    return t(d > 0 ? "mix.up" : "mix.down", { channel: moved.label, pct: `${moved.pct}%`, prev: `${moved.prevPct ?? 0}%`, when: mixWhen });
+  })();
   const miniPanel = (key: string, label: string, total: number, previousTotal: number | undefined, series: TimePoint[]): MiniPanel => ({
     key,
     label,
@@ -230,7 +263,6 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
       previousTitle: showCompare && p.previousKey !== undefined ? pointTitle(p.previousKey) : undefined,
     })),
   });
-  const channelPanels = o.channelSeries.map((c, i) => miniPanel(c.channel, t(`channels.${c.channel}` as never), o.channels[i].revenue, o.channels[i].previousRevenue, c.series));
 
   // ── how people pay ──
   const pay = o.payments.map((p) => ({
@@ -460,40 +492,59 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
       </Section>
 
       <Group>
+        <Section id="channels" title={t("channels.title")} summary={sum.channels} info={t("info.channels")} view={{ href: "/orders", where: tn("orders") }}>
+          {empty ? (
+            <Empty>{t("channels.empty")}</Empty>
+          ) : (
+            <>
+              {mixLine && (
+                <p data-mix-line className="-mt-inline mb-section text-sm text-fg-secondary">
+                  {mixLine}
+                </p>
+              )}
+              <ShareColumns
+                columns={mixColumns}
+                series={mixSeries}
+                ariaLabel={t("mix.aria", { range: nowText })}
+                fmt={formatMoney}
+                emptyText={t("mix.none")}
+              />
+              <ul data-mix-legend className="mt-section flex flex-wrap items-center gap-x-major gap-y-tight text-sm">
+                {mixRows.map((r, i) => {
+                  const d = showCompare ? pts(r) : null;
+                  return (
+                    <li key={r.channel} className="flex items-center gap-tight">
+                      <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-xs" style={{ background: mixSeries[i].color }} />
+                      <span className="text-fg-secondary">{r.label}</span>
+                      <span className="font-medium tabular-nums">{r.pct}%</span>
+                      {d !== null && d !== 0 && (
+                        <span className="text-xs tabular-nums text-muted" title={t("mix.ptsTitle", { prev: `${r.prevPct ?? 0}%`, when: mixWhen })}>
+                          {d > 0 ? "↗" : "↘"} {t("mix.pts", { n: `${d > 0 ? "+" : "−"}${Math.abs(d)}` })}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              <TableTwin
+                caption={t("channels.title")}
+                head={[t("table.point"), ...mixSeries.map((x) => x.label)]}
+                rows={mixColumns.map((c) => {
+                  const pc = wholeShares(c.parts);
+                  const tot = c.parts.reduce((a, b) => a + b, 0);
+                  return [c.title, ...c.parts.map((v, k) => (tot > 0 ? `${pc[k]}% · ${formatMoney(v)}` : "–"))];
+                })}
+              />
+            </>
+          )}
+        </Section>
+      </Group>
+
+      <Group>
       <Grid>
         <Col>
           <Section id="sells" title={t("sells.title")} summary={sum.sells} info={t("info.sells")} view={{ href: "/catalog", where: tn("catalog") }}>
             {sells.length === 0 ? <Empty>{t("sells.empty")}</Empty> : <BarList rows={sells} />}
-          </Section>
-
-          <Section id="channels" title={t("channels.title")} summary={sum.channels} info={t("info.channels")} view={{ href: "/orders", where: tn("orders") }}>
-            {empty ? (
-              <Empty>{t("channels.empty")}</Empty>
-            ) : (
-              <>
-                <Segmented
-                  value={chanView}
-                  onChange={setChanView}
-                  label={t("mode.label")}
-                  options={[
-                    { value: "share", label: t("mode.share") },
-                    { value: "time", label: t("mode.time") },
-                  ]}
-                />
-                {chanView === "share" ? (
-                  <BarList rows={channels} />
-                ) : (
-                  <>
-                    {showCompare && <PairLegend kind="line" {...periodNames} />}
-                    <MiniMultiples panels={channelPanels} fmt={formatMoney} caption={(max) => t("mode.sameScale", { max })} />
-                    {seriesTable(
-                      t("channels.title"),
-                      o.channelSeries.map((c) => ({ label: t(`channels.${c.channel}` as never), series: c.series, fmt: formatMoney })),
-                    )}
-                  </>
-                )}
-              </>
-            )}
           </Section>
 
           <Section id="pay" title={t("pay.title")} summary={sum.pay} info={t("info.pay")} view={{ href: "/finances", where: tn("finances") }}>

@@ -58,7 +58,7 @@
   "channels": {
     "title": "Where sales come from",
     "counter": "At the counter",
-    "online": "Online",
+    "online": "Own website",
     "marketplace": "Marketplaces",
     "empty": "No sales in this period."
   },
@@ -162,7 +162,7 @@
     "revenue": "Sales after discounts and refunds, before VAT, on the day each order was made.\nThe dashed line is the dates you compare with, matched day by day.",
     "sells": "Revenue by booking or event ticket, after discounts and refunds.\nShop items, add-ons and custom amounts are in Other.",
     "tickets": "Revenue by ticket type: the price tier a ticket was sold under, such as Adult or Child, shown as booking · tier. After discounts and refunds.\nThe top 10 are listed. Everything else, including shop items and add-ons, is in Other. Tickets sold are net of refunds.",
-    "channels": "Revenue by where the order came from: at the counter, online on your own site, or through a marketplace. After discounts and refunds.\nOver time shows each one on its own small chart, all on the same scale.",
+    "channels": "Each column is one day's sales (one hour's for a single day, one week's for a long period), split by where the order came from: at the counter, online on your own website, or through a marketplace. Every column is the whole of its sales, so a quiet day reads as clearly as a busy one. Hover or focus a column for the amounts. After discounts and refunds.",
     "pay": "Money taken, by how the guest paid, on the day it was paid. Failed payments are not counted. This is money in, so it includes VAT and does not take refunds off; it can differ from revenue.\nOver time shows each method on its own small chart, all on the same scale.",
     "visitors": "Guests who were booked to come, by the day and hour of their time slot. Every guest in a booking's party counts. Tickets that need no booking are not counted. The total is the Guests figure at the top.",
     "checkins": "Guests checked in, placed on the day and hour of the time slot they booked, because a booking records how many arrived, not when.\n\"Came\" is checked-in guests out of guests who were due: those whose time has started, or who have already arrived. A party of 4 with 3 checked in counts as 3.",
@@ -248,5 +248,22 @@
     "topBookings": "Top 3 bookings sold online",
     "cut": "{orders} · Commission {commission} · You keep {kept}",
     "cutTotal": "Commission {commission} · You keep {kept}"
+  },
+  "mix": {
+    "aria": "Share of sales by where they came from, {range}",
+    "none": "No sales",
+    "only": "{channel} brought {pct} of sales in this period.",
+    "up": "{channel} brought {pct} of sales, up from {prev} {when}.",
+    "down": "{channel} brought {pct} of sales, down from {prev} {when}.",
+    "same": "{channel} brought {pct} of sales, about the same as {when}.",
+    "pts": "{n} pts",
+    "ptsTitle": "{prev} {when}",
+    "when": {
+      "week": "the week before",
+      "day": "the day before",
+      "days": "the {n} days before",
+      "year": "the same days last year",
+      "range": "in {range}"
+    }
   }
 }

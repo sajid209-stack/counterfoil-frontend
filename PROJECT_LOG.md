@@ -18878,3 +18878,28 @@ What changed:
 - **New timeline:** the lockup forms at 1.4–2.7 s, rests until 3.1 s, then the flight to the card runs 1.1 s. About 4.3 s end to end.
 - **Measured, before → after:** the largest per-frame opacity change 0.284 → 0.054; the mark's peak speed 15.3 → 9.2 px a frame; its largest change in speed between frames 2.0 → 0.74 px.
 - Verified on a production build: the flow check 47/47, auth 212/212, settings-nav 53/53, phone shell 49/49, and `tsc` and `lint:tokens` clean.
+
+## Analytics: "Where sales come from" becomes a share-by-day comparison (2026-11-01)
+
+The owner supplied a reference: a full-width card with one column per day, each filled 100% and split into At the counter, Own website and Marketplaces, with a one-line comparison ("Own website brought 26% of sales in the last 7 days, up from 21% the week before") and a legend underneath.
+- **The card is rebuilt, not added.** The old small card (a share list, plus an Over time toggle with three small charts) answered the same question. Two cards with one question would compete, so the existing card (`data-card=channels`) became the new design. It now spans the page directly under Revenue over time. Payments keeps its own Share / Over time toggle.
+- **`ShareColumns`** (`analytics/_components/Parts.tsx`): one column per point, all the same height.
+  - **Why equal heights:** each column is 100% of that point's sales, so a quiet day reads as clearly as a busy one.
+  - **No axis:** the scale is always 0–100%. Corners are soft, and the gaps shrink as the columns multiply (12, 8 or 4 px). A day with no sales is an empty track.
+  - **Hover or focus:** the other columns dim, and a tooltip lists the channels that sold that day, with the percent and the amount. The tooltip sits beside the column, inside the plot, so it never covers the card's text or leaves the card.
+  - **Accessibility:** each column is focusable and named with its whole split, and a table twin carries every value.
+  - **Labels:** weekdays for a week or less of days. Otherwise dates, thinned so none collide; when the columns are narrow, the end labels align to the chart's edges.
+- **The sentence** names the channel whose share moved most (in points; a tie goes to a channel other than the counter) and words the comparison range: "the week before", "the day before", "the N days before", "the same days last year", or the range itself. Without a comparison: "{channel} brought N% of sales in this period."
+- **Whole percents that add to exactly 100** (`wholeShares` in `helpers.ts`, largest remainder) in the sentence, the legend, each tooltip and the table. The legend shows each channel's change in points when comparing.
+- **Colours:**
+  - counter `--chart-cat-other` (neutral);
+  - own website `--chart-1` (brand);
+  - marketplaces `--chart-2` (blue).
+
+  The reference's violet is not in the Color System, and blue already means "came through a marketplace" (`--color-market`).
+- **Copy:** `channels.online` is now "Own website" / "নিজের ওয়েবসাইট", and there are new `mix.*` messages (en and bn). The info note explains equal-height columns.
+- Verified on a production build:
+  - a new card check, 35/35: light, dark, 7 and 30 days, phone, Bangla, hover and focus tooltips, columns summing to 100%, labels apart and inside the card;
+  - the analytics page check ported to the new card and passing 498/498 (backup `an/page.pre-mix.mjs`), including that the channels' by-day CSV still sums to revenue each day;
+  - `tsc`, `lint:tokens`, `eslint` and i18n, clean.
+- Open: the demo week for the default venue has three days with no sales, and a counter share that fell from 80% to 10%. The chart is right about it, but the seed makes it look sparse.

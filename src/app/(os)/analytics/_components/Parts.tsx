@@ -8,6 +8,7 @@ import { SegmentedControl, Skeleton } from "@/components/ui";
 import { niceScale, smoothPath, useWidth } from "@/components/ui/charts";
 import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
+import { wholeShares } from "./helpers";
 
 /* The small shapes the analytics cards are made of. Almost every chart here is
  * a nominal or ranked one, so every bar is one brand hue: the label beside it
@@ -687,6 +688,153 @@ export function CardSkeleton({ rows = 5, tall, className }: { rows?: number; tal
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Share columns: where each day's sales came from ───────────────────────
+ *
+ * One column per point, every column the same height: each is 100% of that
+ * point's sales, split by channel, bottom to top in `series` order. The shape
+ * answers "how much of it came from where", which a stack of amounts hides
+ * whenever a busy day dwarfs a quiet one. Amounts are in the tooltip and the
+ * table twin. A point with no sales is an empty track, not a missing column.
+ *
+ * Calm on purpose: no axis (the scale is always 0–100%), soft corners, gaps
+ * that shrink as the columns multiply, and hovering or focusing a column dims
+ * the others rather than drawing over them. Each column is focusable and
+ * names its whole split, so the chart reads without a pointer.
+ */
+export interface ShareColumn {
+  key: string;
+  /** Axis label, thinned when the columns are narrow. */
+  label: string;
+  /** Tooltip heading. */
+  title: string;
+  /** One amount per series, bottom to top. */
+  parts: number[];
+}
+
+export function ShareColumns({
+  columns,
+  series,
+  ariaLabel,
+  fmt,
+  emptyText,
+}: {
+  columns: ShareColumn[];
+  series: { label: string; color: string }[];
+  ariaLabel: string;
+  fmt: (n: number) => string;
+  emptyText: string;
+}) {
+  const wide = useMediaQuery(MD);
+  const [box, w] = useWidth<HTMLDivElement>();
+  const [active, setActive] = useState<number | null>(null);
+  const n = columns.length;
+  const height = wide ? 168 : 128;
+  // Gaps in px, the same steps as the spacing tokens (12 / 8 / 4).
+  const gap = n <= 10 ? 12 : n <= 18 ? 8 : 4;
+  const gapClass = n <= 10 ? "gap-comfortable" : n <= 18 ? "gap-tight" : "gap-inline";
+  const colW = n > 0 && w > 0 ? (w - gap * (n - 1)) / n : 0;
+  const every = colW > 0 ? Math.max(1, Math.ceil(56 / (colW + gap))) : 1;
+  // Columns narrower than a label: the end labels align to the chart's edges.
+  const narrow = colW > 0 && colW < 48;
+  const totals = columns.map((c) => c.parts.reduce((s, v) => s + v, 0));
+  const split = (i: number) => {
+    const pct = wholeShares(columns[i].parts);
+    return series.map((s, k) => ({ ...s, amount: columns[i].parts[k], pct: pct[k] }));
+  };
+  const named = (i: number) =>
+    totals[i] > 0
+      ? `${columns[i].title}: ${split(i)
+          .filter((p) => p.amount > 0)
+          .map((p) => `${p.label} ${p.pct}% (${fmt(p.amount)})`)
+          .join(", ")}`
+      : `${columns[i].title}: ${emptyText}`;
+  // The tooltip sits beside the column, inside the plot: right of it in the
+  // left half, left of it in the right half. It never covers the card's title
+  // or sentence, and never leaves the card.
+  const onLeftHalf = active !== null && active < n / 2;
+  const tipX = active === null ? 0 : onLeftHalf ? active * (colW + gap) + colW + gap : active * (colW + gap) - gap;
+
+  return (
+    <div ref={box} className="relative w-full" data-share-columns onMouseLeave={() => setActive(null)}>
+      {active !== null && w > 0 && (
+        <div
+          role="tooltip"
+          data-share-tip
+          className="pointer-events-none absolute z-10 min-w-44 rounded-control border border-line bg-card px-comfortable py-tight shadow-float"
+          style={{ left: tipX, top: 8, transform: onLeftHalf ? undefined : "translateX(-100%)" }}
+        >
+          <p className="mb-inline text-xs text-muted">{columns[active].title}</p>
+          {totals[active] > 0 ? (
+            <>
+              {[...split(active)].reverse().filter((p) => p.amount > 0).map((p) => (
+                <p key={p.label} className="flex items-center gap-tight whitespace-nowrap text-sm">
+                  <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-xs" style={{ background: p.color }} />
+                  <span className="text-fg-secondary">{p.label}</span>
+                  <span className="ml-auto pl-section font-medium tabular-nums">{p.pct}%</span>
+                  <span className="w-20 text-right tabular-nums text-muted">{fmt(p.amount)}</span>
+                </p>
+              ))}
+              <p className="mt-inline flex border-t border-hairline pt-inline text-xs text-muted">
+                <span className="ml-auto tabular-nums">{fmt(totals[active])}</span>
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-muted">{emptyText}</p>
+          )}
+        </div>
+      )}
+      <ul role="list" aria-label={ariaLabel} className={cn("flex items-stretch", gapClass)} style={{ height }}>
+        {columns.map((c, i) => (
+          <li
+            key={c.key}
+            tabIndex={0}
+            aria-label={named(i)}
+            onMouseEnter={() => setActive(i)}
+            onFocus={() => setActive(i)}
+            onBlur={() => setActive(null)}
+            className={cn(
+              "flex min-w-0 flex-1 flex-col-reverse overflow-hidden rounded-sm bg-subtle outline-none transition-opacity duration-standard focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+              active !== null && active !== i && "opacity-45",
+            )}
+          >
+            {totals[i] > 0 &&
+              c.parts.map((v, k) =>
+                v > 0 ? (
+                  <span
+                    key={series[k].label}
+                    aria-hidden
+                    className="block w-full shrink-0 transition-[height] duration-considered"
+                    style={{ height: `${(v / totals[i]) * 100}%`, background: series[k].color }}
+                  />
+                ) : null,
+              )}
+          </li>
+        ))}
+      </ul>
+      {/* A label is centred under its column but free to run into its
+          neighbours' space, which the thinning keeps empty. When the columns are
+          narrow the first and last align to the chart's edges instead, so
+          neither leaves the card. */}
+      <div aria-hidden className={cn("mt-tight flex h-4", gapClass)}>
+        {columns.map((c, i) => (
+          <span key={c.key} className="relative min-w-0 flex-1 text-xs text-muted">
+            {i % every === 0 && (
+              <span
+                className={cn(
+                  "absolute top-0 whitespace-nowrap",
+                  narrow && i === 0 ? "left-0" : narrow && i === n - 1 ? "right-0" : "left-1/2 -translate-x-1/2",
+                )}
+              >
+                {c.label}
+              </span>
+            )}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
