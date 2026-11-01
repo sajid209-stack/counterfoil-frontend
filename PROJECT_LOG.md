@@ -19139,3 +19139,11 @@ holds at the same y while its clip changes per chapter, no page overflow at 320�
 console errors, touch targets ≥ 44px. Harness 45/56 — remaining are probe limits (canvas
 motion isn't DOM motion; the dark ember #ff5a14 isn't in the colour list), the orbit rings
 around the phone (deliberate hairlines), and white-on-ember being the app's primary button.
+
+### Reverted to v5 (light), same day
+
+Owner: "bring back the light version old last one". `src/app/website` and `public/website`
+restored byte-for-byte from 1813f1b (v5: kinetic type, 3D film wall, pinned gallery, stacking
+cards, ticket rain, light clips). The dark v6 stays in history at fe409b7 — its pieces
+(canvas kit `space.tsx`, Spark, Orbit, Wormhole, Constellation, Galaxy, dark clips via
+`CF_THEME=dark`) can be cherry-picked into the light site if wanted.

@@ -5,15 +5,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { cn } from "@/lib/cn";
-import logo from "@/app/deck/_media/logo-counterfoil-dark.png";
+import logo from "@/app/deck/_media/logo-counterfoil.png";
 import { LinkButton } from "./ui";
 
 export const NAV_LINKS = [
-  { href: "#interface", label: "OS" },
   { href: "#platform", label: "Go" },
+  { href: "#os", label: "OS" },
+  { href: "#engine", label: "Capacity" },
+  { href: "#types", label: "What you can sell" },
   { href: "#payments", label: "Payments" },
   { href: "#pricing", label: "Pricing" },
-  { href: "#faq", label: "FAQ" },
 ] as const;
 
 /**
@@ -48,7 +49,7 @@ export function Nav() {
     <>
       <a
         href="#payments"
-        className="group flex min-h-11 items-center md:min-h-10 justify-center gap-2 bg-[rgb(249_74_0/0.08)] px-5 text-center text-[13px] text-[var(--cf-fg-2)]"
+        className="group flex min-h-11 items-center md:min-h-10 justify-center gap-2 bg-[var(--color-brand-50)] px-5 text-center text-[13px] text-[var(--cf-fg-2)]"
       >
         <span className="rounded-full bg-ember-solid px-2 py-0.5 text-[12px] font-medium text-on-solid">Bangladesh</span>
         <span className="truncate">Sell with bKash and Bangla QR at the till, in Bangla or English</span>
@@ -58,7 +59,7 @@ export function Nav() {
         data-site-nav
         className={cn(
           "sticky top-0 z-50 transition-[background-color,backdrop-filter,box-shadow] duration-200",
-          scrolled || open ? "bg-[rgb(5_5_5/0.72)] shadow-[0_1px_0_rgb(255_255_255/0.06)] backdrop-blur-xl" : "bg-transparent",
+          scrolled || open ? "bg-white/85 shadow-[0_8px_24px_-16px_rgb(17_17_16/0.18)] backdrop-blur-md" : "bg-white",
         )}
       >
         <nav aria-label="Website" className="mx-auto flex h-14 max-w-[1200px] items-center gap-6 px-5 md:px-6">
@@ -68,7 +69,7 @@ export function Nav() {
           <ul className="hidden items-center gap-0.5 lg:flex">
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
-                <a href={l.href} className="rounded-lg px-2.5 py-1.5 text-[14px] text-[var(--cf-fg-2)] transition-colors hover:bg-white/[0.06] hover:text-[var(--cf-fg)]">
+                <a href={l.href} className="rounded-lg px-2.5 py-1.5 text-[14px] text-[var(--cf-fg-2)] transition-colors hover:bg-[var(--cf-bg-3)] hover:text-[var(--cf-fg)]">
                   {l.label}
                 </a>
               </li>
@@ -92,7 +93,7 @@ export function Nav() {
           </button>
         </nav>
 
-        <div id="site-menu" hidden={!open} className="h-[calc(100dvh-3.5rem)] overflow-y-auto bg-[var(--cf-bg)] px-5 pb-10 pt-2 lg:hidden">
+        <div id="site-menu" hidden={!open} className="h-[calc(100dvh-3.5rem)] overflow-y-auto bg-white px-5 pb-10 pt-2 lg:hidden">
           <ul className="flex flex-col">
             {NAV_LINKS.map((l) => (
               <li key={l.href}>

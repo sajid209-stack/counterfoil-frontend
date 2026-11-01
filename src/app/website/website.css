@@ -9,29 +9,27 @@
    `--spacing-<name>` token exists, and this app has several. */
 
 .cf-root {
-  /* Dark, cinematic: near-black space, warm paper type, the ember as light. */
-  --cf-bg: #050505;
-  --cf-bg-2: #0c0c0b;
-  --cf-bg-3: #151513;
-  --cf-fg: #f5f2eb;
-  --cf-fg-2: #d8d3c8;
-  --cf-muted: #a29e95;
-  --cf-dim: #75716a;
-  --cf-line: rgb(245 242 235 / 0.08);
-  --cf-line-2: rgb(245 242 235 / 0.14);
-  --cf-accent: #ff5a14;
-  --cf-accent-text: #ff8a4c;
-  --cf-accent-wash: rgb(249 74 0 / 0.12);
-  --cf-glow: rgb(249 74 0 / 0.55);
-  --cf-green: #4ade80;
-  --cf-green-wash: rgb(74 222 128 / 0.12);
-  --cf-red: #f87171;
-  --cf-red-wash: rgb(248 113 113 / 0.12);
-  --cf-blue: #7aa7ff;
-  --cf-blue-wash: rgb(122 167 255 / 0.12);
+  --cf-bg: #ffffff;
+  --cf-bg-2: #fafaf9;
+  --cf-bg-3: #f4f4f2;
+  --cf-fg: #111110;
+  --cf-fg-2: #3a3936;
+  --cf-muted: #6b6a66;
+  --cf-dim: #8e8d89;
+  --cf-line: #ebeae6;
+  --cf-line-2: #dedcd7;
+  --cf-accent: #f94a00;
+  --cf-accent-text: #b33400;
+  --cf-accent-wash: #fff1ea;
+  --cf-green: #16803c;
+  --cf-green-wash: #eaf6ee;
+  --cf-red: #c4261d;
+  --cf-red-wash: #fdeeed;
+  --cf-blue: #2f6fde;
+  --cf-blue-wash: #edf3fd;
 
-  --cf-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 8px 24px -8px rgb(0 0 0 / 0.6);
-  --cf-shadow-lg: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 30px 80px -20px rgb(0 0 0 / 0.8), 0 0 0 1px rgb(255 255 255 / 0.05);
+  --cf-shadow: 0 1px 2px rgb(17 17 16 / 0.04), 0 4px 12px -4px rgb(17 17 16 / 0.06);
+  --cf-shadow-lg: 0 1px 2px rgb(17 17 16 / 0.04), 0 12px 32px -12px rgb(17 17 16 / 0.14), 0 32px 64px -32px rgb(17 17 16 / 0.12);
 
   --cf-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --cf-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
@@ -45,8 +43,8 @@
   min-height: 100vh;
 }
 .cf-root ::selection {
-  background: rgb(249 74 0 / 0.45);
-  color: #fff;
+  background: #ffd9c7;
+  color: var(--cf-fg);
 }
 
 /* ── type ─────────────────────────────────────────────────────────────── */
@@ -161,7 +159,7 @@
 /* Dotted ground under product canvases. */
 .cf-dots {
   background-color: var(--cf-bg-2);
-  background-image: radial-gradient(rgb(245 242 235 / 0.07) 1px, transparent 1px);
+  background-image: radial-gradient(rgb(17 17 16 / 0.06) 1px, transparent 1px);
   background-size: 14px 14px;
 }
 
@@ -176,14 +174,6 @@
   background: var(--cf-bg);
   border-radius: 10px;
   box-shadow: var(--cf-shadow);
-}
-
-/* Dark glass: a panel lit from its top edge, the way the reference floats UI in space. */
-.cf-glass {
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.02));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 40px 100px -30px rgb(0 0 0 / 0.9);
-  backdrop-filter: blur(14px) saturate(1.2);
-  border-radius: 20px;
 }
 
 /* ── controls ─────────────────────────────────────────────────────────── */
@@ -231,7 +221,7 @@
   }
 }
 .cf-root :focus-visible {
-  outline: 2px solid var(--cf-accent);
+  outline: 2px solid var(--cf-fg);
   outline-offset: 2px;
   border-radius: 6px;
 }

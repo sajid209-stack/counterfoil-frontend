@@ -12,9 +12,9 @@ const H = 320;
 const PAD = { l: 48, r: 14, t: 14, b: 32 };
 const X_MAX = 1200;
 const Y_MAX = 72000;
-const INK = "#f5f2eb";
+const INK = "#111110";
 const EMBER = "#f94a00";
-const GREY = "#8a867d";
+const GREY = "#b9b8b3";
 const STOPS = [200, 400, 600, 800, 1000, 1200];
 
 const lowCross = evenAt(SHARE_HIGH);
@@ -68,7 +68,7 @@ export function PricingChart() {
             Counterfoil Growth
           </li>
           <li className="flex items-center gap-2">
-            <span aria-hidden className="h-3 w-5 rounded-[3px]" style={{ background: "rgb(245 242 235 / 0.18)" }} />A marketplace share, 6.5–12%
+            <span aria-hidden className="h-3 w-5 rounded-[3px]" style={{ background: "rgb(17 17 16 / 0.12)" }} />A marketplace share, 6.5–12%
           </li>
         </ul>
       </figcaption>
@@ -79,21 +79,21 @@ export function PricingChart() {
             <svg width={w} height={H} role="img" aria-label={summary} className="block">
               {[0, 20000, 40000, 60000].map((v) => (
                 <g key={v}>
-                  <line x1={PAD.l} x2={w - PAD.r} y1={sy(v)} y2={sy(v)} stroke={v === 0 ? "#3a3935" : "#232220"} strokeDasharray={v === 0 ? undefined : "2 4"} />
-                  <text x={PAD.l - 8} y={sy(v) + 4} textAnchor="end" fontSize={12} fill="#a29e95">
+                  <line x1={PAD.l} x2={w - PAD.r} y1={sy(v)} y2={sy(v)} stroke={v === 0 ? "#cfcdc8" : "#e4e2dd"} strokeDasharray={v === 0 ? undefined : "2 4"} />
+                  <text x={PAD.l - 8} y={sy(v) + 4} textAnchor="end" fontSize={12} fill="#6b6a66">
                     {v === 0 ? "৳0" : `৳${v / 1000}k`}
                   </text>
                 </g>
               ))}
               {xTicks.map((t) => (
-                <text key={t} x={sx(t)} y={H - PAD.b + 20} textAnchor={t === 0 ? "start" : t === X_MAX ? "end" : "middle"} fontSize={12} fill="#a29e95">
+                <text key={t} x={sx(t)} y={H - PAD.b + 20} textAnchor={t === 0 ? "start" : t === X_MAX ? "end" : "middle"} fontSize={12} fill="#6b6a66">
                   {t.toLocaleString("en-US")}
                 </text>
               ))}
 
               <polygon
                 points={`${sx(0)},${sy(0)} ${sx(X_MAX)},${sy(share(X_MAX, SHARE_HIGH))} ${sx(X_MAX)},${sy(share(X_MAX, SHARE_LOW))}`}
-                fill="rgb(245 242 235 / 0.09)"
+                fill="rgb(17 17 16 / 0.09)"
                 style={fade(500)}
               />
               <path d={`M${sx(0)} ${sy(0)}L${sx(X_MAX)} ${sy(share(X_MAX, SHARE_HIGH))}`} fill="none" stroke={GREY} strokeWidth={1.25} {...draw(150)} />
@@ -104,17 +104,17 @@ export function PricingChart() {
               {drawn && !reduce && (
                 <g className={styles.travel} style={{ ["--pw" as string]: `${pw}px` }}>
                   <circle cx={PAD.l} cy={flatY} r={5} fill={EMBER} fillOpacity={0.4} className={styles.halo} />
-                  <circle cx={PAD.l} cy={flatY} r={4} fill={EMBER} stroke="#050505" strokeWidth={1.5} />
+                  <circle cx={PAD.l} cy={flatY} r={4} fill={EMBER} stroke="#fff" strokeWidth={1.5} />
                 </g>
               )}
 
               {/* Where the flat plan starts to win. */}
               <g style={fade(1200)}>
                 <path d={`M${sx(lowCross)} ${flatY + 5}v7H${sx(highCross)}v-7`} fill="none" stroke={EMBER} strokeWidth={1.5} />
-                <text x={sx(highCross) + 10} y={flatY + 30} fontSize={12} fontWeight={600} fill="#ff8a4c">
+                <text x={sx(highCross) + 10} y={flatY + 30} fontSize={12} fontWeight={600} fill="#b33400">
                   Cheaper from
                 </text>
-                <text x={sx(highCross) + 10} y={flatY + 44} fontSize={12} fontWeight={600} fill="#ff8a4c">
+                <text x={sx(highCross) + 10} y={flatY + 44} fontSize={12} fontWeight={600} fill="#b33400">
                   {Math.round(lowCross)}–{Math.round(highCross)} tickets
                 </text>
               </g>
@@ -123,14 +123,14 @@ export function PricingChart() {
               <g style={{ opacity: drawn ? 1 : 0, transform: `translateX(${cx}px)`, transition: reduce ? "none" : "transform 900ms var(--cf-ease-in-out), opacity 800ms var(--cf-ease) 1400ms" }}>
                 <line x1={0} x2={0} y1={PAD.t} y2={H - PAD.b} stroke={INK} strokeOpacity={0.35} strokeDasharray="3 3" />
                 {[share(tickets, SHARE_HIGH), share(tickets, SHARE_LOW), GROWTH.monthly].map((c, k) => (
-                  <circle key={k} cx={0} cy={sy(c)} r={4} fill={k === 2 ? EMBER : "#050505"} stroke={k === 2 ? "#050505" : GREY} strokeWidth={1.5} />
+                  <circle key={k} cx={0} cy={sy(c)} r={4} fill={k === 2 ? EMBER : "#fff"} stroke={k === 2 ? "#fff" : GREY} strokeWidth={1.5} />
                 ))}
               </g>
             </svg>
 
             <div
               aria-hidden
-              className="pointer-events-none absolute top-2 z-10 whitespace-nowrap rounded-lg bg-[#1a1917] px-3 py-2 text-[12px] leading-[1.5] text-[var(--cf-fg-2)] shadow-[0_8px_30px_rgb(0_0_0/0.6)]"
+              className="pointer-events-none absolute top-2 z-10 whitespace-nowrap rounded-lg bg-white px-3 py-2 text-[12px] leading-[1.5] text-[var(--cf-fg-2)] shadow-[var(--cf-shadow-lg)]"
               style={{
                 left: cx,
                 transform: `translateX(${flip ? "calc(-100% - 12px)" : "12px"})`,

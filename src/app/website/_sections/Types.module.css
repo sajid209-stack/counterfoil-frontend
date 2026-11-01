@@ -1,0 +1,147 @@
+/* Tiny monochrome loops for the fourteen kinds. Each rests on a good still
+   frame; they only run while the grid is in view (data-live) and not under
+   reduced motion. */
+.micro {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  color: var(--color-ember);
+}
+.micro * {
+  animation-play-state: paused;
+  animation-duration: 3.6s;
+  animation-iteration-count: infinite;
+  animation-timing-function: var(--cf-ease-in-out);
+  animation-delay: calc(var(--i, 0) * 0.3s);
+}
+[data-live] .micro * {
+  animation-play-state: running;
+}
+
+/* slots filling */
+.slot {
+  width: 11px;
+  height: 11px;
+  margin-right: 3px;
+  border-radius: 3px;
+  background: var(--color-brand-200);
+  animation-name: slotfill;
+}
+.slot:nth-child(2),
+.slot:nth-child(4) {
+  background: var(--color-ember);
+}
+@keyframes slotfill {
+  0%, 100% { background: var(--color-brand-200); }
+  35%, 70% { background: var(--color-ember); }
+}
+
+/* a duration bar stretching */
+.track {
+  width: 56px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-brand-100);
+  overflow: hidden;
+}
+.bar {
+  display: block;
+  width: 60%;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--color-ember);
+  animation-name: stretch;
+}
+@keyframes stretch {
+  0%, 100% { width: 25%; }
+  50% { width: 90%; }
+}
+
+/* seats lighting */
+.seats {
+  display: grid;
+  grid-template-columns: repeat(4, 8px);
+  gap: 3px;
+}
+.seat {
+  height: 8px;
+  border-radius: 2px 2px 3px 3px;
+  background: var(--color-brand-200);
+  animation-name: seatlit;
+}
+.seat:nth-child(3),
+.seat:nth-child(6) {
+  background: var(--color-ember);
+}
+@keyframes seatlit {
+  0%, 100% { background: var(--color-brand-200); }
+  40%, 75% { background: var(--color-ember); }
+}
+
+/* credits ticking down */
+.pip {
+  width: 9px;
+  height: 9px;
+  margin-right: 3px;
+  border-radius: 50%;
+  background: var(--color-ember);
+  animation-name: pipout;
+}
+.pip:nth-child(n + 4) {
+  background: var(--color-brand-200);
+}
+@keyframes pipout {
+  0%, 15% { background: var(--color-ember); }
+  45%, 85% { background: var(--color-brand-200); }
+  100% { background: var(--color-ember); }
+}
+
+/* dots arriving */
+.dot {
+  width: 7px;
+  height: 7px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: var(--color-ember);
+  animation-name: dotin;
+}
+.dot:nth-child(n + 3) {
+  background: var(--color-brand-200);
+}
+@keyframes dotin {
+  0%, 100% { background: var(--color-brand-200); transform: scale(0.8); }
+  35%, 70% { background: var(--color-ember); transform: scale(1); }
+}
+
+/* steps rising */
+.step {
+  width: 4px;
+  margin-right: 3px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--color-ember);
+  transform-origin: bottom;
+  animation-name: steprise;
+}
+@keyframes steprise {
+  0%, 100% { transform: scaleY(0.35); opacity: 0.35; }
+  40%, 75% { transform: scaleY(1); opacity: 1; }
+}
+
+.cell {
+  transition: background-color 200ms var(--cf-ease);
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .micro * {
+    animation: none !important;
+  }
+}
+
+/* the card visual: the same loop, scaled up from its corner */
+.big {
+  display: inline-block;
+  transform: scale(2.4);
+  transform-origin: bottom left;
+}
