@@ -22,8 +22,8 @@ function Ticket() {
         style={{ width: "30%", transform: torn ? "translate(-14px, 8px) rotate(-5deg)" : "none", transition: ease }}
       >
         <div className={reduce ? undefined : styles.floatStub}>
-          <div className={`${styles.stub} flex h-[132px] flex-col items-center justify-center gap-3 rounded-l-[10px] bg-white sm:h-[148px]`}>
-            <svg width="38" height="38" viewBox="0 0 70 70" fill="#111110">
+          <div className={`${styles.stub} flex h-[132px] flex-col items-center justify-center gap-3 rounded-l-[14px] bg-white sm:h-[148px]`}>
+            <svg width="38" height="38" viewBox="0 0 70 70" fill="#f94a00">
               <path d={LOGO_MARK} />
             </svg>
             <span className="cf-mono text-[12px] uppercase tracking-[0.06em] text-[var(--cf-muted)]">Admit 2</span>
@@ -32,7 +32,7 @@ function Ticket() {
       </div>
       <div className={`${styles.half} relative flex-1`} style={{ transform: torn ? "translate(4px, 0)" : "none", transition: ease }}>
         <div className={reduce ? undefined : styles.float}>
-          <div className={`${styles.main} flex h-[132px] flex-col justify-center rounded-r-[10px] border-l border-dashed border-[var(--cf-line-2)] bg-white px-5 sm:h-[148px] sm:px-7`}>
+          <div className={`${styles.main} flex h-[132px] flex-col justify-center rounded-r-[14px] bg-white px-5 sm:h-[148px] sm:px-7`}>
             <p className="cf-mono flex items-center gap-2 text-[12px] uppercase tracking-[0.06em] text-[var(--cf-muted)]">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--cf-accent)]" />
               Admit one scan
@@ -51,16 +51,16 @@ export function Cta() {
   return (
     <Section label="Get started" flush>
       <div className="px-5 pb-12 pt-20 md:px-12 md:pb-16 md:pt-28">
-        <Heading align="center" title="Start with one counter." dim="Add the rest when you're ready.">
-          <LinkButton href="/sign-up" variant="dark">
+        <Heading align="center" title={<>Start with <span className="cf-accent">one</span> counter.</>} dim="Add the rest when you're ready.">
+          <LinkButton href="/sign-up" variant="primary">
             Start for free
           </LinkButton>
-          <LinkButton href="/" variant="light">
+          <LinkButton href="/" variant="secondary">
             Try the live demo
           </LinkButton>
         </Heading>
       </div>
-      <div className="cf-dots flex justify-center overflow-hidden border-t border-[var(--cf-line)] px-5 py-16 md:py-24">
+      <div className="mx-5 mb-16 flex justify-center overflow-hidden rounded-2xl bg-[var(--cf-bg-2)] px-5 py-16 md:mx-12 md:mb-24 md:py-24">
         <Ticket />
       </div>
     </Section>

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Check, Play, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { ChoiceCard } from "@/components/ui/ChoiceCard";
 import { Cursor, Window } from "../_components/ui";
 import { useInView, useSequence } from "../_components/motion";
 import { TypesMicro } from "./TypesMicro";
@@ -95,18 +96,17 @@ export function TypesWizard() {
     <div ref={ref} className="relative">
       <Window
         title="New booking"
-        dots
         right={
           manual ? (
             <button
               type="button"
               onClick={() => setManual(null)}
-              className="flex h-7 items-center gap-1 rounded-md px-1.5 text-[12px] font-medium text-[var(--cf-muted)] hover:text-[var(--cf-fg)]"
+              className="flex h-7 items-center gap-1 rounded-md px-1.5 text-[12px] font-medium text-muted hover:text-fg"
             >
               <Play aria-hidden size={12} strokeWidth={2} /> Watch it play
             </button>
           ) : (
-            <span className="cf-label flex items-center gap-1.5 text-[12px]">
+            <span className="flex items-center gap-1.5 text-[12px] font-medium text-brand-foreground">
               <span aria-hidden className="cf-live h-1.5 w-1.5 rounded-full bg-[var(--cf-accent)]" /> Try it
             </span>
           )
@@ -116,33 +116,26 @@ export function TypesWizard() {
         <div className="relative min-h-[430px]" role="group" aria-label="New booking: answer the questions to see the kind of booking">
           {stage !== "result" ? (
             <div key={stage}>
-              <div className="cf-arrive flex flex-col justify-center border-b border-[var(--cf-line)] px-4" style={{ height: HEAD }}>
-                <span className="cf-label text-[12px]">Step {n}</span>
-                <span className="text-[14px] font-semibold tracking-[-0.01em]">{title}</span>
+              <div className="cf-arrive flex flex-col justify-center px-4" style={{ height: HEAD }}>
+                <span className="text-[12px] font-medium text-brand-foreground">Step {n}</span>
+                <span className="text-[15px] font-semibold tracking-[-0.01em] text-fg">{title}</span>
               </div>
-              <div className="p-2">
+              <div className="flex flex-col gap-1.5 p-3 pt-1">
                 {options.map((label, i) => {
                   const hot = auto && v.hover === i;
                   const picked = hot && v.click;
                   return (
-                    <button
+                    <ChoiceCard
                       key={label}
-                      type="button"
+                      selected={!!picked}
+                      hideCheck
                       onClick={() => choose(i)}
-                      style={{ height: ROW }}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-lg px-3 text-left text-[13px] transition-colors duration-300",
-                        picked ? "bg-[var(--cf-accent-wash)] shadow-[inset_0_0_0_1px_var(--cf-accent)]" : hot ? "bg-[var(--cf-bg-3)]" : "hover:bg-[var(--cf-bg-2)]",
-                      )}
+                      className={cn("flex w-full items-center px-4 text-[13px] text-fg", hot && !picked && "bg-subtle")}
                     >
-                      <span
-                        aria-hidden
-                        className={cn("grid h-4 w-4 shrink-0 place-items-center rounded-full border transition-colors", picked ? "border-[var(--cf-accent)]" : "border-[var(--cf-line-2)]")}
-                      >
-                        {picked && <span className="h-2 w-2 rounded-full bg-[var(--cf-accent)]" />}
+                      <span style={{ height: ROW - 2 }} className="flex min-w-0 items-center truncate">
+                        {label}
                       </span>
-                      <span className="min-w-0 truncate">{label}</span>
-                    </button>
+                    </ChoiceCard>
                   );
                 })}
               </div>
@@ -153,22 +146,22 @@ export function TypesWizard() {
                 {crumbs.map(
                   (t) =>
                     t && (
-                      <span key={t} className="inline-flex items-center gap-1 rounded-md bg-[var(--cf-bg-3)] px-2 py-1 text-[12px] text-[var(--cf-fg-2)]">
+                      <span key={t} className="inline-flex items-center gap-1 rounded-full bg-ember-wash px-2.5 py-1 text-[12px] text-brand-foreground">
                         <Check aria-hidden size={11} strokeWidth={2.2} /> {t}
                       </span>
                     ),
                 )}
               </div>
-              <div className="rounded-xl border border-[var(--cf-line)] p-4">
-                <p className="cf-label text-[12px]">This is a</p>
+              <div className="rounded-card bg-subtle p-4">
+                <p className="text-[12px] font-medium text-brand-foreground">This is a</p>
                 {v.resolved ? (
                   <div className="cf-arrive mt-2">
                     <div className="flex items-start justify-between gap-3">
-                      <p className="text-[20px] font-semibold leading-tight tracking-[-0.025em]">{result!.way.name}</p>
+                      <p className="text-[20px] font-semibold leading-tight tracking-[-0.025em] text-fg">{result!.way.name}</p>
                       <TypesMicro way={result!.way} />
                     </div>
-                    <p className="mt-1 text-[13px] text-[var(--cf-muted)]">like {result!.way.example}</p>
-                    <p className="mt-4 border-t border-[var(--cf-line)] pt-3 text-[13px] leading-relaxed text-[var(--cf-fg-2)]">{result!.note}</p>
+                    <p className="mt-1 text-[13px] text-muted">like {result!.way.example}</p>
+                    <p className="mt-4 text-[13px] leading-relaxed text-fg-secondary">{result!.note}</p>
                   </div>
                 ) : (
                   <div className="mt-3 space-y-2" aria-hidden>
@@ -183,7 +176,7 @@ export function TypesWizard() {
                 <button
                   type="button"
                   onClick={() => setManual({ q1: null, a2: null, a3: null })}
-                  className="mt-3 flex h-11 items-center gap-1.5 rounded-lg px-2 text-[13px] font-medium text-[var(--cf-fg-2)] hover:bg-[var(--cf-bg-2)] md:h-9"
+                  className="mt-3 flex h-11 items-center gap-1.5 rounded-control bg-subtle px-3 text-[13px] font-medium text-fg md:h-9"
                 >
                   <RotateCcw aria-hidden size={13} strokeWidth={1.8} /> Start over
                 </button>

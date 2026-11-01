@@ -1,8 +1,8 @@
 import Image, { type StaticImageData } from "next/image";
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { ButtonLink } from "@/components/ui/Button";
 
 /* The website's shared primitives, in attio.com's manner: a white page inside
    hairline rails, sections divided by hairlines with a + at each rail, two-tone
@@ -30,8 +30,6 @@ export function Section({
 }) {
   return (
     <section id={id} aria-label={label} className={cn("cf-sec scroll-mt-16", !flush && "px-5 py-20 md:px-12 md:py-28", className)}>
-      <span aria-hidden className="cf-cross cf-cross-l" />
-      <span aria-hidden className="cf-cross cf-cross-r" />
       {children}
     </section>
   );
@@ -98,35 +96,33 @@ export function Heading({
   );
 }
 
-/** A link styled as a small button. Internal hrefs use next/link. */
+/**
+ * A link that is the app's own Button — `primary` is the solid ember of every
+ * OS and Go primary action, `secondary` the neutral one — so the site's calls
+ * to action are the product's, not a lookalike. ("dark"/"light" are kept as
+ * aliases for primary/secondary.)
+ */
 export function LinkButton({
   href,
   children,
-  variant = "dark",
+  variant = "primary",
   arrow,
   className,
 }: {
   href: string;
   children: ReactNode;
-  variant?: "dark" | "light";
+  variant?: "primary" | "secondary" | "dark" | "light";
   arrow?: boolean;
   className?: string;
 }) {
-  const cls = cn("cf-btn group", `cf-btn-${variant}`, className);
-  const inner = (
-    <>
+  const v = variant === "dark" ? "primary" : variant === "light" ? "secondary" : variant;
+  // ButtonLink is a client component, so a server section can render it; the
+  // class helper behind it cannot be called from the server.
+  return (
+    <ButtonLink href={href} variant={v} size="sm" className={cn("group whitespace-nowrap", v === "secondary" && "!border-transparent", className)}>
       {children}
       {arrow && <ArrowRight aria-hidden size={15} strokeWidth={2} className="transition-transform duration-200 group-hover:translate-x-0.5" />}
-    </>
-  );
-  return href.startsWith("#") ? (
-    <a href={href} className={cls}>
-      {inner}
-    </a>
-  ) : (
-    <Link href={href} className={cls}>
-      {inner}
-    </Link>
+    </ButtonLink>
   );
 }
 
@@ -153,7 +149,7 @@ export function Window({
   return (
     <div className={cn("cf-window overflow-hidden", className)}>
       {(title || dots) && (
-        <div className="flex h-10 items-center gap-2.5 border-b border-[var(--cf-line)] px-3.5">
+        <div className="flex h-10 items-center gap-2.5 bg-[var(--cf-bg-2)] px-3.5">
           {dots && (
             <span aria-hidden className="flex gap-1.5">
               {[0, 1, 2].map((i) => (
@@ -214,7 +210,7 @@ export function Shot({
 }) {
   return (
     <figure className={cn("cf-window overflow-hidden", className)}>
-      <div className="flex h-8 items-center gap-1.5 border-b border-[var(--cf-line)] px-3">
+      <div className="flex h-8 items-center gap-1.5 bg-[var(--cf-bg-2)] px-3">
         {[0, 1, 2].map((i) => (
           <span key={i} aria-hidden className="h-2 w-2 rounded-full bg-[var(--cf-line-2)]" />
         ))}

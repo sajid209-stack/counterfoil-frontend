@@ -8,16 +8,16 @@ export function Types() {
       <div className="px-5 pt-20 pb-12 md:px-12 md:pt-28 md:pb-16">
         <Heading
           label="What you can sell"
-          title="Fourteen ways to sell time."
+          title={<>Fourteen ways to <span className="cf-accent">sell time.</span></>}
           dim="From one engine."
           lead="Answer a few plain questions and Counterfoil works out the rest — no booking-type codes, ever."
         />
       </div>
-      <div className="grid border-t border-[var(--cf-line)] lg:grid-cols-[minmax(0,500px)_minmax(0,1fr)]">
-        <div className="cf-dots px-5 py-8 md:px-10 md:py-12 lg:border-r lg:border-[var(--cf-line)]">
+      <div className="grid gap-3 px-3 pb-3 md:px-6 md:pb-6 lg:grid-cols-[minmax(0,500px)_minmax(0,1fr)]">
+        <div className="cf-dots rounded-2xl px-4 py-8 md:px-8 md:py-10">
           <TypesWizard />
         </div>
-        <TypesGrid className="border-t border-[var(--cf-line)] lg:border-t-0" />
+        <TypesGrid />
       </div>
     </Section>
   );

@@ -9,7 +9,8 @@ import { PlatformTabs } from "./PlatformTabs";
 export function Platform() {
   return (
     <Section id="platform">
-      <Heading label="Platform" title="One day at the venue." dim="From setting up what you sell to counting the drawer at close." />
+      <Heading label="Platform" title={<>One day at the <span className="cf-accent">venue.</span></>} dim="From setup to the last count."
+        lead="Set up what you sell, sell it at the counter, admit it at the gate and close the day square — the same system all the way through." />
       <div data-reveal className="mt-12 md:mt-16">
         <PlatformTabs />
       </div>

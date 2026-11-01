@@ -31,7 +31,7 @@ import { Cta } from "./_sections/Cta";
  */
 export default function WebsitePage() {
   return (
-    <div id="cf-root" className="cf-root">
+    <div id="cf-root" className="cf-root light">
       <RevealRoot rootId="cf-root" />
       <Nav />
       <div className="cf-rails">

@@ -48,17 +48,17 @@ export function Nav() {
     <>
       <a
         href="#payments"
-        className="group flex min-h-11 items-center md:min-h-10 justify-center gap-2 border-b border-[var(--cf-line)] bg-[var(--cf-bg-2)] px-5 text-center text-[13px] text-[var(--cf-fg-2)]"
+        className="group flex min-h-11 items-center md:min-h-10 justify-center gap-2 bg-[var(--color-brand-50)] px-5 text-center text-[13px] text-[var(--cf-fg-2)]"
       >
-        <span className="rounded-full bg-[var(--cf-fg)] px-2 py-0.5 text-[12px] font-medium text-white">Bangladesh</span>
+        <span className="rounded-full bg-ember-solid px-2 py-0.5 text-[12px] font-medium text-on-solid">Bangladesh</span>
         <span className="truncate">Sell with bKash and Bangla QR at the till, in Bangla or English</span>
         <ArrowRight aria-hidden size={14} className="shrink-0 transition-transform group-hover:translate-x-0.5" />
       </a>
       <header
         data-site-nav
         className={cn(
-          "sticky top-0 z-50 border-b border-[var(--cf-line)] transition-[background-color,backdrop-filter] duration-200",
-          scrolled || open ? "bg-white/85 backdrop-blur-md" : "bg-white",
+          "sticky top-0 z-50 transition-[background-color,backdrop-filter,box-shadow] duration-200",
+          scrolled || open ? "bg-white/85 shadow-[0_8px_24px_-16px_rgb(17_17_16/0.18)] backdrop-blur-md" : "bg-white",
         )}
       >
         <nav aria-label="Website" className="mx-auto flex h-14 max-w-[1200px] items-center gap-6 px-5 md:px-6">
@@ -92,11 +92,11 @@ export function Nav() {
           </button>
         </nav>
 
-        <div id="site-menu" hidden={!open} className="h-[calc(100dvh-3.5rem)] overflow-y-auto border-t border-[var(--cf-line)] bg-white px-5 pb-10 pt-2 lg:hidden">
+        <div id="site-menu" hidden={!open} className="h-[calc(100dvh-3.5rem)] overflow-y-auto bg-white px-5 pb-10 pt-2 lg:hidden">
           <ul className="flex flex-col">
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
-                <a href={l.href} onClick={() => setOpen(false)} className="flex min-h-14 items-center border-b border-[var(--cf-line)] text-[18px] font-medium tracking-[-0.01em]">
+                <a href={l.href} onClick={() => setOpen(false)} className="flex min-h-14 items-center text-[18px] font-medium tracking-[-0.01em]">
                   {l.label}
                 </a>
               </li>

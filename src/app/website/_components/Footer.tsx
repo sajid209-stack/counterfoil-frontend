@@ -38,8 +38,6 @@ const link = "inline-flex min-h-11 min-w-11 items-center text-[14px] text-[var(-
 export function Footer() {
   return (
     <footer className="cf-sec px-5 pb-10 pt-16 md:px-12">
-      <span aria-hidden className="cf-cross cf-cross-l" />
-      <span aria-hidden className="cf-cross cf-cross-r" />
       <div className="grid gap-10 md:grid-cols-[1.5fr_repeat(3,1fr)]">
         <div>
           <Image src={logo} alt="Counterfoil" sizes="130px" className="h-[19px] w-auto" />
@@ -68,7 +66,7 @@ export function Footer() {
           </div>
         ))}
       </div>
-      <div className="mt-14 flex flex-col gap-2 border-t border-[var(--cf-line)] pt-6 text-[13px] text-[var(--cf-muted)] sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-14 flex flex-col gap-2 pt-6 text-[13px] text-[var(--cf-muted)] sm:flex-row sm:items-center sm:justify-between">
         <p>© 2026 Counterfoil · Built by Ternary Solutions</p>
         <p>Built in Bangladesh · Ready anywhere</p>
       </div>

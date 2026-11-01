@@ -15,12 +15,12 @@ export function Specials() {
   return (
     <Section id="specials" flush>
       <div className="px-5 pt-20 pb-12 md:px-12 md:pt-28 md:pb-16">
-        <Heading label="Specialities" title="What a retail till can't do." dim="Built in from the first sale." />
+        <Heading label="Specialities" title={<>What a retail till <span className="cf-accent">can&apos;t</span> do.</>} dim="Built in from the first sale." />
       </div>
-      <div className="cf-cells grid-cols-1 border-t border-[var(--cf-line)] md:grid-cols-2 lg:grid-cols-3">
+      <div className="cf-cells grid-cols-1 px-3 pb-3 md:grid-cols-2 md:px-6 md:pb-6 lg:grid-cols-3">
         {CELLS.map((c) => (
           <div key={c.title} className="min-w-0">
-            {c.demo}
+            <div className="p-2">{c.demo}</div>
             <div className="p-5 md:p-6">
               <h3 className="cf-h3">{c.title}</h3>
               <p className="cf-body mt-2">{c.body}</p>

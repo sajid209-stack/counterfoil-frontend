@@ -32,10 +32,10 @@ function PeriodToggle({ value, onChange }: { value: Period; onChange: (p: Period
   };
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <div role="radiogroup" aria-label="Billing period" onKeyDown={onKey} className="relative grid grid-cols-2 rounded-[10px] bg-[var(--cf-bg-3)] p-1 shadow-[inset_0_0_0_1px_var(--cf-line)]">
+      <div role="radiogroup" aria-label="Billing period" onKeyDown={onKey} className="relative grid grid-cols-2 rounded-[10px] bg-[var(--cf-bg-3)] p-1">
         <span
           aria-hidden
-          className="absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-[7px] bg-white shadow-[0_1px_2px_rgb(17_17_16/0.12),0_0_0_1px_var(--cf-line)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+          className="absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-[7px] bg-white shadow-[0_1px_2px_rgb(17_17_16/0.14),0_2px_6px_-2px_rgb(17_17_16/0.1)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
           style={{ transform: `translateX(${idx * 100}%)` }}
         />
         {PERIODS.map((p, i) => (
@@ -77,14 +77,14 @@ export function Pricing() {
         </div>
       </div>
 
-      <div data-reveal className="cf-cells grid-cols-1 border-y border-[var(--cf-line)] md:grid-cols-2 lg:grid-cols-4">
+      <div data-reveal className="cf-cells grid-cols-1 px-5 md:grid-cols-2 md:px-12 lg:grid-cols-4" style={{ background: "transparent" }}>
         {PLANS.map((p) => {
           const price = period === "monthly" ? p.monthly : p.yearly;
           return (
-            <div key={p.name} className="flex min-w-0 flex-col p-6 md:p-7">
+            <div key={p.name} className="flex min-w-0 flex-col p-6 md:p-7" style={p.featured ? { background: "var(--cf-accent-wash)" } : undefined}>
               <div className="flex items-center justify-between gap-2">
                 <h3 className="cf-h3">{p.name}</h3>
-                {p.featured && <span className="cf-mono rounded-full bg-[var(--cf-fg)] px-2 py-1 text-[12px] uppercase leading-none tracking-[0.06em] text-white">Recommended</span>}
+                {p.featured && <span className="cf-mono rounded-full bg-[var(--cf-accent)] px-2 py-1 text-[12px] font-medium uppercase leading-none tracking-[0.06em] text-[#111110]">Recommended</span>}
               </div>
               <p className="mt-1 text-[13px] text-[var(--cf-muted)]">{p.who}</p>
               <p className="mt-6 flex items-baseline gap-1.5">
@@ -94,13 +94,13 @@ export function Pricing() {
                 <span className="text-[13px] text-[var(--cf-muted)]">{price === 0 ? "free" : period === "monthly" ? "a month" : "a year"}</span>
               </p>
               <p className="mt-2 h-5 text-[13px] text-[var(--cf-muted)]">{p.monthly === 0 ? "Month to month" : period === "yearly" ? "Two months free" : "Billed monthly"}</p>
-              <LinkButton href="/sign-up" variant={p.featured ? "dark" : "light"} className="mt-5 w-full">
+              <LinkButton href="/sign-up" variant={p.featured ? "primary" : "secondary"} className="mt-5 w-full">
                 {p.monthly === 0 ? "Start free" : "Get started"}
               </LinkButton>
-              <ul className="mt-6 flex flex-col gap-2.5 border-t border-[var(--cf-line)] pt-5 text-[13px] leading-[1.45] text-[var(--cf-fg-2)]">
+              <ul className="mt-6 flex flex-col gap-2.5 text-[13px] leading-[1.45] text-[var(--cf-fg-2)]">
                 {p.lines.map((l) => (
                   <li key={l} className="flex items-start gap-2.5">
-                    <Check aria-hidden size={14} strokeWidth={2} className="mt-[2px] shrink-0 text-[var(--cf-muted)]" />
+                    <Check aria-hidden size={14} strokeWidth={2} className="mt-[2px] shrink-0 text-[var(--color-brand-foreground)]" />
                     {l}
                   </li>
                 ))}
@@ -115,13 +115,13 @@ export function Pricing() {
             <h3 className="cf-h3 mt-1.5">Events</h3>
           </div>
           <p className="flex items-baseline gap-3">
-            <span className="text-[40px] font-semibold leading-none tracking-[-0.04em]">6%</span>
+            <span className="text-[40px] font-semibold leading-none tracking-[-0.04em] text-[var(--cf-accent)]">6%</span>
             <span className="text-[13px] text-[var(--cf-muted)]">of ticket revenue, nothing monthly</span>
           </p>
           <ul className="flex flex-col gap-2 text-[13px] text-[var(--cf-fg-2)] sm:flex-row sm:flex-wrap sm:gap-x-6 lg:ml-auto">
             {EVENTS_LINES.map((l) => (
               <li key={l} className="flex items-center gap-2.5">
-                <Check aria-hidden size={14} strokeWidth={2} className="shrink-0 text-[var(--cf-muted)]" />
+                <Check aria-hidden size={14} strokeWidth={2} className="shrink-0 text-[var(--color-brand-foreground)]" />
                 {l}
               </li>
             ))}
@@ -133,7 +133,7 @@ export function Pricing() {
         SMS, email, form replies and waivers come with an allowance in every plan; past it they are charged per unit, and the rate falls as the plan grows.
       </p>
 
-      <div className="mx-5 mb-16 overflow-hidden rounded-xl border border-[var(--cf-line)] md:mx-12 md:mb-24">
+      <div className="mx-5 mb-16 overflow-hidden rounded-2xl bg-[var(--cf-bg-2)] md:mx-12 md:mb-24">
         <div data-reveal className="px-5 py-5 md:px-8">
           <h3 className="cf-h3">What a share costs, next to a plan</h3>
           <p className="mt-1 text-[13px] text-[var(--cf-muted)]">A month of selling tickets at ৳500 each.</p>

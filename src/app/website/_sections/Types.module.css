@@ -5,7 +5,7 @@
   display: inline-flex;
   align-items: center;
   height: 18px;
-  color: var(--cf-fg);
+  color: var(--color-ember);
 }
 .micro * {
   animation-play-state: paused;
@@ -24,16 +24,16 @@
   height: 11px;
   margin-right: 3px;
   border-radius: 3px;
-  background: var(--cf-line-2);
+  background: var(--color-brand-200);
   animation-name: slotfill;
 }
 .slot:nth-child(2),
 .slot:nth-child(4) {
-  background: var(--cf-fg);
+  background: var(--color-ember);
 }
 @keyframes slotfill {
-  0%, 100% { background: var(--cf-line-2); }
-  35%, 70% { background: var(--cf-fg); }
+  0%, 100% { background: var(--color-brand-200); }
+  35%, 70% { background: var(--color-ember); }
 }
 
 /* a duration bar stretching */
@@ -41,7 +41,7 @@
   width: 56px;
   height: 6px;
   border-radius: 3px;
-  background: var(--cf-line);
+  background: var(--color-brand-100);
   overflow: hidden;
 }
 .bar {
@@ -49,7 +49,7 @@
   width: 60%;
   height: 100%;
   border-radius: 3px;
-  background: var(--cf-fg);
+  background: var(--color-ember);
   animation-name: stretch;
 }
 @keyframes stretch {
@@ -66,16 +66,16 @@
 .seat {
   height: 8px;
   border-radius: 2px 2px 3px 3px;
-  background: var(--cf-line-2);
+  background: var(--color-brand-200);
   animation-name: seatlit;
 }
 .seat:nth-child(3),
 .seat:nth-child(6) {
-  background: var(--cf-fg);
+  background: var(--color-ember);
 }
 @keyframes seatlit {
-  0%, 100% { background: var(--cf-line-2); }
-  40%, 75% { background: var(--cf-fg); }
+  0%, 100% { background: var(--color-brand-200); }
+  40%, 75% { background: var(--color-ember); }
 }
 
 /* credits ticking down */
@@ -84,16 +84,16 @@
   height: 9px;
   margin-right: 3px;
   border-radius: 50%;
-  background: var(--cf-fg);
+  background: var(--color-ember);
   animation-name: pipout;
 }
 .pip:nth-child(n + 4) {
-  background: var(--cf-line-2);
+  background: var(--color-brand-200);
 }
 @keyframes pipout {
-  0%, 15% { background: var(--cf-fg); }
-  45%, 85% { background: var(--cf-line-2); }
-  100% { background: var(--cf-fg); }
+  0%, 15% { background: var(--color-ember); }
+  45%, 85% { background: var(--color-brand-200); }
+  100% { background: var(--color-ember); }
 }
 
 /* dots arriving */
@@ -102,15 +102,15 @@
   height: 7px;
   margin-right: 4px;
   border-radius: 50%;
-  background: var(--cf-fg);
+  background: var(--color-ember);
   animation-name: dotin;
 }
 .dot:nth-child(n + 3) {
-  background: var(--cf-line-2);
+  background: var(--color-brand-200);
 }
 @keyframes dotin {
-  0%, 100% { background: var(--cf-line-2); transform: scale(0.8); }
-  35%, 70% { background: var(--cf-fg); transform: scale(1); }
+  0%, 100% { background: var(--color-brand-200); transform: scale(0.8); }
+  35%, 70% { background: var(--color-ember); transform: scale(1); }
 }
 
 /* steps rising */
@@ -119,7 +119,7 @@
   margin-right: 3px;
   height: 14px;
   border-radius: 1px;
-  background: var(--cf-fg);
+  background: var(--color-ember);
   transform-origin: bottom;
   animation-name: steprise;
 }
@@ -131,9 +131,7 @@
 .cell {
   transition: background-color 200ms var(--cf-ease);
 }
-.cell:hover {
-  background: var(--cf-bg-2) !important;
-}
+
 
 @media (prefers-reduced-motion: reduce) {
   .micro * {

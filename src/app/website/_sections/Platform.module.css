@@ -60,3 +60,9 @@
     animation: none;
   }
 }
+
+/* The Go "do not admit" field: red with diagonal bands, as the real scan screen draws it. */
+.hatchDanger {
+  background-color: #b91c1c;
+  background-image: repeating-linear-gradient(135deg, rgb(0 0 0 / 0.16) 0 14px, transparent 14px 28px);
+}

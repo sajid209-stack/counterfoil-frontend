@@ -16,7 +16,7 @@ function Row({ hidden }: { hidden?: boolean }) {
     <ul aria-hidden={hidden || undefined} className="flex shrink-0 items-center gap-12 pr-12">
       {VENUES.map(([Icon, name]) => (
         <li key={name} className="flex items-center gap-2.5 whitespace-nowrap text-[15px] font-medium tracking-tight text-[var(--cf-muted)]">
-          <Icon aria-hidden size={18} strokeWidth={1.6} />
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--color-brand-50,#fff5ee)] text-[var(--color-brand-foreground,#aa3000)]"><Icon aria-hidden size={16} strokeWidth={1.7} /></span>
           {name}
         </li>
       ))}

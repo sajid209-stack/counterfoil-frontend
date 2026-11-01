@@ -1,4 +1,4 @@
-/* Tiny looping glyphs for the four claims. Calm, slow, CSS only. */
+/* Tiny looping glyphs for the four claims. Calm, slow, CSS only, no outlines. */
 
 .glyph {
   position: relative;
@@ -7,13 +7,13 @@
   align-items: center;
 }
 
-/* 1 — one count: cells fill one after another, from three places */
+/* 1 — one count: cells fill one after another */
 .cell {
   width: 18px;
   height: 18px;
-  border-radius: 4px;
-  border: 1px solid var(--cf-line-2);
+  border-radius: 5px;
   background: var(--cf-bg);
+  box-shadow: var(--cf-shadow);
   animation: cellFill 6s var(--cf-ease) infinite;
   animation-delay: var(--d, 0s);
 }
@@ -21,23 +21,21 @@
   0%,
   8% {
     background: var(--cf-bg);
-    border-color: var(--cf-line-2);
   }
   14%,
   70% {
-    background: var(--cf-fg);
-    border-color: var(--cf-fg);
+    background: var(--cf-accent);
   }
   80%,
   100% {
     background: var(--cf-bg);
-    border-color: var(--cf-line-2);
   }
 }
 
 /* 2 — a hold: hatching drifts across a named chip */
 .hold {
-  background-image: repeating-linear-gradient(135deg, rgb(249 74 0 / 0.16) 0 4px, transparent 4px 8px);
+  background-color: var(--cf-bg);
+  background-image: repeating-linear-gradient(135deg, rgb(249 74 0 / 0.22) 0 4px, transparent 4px 8px);
   background-size: 11.3px 11.3px;
   animation: hatch 2.4s linear infinite;
 }
@@ -53,7 +51,7 @@
   overflow: hidden;
   white-space: nowrap;
   vertical-align: bottom;
-  animation: typing 6s steps(26, end) infinite;
+  animation: typing 6s steps(22, end) infinite;
 }
 @keyframes typing {
   0% {
@@ -79,12 +77,12 @@
 @keyframes turn {
   0%,
   45% {
-    border-color: var(--cf-fg);
-    color: var(--cf-fg);
+    background: var(--cf-accent);
+    color: #fff;
   }
   55%,
   100% {
-    border-color: var(--cf-line-2);
+    background: var(--cf-bg);
     color: var(--cf-muted);
   }
 }
@@ -115,10 +113,13 @@
     animation: none;
   }
   .cell:nth-child(-n + 5) {
-    background: var(--cf-fg);
-    border-color: var(--cf-fg);
+    background: var(--cf-accent);
   }
   .type {
     width: 100%;
+  }
+  .turnA {
+    background: var(--cf-accent);
+    color: #fff;
   }
 }

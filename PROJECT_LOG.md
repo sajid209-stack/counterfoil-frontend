@@ -19003,3 +19003,30 @@ are gone; every section was rewritten.
 top (above), no overflow / no sub-12px real text / contrast AA at 320 · 390 · 768 · 1024 ·
 1440, touch targets ≥ 44px, reduced motion shows every end state, no console errors, the
 sidebar and phone-menu entries open `/website`. `tsc`, eslint, `lint:tokens` clean.
+
+### v3, same day — no strokes, the real system UI, more primary
+
+Owner on v2: "remove the borders and strokes, and use real OS system UI for the motions and
+visual, and use primary color more".
+
+- **No lines.** Rails, section rules, `+` crosses, hairline cell grids, window/title-bar rules
+  and outlined chips are gone; separation is spacing, soft fills, radius and soft shadow.
+  `cf-cells` is now 12px-gap soft tiles. The site's secondary buttons drop the app button's
+  1px edge (`!border-transparent`). Harness: **0 bordered elements in every section**.
+- **The real UI.** The page root carries the app's `.light` class, so every app token and
+  component renders exactly as in OS. CTAs are the app's own `ButtonLink` (primary = solid
+  ember). Demos are rebuilt on app tokens from the real screens (go-till, go-cart,
+  sheet-slots, go-scan, go-cash/bkash, os-dashboard, os-customer) and use real components
+  where they carry no data dependency: `ChoiceCard` (wizard), `Qr`, `StatusPill`, `Logo`.
+- **Primary colour**: ember primary buttons, ember prices on the till, brand-50 icon tiles,
+  ember progress/active states, ember chart line, and one `.cf-accent` ember word per heading.
+  Harness counts ember in every section (5 → 157 elements).
+- **Gotcha**: `buttonClass` lives in a `"use client"` module, so a server component calling it
+  500s at request time ("Attempted to call buttonClass() from the server"). `LinkButton`
+  renders `ButtonLink` (a client component) instead.
+
+**Verified** (production build): 46/52. Remaining, both deliberate: (1) Pricing's plan grid
+is still (its chart animates); (2) the contrast check flags white text on solid ember at
+3.5:1 — that is the app's own primary button exactly as the Color System defines it
+("#F94A00 with white text"), kept so the site's buttons are the product's. If AA for that
+pairing is wanted, it is a Color System decision for the whole app, not a website one.

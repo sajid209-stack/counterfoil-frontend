@@ -3,6 +3,7 @@ import { EngineDiagram } from "./EngineDiagram";
 import s from "./Engine.module.css";
 
 const cellDelay = (i: number) => ({ "--d": `${i * 0.35}s` }) as React.CSSProperties;
+const CHIP = "rounded-lg px-2.5 py-1.5 text-[12px] font-medium shadow-[var(--cf-shadow)]";
 
 const CLAIMS = [
   {
@@ -19,15 +20,13 @@ const CLAIMS = [
   {
     title: "Holds that name who they're for",
     body: "Set places aside for a school group or a private event. A hold always says who it is for, and lets go on its own when it expires.",
-    glyph: (
-      <span className={`${s.hold} rounded-md border border-[var(--cf-line-2)] px-2.5 py-1.5 text-[12px] font-medium text-[var(--cf-fg)]`}>School group · 25 places</span>
-    ),
+    glyph: <span className={`${s.hold} ${CHIP} text-[var(--cf-fg)]`}>School group · 25 places</span>,
   },
   {
     title: "Refusals that explain themselves",
     body: "When something can't be sold, the till says why (sold out, held for a group, closed) and what to do next, instead of a bare no.",
     glyph: (
-      <span className="rounded-md bg-[var(--cf-red-wash)] px-2.5 py-1.5 text-[12px] font-medium text-[var(--cf-fg)]">
+      <span className="rounded-lg bg-[var(--cf-red-wash)] px-2.5 py-1.5 text-[12px] font-medium text-[var(--cf-fg)]">
         <span className={s.type}>Taken — Field 2 is free</span>
         <span className="cf-caret" />
       </span>
@@ -38,9 +37,9 @@ const CLAIMS = [
     body: "On the turf, Football and Cricket share Fields 1–2. Book one and the other sees the field taken.",
     glyph: (
       <div className="flex items-center gap-2 text-[12px] font-medium">
-        <span className={`${s.turnA} rounded-md border px-2 py-1`}>Football</span>
-        <span className={`${s.turnB} rounded-md border px-2 py-1`}>Cricket</span>
-        <span className={`${s.field} rounded-md px-2 py-1 text-[var(--cf-fg-2)]`}>Fields 1–2</span>
+        <span className={`${s.turnA} ${CHIP}`}>Football</span>
+        <span className={`${s.turnB} ${CHIP}`}>Cricket</span>
+        <span className={`${s.field} rounded-lg px-2 py-1.5 text-[var(--cf-fg-2)]`}>Fields 1–2</span>
       </div>
     ),
   },
@@ -52,7 +51,11 @@ export function Engine() {
     <Section id="engine" flush className="px-5 py-20 md:px-12 md:py-28">
       <Heading
         label="Capacity"
-        title="Never sold twice."
+        title={
+          <>
+            Never sold <span className="cf-accent">twice.</span>
+          </>
+        }
         dim="One engine holds every seat, slot and lane."
         lead="A place sold at one counter is gone at every other counter, and online — the moment it sells."
       />
@@ -63,7 +66,7 @@ export function Engine() {
       <div data-reveal className="mt-12 md:mt-16">
         <EngineDiagram />
       </div>
-      <div data-reveal className="cf-cells mt-10 grid-cols-1 overflow-hidden rounded-2xl border border-[var(--cf-line)] sm:grid-cols-2 lg:grid-cols-4">
+      <div data-reveal className="cf-cells mt-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {CLAIMS.map((c) => (
           <div key={c.title} className="p-6">
             <div aria-hidden className={s.glyph}>

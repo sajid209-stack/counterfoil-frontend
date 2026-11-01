@@ -11,13 +11,13 @@ export function Hero() {
         align="center"
         className="max-w-[820px]"
         title="The system for"
-        dim="places that sell time."
+        dim={<>places that sell <span className="cf-accent">time.</span></>}
         lead="Tickets, sessions, courts and tours — sold at the counter, checked at the gate and reconciled by close. In one place."
       >
-        <LinkButton href="/sign-up" variant="dark">
+        <LinkButton href="/sign-up" variant="primary">
           Start for free
         </LinkButton>
-        <LinkButton href="/" variant="light">
+        <LinkButton href="/" variant="secondary">
           Try the live demo
         </LinkButton>
       </Heading>

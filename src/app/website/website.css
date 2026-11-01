@@ -82,6 +82,10 @@
   letter-spacing: -0.01em;
   text-wrap: pretty;
 }
+/* The brand word in a heading — large text only (3.5:1 on white). */
+.cf-accent {
+  color: var(--cf-accent);
+}
 /* The grey second half of a two-tone heading. */
 .cf-dimtext {
   color: var(--cf-dim);
@@ -105,13 +109,12 @@
   position: relative;
   max-width: 1200px;
   margin-inline: auto;
-  border-inline: 1px solid var(--cf-line);
 }
 .cf-sec {
   position: relative;
-  border-top: 1px solid var(--cf-line);
 }
 .cf-sec > .cf-cross {
+  display: none;
   position: absolute;
   top: -5px;
   width: 9px;
@@ -146,17 +149,17 @@
 /* Hairline grid: children separated by 1px lines, no cards. */
 .cf-cells {
   display: grid;
-  gap: 1px;
-  background: var(--cf-line);
+  gap: 12px;
 }
 .cf-cells > * {
-  background: var(--cf-bg);
+  background: var(--cf-bg-2);
+  border-radius: 16px;
 }
 
 /* Dotted ground under product canvases. */
 .cf-dots {
   background-color: var(--cf-bg-2);
-  background-image: radial-gradient(rgb(17 17 16 / 0.09) 1px, transparent 1px);
+  background-image: radial-gradient(rgb(17 17 16 / 0.06) 1px, transparent 1px);
   background-size: 14px 14px;
 }
 
@@ -164,13 +167,11 @@
 
 .cf-window {
   background: var(--cf-bg);
-  border: 1px solid var(--cf-line);
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: var(--cf-shadow-lg);
 }
 .cf-chip {
   background: var(--cf-bg);
-  border: 1px solid var(--cf-line);
   border-radius: 10px;
   box-shadow: var(--cf-shadow);
 }

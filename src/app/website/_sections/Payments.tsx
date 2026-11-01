@@ -7,7 +7,7 @@ export function Payments() {
       <div className="px-5 pt-20 pb-12 md:px-12 md:pt-28 md:pb-16">
         <Heading
           label="Made for the market"
-          title="Built in Bangladesh."
+          title={<>Built in <span className="cf-accent">Bangladesh.</span></>}
           dim="Ready anywhere."
           lead="Bangla and English, bKash and Bangla QR, VAT and taka — with Stripe for cards abroad."
         />
