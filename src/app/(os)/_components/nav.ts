@@ -1,5 +1,6 @@
 import {
   Activity,
+  AppWindow,
   Boxes,
   CalendarDays,
   ChartNoAxesColumn,
@@ -125,6 +126,9 @@ export const NAV_OPEN: readonly NavDestination[] = [
      like the other two, so it carries the same ↗. A palette: not a store and
      not a stack of cards. */
   { href: "/design-system", key: "designSystem", icon: Palette },
+  /* The public website — the story of Counterfoil told to a venue that has not
+     bought it yet. A browser window, since that is what it is. */
+  { href: "/website", key: "website", icon: AppWindow },
 ];
 
 /** One Settings entry, opening on the first section. Settings has no index

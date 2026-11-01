@@ -1,0 +1,48 @@
+/* Day: the four scenes. Base styles are the finished picture; the animations only
+   run while a scene is on (data-on), so each scene replays when it comes back. */
+
+.scene[data-on] .chip { animation: pop 520ms var(--w-ease) backwards; animation-delay: calc(500ms + var(--i) * 170ms); }
+.scene[data-on] .card { animation: rise 700ms var(--w-ease) 200ms backwards; }
+.scene[data-on] .bar { animation: grow 900ms var(--w-ease) backwards; animation-delay: calc(400ms + var(--i) * 70ms); }
+.bar { transform-origin: bottom; }
+.scene[data-on] .progress { animation: fill 1100ms var(--w-ease-in-out) 700ms backwards; }
+.progress { transform-origin: left; }
+.scene[data-on] .pending { animation: out 300ms linear 1800ms both; }
+.pending { opacity: 0; }
+.scene[data-on] .paid { animation: pop 500ms var(--w-ease) 1900ms backwards; }
+.scene[data-on] .drawer { animation: pop 600ms var(--w-ease) 1400ms backwards; }
+
+/* Admit: the green result and the refusal take turns, 8s a round. */
+.scene[data-on] .admit { animation: admit 8s var(--w-ease-in-out) 400ms infinite; }
+.scene[data-on] .refuse { animation: refuse 8s var(--w-ease-in-out) 400ms infinite; }
+.refuse { opacity: 0; }
+.scene[data-on] .p0 { animation: p0 8s var(--w-ease) 400ms infinite; }
+.scene[data-on] .p1 { animation: p1 8s var(--w-ease) 400ms infinite; }
+.scene[data-on] .p2 { animation: p2 8s var(--w-ease) 400ms infinite; }
+.scene[data-on] .p3 { animation: p3 8s var(--w-ease) 400ms infinite; }
+
+@keyframes pop { from { opacity: 0; transform: translate3d(0, 6px, 0) scale(0.7); } }
+@keyframes rise { from { opacity: 0; transform: translate3d(0, 18px, 0); } }
+@keyframes grow { from { transform: scaleY(0.04); } }
+@keyframes fill { from { transform: scaleX(0); } }
+@keyframes out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes admit {
+  0% { opacity: 0; transform: translate3d(0, 10px, 0); }
+  6%, 44% { opacity: 1; transform: none; }
+  50%, 100% { opacity: 0; transform: translate3d(0, -6px, 0); }
+}
+@keyframes refuse {
+  0%, 50% { opacity: 0; transform: translate3d(0, 10px, 0); }
+  56%, 94% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translate3d(0, -6px, 0); }
+}
+@keyframes p0 { 0%, 8% { opacity: 0.15; transform: scale(0.5); } 13%, 100% { opacity: 1; transform: none; } }
+@keyframes p1 { 0%, 13% { opacity: 0.15; transform: scale(0.5); } 18%, 100% { opacity: 1; transform: none; } }
+@keyframes p2 { 0%, 18% { opacity: 0.15; transform: scale(0.5); } 23%, 100% { opacity: 1; transform: none; } }
+@keyframes p3 { 0%, 23% { opacity: 0.15; transform: scale(0.5); } 28%, 100% { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene *, .scene[data-on] * { animation: none !important; }
+  .refuse { opacity: 0 !important; }
+  .pending { opacity: 0 !important; }
+}

@@ -9,6 +9,13 @@
       "reason": "§12: the company deck is a fixed 1600 x 900 slide canvas in real pixels"
     },
     {
+      "path": "src/app/website/**",
+      "rules": [
+        "*"
+      ],
+      "reason": "§12: the Counterfoil marketing website is mode-locked like the deck and carries its own palette and type, scoped to --w-* in website.css"
+    },
+    {
       "path": "src/lib/events/**",
       "rules": [
         "*"

@@ -1,0 +1,91 @@
+/* The live sync demo. Transform / opacity / stroke-dashoffset only. Keyed elements
+   remount on every sale, which restarts their animation. */
+
+@keyframes draw {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  55% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+.lit {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 1.7s var(--w-ease) forwards;
+  filter: drop-shadow(0 0 4px rgb(249 74 0 / 0.8));
+}
+
+@keyframes press {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgb(249 74 0 / 0.55);
+  }
+  30% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 12px rgb(249 74 0 / 0);
+  }
+}
+.press {
+  animation: press 900ms var(--w-ease);
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.pop {
+  display: inline-block;
+  animation: pop 700ms var(--w-ease);
+  animation-delay: 650ms;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.enter {
+  animation: enter 700ms var(--w-ease) 650ms backwards;
+}
+
+.bar {
+  transform-origin: left center;
+  transition: transform 700ms var(--w-ease) 650ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lit,
+  .press,
+  .pop,
+  .enter {
+    animation: none;
+  }
+  .lit {
+    opacity: 0;
+  }
+  .bar {
+    transition: none;
+  }
+}

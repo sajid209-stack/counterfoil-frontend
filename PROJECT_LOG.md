@@ -18903,3 +18903,67 @@ The owner supplied a reference: a full-width card with one column per day, each 
   - the analytics page check ported to the new card and passing 498/498 (backup `an/page.pre-mix.mjs`), including that the channels' by-day CSV still sums to revenue each day;
   - `tsc`, `lint:tokens`, `eslint` and i18n, clean.
 - Open: the demo week for the default venue has three days with no sales, and a counter share that fell from 80% to 10%. The chart is right about it, but the seed makes it look sparse.
+
+---
+
+## The Counterfoil website (2026-11-01) — `/website`, linked from Other apps
+
+Owner asked for a storytelling marketing site — "more visuals, motions, modern minimal" — with
+linear.app, attio.com, ramp.com and jimo.ai as inspiration and the old counterfoil.app as
+the reference for what Counterfoil says about itself, plus a menu entry that opens it.
+
+**Where it lives.** `src/app/website/`, at the app root outside the OS shell like `/deck`
+and `/design-system`, so the sidebar's ↗ tells the truth. `NAV_OPEN` gains
+`{ href: "/website", key: "website", icon: AppWindow }` ("Counterfoil website" /
+"Counterfoil ওয়েবসাইট"), so it appears under Other apps on the rail, the collapsed rail and the
+phone menu (whose tile grid went from three across to two by two, since four tiles in a
+three-column grid left one orphaned).
+
+**The story** (`page.tsx` lists it): Hero (ink) → 01 Problem "Venues sell time with tools
+built for shelves" (paper) → 02 System "One system, from the office to the gate" with a live
+sync demo where a sale at either till drops the seat count on all three surfaces at once (ink)
+→ 03 "A day at the venue": a sticky scroll story with a venue clock running 08:00 → 22:00
+across Set up / Sell / Admit / Reconcile (paper) → 04 Fourteen ways to sell time, with a
+chooser built on BookingSetup's real questions (white) → 05 Specialities bento with live mini
+demos (ink) → 06 Built in Bangladesh, the real payment rails and an EN/বাংলা phone (paper) →
+07 Pricing, the real plans and an animated marketplace-cost chart (ink) → "Sell time. Keep all
+of it." with a ticket torn from the real logo mark (ember).
+
+**Honest by construction.** No invented customers, logos, quotes or statistics. The screens
+are the product's own (the deck's `_media`, imported in place), the prices and the
+marketplace maths are the deck's (`Sales.tsx`; the chart's 167–307-ticket crossover is
+৳9,990 against 12% and 6.5% of ৳500), and the one reach claim — operators in Bangladesh,
+Malaysia, the US and Canada — is this log's own §1. The old counterfoil.app listed many
+"coming soon" features and US-dollar mockups; none of that was carried over.
+
+**Mode-locked, its own palette.** Like the deck, the site alternates ink and paper chapters
+itself and ignores the OS theme; every value is `--w-*` in `website.css`, and
+`design-tokens.allow.json` exempts `src/app/website/**` with that reason. English only, as the
+deck is.
+
+**Motion.** `_components/motion.tsx`: one `IntersectionObserver` reveals every
+`[data-reveal]` (hidden only once JS has marked the root ready, so no-JS reads top to bottom);
+scroll work writes `--w-p` on the element rather than React state; looping demos run only while
+in view; reduced motion shows every end state at once.
+
+**A trap worth remembering.** Tailwind reads any `w-<name>` class as a width utility when a
+`--spacing-<name>` token exists. The site's card class was `w-card`, and this app has
+`--spacing-card` — so every card silently got `width: var(--spacing-card)` and the Problem
+cards rendered **34px wide**. Renamed `w-panel`; `website.css` carries the warning. Check the
+built CSS before adding a new `w-` name.
+
+**Build note.** `next build` in `$TEMP/cf-ds-build` now panics in Turbopack ("Symlink
+[project]/node_modules … points out of the filesystem root") — that checkout's `node_modules`
+is a link to this repo's. Built in the repo itself instead (no dev server was running).
+
+**Verified** on a production build (:3111) with a scratchpad harness, 38/43: one `h1`, eight
+chapter `h2`s, nav anchors resolve, every reveal shows after scrolling, all visible images
+load, no console errors; at 320 · 390 · 768 · 1024 · 1440 no element past the viewport and no
+text under 12px; phone touch targets ≥ 44px; reduced motion shows everything; the sidebar and
+phone-menu entries open `/website`. The five failures are one contrast false positive — the
+EN/বাংলা toggle's selected label is white on the ink thumb, which the checker cannot see
+because the thumb is absolutely positioned (the same artifact the POS audit recorded).
+`tsc`, `eslint` (website + nav), `lint:tokens` and i18n parity clean.
+
+Built by three Sonnet sub-agents on a shared foundation (`ui.tsx`, `motion.tsx`,
+`website.css`, Nav, Footer); every section was reviewed in screenshots at 1440 and 390.

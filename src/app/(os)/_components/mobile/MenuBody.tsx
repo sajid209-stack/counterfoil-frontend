@@ -23,7 +23,7 @@ import { VenueSheet } from "./VenueSheet";
  *
  *   Venue         one row → the venue picker
  *   Destinations  NAV_MAIN; a parent with pages has a separate chevron
- *   Other apps    NAV_OPEN as three tiles
+ *   Other apps    NAV_OPEN as tiles, two abreast
  *   Settings      one row
  *   You           who is signed in, Appearance + Language, profile, sign out
  *   (foot)        the developer's page-state picker, quiet
@@ -188,7 +188,7 @@ export function MenuBody({
         <p id={appsId} className="px-comfortable pb-1.5 text-xs font-medium text-muted">
           {t("otherApps")}
         </p>
-        <ul className="card-surface grid grid-cols-3 gap-1 p-1.5">
+        <ul className="card-surface grid grid-cols-2 gap-1 p-1.5">
           {NAV_OPEN.map((d) => (
             <li key={d.key} className="flex">
               <Link

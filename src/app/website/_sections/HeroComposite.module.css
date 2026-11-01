@@ -1,0 +1,36 @@
+/* Starts tilted and flattens as --w-p (written by HeroScroll) rises. */
+.stage {
+  --t: clamp(0, calc(1 - var(--w-p, 0) / 0.3), 1);
+  transform: perspective(1800px) rotateX(calc(var(--t) * 16deg)) scale(calc(1 - var(--t) * 0.06));
+  transform-origin: 50% 0;
+  will-change: transform;
+}
+
+@keyframes tear {
+  0%,
+  18% {
+    transform: none;
+  }
+  30%,
+  60% {
+    transform: translate3d(10px, 26px, 0) rotate(6deg);
+  }
+  74%,
+  100% {
+    transform: none;
+  }
+}
+.stub {
+  transform-origin: 0 0;
+  animation: tear 9s var(--w-ease-in-out) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage {
+    transform: none;
+    will-change: auto;
+  }
+  .stub {
+    animation: none;
+  }
+}
