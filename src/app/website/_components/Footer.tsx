@@ -8,7 +8,8 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Platform",
     links: [
-      { label: "Set up", href: "#platform" },
+      { label: "Counterfoil Go", href: "#platform" },
+      { label: "Counterfoil OS", href: "#os" },
       { label: "Capacity", href: "#engine" },
       { label: "What you can sell", href: "#types" },
       { label: "Payments", href: "#payments" },

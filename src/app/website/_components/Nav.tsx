@@ -9,7 +9,8 @@ import logo from "@/app/deck/_media/logo-counterfoil.png";
 import { LinkButton } from "./ui";
 
 export const NAV_LINKS = [
-  { href: "#platform", label: "Platform" },
+  { href: "#platform", label: "Go" },
+  { href: "#os", label: "OS" },
   { href: "#engine", label: "Capacity" },
   { href: "#types", label: "What you can sell" },
   { href: "#payments", label: "Payments" },

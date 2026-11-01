@@ -19030,3 +19030,42 @@ is still (its chart animates); (2) the contrast check flags white text on solid 
 3.5:1 — that is the app's own primary button exactly as the Color System defines it
 ("#F94A00 with white text"), kept so the site's buttons are the product's. If AA for that
 pairing is wanted, it is a Color System decision for the whole app, not a website one.
+
+### v4, same day — the real product, filmed
+
+Owner on v3: "the UI u used for motions doesnt match with counterfoil OS and GO ui …
+GO screens show as mobile screen view … do something cool, creative and interesting like
+jimo.ai/product/ai".
+
+Hand-drawn mockups were the root problem — however carefully copied, a redrawing drifts from
+the product. **The site now shows recordings of the running app** and builds the motion around
+them.
+
+- **12 clips in `public/website/`** (`.webm` + `.jpg` poster, ~19 MB total, each fetched only
+  when near the viewport): Go at phone size — `go-sell` (Heritage Walking Tour, 2 adults, bKash,
+  ৳2,760), `go-slot` (Futsal, Indoor Field 2 PM, repeat weekly × 4), `go-seats` (Evening Film
+  C6–C8), `go-scan` (family ticket: Let all 4 in, then "Already used"), `go-checkin`,
+  `go-cash` (৳575, ৳1,000 tendered, change ৳425), `go-bangla`; OS at desktop —
+  `os-dashboard`, `os-calendar`, `os-customers`, `os-catalog`, `os-analytics`.
+- **How they were made**: a scratchpad recorder (`scratchpad/rec/rec.mjs`) drives the
+  production build with Playwright, captures CDP screencast JPEG frames at 2× (phone) /
+  1.5× (desktop) — `--force-device-scale-factor` is needed or frames come out at 1× — re-times
+  them to 30 fps and encodes VP8/WebM with Playwright's bundled ffmpeg (VP8 is the only
+  encoder it ships). It draws an ember tap ripple and, on desktop, an arrow cursor, since
+  headless Chromium draws neither. Measured in the browser: 20–28 distinct frames a second.
+  Re-shoot when the app's UI changes; the per-clip scripts live in the scratchpad
+  (`gorec/`, `rec/`), not the repo.
+- **Seed constraints found while filming**: the mock store resets on a full reload, so the
+  scan and seat clips sell/configure first and then navigate client-side; Evening Film is only
+  sold at the closed Museum Lobby counter; no repeat-weekly date in the seed can collide, so
+  the series shows four dates and none skipped — the copy says only what the clip shows.
+- **The page** (`media.tsx`: `Clip`, `useCue`, `Phone`, `Browser`): a hero stage where the
+  real till sells in a phone in front of the real dashboard, with Jimo-style bubbles synced to
+  the clip's playhead; a sticky scroll story (Go: court, seats, scan, check-in, Bangla) whose
+  phone cross-fades between clips; an OS showcase with auto-advancing tabs; Payments with the
+  cash clip. Platform/Specials/Hero mockups and the drawn setup wizard are deleted.
+
+**Verified** (production build): every clip plays when on screen and only the active one
+in a story/tab set; no console errors; 45/52 — remaining: Pricing's still plan grid, the
+warm stage glows tripping the "saturated block" guard (soft blurred washes, judged by eye),
+and white-on-ember being the app's own primary button (3.5:1, a Color System decision).

@@ -1,5 +1,4 @@
 import { Section, Heading } from "../_components/ui";
-import { TypesWizard } from "./TypesWizard";
 import { TypesGrid } from "./TypesGrid";
 
 export function Types() {
@@ -13,10 +12,9 @@ export function Types() {
           lead="Answer a few plain questions and Counterfoil works out the rest — no booking-type codes, ever."
         />
       </div>
-      <div className="grid gap-3 px-3 pb-3 md:px-6 md:pb-6 lg:grid-cols-[minmax(0,500px)_minmax(0,1fr)]">
-        <div className="cf-dots rounded-2xl px-4 py-8 md:px-8 md:py-10">
-          <TypesWizard />
-        </div>
+      {/* The hand-drawn setup wizard is gone: the site shows only the real
+          product, and the real catalog editor plays in the OS showcase. */}
+      <div className="px-3 pb-3 md:px-6 md:pb-6">
         <TypesGrid />
       </div>
     </Section>

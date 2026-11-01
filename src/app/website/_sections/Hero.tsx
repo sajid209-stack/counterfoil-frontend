@@ -1,8 +1,8 @@
 import { Heading, LinkButton, Section } from "../_components/ui";
-import { HeroDemo } from "./HeroDemo";
+import { HeroStage } from "./HeroStage";
 import { HeroVenues } from "./HeroVenues";
 
-/** The first screen: one line, two buttons, and the product selling by itself. */
+/** The first screen: one line, two buttons, and the real product on a soft stage. */
 export function Hero() {
   return (
     <Section label="Counterfoil" flush className="px-5 pb-16 pt-20 md:px-12 md:pb-20 md:pt-28">
@@ -22,10 +22,10 @@ export function Hero() {
         </LinkButton>
       </Heading>
       <p className="sr-only">
-        A live demo: a cashier sells two Planetarium Show tickets at Fort Main Gate, pays with bKash, and the sale appears in Counterfoil OS.
+        A recording of the real product: a cashier sells two Planetarium Show tickets in Counterfoil Go, pays with bKash, and the sale appears in Counterfoil OS.
       </p>
       <div data-reveal className="mt-14 md:mt-16">
-        <HeroDemo />
+        <HeroStage />
       </div>
       <HeroVenues />
     </Section>

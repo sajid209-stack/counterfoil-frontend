@@ -1,10 +1,22 @@
 "use client";
 
-import { useRef, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { CalendarDays, BarChart3, ClipboardCheck, Monitor, Globe, Smartphone, Check, type LucideIcon } from "lucide-react";
 import { useInView, useSequence } from "../_components/motion";
 import { cn } from "@/lib/cn";
-import { useBoxWidth } from "./HeroDemo";
+
+/** The element's measured width, kept current as it resizes. */
+function useBoxWidth<T extends HTMLElement>(ref: React.RefObject<T | null>) {
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.round(e.contentRect.width)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return w;
+}
 
 /* Eight steps, ~9 s. Three pulses: a sale lands (till), a second source is
    refused (online), a hold explains a refusal (museum shop). */
