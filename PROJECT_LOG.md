@@ -18967,3 +18967,39 @@ because the thumb is absolutely positioned (the same artifact the POS audit reco
 
 Built by three Sonnet sub-agents on a shared foundation (`ui.tsx`, `motion.tsx`,
 `website.css`, Nav, Footer); every section was reviewed in screenshots at 1440 and 390.
+
+### v2, same day — rebuilt in attio.com's design language
+
+Owner's verdict on v1: "looks like AI and not interesting, less motions and animation,
+overwhelming in color" — follow attio.com. v1's ink/ember chapters, glows and gradient text
+are gone; every section was rewritten.
+
+- **The language**: a white page inside 1200px hairline rails, sections divided by hairlines
+  with a `+` at each rail, two-tone headings (black title, grey `--cf-dim` second half), small
+  black/white buttons, `cf-cells` hairline grids instead of floating cards, white product
+  windows on a dotted ground. Ember survives only as tiny accents inside the product UI
+  (dots, the tab progress line, a selected outline).
+- **The UI acts by itself.** `useSequence(durations, inView)` in `motion.tsx` drives looping
+  timelines; `Cursor` in `ui.tsx` glides and clicks. Hero: a till sells two Planetarium
+  tickets by bKash while the OS window's revenue, seats-left and activity feed update.
+  Platform: five numbered tabs (Set up · Sell · Admit · Reconcile · Grow) auto-advancing on an
+  8 s progress line, each with its own demo. Capacity: a live diagram where a second
+  counter's attempt bounces with the reason. Types: a self-playing setup wizard (clickable)
+  beside the fourteen kinds. Specials, Payments, Pricing (a sweeping cost-comparison guide)
+  and a closing ticket that tears once.
+- **Renamed the prefix `w-` → `cf-`** (classes and `--cf-*` variables): no Tailwind utility
+  starts with `cf-`, so the `w-card` width-collision class of bug cannot recur.
+- **Measured, not asserted**: the harness now counts DOM mutations + running animations per
+  section over 5 s with motion on — hero, platform 45, engine 59, types 88, specials 164,
+  payments 24 — and fails any large dark or saturated block (the "overwhelming colour"
+  guard). Pricing's plan grid is deliberately still, as Attio's is; its chart's guide sweeps
+  (15 changes in 5 s).
+- Heading grey darkened `#a3a29e → #8e8d89` (2.56 → 3.3:1; the dim half is always ≥ 24px).
+- Known and accepted: the hero and platform demos are fixed design canvases scaled to the
+  container on phones, so their decorative micro-text renders below 12px at 390px. They are
+  `aria-hidden`; the section's meaning is in real text.
+
+**Verified** on a production build: 49/50 — every section acts by itself except Pricing's
+top (above), no overflow / no sub-12px real text / contrast AA at 320 · 390 · 768 · 1024 ·
+1440, touch targets ≥ 44px, reduced motion shows every end state, no console errors, the
+sidebar and phone-menu entries open `/website`. `tsc`, eslint, `lint:tokens` clean.

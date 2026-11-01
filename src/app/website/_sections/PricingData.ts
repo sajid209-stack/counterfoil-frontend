@@ -1,5 +1,5 @@
-/* Prices and the marketplace comparison, copied from the deck (Sales.tsx):
-   the real Bangladesh price list. One source for the cards and the chart. */
+/* Prices and the marketplace comparison, from the deck (Sales.tsx): the real
+   Bangladesh price list. One source for the grid and the chart. */
 
 export const taka = (v: number) => `৳${Math.round(v).toLocaleString("en-US")}`;
 
@@ -9,6 +9,7 @@ export type Plan = {
   monthly: number;
   yearly: number;
   lines: string[];
+  featured?: boolean;
 };
 
 export const PLANS: Plan[] = [
@@ -18,26 +19,24 @@ export const PLANS: Plan[] = [
     who: "A venue with a few staff",
     monthly: 2990,
     yearly: 29900,
-    lines: ["3 seats · 1 location", "1,000 SMS, emails and form replies", "Memberships, retail, food & drink"],
+    lines: ["3 seats · 1 location", "1,000 SMS, emails and form replies", "250 waivers a month", "Memberships, retail, food & drink"],
   },
   {
     name: "Growth",
     who: "Several counters, or two sites",
     monthly: 9990,
     yearly: 99900,
-    lines: ["10 seats · 2 locations", "3,000 SMS, emails and form replies", "Agents and kitchen display included"],
+    featured: true,
+    lines: ["10 seats · 2 locations", "3,000 SMS, emails and form replies", "1,000 waivers a month", "Agents and kitchen display", "Full API, priority chat"],
   },
   {
     name: "Advanced",
     who: "Groups and busy operations",
     monthly: 14990,
     yearly: 149900,
-    lines: ["25 seats · 3 locations", "5,000 SMS, emails and form replies", "Phone support, full API"],
+    lines: ["25 seats · 3 locations", "5,000 SMS, emails and form replies", "2,000 waivers a month", "Agents and kitchen display", "Full API, phone support"],
   },
 ];
-
-/** Yearly is ten months' price: two months free, confirmed against every paid plan. */
-export const YEARLY_IS_TWO_FREE = PLANS.filter((p) => p.monthly > 0).every((p) => p.yearly === p.monthly * 10);
 
 export const EVENTS_LINES = ["Unlimited seats and locations", "Pay as you go on every meter", "Full API"];
 

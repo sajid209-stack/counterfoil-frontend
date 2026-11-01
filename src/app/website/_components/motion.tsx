@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
 
 /* The website's motion kit. Three rules hold everywhere:
-   1. Nothing is hidden unless JS is running — `.w-ready` gates every hidden
+   1. Nothing is hidden unless JS is running — `.cf-ready` gates every hidden
       state, so a page that never hydrates still reads top to bottom.
    2. Reduced motion means the end state, at once — never a slower version.
    3. Scroll work writes CSS variables on the element instead of React state,
@@ -29,14 +29,14 @@ export function useReducedMotion(): boolean {
 /**
  * Mounted once at the top of the page. Marks the root ready and reveals every
  * `[data-reveal]` element the first time it scrolls into view. A section opts in
- * with nothing more than the attribute (and `--w-delay` for a stagger), so
+ * with nothing more than the attribute (and `--cf-delay` for a stagger), so
  * server components can use it too.
  */
 export function RevealRoot({ rootId }: { rootId: string }) {
   useEffect(() => {
     const root = document.getElementById(rootId);
     if (!root) return;
-    root.classList.add("w-ready");
+    root.classList.add("cf-ready");
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
@@ -85,7 +85,7 @@ export function useInView<T extends Element>(ref: RefObject<T | null>, { once = 
 /**
  * How far the visitor has scrolled through `ref`, 0 → 1: 0 when its top meets
  * the bottom of the viewport (or the top, with `from: "top"` — what a sticky
- * story wants), 1 when its bottom meets the top. Written to `--w-p` on the
+ * story wants), 1 when its bottom meets the top. Written to `--cf-p` on the
  * element every frame; `onChange` gets the value too, for the rare part that
  * needs to switch something discrete (call setState only when it changes).
  */
@@ -108,7 +108,7 @@ export function useScrollProgress<T extends HTMLElement>(
       const start = from === "top" ? 0 : vh;
       const span = from === "top" ? r.height - vh : r.height + vh;
       const p = Math.min(1, Math.max(0, (start - r.top) / Math.max(1, span)));
-      el.style.setProperty("--w-p", p.toFixed(4));
+      el.style.setProperty("--cf-p", p.toFixed(4));
       cb.current?.(p);
     };
     const queue = () => {
@@ -183,4 +183,38 @@ export function useTicker(count: number, ms: number, active: boolean) {
     return () => window.clearInterval(id);
   }, [count, ms, active]);
   return i;
+}
+
+/**
+ * A looping timeline for the product demos — the thing that makes the UI act by
+ * itself. `durations[i]` is how long step i holds before the next. It advances
+ * only while `active` (pass `useInView(ref, { once: false })`), and returns the
+ * last step, still, under reduced motion, so a demo always has a sensible
+ * resting frame. `loop: false` stops on the last step.
+ */
+export function useSequence(durations: readonly number[], active: boolean, { loop = true }: { loop?: boolean } = {}) {
+  const reduce = useReducedMotion();
+  const [step, setStep] = useState(0);
+  // Where the timeline was when it last paused, so scrolling away and back
+  // resumes rather than jumping to a step the screen is not showing.
+  const at = useRef(0);
+  const key = durations.join(",");
+  useEffect(() => {
+    if (!active || reduce) return;
+    const ds = key.split(",").map(Number);
+    let i = at.current;
+    let id = 0;
+    const next = () => {
+      id = window.setTimeout(() => {
+        if (i >= ds.length - 1 && !loop) return;
+        i = (i + 1) % ds.length;
+        at.current = i;
+        setStep(i);
+        next();
+      }, ds[i]);
+    };
+    next();
+    return () => window.clearTimeout(id);
+  }, [active, reduce, key, loop]);
+  return reduce ? durations.length - 1 : step;
 }

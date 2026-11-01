@@ -39,7 +39,7 @@ export const WAYS: Way[] = [
   { id: "quick", name: "Quick passes", icon: Ticket, example: "Parking Pass, by the plate", plain: "Issued in seconds against an identifier.", micro: "stretch" },
   { id: "timed", name: "Timed sessions", icon: Timer, example: "Planetarium Show, every 45 min", plain: "Set start times with seats on each.", micro: "slots" },
   { id: "seats", name: "Seat maps", icon: Clapperboard, example: "Evening Film, Stalls & Balcony", plain: "The seat, chosen on a plan.", micro: "seats" },
-  { id: "courts", name: "Courts & fields", icon: LandPlot, example: "Football, Fields 1 and 2", plain: "An hour on a court, field or room.", micro: "slots" },
+  { id: "courts", name: "Courts & fields", icon: LandPlot, example: "Football on Fields 1–2", plain: "An hour on a court, field or room.", micro: "slots" },
   { id: "flex", name: "Flexible duration", icon: Hourglass, example: "Bowling Lane, from 1 hr", plain: "A lane or table, for as long as they like.", micro: "stretch" },
   { id: "guided", name: "Guided tours", icon: Compass, example: "Heritage Walking Tour, 10:00 and 14:00", plain: "A group, when a guide is free.", micro: "dots", n: 4 },
   { id: "appt", name: "Appointments", icon: UserRound, example: "Deep Tissue Massage, Karim or Nadia", plain: "A person and a time.", micro: "slots" },
@@ -102,4 +102,20 @@ export function derive(q1: Q1, a2: 0 | 1, a3: 0 | 1): { way: Way; note: string }
     default:
       return { way: wayById("credits"), note: "Buy now, book later. Each visit spends a credit." };
   }
+}
+
+/** Scripted autoplay paths for the live wizard: the rows the cursor clicks, in order. */
+export type Path = { q1: Q1; a2?: 0 | 1; a3?: 0 | 1 };
+export const PATHS: Path[] = [
+  { q1: "time", a2: 0 },
+  { q1: "space", a2: 0, a3: 0 },
+  { q1: "credits" },
+];
+
+/** Which screen the answers so far lead to. */
+export function stageOf(q1: Q1 | null, a2: 0 | 1 | null, a3: 0 | 1 | null): "q1" | "q2" | "q3" | "result" {
+  if (q1 === null) return "q1";
+  if (Q2[q1] && a2 === null) return "q2";
+  if (q1 === "space" && a2 === 0 && a3 === null) return "q3";
+  return "result";
 }

@@ -1,23 +1,63 @@
 import type { CSSProperties } from "react";
-import type { MicroKind } from "./TypesData";
-import m from "./Types.module.css";
+import type { Way } from "./TypesData";
+import s from "./Types.module.css";
 
-/** A tiny, decorative CSS animation that shows the kind. Ends in its finished state. */
-export function Micro({ kind, n, play }: { kind: MicroKind; n?: number; play: boolean }) {
-  const cells = (count: number, cls: string) =>
-    Array.from({ length: count }, (_, i) => <span key={i} className={cls} style={{ "--i": i } as CSSProperties} />);
-  return (
-    <div aria-hidden data-play={play} className={m.micro}>
-      {kind === "slots" && <div className={m.slots}>{cells(4, m.slot)}</div>}
-      {kind === "stretch" && (
-        <div className={m.track}>
-          <span className={m.stretch} />
-        </div>
-      )}
-      {kind === "seats" && <div className={m.seats}>{cells(12, m.seat)}</div>}
-      {kind === "credits" && <div className={m.credits}>{cells(10, m.credit)}</div>}
-      {kind === "dots" && <div className={m.dots}>{cells(n ?? 4, m.dot)}</div>}
-      {kind === "steps" && <div className={m.steps}>{cells(n ?? 7, m.step)}</div>}
-    </div>
-  );
+const idx = (i: number) => ({ "--i": i }) as CSSProperties;
+const range = (n: number) => Array.from({ length: n }, (_, i) => i);
+
+/** One tiny monochrome loop for a kind of booking. Decorative. */
+export function TypesMicro({ way }: { way: Way }) {
+  const n = way.n ?? 5;
+  switch (way.micro) {
+    case "slots":
+      return (
+        <span aria-hidden className={s.micro}>
+          {range(5).map((i) => (
+            <span key={i} className={s.slot} style={idx(i)} />
+          ))}
+        </span>
+      );
+    case "stretch":
+      return (
+        <span aria-hidden className={s.micro}>
+          <span className={s.track}>
+            <span className={s.bar} />
+          </span>
+        </span>
+      );
+    case "seats":
+      return (
+        <span aria-hidden className={s.micro}>
+          <span className={s.seats}>
+            {range(8).map((i) => (
+              <span key={i} className={s.seat} style={idx((i * 3) % 8)} />
+            ))}
+          </span>
+        </span>
+      );
+    case "credits":
+      return (
+        <span aria-hidden className={s.micro}>
+          {range(5).map((i) => (
+            <span key={i} className={s.pip} style={idx(i)} />
+          ))}
+        </span>
+      );
+    case "dots":
+      return (
+        <span aria-hidden className={s.micro}>
+          {range(Math.min(n, 5)).map((i) => (
+            <span key={i} className={s.dot} style={idx(i)} />
+          ))}
+        </span>
+      );
+    default:
+      return (
+        <span aria-hidden className={s.micro}>
+          {range(Math.min(n, 8)).map((i) => (
+            <span key={i} className={s.step} style={idx(i)} />
+          ))}
+        </span>
+      );
+  }
 }

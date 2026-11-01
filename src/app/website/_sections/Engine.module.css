@@ -1,0 +1,124 @@
+/* Tiny looping glyphs for the four claims. Calm, slow, CSS only. */
+
+.glyph {
+  position: relative;
+  height: 56px;
+  display: flex;
+  align-items: center;
+}
+
+/* 1 — one count: cells fill one after another, from three places */
+.cell {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid var(--cf-line-2);
+  background: var(--cf-bg);
+  animation: cellFill 6s var(--cf-ease) infinite;
+  animation-delay: var(--d, 0s);
+}
+@keyframes cellFill {
+  0%,
+  8% {
+    background: var(--cf-bg);
+    border-color: var(--cf-line-2);
+  }
+  14%,
+  70% {
+    background: var(--cf-fg);
+    border-color: var(--cf-fg);
+  }
+  80%,
+  100% {
+    background: var(--cf-bg);
+    border-color: var(--cf-line-2);
+  }
+}
+
+/* 2 — a hold: hatching drifts across a named chip */
+.hold {
+  background-image: repeating-linear-gradient(135deg, rgb(249 74 0 / 0.16) 0 4px, transparent 4px 8px);
+  background-size: 11.3px 11.3px;
+  animation: hatch 2.4s linear infinite;
+}
+@keyframes hatch {
+  to {
+    background-position: 11.3px 0;
+  }
+}
+
+/* 3 — a refusal: the reason types out */
+.type {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: bottom;
+  animation: typing 6s steps(26, end) infinite;
+}
+@keyframes typing {
+  0% {
+    width: 0;
+  }
+  45%,
+  85% {
+    width: 100%;
+  }
+  100% {
+    width: 0;
+  }
+}
+
+/* 4 — shared resource: two bookings take turns on one field */
+.turnA {
+  animation: turn 6s var(--cf-ease) infinite;
+}
+.turnB {
+  animation: turn 6s var(--cf-ease) infinite;
+  animation-delay: -3s;
+}
+@keyframes turn {
+  0%,
+  45% {
+    border-color: var(--cf-fg);
+    color: var(--cf-fg);
+  }
+  55%,
+  100% {
+    border-color: var(--cf-line-2);
+    color: var(--cf-muted);
+  }
+}
+.field {
+  animation: fieldLabel 6s var(--cf-ease) infinite;
+}
+@keyframes fieldLabel {
+  0%,
+  45% {
+    background: var(--cf-accent-wash);
+  }
+  55%,
+  95% {
+    background: var(--cf-bg-3);
+  }
+  100% {
+    background: var(--cf-accent-wash);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell,
+  .hold,
+  .type,
+  .turnA,
+  .turnB,
+  .field {
+    animation: none;
+  }
+  .cell:nth-child(-n + 5) {
+    background: var(--cf-fg);
+    border-color: var(--cf-fg);
+  }
+  .type {
+    width: 100%;
+  }
+}

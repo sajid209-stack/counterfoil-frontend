@@ -1,246 +1,256 @@
 "use client";
 
-import { useRef } from "react";
-import { Check, Lock, UserRound } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { Check, Lock, Armchair, Scan, Repeat } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { CountUp, useInView, useReducedMotion, useTicker } from "../_components/motion";
+import { useInView, useReducedMotion, useSequence } from "../_components/motion";
 
-/* Live mini-demos for the Specialities bento. Each runs only while in view and
-   rests on its end state, still, under reduced motion. Everything is aria-hidden:
-   the card's heading and sentence carry the meaning. */
+/* Six small stages for the Specials grid. Each is a white mini-UI on a dotted
+   ground that loops while in view and rests on a complete frame otherwise. */
 
-function useLoop(count: number, ms: number) {
+function useDemo(durations: readonly number[]) {
   const ref = useRef<HTMLDivElement>(null);
-  const seen = useInView(ref, { once: false, threshold: 0.3 });
+  const inView = useInView(ref, { once: false, threshold: 0.3, margin: "0px" });
+  const step = useSequence(durations, inView);
+  return { ref, step };
+}
+
+function Stage({ stageRef, children }: { stageRef: RefObject<HTMLDivElement | null>; children: ReactNode }) {
+  return (
+    <div ref={stageRef} aria-hidden className="cf-dots grid h-[180px] place-items-center overflow-hidden px-4">
+      <div className="w-full max-w-[250px] rounded-lg border border-[var(--cf-line)] bg-white p-3 text-[12px] shadow-[var(--cf-shadow)]">{children}</div>
+    </div>
+  );
+}
+
+const taka = (n: number) => "৳" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** Eases a displayed number toward `target`, like a till total ticking. */
+function useTween(target: number, ms = 600) {
   const reduce = useReducedMotion();
-  const i = useTicker(count, ms, seen && !reduce);
-  return { ref, i, reduce };
+  const [v, setV] = useState(target);
+  const from = useRef(target);
+  useEffect(() => {
+    if (reduce) return;
+    const a = from.current;
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (t: number) => {
+      const k = Math.min(1, (t - t0) / ms);
+      const val = a + (target - a) * (1 - Math.pow(1 - k, 3));
+      from.current = val;
+      setV(val);
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, ms, reduce]);
+  return reduce ? target : v;
 }
 
-const PAPER = "rounded-[14px] bg-[var(--w-paper)] text-[var(--w-ink)]";
-const EASE = "transition-[opacity,transform] duration-700 [transition-timing-function:var(--w-ease)]";
-
-/* ── Never sold twice ─────────────────────────────────────────────────── */
-
-export function NeverSoldTwice() {
-  const { ref, i, reduce } = useLoop(4, 1500);
-  const c1 = reduce || i >= 1;
-  const c2 = reduce || i >= 2;
-  const tiles = [
-    { till: "Counter 1", on: c1, label: "Sold" },
-    { till: "Counter 2", on: c2, label: "Taken" },
-  ];
+/* 1 ── seats get picked */
+const CHOSEN = [11, 12, 13];
+export function SeatsDemo() {
+  const { ref, step } = useDemo([900, 600, 600, 600, 2600]);
+  const n = Math.min(step, 3);
   return (
-    <div ref={ref} aria-hidden className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
-      {tiles.map(({ till, on, label }, k) => (
-        <div key={till} className={cn(PAPER, EASE, "flex h-[84px] flex-col justify-center px-4", k === 1 && on && "opacity-60")}>
-          <p className="text-[13px] text-[var(--w-muted)]">{till} · Field 1</p>
-          <p className="mt-1 flex items-center justify-between gap-2">
-            <span className={cn("text-[18px] font-semibold tabular-nums", k === 1 && on && "line-through")}>6:00 PM</span>
-            <span
-              className={cn(
-                "rounded-full px-2.5 py-1 text-[12px] font-semibold leading-none",
-                EASE,
-                on ? (k === 0 ? "bg-[var(--w-ink)] text-[var(--w-paper)]" : "bg-[var(--w-line)] text-[var(--w-muted)]") : "bg-[var(--w-ember-wash)] text-[var(--w-ember-text)]",
-              )}
-            >
-              {on ? label : "Open"}
-            </span>
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ── One scan, the whole family ───────────────────────────────────────── */
-
-export function FamilyScan() {
-  const { ref, i, reduce } = useLoop(6, 900);
-  const n = reduce ? 4 : Math.min(i, 4);
-  return (
-    <div ref={ref} aria-hidden className={cn(PAPER, "flex h-[84px] items-center justify-between gap-3 px-4")}>
-      <div className="min-w-0">
-        <p className="text-[20px] font-bold leading-none tracking-[-0.01em]">ADMIT 4</p>
-        <p className="mt-1.5 text-[13px] text-[var(--w-muted)]">Family · {n} of 4 in</p>
-      </div>
-      <div className="flex shrink-0 gap-1.5">
-        {[0, 1, 2, 3].map((k) => (
-          <span
-            key={k}
-            className={cn(
-              "grid h-[30px] w-[30px] place-items-center rounded-full",
-              EASE,
-              k < n ? "scale-100 bg-[var(--w-success)] text-white" : "scale-90 text-[var(--w-muted)] ring-1 ring-inset ring-[var(--w-line)]",
-            )}
-          >
-            {k < n ? <Check size={15} strokeWidth={2.6} /> : <UserRound size={14} strokeWidth={1.8} />}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ── Seat map ─────────────────────────────────────────────────────────── */
-
-const SOLD = new Set(["0-4", "0-5", "3-6", "3-7", "4-0", "4-1"]);
-const PICKS = ["2-3", "2-4", "2-5"];
-
-export function SeatDemo() {
-  const { ref, i, reduce } = useLoop(6, 1000);
-  const n = reduce ? 3 : Math.min(i, 3);
-  const picked = new Set(PICKS.slice(0, n));
-  return (
-    <div ref={ref} aria-hidden className={cn(PAPER, "p-4")}>
-      <p className="w-mono rounded-md bg-[var(--w-paper-2)] py-1 text-center text-[12px] uppercase tracking-[0.2em] text-[var(--w-muted)]">Screen</p>
-      <div className="mt-3 grid grid-cols-9 gap-1.5">
-        {Array.from({ length: 45 }, (_, k) => {
-          const key = `${Math.floor(k / 9)}-${k % 9}`;
-          const sold = SOLD.has(key);
-          const on = picked.has(key);
+    <Stage stageRef={ref}>
+      <div className="mb-2 h-1 rounded-full bg-[var(--cf-line-2)]" />
+      <div className="grid grid-cols-8 gap-1">
+        {Array.from({ length: 24 }, (_, i) => {
+          const taken = [2, 3, 8, 17, 20].includes(i);
+          const sel = CHOSEN.indexOf(i);
+          const on = sel > -1 && sel < n;
           return (
             <span
-              key={key}
+              key={i}
               className={cn(
-                "aspect-square rounded-[5px] border transition-colors duration-500",
-                sold ? "border-transparent bg-[var(--w-line)]" : on ? "border-[var(--w-ember)] bg-[var(--w-ember)]" : "border-[var(--w-ember)]/50 bg-[var(--w-ember-wash)]",
+                "h-4 rounded-[4px] transition-colors duration-300",
+                taken ? "bg-[var(--cf-line-2)]" : on ? "bg-[var(--cf-fg)]" : "bg-[var(--cf-bg-3)]",
+                on && "shadow-[0_0_0_1px_var(--cf-accent)]",
               )}
             />
           );
         })}
       </div>
-      <p className="mt-3 flex items-center justify-between gap-2 rounded-full bg-[var(--w-ember)] px-4 py-2 text-[13px] font-semibold text-[var(--w-ink)]">
-        <span>{n ? `Add ${n} seats` : "Pick your seats"}</span>
-        <span className="tabular-nums">{n ? `৳${(n * 400).toLocaleString("en-US")}.00` : "Stalls · ৳400"}</span>
+      <div
+        className={cn(
+          "mt-3 flex h-8 items-center justify-center gap-1.5 rounded-md text-[12px] font-medium transition-colors duration-300",
+          n === 3 ? "bg-[var(--cf-fg)] text-white" : "bg-[var(--cf-bg-3)] text-[var(--cf-muted)]",
+        )}
+      >
+        <Armchair size={13} strokeWidth={1.8} />
+        {n === 3 ? "Add 3 seats — ৳1,200.00" : n === 0 ? "Choose seats" : `${n} selected`}
+      </div>
+    </Stage>
+  );
+}
+
+/* 2 ── one scan, the whole family */
+export function FamilyDemo() {
+  const { ref, step } = useDemo([900, 500, 500, 500, 500, 2600]);
+  const n = Math.min(4, Math.max(0, step - 1));
+  const done = step >= 5;
+  return (
+    <Stage stageRef={ref}>
+      <div className="flex items-center justify-between">
+        <span className="cf-mono text-[12px] text-[var(--cf-muted)]">CF-2026-001053</span>
+        <span className="text-[12px] text-[var(--cf-muted)]">Family</span>
+      </div>
+      <div className="mt-2 flex items-center justify-between rounded-md bg-[var(--cf-bg-3)] px-2.5 py-2">
+        <span className="flex items-center gap-1.5 text-[14px] font-semibold tracking-tight">
+          <Scan size={14} strokeWidth={1.8} /> ADMIT 4
+        </span>
+        <span className="flex gap-1">
+          {[0, 1, 2, 3].map((i) => (
+            <span key={i} className={cn("h-2.5 w-2.5 rounded-full transition-colors duration-300", i < n ? "bg-[var(--cf-fg)]" : "bg-[var(--cf-line-2)]")} />
+          ))}
+        </span>
+      </div>
+      <p className={cn("mt-2 flex items-center gap-1 text-[12px] transition-colors", done ? "text-[var(--cf-green)]" : "text-[var(--cf-muted)]")}>
+        {done ? (
+          <>
+            <Check size={12} strokeWidth={2.4} /> Admitted · 4 of 4
+          </>
+        ) : (
+          `Scanning · ${n} of 4`
+        )}
       </p>
-    </div>
+    </Stage>
   );
 }
 
-/* ── Taka to the paisa, VAT per line ──────────────────────────────────── */
-
-const money = (n: number) => `৳${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-export function Receipt() {
-  const rows: [string, number][] = [
-    ["Subtotal", 900],
-    ["VAT 15%", 135],
-    ["Total", 1035],
-  ];
+/* 3 ── taka to the paisa */
+export function TakaDemo() {
+  const { ref, step } = useDemo([700, 900, 900, 2600]);
+  const total = useTween(step <= 0 ? 0 : step === 1 ? 1000 : 1400);
   return (
-    <div aria-hidden className={cn(PAPER, "w-mono p-4 text-[13px]")}>
-      <div className="flex justify-between gap-3 border-b border-dashed border-[var(--w-line)] pb-2 text-[var(--w-muted)]">
-        <span>Planetarium Show ×2</span>
-        <span>{money(600)}</span>
+    <Stage stageRef={ref}>
+      {[
+        { n: "Adult × 2", a: "1,000.00", v: "VAT 15%", at: 1 },
+        { n: "Evening Film", a: "400.00", v: "VAT 7.5%", at: 2 },
+      ].map((l) => (
+        <div key={l.n} className={cn("flex items-center gap-2 border-b border-[var(--cf-line)] py-1.5 transition-opacity duration-500", step >= l.at ? "opacity-100" : "opacity-0")}>
+          <span className="min-w-0 flex-1 truncate">{l.n}</span>
+          <span className="rounded bg-[var(--cf-bg-3)] px-1 text-[12px] text-[var(--cf-muted)]">{l.v}</span>
+          <span className="w-[62px] text-right">৳{l.a}</span>
+        </div>
+      ))}
+      <div className="mt-2 flex items-center justify-between text-[13px] font-semibold">
+        <span>Total</span>
+        <span>{taka(total)}</span>
       </div>
-      <div className="flex justify-between gap-3 border-b border-dashed border-[var(--w-line)] py-2 text-[var(--w-muted)]">
-        <span>Gift shop</span>
-        <span>{money(300)}</span>
-      </div>
-      <dl className="pt-2">
-        {rows.map(([k, v]) => (
-          <div key={k} className={cn("flex justify-between gap-3 py-[3px]", k === "VAT 15%" && "font-semibold text-[var(--w-ember-text)]", k === "Total" && "text-[15px] font-semibold")}>
-            <dt>{k}</dt>
-            <dd>
-              <CountUp value={v} format={money} duration={1200} />
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <p className="mt-2 text-[12px] text-[var(--w-muted)]">15% or 7.5%, worked per line.</p>
-    </div>
+    </Stage>
   );
 }
 
-/* ── Bangla + English ─────────────────────────────────────────────────── */
-
-export function Bilingual() {
-  const { ref, i, reduce } = useLoop(2, 2200);
-  const bn = i === 1;
-  const words = [
-    { lang: "bn", script: "বাংলা", said: "টিকিট ইস্যু হয়েছে" },
-    { lang: "en", script: "English", said: "Ticket issued" },
-  ];
-  if (reduce)
-    return (
-      <div ref={ref} aria-hidden className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
-        {words.map((w) => (
-          <div key={w.lang} lang={w.lang} className={cn(PAPER, "px-4 py-4")}>
-            <p className="text-[32px] font-semibold leading-none tracking-[-0.02em]">{w.script}</p>
-            <p className="mt-3 text-[14px] text-[var(--w-muted)]">{w.said}</p>
-          </div>
-        ))}
+/* 4 ── Bangla and English */
+export function LanguageDemo() {
+  const { ref, step } = useDemo([2400, 2400]);
+  const bn = step === 1;
+  const layer = (show: boolean, lang: "en" | "bn") => (
+    <div
+      lang={lang}
+      className={cn("col-start-1 row-start-1 transition-[opacity,filter] duration-700", show ? "opacity-100 blur-0" : "pointer-events-none opacity-0 blur-[3px]")}
+    >
+      <div className="flex items-center justify-between">
+        <span className="font-medium">{lang === "en" ? "Family ticket" : "পারিবারিক টিকিট"}</span>
+        <span>{lang === "en" ? "৳1,400.00" : "৳১,৪০০.০০"}</span>
       </div>
-    );
+      <div className="mt-1 flex items-center justify-between text-[var(--cf-muted)]">
+        <span>{lang === "en" ? "4 people" : "৪ জন"}</span>
+        <span>{lang === "en" ? "Total" : "মোট"}</span>
+      </div>
+      <div className="mt-3 flex h-8 items-center justify-center rounded-md bg-[var(--cf-fg)] text-[12px] font-medium text-white">{lang === "en" ? "Charge" : "পরিশোধ নিন"}</div>
+    </div>
+  );
   return (
-    <div ref={ref} aria-hidden className={cn(PAPER, "p-4")}>
-      <div className="grid h-[84px] [&>*]:col-start-1 [&>*]:row-start-1">
-        {words.map((w) => {
-          const on = (w.lang === "bn") === bn;
-          return (
-            <div key={w.lang} lang={w.lang} className={cn(EASE, on ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0")}>
-              <p className="text-[40px] font-semibold leading-none tracking-[-0.02em]">{w.script}</p>
-              <p className="mt-3 flex items-center gap-2 text-[14px] text-[var(--w-muted)]">
-                <span className="grid h-[20px] w-[20px] place-items-center rounded-full bg-[var(--w-success)] text-[12px] font-bold text-white">✓</span>
-                {w.said}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-3 flex rounded-full bg-[var(--w-paper-2)] p-1 text-[13px] font-medium">
-        {["বাংলা", "English"].map((l, k) => (
-          <span key={l} className={cn("flex-1 rounded-full py-1 text-center transition-colors duration-500", (k === 0) === bn ? "bg-[var(--w-ink)] text-[var(--w-paper)]" : "text-[var(--w-muted)]")}>
+    <Stage stageRef={ref}>
+      <div className="mb-2 flex gap-1">
+        {["EN", "বাংলা"].map((l, i) => (
+          <span key={l} className={cn("rounded px-1.5 py-0.5 text-[12px] transition-colors duration-500", (i === 1) === bn ? "bg-[var(--cf-fg)] text-white" : "bg-[var(--cf-bg-3)] text-[var(--cf-muted)]")}>
             {l}
           </span>
         ))}
       </div>
-    </div>
+      <div className="grid">
+        {layer(!bn, "en")}
+        {layer(bn, "bn")}
+      </div>
+    </Stage>
   );
 }
 
-/* ── Holds ────────────────────────────────────────────────────────────── */
-
+/* 5 ── holds */
 export function HoldsDemo() {
-  const { ref, i, reduce } = useLoop(4, 1700);
-  const held = reduce || (i >= 1 && i < 3);
-  const hours = ["09", "10", "11", "12", "13"];
-  const cell = "border-l border-t border-[var(--w-line)]";
+  const { ref, step } = useDemo([900, 900, 2400, 1000, 1200]);
+  const held = step === 1 || step === 2 || step === 3;
+  const left = held ? 7 : 32;
   return (
-    <div ref={ref} aria-hidden className={cn(PAPER, "p-4")}>
-      <div className="grid grid-cols-[44px_repeat(5,minmax(0,1fr))] text-[12px] text-[var(--w-muted)]">
-        <span />
-        {hours.map((h) => (
-          <span key={h} className="w-mono pb-1 pl-1">
-            {h}:00
-          </span>
-        ))}
-        {["Lane 1", "Lane 2", "Lane 3"].map((l, r) => (
-          <div key={l} className="contents">
-            <span className="flex h-11 items-center">{l}</span>
-            {hours.map((h) => (
-              <span key={h + r} className={cn(cell, "h-11", h === "13" && "border-r")} />
-            ))}
-          </div>
-        ))}
+    <Stage stageRef={ref}>
+      <div className="flex items-center justify-between">
+        <span className="font-medium">Planetarium Show · 12:30</span>
+        <span className="cf-mono text-[12px] text-[var(--cf-muted)]">{left} left</span>
       </div>
-      {/* Blocks sit over the same grid. */}
-      <div className="pointer-events-none relative -mt-[132px] grid h-[132px] grid-cols-[44px_repeat(5,minmax(0,1fr))] grid-rows-3 p-[2px]">
-        <span className="col-span-2 col-start-2 row-start-1 flex items-center rounded-md bg-[var(--w-ember-wash)] px-2 text-[12px] font-medium text-[var(--w-ember-text)]">Booked</span>
+      <div className="relative mt-2 flex h-4 overflow-hidden rounded bg-[var(--cf-bg-3)]">
+        <span className="h-full bg-[var(--cf-dim)]" style={{ width: "20%" }} />
         <span
-          className={cn(
-            "col-span-3 col-start-3 row-start-3 flex items-center gap-1.5 rounded-md px-2 text-[12px] font-semibold text-[var(--w-ink)] ring-1 ring-inset ring-[var(--w-ink)]/30",
-            EASE,
-            held ? "scale-100 opacity-100" : "scale-95 opacity-0",
-          )}
-          style={{ backgroundImage: "repeating-linear-gradient(135deg, rgb(20 20 19 / 0.14) 0 5px, transparent 5px 10px)" }}
-        >
-          <Lock size={12} strokeWidth={2} />
-          Maintenance
-        </span>
+          className="h-full transition-[width] duration-700 ease-[var(--cf-ease)]"
+          style={{
+            width: held ? "62.5%" : "0%",
+            backgroundImage: "repeating-linear-gradient(135deg, var(--cf-fg) 0 1.5px, transparent 1.5px 5px)",
+          }}
+        />
       </div>
-      <p className="mt-3 text-[13px] text-[var(--w-muted)]">Taken off public sale. Who for, and when it goes back, on record.</p>
-    </div>
+      <div className="mt-3 h-7">
+        {held && (
+          <div key={step === 3 ? "r" : "h"} className="cf-arrive flex h-7 items-center gap-1.5 rounded-md border border-dashed border-[var(--cf-line-2)] px-2 text-[12px]">
+            <Lock size={12} strokeWidth={1.8} className="shrink-0" />
+            <span className="truncate">Held · School group · 25 places</span>
+          </div>
+        )}
+        {step === 4 && (
+          <div className="cf-arrive flex h-7 items-center gap-1.5 text-[12px] text-[var(--cf-green)]">
+            <Check size={12} strokeWidth={2.4} /> Released · on sale again
+          </div>
+        )}
+      </div>
+    </Stage>
+  );
+}
+
+/* 6 ── repeat weekly */
+const WEDS = ["4 Nov", "11 Nov", "18 Nov", "25 Nov", "2 Dec", "9 Dec", "16 Dec"];
+export function RepeatDemo() {
+  const { ref, step } = useDemo([700, 220, 220, 220, 220, 220, 220, 220, 700, 2600]);
+  const shown = Math.min(7, Math.max(0, step - 0));
+  const skipped = step >= 8;
+  const done = step >= 9;
+  return (
+    <Stage stageRef={ref}>
+      <div className="mb-2 flex items-center gap-1.5 font-medium">
+        <Repeat size={13} strokeWidth={1.8} /> Repeat weekly
+      </div>
+      <div className="grid grid-cols-4 gap-1">
+        {WEDS.map((d, i) => {
+          const taken = i === 2;
+          return (
+            <span
+              key={d}
+              className={cn(
+                "rounded px-1 py-1 text-center text-[12px] transition-all duration-300",
+                i < shown ? "opacity-100" : "opacity-0",
+                taken && skipped ? "bg-[var(--cf-red-wash)] text-[var(--cf-red)] line-through" : "bg-[var(--cf-bg-3)]",
+              )}
+            >
+              {d}
+            </span>
+          );
+        })}
+      </div>
+      <p className={cn("mt-2 text-[12px] leading-snug text-[var(--cf-muted)] transition-opacity duration-500", done ? "opacity-100" : "opacity-0")}>
+        Next 7 Wednesdays at 18:00 · 1 already taken — skipped
+      </p>
+    </Stage>
   );
 }

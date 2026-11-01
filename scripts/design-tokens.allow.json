@@ -13,7 +13,7 @@
       "rules": [
         "*"
       ],
-      "reason": "§12: the Counterfoil marketing website is mode-locked like the deck and carries its own palette and type, scoped to --w-* in website.css"
+      "reason": "§12: the Counterfoil marketing website is a fixed light page that carries its own palette and type, scoped to --cf-* in website.css"
     },
     {
       "path": "src/lib/events/**",

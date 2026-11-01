@@ -1,22 +1,24 @@
-import { ChapterHead, Container, Section } from "../_components/ui";
-import { TypesChooser } from "./TypesChooser";
+import { Section, Heading } from "../_components/ui";
+import { TypesWizard } from "./TypesWizard";
 import { TypesGrid } from "./TypesGrid";
 
-/** 04 · What you can sell. Three plain questions in, a kind of booking out. */
 export function Types() {
   return (
-    <Section id="types" tone="white">
-      <Container>
-        <ChapterHead
-          n="04"
-          eyebrow="What you can sell"
-          title="Fourteen ways to sell time, from one engine."
-          lead="Answer a few plain questions and Counterfoil works out the rest. No booking-type codes, ever. One engine sits behind all of them, so a court and a concert cannot sell the same hour twice."
+    <Section id="types" flush>
+      <div className="px-5 pt-20 pb-12 md:px-12 md:pt-28 md:pb-16">
+        <Heading
+          label="What you can sell"
+          title="Fourteen ways to sell time."
+          dim="From one engine."
+          lead="Answer a few plain questions and Counterfoil works out the rest — no booking-type codes, ever."
         />
-        <TypesChooser />
-        <h3 className="sr-only">All fourteen</h3>
-        <TypesGrid />
-      </Container>
+      </div>
+      <div className="grid border-t border-[var(--cf-line)] lg:grid-cols-[minmax(0,500px)_minmax(0,1fr)]">
+        <div className="cf-dots px-5 py-8 md:px-10 md:py-12 lg:border-r lg:border-[var(--cf-line)]">
+          <TypesWizard />
+        </div>
+        <TypesGrid className="border-t border-[var(--cf-line)] lg:border-t-0" />
+      </div>
     </Section>
   );
 }

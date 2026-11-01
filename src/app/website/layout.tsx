@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "Tickets, sessions, courts and tours — sold at the counter, checked at the gate and reconciled by close. Counterfoil OS runs the business; Counterfoil Go sells and admits.",
 };
 
-export const viewport: Viewport = { themeColor: "#141413" };
+export const viewport: Viewport = { themeColor: "#ffffff" };
 
 /**
  * The Counterfoil website lives at the app root, outside the OS shell — the
