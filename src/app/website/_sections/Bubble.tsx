@@ -16,6 +16,7 @@ export function Bubble({
   show,
   className,
   bob = 0,
+  drift,
 }: {
   icon: LucideIcon;
   title: string;
@@ -24,9 +25,11 @@ export function Bubble({
   className?: string;
   /** Seconds to offset this bubble's float so a group never bobs in step. */
   bob?: number;
+  /** Px this bubble travels at full scroll (parallax), as [x, y]. Needs a parent that sets --s. */
+  drift?: readonly [number, number];
 }) {
   return (
-    <div aria-hidden className={cn("absolute z-20", className)}>
+    <div aria-hidden className={cn("absolute z-20", drift && styles.drift, className)} style={drift ? ({ "--dx": `${drift[0]}px`, "--dy": `${drift[1]}px` } as CSSProperties) : undefined}>
       <div className={cn(styles.pop, show && styles.in)}>
         <div className={styles.float} style={{ animationDelay: `${-bob}s` } as CSSProperties}>
           <div className="flex items-center gap-2.5 rounded-2xl bg-white py-2 pl-2 pr-4 shadow-[0_22px_44px_-16px_rgb(140_50_0/0.34),0_4px_12px_-4px_rgb(0_0_0/0.08)]">

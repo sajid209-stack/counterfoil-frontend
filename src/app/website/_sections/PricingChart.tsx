@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useInView, useReducedMotion, useTicker } from "../_components/motion";
+import styles from "./Pricing.module.css";
 import { GROWTH, SHARE_HIGH, SHARE_LOW, TICKET_PRICE, evenAt, share, taka } from "./PricingData";
 
 /* Monthly cost against tickets sold, at ৳500 a ticket. Drawn at measured 1:1
@@ -98,6 +99,14 @@ export function PricingChart() {
               <path d={`M${sx(0)} ${sy(0)}L${sx(X_MAX)} ${sy(share(X_MAX, SHARE_HIGH))}`} fill="none" stroke={GREY} strokeWidth={1.25} {...draw(150)} />
               <path d={`M${sx(0)} ${sy(0)}L${sx(X_MAX)} ${sy(share(X_MAX, SHARE_LOW))}`} fill="none" stroke={GREY} strokeWidth={1.25} {...draw(300)} />
               <path d={`M${sx(0)} ${flatY}L${sx(X_MAX)} ${flatY}`} fill="none" stroke={EMBER} strokeWidth={2.5} strokeLinecap="round" {...draw(0)} />
+
+              {/* A soft pulse travelling along the Counterfoil line. */}
+              {drawn && !reduce && (
+                <g className={styles.travel} style={{ ["--pw" as string]: `${pw}px` }}>
+                  <circle cx={PAD.l} cy={flatY} r={5} fill={EMBER} fillOpacity={0.4} className={styles.halo} />
+                  <circle cx={PAD.l} cy={flatY} r={4} fill={EMBER} stroke="#fff" strokeWidth={1.5} />
+                </g>
+              )}
 
               {/* Where the flat plan starts to win. */}
               <g style={fade(1200)}>

@@ -19069,3 +19069,37 @@ them.
 in a story/tab set; no console errors; 45/52 — remaining: Pricing's still plan grid, the
 warm stage glows tripping the "saturated block" guard (soft blurred washes, judged by eye),
 and white-on-ember being the app's own primary button (3.5:1, a Color System decision).
+
+### v5, same day — trend-led motion around the real product
+
+Owner: "need more visuals, and interesting motions, do some crazy animations … trendy".
+Research (agency/Awwwards round-ups) converged on kinetic oversized type, scroll-triggered
+headline reveals, scroll-reactive 3D, pinned/horizontal and stacking scroll layouts — with
+the standing warnings about phone jank and reduced motion. Built on the filmed real UI:
+
+- **`_components/fx.tsx`** (new kit): `SplitReveal` (words rise from a mask), `WordCycle`
+  (departure-board word), `ScrollWords` (words light up with scroll), `Magnetic`, `Tilt`
+  (3D tilt + glare), `VelocityMarquee` (speed and lean follow scroll velocity, reverses on
+  scroll-up), `Odometer`, `ScrollBar` (ember reading bar), `CursorRing` (trailing ember ring,
+  fine pointers only). All write through refs/CSS vars, never state per frame; all still
+  under reduced motion.
+- **Sections**: kinetic hero "Sell <time./tickets./courts./seats./tours.> without the
+  chaos." with a 3D stage that fans apart on scroll and orbiting paper tickets; a Manifesto
+  that lights word by word over a scroll-driven clock; a **3D tilted infinite film wall** of
+  real screens ("Every screen you see here is real."); giant velocity type bands; a **pinned
+  horizontal gallery** of the 14 booking kinds; **sticky stacking cards** each carrying a real
+  clip; odometer facts; tilting pricing tiles; a **ticket-rain finale**.
+- Below `lg` the pinned/sticky effects fall back to ordinary vertical layouts (no
+  scroll-jacking on phones).
+- Fixed on review: the Types heading moved inside the pinned viewport (it had left a dead gap
+  above the track); film-wall images load eagerly (lazy images inside the 3D transform never
+  loaded, leaving blank phones); Stack copy corrected to what the clips show; one 4.36:1 body
+  text raised.
+
+**Known**: `go-scan` opens on the app's own "Camera scanning isn't available on this device"
+— headless Chromium has no camera; the clip then admits via the manual code field. Re-film
+on a device with a camera if it matters.
+
+**Verified** (production build): 49/56 — remaining are the standing deliberate ones (still
+pricing grid, warm stage glows, white-on-ember primary). No page overflow at any width, no
+console errors.

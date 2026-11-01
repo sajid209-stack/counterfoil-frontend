@@ -1,8 +1,13 @@
 import { RevealRoot } from "./_components/motion";
+import { CursorRing, ScrollBar } from "./_components/fx";
 import { Nav } from "./_components/Nav";
 import { Footer } from "./_components/Footer";
 import { Hero } from "./_sections/Hero";
+import { Manifesto } from "./_sections/Manifesto";
+import { FilmWall } from "./_sections/FilmWall";
 import { PhoneStory } from "./_sections/PhoneStory";
+import { Band } from "./_sections/Band";
+import { Stack } from "./_sections/Stack";
 import { OsShowcase } from "./_sections/OsShowcase";
 import { Engine } from "./_sections/Engine";
 import { Types } from "./_sections/Types";
@@ -36,16 +41,23 @@ export default function WebsitePage() {
   return (
     <div id="cf-root" className="cf-root light">
       <RevealRoot rootId="cf-root" />
+      <ScrollBar />
+      <CursorRing />
       <Nav />
       <div className="cf-rails">
         <main>
           <Hero />
+          <Manifesto />
+          <FilmWall />
           <PhoneStory />
+          <Band words={["Sell", "Scan", "Admit", "Reconcile"]} />
           <OsShowcase />
           <Engine />
           <Types />
+          <Stack />
           <Payments />
           <Facts />
+          <Band words={["Tickets", "Courts", "Seats", "Tours", "Sessions"]} reverse />
           <Pricing />
           <Cta />
         </main>
