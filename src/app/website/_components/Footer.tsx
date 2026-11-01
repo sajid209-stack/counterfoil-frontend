@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import logo from "@/app/deck/_media/logo-counterfoil.png";
+import logo from "@/app/deck/_media/logo-counterfoil-dark.png";
 
 /* Every link here goes somewhere real in this app. A footer full of "Careers",
    "Press" and "Blog" pointing at nothing teaches the reader to distrust it. */
@@ -8,12 +8,11 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Platform",
     links: [
+      { label: "Counterfoil OS", href: "#interface" },
       { label: "Counterfoil Go", href: "#platform" },
-      { label: "Counterfoil OS", href: "#os" },
-      { label: "Capacity", href: "#engine" },
-      { label: "What you can sell", href: "#types" },
       { label: "Payments", href: "#payments" },
       { label: "Pricing", href: "#pricing" },
+      { label: "FAQ", href: "#faq" },
     ],
   },
   {
@@ -38,7 +37,7 @@ const link = "inline-flex min-h-11 min-w-11 items-center text-[14px] text-[var(-
 
 export function Footer() {
   return (
-    <footer className="cf-sec px-5 pb-10 pt-16 md:px-12">
+    <footer className="cf-sec mx-auto max-w-[1200px] px-5 pb-10 pt-16 md:px-12">
       <div className="grid gap-10 md:grid-cols-[1.5fr_repeat(3,1fr)]">
         <div>
           <Image src={logo} alt="Counterfoil" sizes="130px" className="h-[19px] w-auto" />

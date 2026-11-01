@@ -109,14 +109,14 @@ export function Phone({ children, className, time = "9:41" }: { children: ReactN
   return (
     <div
       className={cn(
-        "relative rounded-[3rem] bg-[#121211] p-[10px] shadow-[0_2px_0_1px_rgb(255_255_255/0.06)_inset,0_50px_100px_-30px_rgb(60_20_0/0.45),0_30px_60px_-40px_rgb(0_0_0/0.5)]",
+        "relative rounded-[3rem] bg-[#1b1b1a] p-[10px] shadow-[0_1px_0_1px_rgb(255_255_255/0.12)_inset,0_0_0_1px_rgb(255_255_255/0.06),0_60px_120px_-30px_rgb(249_74_0/0.25),0_40px_80px_-40px_rgb(0_0_0/0.9)]",
         className,
       )}
     >
-      <div className="relative overflow-hidden rounded-[2.4rem] bg-[#f5f2eb]">
-        <div aria-hidden className="relative z-10 flex h-[30px] items-center justify-between px-6 pt-1 text-[12px] font-semibold text-[#121211]">
+      <div className="relative overflow-hidden rounded-[2.4rem] bg-[#0f0f0e]">
+        <div aria-hidden className="relative z-10 flex h-[30px] items-center justify-between px-6 pt-1 text-[12px] font-semibold text-[#f5f2eb]">
           <span>{time}</span>
-          <span className="absolute left-1/2 top-[7px] h-[22px] w-[84px] -translate-x-1/2 rounded-full bg-[#121211]" />
+          <span className="absolute left-1/2 top-[7px] h-[22px] w-[84px] -translate-x-1/2 rounded-full bg-black" />
           <span className="flex items-center gap-1">
             <svg width="16" height="10" viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="1" /><rect x="4.3" y="4" width="3" height="6" rx="1" /><rect x="8.6" y="2" width="3" height="8" rx="1" /><rect x="12.9" y="0" width="3" height="10" rx="1" /></svg>
             <svg width="22" height="11" viewBox="0 0 22 11"><rect x="0.5" y="0.5" width="18" height="10" rx="3" fill="none" stroke="currentColor" opacity=".45" /><rect x="2" y="2" width="13" height="7" rx="1.6" fill="currentColor" /><rect x="19.6" y="3.5" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".45" /></svg>
@@ -131,14 +131,14 @@ export function Phone({ children, className, time = "9:41" }: { children: ReactN
 /** A light browser window around an OS recording — no strokes, a soft shadow. */
 export function Browser({ children, className, url = "app.counterfoil.app/dashboard" }: { children: ReactNode; className?: string; url?: string }) {
   return (
-    <div className={cn("overflow-hidden rounded-2xl bg-white shadow-[0_40px_90px_-30px_rgb(60_20_0/0.35),0_12px_30px_-18px_rgb(0_0_0/0.18)]", className)}>
-      <div aria-hidden className="flex h-9 items-center gap-3 bg-[#f4f3f0] px-3.5">
+    <div className={cn("overflow-hidden rounded-2xl bg-[#121211] shadow-[0_0_0_1px_rgb(255_255_255/0.07),0_50px_120px_-30px_rgb(0_0_0/0.9),0_0_80px_-20px_rgb(249_74_0/0.18)]", className)}>
+      <div aria-hidden className="flex h-9 items-center gap-3 bg-[#1a1a19] px-3.5">
         <span className="flex gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
         </span>
-        <span className="mx-auto hidden max-w-[50%] truncate rounded-md bg-white px-3 py-0.5 text-[12px] text-[#6b6a66] sm:block">{url}</span>
+        <span className="mx-auto hidden max-w-[50%] truncate rounded-md bg-white/[0.06] px-3 py-0.5 text-[12px] text-[#a29e95] sm:block">{url}</span>
         <span className="hidden w-[46px] sm:block" />
       </div>
       <div className="aspect-[1440/900]">{children}</div>

@@ -19103,3 +19103,39 @@ on a device with a camera if it matters.
 **Verified** (production build): 49/56 — remaining are the standing deliberate ones (still
 pricing grid, warm stage glows, white-on-ember primary). No page overflow at any width, no
 console errors.
+
+### v6, same day — dark and cinematic, after jimo.ai/product/ai
+
+Owner: "thats so basic do some crazy stuff like https://jimo.ai/product/ai i want website in
+dark". This time the reference was **rendered and studied** (headless Chromium, 27 scrolled
+screenshots, DOM probe: 18 canvases, no video/Lottie): black space and starfield, a glowing
+planet rim, ONE travelling light that guides the eye, orbital target rings, a grid warping
+into a wormhole around a self-typing prompt, the product as tilted lit glass with labels
+popping on, a particle dot-floor where questions collapse into constellations under a
+count-down headline, a galaxy behind a quote, pricing as one huge number with a slider, the
+FAQ as a chat.
+
+- **Dark**: the root is `cf-root dark` (the app's `.dark` tokens apply to the subtree, so real
+  components render dark); `--cf-*` re-cut for near-black (#050505) with ember #ff5a14 as the
+  light. All 12 recordings **re-filmed in the app's dark theme** (`CF_THEME=dark` on the
+  scratchpad recorders); phone/browser frames darkened.
+- **Sections** (canvas 2D, no new deps; `_sections/space.tsx` holds the shared canvas hook —
+  DPR ≤ 2, in-view-only RAF, seeded PRNG, one still frame under reduced motion): Hero (ember
+  planet rim), **Spark** (a fixed ember guide light easing between `[data-spark]` anchors),
+  Orbit (clock rings + ticks), Wormhole ("Is 6 PM still free?" → "18:00 · Field 2 · Free ·
+  ৳2,000"), Interface (real dark OS as 3D glass + light sweep + cue-timed labels + tabs),
+  PhoneStory (sticky real dark Go phone in orbit), Constellation ("Questions the counter can't
+  answer, down to 0" → 14 ways · 2 languages · 0% cut), Payments, Galaxy, Pricing (big number +
+  plan slider + honest marketplace chart), Faq (chat), Cta (ember sunrise).
+- Removed the light-era sections (film wall, bands, stack, types gallery, facts, engine,
+  manifesto, old hero).
+- **Gotcha**: `overflow-hidden` on a section kills `position: sticky` inside it (it becomes the
+  scroll container) — the phone story's phone scrolled away. Use `overflow-x-clip`.
+- Pricing glow cut from 60% to ~25% opacity: it read as an orange wash, the "overwhelming
+  colour" complaint from v1.
+
+**Verified** (production build): every canvas animates (frame-hash probe), the sticky phone
+holds at the same y while its clip changes per chapter, no page overflow at 320–1440, no
+console errors, touch targets ≥ 44px. Harness 45/56 — remaining are probe limits (canvas
+motion isn't DOM motion; the dark ember #ff5a14 isn't in the colour list), the orbit rings
+around the phone (deliberate hairlines), and white-on-ember being the app's primary button.

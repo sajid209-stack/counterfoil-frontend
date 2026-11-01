@@ -1,127 +1,44 @@
-@keyframes drift {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
-}
-@keyframes driftAlt {
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(2px) rotate(0.6deg);
-  }
-}
-.float {
-  animation: drift 6s ease-in-out 1.6s infinite;
-}
-.floatStub {
-  animation: driftAlt 7s ease-in-out 1.6s infinite;
-}
-.half {
-  filter: drop-shadow(0 1px 1px rgb(20 20 19 / 0.06)) drop-shadow(0 12px 22px rgb(20 20 19 / 0.1));
-}
-.stub {
-  -webkit-mask:
-    radial-gradient(circle 8px at 100% 0, #0000 97%, #000) top / 100% 51% no-repeat,
-    radial-gradient(circle 8px at 100% 100%, #0000 97%, #000) bottom / 100% 51% no-repeat;
-  mask:
-    radial-gradient(circle 8px at 100% 0, #0000 97%, #000) top / 100% 51% no-repeat,
-    radial-gradient(circle 8px at 100% 100%, #0000 97%, #000) bottom / 100% 51% no-repeat;
-}
-.main {
-  -webkit-mask:
-    radial-gradient(circle 8px at 0 0, #0000 97%, #000) top / 100% 51% no-repeat,
-    radial-gradient(circle 8px at 0 100%, #0000 97%, #000) bottom / 100% 51% no-repeat;
-  mask:
-    radial-gradient(circle 8px at 0 0, #0000 97%, #000) top / 100% 51% no-repeat,
-    radial-gradient(circle 8px at 0 100%, #0000 97%, #000) bottom / 100% 51% no-repeat;
-}
-
-/* ── ticket rain ── */
-@keyframes fall {
-  0% {
-    transform: translateY(var(--drop)) rotate(var(--r0));
-    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6);
-  }
-  62% {
-    transform: translateY(0) rotate(var(--r));
-    animation-timing-function: ease-out;
-  }
-  76% {
-    transform: translateY(-16px) rotate(var(--r));
-    animation-timing-function: ease-in;
-  }
-  88% {
-    transform: translateY(0) rotate(var(--r));
-    animation-timing-function: ease-out;
-  }
-  94% {
-    transform: translateY(-4px) rotate(var(--r));
-    animation-timing-function: ease-in;
-  }
-  100% {
-    transform: translateY(0) rotate(var(--r));
-  }
-}
-@keyframes sway {
-  from {
-    transform: translateY(0) rotate(calc(var(--r) - 1.2deg));
-  }
-  to {
-    transform: translateY(-2px) rotate(calc(var(--r) + 1.2deg));
-  }
-}
+/* The ember planet rises from the bottom as the section scrolls in.
+   --cf-p (0 at entry, 1 at exit) is written by useScrollProgress. */
 .stage {
-  --drop: -620px;
+  --r: min(1, calc(var(--cf-p, 1) * 2.2));
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
 }
-.piece {
+.wash {
   position: absolute;
-  transform: rotate(var(--r));
-  filter: drop-shadow(0 1px 1px rgb(20 20 19 / 0.08)) drop-shadow(0 5px 8px rgb(20 20 19 / 0.1));
-  animation:
-    fall var(--dur) var(--del) both,
-    sway 5s ease-in-out calc(var(--del) + var(--dur)) infinite alternate;
-  animation-play-state: paused;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 100%, rgb(255 90 20 / 0.55), rgb(255 90 20 / 0.12) 45%, transparent 75%);
+  opacity: var(--r);
+  pointer-events: none;
 }
-.run .piece,
-.run .big {
-  animation-play-state: running;
+.planet {
+  position: absolute;
+  left: 50%;
+  top: 68%;
+  width: max(190vw, 1400px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 0%, #ffd2a8 0, #ff8a4c 1.2%, #ff5a14 4%, #8a2400 14%, #2a0a00 30%, #070302 52%);
+  box-shadow: 0 -2px 0 rgb(255 226 196 / 0.9), 0 -30px 120px 20px rgb(255 90 20 / 0.55), 0 -120px 240px 60px rgb(255 90 20 / 0.25);
+  transform: translate(-50%, calc((1 - var(--r)) * 38%));
+  opacity: calc(0.2 + var(--r) * 0.8);
+  pointer-events: none;
 }
-.big {
-  animation: fall 1500ms var(--bigdel) both;
-  animation-play-state: paused;
-  --r: 0deg;
-  --r0: 3deg;
-}
-.chip {
+.content {
+  position: relative;
+  z-index: 1;
   display: flex;
-  width: 58px;
-  height: 38px;
+  min-height: 100vh;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  -webkit-mask:
-    radial-gradient(circle 5px at 0 50%, #0000 97%, #000) left / 51% 100% no-repeat,
-    radial-gradient(circle 5px at 100% 50%, #0000 97%, #000) right / 51% 100% no-repeat;
-  mask:
-    radial-gradient(circle 5px at 0 50%, #0000 97%, #000) left / 51% 100% no-repeat,
-    radial-gradient(circle 5px at 100% 50%, #0000 97%, #000) right / 51% 100% no-repeat;
-}
-@media (max-width: 639px) {
-  .extra {
-    display: none;
-  }
+  padding: 6rem 1.25rem 7rem;
+  text-align: center;
 }
 @media (prefers-reduced-motion: reduce) {
-  .float,
-  .floatStub,
-  .piece,
-  .big {
-    animation: none;
+  .stage {
+    --r: 1;
   }
 }
