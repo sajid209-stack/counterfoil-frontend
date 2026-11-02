@@ -19147,3 +19147,11 @@ restored byte-for-byte from 1813f1b (v5: kinetic type, 3D film wall, pinned gall
 cards, ticket rain, light clips). The dark v6 stays in history at fe409b7 — its pieces
 (canvas kit `space.tsx`, Spark, Orbit, Wormhole, Constellation, Galaxy, dark clips via
 `CF_THEME=dark`) can be cherry-picked into the light site if wanted.
+
+### Reverted to v4 (light), 2026-11-02
+
+Owner, with v5 already live: "bring back the previous light version". Read as the light version
+before v5, so `src/app/website` and `public/website` are restored byte-for-byte from f147156
+(v4: filmed real Go and OS, hero with synced bubbles, sticky phone story, OS showcase). v5 stays
+at 1813f1b, dark v6 at fe409b7, v3 at caa7bb2. Known from v4: `go-scan` opens on the app's camera
+notice, because the recording browser has no camera.

@@ -138,10 +138,3 @@
     animation: none !important;
   }
 }
-
-/* the card visual: the same loop, scaled up from its corner */
-.big {
-  display: inline-block;
-  transform: scale(2.4);
-  transform-origin: bottom left;
-}
