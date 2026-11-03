@@ -19155,3 +19155,46 @@ before v5, so `src/app/website` and `public/website` are restored byte-for-byte 
 (v4: filmed real Go and OS, hero with synced bubbles, sticky phone story, OS showcase). v5 stays
 at 1813f1b, dark v6 at fe409b7, v3 at caa7bb2. Known from v4: `go-scan` opens on the app's camera
 notice, because the recording browser has no camera.
+
+---
+
+## Settings: Assignments (2026-11-03)
+
+Owner supplied a screenshot of an Assignments page (a venue card, a flat list of counter names,
+chips "via workspace" / "Check-in" / "Auto check-in", from a `bd-tenant` workspace on a dev server)
+and asked for a 10/10 design. **That page is not in this repo on any branch or ref**, so it was
+built new at `/settings/assignments` under Your account, after My profile. The other checkout
+needs this merged, or its data pointed at `buildAssignments`.
+
+It is read-only and about the signed-in person, and answers four questions: where can I work,
+what can I do there, what do I sign in on, who changes it if it is wrong.
+
+- **`settings/_lib/assignments.ts`**: pure `buildAssignments`, every rule in one place. The view
+  (`assignments/_components/AssignmentsView.tsx`) is props-only.
+- **Summary**: one sentence ("2 counters at Lalbagh Fort") and the role in words, because
+  permissions come from the role and hold at every counter (the Shopify and Toast model).
+- **Venue cards**: how you got it (Assigned to you / Through your workspace). Counters carry their
+  job, what they sell and take, and an Open till action with the rail's ↗ that really moves the
+  till (`setActiveCounter`). Closed counters say why and offer no till.
+- **One line, not seven**: when every open counter at a venue sells the same things, the line
+  moves up to the venue and rows speak only when they differ.
+- **Blockers and exits**: a warning when someone has counters but no till PIN; devices name their
+  counter; Need a change? names real managers with contact links, or Edit in Team for a manager.
+- **Search** appears only past 8 counters. Nothing assigned is its own empty state.
+- **My profile** no longer lists venues and counters; one fact links here ("one thing per place").
+- **Contract**: optional `Counter.checkIn` ("manual" | "auto") and `Staff.workspaceWide`. Seeded
+  on Fort Group Desk only; nothing else reads them and no editor sets them yet. The meaning of
+  "Auto check-in" is taken from the screenshot's label, so the page shows the label and defines
+  nothing beyond it.
+- Also fixed: `voucher` and `credit` had no payment-method label, so they stayed English in Bangla.
+
+**Not built, deliberately**: "on shift now" (no Shift API exists, only activity-log events) and
+today's hours (the demo clock is frozen). Both would be natural additions on a real backend.
+
+**Verified** (production builds): 119 of 120 driven checks using a temporary fixture route, deleted
+before commit, with the screenshot's exact data plus 20 counters, closed counters, very long
+names, no counters, no PIN, nothing assigned and manager: overflow, clipping, sub-12px text and
+44px targets at 320, 390, 768, 1024 and 1440, dark, Bangla, search, Open till. The one failure was
+an over-strict test (the button is on the row, centred rather than level with the name), corrected
+and passing in the 7-check run on the final build without the fixture. `tsc`, eslint on the
+touched files, `lint:tokens` and i18n parity clean. Bangla strings need a native review.

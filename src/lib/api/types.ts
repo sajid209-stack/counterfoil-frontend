@@ -635,6 +635,9 @@ export interface Counter {
   allowedProductIds: ID[] | "all";
   allowedPaymentMethods: PaymentMethod[];
   status: Lifecycle;
+  /** A counter whose job includes checking guests in: by a person ("manual") or
+   *  automatically ("auto"). Absent on an ordinary selling counter. */
+  checkIn?: "manual" | "auto";
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
   // NOTE: runtime open/closed state lives on a future Shift entity, not here.
@@ -677,6 +680,9 @@ export interface Staff {
   roleId: ID;
   locationIds: ID[];
   counterIds: ID[];
+  /** Reaches every venue and counter through the workspace (an organization
+   *  admin), rather than being named on each one. */
+  workspaceWide?: boolean;
   status: StaffStatus;
   lastActiveAt: ISODateTime | null;
   createdAt: ISODateTime;

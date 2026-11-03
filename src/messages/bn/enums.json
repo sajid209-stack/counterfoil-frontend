@@ -26,7 +26,9 @@
     "bangla_qr": "বাংলা QR",
     "card_terminal": "কার্ড",
     "credits": "পাস",
-    "mixed": "ভাগ করে পেমেন্ট"
+    "mixed": "ভাগ করে পেমেন্ট",
+    "voucher": "ভাউচার",
+    "credit": "ক্রেডিট"
   },
   "tax": {
     "standard": "সাধারণ ভ্যাট",

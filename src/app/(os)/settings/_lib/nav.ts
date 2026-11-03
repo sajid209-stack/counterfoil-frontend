@@ -1,6 +1,7 @@
 import {
   BadgeCheck,
   Building2,
+  ClipboardList,
   CreditCard,
   Gift,
   Globe,
@@ -47,6 +48,7 @@ export type SettingsItemKey =
   | "devices"
   | "notifications"
   | "profile"
+  | "assignments"
   | "security"
   | "preferences";
 
@@ -120,6 +122,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     key: "account",
     items: [
       { key: "profile", href: "/settings/profile", icon: UserRound },
+      { key: "assignments", href: "/settings/assignments", icon: ClipboardList },
       { key: "security", href: "/settings/security", icon: ShieldCheck },
       { key: "preferences", href: "/settings/preferences", icon: SlidersHorizontal },
     ],

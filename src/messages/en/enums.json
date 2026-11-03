@@ -26,7 +26,9 @@
     "bangla_qr": "Bangla QR",
     "card_terminal": "Card",
     "credits": "Pass",
-    "mixed": "Split payment"
+    "mixed": "Split payment",
+    "voucher": "Voucher",
+    "credit": "Credit"
   },
   "tax": {
     "standard": "Normal VAT",

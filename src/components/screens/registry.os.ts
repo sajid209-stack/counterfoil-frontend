@@ -74,6 +74,7 @@ export const OS_ENTRIES: readonly ScreenEntry[] = [
   { pattern: "/promotions/[id]", surface: "os", shape: "form", empty: { id: "promotion-detail", icon: Gift, action: "/promotions" } },
   { pattern: "/booking-rules", surface: "os", shape: "list", empty: { id: "booking-rules", icon: ClipboardList, action: "/booking-rules/new" } },
   { pattern: "/booking-rules/[id]", surface: "os", shape: "form", empty: { id: "booking-rule-detail", icon: ClipboardList, action: "/booking-rules" } },
+  { pattern: "/settings/assignments", surface: "os", shape: "list", empty: { id: "settings-assignments", icon: ClipboardList, action: "self" } },
   { pattern: "/settings/business", surface: "os", shape: "form", empty: { id: "settings-business", icon: Building2, action: "self" } },
   { pattern: "/settings/counters", surface: "os", shape: "list", empty: { id: "settings-counters", icon: Store, action: "/settings/counters/new" } },
   { pattern: "/settings/counters/new", surface: "os", shape: "form", empty: { id: "settings-counter-new", icon: Store, action: "self" } },

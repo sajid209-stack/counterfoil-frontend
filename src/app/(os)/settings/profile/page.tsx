@@ -7,7 +7,7 @@ import { Mail, Phone, ShieldCheck, UserRound } from "lucide-react";
 import { Avatar, PageShell, useToast } from "@/components/ui";
 import { LanguagePicker } from "@/components/LocaleProvider";
 import { useApiQuery } from "@/lib/useApi";
-import { getStaff, listCounters, listLocations, listRoles, updateStaff } from "@/lib/api";
+import { getStaff, listRoles, updateStaff } from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { formatDay } from "@/lib/format";
 import { RecordFacts, SaveBar, SectionSkeleton, SettingRow, SettingsSection, controlCls } from "../_components/SettingsKit";
@@ -33,7 +33,8 @@ interface Draft {
  * group that is already about the person rather than the business — and the
  * till keeps a profile of its own shape at `/profile`.
  *
- * One thing per place: this holds who you are and where you work; passwords,
+ * One thing per place: this holds who you are, and points to Assignments for
+ * where you work; passwords,
  * two-step and sessions are Security's, and it says so rather than drawing a
  * second version of them.
  */
@@ -42,8 +43,6 @@ export default function MyProfilePage() {
   const toast = useToast();
   const languageId = useId();
   const meQ = useApiQuery(() => getStaff(DEMO_STAFF_ID), []);
-  const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
-  const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
   const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
 
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -64,8 +63,13 @@ export default function MyProfilePage() {
   const set = (patch: Partial<Draft>) => setDraft({ ...form, ...patch });
   const nameError = form.name.trim() ? undefined : t("profile.nameRequired");
 
-  const named = (ids: string[] | undefined, all: { id: string; name: string }[]) =>
-    (ids ?? []).map((id) => all.find((x) => x.id === id)?.name ?? id).join(" · ") || "—";
+  const counters = me.counterIds.length;
+  const venues = me.locationIds.length;
+  const where = me.workspaceWide
+    ? t("assignments.factWide")
+    : counters + venues === 0
+      ? t("assignments.factNone")
+      : t("assignments.factSummary", { counters, venues });
 
   const save = async () => {
     if (nameError) return;
@@ -104,8 +108,15 @@ export default function MyProfilePage() {
           label={t("profile.factsLabel")}
           facts={[
             { key: "status", label: t("profile.status"), value: t(`profile.status_${me.status}`) },
-            { key: "locations", label: t("profile.locations"), value: named(me.locationIds, locationsQ.data?.data ?? []) },
-            { key: "counters", label: t("profile.counters"), value: named(me.counterIds, countersQ.data?.data ?? []) },
+            {
+              key: "where",
+              label: t("assignments.factLabel"),
+              value: (
+                <Link href="/settings/assignments" className="inline-flex min-h-11 items-center text-brand-foreground underline underline-offset-4 hover:no-underline md:min-h-0">
+                  {where}
+                </Link>
+              ),
+            },
             { key: "since", label: t("profile.since"), value: formatDay(me.createdAt.slice(0, 10), { weekday: false }) },
           ]}
         />

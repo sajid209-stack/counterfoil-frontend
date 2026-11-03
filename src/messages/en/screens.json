@@ -470,6 +470,11 @@
       "title": "No write-off requests yet",
       "body": "When the counter asks to write off a balance, it shows up here for you to answer.",
       "action": "Open orders"
+    },
+    "settings-assignments": {
+      "title": "Nothing assigned to you",
+      "body": "A manager adds you to a venue and its counters in Team.",
+      "action": "Refresh"
     }
   }
 }

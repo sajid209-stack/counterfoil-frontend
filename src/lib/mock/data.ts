@@ -628,6 +628,7 @@ export const counters: Counter[] = [
   {
     id: "cnt_fort_group",
     name: "Fort Group Desk",
+    checkIn: "manual",
     locationId: "loc_fort",
     allowedProductIds: ["prd_tour"],
     allowedPaymentMethods: ["cash", "voucher", "credit"],
