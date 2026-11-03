@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Check, Copy, ExternalLink, Globe, Link2, Store } from "lucide-react";
 import { Button, ButtonLink, Card, Notice } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { isCreatedInThisBrowser, type Location, type Product, type ProductPage } from "@/lib/api";
+import { isCreatedInThisBrowser, onPublishState, publishStateOf, retryPublishing, type Location, type Product, type ProductPage } from "@/lib/api";
 import { isSlugFree, isSlugValid } from "@/lib/api/products";
 import { PageDesigner } from "../page/PageDesigner";
 import { SellChannels, type OnlineChoice } from "../sell/SellChannels";
@@ -143,6 +143,25 @@ export function PageTab({
  * the item is listed. An item that is not sold online has no page and no link,
  * and says so, with the way to change it.
  */
+const noPublishing = () => () => {};
+
+/** Whether the link really opens for other people, in words. */
+function PublishLine({ itemId }: { itemId: string }) {
+  const t = useTranslations("catalog.item");
+  const state = useSyncExternalStore(typeof window === "undefined" ? noPublishing : onPublishState, () => publishStateOf(itemId), () => "off" as const);
+  if (state === "off") return null;
+  if (state === "failed") {
+    return (
+      <p className="text-xs text-muted" role="status">
+        {t("link.publishFailed")}{" "}
+        <button type="button" className="font-medium text-fg underline" onClick={retryPublishing}>{t("link.publishRetry")}</button>
+      </p>
+    );
+  }
+  const words = { live: "link.publishLive", sending: "link.publishSending", taken: "link.publishTaken", unavailable: "link.thisBrowserOnly" } as const;
+  return <p className="text-xs text-muted" role="status">{t(words[state])}</p>;
+}
+
 export function ItsLink({
   itemId,
   slug,
@@ -216,8 +235,7 @@ export function ItsLink({
             )}
           </div>
           {!saved && <p className="text-xs text-muted">{t("link.saveFirst")}</p>}
-          {/* Nothing is on a server yet: a link to an item made here opens only in this browser. */}
-          {saved && isCreatedInThisBrowser("products", itemId) && <p className="text-xs text-muted">{t("link.thisBrowserOnly")}</p>}
+          {saved && isCreatedInThisBrowser("products", itemId) && <PublishLine itemId={itemId} />}
           {copied === "failed" && <p role="alert" className="text-sm text-danger">{ts("copyFailed")}</p>}
           <p className={cn("text-sm", online === "listed" && venues.length ? "text-fg" : "text-muted")}>
             {online === "listed"

@@ -351,6 +351,46 @@ function writeSaved(): void {
     // Full, usually from photos. Say so: losing work silently is the bug this fixes.
     window.dispatchEvent(new Event(SAVE_FAILED_EVENT));
   }
+  for (const fn of catalogueWriteListeners) fn();
+}
+
+const catalogueWriteListeners = new Set<() => void>();
+/** Something in the catalogue changed. `publish.ts` listens, to keep public pages up to date. */
+export const onCatalogueWrite = (fn: () => void): void => void catalogueWriteListeners.add(fn);
+
+/** Which demo the catalogue in front of the operator belongs to. */
+export const currentSavedScope = (): string => savedScope;
+
+/** A published item as its visitors' browsers receive it. Its shape is the server's contract: see `publish.ts`. */
+export interface PublishedSnapshot {
+  v: 1;
+  slug: string;
+  product: Product;
+  location: Row;
+  storefront: Row;
+  resources: Row[];
+  seatLayouts: Row[];
+  team: Row[];
+  operator: Partial<Operator>;
+}
+
+/** A visitor's browser takes in somebody's published item. It is theirs to read, not this browser's own
+ *  work, so it joins the baseline: nothing here saves it again or publishes it back. */
+export function adoptPublished(doc: PublishedSnapshot): void {
+  const upsert = (collection: string, row: Row) => {
+    const list = store[collection];
+    const i = list.findIndex((r) => r.id === row.id);
+    if (i >= 0) list[i] = row;
+    else list.push(row);
+    savedBaseline.set(savedKey(collection, row.id), JSON.stringify(row));
+  };
+  upsert("products", doc.product as unknown as Row);
+  upsert("locations", doc.location);
+  upsert("storefronts", doc.storefront);
+  for (const r of doc.resources) upsert("resources", r);
+  for (const l of doc.seatLayouts) upsert("seatLayouts", l);
+  for (const s of doc.team) upsert("staff", s);
+  operatorState = { ...operatorState, ...doc.operator };
 }
 
 /** Forget what this browser made in a demo: "Start fresh" means empty. */

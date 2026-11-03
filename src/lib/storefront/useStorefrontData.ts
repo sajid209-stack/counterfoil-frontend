@@ -27,12 +27,12 @@ export function useStorefrontData(slug: string) {
 
 /** The same four calls for an item's own link (`/b/<slug>`): the item, its
  *  venue and the rest of what a basket and a checkout need. */
-export function useItemData(slug: string) {
+export function useItemData(slug: string, version = 0) {
   const now = useMemo(() => demoNow(), []);
-  const pageQ = useApiQuery(() => getItemPage(slug), [slug]);
-  const resourcesQ = useApiQuery(() => listResources({ pageSize: 200 }), []);
-  const staffQ = useApiQuery(() => listStaff({ pageSize: 200 }), []);
-  const operatorQ = useApiQuery(() => getOperator(), []);
+  const pageQ = useApiQuery(() => getItemPage(slug), [slug, version]);
+  const resourcesQ = useApiQuery(() => listResources({ pageSize: 200 }), [version]);
+  const staffQ = useApiQuery(() => listStaff({ pageSize: 200 }), [version]);
+  const operatorQ = useApiQuery(() => getOperator(), [version]);
 
   return {
     loading: pageQ.loading,

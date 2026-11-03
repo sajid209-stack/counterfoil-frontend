@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { usePage } from "../context";
 import { Section } from "../Section";
 import { clean, hostOf } from "./helpers";
+import { SocialLinks } from "./SocialLinks";
 
 const initial = (name: string) => Array.from(clean(name))[0]?.toUpperCase() ?? "";
 
@@ -42,6 +43,7 @@ export function HostSection() {
           </p>
           {host.role && <p className="pg-meta pg-muted">{host.role}</p>}
           {host.bio && <p className="pg-body mt-2 max-w-[60ch]">{host.bio}</p>}
+          <SocialLinks links={host.links} />
         </div>
       </div>
     </Section>

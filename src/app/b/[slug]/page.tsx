@@ -4,6 +4,8 @@ import { getTranslations } from "next-intl/server";
 import { peekLocations } from "@/lib/api/locations";
 import { demoItemAtSlug, productBySlug } from "@/lib/api/products";
 import { isListed } from "@/lib/productPage";
+import { readPublishedDoc } from "@/lib/server/publishedStore";
+import type { PublishedSnapshot } from "@/lib/api/client";
 import { LiveItemShell } from "../_components/LiveItemShell";
 import { ItemScreen } from "../_components/ItemScreen";
 
@@ -26,14 +28,25 @@ const isAvailable = (slug: string): boolean => {
  * the same noindex and the same HTTP 404 (`notFound()`, rendered by this
  * segment's not-found.tsx), so nothing leaks about what exists but is not for sale.
  *
- * The server only knows the seeded catalogue and the demo businesses: an item
- * made in someone's browser is not known here, so its link answers 404 until there
- * is a real backend to ask. The browser that made it still draws it: see LocalItem.
+ * The server knows the seeded catalogue, the demo businesses and whatever has been
+ * published (`lib/api/publish.ts`). Anything else answers 404, though the browser
+ * that made it still draws it: see LocalItem.
  */
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const t = await getTranslations("storefront");
   const p = productBySlug(slug);
+  if (!p) {
+    const doc = (await readPublishedDoc(slug)) as PublishedSnapshot | null;
+    if (doc) {
+      return {
+        title: `${doc.product.name} · ${(doc.location as unknown as { name: string }).name}`,
+        description: doc.product.page?.tagline || doc.product.description?.slice(0, 160) || undefined,
+        // Published by a browser, with no account behind it: reachable by its link, not by search.
+        robots: { index: false, follow: false },
+      };
+    }
+  }
   if (!p || p.status !== "active" || !p.channels.includes("online")) {
     return { title: t("itemMissingTitle"), robots: { index: false, follow: false } };
   }
@@ -47,7 +60,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ItemLinkPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  if (!isAvailable(slug)) notFound();
+  if (!isAvailable(slug) && !(await readPublishedDoc(slug))) notFound();
   return (
     <LiveItemShell slug={slug}>
       <ItemScreen />

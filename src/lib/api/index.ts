@@ -18,6 +18,7 @@ export * from "./slots";
 export * from "./waitlist";
 export * from "./reports";
 export * from "./operator";
+export * from "./publish";
 export * from "./paymentAccounts";
 export * from "./taxConfig";
 export * from "./vatSettings";

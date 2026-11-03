@@ -3,6 +3,7 @@
 import { usePage } from "../context";
 import { Section } from "../Section";
 import { aboutOf } from "./helpers";
+import { SocialLinks } from "./SocialLinks";
 
 /**
  * About: prose (68 characters wide at most), the facts a buyer checks as a
@@ -51,6 +52,7 @@ export function AboutSection() {
             {labels.hostedBy} {org.name}
           </p>
           {org.blurb && <p className="pg-meta mt-1">{org.blurb}</p>}
+          <SocialLinks links={org.links} />
         </div>
       )}
     </Section>

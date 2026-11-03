@@ -7,5 +7,9 @@
     "quote": "What people say",
     "host": "Meet your host",
     "steps": "How it works"
+  },
+  "links": {
+    "label": "Links",
+    "website": "Website"
   }
 }

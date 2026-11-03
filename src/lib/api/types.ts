@@ -14,7 +14,7 @@
    ────────────────────────────────────────────────────────────────────────── */
 
 import type { CategoryId, SectionId } from "@/lib/events/catalog";
-import type { EventDay, EventHighlight, EventLineupEntry, EventOrganiser, EventSponsor, EventStat } from "./events";
+import type { EventDay, EventHighlight, EventLineupEntry, EventOrganiser, EventSponsor, EventStat, ExternalLink } from "./events";
 
 // ── Scalars ────────────────────────────────────────────────────────────────
 export type ID = string; // ULID/UUID
@@ -478,7 +478,7 @@ export interface PageStyle {
  *  steps, text, cta). All optional; an empty block renders nothing. */
 export interface PageBlocks {
   quotes?: { id: string; text: string; who: string; detail?: string }[];
-  host?: { name: string; role?: string; bio?: string; photoUrl?: string };
+  host?: { name: string; role?: string; bio?: string; photoUrl?: string; links?: ExternalLink[] };
   steps?: { title?: string; items: { id: string; title: string; detail?: string }[] };
   text?: { title?: string; body: string };
   cta?: { title: string; line?: string; button?: string };

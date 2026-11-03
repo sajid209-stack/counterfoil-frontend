@@ -19296,3 +19296,42 @@ The owner saw "Starts in 111 days" on a page for 17 Nov, three months out becaus
 ### Verified
 
 Production build, f19663fb scratchpad `link/`: `clocktest.mjs` (186) sweeps 20 OS, POS and public routes at the real time, 08:05 and 23:50, plus the shift timer moving 3:24 to 3:34. With `FAKE_DAYS=12` (`fakedate.cjs`) and `ONLY_AT`, the same routes on a later day: 60 checks. `wiz.mjs` (24) now reads "Tue 17 Nov" with 14 days on the countdown. `link.mjs` (21) and `edge.mjs` (13) still pass. The full older regression list no longer exists (see SESSION_HANDOFF), so screens outside that sweep were not walked.
+
+---
+
+## Publishing an item's page for everyone, host links, sponsor logos (2026-11-03)
+
+The owner asked for item links to open on other browsers and devices, for hosts to carry any number of social and website links, and for sponsors to have a logo and one link that opens when the card is tapped.
+
+### Publishing
+
+The real backend is not on this machine, so a small store stands in. **Code is shipped, but it stays off until the store exists on Vercel.** Creating it was refused by the permission system, because it changes the shared Vercel account, and is left to the owner:
+
+`vercel blob create-store counterfoil-published --access public --yes`, run in the repo. It should set `BLOB_READ_WRITE_TOKEN` on the project; then redeploy.
+
+- **Server** (`lib/server/publishedStore.ts`, `api/published/[slug]`, `api/published-images`). Vercel Blob when the token is set, a folder when `PUBLISHED_LOCAL_DIR` is set (testing), otherwise off, answering 503.
+- **Browser** (`lib/api/publish.ts`). On each catalogue write and on load, items made in this browser that are active and sold online are sent up; anything else comes down. Photos upload once each and the page refers to them by address. Items saved before this change go up the first time their owner opens the app.
+- **Visitors** (`LiveItemShell`). An item not in the local store is fetched and laid in with `adoptPublished`, joining the baseline so it is never saved or published back. Every route under the link passes through here, so a reload in checkout works. The browser's own copy wins over the server's.
+- **`page.tsx`** answers 200 with a title for a published item, noindex. Otherwise 404, as before.
+- **What a page reveals**: the item, its venue, the venue's storefront marked unpublished, resources and layouts it uses, staff it names with email and phone removed, and the operator's name, currency and tax rates. No orders or customers.
+- **Who may write**: there are no accounts. The first browser to publish a slug owns it, proved by a secret in localStorage (`cf_publisher_secret`). Demo slugs can't be claimed. Limits: page 256 KB, JPEG only, 1.5 MB per photo.
+
+### Limits, stated
+
+- **Anyone who finds the API can publish a page under this domain.** No sign-in stands behind it, and there is no rate limit. Noindex lowers the value of abusing it. A real backend with accounts is the fix.
+- **Bookings made by visitors stay in the visitor's browser.** They don't reach OS Orders, and capacity isn't shared, so tickets can be oversold. The link card says the first part.
+- An owner can't update a published page from a second browser: it has a different secret, and clearing site data loses it. The slug then answers "taken".
+- A server's short read memory (10 s) means a page may take a few seconds to come down everywhere.
+- Real Vercel Blob has not been exercised. Everything below ran against the local folder.
+
+### Host and sponsor
+
+`lib/externalLink.ts` is the one gate for typed links: http and https only. Hosts and the "Hosted by" organiser take any number of links, and the platform and its icon come from the address (`BrandIcon`, `SocialLinks`). Sponsors take a logo (640px, on a white plate) and one link that makes the whole card an `<a>`.
+
+### Two defects testing found
+
+Both only showed in the no-store state: a route refusing a request without reading its body, and the browser never reading the response's body, left the publish request open forever. Both now read the body.
+
+### Verified
+
+Production build, f19663fb scratchpad `link/`: `pub.mjs` (33, run three times) publishes in one browser, then a separate context opens, reloads the basket and opens checkout, plus stranger overwrites, bad shapes, oversize, non-JPEG and path tricks. `hs.mjs` (17) drives the editor end to end, including `javascript:` links refused and tapping a sponsor. `wiz.mjs` (24), `clocktest.mjs` (186). With no store: `link.mjs` (21), `edge.mjs` (13), the card saying it works in this browser only. The brand icons and sponsor cards were checked by eye. A paid booking wasn't completed on the visitor's side.

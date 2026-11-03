@@ -11,6 +11,7 @@
     "deck:pdf": "node scripts/deck-pdf.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "2.8.2",
     "lucide-react": "^1.27.0",
     "next": "16.2.12",
     "next-intl": "^4.13.7",

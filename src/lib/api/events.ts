@@ -174,18 +174,27 @@ export interface EventLineupEntry {
 /** Who is putting the event on. A conference page is believed or not on the
  *  strength of this line, which is why it is a first-class field rather than a
  *  sentence someone remembers to type into the description. */
+/** A social account or website, as typed. Read through `externalHref` before it becomes an href. */
+export interface ExternalLink {
+  id: string;
+  url: string;
+}
+
 export interface EventOrganiser {
   name: string;
   blurb?: string;
+  links?: ExternalLink[];
 }
 
-/** Names only, by design. Sponsor artwork is an upload this product does not
- *  have yet, and a wall of broken images says less than a wall of names. */
 export interface EventSponsor {
   id: string;
   name: string;
   /** "Headline", "Partner" — the operator's own word, shown as a group label. */
   tier?: string;
+  /** Their logo, uploaded. Without one the card shows the name. */
+  logoUrl?: string;
+  /** Where tapping the card goes. As typed: read through `externalHref`. */
+  href?: string;
 }
 
 /**

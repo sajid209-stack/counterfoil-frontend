@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui";
 import { StorefrontMissing } from "@/app/s/_components/Chrome";
 import { SfRoot } from "@/app/s/_components/sf";
+import { fetchPublishedItem } from "@/lib/api";
 import { isListed } from "@/lib/productPage";
 import { StorefrontFlowProvider, type StorefrontFlowData, type StorefrontFlowNav } from "@/lib/storefront/FlowProvider";
 import { useLiveBasket } from "@/lib/storefront/basket";
@@ -30,10 +32,28 @@ import { useItemData } from "@/lib/storefront/useStorefrontData";
 export function LiveItemShell({ slug, children }: { slug: string; children: React.ReactNode }) {
   const router = useRouter();
   const t = useTranslations("storefront");
-  const { loading, page, resources, team, operator, now } = useItemData(slug);
+  /* Not in this browser's store? It may be somebody else's published item. Every
+     route under the link comes through here, so a visitor can reload the checkout. */
+  const [asked, setAsked] = useState<string | null>(null);
+  const [adopted, setAdopted] = useState(0);
+  const { loading, page, resources, team, operator, now } = useItemData(slug, adopted);
   const [basket, setBasket] = useLiveBasket(`b:${slug}`);
+  const lookUp = !loading && !page && asked !== slug;
 
-  if (loading) {
+  useEffect(() => {
+    if (!lookUp) return;
+    let live = true;
+    void fetchPublishedItem(slug).then((found) => {
+      if (!live) return;
+      setAsked(slug);
+      if (found) setAdopted((n) => n + 1);
+    });
+    return () => {
+      live = false;
+    };
+  }, [lookUp, slug]);
+
+  if (loading || lookUp) {
     return (
       <SfRoot accent={null} className="px-gutter py-hero">
         <div aria-busy="true" className="mx-auto grid max-w-[1200px] grid-cols-1 gap-wide lg:grid-cols-2">

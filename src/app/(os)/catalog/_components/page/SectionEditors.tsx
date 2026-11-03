@@ -10,6 +10,9 @@ import { dayName } from "@/lib/events/days";
 import { parseEventVideo } from "@/lib/events/video";
 import { listLocations } from "@/lib/api/locations";
 import { useApiQuery } from "@/lib/useApi";
+import { externalHref, linkPlatform } from "@/lib/externalLink";
+import { BrandIcon } from "@/components/productPage/page/sections/BrandIcon";
+import type { ExternalLink } from "@/lib/api/events";
 import type { PageSectionId, Product, ProductPage } from "@/lib/api/types";
 import { newId } from "./pageOps";
 
@@ -197,7 +200,11 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
           <FormField
             label={t("organiserLine")}
             value={page.organiser?.blurb ?? ""}
-            onChange={(e) => onChange({ organiser: { name: page.organiser?.name ?? "", blurb: e.target.value } })}
+            onChange={(e) => onChange({ organiser: { ...page.organiser, name: page.organiser?.name ?? "", blurb: e.target.value } })}
+          />
+          <LinkRows
+            links={page.organiser?.links}
+            onChange={(links) => onChange({ organiser: { ...page.organiser, name: page.organiser?.name ?? "", links } })}
           />
         </>
       );
@@ -300,6 +307,19 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
             >
               <FormField label={t("sponsorName")} value={s.name} onChange={(e) => onChange({ sponsors: page.sponsors.map((x) => (x.id === s.id ? { ...x, name: e.target.value } : x)) })} />
               <FormField label={t("sponsorLevel")} placeholder={t("sponsorLevelPlaceholder")} value={s.tier ?? ""} onChange={(e) => onChange({ sponsors: page.sponsors.map((x) => (x.id === s.id ? { ...x, tier: e.target.value } : x)) })} />
+              <PortraitField
+                shape="logo"
+                name={s.name.trim() || t("sponsorN", { n: i + 1 })}
+                url={s.logoUrl}
+                onChange={(logoUrl) => onChange({ sponsors: page.sponsors.map((x) => (x.id === s.id ? { ...x, logoUrl } : x)) })}
+              />
+              <LinkField
+                label={t("sponsorLink")}
+                help={t("sponsorLinkHelp")}
+                placeholder={t("sponsorLinkPlaceholder")}
+                value={s.href ?? ""}
+                onChange={(href) => onChange({ sponsors: page.sponsors.map((x) => (x.id === s.id ? { ...x, href } : x)) })}
+              />
             </ItemCard>
           ))}
           <AddButton onClick={() => onChange({ sponsors: [...page.sponsors, { id: newId("sp"), name: "", tier: "" }] })}>{t("addSponsor")}</AddButton>
@@ -399,6 +419,7 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
           <FormField label={t("hostRole")} placeholder={t("hostRolePlaceholder")} value={host.role ?? ""} onChange={(e) => patchHost({ role: e.target.value })} />
           <FormField label={t("hostBio")} variant="textarea" rows={3} value={host.bio ?? ""} onChange={(e) => patchHost({ bio: e.target.value })} />
           <PortraitField name={host.name.trim() || t("hostN")} url={host.photoUrl} onChange={(photoUrl) => patchHost({ photoUrl })} />
+          <LinkRows links={host.links} onChange={(links) => patchHost({ links })} />
         </>
       );
     }
@@ -486,25 +507,40 @@ export function InfoRows({ ctx }: { ctx: EditorCtx }) {
  * (docs/product-page.md §3.5). Mock layer: the picked file is shrunk to a small
  * JPEG data URL so it is kept with the page, the same way the cover upload works.
  */
-function PortraitField({ name, url, onChange }: { name: string; url?: string; onChange: (url: string | undefined) => void }) {
+function PortraitField({
+  name,
+  url,
+  onChange,
+  shape = "portrait",
+}: {
+  name: string;
+  url?: string;
+  onChange: (url: string | undefined) => void;
+  /** A sponsor's logo is wide and sits contained on white, not cropped to a face. */
+  shape?: "portrait" | "logo";
+}) {
   const t = useTranslations("catalog.page");
   const tm = useTranslations("catalog.item");
   const toast = useToast();
   const file = useRef<HTMLInputElement>(null);
+  const k = shape === "logo" ? "logo" : "portrait";
   return (
     <div className="flex items-center gap-comfortable">
       <span
         aria-hidden
-        className="block h-14 w-12 shrink-0 rounded-inner border border-line bg-muted-wash bg-cover bg-center"
+        className={cn(
+          "block shrink-0 rounded-inner border border-line bg-muted-wash bg-center",
+          shape === "logo" ? "h-14 w-24 bg-contain bg-no-repeat" : "h-14 w-12 bg-cover",
+        )}
         style={url ? { backgroundImage: `url("${url}")` } : undefined}
       />
       <div className="flex flex-wrap gap-tight">
-        <Button variant="secondary" size="sm" icon={<ImagePlus size={15} strokeWidth={1.5} aria-hidden />} onClick={() => file.current?.click()} aria-label={t(url ? "portraitReplaceFor" : "portraitAddFor", { name })}>
-          {url ? t("portraitReplace") : t("portraitAdd")}
+        <Button variant="secondary" size="sm" icon={<ImagePlus size={15} strokeWidth={1.5} aria-hidden />} onClick={() => file.current?.click()} aria-label={t(url ? `${k}ReplaceFor` : `${k}AddFor`, { name })}>
+          {url ? t(`${k}Replace`) : t(`${k}Add`)}
         </Button>
         {url && (
-          <Button variant="secondary" size="sm" onClick={() => onChange(undefined)} aria-label={t("portraitRemoveFor", { name })}>
-            {t("portraitRemove")}
+          <Button variant="secondary" size="sm" onClick={() => onChange(undefined)} aria-label={t(`${k}RemoveFor`, { name })}>
+            {t(`${k}Remove`)}
           </Button>
         )}
       </div>
@@ -519,6 +555,58 @@ function PortraitField({ name, url, onChange }: { name: string; url?: string; on
           e.target.value = "";
         }}
       />
+    </div>
+  );
+}
+
+/** One typed web address. It shows the service it goes to once it reads as one, and says so when it does not. */
+function LinkField({ label, help, placeholder, value, onChange }: { label: string; help?: string; placeholder: string; value: string; onChange: (v: string) => void }) {
+  const t = useTranslations("catalog.page");
+  const href = externalHref(value);
+  return (
+    <FormField
+      label={label}
+      help={help}
+      placeholder={placeholder}
+      value={value}
+      inputMode="url"
+      autoComplete="off"
+      prefix={<BrandIcon platform={href ? linkPlatform(href) : "website"} size={16} />}
+      error={value.trim() && !href ? t("linkInvalid") : undefined}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+}
+
+/** Any number of links for a person or organisation: social accounts, a website. */
+function LinkRows({ links = [], onChange }: { links?: ExternalLink[]; onChange: (links: ExternalLink[]) => void }) {
+  const t = useTranslations("catalog.page");
+  return (
+    <div className="grid gap-tight">
+      <span className="text-sm font-medium text-fg">{t("linksLabel")}</span>
+      {links.map((l, i) => (
+        <div key={l.id} className="flex items-start gap-tight">
+          <div className="min-w-0 flex-1">
+            <LinkField
+              label={t("linkN", { n: i + 1 })}
+              placeholder={t("linkPlaceholder")}
+              value={l.url}
+              onChange={(url) => onChange(links.map((x) => (x.id === l.id ? { ...x, url } : x)))}
+            />
+          </div>
+          <Button
+            variant="tertiary"
+            size="icon"
+            aria-label={t("removeLink", { n: i + 1 })}
+            title={t("removeLink", { n: i + 1 })}
+            onClick={() => onChange(links.filter((x) => x.id !== l.id))}
+            className="mt-6 shrink-0 text-muted hover:text-danger"
+          >
+            <Trash2 size={15} strokeWidth={1.5} aria-hidden />
+          </Button>
+        </div>
+      ))}
+      <AddButton onClick={() => onChange([...links, { id: newId("ln"), url: "" }])}>{t("addLink")}</AddButton>
     </div>
   );
 }

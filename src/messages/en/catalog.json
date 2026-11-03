@@ -992,7 +992,22 @@
       "useBrand": "Use the storefront's style",
       "customise": "Customise for this page",
       "reset": "Reset to storefront style"
-    }
+    },
+    "linksLabel": "Links",
+    "linkN": "Link {n}",
+    "linkPlaceholder": "e.g. instagram.com/yourname",
+    "addLink": "Add a link",
+    "removeLink": "Remove link {n}",
+    "linkInvalid": "That doesn't look like a web address.",
+    "sponsorLink": "Link",
+    "sponsorLinkPlaceholder": "e.g. theirsite.com",
+    "sponsorLinkHelp": "Tapping their card opens this.",
+    "logoAdd": "Add a logo",
+    "logoReplace": "Change logo",
+    "logoRemove": "Remove logo",
+    "logoAddFor": "Add a logo for {name}",
+    "logoReplaceFor": "Change the logo of {name}",
+    "logoRemoveFor": "Remove the logo of {name}"
   },
   "addFlow": {
     "pageTitle": "Add a booking",
@@ -1094,7 +1109,12 @@
       "saveFirst": "Save your changes to use this link.",
       "listedOn": "Listed on the page of {venues}.",
       "counterAt": "Also sold at the counter of {venues}.",
-      "thisBrowserOnly": "Works in this browser for now. Other people and devices can't open this link until Counterfoil is connected to its server."
+      "thisBrowserOnly": "Works in this browser for now. Other people and devices can't open this link until Counterfoil is connected to its server.",
+      "publishLive": "Anyone with this link can open it, on any device. Bookings made there don't reach your Orders yet.",
+      "publishSending": "Putting this online…",
+      "publishFailed": "This couldn't go online, so other people will see \"This page isn't available\".",
+      "publishRetry": "Try again",
+      "publishTaken": "Another business already uses this link. Change the link in Where it's sold to put it online."
     },
     "overview": {
       "glance": "At a glance",
