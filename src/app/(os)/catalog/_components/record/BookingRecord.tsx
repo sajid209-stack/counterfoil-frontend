@@ -254,6 +254,7 @@ export function BookingRecord({ product, env, onChanged }: { product: Product; e
           online={state.onlineMode}
           onPage={(p) => set("page", p)}
           onDescription={(d) => set("description", d)}
+          onDays={(days) => set("ev", { ...state.ev, days })}
           onEditDetails={() => setTab("details")}
           onEditTickets={() => setTab("prices")}
           onGoWhere={() => setTab("where")}

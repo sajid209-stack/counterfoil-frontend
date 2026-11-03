@@ -22,6 +22,12 @@ const MAX_PERKS = 4;
  * hour is one decision and the booking panel is the whole of it.
  *
  * Choose opens the booking with that ticket already chosen (`ctx.book(id)`).
+ *
+ * One flow, one strong action. With the booking panel beside the page the cards
+ * are the reference — what each ticket includes — and the panel is where the
+ * choice is made, so a card's Choose is a quiet link that hands the ticket to
+ * the panel, and the price is a figure, not a headline. Where the cards ARE the
+ * way in (phone, tablet: the sheet), Choose is a real button.
  */
 export function TicketOptions() {
   const ctx = usePage();
@@ -58,7 +64,7 @@ function StateChip({ chip }: { chip: TicketChip }) {
     chip === "soldOut" ? labels.soldOut : chip === "ended" ? t("pg.shell.salesEnded") : chip === "lastFew" ? t("pg.shell.lastFew") : labels.mostPopular;
   const style =
     chip === "popular"
-      ? { background: "var(--pg-fill)", color: "var(--pg-on-fill)" }
+      ? { background: "var(--pg-soft)", color: "var(--pg-ink)" }
       : chip === "lastFew"
         ? { background: "var(--pg-soft)", color: "var(--pg-fg)" }
         : { background: "var(--pg-surface)", color: "var(--pg-muted)", border: "1px solid var(--pg-line)" };
@@ -82,15 +88,11 @@ function TicketOption({ ctx, row, unit }: { ctx: PageCtx; row: TicketRow; unit: 
   const priceText = tier.price === 0 ? labels.free : pt?.donation ? t("donationFrom", { price: formatPriceShort(tier.price) }) : formatPriceShort(tier.price);
   const saving = bundle && state.saving ? labels.saves.replace("{amount}", formatPriceShort(state.saving)) : null;
   const muted = "var(--pg-muted)";
+  /* Beside the booking panel the card is a reference, not a second picker. */
+  const quiet = ctx.layout === "desktop";
 
   return (
-    <article
-      className="flex w-full min-w-0 flex-col rounded-[16px] p-5"
-      style={{
-        background: gone ? "var(--pg-surface)" : "var(--pg-card)",
-        border: `1px solid ${row.chip === "popular" ? "var(--pg-accent)" : "var(--pg-line)"}`,
-      }}
-    >
+    <article className="pg-card flex w-full min-w-0 flex-col p-5" style={gone ? { background: "var(--pg-surface)" } : undefined}>
       <div className="flex items-start justify-between gap-3">
         <h3 className="min-w-0 break-words text-[16px] font-semibold leading-6" style={{ color: gone ? muted : "var(--pg-fg)" }}>
           {tier.name}
@@ -142,7 +144,7 @@ function TicketOption({ ctx, row, unit }: { ctx: PageCtx; row: TicketRow; unit: 
       <div className="mt-auto flex items-end justify-between gap-3 pt-5">
         <div className="min-w-0">
           <p
-            className="tnum text-[22px] font-bold leading-7"
+            className={`tnum font-semibold ${quiet ? "text-[18px] leading-6" : "text-[22px] leading-7"}`}
             style={{ color: gone ? muted : "var(--pg-fg)", textDecoration: gone && tier.price > 0 ? "line-through" : undefined }}
           >
             {priceText}
@@ -156,8 +158,8 @@ function TicketOption({ ctx, row, unit }: { ctx: PageCtx; row: TicketRow; unit: 
         {!gone && (
           <button
             type="button"
-            className="pg-btn-secondary shrink-0"
-            style={{ minHeight: 44 }}
+            className={quiet ? "inline-flex min-h-11 shrink-0 items-center rounded-[var(--ps-radius-control,12px)] px-2 text-[14px] font-semibold underline-offset-4 hover:underline" : "pg-btn-secondary shrink-0"}
+            style={quiet ? { color: "var(--pg-ink)" } : { minHeight: 44 }}
             aria-label={t("pg.shell.chooseNamed", { name: tier.name })}
             onClick={() => ctx.book(tier.id)}
           >

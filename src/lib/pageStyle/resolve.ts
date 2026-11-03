@@ -96,7 +96,11 @@ function groundFrom(style: PageStyle, base: Ground): { ground: Ground; changed: 
   const card = hexOr(style.surface, style.background ? (mode === "dark" ? mix(WHITE, bg, 0.06) : WHITE) : base.card);
   const panel = mode === "dark" ? mix(WHITE, bg, 0.035) : mix(BLACK, bg, 0.025);
   const toward = mode === "dark" ? WHITE : INK;
-  const fg = readable(hexOr(style.text, base.fg), [bg, card, panel], 4.5, toward);
+  /* With no text colour of its own, a ground that changes mode must not start from
+     the old ground's ink: walking dark ink toward white stops as soon as it passes,
+     at a muddy grey. It takes the mode's own text colour instead. */
+  const start = style.text ?? (modeOf(base.bg) === mode ? base.fg : LOOK_GROUNDS[mode].fg);
+  const fg = readable(hexOr(start, base.fg), [bg, card, panel], 4.5, toward);
   let muted = fg;
   for (let i = 0; i <= 20; i++) {
     const x = mix(fg, bg, 0.55 + i * 0.0225);
@@ -211,7 +215,10 @@ function resolve(style: PageStyle, d: Defaults, primaryRule: "page" | "storefron
   const sec = secondaryOn(hexOr(style.secondary, accent), mode, ground);
   const hf = fontById(style.headingFont);
   const bf = fontById(style.bodyFont);
-  const weight = style.headingWeight ?? null;
+  /* No weight chosen: the face's own, except that a face which only has a
+     regular weight (Bebas, Archivo Black) is pinned to it so the browser does
+     not fake a bold. */
+  const weight = style.headingWeight ?? (hf && hf.maxWeight < 600 ? hf.maxWeight : null);
   const iconStroke = style.iconStroke ?? "regular";
   return {
     colours: { mode, ground, fill, onFill, ink, soft, accent, ...sec },
@@ -252,6 +259,24 @@ export interface LookBase {
   accent: string | null;
 }
 
+/** Fields no longer offered anywhere (docs/page-design.md "Old pages"). A
+ *  product page ignores them, so a page saved with a texture or a warm photo
+ *  tone draws clean. A storefront still honours them. */
+const RETIRED: (keyof PageStyle)[] = [
+  "texture", "imageTone", "iconStroke", "dividers", "buttonStyle", "cardStyle", "typeScale", "headingWeight",
+  "heroHeight", "spacing", "width", "overlay", "ctaLabel", "priceLabel", "badge", "palette", "preset",
+];
+
+/** The three layouts a product page has. The old collage is a split, the old text hero an editorial. */
+const HERO_NOW = { collage: "split", text: "editorial" } as const;
+
+function withoutRetired(style: PageStyle): PageStyle {
+  const out: PageStyle = { ...style };
+  for (const k of RETIRED) delete out[k];
+  if (out.hero === "collage" || out.hero === "text") out.hero = HERO_NOW[out.hero];
+  return out;
+}
+
 export function productPageStyle({
   look,
   page,
@@ -266,11 +291,14 @@ export function productPageStyle({
   venueAccent?: string | null;
 }): ResolvedStyle {
   const own = page.styleSource === "custom" ? page.style : undefined;
+  /* A ground chosen on this page brings its own cards and text with it: the
+     venue's surface and text were picked for the venue's ground. */
+  const brandLayer = own?.background && brand ? { ...brand, surface: undefined, text: undefined } : brand;
   /* A page's old own accent and face still win over the brand: they were an
      explicit choice for this page. */
   const legacy: PageStyle = {};
   if (page.accent) legacy.primary = page.accent;
-  const merged = mergeStyles(brand ?? undefined, legacy, own);
+  const merged = withoutRetired(mergeStyles(brandLayer ?? undefined, legacy, own));
   const legacyFont = page.displayFont && !own?.headingFont && !brand?.headingFont ? page.displayFont : undefined;
   return resolve(
     merged,
@@ -400,6 +428,11 @@ export interface StyleIssue {
   severity: "error" | "notice";
   code: "textUnreadable" | "textOnCards" | "primaryAdjusted" | "secondaryAdjusted" | "buttonLowContrast";
   ratio: number;
+}
+
+/** Errors (never notices) from `checkStyle`: a parent disables Save on these. */
+export function styleErrors(style: PageStyle, base: Ground = STOREFRONT_GROUND) {
+  return checkStyle(style, base).filter((i) => i.severity === "error");
 }
 
 /** What a style's own colours do before they are made readable. The editor

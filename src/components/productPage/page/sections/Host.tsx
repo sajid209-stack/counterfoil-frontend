@@ -38,7 +38,7 @@ export function HostSection() {
           )}
         </div>
         <div className="min-w-0">
-          <p className="text-[17px] font-semibold leading-6" style={{ color: "var(--ps-fg)" }}>
+          <p className="text-[16px] font-semibold leading-6" style={{ color: "var(--ps-fg)" }}>
             {host.name}
           </p>
           {host.role && <p className="pg-meta pg-muted">{host.role}</p>}

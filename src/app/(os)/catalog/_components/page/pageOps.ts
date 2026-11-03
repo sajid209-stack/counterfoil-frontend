@@ -49,7 +49,7 @@ const flatten = (rows: PageSectionId[][]) => rows.flat();
 /** Every row the designer lists, in the page's usual order. */
 const ALL_ROWS = ALL_PAGE_SECTIONS.filter((s) => s !== "schedule");
 
-/** Shown rows in page order, then the ones that are off. The Programme is one row, named "lineup". */
+/** Shown rows in page order, then the ones that can still be added. The Programme is one row, named "lineup". */
 export function rowsOf(page: ProductPage): { shown: PageSectionId[]; hidden: PageSectionId[] } {
   const shown = toRows(page.sections.filter((s) => ALL_PAGE_SECTIONS.includes(s))).map((r) => rowOf(r[0]));
   return { shown, hidden: ALL_ROWS.filter((s) => !shown.includes(s)) };
@@ -89,9 +89,10 @@ export function moveBefore(page: ProductPage, id: PageSectionId, targetId: PageS
 /** Show a hidden section where it belongs in the usual order, or hide a shown one.
  *  The Programme's two sections go together. */
 export function toggleSection(page: ProductPage, id: PageSectionId): ProductPage {
-  if (isRequired(id)) return page;
   const ids = idsOf(id);
-  if (ids.some((x) => page.sections.includes(x))) return { ...page, sections: page.sections.filter((s) => !ids.includes(s)) };
+  const present = ids.some((x) => page.sections.includes(x));
+  if (isRequired(id) && present) return page;
+  if (present) return { ...page, sections: page.sections.filter((s) => !ids.includes(s)) };
   const rank = ALL_PAGE_SECTIONS.indexOf(rowOf(id));
   const rows = toRows(page.sections);
   let at = floorOf(rows);
@@ -100,6 +101,20 @@ export function toggleSection(page: ProductPage, id: PageSectionId): ProductPage
   }
   rows.splice(at, 0, ids);
   return { ...page, sections: flatten(rows) };
+}
+
+/** Put a row on the page where it belongs in the usual order. The Countdown
+ *  needs a way to count, so it starts on the first day when there is one. */
+export function addSection(page: ProductPage, product: Pick<Product, "event">, id: PageSectionId): ProductPage {
+  if (id === "countdown") return page.sections.includes("countdown") ? page : toggleCountdownRow(page, product);
+  return idsOf(id).some((x) => page.sections.includes(x)) ? page : toggleSection(page, id);
+}
+
+/** Take a row off the page. Its words stay on the record, so adding it back
+ *  finds them again. Hero and Tickets cannot be removed. */
+export function removeSection(page: ProductPage, id: PageSectionId): ProductPage {
+  if (isRequired(id)) return page;
+  return id === "countdown" ? setCountdown(page, { mode: "off" }) : toggleSection(page, id);
 }
 
 /** Does this row still show sample text nobody has confirmed? */
@@ -195,8 +210,6 @@ export function sectionFill(id: PageSectionId, product: Product, page: ProductPa
       const mode = countdownMode(product, page);
       return has((mode === "start" && !!firstDayOf(product)) || (mode === "date" && !!page.countdown?.at));
     }
-    case "stats":
-      return has(page.stats.some((s) => s.value.trim()));
     case "highlights":
       return has(page.highlights.some((h) => h.label.trim()));
     case "about":
@@ -219,16 +232,8 @@ export function sectionFill(id: PageSectionId, product: Product, page: ProductPa
       return has(!!product.event?.venueName?.trim() || product.locationIds.length > 0);
     case "sponsors":
       return has(page.sponsors.some((s) => s.name.trim()));
-    case "quote":
-      return has((page.blocks?.quotes ?? []).some((q) => q.text.trim() && q.who.trim()));
     case "host":
       return has(!!page.blocks?.host?.name.trim());
-    case "steps":
-      return has((page.blocks?.steps?.items ?? []).some((i) => i.title.trim()));
-    case "text":
-      return has(!!page.blocks?.text?.body.trim());
-    case "cta":
-      return has(!!page.blocks?.cta?.title.trim());
     default:
       return "written";
   }

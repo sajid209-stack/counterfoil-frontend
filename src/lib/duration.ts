@@ -214,3 +214,45 @@ export function productDurationPrice(product: Product, date: string, startTime: 
   if (!product.durationConfig && !cfg.hourlyRate) cfg.hourlyRate = fallbackHourly;
   return resolveDurationPrice(cfg, product.pricingRules ?? [], date, startTime, minutes);
 }
+
+// ── A time typed for an event ───────────────────────────────────────────────
+
+/**
+ * A time typed into a programme, read the way the event means it.
+ *
+ * `parseTimeOfDay` has to read a bare "6:00" as 06:00, because a bare hour has
+ * no other honest reading on its own. On a 6 PM event that is the wrong answer:
+ * a programme typed "6:00, 6:30, 7:15" came out as 6 AM, 6:30 AM, 7:15 AM. A
+ * time typed without AM/PM belongs to the event it is on:
+ *
+ *  - an explicit AM/PM ("6:00 am", "6p", "noon") is obeyed;
+ *  - a 24-hour value is obeyed: an hour above 12 ("18:30") or one with a
+ *    leading zero ("06:00", "0600", "00:30");
+ *  - otherwise, a bare hour from 1 to 12 takes the reading that fits the event:
+ *    within LEAD_IN before the start counts as the doors opening ("5:30" on a
+ *    6 PM event is 5:30 PM, "8:00" on a 9 AM event is 8 AM); at or after the
+ *    start, the earlier such reading ("7:15" on a 6 PM event is 7:15 PM); and
+ *    anything else has run past midnight ("1:00" on a 9 PM event is 1 AM).
+ *
+ * `eventStartMinutes` is the start of the event or of that day, in minutes from
+ * midnight; without it this is exactly `parseTimeOfDay`. Returns the stored
+ * 24-hour "HH:MM", or null if unparseable.
+ */
+const LEAD_IN_MINUTES = 3 * 60;
+
+export function timeForEvent(typed: string, eventStartMinutes: number | null | undefined): string | null {
+  const plain = parseTimeOfDay(typed);
+  if (plain === null || eventStartMinutes == null) return plain;
+  const s = typed.trim().toLowerCase().replace(/\s+/g, "");
+  if (s === "noon" || s === "midday" || s === "midnight" || /[ap]\.?m?\.?$/.test(s)) return plain;
+  const hourText = /^\d{3,4}$/.test(s) ? s.slice(0, s.length - 2) : /^(\d{1,2})(?:[:.]\d{2})?$/.exec(s)?.[1];
+  if (!hourText) return plain;
+  const h = parseInt(hourText, 10);
+  if (hourText.length === 2 && hourText.startsWith("0")) return plain; // 24-hour, as written
+  if (h < 1 || h > 12) return plain;
+  const mm = parseInt(plain.slice(3), 10);
+  const am = (h % 12) * 60 + mm;
+  const pm = am + 720;
+  const fits = (m: number) => m >= eventStartMinutes - LEAD_IN_MINUTES;
+  return toTime(fits(am) ? am : fits(pm) ? pm : am);
+}

@@ -265,8 +265,9 @@
       "getDirections": "Get directions",
       "dayEmpty": "Nothing is scheduled for this day yet.",
       "daysLabel": "Days",
-      "versus": "{a} versus {b}",
-      "vs": "vs"
+      "vs": "vs",
+      "opensNew": "(opens in a new tab)",
+      "mapTitle": "Map of {name}"
     },
     "shell": {
       "runsDays": "Runs {count, plural, one {# day} other {# days}}",

@@ -19335,3 +19335,35 @@ Both only showed in the no-store state: a route refusing a request without readi
 ### Verified
 
 Production build, f19663fb scratchpad `link/`: `pub.mjs` (33, run three times) publishes in one browser, then a separate context opens, reloads the basket and opens checkout, plus stranger overwrites, bad shapes, oversize, non-JPEG and path tricks. `hs.mjs` (17) drives the editor end to end, including `javascript:` links refused and tapping a sponsor. `wiz.mjs` (24), `clocktest.mjs` (186). With no store: `link.mjs` (21), `edge.mjs` (13), the card saying it works in this browser only. The brand icons and sponsor cards were checked by eye. A paid booking wasn't completed on the visitor's side.
+
+---
+
+## Page customiser v4: fewer choices, every one visible (2026-11-03)
+
+The owner asked for a friendlier, simpler customiser and a review of the public page. The spec is `docs/page-design.md`.
+
+- **Design tab** (`components/pageStyle/DesignPanel.tsx`): Layout (Cover image, Classic, Title first), Cover photo, Colours (Light, Warm or Dark, and an accent), Font (six named styles), and More options closed (Corners, Tickets panel, Photos). Look cards, starting points, palettes, font chips and about fifteen fine controls are gone. Any change makes the page's style its own, so the Use/Customise switch is gone too. The venue page editor uses the same panel in `scope="storefront"`.
+- **Sections tab**: "On your page" rows open their editor, with Move and Remove at its foot. "Add to your page" chips add and open a section, so nothing can be filled in while hidden.
+- **Removed sections**: Numbers, How it works, Extra text, Quote, Call to action. `pageOf` filters them from old records, whose data stays.
+- **Programme** (`ProgrammeEditor.tsx`): a tab per day with its own name, hours and sessions. Day edits reach the event through `onDays`, wired in the wizard and the record.
+- **Times**: `timeForEvent` in `lib/duration.ts`. A bare time takes the reading that fits the event, allowing three hours of lead-in: "6:00" and "5:30" on a 6 PM event are PM, "8:00" on a 9 AM event is AM, "1:00" on a 9 PM event is past midnight. Explicit am/pm and 24-hour values are obeyed. Stored times aren't rewritten, so a programme typed earlier still reads AM until retyped.
+- **Public page**: three heroes, sponsors with a logo plate and the name beneath, frame following the page's colours, a real map on live pages, quieter ticket cards so the panel is the one strong action, one card radius, and a heading weight per page.
+
+### Defects found by looking at it
+
+- **Dark pages read grey.** `groundFrom` started text from the old ground's ink and walked toward white only until it passed 4.5:1, stopping at `#8b8b8b`. A ground that changes mode now starts from that mode's own text colour. No code check could see this; the screenshot did.
+- **Display faces on small text.** `.sf[data-ps-mode] :where(h1, h2, h3, h4)` set the heading face on ticket names and card labels and overrode their weights. It now covers titles only.
+- **Sub-agent's cover scrim** was so heavy the photo barely showed; lightened at the top while staying dark under the text.
+- **Hero button** was forced white on a photo for pages on a light look, ignoring the chosen accent. It now uses the page's colour unless that would sink into the scrim.
+- **Time rule as first written** made "5:30" on a 6 PM event AM and "8:00" on a 9 AM event PM.
+
+### Not changed
+
+- The venue page editor's own Colour chips and Cover photo grid remain beside the Design panel, so colour is offered there twice. Its "Look and feel" copy needs a look.
+- `PRESETS` remains in `presets.ts` for the dev-only `?ps=` hook in `s/_components/sf.tsx`.
+- The Bangla for all new strings needs a native read.
+- Reference research this round rested on rendering Luma's and Eventbrite's listing pages and on known patterns: no competitor's event editor was opened, because they sit behind sign-in.
+
+### Verified
+
+Production build, f19663fb scratchpad `design/` and `link/`: `walk.mjs` (30) runs a two-day event through the wizard on all three layouts, with fonts, sponsors, host, per-day programme and PM times, on desktop and phone. `extra.mjs` (26) covers five old seeded pages with text contrast of at least 7:1, the phone customiser and the venue page editor. `pub.mjs` (33), `hs.mjs` (18), `wiz.mjs` (24), `edge.mjs` (13) and `clocktest.mjs` (186) still pass. Publishing remains tested only against the local folder, and stays off on Vercel until the Blob store exists.

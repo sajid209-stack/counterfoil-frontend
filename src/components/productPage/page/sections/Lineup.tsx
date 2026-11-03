@@ -69,7 +69,7 @@ function Portraits({ people }: { people: EventLineupEntry[] }) {
     <ul className="grid gap-x-4 gap-y-6" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
       {people.map((p) => (
         <li key={p.id} className="min-w-0">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-xl" style={{ background: "var(--pg-surface)", border: LINE }}>
+          <div className="pg-media relative aspect-[4/5] overflow-hidden" style={{ background: "var(--pg-surface)", border: LINE }}>
             {clean(p.imageUrl) ? (
               // eslint-disable-next-line @next/next/no-img-element -- local / remote photos; next/image loader config is avoided app-wide (see PROJECT_LOG)
               <img src={p.imageUrl} alt={p.name} width={480} height={600} loading="lazy" decoding="async" className="size-full object-cover" />

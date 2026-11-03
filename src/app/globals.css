@@ -1284,11 +1284,9 @@ html.dark[data-contrast="more"] {
   --color-on-solid: var(--sf-on-fill);
   --color-ring: var(--sf-accent);
   --color-brand-foreground: var(--sf-ink);
-  background: var(--pg-bg);
-  color: var(--pg-fg);
-}
-.sf .pg-dark {
-  color-scheme: dark;
+  /* The page's own ground, for everything inside it AND the storefront header
+     and footer drawn around it (Chrome puts them in this scope), so a warm or
+     dark page is never framed in white. */
   --color-surface: var(--pg-bg);
   --color-card: var(--pg-card);
   --color-sheet: var(--pg-card);
@@ -1297,8 +1295,13 @@ html.dark[data-contrast="more"] {
   --color-muted: var(--pg-muted);
   --color-line: var(--pg-line);
   --color-hairline: var(--pg-line);
-  --color-strong: #3a3a42;
   --color-subtle: var(--pg-surface);
+  background: var(--pg-bg);
+  color: var(--pg-fg);
+}
+.sf .pg-dark {
+  color-scheme: dark;
+  --color-strong: #3a3a42;
   --color-muted-wash: #222228;
   --color-secondary-hover: #26262c;
   --color-secondary-active: #2e2e35;
@@ -1313,9 +1316,11 @@ html.dark[data-contrast="more"] {
 @media (min-width: 1280px) { .pg-container { padding-inline: 32px; } }
 .pg-section + .pg-section { margin-top: 40px; }
 @media (min-width: 768px) { .pg-section + .pg-section { margin-top: 56px; } }
-.pg-h2 { font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.015em; color: var(--pg-fg); text-wrap: balance; }
+/* One heading size, face and weight per page: every section title is this. */
+.pg-h2 { font-family: var(--pg-display); font-size: 24px; line-height: 32px; font-weight: var(--ps-heading-weight, 700); text-transform: var(--ps-heading-transform, none); letter-spacing: -0.015em; color: var(--pg-fg); text-wrap: balance; }
+@media (min-width: 768px) { .pg-h2 { font-size: 28px; line-height: 36px; } }
 .pg-intro { margin-top: 4px; font-size: 16px; line-height: 24px; color: var(--pg-muted); }
-.pg-title { font-family: var(--pg-display); letter-spacing: var(--pg-title-tracking); font-weight: 700; text-wrap: balance; font-size: 34px; line-height: 40px; }
+.pg-title { font-family: var(--pg-display); letter-spacing: var(--pg-title-tracking); font-weight: var(--ps-heading-weight, 700); text-wrap: balance; font-size: 34px; line-height: 40px; }
 @media (min-width: 768px) { .pg-title { font-size: 48px; line-height: 56px; } }
 .pg-body { font-size: 16px; line-height: 26px; }
 .pg-meta { font-size: 14px; line-height: 20px; color: var(--pg-muted); }
@@ -1332,5 +1337,11 @@ html.dark[data-contrast="more"] {
 /* On a photo (the cover hero) the secondary button is a glass-free outline in white. */
 .pg-on-photo .pg-btn-secondary { color: #fff; border-color: rgb(255 255 255 / 0.45); }
 .pg-on-photo .pg-btn-secondary:hover { background: rgb(255 255 255 / 0.12); }
+/* Photos, video and the map share one radius (cards use .pg-card). */
+.pg-media { border-radius: var(--ps-radius-media, 16px); }
 .pg-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 10px; border-radius: 999px; font-size: 13px; font-weight: 500; background: color-mix(in srgb, var(--pg-fg) 7%, transparent); color: var(--pg-fg); }
 .pg [id] { scroll-margin-top: 80px; }
+@media (prefers-reduced-motion: reduce) {
+  .pg-btn, .pg-btn-secondary { transition: none; }
+  .pg-btn:active { transform: none; }
+}

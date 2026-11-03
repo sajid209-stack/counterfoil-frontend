@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Mail, MapPin, Phone, ShoppingBag } from "lucide-react";
@@ -76,7 +77,21 @@ export interface ChromeProps {
   backHref?: string;
   backLabel?: string;
   preview?: boolean;
+  /** An item's page colours (its `pg` class and --pg-* variables). The header,
+   *  main and footer are drawn inside that scope so the frame follows the page
+   *  instead of staying white round a dark one. */
+  pageTheme?: { className: string; style: CSSProperties };
   children: React.ReactNode;
+}
+
+/** Draws the frame inside the page's own colour scope, when it has one. */
+function ThemeScope({ theme, children }: { theme: ChromeProps["pageTheme"]; children: React.ReactNode }) {
+  if (!theme) return <>{children}</>;
+  return (
+    <div className={cn(theme.className, "flex flex-1 flex-col")} style={theme.style}>
+      {children}
+    </div>
+  );
 }
 
 /** The frame every public page sits in: the venue's full storefront header, or
@@ -94,6 +109,7 @@ function FullChrome({
   current = "other",
   accent,
   bleed,
+  pageTheme,
   children,
 }: ChromeProps) {
   const t = useTranslations("storefront");
@@ -160,6 +176,7 @@ function FullChrome({
 
   return (
     <SfRoot storefront={accent ? { accent: storefront.accent, style: { ...storefront.style, primary: accent } } : storefront} className="flex flex-col">
+      <ThemeScope theme={pageTheme}>
       <header className={cn(bleed ? "relative" : "sticky top-0", "z-50 border-b border-hairline bg-card backdrop-blur")} data-sf-header>
         <div className={cn(WRAP, "flex h-16 items-center gap-section")}>
           {preview ? (
@@ -262,6 +279,7 @@ function FullChrome({
           </div>
         </div>
       </footer>
+      </ThemeScope>
     </SfRoot>
   );
 }
@@ -327,7 +345,7 @@ export function StorefrontMissing({ title, message }: { title: string; message: 
  * never send its visitor to a page that does not list it, so for those the
  * header says whose it is and offers nothing else to click.
  */
-function LinkChrome({ storefront, location, poweredBy, showMore, accent, bleed, children }: ChromeProps) {
+function LinkChrome({ storefront, location, poweredBy, showMore, accent, bleed, pageTheme, children }: ChromeProps) {
   const t = useTranslations("storefront");
   const flow = useStorefrontFlow();
   const privacyQ = useApiQuery(() => getPrivacySettings(), []);
@@ -369,6 +387,7 @@ function LinkChrome({ storefront, location, poweredBy, showMore, accent, bleed, 
 
   return (
     <SfRoot storefront={accent ? { accent: storefront.accent, style: { ...storefront.style, primary: accent } } : storefront} className="flex flex-col">
+      <ThemeScope theme={pageTheme}>
       <header className={cn(bleed ? "relative" : "sticky top-0", "z-50 border-b border-hairline bg-card backdrop-blur")} data-sf-header data-sf-link-header>
         <div className={cn(WRAP, "flex h-16 items-center gap-section")}>
           {moreHref && !inert ? (
@@ -449,6 +468,7 @@ function LinkChrome({ storefront, location, poweredBy, showMore, accent, bleed, 
           </div>
         </div>
       </footer>
+      </ThemeScope>
     </SfRoot>
   );
 }

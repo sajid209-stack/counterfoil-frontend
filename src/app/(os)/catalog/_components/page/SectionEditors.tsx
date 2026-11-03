@@ -1,73 +1,33 @@
 "use client";
 
-import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ImagePlus, Plus, Trash2 } from "lucide-react";
-import { Button, FormField, Tabs, TimeInput, useToast } from "@/components/ui";
-import { fileToStoredImage } from "@/lib/imageUpload";
+import { FormField } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { dayName } from "@/lib/events/days";
 import { parseEventVideo } from "@/lib/events/video";
 import { listLocations } from "@/lib/api/locations";
 import { useApiQuery } from "@/lib/useApi";
-import { externalHref, linkPlatform } from "@/lib/externalLink";
-import { BrandIcon } from "@/components/productPage/page/sections/BrandIcon";
-import type { ExternalLink } from "@/lib/api/events";
+import type { EventDay } from "@/lib/api/events";
 import type { PageSectionId, Product, ProductPage } from "@/lib/api/types";
+import { CountdownSettings } from "./CountdownSettings";
+import { AddButton, ItemGroup, LinkField, LinkRows, Note, PortraitField, ReadOnly } from "./editorParts";
 import { newId } from "./pageOps";
+import { ProgrammeBody } from "./ProgrammeEditor";
 
 /** What every section editor needs. `onChange` already knows which row it is. */
 export interface EditorCtx {
   product: Product;
   page: ProductPage;
   onChange: (patch: Partial<ProductPage>) => void;
+  /** The whole page, for an editor that changes more than one field: the
+   *  Countdown also adds or removes its own section. */
+  onPage: (next: ProductPage) => void;
   /** When given, the About words are edited here instead of only in Details. */
   onDescription?: (next: string) => void;
   onEditDetails?: () => void;
   onEditTickets?: () => void;
-  /** Takes the operator to the countdown settings, which live above the list. */
-  onGoCountdown?: () => void;
-}
-
-function Note({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-muted">{children}</p>;
-}
-
-/** A line of read-only text with the one place it is changed. */
-function ReadOnly({ children, action, onAction }: { children: React.ReactNode; action: string; onAction?: () => void }) {
-  return (
-    <div className="flex flex-col gap-tight">
-      <div className="text-sm text-fg">{children}</div>
-      {onAction && (
-        <Button variant="secondary" size="sm" className="self-start" onClick={onAction}>
-          {action}
-        </Button>
-      )}
-    </div>
-  );
-}
-
-function AddButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
-  return (
-    <Button variant="secondary" size="sm" onClick={onClick} icon={<Plus size={15} strokeWidth={1.5} aria-hidden />} className="w-full">
-      {children}
-    </Button>
-  );
-}
-
-/** One editable item in a list, with its remove button named for what it removes. */
-function ItemCard({ title, removeLabel, onRemove, children }: { title: string; removeLabel: string; onRemove: () => void; children: React.ReactNode }) {
-  return (
-    <div className="rounded-sm bg-card p-comfortable">
-      <div className="mb-tight flex items-center justify-between gap-tight">
-        <span className="min-w-0 truncate text-sm font-medium text-muted">{title}</span>
-        <Button variant="tertiary" size="icon" aria-label={removeLabel} title={removeLabel} onClick={onRemove} className="text-muted hover:text-danger">
-          <Trash2 size={15} strokeWidth={1.5} aria-hidden />
-        </Button>
-      </div>
-      <div className="grid gap-tight">{children}</div>
-    </div>
-  );
+  /** Writes the event's days (a day's name and hours). Without it the
+   *  Programme edits sessions only. */
+  onDays?: (days: EventDay[]) => void;
 }
 
 /** The item's rules as short lines, from what the booking already says. */
@@ -114,18 +74,35 @@ function WhereBody({ ctx }: { ctx: EditorCtx }) {
   );
 }
 
+/** The words inside one open section. One column, one gap. */
 export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) {
+  return (
+    <div className="flex flex-col gap-comfortable">
+      <Editor id={id} ctx={ctx} />
+    </div>
+  );
+}
+
+function Editor({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) {
   const t = useTranslations("catalog.page");
   const { product, page, onChange } = ctx;
-  const [openDay, setOpenDay] = useState(0);
-  const days = product.event?.days ?? [];
 
   switch (id) {
     case "hero":
-      return <ReadOnly action={t("editDetails")} onAction={ctx.onEditDetails}>{t("heroNote")}</ReadOnly>;
+      return (
+        <>
+          <FormField
+            label={t("tagline")}
+            placeholder={t("taglinePlaceholder")}
+            value={page.tagline ?? ""}
+            onChange={(e) => onChange({ tagline: e.target.value })}
+          />
+          <ReadOnly action={t("editDetails")} onAction={ctx.onEditDetails}>{t("heroNote")}</ReadOnly>
+        </>
+      );
 
     case "countdown":
-      return <ReadOnly action={t("goCountdown")} onAction={ctx.onGoCountdown}>{t("countdownRowNote")}</ReadOnly>;
+      return <CountdownSettings product={product} page={page} onPage={ctx.onPage} />;
 
     case "tickets":
       return <ReadOnly action={t("editTickets")} onAction={ctx.onEditTickets}>{t("ticketsNote")}</ReadOnly>;
@@ -178,14 +155,7 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
       return (
         <>
           {ctx.onDescription ? (
-            <FormField
-              label={t("aboutLabel")}
-              variant="textarea"
-              rows={5}
-              value={product.description}
-              help={t("aboutHelp")}
-              onChange={(e) => ctx.onDescription?.(e.target.value)}
-            />
+            <FormField label={t("aboutLabel")} variant="textarea" rows={5} value={product.description} onChange={(e) => ctx.onDescription?.(e.target.value)} />
           ) : (
             <ReadOnly action={t("editDetails")} onAction={ctx.onEditDetails}>
               {product.description.trim() ? <span className="line-clamp-4 whitespace-pre-line">{product.description}</span> : t("aboutNone")}
@@ -214,7 +184,7 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
         <>
           <Note>{t("highlightsNote")}</Note>
           {page.highlights.map((h, i) => (
-            <ItemCard
+            <ItemGroup
               key={h.id}
               title={h.label.trim() || t("highlightN", { n: i + 1 })}
               removeLabel={t("removeHighlight", { name: h.label.trim() || t("highlightN", { n: i + 1 }) })}
@@ -222,7 +192,7 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
             >
               <FormField label={t("highlightLabel")} value={h.label} onChange={(e) => onChange({ highlights: page.highlights.map((x) => (x.id === h.id ? { ...x, label: e.target.value } : x)) })} />
               <FormField label={t("highlightLine")} value={h.description ?? ""} onChange={(e) => onChange({ highlights: page.highlights.map((x) => (x.id === h.id ? { ...x, description: e.target.value } : x)) })} />
-            </ItemCard>
+            </ItemGroup>
           ))}
           <AddButton onClick={() => onChange({ highlights: [...page.highlights, { id: newId("h"), label: "", description: "" }] })}>{t("addHighlight")}</AddButton>
         </>
@@ -245,31 +215,11 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
       );
     }
 
-    case "stats":
-      return (
-        <>
-          <Note>{t("statsNote")}</Note>
-          {page.stats.map((s, i) => (
-            <ItemCard
-              key={s.id}
-              title={s.label.trim() || t("statN", { n: i + 1 })}
-              removeLabel={t("removeStat", { name: s.label.trim() || t("statN", { n: i + 1 }) })}
-              onRemove={() => onChange({ stats: page.stats.filter((x) => x.id !== s.id) })}
-            >
-              <FormField label={t("statValue")} value={s.value} onChange={(e) => onChange({ stats: page.stats.map((x) => (x.id === s.id ? { ...x, value: e.target.value } : x)) })} />
-              <FormField label={t("statLabel")} value={s.label} onChange={(e) => onChange({ stats: page.stats.map((x) => (x.id === s.id ? { ...x, label: e.target.value } : x)) })} />
-            </ItemCard>
-          ))}
-          <AddButton onClick={() => onChange({ stats: [...page.stats, { id: newId("s"), value: "", label: "" }] })}>{t("addStat")}</AddButton>
-        </>
-      );
-
     case "video": {
       const url = page.videoUrl ?? "";
       const ok = !!parseEventVideo(url);
       return (
         <>
-          <Note>{t("videoNote")}</Note>
           <FormField label={t("videoLabel")} placeholder="https://www.youtube.com/watch?v=..." value={url} onChange={(e) => onChange({ videoUrl: e.target.value })} />
           {url.trim() !== "" && <p className={cn("text-sm", ok ? "text-muted" : "text-danger")}>{ok ? t("videoOk") : t("videoBad")}</p>}
         </>
@@ -280,7 +230,7 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
       return (
         <>
           {page.faq.map((f, i) => (
-            <ItemCard
+            <ItemGroup
               key={f.id}
               title={f.q.trim() || t("faqN", { n: i + 1 })}
               removeLabel={t("removeFaq", { name: f.q.trim() || t("faqN", { n: i + 1 }) })}
@@ -288,7 +238,7 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
             >
               <FormField label={t("faqQ")} value={f.q} placeholder={t("faqQPlaceholder")} onChange={(e) => onChange({ faq: page.faq.map((x) => (x.id === f.id ? { ...x, q: e.target.value } : x)) })} />
               <FormField label={t("faqA")} variant="textarea" rows={2} value={f.a} onChange={(e) => onChange({ faq: page.faq.map((x) => (x.id === f.id ? { ...x, a: e.target.value } : x)) })} />
-            </ItemCard>
+            </ItemGroup>
           ))}
           <AddButton onClick={() => onChange({ faq: [...page.faq, { id: newId("f"), q: "", a: "" }] })}>{t("addFaq")}</AddButton>
         </>
@@ -297,9 +247,8 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
     case "sponsors":
       return (
         <>
-          <Note>{t("sponsorsNote")}</Note>
           {page.sponsors.map((s, i) => (
-            <ItemCard
+            <ItemGroup
               key={s.id}
               title={s.name.trim() || t("sponsorN", { n: i + 1 })}
               removeLabel={t("removeSponsor", { name: s.name.trim() || t("sponsorN", { n: i + 1 }) })}
@@ -315,161 +264,30 @@ export function SectionBody({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) 
               />
               <LinkField
                 label={t("sponsorLink")}
-                help={t("sponsorLinkHelp")}
                 placeholder={t("sponsorLinkPlaceholder")}
                 value={s.href ?? ""}
                 onChange={(href) => onChange({ sponsors: page.sponsors.map((x) => (x.id === s.id ? { ...x, href } : x)) })}
               />
-            </ItemCard>
+            </ItemGroup>
           ))}
           <AddButton onClick={() => onChange({ sponsors: [...page.sponsors, { id: newId("sp"), name: "", tier: "" }] })}>{t("addSponsor")}</AddButton>
         </>
       );
 
     case "lineup":
-    case "schedule": {
-      const tabs = days.length > 1 ? days.map((d, i) => ({ id: d.id, label: dayName(d, i, (n) => t("dayN", { n })) })) : [];
-      const active = tabs.length > 1 ? tabs[Math.min(openDay, tabs.length - 1)] : null;
-      // An entry written before the event had days is shown on the first day.
-      const shown = active ? page.lineup.filter((l) => (l.dayId ? l.dayId === active.id : tabs[0].id === active.id)) : page.lineup;
-      const patch = (eid: string, p: Partial<ProductPage["lineup"][number]>) => onChange({ lineup: page.lineup.map((l) => (l.id === eid ? { ...l, ...p } : l)) });
-      return (
-        <>
-          {tabs.length > 1 && (
-            <Tabs
-              variant="pill"
-              aria-label={t("dayTabs")}
-              items={tabs.map((d) => ({ value: d.id, label: d.label, count: page.lineup.filter((l) => l.dayId === d.id).length }))}
-              value={active?.id ?? ""}
-              onChange={(v) => setOpenDay(Math.max(0, tabs.findIndex((d) => d.id === v)))}
-            />
-          )}
-          {shown.length === 0 && <Note>{tabs.length > 1 ? t("dayEmpty") : t("lineupEmpty")}</Note>}
-          {shown.map((l, i) => (
-            <ItemCard
-              key={l.id}
-              title={l.name.trim() || t("entryN", { n: i + 1 })}
-              removeLabel={t("removeEntry", { name: l.name.trim() || t("entryN", { n: i + 1 }) })}
-              onRemove={() => onChange({ lineup: page.lineup.filter((x) => x.id !== l.id) })}
-            >
-              <FormField label={t("entryName")} placeholder={t("entryNamePlaceholder")} value={l.name} onChange={(e) => patch(l.id, { name: e.target.value })} />
-              <FormField
-                label={t("entryKind")}
-                variant="select"
-                value={l.kind ?? "person"}
-                options={[
-                  { value: "person", label: t("kindPerson") },
-                  { value: "session", label: t("kindSession") },
-                ]}
-                onChange={(e) => patch(l.id, { kind: e.target.value as "person" | "session" })}
-              />
-              <FormField label={t("entryRole")} placeholder={t("entryRolePlaceholder")} value={l.role ?? ""} onChange={(e) => patch(l.id, { role: e.target.value })} />
-              <TimeInput picker label={t("entryTime")} value={l.at ?? ""} onChange={(v) => patch(l.id, { at: v })} />
-              {(l.kind ?? "person") === "person" && (
-                <PortraitField name={l.name.trim() || t("entryN", { n: i + 1 })} url={l.imageUrl} onChange={(imageUrl) => patch(l.id, { imageUrl })} />
-              )}
-            </ItemCard>
-          ))}
-          <AddButton
-            onClick={() =>
-              onChange({ lineup: [...page.lineup, { id: newId("l"), name: "", role: "", at: "", dayId: active?.id }] })
-            }
-          >
-            {t("addEntry")}
-          </AddButton>
-        </>
-      );
-    }
-
-    case "quote": {
-      const quotes = page.blocks?.quotes ?? [];
-      const patchQuote = (qid: string, p: Partial<NonNullable<NonNullable<ProductPage["blocks"]>["quotes"]>[number]>) =>
-        onChange({ blocks: { ...page.blocks, quotes: quotes.map((q) => (q.id === qid ? { ...q, ...p } : q)) } });
-      return (
-        <>
-          <Note>{t("quoteNote")}</Note>
-          {quotes.map((q, i) => (
-            <ItemCard
-              key={q.id}
-              title={q.who.trim() || t("quoteN", { n: i + 1 })}
-              removeLabel={t("removeQuote", { name: q.who.trim() || t("quoteN", { n: i + 1 }) })}
-              onRemove={() => onChange({ blocks: { ...page.blocks, quotes: quotes.filter((x) => x.id !== q.id) } })}
-            >
-              <FormField label={t("quoteText")} variant="textarea" rows={2} value={q.text} onChange={(e) => patchQuote(q.id, { text: e.target.value })} />
-              <FormField label={t("quoteWho")} placeholder={t("quoteWhoPlaceholder")} value={q.who} onChange={(e) => patchQuote(q.id, { who: e.target.value })} />
-              <FormField label={t("quoteDetail")} value={q.detail ?? ""} onChange={(e) => patchQuote(q.id, { detail: e.target.value })} />
-            </ItemCard>
-          ))}
-          {quotes.length < 6 && (
-            <AddButton onClick={() => onChange({ blocks: { ...page.blocks, quotes: [...quotes, { id: newId("q"), text: "", who: "" }] } })}>
-              {t("addQuote")}
-            </AddButton>
-          )}
-        </>
-      );
-    }
+    case "schedule":
+      return <ProgrammeBody ctx={ctx} />;
 
     case "host": {
       const host = page.blocks?.host ?? { name: "" };
       const patchHost = (p: Partial<NonNullable<NonNullable<ProductPage["blocks"]>["host"]>>) => onChange({ blocks: { ...page.blocks, host: { ...host, ...p } } });
       return (
         <>
-          <Note>{t("hostNote")}</Note>
           <FormField label={t("hostName")} value={host.name} onChange={(e) => patchHost({ name: e.target.value })} />
           <FormField label={t("hostRole")} placeholder={t("hostRolePlaceholder")} value={host.role ?? ""} onChange={(e) => patchHost({ role: e.target.value })} />
           <FormField label={t("hostBio")} variant="textarea" rows={3} value={host.bio ?? ""} onChange={(e) => patchHost({ bio: e.target.value })} />
           <PortraitField name={host.name.trim() || t("hostN")} url={host.photoUrl} onChange={(photoUrl) => patchHost({ photoUrl })} />
           <LinkRows links={host.links} onChange={(links) => patchHost({ links })} />
-        </>
-      );
-    }
-
-    case "steps": {
-      const stepsBlock = page.blocks?.steps ?? { items: [] };
-      const items = stepsBlock.items;
-      const patchStep = (sid: string, p: Partial<(typeof items)[number]>) =>
-        onChange({ blocks: { ...page.blocks, steps: { ...stepsBlock, items: items.map((x) => (x.id === sid ? { ...x, ...p } : x)) } } });
-      return (
-        <>
-          <Note>{t("stepsNote")}</Note>
-          <FormField label={t("stepsTitle")} placeholder={t("stepsTitlePlaceholder")} value={stepsBlock.title ?? ""} onChange={(e) => onChange({ blocks: { ...page.blocks, steps: { ...stepsBlock, title: e.target.value } } })} />
-          {items.map((it, i) => (
-            <ItemCard
-              key={it.id}
-              title={it.title.trim() || t("stepN", { n: i + 1 })}
-              removeLabel={t("removeStep", { name: it.title.trim() || t("stepN", { n: i + 1 }) })}
-              onRemove={() => onChange({ blocks: { ...page.blocks, steps: { ...stepsBlock, items: items.filter((x) => x.id !== it.id) } } })}
-            >
-              <FormField label={t("stepTitle")} value={it.title} onChange={(e) => patchStep(it.id, { title: e.target.value })} />
-              <FormField label={t("stepDetail")} variant="textarea" rows={2} value={it.detail ?? ""} onChange={(e) => patchStep(it.id, { detail: e.target.value })} />
-            </ItemCard>
-          ))}
-          <AddButton onClick={() => onChange({ blocks: { ...page.blocks, steps: { ...stepsBlock, items: [...items, { id: newId("st"), title: "" }] } } })}>
-            {t("addStep")}
-          </AddButton>
-        </>
-      );
-    }
-
-    case "text": {
-      const textBlock = page.blocks?.text ?? { body: "" };
-      return (
-        <>
-          <Note>{t("textNote")}</Note>
-          <FormField label={t("textTitle")} value={textBlock.title ?? ""} onChange={(e) => onChange({ blocks: { ...page.blocks, text: { ...textBlock, title: e.target.value } } })} />
-          <FormField label={t("textBody")} variant="textarea" rows={5} value={textBlock.body} onChange={(e) => onChange({ blocks: { ...page.blocks, text: { ...textBlock, body: e.target.value } } })} />
-        </>
-      );
-    }
-
-    case "cta": {
-      const cta = page.blocks?.cta ?? { title: "" };
-      return (
-        <>
-          <Note>{t("ctaNote")}</Note>
-          <FormField label={t("ctaTitle")} value={cta.title} onChange={(e) => onChange({ blocks: { ...page.blocks, cta: { ...cta, title: e.target.value } } })} />
-          <FormField label={t("ctaLine")} value={cta.line ?? ""} onChange={(e) => onChange({ blocks: { ...page.blocks, cta: { ...cta, line: e.target.value } } })} />
-          <FormField label={t("ctaButton")} placeholder={t("ctaButtonPlaceholder")} value={cta.button ?? ""} onChange={(e) => onChange({ blocks: { ...page.blocks, cta: { ...cta, button: e.target.value } } })} />
         </>
       );
     }
@@ -486,7 +304,7 @@ export function InfoRows({ ctx }: { ctx: EditorCtx }) {
   return (
     <>
       {page.info.map((f, i) => (
-        <ItemCard
+        <ItemGroup
           key={f.id}
           title={f.label.trim() || t("infoN", { n: i + 1 })}
           removeLabel={t("removeInfo", { name: f.label.trim() || t("infoN", { n: i + 1 }) })}
@@ -494,119 +312,9 @@ export function InfoRows({ ctx }: { ctx: EditorCtx }) {
         >
           <FormField label={t("infoLabel")} placeholder={t("infoLabelPlaceholder")} value={f.label} onChange={(e) => onChange({ info: page.info.map((x) => (x.id === f.id ? { ...x, label: e.target.value } : x)) })} />
           <FormField label={t("infoValue")} value={f.value} onChange={(e) => onChange({ info: page.info.map((x) => (x.id === f.id ? { ...x, value: e.target.value } : x)) })} />
-        </ItemCard>
+        </ItemGroup>
       ))}
       <AddButton onClick={() => onChange({ info: [...page.info, { id: newId("i"), label: "", value: "" }] })}>{t("addInfo")}</AddButton>
     </>
-  );
-}
-
-/**
- * A portrait for a person on the bill. With portraits the page draws a photo
- * grid; without, a clean list — never a placeholder face
- * (docs/product-page.md §3.5). Mock layer: the picked file is shrunk to a small
- * JPEG data URL so it is kept with the page, the same way the cover upload works.
- */
-function PortraitField({
-  name,
-  url,
-  onChange,
-  shape = "portrait",
-}: {
-  name: string;
-  url?: string;
-  onChange: (url: string | undefined) => void;
-  /** A sponsor's logo is wide and sits contained on white, not cropped to a face. */
-  shape?: "portrait" | "logo";
-}) {
-  const t = useTranslations("catalog.page");
-  const tm = useTranslations("catalog.item");
-  const toast = useToast();
-  const file = useRef<HTMLInputElement>(null);
-  const k = shape === "logo" ? "logo" : "portrait";
-  return (
-    <div className="flex items-center gap-comfortable">
-      <span
-        aria-hidden
-        className={cn(
-          "block shrink-0 rounded-inner border border-line bg-muted-wash bg-center",
-          shape === "logo" ? "h-14 w-24 bg-contain bg-no-repeat" : "h-14 w-12 bg-cover",
-        )}
-        style={url ? { backgroundImage: `url("${url}")` } : undefined}
-      />
-      <div className="flex flex-wrap gap-tight">
-        <Button variant="secondary" size="sm" icon={<ImagePlus size={15} strokeWidth={1.5} aria-hidden />} onClick={() => file.current?.click()} aria-label={t(url ? `${k}ReplaceFor` : `${k}AddFor`, { name })}>
-          {url ? t(`${k}Replace`) : t(`${k}Add`)}
-        </Button>
-        {url && (
-          <Button variant="secondary" size="sm" onClick={() => onChange(undefined)} aria-label={t(`${k}RemoveFor`, { name })}>
-            {t(`${k}Remove`)}
-          </Button>
-        )}
-      </div>
-      <input
-        ref={file}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) fileToStoredImage(f, 640).then(onChange, () => toast.error(tm("imageUnreadable")));
-          e.target.value = "";
-        }}
-      />
-    </div>
-  );
-}
-
-/** One typed web address. It shows the service it goes to once it reads as one, and says so when it does not. */
-function LinkField({ label, help, placeholder, value, onChange }: { label: string; help?: string; placeholder: string; value: string; onChange: (v: string) => void }) {
-  const t = useTranslations("catalog.page");
-  const href = externalHref(value);
-  return (
-    <FormField
-      label={label}
-      help={help}
-      placeholder={placeholder}
-      value={value}
-      inputMode="url"
-      autoComplete="off"
-      prefix={<BrandIcon platform={href ? linkPlatform(href) : "website"} size={16} />}
-      error={value.trim() && !href ? t("linkInvalid") : undefined}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  );
-}
-
-/** Any number of links for a person or organisation: social accounts, a website. */
-function LinkRows({ links = [], onChange }: { links?: ExternalLink[]; onChange: (links: ExternalLink[]) => void }) {
-  const t = useTranslations("catalog.page");
-  return (
-    <div className="grid gap-tight">
-      <span className="text-sm font-medium text-fg">{t("linksLabel")}</span>
-      {links.map((l, i) => (
-        <div key={l.id} className="flex items-start gap-tight">
-          <div className="min-w-0 flex-1">
-            <LinkField
-              label={t("linkN", { n: i + 1 })}
-              placeholder={t("linkPlaceholder")}
-              value={l.url}
-              onChange={(url) => onChange(links.map((x) => (x.id === l.id ? { ...x, url } : x)))}
-            />
-          </div>
-          <Button
-            variant="tertiary"
-            size="icon"
-            aria-label={t("removeLink", { n: i + 1 })}
-            title={t("removeLink", { n: i + 1 })}
-            onClick={() => onChange(links.filter((x) => x.id !== l.id))}
-            className="mt-6 shrink-0 text-muted hover:text-danger"
-          >
-            <Trash2 size={15} strokeWidth={1.5} aria-hidden />
-          </Button>
-        </div>
-      ))}
-      <AddButton onClick={() => onChange([...links, { id: newId("ln"), url: "" }])}>{t("addLink")}</AddButton>
-    </div>
   );
 }

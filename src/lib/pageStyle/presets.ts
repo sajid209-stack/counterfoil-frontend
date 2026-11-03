@@ -1,15 +1,66 @@
 import type { PageStyle } from "@/lib/api/types";
+import type { ResolvedStyle } from "./resolve";
+import { fontIdFromCss } from "./fontMeta";
 
 /**
- * Named palettes and complete starting styles (docs/page-style.md §4).
- *
- * A palette is five colours that have been tried together. A preset is a whole
- * style — palette, type pair, shape and layout — so an operator starts from a
- * page somebody designed rather than from a blank one, then changes what they
- * like. Ids are stored on the record (`PageStyle.palette` / `.preset`) only so
- * the editor can show which one is in use; the colours themselves are copied.
+ * What the Design tab offers (docs/page-design.md). Everything an operator
+ * picks is one of these; the style fields they write are the ones below.
  */
-export interface Palette {
+
+/** The three page layouts, as `style.hero`. */
+export const LAYOUTS = ["cover", "split", "editorial"] as const;
+export type LayoutId = (typeof LAYOUTS)[number];
+
+/** The three grounds. Surface and text are not stored with them: clearing both
+ *  lets the resolver derive cards and readable text from the ground. */
+export const BACKGROUNDS = [
+  { id: "light", hex: "#ffffff" },
+  { id: "warm", hex: "#faf6f0" },
+  { id: "dark", hex: "#0d0d10" },
+] as const;
+export type BackgroundId = (typeof BACKGROUNDS)[number]["id"];
+
+/** Eight accents, chosen to read as a button on all three grounds. */
+export const ACCENTS = [
+  { id: "ink", hex: "#161616" },
+  { id: "orange", hex: "#c2410c" },
+  { id: "red", hex: "#b91c1c" },
+  { id: "rose", hex: "#be185d" },
+  { id: "purple", hex: "#7e22ce" },
+  { id: "blue", hex: "#1d4ed8" },
+  { id: "teal", hex: "#0f766e" },
+  { id: "green", hex: "#15803d" },
+] as const;
+
+/** The six named type styles. The operator never sees a face name or pairing. */
+export const FONT_STYLES = [
+  { id: "modern", heading: "jakarta", body: "jakarta", headingCase: "normal" },
+  { id: "clean", heading: "sora", body: "inter", headingCase: "normal" },
+  { id: "classic", heading: "playfair", body: "work-sans", headingCase: "normal" },
+  { id: "elegant", heading: "cormorant", body: "lora", headingCase: "normal" },
+  { id: "bold", heading: "archivo-black", body: "plex", headingCase: "normal" },
+  { id: "poster", heading: "bebas", body: "figtree", headingCase: "upper" },
+] as const;
+export type FontStyleId = (typeof FONT_STYLES)[number]["id"];
+
+/** The fields a font style writes. `headingWeight` is cleared so the face's own weight is used. */
+export const fontStylePatch = (id: FontStyleId): PageStyle => {
+  const f = FONT_STYLES.find((x) => x.id === id)!;
+  return { headingFont: f.heading, bodyFont: f.body, headingCase: f.headingCase, headingWeight: undefined };
+};
+
+/** The fields a background writes: surface and text are cleared so they are derived. */
+export const backgroundPatch = (id: BackgroundId): PageStyle => ({
+  background: BACKGROUNDS.find((x) => x.id === id)!.hex,
+  surface: undefined,
+  text: undefined,
+});
+
+/*
+ * LEGACY, dev only: `?ps=<id>` in src/app/s/_components/sf.tsx still reads
+ * PRESETS. Nothing in the editor offers these any more.
+ */
+interface Palette {
   id: string;
   primary: string;
   secondary: string;
@@ -18,7 +69,7 @@ export interface Palette {
   text: string;
 }
 
-export const PALETTES: Palette[] = [
+const PALETTES: Palette[] = [
   { id: "paper", primary: "#161616", secondary: "#c2410c", background: "#ffffff", surface: "#f6f6f4", text: "#161616" },
   { id: "matcha", primary: "#3f6b35", secondary: "#b07a1f", background: "#f6f4ec", surface: "#ffffff", text: "#1f2a1c" },
   { id: "clay", primary: "#a8462a", secondary: "#2f5d62", background: "#faf5ef", surface: "#ffffff", text: "#2b1d16" },
@@ -33,10 +84,10 @@ export const PALETTES: Palette[] = [
   { id: "ink", primary: "#f4f1ea", secondary: "#e2a03f", background: "#16140f", surface: "#211e17", text: "#f4f1ea" },
 ];
 
-export const paletteById = (id: string | undefined) => PALETTES.find((p) => p.id === id);
+const paletteById = (id: string | undefined) => PALETTES.find((p) => p.id === id);
 
 /** The colours of a palette as style fields. */
-export const paletteStyle = (p: Palette): PageStyle => ({
+const paletteStyle = (p: Palette): PageStyle => ({
   palette: p.id,
   primary: p.primary,
   secondary: p.secondary,
@@ -119,3 +170,21 @@ export const PRESETS: Preset[] = [
 ];
 
 export const presetById = (id: string | undefined) => PRESETS.find((p) => p.id === id);
+
+/* ── reading the current choice back from a resolved style ───────────────── */
+
+/** Which named type style a resolved style is showing, if any. Read from the
+ *  resolved heading face so an old page's look (a Poster look draws Bebas in
+ *  capitals) shows the matching card selected. */
+export function fontStyleOf(r: Pick<ResolvedStyle, "headingFont" | "headingCase">): FontStyleId | null {
+  const id = fontIdFromCss(r.headingFont);
+  if (!id) return null;
+  const hit = FONT_STYLES.find((f) => f.heading === id && f.headingCase === r.headingCase) ?? FONT_STYLES.find((f) => f.heading === id);
+  return hit?.id ?? null;
+}
+
+export const backgroundOf = (r: Pick<ResolvedStyle, "colours">): BackgroundId | null =>
+  BACKGROUNDS.find((b) => b.hex === r.colours.ground.bg.toLowerCase())?.id ?? null;
+
+export const accentOf = (r: Pick<ResolvedStyle, "colours">): string | null =>
+  ACCENTS.find((a) => a.hex === r.colours.accent.toLowerCase())?.id ?? null;

@@ -39,7 +39,6 @@ export const LOOK_KEY: Record<PageLook, string> = {
 export const ALL_PAGE_SECTIONS: PageSectionId[] = [
   "hero",
   "countdown",
-  "stats",
   "highlights",
   "about",
   "included",
@@ -51,13 +50,19 @@ export const ALL_PAGE_SECTIONS: PageSectionId[] = [
   "faq",
   "venue",
   "sponsors",
-  "quote",
   "host",
-  "steps",
-  "text",
-  "cta",
   "tickets",
 ];
+
+/** Sections the page no longer draws or offers (docs/page-design.md): Numbers,
+ *  How it works, Extra text, Quote and Call to action. Old records may still
+ *  list them and still carry their words; they are simply never drawn. */
+export const RETIRED_SECTIONS: PageSectionId[] = ["stats", "steps", "text", "quote", "cta"];
+
+export const isRetiredSection = (id: PageSectionId) => RETIRED_SECTIONS.includes(id);
+
+/** A section list without the retired ones. Same array when there are none. */
+export const liveSections = (list: PageSectionId[]): PageSectionId[] => (list.some(isRetiredSection) ? list.filter((s) => !isRetiredSection(s)) : list);
 
 /** Kept for callers written before revision 2. */
 export const STANDARD_SECTIONS = ALL_PAGE_SECTIONS;
@@ -109,8 +114,13 @@ export function lookDefaults(look: PageLook): Pick<ProductPage, "accent" | "disp
   return { accent: cat.theme.accent, displayFont: cat.theme.display, bodyFont: cat.theme.body, variant: cat.variants[0] };
 }
 
-/** The booking's page as it will be drawn: what was designed, or the default. */
-export const pageOf = (p: Pick<Product, "bookingType" | "event" | "page">): ProductPage => p.page ?? defaultPage(p);
+/** The booking's page as it will be drawn: what was designed, or the default,
+ *  with the retired sections taken out of its list. */
+export function pageOf(p: Pick<Product, "bookingType" | "event" | "page">): ProductPage {
+  const page = p.page ?? defaultPage(p);
+  const sections = liveSections(page.sections);
+  return sections === page.sections ? page : { ...page, sections };
+}
 
 /**
  * The countdown as it will be drawn, or null when there is none to draw:

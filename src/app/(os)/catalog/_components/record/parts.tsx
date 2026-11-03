@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Check, Copy, ExternalLink, Globe, Link2, Store } from "lucide-react";
 import { Button, ButtonLink, Card, Notice } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { isCreatedInThisBrowser, onPublishState, publishStateOf, retryPublishing, type Location, type Product, type ProductPage } from "@/lib/api";
+import { isCreatedInThisBrowser, type EventDay, onPublishState, publishStateOf, retryPublishing, type Location, type Product, type ProductPage } from "@/lib/api";
 import { isSlugFree, isSlugValid } from "@/lib/api/products";
 import { PageDesigner } from "../page/PageDesigner";
 import { SellChannels, type OnlineChoice } from "../sell/SellChannels";
@@ -102,6 +102,7 @@ export function PageTab({
   online,
   onPage,
   onDescription,
+  onDays,
   onEditDetails,
   onEditTickets,
   onGoWhere,
@@ -112,6 +113,7 @@ export function PageTab({
   online: OnlineChoice;
   onPage: (next: ProductPage) => void;
   onDescription: (next: string) => void;
+  onDays: (days: EventDay[]) => void;
   onEditDetails: () => void;
   onEditTickets: () => void;
   onGoWhere: () => void;
@@ -131,7 +133,7 @@ export function PageTab({
           {t("pageSamplesBody")}
         </Notice>
       )}
-      <PageDesigner product={draft} page={page} onPage={onPage} onDescription={onDescription} onEditDetails={onEditDetails} onEditTickets={onEditTickets} />
+      <PageDesigner product={draft} page={page} onPage={onPage} onDescription={onDescription} onDays={onDays} onEditDetails={onEditDetails} onEditTickets={onEditTickets} />
     </div>
   );
 }

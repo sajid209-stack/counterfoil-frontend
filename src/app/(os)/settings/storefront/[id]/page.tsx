@@ -33,7 +33,8 @@ import {
 import { FoldOnPhone } from "../../_components/FoldOnPhone";
 import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, Switch, controlCls } from "../../_components/SettingsKit";
 import { ACCENT_COLORS, COLOR_DOT } from "../_components/ColorPicker";
-import { StylePanel, styleErrors } from "@/components/pageStyle/StylePanel";
+import { DesignPanel } from "@/components/pageStyle/DesignPanel";
+import { storefrontStyle, styleErrors } from "@/lib/pageStyle/resolve";
 import type { PageStyle } from "@/lib/api/types";
 
 interface Draft {
@@ -646,7 +647,7 @@ export default function StorefrontEditorPage() {
 
           <SettingsSection title={t("storefront.lookAndFeelTitle")} description={t("storefront.lookAndFeelDesc")}>
             <div className="px-card py-section">
-              <StylePanel value={form.style} onChange={(s) => set({ style: s })} scope="storefront" />
+              <DesignPanel value={form.style} resolved={storefrontStyle({ accent: form.accent, style: form.style })} onChange={(s) => set({ style: s })} scope="storefront" />
             </div>
           </SettingsSection>
 

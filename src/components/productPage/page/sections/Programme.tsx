@@ -2,7 +2,8 @@
 
 import { useId, useState, type KeyboardEvent } from "react";
 import { useTranslations } from "next-intl";
-import type { EventLineupEntry } from "@/lib/api/events";
+import { eventDays, spansDays, type EventLineupEntry } from "@/lib/api/events";
+import { formatClockRange } from "@/lib/format";
 import { usePage } from "../context";
 import { Section } from "../Section";
 import { clean, dayGroups, isRoute, programmeOf, sidesOf, timeLabel, type DayGroup } from "./helpers";
@@ -10,9 +11,10 @@ import { clean, dayGroups, isRoute, programmeOf, sidesOf, timeLabel, type DayGro
 const LINE = "1px solid var(--pg-line)";
 
 /**
- * Programme: what happens and when. Day tabs when the event has days; rows with
- * a fixed time column; fixtures ("A vs B") drawn as two sides around a centred
- * "vs"; and, on the Journey look, a vertical route.
+ * Programme: what happens and when. Day tabs when the event has days (the
+ * label, the date and that day's hours); rows with a fixed time column that
+ * never wraps; fixtures ("A vs B") set on one line, left-aligned under the same
+ * column as every other row; and, on the Journey look, a vertical route.
  */
 export function ProgrammeSection() {
   const ctx = usePage();
@@ -43,40 +45,40 @@ function Rows({ entries }: { entries: EventLineupEntry[] }) {
     <ol className="m-0 list-none p-0">
       {entries.map((e, i) => {
         const sides = sidesOf(e.name);
+        const time = timeLabel(e.at);
+        /* A clock time never wraps; a word ("Evening") may. */
+        const clock = /\d{1,2}:\d{2}/.test(time);
         return (
           <li
             key={e.id}
-            className="grid items-start gap-x-4 py-4"
-            style={{ gridTemplateColumns: "88px minmax(0, 1fr)", borderTop: i ? LINE : "none" }}
+            className="grid items-baseline gap-x-3 py-4 sm:gap-x-4"
+            style={{ gridTemplateColumns: "84px minmax(0, 1fr)", borderTop: i ? LINE : "none" }}
           >
-            <span className="text-[15px] font-semibold leading-6" style={{ color: "var(--pg-ink)", fontVariantNumeric: "tabular-nums" }}>
-              {timeLabel(e.at)}
+            <span
+              className="text-[14px] font-semibold leading-6 sm:text-[15px]"
+              style={{ color: "var(--pg-ink)", fontVariantNumeric: "tabular-nums", whiteSpace: clock ? "nowrap" : undefined }}
+            >
+              {time}
             </span>
             <div className="min-w-0">
-              {sides ? (
-                <div
-                  role="group"
-                  aria-label={t("pg.sec.versus", { a: sides[0], b: sides[1] })}
-                  className="grid items-center gap-3"
-                  style={{ gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)" }}
-                >
-                  <span className="text-right text-[16px] font-semibold leading-6" style={{ overflowWrap: "anywhere" }}>
+              {/* A fixture is one line of text, so both sides share a baseline
+                  and start under the time column; it wraps at the spaces between
+                  words, and "vs" is held to the word after it so it never ends
+                  a line on its own. */}
+              <p className="text-[16px] font-semibold leading-6" style={{ overflowWrap: "break-word" }}>
+                {sides ? (
+                  <>
                     {sides[0]}
-                  </span>
-                  <span className="pg-chip" aria-hidden>
-                    {t("pg.sec.vs")}
-                  </span>
-                  <span className="text-[16px] font-semibold leading-6" style={{ overflowWrap: "anywhere" }}>
+                    <span className="pg-muted mx-1.5 text-[13px] font-medium">{t("pg.sec.vs")}</span>
+                    {"\u00A0"}
                     {sides[1]}
-                  </span>
-                </div>
-              ) : (
-                <p className="text-[16px] font-semibold leading-6" style={{ overflowWrap: "anywhere" }}>
-                  {e.name}
-                </p>
-              )}
+                  </>
+                ) : (
+                  e.name
+                )}
+              </p>
               {clean(e.role) && (
-                <p className="pg-meta mt-0.5" style={{ textAlign: sides ? "center" : "left", overflowWrap: "anywhere" }}>
+                <p className="pg-meta mt-0.5" style={{ overflowWrap: "break-word" }}>
                   {e.role}
                 </p>
               )}
@@ -88,10 +90,26 @@ function Rows({ entries }: { entries: EventLineupEntry[] }) {
   );
 }
 
+/** Each day's own hours, keyed like the day groups: "9:00 AM – 9:00 PM" where
+ *  the day carries both, the opening time alone where it carries one. */
+function dayHours(ev: Parameters<typeof eventDays>[0]): Map<string, string> {
+  const out = new Map<string, string>();
+  if (!spansDays(ev)) return out;
+  for (const d of eventDays(ev)) {
+    const from = d.startTime?.trim();
+    const to = d.endTime?.trim();
+    if (from && to) out.set(d.id, formatClockRange(from, to));
+    else if (from) out.set(d.id, timeLabel(from));
+  }
+  return out;
+}
+
 /* ── day tabs ────────────────────────────────────────────────────────── */
 
 function DayTabs({ groups }: { groups: DayGroup[] }) {
+  const ctx = usePage();
   const t = useTranslations("storefront");
+  const hours = dayHours(ctx.ev);
   const base = useId();
   const [active, setActive] = useState(0);
   const at = Math.min(active, groups.length - 1);
@@ -141,15 +159,20 @@ function DayTabs({ groups }: { groups: DayGroup[] }) {
               tabIndex={on ? 0 : -1}
               onClick={() => setActive(i)}
               onKeyDown={(e) => onKey(e, i)}
-              className="flex min-h-12 shrink-0 flex-col items-start justify-center rounded-xl px-4 py-1.5 text-left transition-colors motion-reduce:transition-none"
+              className="flex min-h-12 shrink-0 flex-col items-start justify-center rounded-[var(--ps-radius-control,12px)] px-4 py-1.5 text-left transition-colors motion-reduce:transition-none"
               style={{
                 background: on ? "var(--pg-fill)" : "transparent",
                 color: on ? "var(--pg-on-fill)" : "var(--pg-fg)",
                 border: `1px solid ${on ? "var(--pg-fill)" : "var(--pg-line)"}`,
               }}
             >
-              <span className="text-[15px] font-semibold leading-5">{g.label}</span>
-              {g.sub && <span className="text-[13px] leading-4">{g.sub}</span>}
+              <span className="whitespace-nowrap text-[15px] font-semibold leading-5">{g.label}</span>
+              {g.sub && <span className="whitespace-nowrap text-[13px] leading-4">{g.sub}</span>}
+              {hours.get(g.key) && (
+                <span className="whitespace-nowrap text-[13px] leading-4" style={{ fontVariantNumeric: "tabular-nums", opacity: 0.85 }}>
+                  {hours.get(g.key)}
+                </span>
+              )}
             </button>
           );
         })}

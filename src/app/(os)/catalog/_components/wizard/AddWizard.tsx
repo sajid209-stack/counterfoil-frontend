@@ -851,6 +851,7 @@ export function AddWizard({ locations: initialLocations, team, resources: initia
               onEditDetails={() => goTo("name")}
               onEditTickets={() => goTo("price")}
               onDescription={setDescription}
+              onDays={(days) => setEv((e) => ({ ...e, days }))}
             />
           )}
 

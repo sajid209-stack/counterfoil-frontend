@@ -1,9 +1,9 @@
 "use client";
 
+import { contrast } from "@/lib/storefront/theme";
 import { useState, type CSSProperties } from "react";
 import { CalendarPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { TypeIcon } from "@/app/s/_components/sf";
 import { calendarUrl } from "@/lib/events/calendar";
 import { formatPriceShort } from "@/lib/format";
 import { usePage, type PageCtx } from "./context";
@@ -11,29 +11,31 @@ import { canAddToCalendar, useHeroFacts, type HeroFact } from "./heroFacts";
 import { buildTicketRows, priceSummary, usePrimaryLabel, useTicketUnit } from "./ticketRows";
 
 /**
- * The hero: ONE component, three treatments chosen by the look
- * (docs/product-page.md §3.3).
+ * The hero: ONE component, three layouts chosen by the page's style
+ * (docs/page-design.md).
  *
- *   split      text left, media right at 4:3 (phone: media first, 16:10)
- *   cover      a full-bleed photo under a bottom scrim, text bottom-left in white
- *   editorial  the title first in the display face, a meta line, a wide photo
+ *   cover      the title over a full-width photo, under a scrim that keeps it
+ *              readable on any picture (an ornate dark one included)
+ *   split      "Classic": the title and details beside the photo (phone and
+ *              tablet: the photo first, then the text)
+ *   editorial  "Title first": the title, then the details, then a wide photo
  *
- * Every treatment carries the same things in the same order — title, tagline,
+ * Every layout carries the same things in the same order — title, tagline,
  * facts, countdown, the primary action with its price, add to calendar — so a
- * look changes how the page is composed, never what it says. It lays out by the
- * width of the page's OWN box (`ctx.layout`), so the designer's phone preview
- * on a wide screen lays out as a phone.
+ * layout changes how the page is composed, never what it says. It lays out by
+ * the width of the page's OWN box (`ctx.layout`), so the designer's phone
+ * preview on a wide screen lays out as a phone.
+ *
+ * With no photo (none set, or it will not load) each layout has its own honest
+ * fallback: split and editorial sit on a quiet panel with no picture frame,
+ * cover becomes a panel hero in the page's colours. Never a stock glyph in a
+ * grey box.
  */
 export function Hero() {
   const ctx = usePage();
-  /* The resolved style's hero wins — it falls back to the look's own hero when
-     nobody has chosen one (docs/page-style.md §2), so this covers every page
-     that existed before styles too. */
   const hero = ctx.style.hero;
   if (hero === "cover") return <CoverHero ctx={ctx} />;
   if (hero === "editorial") return <EditorialHero ctx={ctx} />;
-  if (hero === "collage") return <CollageHero ctx={ctx} />;
-  if (hero === "text") return <TextHero ctx={ctx} />;
   return <SplitHero ctx={ctx} />;
 }
 
@@ -41,6 +43,13 @@ export function Hero() {
 
 /** The booking's picture: the page's cover, else its first photo, else nothing. */
 const mediaUrl = (ctx: PageCtx): string | null => ctx.page.coverUrl || ctx.product.images[0]?.url || null;
+
+/** The picture to draw, or null when there is none or it failed to load. */
+function usePhoto(ctx: PageCtx): { url: string | null; onError: () => void } {
+  const url = mediaUrl(ctx);
+  const [failed, setFailed] = useState<string | null>(null);
+  return { url: url && failed !== url ? url : null, onError: () => setFailed(url) };
+}
 
 /** A long name steps down a size so it stays within about two lines. */
 function titleStyle(ctx: PageCtx): CSSProperties {
@@ -140,10 +149,10 @@ function Actions({ ctx, onPhoto }: { ctx: PageCtx; onPhoto?: boolean }) {
   const label = usePrimaryLabel(ctx);
   const unit = price !== null ? unitOf(sum.pt, price) : "";
 
-  /* On a photo a light page's accent-dark fill would sink into the scrim, so the
-     button turns white there; a dark look's fill already stands off its ground. */
-  const photoLightLook = onPhoto && ctx.look.mode === "light";
-  const ctaStyle: CSSProperties | undefined = photoLightLook ? { background: "#fff", color: "#111114" } : undefined;
+  /* Always the page's own colour: it is the one thing the operator chose for the
+     button. Only a near-black accent would sink into the scrim, and turns white. */
+  const sinks = onPhoto && contrast(ctx.style.colours.fill, "#111114") < 3;
+  const ctaStyle: CSSProperties | undefined = sinks ? { background: "#fff", color: "#111114" } : undefined;
 
   return (
     <div className="flex flex-col gap-4">
@@ -202,59 +211,70 @@ function CalendarLink({ ctx, onPhoto }: { ctx: PageCtx; onPhoto?: boolean }) {
   );
 }
 
-/** A photo, or — when there is none, or it will not load — a calm surface panel
- *  carrying the booking's own glyph. No stripes, no initials, no pattern. */
-function Picture({ ctx, aspect, className }: { ctx: PageCtx; aspect: string; className?: string }) {
-  const url = mediaUrl(ctx);
-  const [broken, setBroken] = useState(false);
-  const showImg = !!url && !broken;
+type Photo = ReturnType<typeof usePhoto>;
+
+/** The photo, or nothing. The frame follows the page's media radius. */
+function Picture({ photo, aspect }: { photo: Photo; aspect: string }) {
+  if (!photo.url) return null;
   return (
-    <div
-      className={`relative w-full overflow-hidden rounded-[16px] ${className ?? ""}`}
-      style={{ aspectRatio: aspect, background: "var(--pg-surface)", border: showImg ? undefined : "1px solid var(--pg-line)" }}
-    >
-      {showImg ? (
-        // eslint-disable-next-line @next/next/no-img-element -- bundled/local assets; next/image loader config avoided by design (see sf.tsx)
-        <img src={url} alt="" onError={() => setBroken(true)} className="absolute inset-0 h-full w-full object-cover" />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center" aria-hidden>
-          <span
-            className="flex h-24 w-24 items-center justify-center rounded-full"
-            style={{ background: "var(--pg-card)", color: "var(--pg-ink)", border: "1px solid var(--pg-line)" }}
-          >
-            <TypeIcon bookingType={ctx.product.bookingType} size={44} />
-          </span>
-        </div>
-      )}
+    <div className="pg-media relative w-full overflow-hidden" style={{ aspectRatio: aspect, background: "var(--pg-surface)" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets; next/image loader config avoided by design (see sf.tsx) */}
+      <img src={photo.url} alt="" onError={photo.onError} className="absolute inset-0 h-full w-full object-cover" />
     </div>
   );
 }
 
-/* ── split ───────────────────────────────────────────────────────────────── */
+/** The hero's ground when there is no photo to carry it: a quiet panel in the
+ *  page's own colours, full width, with a hairline under it. */
+function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <header className={className} style={{ background: "var(--pg-surface)", borderBottom: "1px solid var(--pg-line)" }}>
+      {children}
+    </header>
+  );
+}
 
-function SplitHero({ ctx }: { ctx: PageCtx }) {
-  const facts = useHeroFacts(ctx);
-  const side = ctx.layout === "desktop";
-  const body = (
+/** The text of the hero, in one column. */
+function Body({ ctx, facts, wide }: { ctx: PageCtx; facts: HeroFact[]; wide?: boolean }) {
+  return (
     <div className="flex min-w-0 flex-col gap-5">
       <Badge ctx={ctx} />
       <Title ctx={ctx} />
-      {ctx.ev.subtitle && <p className="pg-body pg-muted max-w-[56ch]">{ctx.ev.subtitle}</p>}
+      {ctx.ev.subtitle && <p className={`pg-body pg-muted ${wide ? "max-w-[60ch]" : "max-w-[56ch]"}`}>{ctx.ev.subtitle}</p>}
       <FactsRow facts={facts} />
       <CountdownRow ctx={ctx} />
       <Actions ctx={ctx} />
     </div>
   );
+}
+
+/* ── split ("Classic") ───────────────────────────────────────────────────── */
+
+function SplitHero({ ctx }: { ctx: PageCtx }) {
+  const facts = useHeroFacts(ctx);
+  const photo = usePhoto(ctx);
+  const side = ctx.layout === "desktop";
+  const body = <Body ctx={ctx} facts={facts} />;
+
+  if (!photo.url) {
+    return (
+      <Panel>
+        <div className="pg-container py-8 md:py-12">
+          <div className="max-w-[760px]">{body}</div>
+        </div>
+      </Panel>
+    );
+  }
   return (
     <header className="pg-container pb-8 pt-5 md:pb-12 md:pt-8">
       {side ? (
         <div className="grid items-center gap-12" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }}>
           {body}
-          <Picture ctx={ctx} aspect="4 / 3" />
+          <Picture photo={photo} aspect="4 / 3" />
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          <Picture ctx={ctx} aspect={ctx.layout === "tablet" ? "2 / 1" : "16 / 10"} />
+          <Picture photo={photo} aspect={ctx.layout === "tablet" ? "2 / 1" : "16 / 10"} />
           {body}
         </div>
       )}
@@ -262,67 +282,96 @@ function SplitHero({ ctx }: { ctx: PageCtx }) {
   );
 }
 
-/* ── editorial ───────────────────────────────────────────────────────────── */
+/* ── editorial ("Title first") ───────────────────────────────────────────── */
 
 function EditorialHero({ ctx }: { ctx: PageCtx }) {
   const facts = useHeroFacts(ctx);
-  return (
-    <header className="pg-container pb-8 pt-8 md:pb-12 md:pt-12">
-      <div className="flex max-w-[920px] flex-col gap-5">
-        <Badge ctx={ctx} />
-        <Title ctx={ctx} />
-        <FactsRow facts={facts} />
-        {ctx.ev.subtitle && <p className="pg-body pg-muted max-w-[60ch]">{ctx.ev.subtitle}</p>}
-        <CountdownRow ctx={ctx} />
-        <Actions ctx={ctx} />
-      </div>
-      <Picture ctx={ctx} aspect={ctx.layout === "phone" ? "16 / 10" : "21 / 9"} className="mt-8 md:mt-10" />
-    </header>
+  const photo = usePhoto(ctx);
+  const desktop = ctx.layout === "desktop";
+
+  /* Desktop: the title and tagline lead on the left; the details (facts,
+     countdown, the action) sit in a narrower column on the right, level with
+     the foot of the title. Narrower screens stack them in that order. */
+  const lead = (
+    <div className="flex min-w-0 flex-col gap-5">
+      <Badge ctx={ctx} />
+      <Title ctx={ctx} />
+      {ctx.ev.subtitle && <p className="pg-body pg-muted max-w-[60ch]">{ctx.ev.subtitle}</p>}
+    </div>
   );
+  const details = (
+    <div className="flex min-w-0 flex-col gap-5">
+      <FactsRow facts={facts} />
+      <CountdownRow ctx={ctx} />
+      <Actions ctx={ctx} />
+    </div>
+  );
+  const top = desktop ? (
+    <div className="grid items-end gap-14" style={{ gridTemplateColumns: "minmax(0,1.5fr) minmax(0,1fr)" }}>
+      {lead}
+      {details}
+    </div>
+  ) : (
+    <div className="flex max-w-[920px] flex-col gap-5">
+      {lead}
+      {details}
+    </div>
+  );
+  const inner = (
+    <div className="pg-container pb-8 pt-8 md:pb-12 md:pt-12">
+      {top}
+      {photo.url && (
+        <div className="mt-8 md:mt-10">
+          <Picture photo={photo} aspect={ctx.layout === "phone" ? "16 / 10" : "21 / 9"} />
+        </div>
+      )}
+    </div>
+  );
+  return photo.url ? <header>{inner}</header> : <Panel>{inner}</Panel>;
 }
 
 /* ── cover ───────────────────────────────────────────────────────────────── */
 
 function CoverHero({ ctx }: { ctx: PageCtx }) {
   const facts = useHeroFacts(ctx);
-  const url = mediaUrl(ctx);
-  const [broken, setBroken] = useState(false);
+  const photo = usePhoto(ctx);
   const phone = ctx.layout === "phone";
-  const showImg = !!url && !broken;
-  /* The scrim ends in the page's own ground, so no seam shows under the hero. */
+
+  /* No photo: a cover with nothing to cover is the same text on the page's own
+     panel, not a black slab. */
+  if (!photo.url) {
+    return (
+      <Panel>
+        <div className="pg-container py-10 md:py-16">
+          <div className="max-w-[860px]">
+            <Body ctx={ctx} facts={facts} wide />
+          </div>
+        </div>
+      </Panel>
+    );
+  }
+
+  /* The scrim is the black (or the dark page's own ground) at no less than
+     ~50% everywhere and deepest under the text, so white type reads on an
+     ornate or bright picture and no seam shows against a dark page. */
   const base = ctx.look.mode === "dark" ? "13 13 16" : "0 0 0";
   return (
-    <header className="pg-on-photo relative isolate overflow-hidden text-white" style={{ minHeight: phone ? 400 : ctx.layout === "tablet" ? 460 : 500 }}>
-      {/* The ground: a photo, or one dark colour with a single soft accent light. */}
-      {showImg ? (
-        // eslint-disable-next-line @next/next/no-img-element -- bundled/local assets; next/image loader config avoided by design (see sf.tsx)
-        <img src={url} alt="" onError={() => setBroken(true)} className="absolute inset-0 -z-20 h-full w-full object-cover" />
-      ) : (
-        <div
-          aria-hidden
-          className="absolute inset-0 -z-20"
-          style={{
-            background:
-              "radial-gradient(ellipse 55% 75% at 88% 8%, color-mix(in srgb, var(--pg-accent) 30%, transparent), transparent 70%), #0d0d10",
-          }}
-        />
-      )}
-      {/* The scrim: dark enough under the text to read it on any photo. */}
+    <header className="pg-on-photo relative isolate overflow-hidden text-white" style={{ minHeight: phone ? 420 : ctx.layout === "tablet" ? 480 : 540 }}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets; next/image loader config avoided by design (see sf.tsx) */}
+      <img src={photo.url} alt="" onError={photo.onError} className="absolute inset-0 -z-20 h-full w-full object-cover" />
       <div
         aria-hidden
         className="absolute inset-0 -z-10"
         style={{
-          background: showImg
-            ? `linear-gradient(to top, rgb(${base} / 0.92) 0%, rgb(${base} / 0.8) 45%, rgb(${base} / 0.62) 72%, rgb(${base} / 0.28) 100%)`
-            : undefined,
+          background: `linear-gradient(to top, rgb(${base} / 0.9) 0%, rgb(${base} / 0.72) 42%, rgb(${base} / 0.38) 74%, rgb(${base} / 0.18) 100%)`,
         }}
       />
       <div className="pg-container flex items-end" style={{ minHeight: "inherit" }}>
-        <div className="flex max-w-[860px] flex-col gap-4 pb-8 pt-24 md:gap-5 md:pb-12" style={{ textShadow: "0 1px 14px rgb(0 0 0 / 0.45)" }}>
+        <div className="flex max-w-[860px] flex-col gap-4 pb-8 pt-24 md:gap-5 md:pb-12" style={{ textShadow: "0 1px 14px rgb(0 0 0 / 0.5)" }}>
           <Badge ctx={ctx} onPhoto />
           <Title ctx={ctx} />
           {ctx.ev.subtitle && (
-            <p className="pg-body max-w-[56ch]" style={{ color: "rgb(255 255 255 / 0.9)" }}>
+            <p className="pg-body max-w-[56ch]" style={{ color: "rgb(255 255 255 / 0.92)" }}>
               {ctx.ev.subtitle}
             </p>
           )}
@@ -332,76 +381,6 @@ function CoverHero({ ctx }: { ctx: PageCtx }) {
             <Actions ctx={ctx} onPhoto />
           </div>
         </div>
-      </div>
-    </header>
-  );
-}
-
-/* ── collage ─────────────────────────────────────────────────────────────── */
-
-/** Title beside a 3-photo collage; falls back to split with fewer than 3
- *  (docs/page-style.md §5). */
-function CollageHero({ ctx }: { ctx: PageCtx }) {
-  const facts = useHeroFacts(ctx);
-  const photos = ctx.product.images.slice(0, 3);
-  if (photos.length < 3) return <SplitHero ctx={ctx} />;
-  const side = ctx.layout === "desktop";
-  const body = (
-    <div className="flex min-w-0 flex-col gap-5">
-      <Badge ctx={ctx} />
-      <Title ctx={ctx} />
-      {ctx.ev.subtitle && <p className="pg-body pg-muted max-w-[56ch]">{ctx.ev.subtitle}</p>}
-      <FactsRow facts={facts} />
-      <CountdownRow ctx={ctx} />
-      <Actions ctx={ctx} />
-    </div>
-  );
-  const collage = (
-    <div className="grid grid-cols-2 gap-3" style={{ gridTemplateRows: "repeat(2, minmax(0,1fr))", aspectRatio: side ? "5 / 4" : "16 / 11" }}>
-      <div className="relative row-span-2 overflow-hidden " style={{ background: "var(--ps-panel)", borderRadius: "var(--ps-radius-media)" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets */}
-        <img src={photos[0].url} alt="" className="absolute inset-0 h-full w-full object-cover" />
-      </div>
-      {photos.slice(1).map((p) => (
-        <div key={p.id} className="relative overflow-hidden " style={{ background: "var(--ps-panel)", borderRadius: "var(--ps-radius-media)" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets */}
-          <img src={p.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        </div>
-      ))}
-    </div>
-  );
-  return (
-    <header className="pg-container pb-8 pt-5 md:pb-12 md:pt-8">
-      {side ? (
-        <div className="grid items-center gap-12" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }}>
-          {body}
-          {collage}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-6">
-          {collage}
-          {body}
-        </div>
-      )}
-    </header>
-  );
-}
-
-/* ── text ────────────────────────────────────────────────────────────────── */
-
-/** No media: title, tagline, facts, CTAs on a panel band — compact
- *  (docs/page-style.md §5, §6: whitespace rules). */
-function TextHero({ ctx }: { ctx: PageCtx }) {
-  const facts = useHeroFacts(ctx);
-  return (
-    <header className="pg-container" style={{ background: "var(--ps-panel)" }}>
-      <div className="flex max-w-[760px] flex-col gap-4 py-8 md:py-12">
-        <Badge ctx={ctx} />
-        <Title ctx={ctx} />
-        {ctx.ev.subtitle && <p className="pg-body pg-muted max-w-[56ch]">{ctx.ev.subtitle}</p>}
-        <FactsRow facts={facts} />
-        <CountdownRow ctx={ctx} />
-        <Actions ctx={ctx} />
       </div>
     </header>
   );

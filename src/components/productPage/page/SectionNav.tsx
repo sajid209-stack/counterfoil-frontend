@@ -25,7 +25,7 @@ const labelOf = (id: PageSectionId, labels: PageCtx["labels"]): string | null =>
     case "sponsors": return labels.sponsors;
     case "faq": return labels.faq;
     case "tickets": return labels.tickets;
-    default: return null; // hero, countdown and stats are not places to jump to
+    default: return null; // hero and countdown are not places to jump to
   }
 };
 

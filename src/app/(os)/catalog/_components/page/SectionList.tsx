@@ -5,11 +5,9 @@ import { useTranslations } from "next-intl";
 import {
   ArrowDown,
   ArrowUp,
-  ChevronDown,
   CalendarClock,
+  ChevronDown,
   Clock,
-  Eye,
-  EyeOff,
   FileText,
   GripVertical,
   HelpCircle,
@@ -19,28 +17,24 @@ import {
   ListChecks,
   MapPin,
   Play,
+  Plus,
   Sparkles,
   Ticket,
   Users,
-  Hash,
   Handshake,
-  Quote,
   UserRound,
-  ListOrdered,
-  AlignLeft,
-  Megaphone,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import type { EventDay } from "@/lib/api/events";
 import type { PageSectionId, Product, ProductPage } from "@/lib/api/types";
-import { canMove, edited, isRequired, keepSample, moveBefore, moveSection, rowHasSample, rowsOf, sectionFill, toggleCountdownRow, toggleSection } from "./pageOps";
+import { addSection, canMove, edited, isRequired, keepSample, moveBefore, moveSection, removeSection, rowHasSample, rowsOf, sectionFill } from "./pageOps";
 import { SectionBody, type EditorCtx } from "./SectionEditors";
 
-const ICON: Record<PageSectionId, LucideIcon> = {
+const ICON: Partial<Record<PageSectionId, LucideIcon>> = {
   hero: ImageIcon,
   countdown: Clock,
-  stats: Hash,
   highlights: Sparkles,
   about: FileText,
   included: ListChecks,
@@ -53,18 +47,69 @@ const ICON: Record<PageSectionId, LucideIcon> = {
   tickets: Ticket,
   venue: MapPin,
   faq: HelpCircle,
-  quote: Quote,
   host: UserRound,
-  steps: ListOrdered,
-  text: AlignLeft,
-  cta: Megaphone,
 };
 
+type T = ReturnType<typeof useTranslations>;
+
+/** One short line saying what a section holds right now. It is a fact about the
+ *  page, never help: "3 points", "Empty", "Sample text". */
+function stateOf(id: PageSectionId, product: Product, page: ProductPage, t: T): string {
+  if (rowHasSample(page, id)) return t("state.sample");
+  const fill = sectionFill(id, product, page);
+  if (fill === "empty") return t("state.empty");
+  const n = (count: number) => ({ count });
+  switch (id) {
+    case "hero":
+      return page.tagline?.trim() || t("state.hero");
+    case "tickets":
+      return t("state.tickets", n(product.tiers.filter((x) => x.active).length));
+    case "countdown":
+      return page.countdown?.mode === "date" ? t("state.countdownDate") : t("state.countdownStart");
+    case "highlights":
+      return t("state.highlights", n(page.highlights.filter((h) => h.label.trim()).length));
+    case "about":
+      return t("state.about");
+    case "included":
+      return t("state.tickets", n(product.tiers.filter((x) => x.active && (x.note?.trim() || (x.perks?.length ?? 0) > 0)).length));
+    case "know":
+      return page.info.some((i) => i.label.trim() && i.value.trim())
+        ? t("state.knowMore", n(page.info.filter((i) => i.label.trim() && i.value.trim()).length))
+        : t("state.know");
+    case "lineup":
+    case "schedule":
+      return t("state.lineup", n(page.lineup.filter((l) => l.name.trim()).length));
+    case "gallery":
+      return t("state.gallery", n(product.images.length));
+    case "video":
+      return t("state.video");
+    case "venue":
+      return product.event?.venueName?.trim() || t("state.venue");
+    case "faq":
+      return t("state.faq", n(page.faq.filter((f) => f.q.trim() && f.a.trim()).length));
+    case "sponsors":
+      return t("state.sponsors", n(page.sponsors.filter((s) => s.name.trim()).length));
+    case "host":
+      return page.blocks?.host?.name.trim() || t("state.empty");
+    default:
+      return "";
+  }
+}
+
 /**
- * The sections of the page, in the order the page draws them, with the hidden
- * ones listed after. Each row is the whole control for one section: where it
- * sits (a drag handle AND move up / move down — dragging is never the only
- * way), whether it shows, and the words in it, edited in place.
+ * The sections of the page (docs/page-design.md).
+ *
+ * "On your page" is the sections that show, in the order the page draws them.
+ * Each row is ONE button that opens its editor, and only one editor is open at
+ * a time. Where a section sits is changed at the foot of its open editor (Move
+ * up, Move down), beside Remove from page, so a row carries nothing but a drag
+ * handle, an icon, a name, a line saying what is in it, and a chevron: it never
+ * wraps in a 360px column. Dragging is optional; Move up and Move down do the
+ * same job from the keyboard.
+ *
+ * "Add to your page" is a wrap of chips for the rest. Pressing one puts the
+ * section on the page and opens it, so a section can no longer be filled in
+ * while hidden.
  */
 export function SectionList({
   product,
@@ -73,6 +118,7 @@ export function SectionList({
   onDescription,
   onEditDetails,
   onEditTickets,
+  onDays,
 }: {
   product: Product;
   page: ProductPage;
@@ -80,13 +126,16 @@ export function SectionList({
   onDescription?: (next: string) => void;
   onEditDetails?: () => void;
   onEditTickets?: () => void;
+  /** Writes the event's days (`product.event.days`): a day's name and hours,
+   *  edited in the Programme. Without it the Programme edits sessions only. */
+  onDays?: (days: EventDay[]) => void;
 }) {
   const t = useTranslations("catalog.page");
   const [open, setOpen] = useState<string>("");
   const [dragId, setDragId] = useState<PageSectionId | null>(null);
   const list = useRef<HTMLDivElement>(null);
   const refocus = useRef<string | null>(null);
-  const { shown, hidden } = rowsOf(page);
+  const { shown, hidden: available } = rowsOf(page);
 
   /* After a move the row is at a new place; hand the keyboard back to the same
      button (or its partner when it has hit an end), so Move up can be pressed
@@ -102,30 +151,23 @@ export function SectionList({
 
   const labelOf = (id: PageSectionId) => t(`section.${id}`);
 
-  /* The countdown settings sit above this list; take the operator to them. */
-  const goCountdown = () => {
-    const el = document.getElementById("page-countdown");
-    el?.scrollIntoView({ block: "center", behavior: "smooth" });
-    el?.querySelector<HTMLElement>("input[type=radio]:checked")?.focus({ preventScroll: true });
-  };
-
   const ctx = (id: PageSectionId): EditorCtx => ({
     product,
     page,
     onChange: (patch) => onPage(edited(page, id, patch)),
+    onPage,
     onDescription: onDescription ? (v) => { onDescription(v); onPage(edited(page, id, {})); } : undefined,
     onEditDetails,
     onEditTickets,
-    onGoCountdown: goCountdown,
+    onDays,
   });
 
-  const row = (id: PageSectionId, isShown: boolean) => {
+  const row = (id: PageSectionId) => {
     const name = labelOf(id);
-    const Icon = ICON[id];
+    const Icon = ICON[id] ?? FileText;
     const required = isRequired(id);
-    const sample = isShown && rowHasSample(page, id);
+    const sample = rowHasSample(page, id);
     const fill = sectionFill(id, product, page);
-    const sub = !isShown ? t("hiddenRow") : required ? t("alwaysShown") : sample ? t("sampleRow") : fill === "empty" ? t("empty") : null;
     const up = canMove(page, id, -1);
     const down = canMove(page, id, 1);
     const isOpen = open === id;
@@ -137,16 +179,16 @@ export function SectionList({
       <div
         key={id}
         data-section={id}
-        onDragOver={(e) => { if (dragId && dragId !== id && isShown) e.preventDefault(); }}
+        onDragOver={(e) => { if (dragId && dragId !== id) e.preventDefault(); }}
         onDrop={(e) => {
           e.preventDefault();
-          if (dragId && isShown) onPage(moveBefore(page, dragId, id));
+          if (dragId) onPage(moveBefore(page, dragId, id));
           setDragId(null);
         }}
         className={cn("border-b border-hairline last:border-0", dragId === id && "opacity-50")}
       >
-        <div className="flex items-center gap-inline pl-comfortable pr-inline">
-          {isShown && id !== "hero" ? (
+        <div className="flex items-center pl-tight">
+          {id !== "hero" ? (
             <span
               aria-hidden
               draggable
@@ -171,73 +213,66 @@ export function SectionList({
           >
             <Icon size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
             <span className="min-w-0 flex-1">
-              <span className={cn("flex flex-wrap items-center gap-x-tight text-sm font-medium", isShown ? "text-fg" : "text-muted")}>
-                {name}
-              </span>
-              {sub && <span className="block text-sm text-muted">{sub}</span>}
+              <span className="block truncate text-sm font-medium text-fg">{name}</span>
+              <span className="block truncate text-sm text-muted">{stateOf(id, product, page, t)}</span>
             </span>
             <ChevronDown size={16} strokeWidth={1.5} aria-hidden className={cn("shrink-0 text-muted transition-transform duration-quick", isOpen && "rotate-180")} />
           </button>
-          <span className="flex shrink-0 items-center">
-            {id === "hero" ? (
-              <span aria-hidden className="h-11 w-33 shrink-0 md:h-9 md:w-27" />
-            ) : required ? (
-              <span aria-hidden className="h-11 w-11 shrink-0 md:h-9 md:w-9" />
-            ) : (
-            <Button
-              variant="tertiary"
-              size="icon"
-              aria-label={isShown ? t("hide", { name }) : t("show", { name })}
-              title={isShown ? t("hide", { name }) : t("show", { name })}
-              onClick={() => onPage(id === "countdown" ? toggleCountdownRow(page, product) : toggleSection(page, id))}
-              className="text-muted"
-            >
-              {isShown ? <Eye size={16} strokeWidth={1.5} aria-hidden /> : <EyeOff size={16} strokeWidth={1.5} aria-hidden />}
-            </Button>
-            )}
-            {id !== "hero" && isShown && (
-              <>
-                <Button
-                  variant="tertiary"
-                  size="icon"
-                  data-move={`${id}:up`}
-                  aria-label={t("moveUp", { name })}
-                  title={up ? t("moveUp", { name }) : t("alreadyFirst")}
-                  disabled={!up}
-                  onClick={() => move(-1)}
-                  className="text-muted"
-                >
-                  <ArrowUp size={15} strokeWidth={1.5} aria-hidden />
-                </Button>
-                <Button
-                  variant="tertiary"
-                  size="icon"
-                  data-move={`${id}:down`}
-                  aria-label={t("moveDown", { name })}
-                  title={down ? t("moveDown", { name }) : t("alreadyLast")}
-                  disabled={!down}
-                  onClick={() => move(1)}
-                  className="text-muted"
-                >
-                  <ArrowDown size={15} strokeWidth={1.5} aria-hidden />
-                </Button>
-              </>
-            )}
-          </span>
         </div>
         {isOpen && (
-          <div className="flex flex-col gap-section bg-subtle px-comfortable pb-card pt-tight">
+          <div className="flex flex-col gap-comfortable bg-subtle px-comfortable pb-comfortable pt-tight">
             {sample && (
-              <div className="flex flex-wrap items-center justify-between gap-tight rounded-inner bg-subtle px-comfortable py-tight">
+              <div className="flex flex-wrap items-center justify-between gap-tight">
                 <p className="min-w-0 flex-1 text-sm text-fg">{t("sampleNote")}</p>
                 <Button variant="secondary" size="sm" onClick={() => onPage(keepSample(page, id))}>
                   {t("keepSample")}
                 </Button>
               </div>
             )}
-            {!isShown && <p className="text-sm text-muted">{t("hiddenNote")}</p>}
-            {isShown && fill === "empty" && <p className="text-sm text-muted">{t("emptyNote")}</p>}
+            {!sample && fill === "empty" && id !== "hero" && <Note>{t("emptyNote")}</Note>}
             <SectionBody id={id} ctx={ctx(id)} />
+            {id !== "hero" && (
+              <div className="flex flex-wrap items-center gap-tight border-t border-hairline pt-comfortable">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  data-move={`${id}:up`}
+                  aria-label={t("moveUp", { name })}
+                  title={up ? t("moveUp", { name }) : t("alreadyFirst")}
+                  disabled={!up}
+                  onClick={() => move(-1)}
+                  icon={<ArrowUp size={15} strokeWidth={1.5} aria-hidden />}
+                >
+                  {t("moveUpText")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  data-move={`${id}:down`}
+                  aria-label={t("moveDown", { name })}
+                  title={down ? t("moveDown", { name }) : t("alreadyLast")}
+                  disabled={!down}
+                  onClick={() => move(1)}
+                  icon={<ArrowDown size={15} strokeWidth={1.5} aria-hidden />}
+                >
+                  {t("moveDownText")}
+                </Button>
+                {!required && (
+                  <Button
+                    variant="tertiary"
+                    size="sm"
+                    className="text-danger sm:ml-auto"
+                    aria-label={t("removeFromPageFor", { name })}
+                    onClick={() => {
+                      setOpen("");
+                      onPage(removeSection(page, id));
+                    }}
+                  >
+                    {t("removeFromPage")}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -245,19 +280,48 @@ export function SectionList({
   };
 
   return (
-    <div className="flex flex-col gap-tight">
-      <h3 className="text-md font-semibold text-fg">{t("sections")}</h3>
-      <p className="text-sm text-muted">{t("sectionsHelp")}</p>
-      {(page.samples ?? []).some((x) => page.sections.includes(x)) && <p className="text-sm text-muted">{t("samplesNote")}</p>}
-      <div ref={list} className="overflow-hidden rounded-inner border border-line bg-card">
-        {shown.map((id) => row(id, true))}
-        {hidden.length > 0 && (
-          <>
-            <p className="border-b border-hairline bg-subtle px-comfortable py-tight text-sm font-medium text-muted">{t("hiddenHeading", { count: hidden.length })}</p>
-            {hidden.map((id) => row(id, false))}
-          </>
-        )}
+    <div className="flex flex-col gap-section">
+      <div className="flex flex-col gap-tight">
+        <h3 className="text-md font-semibold text-fg">{t("onPage")}</h3>
+        <p className="text-sm text-muted">{t("onPageHelp")}</p>
+        <div ref={list} className="overflow-hidden rounded-inner border border-line bg-card">
+          {shown.map((id) => row(id))}
+        </div>
       </div>
+
+      {available.length > 0 && (
+        <div className="flex flex-col gap-tight">
+          <h3 className="text-md font-semibold text-fg">{t("addHeading")}</h3>
+          <ul className="flex flex-wrap gap-tight">
+            {available.map((id) => {
+              const Icon = ICON[id] ?? FileText;
+              const name = labelOf(id);
+              return (
+                <li key={id}>
+                  <button
+                    type="button"
+                    data-add={id}
+                    aria-label={t("addSection", { name })}
+                    onClick={() => {
+                      onPage(addSection(page, product, id));
+                      setOpen(id);
+                    }}
+                    className="inline-flex min-h-9 items-center gap-inline rounded-control border border-line bg-card px-comfortable text-sm font-medium text-fg transition-colors duration-quick hover:bg-muted-wash"
+                  >
+                    <Plus size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
+                    <Icon size={15} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
+                    {name}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
+}
+
+function Note({ children }: { children: React.ReactNode }) {
+  return <p className="text-sm text-muted">{children}</p>;
 }

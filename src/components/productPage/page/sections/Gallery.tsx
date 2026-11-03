@@ -28,7 +28,7 @@ export function GallerySection() {
   const tile = (p: ProductImage, i: number, style?: CSSProperties, ratio?: string) => (
     <div
       key={p.id}
-      className="relative overflow-hidden rounded-xl"
+      className="pg-media relative overflow-hidden"
       style={{ background: "var(--pg-surface)", border: "1px solid var(--pg-line)", aspectRatio: ratio, ...style }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- local / remote photos; next/image loader config is avoided app-wide (see PROJECT_LOG) */}

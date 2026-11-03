@@ -53,9 +53,12 @@
 /* ── Type: headings take the heading face/weight/case/scale, body stays the
    page font. Weight and transform fall back to the element's own when the
    operator hasn't chosen one (the vars are only SET when chosen). */
-.sf[data-ps-mode] :where(h1, h2, h3, h4, .sf-heading) {
+/* Titles only. A ticket's name or a card's label is small text: in a display face
+   (a thin serif, a poster caps) it stops being readable, so h3 and h4 stay in the
+   body face at the weight their own classes give them. */
+.sf[data-ps-mode] :where(h1, h2, .sf-heading) {
   font-family: var(--ps-font-heading);
-  font-weight: var(--ps-heading-weight, inherit);
+  font-weight: var(--ps-heading-weight, 600);
   text-transform: var(--ps-heading-transform, none);
 }
 /* Scale is applied to the heading's OWN px/rem base (not `1em`, which is

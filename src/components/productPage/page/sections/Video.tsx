@@ -28,9 +28,8 @@ export function VideoSection() {
   return (
     <Section id="video" title={ctx.labels.video}>
       <div
-        className="relative aspect-video overflow-hidden"
+        className="pg-media relative aspect-video overflow-hidden"
         style={{
-          borderRadius: 16,
           background: poster || "var(--pg-surface)",
           backgroundColor: "var(--pg-surface)",
           border: "1px solid var(--pg-line)",
@@ -51,7 +50,7 @@ export function VideoSection() {
             onClick={() => setPlaying(true)}
             aria-label={t("page.playVideo")}
             className="absolute inset-0 grid size-full place-items-center"
-            style={{ background: "linear-gradient(to bottom, rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.36))" }}
+            style={{ background: "rgb(0 0 0 / 0.22)" }}
           >
             <span className="grid size-16 place-items-center rounded-full" style={{ background: "var(--pg-fill)", color: "var(--pg-on-fill)" }}>
               <Play size={26} strokeWidth={1.75} className="ml-1" aria-hidden />
