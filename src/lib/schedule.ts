@@ -1,29 +1,78 @@
 import type { BookingTypeCode, ProductSchedule } from "@/lib/api/types";
 
 /** ISO for a slot start on a given local date + "HH:MM" (Dhaka offset). */
-/* The demo's "today". Every seeded order, booking and hold is built around
-   this date, so the whole app has to agree on it — two components each holding
-   their own copy is how a hold ends up in a different month from the schedule
-   it is meant to block. Replacing the mock with a real backend means deleting
-   this and using the actual date. */
-export const DEMO_TODAY = "2026-07-29";
+/** Dhaka's wall clock, wherever the browser or server happens to be: the seed
+ *  and every slot in the app are written at +06:00. */
+const dhaka = (at: Date): { date: string; minutes: number } => {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Dhaka", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+      .formatToParts(at)
+      .map((x) => [x.type, x.value]),
+  );
+  return { date: `${p.year}-${p.month}-${p.day}`, minutes: Number(p.hour) * 60 + Number(p.minute) };
+};
 
-/** The demo's "now" — its date at the hour the till pins itself to.
- *
- *  Pinned rather than read off the wall clock, for the same reason the date
- *  above is: the calendar's grids each called `new Date()`, so "today" was a
- *  day in the real present that the seeded week never contains. The result was
- *  a calendar with no today marker and no current-time line, and a "Today"
- *  button that jumped to a day the grid did not think was today. */
-export const DEMO_NOW_MINUTES = 12 * 60;
-export const demoNow = (): Date => new Date(`${DEMO_TODAY}T12:00:00`);
+/* Today, the real one, as of this page load. The whole app reads it from here so
+   it has to agree: two components each holding their own copy is how a hold ends
+   up in a different month from the schedule it is meant to block. A tab left open
+   past midnight keeps its day until it is reloaded, because the store's "today"
+   was built for that day. Replacing the mock with a real backend leaves this. */
+export const DEMO_TODAY = dhaka(new Date()).date;
 
-/** N days from the demo's today, as an ISO date. */
-export const demoDay = (offset: number): string => {
-  const d = new Date(`${DEMO_TODAY}T00:00:00Z`);
+/** The time now, in minutes past midnight. A live binding: it keeps moving while the page is open. */
+export let DEMO_NOW_MINUTES = dhaka(new Date()).minutes;
+if (typeof window !== "undefined") {
+  setInterval(() => {
+    DEMO_NOW_MINUTES = dhaka(new Date()).minutes;
+  }, 30_000);
+}
+export const demoNow = (): Date => new Date();
+
+/* The day the seed was written around. Its orders, bookings and holds are all
+   dated relative to this, and are moved to the real today as they load (see
+   `rebaseSeed`), so the demo never goes stale: there are always sales today. */
+const SEED_TODAY = "2026-07-29";
+const addDays = (date: string, offset: number): string => {
+  const d = new Date(`${date}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + offset);
   return d.toISOString().slice(0, 10);
 };
+const SEED_SHIFT_DAYS = Math.round((Date.parse(`${DEMO_TODAY}T00:00:00Z`) - Date.parse(`${SEED_TODAY}T00:00:00Z`)) / 86_400_000);
+
+/** N days from the seed's today. For the seed only: it is moved afterwards, with everything else. */
+export const seedDay = (offset: number): string => addDays(SEED_TODAY, offset);
+
+const DATED = /^\d{4}-\d{2}-\d{2}(?=$|T)/;
+/** One date or timestamp written against the seed's today, moved to the real one. Its time of day stays. */
+export const fromSeedDate = (value: string): string => value.replace(DATED, (d) => addDays(d, SEED_SHIFT_DAYS));
+
+const latestDate = (value: unknown): string => {
+  if (typeof value === "string") return DATED.test(value) ? value.slice(0, 10) : "";
+  if (!value || typeof value !== "object") return "";
+  return Object.values(value).reduce<string>((best, v) => {
+    const d = latestDate(v);
+    return d > best ? d : best;
+  }, "");
+};
+const moved = (value: unknown): unknown => {
+  if (typeof value === "string") return fromSeedDate(value);
+  if (Array.isArray(value)) return value.map(moved);
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, moved(v)]));
+  return value;
+};
+/** A record is moved whole so its dates stay in order. One still ahead of today (an
+ *  event in December, a season that has not begun) already makes sense, and stays. */
+const rebaseRecord = (row: unknown): unknown => (latestDate(row) > DEMO_TODAY ? row : moved(row));
+
+/** Every record in a seed module (or a generated batch), moved to the real today. */
+export function rebaseSeed<T extends object>(seed: T): T {
+  return Object.fromEntries(
+    Object.entries(seed).map(([k, v]) => [k, Array.isArray(v) ? v.map(rebaseRecord) : v && typeof v === "object" ? rebaseRecord(v) : v]),
+  ) as T;
+}
+
+/** N days from today, as an ISO date. */
+export const demoDay = (offset: number): string => addDays(DEMO_TODAY, offset);
 
 export const slotISO = (date: string, time: string) => `${date}T${time}:00+06:00`;
 

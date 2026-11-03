@@ -1,5 +1,6 @@
 "use client";
 
+import { startShiftClock } from "@/lib/useShiftClock";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -31,7 +32,7 @@ export default function ShiftOpenPage() {
         />
       </GoCard>
 
-      <Button size="lg" fullWidth className="h-13 text-md font-semibold" onClick={() => router.push("/pos")}>
+      <Button size="lg" fullWidth className="h-13 text-md font-semibold" onClick={() => { startShiftClock(); router.push("/pos"); }}>
         {t("openShift")}
       </Button>
     </main>

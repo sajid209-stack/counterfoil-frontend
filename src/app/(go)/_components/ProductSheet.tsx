@@ -37,7 +37,7 @@ import {
 } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { DEMO_STAFF_ID } from "@/lib/session";
-import { DEMO_TODAY, isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
+import { DEMO_TODAY, demoDay, isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime, DEMO_NOW_MINUTES } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
 import { durationOptions, formatDuration, formulaPrice, isDealDuration, priceSegments, productDurationPrice } from "@/lib/duration";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
@@ -83,8 +83,7 @@ export interface CartEntry {
 
 
 const TODAY = DEMO_TODAY;
-const TOMORROW = "2026-07-30";
-const NOW_MIN = 12 * 60; // the mock clock: today, noon
+const TOMORROW = demoDay(1);
 
 // Providers without a configured schedule sell appointments on these hours.
 const PROVIDER_DAY: ProductSchedule = {
@@ -253,7 +252,7 @@ export function ProductSheet({
     const given = initial?.slotTime ?? preset?.time;
     if (given) return given;
     const d0 = initial?.slotDate ?? preset?.date ?? firstBookable;
-    const notPast = (t: string) => d0 !== TODAY || toMinutes(t) >= NOW_MIN;
+    const notPast = (t: string) => d0 !== TODAY || toMinutes(t) >= DEMO_NOW_MINUTES;
     if (product.layoutId || !isOpenOn(product, d0)) return undefined;
     if (isFlexibleResource(bt)) {
       const shortest = product.durationConfig ? durationOptions(product.durationConfig)[0] : 60;
@@ -971,7 +970,7 @@ export function ProductSheet({
 
           const startState = (tm: string, dur: number, laneId?: string): { ok: boolean; reason?: string } => {
             const start = toMinutes(tm);
-            if (date === TODAY && start < NOW_MIN + lead) return { ok: false, reason: lead > 0 ? t("sheet.needsNotice", { duration: formatDuration(lead) }) : t("sheet.alreadyPast") };
+            if (date === TODAY && start < DEMO_NOW_MINUTES + lead) return { ok: false, reason: lead > 0 ? t("sheet.needsNotice", { duration: formatDuration(lead) }) : t("sheet.alreadyPast") };
             if (mustEnd && start + dur > closeMin) return { ok: false, reason: t("sheet.endsAfterClosing") };
             const free = laneId
               ? isResourceFreeFor(laneId, date, tm, dur, buffer)
@@ -988,7 +987,7 @@ export function ProductSheet({
             const spans = ownerBusyDetailed(l.id, date);
             if (l.outOfService) return t("sheet.outOfService");
             if (date === TODAY) {
-              const current = spans.find((s) => s.start <= NOW_MIN && NOW_MIN < s.end);
+              const current = spans.find((s) => s.start <= DEMO_NOW_MINUTES && DEMO_NOW_MINUTES < s.end);
               if (current) return t("sheet.inUseUntil", { time: formatClockMin(current.end), label: current.label });
             }
             return spans.length ? t("sheet.bookingsToday", { count: spans.length }) : t("sheet.free");
@@ -1095,7 +1094,7 @@ export function ProductSheet({
               {flexTimes.length > 0 && <TileLabel>{t("sheet.startTime")}</TileLabel>}
               {flexTimes.length > 0 && (
                 <div className="grid grid-cols-4 gap-tight sm:grid-cols-6">
-                  {flexTimes.filter((tt) => showEarlier || !(date === TODAY && toMinutes(tt) < NOW_MIN) || tt === slotTime).map((tt) => {
+                  {flexTimes.filter((tt) => showEarlier || !(date === TODAY && toMinutes(tt) < DEMO_NOW_MINUTES) || tt === slotTime).map((tt) => {
                     const st = startState(tt, duration, resourceId);
                     if (!st.ok) {
                       return (
@@ -1114,7 +1113,7 @@ export function ProductSheet({
                 </div>
               )}
               {!showEarlier && (() => {
-                const n = date === TODAY ? flexTimes.filter((tt) => toMinutes(tt) < NOW_MIN && tt !== slotTime).length : 0;
+                const n = date === TODAY ? flexTimes.filter((tt) => toMinutes(tt) < DEMO_NOW_MINUTES && tt !== slotTime).length : 0;
                 return n > 0 ? (
                   <button type="button" onClick={() => setShowEarlier(true)} className="min-h-11 self-start text-sm font-medium text-brand-foreground underline-offset-2 hover:underline">
                     {t("sheet.showEarlier", { count: n })}
@@ -1209,7 +1208,7 @@ export function ProductSheet({
             <div className="flex flex-col gap-tight">
               {product.providerPickable && <TileLabel>{t("sheet.provider")}</TileLabel>}
               {product.providerPickable && providers.map((p) => {
-                const nextFree = providerTimes.find((t) => (date !== TODAY || toMinutes(t) >= NOW_MIN) && isOwnerFree(p.id, date, t, providerDuration));
+                const nextFree = providerTimes.find((t) => (date !== TODAY || toMinutes(t) >= DEMO_NOW_MINUTES) && isOwnerFree(p.id, date, t, providerDuration));
                 const prem = premiumOf(p.id);
                 return (
                   <OptionRow
@@ -1327,7 +1326,7 @@ export function ProductSheet({
             variant="tiles"
             currency={currency}
             selected={slotTime}
-            sessions={slots.filter((s) => showEarlier || !(date === TODAY && toMinutes(s.time) < NOW_MIN) || s.time === slotTime).map((s) => {
+            sessions={slots.filter((s) => showEarlier || !(date === TODAY && toMinutes(s.time) < DEMO_NOW_MINUTES) || s.time === slotTime).map((s) => {
               const left = s.remaining - seatsInCart(product.id, slotISO(date, s.time));
               // A departure needs a free guide as well as seats.
               const guideless = guided && guides.length > 0 && freeGuides(product, date, s.time).length === 0;
@@ -1341,7 +1340,7 @@ export function ProductSheet({
               const lock = isSessionLocked(product.id, date, slotISO(date, s.time))
                 ? blockingHold(product.id, date, slotISO(date, s.time))
                 : undefined;
-              const started = date === TODAY && toMinutes(s.time) < NOW_MIN;
+              const started = date === TODAY && toMinutes(s.time) < DEMO_NOW_MINUTES;
               return {
                 time: s.time,
                 price: resolveProductPrice(product, date, s.time, activeTiers.find((x) => !x.donation)?.price ?? basePrice),
@@ -1380,7 +1379,7 @@ export function ProductSheet({
           />
         )}
         {needsSchedule(bt) && !resourceMode && !flexible && openToday && !showEarlier && date === TODAY && (() => {
-          const n = slots.filter((x) => toMinutes(x.time) < NOW_MIN && x.time !== slotTime).length;
+          const n = slots.filter((x) => toMinutes(x.time) < DEMO_NOW_MINUTES && x.time !== slotTime).length;
           return n > 0 ? (
             <button type="button" onClick={() => setShowEarlier(true)} className="-mt-tight mb-section min-h-11 text-sm font-medium text-brand-foreground underline-offset-2 hover:underline">
               {t("sheet.showEarlier", { count: n })}

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { CircleCheck } from "lucide-react";
 import { Button, FormField } from "@/components/ui";
 import { checkout, listProducts } from "@/lib/api";
-import { DEMO_TODAY as TODAY } from "@/lib/schedule";
+import { DEMO_TODAY as TODAY, DEMO_NOW_MINUTES, toTime } from "@/lib/schedule";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveCounterNow } from "@/lib/activeCounter";
 import { durationOptions, formatDuration, isDealDuration, productDurationPrice } from "@/lib/duration";
@@ -44,7 +44,7 @@ export default function QuickPassPage() {
   // Engine price (models, bands and deal prices), still editable — a pass is
   // often written at whatever the manager says.
   const enginePrice = passProduct
-    ? productDurationPrice(passProduct, TODAY, "12:00", duration, baseMinor)
+    ? productDurationPrice(passProduct, TODAY, toTime(DEMO_NOW_MINUTES), duration, baseMinor)
     : Math.round((baseMinor * duration) / 60);
   const price = priceEdit ?? String(enginePrice / 100);
 

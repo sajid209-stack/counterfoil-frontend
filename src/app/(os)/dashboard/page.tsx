@@ -31,7 +31,7 @@ import {
   isVoidedOrder,
   type Order,
 } from "@/lib/api";
-import { DEMO_TODAY, demoNow, isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
+import { DEMO_TODAY, demoNow, isResourceType, isSlotBased, toMinutes, DEMO_NOW_MINUTES } from "@/lib/schedule";
 import { formatClock, formatDateTime, formatDay, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { useActiveLocation } from "@/lib/activeLocation";
@@ -51,7 +51,6 @@ const readOwnerFirst = () => (getFreshAccount()?.ownerName ?? "").trim().split(/
 // The demo clock is shared, never copied: DEMO_TODAY's own comment warns
 // that two components each holding their own date is the bug.
 const TODAY = DEMO_TODAY;
-const NOW_MIN = 12 * 60; // mock clock: noon
 const dayShift = (d: string, n: number) => new Date(Date.parse(`${d}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -294,7 +293,7 @@ export default function DashboardPage() {
       for (const r of getResourceMatrix(p, TODAY)) {
         if (r.resource.outOfService) continue;
         for (const slot of r.slots) {
-          if (toMinutes(slot.time) < NOW_MIN) continue;
+          if (toMinutes(slot.time) < DEMO_NOW_MINUTES) continue;
           if (slot.available) free++;
         }
       }
@@ -326,7 +325,7 @@ export default function DashboardPage() {
       for (const p of products) {
         if (!isSlotBased(p.bookingType) || isResourceType(p.bookingType)) continue;
         for (const s of getSlots(p, d)) {
-          if (d === TODAY && toMinutes(s.time) < NOW_MIN) continue;
+          if (d === TODAY && toMinutes(s.time) < DEMO_NOW_MINUTES) continue;
           if (s.capacity > 1 && s.sold / s.capacity < 0.3) {
             const price = Math.min(...p.tiers.filter((t) => t.active).map((t) => t.price));
             out.push({ text: `${d === TODAY ? "" : t("tomorrow")}${formatClock(s.time)} ${p.name} · ${s.sold}/${s.capacity}`, value: s.remaining * price, href: `/catalog/${p.id}` });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useShiftClock } from "@/lib/useShiftClock";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -56,6 +57,7 @@ const MORE_ITEMS = [
 ] as const;
 
 export function ClassicShell({ children }: { children: React.ReactNode }) {
+  const shiftTime = useShiftClock();
   const pathname = usePathname();
   const t = useTranslations("nav");
   const tp = useTranslations("pos");
@@ -121,7 +123,7 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
             <Logo variant="go" size={30} />
           </Link>
           <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-xs text-muted sm:block">{tp("counter")}</span>
-          <span className="hidden shrink-0 font-mono text-xs text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
+          <span className="hidden shrink-0 font-mono text-xs text-muted sm:block" title={tp("shell.shiftOpenFor", { time: shiftTime })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: shiftTime })}</span><span aria-hidden>⏱ {shiftTime}</span></span>
         </div>
         {/* Review scaffolding, not part of the restored design — without it
             there is no way out of this variant except the browser's back
@@ -162,7 +164,7 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
             <div className="mb-section flex items-center justify-between">
               <div>
                 <p className="text-base font-medium">Lalbagh Heritage Attractions</p>
-                <p className="font-mono text-xs text-muted">{tp("shell.shiftLine", { counter: tp("counter"), time: "3:24" })}</p>
+                <p className="font-mono text-xs text-muted">{tp("shell.shiftLine", { counter: tp("counter"), time: shiftTime })}</p>
               </div>
               <div className="flex items-center gap-tight">
                 <LocaleToggle />

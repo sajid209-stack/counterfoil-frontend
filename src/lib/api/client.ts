@@ -9,9 +9,10 @@
    to the parsed response). Nothing else in the codebase changes — entity
    modules and components already speak only in these types.
    ────────────────────────────────────────────────────────────────────────── */
-import * as seed from "@/lib/mock/data";
-import { generateSales } from "@/lib/mock/generate";
-import * as doers from "@/lib/mock/doers";
+import * as seedAsWritten from "@/lib/mock/data";
+import { generateSales as generateAsWritten } from "@/lib/mock/generate";
+import * as doersAsWritten from "@/lib/mock/doers";
+import { rebaseSeed } from "@/lib/schedule";
 import type {
   AdvancePolicy,
   ApiError,
@@ -50,6 +51,11 @@ export const conflictError = (message: string): ApiError => ({
 
 // ── the mutable mock store (cloned so a session's edits persist) ────────────
 type Row = { id: string; createdAt?: string; updatedAt?: string };
+
+// The seed, dated to the real today rather than the day it was written around.
+const seed = rebaseSeed(seedAsWritten);
+const doers = rebaseSeed(doersAsWritten);
+const generateSales = (input: Parameters<typeof generateAsWritten>[0]) => rebaseSeed(generateAsWritten(input));
 
 const store: Record<string, Row[]> = {
   products: structuredClone(seed.products),

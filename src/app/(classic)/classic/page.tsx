@@ -11,7 +11,7 @@ import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, Pro
 import { useApiQuery } from "@/lib/useApi";
 import { tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
-import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
+import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime, DEMO_NOW_MINUTES } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
@@ -727,7 +727,7 @@ export default function PosPage() {
   const slotLabel = (e: CartEntry) => (!e.slotDate ? "" : e.slotTime ? ` · ${formatClock(e.slotTime)} ${e.slotDate === TODAY ? t("slotToday") : e.slotDate}` : ` · ${e.slotDate === TODAY ? t("slotToday") : e.slotDate}`);
 
   /** The till's clock, in minutes — the demo clock, same as everywhere else. */
-  const nowMinutes = 12 * 60;
+  const nowMinutes = DEMO_NOW_MINUTES;
   /** Phrasing for the live-state line. The deriver picks WHICH question to
    *  answer; these translate the answer. */
   const liveWords = useMemo(() => ({

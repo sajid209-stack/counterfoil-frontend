@@ -346,7 +346,7 @@ function CheckInScreen() {
       channel: "counter", locationId: venueId || (p.locationIds[0] ?? "loc_fort"), counterId: activeCounter.counter?.id ?? null, staffId: null,
       customerName: walkInName.trim() || t("walkInDefaultName"),
       lines: [{ productId: p.id, productName: p.name, tierId: tier.id, tierName: tier.name, admits: tier.admits ?? 1, quantity: walkInParty, unitPrice: tier.price }],
-      bookings: [{ productId: p.id, slotStart: `${date}T12:00:00+06:00`, partySize: walkInParty }],
+      bookings: [{ productId: p.id, slotStart: `${date}T${toTime(DEMO_NOW_MINUTES)}:00+06:00`, partySize: walkInParty }],
       taxPct: 0, method: "cash", amountTendered: tier.price * walkInParty,
     });
     if (res.ok) { toast.success(t("walkInSold", { code: res.data.firstTicketCode })); setWalkInOpen(false); setWalkInName(""); setWalkInParty(2); reload(); }

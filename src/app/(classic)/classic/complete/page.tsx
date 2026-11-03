@@ -1,5 +1,6 @@
 "use client";
 
+import { DEMO_TODAY } from "@/lib/schedule";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -10,7 +11,7 @@ import { getOperator } from "@/lib/api";
 import { formatDay, formatMoney } from "@/lib/format";
 import { DEFAULT_SMS_TEMPLATE, renderSms } from "@/lib/sms";
 
-const TODAY = "2026-07-29";
+const TODAY = DEMO_TODAY;
 
 export default function CompletePage() {
   const router = useRouter();

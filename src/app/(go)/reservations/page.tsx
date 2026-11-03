@@ -1,5 +1,6 @@
 "use client";
 
+import { DEMO_TODAY } from "@/lib/schedule";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -14,7 +15,7 @@ import { BookingGlyph } from "../_components/WallTile";
 import { Thumb } from "../_components/Thumb";
 import { GoPage, GoPageHeader } from "../_components/GoPage";
 
-const TODAY = Date.parse("2026-07-29T00:00:00+06:00");
+const TODAY = Date.parse(`${DEMO_TODAY}T00:00:00+06:00`);
 
 /**
  * Who is still to come. The guest's name leads (it is what a steward matches

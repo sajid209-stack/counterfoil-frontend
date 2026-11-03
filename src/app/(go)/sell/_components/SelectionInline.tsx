@@ -28,7 +28,7 @@ import { availableSeats, explainUnavailable, type Product, type Resource, type S
 import { applyResourceRate } from "@/lib/api";
 import { productDurationPrice } from "@/lib/duration";
 import { resolveProductPrice } from "@/lib/pricing";
-import { DEMO_TODAY, demoDay, isGuided, slotISO, toMinutes } from "@/lib/schedule";
+import { DEMO_TODAY, demoDay, isGuided, slotISO, toMinutes, DEMO_NOW_MINUTES } from "@/lib/schedule";
 import { formatClock, formatClockRange, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { ClockCell } from "../../_components/Clock";
 import { formatDuration } from "@/lib/duration";
@@ -430,7 +430,7 @@ export function SelectionInline({
                   // longer fits.
                   const stillFits =
                     draft.slotTime &&
-                    !flexStartBlocked(product, draft.date, draft.slotTime, d, draft.resourceId, 12 * 60);
+                    !flexStartBlocked(product, draft.date, draft.slotTime, d, draft.resourceId, DEMO_NOW_MINUTES);
                   set({ durationMinutes: d, slotTime: stillFits ? draft.slotTime : undefined });
                 }}
               >
@@ -473,7 +473,7 @@ export function SelectionInline({
         <Step label={t("step.start")}>
           <TileGrid cols={4}>
             {times.map((time) => {
-              const blocked = flexStartBlocked(product, draft.date, time, minutes, draft.resourceId, 12 * 60);
+              const blocked = flexStartBlocked(product, draft.date, time, minutes, draft.resourceId, DEMO_NOW_MINUTES);
               const on = draft.slotTime === time;
               return (
                 <Tile

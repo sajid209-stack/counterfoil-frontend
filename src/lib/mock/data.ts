@@ -38,7 +38,7 @@ import type {
 import { generateSales } from "./generate";
 import { events } from "./events";
 import { productRecordFromEvent } from "@/lib/api/eventModel";
-import { demoDay } from "@/lib/schedule";
+import { seedDay as demoDay } from "@/lib/schedule";
 import { buildOrderLines } from "@/lib/orderMath";
 import type { Order } from "@/lib/api/types";
 

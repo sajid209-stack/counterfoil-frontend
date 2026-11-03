@@ -1,5 +1,6 @@
 "use client";
 
+import { useShiftClock } from "@/lib/useShiftClock";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -321,11 +322,9 @@ function SidebarFoot({
   const pathname = usePathname();
   const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
   const role = myRoleId ? rolesQ.data?.data.find((r) => r.id === myRoleId)?.name : undefined;
+  const shiftTime = useShiftClock();
 
-  /* TODO(data): the elapsed shift time has no reader yet (no shift record
-     carries its start), so the 3:24 is still the demo value, as it is in the
-     phone header and the More sheet. */
-  const shiftText = tp("shell.shiftOpenFor", { time: "3:24" });
+  const shiftText = tp("shell.shiftOpenFor", { time: shiftTime });
   const onShift = pathname.startsWith("/shift");
 
   return (

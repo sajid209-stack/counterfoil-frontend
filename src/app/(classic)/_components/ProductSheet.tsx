@@ -31,7 +31,7 @@ import {
   type Resource,
   type Staff,
 } from "@/lib/api";
-import { DEMO_TODAY, isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
+import { DEMO_TODAY, demoDay, isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime, DEMO_NOW_MINUTES } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
 import { durationOptions, formatDuration, formulaPrice, isDealDuration, priceSegments, productDurationPrice } from "@/lib/duration";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
@@ -64,8 +64,7 @@ export interface CartEntry {
 
 
 const TODAY = DEMO_TODAY;
-const TOMORROW = "2026-07-30";
-const NOW_MIN = 12 * 60; // the mock clock: today, noon
+const TOMORROW = demoDay(1);
 
 // Providers without a configured schedule sell appointments on these hours.
 const PROVIDER_DAY: ProductSchedule = {
@@ -728,7 +727,7 @@ export function ProductSheet({
 
           const startState = (tm: string, dur: number, laneId?: string): { ok: boolean; reason?: string } => {
             const start = toMinutes(tm);
-            if (date === TODAY && start < NOW_MIN + lead) return { ok: false, reason: lead > 0 ? t("sheet.needsNotice", { duration: formatDuration(lead) }) : t("sheet.alreadyPast") };
+            if (date === TODAY && start < DEMO_NOW_MINUTES + lead) return { ok: false, reason: lead > 0 ? t("sheet.needsNotice", { duration: formatDuration(lead) }) : t("sheet.alreadyPast") };
             if (mustEnd && start + dur > closeMin) return { ok: false, reason: t("sheet.endsAfterClosing") };
             const free = laneId
               ? isResourceFreeFor(laneId, date, tm, dur, buffer)
@@ -745,7 +744,7 @@ export function ProductSheet({
             const spans = ownerBusyDetailed(l.id, date);
             if (l.outOfService) return t("sheet.outOfService");
             if (date === TODAY) {
-              const current = spans.find((s) => s.start <= NOW_MIN && NOW_MIN < s.end);
+              const current = spans.find((s) => s.start <= DEMO_NOW_MINUTES && DEMO_NOW_MINUTES < s.end);
               if (current) return t("sheet.inUseUntil", { time: formatClockMin(current.end), label: current.label });
             }
             return spans.length ? t("sheet.bookingsToday", { count: spans.length }) : t("sheet.free");
@@ -759,8 +758,8 @@ export function ProductSheet({
 
           // Start now: round the clock per config, first free lane.
           const round = cfg?.walkInRoundMinutes || 15;
-          const nowTime = toTime(Math.ceil(NOW_MIN / round) * round);
-          const nowLane = date === TODAY && (!mustEnd || NOW_MIN + duration <= closeMin) ? firstFreeResource(product, date, nowTime, duration) : null;
+          const nowTime = toTime(Math.ceil(DEMO_NOW_MINUTES / round) * round);
+          const nowLane = date === TODAY && (!mustEnd || DEMO_NOW_MINUTES + duration <= closeMin) ? firstFreeResource(product, date, nowTime, duration) : null;
           const nowPrice = nowLane ? priceFor(nowTime, duration, nowLane) : 0;
 
           const endLabel = slotTime ? toTime(toMinutes(slotTime) + duration) : null;
@@ -938,7 +937,7 @@ export function ProductSheet({
                 three want a consistent left edge to be comparable. */}
             <div className="flex flex-col gap-tight">
               {product.providerPickable && providers.map((p) => {
-                const nextFree = providerTimes.find((t) => (date !== TODAY || toMinutes(t) >= NOW_MIN) && isOwnerFree(p.id, date, t, providerDuration));
+                const nextFree = providerTimes.find((t) => (date !== TODAY || toMinutes(t) >= DEMO_NOW_MINUTES) && isOwnerFree(p.id, date, t, providerDuration));
                 return (
                   <ChoiceCard key={p.id} selected={providerId === p.id} onClick={() => setProviderId(p.id)} className="flex w-full items-center gap-tight py-comfortable pl-comfortable pr-7">
                     <Avatar name={p.name} />

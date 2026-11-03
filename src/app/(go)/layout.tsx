@@ -2,6 +2,10 @@ import type { Viewport } from "next";
 
 import { GoShell } from "./_components/GoShell";
 
+// Today is on these screens, so they are drawn when asked for: a page saved at build
+// time would carry the build's date and disagree with the browser the day after.
+export const dynamic = "force-dynamic";
+
 /**
  * The till keeps the zoom lock; OS does not.
  *

@@ -1223,10 +1223,10 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     return e.slotTime ? ` · ${formatClock(e.slotTime)} ${day}` : ` · ${day}`;
   };
 
-  /** The till's clock, in minutes — the demo clock, same as everywhere else.
+  /** The till's clock, in minutes.
    *  A day that has not started has none of it behind it: nothing "already
    *  went" on Friday. */
-  const nowMinutes = sellDate === TODAY ? 12 * 60 : 0;
+  const nowMinutes = sellDate === TODAY ? DEMO_NOW_MINUTES : 0;
   /** Phrasing for the live-state line. The deriver picks WHICH question to
    *  answer; these translate the answer. */
   /* "Today" and "now" are only true of today: a tile describing Friday says

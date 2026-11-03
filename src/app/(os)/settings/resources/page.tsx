@@ -10,11 +10,10 @@ import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { listLocations, listResources, ownerBusyDetailed, updateResource, type Resource } from "@/lib/api";
 import { formatClockMin, formatPriceShort } from "@/lib/format";
-import { DEMO_TODAY } from "@/lib/schedule";
+import { DEMO_TODAY, DEMO_NOW_MINUTES } from "@/lib/schedule";
 import { IconTile, RecordList, RecordRow, SectionSkeleton, Switch, controlCls } from "../_components/SettingsKit";
 
 /** The demo's "now": the same noon the till and the dashboard read. */
-const NOW_MIN = 12 * 60;
 
 type Tab = "all" | "available" | "out" | "retired";
 const TABS: Tab[] = ["all", "available", "out", "retired"];
@@ -82,9 +81,9 @@ export default function ResourcesPage() {
       };
     }
     const spans = ownerBusyDetailed(r.id, DEMO_TODAY);
-    const current = spans.find((s) => s.start <= NOW_MIN && NOW_MIN < s.end);
+    const current = spans.find((s) => s.start <= DEMO_NOW_MINUTES && DEMO_NOW_MINUTES < s.end);
     if (current) return { text: t("resources.inUseUntil", { time: formatClockMin(current.end), label: current.label }), warn: false };
-    const next = spans.find((s) => s.start > NOW_MIN);
+    const next = spans.find((s) => s.start > DEMO_NOW_MINUTES);
     return { text: next ? t("resources.freeNext", { time: formatClockMin(next.start) }) : t("resources.free"), warn: false };
   };
 

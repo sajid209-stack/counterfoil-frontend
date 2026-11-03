@@ -15,7 +15,7 @@
    IMPORTANT: like data.ts, nothing outside `src/lib/api/client.ts` imports this.
    ────────────────────────────────────────────────────────────────────────── */
 import type { Counter, InventoryItem, Location, Product, ProductPage, StockMovement, Storefront } from "@/lib/api/types";
-import { demoDay } from "@/lib/schedule";
+import { seedDay as demoDay } from "@/lib/schedule";
 
 const T = "2026-06-01T10:00:00+06:00";
 const LOC = "loc_fort";

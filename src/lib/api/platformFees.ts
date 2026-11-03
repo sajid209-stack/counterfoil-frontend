@@ -1,3 +1,4 @@
+import { DEMO_TODAY } from "@/lib/schedule";
 import { delay, fail, notFoundError, ok, validationError } from "./client";
 import { peekOrders } from "./orders";
 import { peekPaymentSettings, payoutDayAfterSchedule } from "./paymentSettings";
@@ -419,8 +420,7 @@ const addDays = (day: ISODate, n: number) => {
   d.setDate(d.getDate() + n);
   return isoDay(d);
 };
-/** The demo's today. The clock is pinned so the settlement states are stable. */
-const TODAY: ISODate = "2026-07-29";
+const TODAY: ISODate = DEMO_TODAY;
 const localDay = (iso: ISODateTime) => isoDay(new Date(iso));
 
 /** Collections paid through the console this session (Pay now). */

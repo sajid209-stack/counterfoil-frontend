@@ -1,5 +1,6 @@
 "use client";
 
+import { fromSeedDate } from "@/lib/schedule";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Copy, KeyRound, LifeBuoy, LogOut, Mail, Monitor, ShieldCheck, Smartphone, Tablet, type LucideIcon } from "lucide-react";
@@ -14,9 +15,9 @@ import { twoStepApplies } from "../_lib/access";
 import { useSince } from "../_lib/time";
 
 const MOCK_SIGNINS = [
-  { at: "2026-07-29T09:05:00", where: "Fort iPad 1 · Dhaka", ok: true },
-  { at: "2026-07-28T18:40:00", where: "Chrome on Windows · Dhaka", ok: true },
-  { at: "2026-07-28T07:12:00", where: "Unknown device · Chattogram", ok: false },
+  { at: fromSeedDate("2026-07-29T09:05:00"), where: "Fort iPad 1 · Dhaka", ok: true },
+  { at: fromSeedDate("2026-07-28T18:40:00"), where: "Chrome on Windows · Dhaka", ok: true },
+  { at: fromSeedDate("2026-07-28T07:12:00"), where: "Unknown device · Chattogram", ok: false },
 ];
 
 interface Session {
@@ -33,9 +34,9 @@ interface Session {
    after losing a phone, and the only one of the two they can act on, one place
    at a time. */
 const MOCK_SESSIONS: Session[] = [
-  { id: "ses_here", device: "Chrome on Windows", place: "Dhaka", kind: "desktop", lastActiveAt: "2026-07-29T12:00:00", current: true },
-  { id: "ses_go", device: "Counterfoil Go · Fort iPad 1", place: "Lalbagh Fort", kind: "tablet", lastActiveAt: "2026-07-29T09:05:00" },
-  { id: "ses_phone", device: "Safari on iPhone", place: "Dhaka", kind: "phone", lastActiveAt: "2026-07-27T21:40:00" },
+  { id: "ses_here", device: "Chrome on Windows", place: "Dhaka", kind: "desktop", lastActiveAt: fromSeedDate("2026-07-29T12:00:00"), current: true },
+  { id: "ses_go", device: "Counterfoil Go · Fort iPad 1", place: "Lalbagh Fort", kind: "tablet", lastActiveAt: fromSeedDate("2026-07-29T09:05:00") },
+  { id: "ses_phone", device: "Safari on iPhone", place: "Dhaka", kind: "phone", lastActiveAt: fromSeedDate("2026-07-27T21:40:00") },
 ];
 
 const KIND_ICON: Record<Session["kind"], LucideIcon> = { desktop: Monitor, tablet: Tablet, phone: Smartphone };

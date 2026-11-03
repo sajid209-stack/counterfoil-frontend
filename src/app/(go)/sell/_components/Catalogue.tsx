@@ -18,13 +18,12 @@ import { SkeletonText } from "@/components/ui";
 import type { InventoryItemView, Product, Resource, Staff } from "@/lib/api";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
-import { DEMO_TODAY } from "@/lib/schedule";
+import { DEMO_NOW_MINUTES, DEMO_TODAY } from "@/lib/schedule";
 import { formatClock, formatDay, formatPriceShort } from "@/lib/format";
 import { HeldButton } from "../../pos/HeldSheet";
 import { BookingGlyph, WallHeading, WallRow, WallTile } from "../../_components/WallTile";
 import { GENERIC_UNITS, ShopGlyph, productNeedsSheet, tilePrice } from "../_lib/wall";
 
-const NOW_MINUTES = 12 * 60;
 
 export function Catalogue({
   products,
@@ -130,7 +129,7 @@ export function Catalogue({
         ) : (
           <div className="grid grid-cols-2 gap-comfortable sm:grid-cols-3 xl:grid-cols-4 rail:grid-cols-[repeat(auto-fill,minmax(min(100%,11.5rem),1fr))] rail:gap-section">
             {shown.map((p) => {
-              const live = posLiveState(p, DEMO_TODAY, NOW_MINUTES, liveWords);
+              const live = posLiveState(p, DEMO_TODAY, DEMO_NOW_MINUTES, liveWords);
               const n = countOf(p.id);
               return (
                 <WallTile
@@ -141,7 +140,7 @@ export function Catalogue({
                   image={p.images?.[0]?.url}
                   glyph={<BookingGlyph bookingType={p.bookingType} />}
                   name={p.name}
-                  price={formatPriceShort(tilePrice(p, DEMO_TODAY, NOW_MINUTES), currency)}
+                  price={formatPriceShort(tilePrice(p, DEMO_TODAY, DEMO_NOW_MINUTES), currency)}
                   meta={subtitle(p, { resources, team })}
                   live={live}
                   count={n}

@@ -19273,3 +19273,26 @@ Production build on :3111, headless Chromium, harnesses in the f19663fb scratchp
 - `edge.mjs` (13): browsing saves nothing, one row saved rather than the catalogue, draft and stopped items unavailable, a later tab sees both copies, full and corrupt storage, Start fresh forgets only its own scope.
 
 The later-tab check does not make the older tab write anything, so the `storage` merge itself was not exercised.
+
+---
+
+## OS and POS run on the real date and time (2026-11-03)
+
+The owner saw "Starts in 111 days" on a page for 17 Nov, three months out because the app's clock was pinned at `DEMO_TODAY = 2026-07-29`, 12:00. This settles the seed re-anchoring question left open since 2026-08-30: the owner asked for the current date and time.
+
+- **The clock** (`lib/schedule.ts`). `DEMO_TODAY` is today in Asia/Dhaka as of page load. `DEMO_NOW_MINUTES` is a live binding (`export let`) refreshed every 30 seconds, and `demoNow()` is the real time. Hardcoded noons went from the till, sheets, dashboard, resources, check-in walk-ins and quick pass.
+- **The seed moves with it** (`rebaseSeed`, applied in `client.ts`). The seed is still written around 2026-07-29 (`seedDay` in `lib/mock`) and is shifted whole days to today as it loads, so there are always recent sales and upcoming bookings. A record is moved whole so its dates stay in order. A record with any date still ahead of today (a December event, a season) is left alone. The dashboard's figures came out identical to the frozen clock's for the same venue: sales today, places sold, 30-day sales.
+- **Weekdays are not preserved** by the shift. A hand-authored booking keeps its time of day but may land on another weekday; the literal-date proofs cited in older entries, such as "Sat 2026-08-01", no longer hold by date.
+- **OS and POS are drawn on request** (`dynamic = "force-dynamic"` in both layouts). Pages saved at build time carried the build's date and gave React error #418 the next day. Checked with a server whose `Date` runs 12 days ahead of the build.
+- **The shift timer** was a literal "3:24". `useShiftClock` now keeps a start per browser per day, first seen as 3:24 ago, and moving from there. Open shift resets it. No shift record exists yet to read instead.
+
+### Limits
+
+- A tab left open past midnight keeps its day until reloaded, because the store's today is built for that day. The time keeps moving.
+- Today's seeded sales are written up to 12:00, so before noon some are stamped later than now.
+- Items saved in a browser keep the dates they were given. Events made under the old clock may hold a default date from August.
+- Late at night most of today's sessions have passed and the till says so, which is correct but makes a thinner demo.
+
+### Verified
+
+Production build, f19663fb scratchpad `link/`: `clocktest.mjs` (186) sweeps 20 OS, POS and public routes at the real time, 08:05 and 23:50, plus the shift timer moving 3:24 to 3:34. With `FAKE_DAYS=12` (`fakedate.cjs`) and `ONLY_AT`, the same routes on a later day: 60 checks. `wiz.mjs` (24) now reads "Tue 17 Nov" with 14 days on the countdown. `link.mjs` (21) and `edge.mjs` (13) still pass. The full older regression list no longer exists (see SESSION_HANDOFF), so screens outside that sweep were not walked.

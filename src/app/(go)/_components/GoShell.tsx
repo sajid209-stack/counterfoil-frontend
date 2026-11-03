@@ -1,5 +1,6 @@
 "use client";
 
+import { useShiftClock } from "@/lib/useShiftClock";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -100,6 +101,7 @@ const MORE_ITEMS = [
 ] as const;
 
 export function GoShell({ children }: { children: React.ReactNode }) {
+  const shiftTime = useShiftClock();
   const pathname = usePathname();
   /*
    * How many lines the sale in progress holds. An external store, read the way
@@ -299,7 +301,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
             {/* Beside the counter, 48px like every other control on the till. */}
             {roomy ? <PageStatePicker size="lg" /> : <PreviewChip compact />}
             {!bare && (
-              <span className="hidden shrink-0 text-sm tabular-nums text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
+              <span className="hidden shrink-0 text-sm tabular-nums text-muted sm:block" title={tp("shell.shiftOpenFor", { time: shiftTime })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: shiftTime })}</span><span aria-hidden>⏱ {shiftTime}</span></span>
             )}
             <span className="flex-1 max-sm:hidden" />
             {/* Only on a till, and only where there is room for it. */}
@@ -395,9 +397,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
       >
         <div className="bg-surface p-section">
           <div className="mb-section flex items-center justify-between gap-tight">
-            {/* TODO(data): the elapsed shift time has no reader yet (no shift record
-                carries its start), so the 3:24 in this line is still the demo value. */}
-            <p className="min-w-0 text-sm text-muted">{tp("shell.shiftLine", { counter: activeCounter?.name ?? tp("counter"), time: "3:24" })}</p>
+            <p className="min-w-0 text-sm text-muted">{tp("shell.shiftLine", { counter: activeCounter?.name ?? tp("counter"), time: shiftTime })}</p>
             <LocaleToggle />
           </div>
           {/* Every destination is its own tile, the icon in a soft round over a
