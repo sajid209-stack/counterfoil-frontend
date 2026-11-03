@@ -101,45 +101,26 @@ export function useCue<T extends { at: number }>(cues: readonly T[]) {
 }
 
 /**
- * A modern phone around a Go recording: a dark bezel, the dynamic island, and
- * an iOS status bar drawn above the screen so the app's own header is never
- * covered. Width is set by the caller (the recording is 390 × 844 points).
+ * A slim phone around a Go recording: a thin bezel and nothing else. The app
+ * draws its own header, so no fake status bar or notch sits on top of it, and
+ * the frame is never overlapped or cropped by a layout. Width is the caller's.
  */
-export function Phone({ children, className, time = "9:41" }: { children: ReactNode; className?: string; time?: string }) {
+export function Phone({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div
-      className={cn(
-        "relative rounded-[3rem] bg-[#121211] p-[10px] shadow-[0_2px_0_1px_rgb(255_255_255/0.06)_inset,0_50px_100px_-30px_rgb(60_20_0/0.45),0_30px_60px_-40px_rgb(0_0_0/0.5)]",
-        className,
-      )}
-    >
-      <div className="relative overflow-hidden rounded-[2.4rem] bg-[#f5f2eb]">
-        <div aria-hidden className="relative z-10 flex h-[30px] items-center justify-between px-6 pt-1 text-[12px] font-semibold text-[#121211]">
-          <span>{time}</span>
-          <span className="absolute left-1/2 top-[7px] h-[22px] w-[84px] -translate-x-1/2 rounded-full bg-[#121211]" />
-          <span className="flex items-center gap-1">
-            <svg width="16" height="10" viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="1" /><rect x="4.3" y="4" width="3" height="6" rx="1" /><rect x="8.6" y="2" width="3" height="8" rx="1" /><rect x="12.9" y="0" width="3" height="10" rx="1" /></svg>
-            <svg width="22" height="11" viewBox="0 0 22 11"><rect x="0.5" y="0.5" width="18" height="10" rx="3" fill="none" stroke="currentColor" opacity=".45" /><rect x="2" y="2" width="13" height="7" rx="1.6" fill="currentColor" /><rect x="19.6" y="3.5" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".45" /></svg>
-          </span>
-        </div>
-        <div className="aspect-[390/844]">{children}</div>
-      </div>
+    <div className={cn("rounded-[2.5rem] bg-[#1c1c1a] p-[6px] shadow-[0_0_0_1px_rgb(20_20_19/0.1),0_32px_64px_-24px_rgb(20_20_19/0.35)]", className)}>
+      <div className="aspect-[390/844] overflow-hidden rounded-[2.15rem] bg-[var(--cf-paper)]">{children}</div>
     </div>
   );
 }
 
-/** A light browser window around an OS recording — no strokes, a soft shadow. */
-export function Browser({ children, className, url = "app.counterfoil.app/dashboard" }: { children: ReactNode; className?: string; url?: string }) {
+/** A quiet window around an OS recording, with the UI large enough to read. */
+export function Browser({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("overflow-hidden rounded-2xl bg-white shadow-[0_40px_90px_-30px_rgb(60_20_0/0.35),0_12px_30px_-18px_rgb(0_0_0/0.18)]", className)}>
-      <div aria-hidden className="flex h-9 items-center gap-3 bg-[#f4f3f0] px-3.5">
-        <span className="flex gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-        </span>
-        <span className="mx-auto hidden max-w-[50%] truncate rounded-md bg-white px-3 py-0.5 text-[12px] text-[#6b6a66] sm:block">{url}</span>
-        <span className="hidden w-[46px] sm:block" />
+    <div className={cn("overflow-hidden rounded-xl bg-white shadow-[var(--cf-shadow-frame)]", className)}>
+      <div aria-hidden className="flex h-8 items-center gap-1.5 bg-[#f7f6f3] px-3">
+        <span className="h-2.5 w-2.5 rounded-full bg-[#dedad1]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#dedad1]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#dedad1]" />
       </div>
       <div className="aspect-[1440/900]">{children}</div>
     </div>

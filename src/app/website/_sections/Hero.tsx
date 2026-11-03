@@ -1,33 +1,44 @@
-import { Heading, LinkButton, Section } from "../_components/ui";
-import { HeroStage } from "./HeroStage";
-import { HeroVenues } from "./HeroVenues";
+import { Browser, Clip } from "../_components/media";
+import { Container, Heading, LinkButton, delay } from "../_components/ui";
 
-/** The first screen: one line, two buttons, and the real product on a soft stage. */
+const VENUES = ["Museums & heritage", "Turf & courts", "Bowling", "Spas", "Cinemas", "Guided tours", "Pools & classes"];
+
+/** A plain promise, then one large product frame that nothing overlaps. */
 export function Hero() {
   return (
-    <Section label="Counterfoil" flush className="px-5 pb-16 pt-20 md:px-12 md:pb-20 md:pt-28">
-      <Heading
-        as="h1"
-        align="center"
-        className="max-w-[820px]"
-        title="The system for"
-        dim={<>places that sell <span className="cf-accent">time.</span></>}
-        lead="Tickets, sessions, courts and tours — sold at the counter, checked at the gate and reconciled by close. In one place."
-      >
-        <LinkButton href="/sign-up" variant="primary">
-          Start for free
-        </LinkButton>
-        <LinkButton href="/" variant="secondary">
-          Try the live demo
-        </LinkButton>
-      </Heading>
-      <p className="sr-only">
-        A recording of the real product: a cashier sells two Planetarium Show tickets in Counterfoil Go, pays with bKash, and the sale appears in Counterfoil OS.
-      </p>
-      <div data-reveal className="mt-14 md:mt-16">
-        <HeroStage />
-      </div>
-      <HeroVenues />
-    </Section>
+    <section className="bg-gradient-to-b from-white from-60% to-[var(--cf-paper)] pb-16 pt-16 md:pb-24 md:pt-24">
+      <Container>
+        <Heading
+          as="h1"
+          align="center"
+          title="The system for places that sell time."
+          lead="Tickets, sessions, courts and tours, sold at the counter, checked at the gate and reconciled by close."
+          className="max-w-[860px]"
+        >
+          <LinkButton href="/sign-up">Start for free</LinkButton>
+          <LinkButton href="/" variant="secondary">
+            See the live demo
+          </LinkButton>
+        </Heading>
+        <p data-reveal style={delay(240)} className="cf-body mt-4 text-center text-sm">
+          Free to start. No cut of your tickets on a monthly plan.
+        </p>
+
+        <div data-reveal style={delay(300)} className="mt-14 md:mt-16">
+          <Browser>
+            <Clip name="os-hero" label="The Counterfoil OS dashboard: sales, capacity and what needs attention, updating live" />
+          </Browser>
+        </div>
+
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-center">
+          <span className="cf-eyebrow">Built for</span>
+          {VENUES.map((v) => (
+            <span key={v} className="text-[15px] font-medium text-[var(--cf-muted)]">
+              {v}
+            </span>
+          ))}
+        </div>
+      </Container>
+    </section>
   );
 }

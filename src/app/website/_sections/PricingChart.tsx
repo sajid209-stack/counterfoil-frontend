@@ -50,7 +50,7 @@ export function PricingChart() {
     pathLength: 1,
     strokeDasharray: "1 1",
     strokeDashoffset: drawn ? 0 : 1,
-    style: { transition: reduce ? "none" : `stroke-dashoffset 1400ms var(--cf-ease-in-out) ${delayMs}ms` },
+    style: { transition: reduce ? "none" : `stroke-dashoffset 1400ms cubic-bezier(0.65,0,0.35,1) ${delayMs}ms` },
   });
   const fade = (delayMs: number) => ({
     opacity: drawn ? 1 : 0,
@@ -58,10 +58,10 @@ export function PricingChart() {
   });
 
   return (
-    <figure className="m-0 p-4 pt-0 md:p-8 md:pt-0">
+    <figure className="m-0">
       <figcaption className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
-        <span className="cf-label">Monthly cost, at ৳{TICKET_PRICE} a ticket</span>
-        <ul className="flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-[var(--cf-fg-2)]">
+        <span className="text-[14px] font-medium text-[var(--cf-fg)]">Monthly cost, at ৳{TICKET_PRICE} a ticket</span>
+        <ul className="flex flex-wrap gap-x-5 gap-y-2 text-[14px] text-[var(--cf-fg)]">
           <li className="flex items-center gap-2">
             <span aria-hidden className="h-[3px] w-5 rounded-full" style={{ background: EMBER }} />
             Counterfoil Growth
@@ -111,7 +111,7 @@ export function PricingChart() {
               </g>
 
               {/* The sweeping guide. */}
-              <g style={{ opacity: drawn ? 1 : 0, transform: `translateX(${cx}px)`, transition: reduce ? "none" : "transform 900ms var(--cf-ease-in-out), opacity 800ms var(--cf-ease) 1400ms" }}>
+              <g style={{ opacity: drawn ? 1 : 0, transform: `translateX(${cx}px)`, transition: reduce ? "none" : "transform 900ms cubic-bezier(0.65,0,0.35,1), opacity 800ms var(--cf-ease) 1400ms" }}>
                 <line x1={0} x2={0} y1={PAD.t} y2={H - PAD.b} stroke={INK} strokeOpacity={0.35} strokeDasharray="3 3" />
                 {[share(tickets, SHARE_HIGH), share(tickets, SHARE_LOW), GROWTH.monthly].map((c, k) => (
                   <circle key={k} cx={0} cy={sy(c)} r={4} fill={k === 2 ? EMBER : "#fff"} stroke={k === 2 ? "#fff" : GREY} strokeWidth={1.5} />
@@ -121,12 +121,12 @@ export function PricingChart() {
 
             <div
               aria-hidden
-              className="pointer-events-none absolute top-2 z-10 whitespace-nowrap rounded-lg bg-white px-3 py-2 text-[12px] leading-[1.5] text-[var(--cf-fg-2)] shadow-[var(--cf-shadow-lg)]"
+              className="pointer-events-none absolute top-2 z-10 whitespace-nowrap rounded-lg bg-white px-3 py-2 text-[12px] leading-[1.5] text-[var(--cf-fg)] shadow-[var(--cf-shadow-frame)]"
               style={{
                 left: cx,
                 transform: `translateX(${flip ? "calc(-100% - 12px)" : "12px"})`,
                 opacity: drawn ? 1 : 0,
-                transition: reduce ? "none" : "left 900ms var(--cf-ease-in-out), opacity 800ms var(--cf-ease) 1400ms",
+                transition: reduce ? "none" : "left 900ms cubic-bezier(0.65,0,0.35,1), opacity 800ms var(--cf-ease) 1400ms",
               }}
             >
               <span className="block font-semibold tabular-nums text-[var(--cf-fg)]">{tickets.toLocaleString("en-US")} tickets</span>

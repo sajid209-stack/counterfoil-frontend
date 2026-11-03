@@ -1,43 +1,26 @@
-/* The Counterfoil website. A light, near-monochrome page in the manner of
-   attio.com: a white canvas framed by hairline rails, black type with grey
-   second halves, small black buttons, and product UI that acts by itself.
-   Colour is spent almost entirely on the product mockups' own small accents;
-   the brand ember appears as a dot, a progress line, a mark — never a field.
+/* The Counterfoil website: a white page, ink type, the brand ember only where
+   it means something (the primary action, the active item), and real product
+   UI shown large enough to read. Fixed light theme via `.light` on the root.
 
-   Every class is `cf-*` and every value `--cf-*`, scoped to .cf-root. Not
-   `w-*`: Tailwind reads `w-<name>` as a width utility whenever a
-   `--spacing-<name>` token exists, and this app has several. */
+   Every class is `cf-*` and every value `--cf-*`, scoped to .cf-root. Not `w-*`:
+   Tailwind reads `w-<name>` as a width utility whenever a `--spacing-<name>`
+   token exists, and this app has several. */
 
 .cf-root {
-  --cf-bg: #ffffff;
-  --cf-bg-2: #fafaf9;
-  --cf-bg-3: #f4f4f2;
-  --cf-fg: #111110;
-  --cf-fg-2: #3a3936;
-  --cf-muted: #6b6a66;
-  --cf-dim: #8e8d89;
-  --cf-line: #ebeae6;
-  --cf-line-2: #dedcd7;
+  --cf-white: #ffffff;
+  --cf-paper: #f5f2eb;
+  --cf-ink: #141413;
+  --cf-fg: #141413;
+  --cf-muted: #5f5c55;
+  --cf-line: #e8e4db;
   --cf-accent: #f94a00;
   --cf-accent-text: #b33400;
-  --cf-accent-wash: #fff1ea;
-  --cf-green: #16803c;
-  --cf-green-wash: #eaf6ee;
-  --cf-red: #c4261d;
-  --cf-red-wash: #fdeeed;
-  --cf-blue: #2f6fde;
-  --cf-blue-wash: #edf3fd;
-
-  --cf-shadow: 0 1px 2px rgb(17 17 16 / 0.04), 0 4px 12px -4px rgb(17 17 16 / 0.06);
-  --cf-shadow-lg: 0 1px 2px rgb(17 17 16 / 0.04), 0 12px 32px -12px rgb(17 17 16 / 0.14), 0 32px 64px -32px rgb(17 17 16 / 0.12);
-
+  --cf-shadow-frame: 0 0 0 1px rgb(20 20 19 / 0.07), 0 2px 4px rgb(20 20 19 / 0.04), 0 24px 64px -24px rgb(20 20 19 / 0.22);
   --cf-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --cf-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
-  background: var(--cf-bg);
+  background: var(--cf-white);
   color: var(--cf-fg);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  font-feature-settings: "cv11", "ss01", "ss03";
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
   min-height: 100vh;
@@ -46,191 +29,63 @@
   background: #ffd9c7;
   color: var(--cf-fg);
 }
-
-/* ── type ─────────────────────────────────────────────────────────────── */
-
-.cf-display {
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
-  font-weight: 600;
-  text-wrap: balance;
-}
-.cf-h2 {
-  font-size: clamp(1.875rem, 3.6vw, 2.875rem);
-  line-height: 1.06;
-  letter-spacing: -0.035em;
-  font-weight: 600;
-  text-wrap: balance;
-}
-.cf-h3 {
-  font-size: 1.0625rem;
-  line-height: 1.35;
-  letter-spacing: -0.015em;
-  font-weight: 600;
-}
-.cf-body {
-  font-size: 0.9375rem;
-  line-height: 1.6;
-  color: var(--cf-muted);
-  text-wrap: pretty;
-}
-.cf-lead {
-  font-size: clamp(1rem, 1.3vw, 1.125rem);
-  line-height: 1.6;
-  color: var(--cf-muted);
-  letter-spacing: -0.01em;
-  text-wrap: pretty;
-}
-/* The brand word in a heading — large text only (3.5:1 on white). */
-.cf-accent {
-  color: var(--cf-accent);
-}
-/* The grey second half of a two-tone heading. */
-.cf-dimtext {
-  color: var(--cf-dim);
-}
-.cf-label {
-  font-family: var(--font-dm-mono), ui-monospace, monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--cf-muted);
-}
-.cf-mono {
-  font-family: var(--font-dm-mono), ui-monospace, monospace;
-}
-
-/* ── the rails ────────────────────────────────────────────────────────── */
-
-/* The page's frame: one 1200px column with hairline rails down both sides,
-   and every section separated by a hairline with a small + at each rail. */
-.cf-rails {
-  position: relative;
-  max-width: 1200px;
-  margin-inline: auto;
-}
-.cf-sec {
-  position: relative;
-}
-.cf-sec > .cf-cross {
-  display: none;
-  position: absolute;
-  top: -5px;
-  width: 9px;
-  height: 9px;
-  pointer-events: none;
-  z-index: 2;
-}
-.cf-cross::before,
-.cf-cross::after {
-  content: "";
-  position: absolute;
-  background: var(--cf-line-2);
-}
-.cf-cross::before {
-  left: 4px;
-  top: 0;
-  width: 1px;
-  height: 9px;
-}
-.cf-cross::after {
-  top: 4px;
-  left: 0;
-  width: 9px;
-  height: 1px;
-}
-.cf-cross-l {
-  left: -5px;
-}
-.cf-cross-r {
-  right: -5px;
-}
-/* Hairline grid: children separated by 1px lines, no cards. */
-.cf-cells {
-  display: grid;
-  gap: 12px;
-}
-.cf-cells > * {
-  background: var(--cf-bg-2);
-  border-radius: 16px;
-}
-
-/* Dotted ground under product canvases. */
-.cf-dots {
-  background-color: var(--cf-bg-2);
-  background-image: radial-gradient(rgb(17 17 16 / 0.06) 1px, transparent 1px);
-  background-size: 14px 14px;
-}
-
-/* ── surfaces ─────────────────────────────────────────────────────────── */
-
-.cf-window {
-  background: var(--cf-bg);
-  border-radius: 14px;
-  box-shadow: var(--cf-shadow-lg);
-}
-.cf-chip {
-  background: var(--cf-bg);
-  border-radius: 10px;
-  box-shadow: var(--cf-shadow);
-}
-
-/* ── controls ─────────────────────────────────────────────────────────── */
-
-.cf-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  height: 2.25rem;
-  padding: 0 0.875rem;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  transition:
-    background-color 160ms var(--cf-ease),
-    box-shadow 160ms var(--cf-ease),
-    transform 160ms var(--cf-ease);
-}
-.cf-btn:active {
-  transform: scale(0.98);
-}
-.cf-btn-dark {
-  background: var(--cf-fg);
-  color: #fff;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 1px 2px rgb(17 17 16 / 0.2);
-}
-.cf-btn-dark:hover {
-  background: #2b2a28;
-}
-.cf-btn-light {
-  background: var(--cf-bg);
-  color: var(--cf-fg);
-  box-shadow: inset 0 0 0 1px var(--cf-line-2), 0 1px 2px rgb(17 17 16 / 0.05);
-}
-.cf-btn-light:hover {
-  background: var(--cf-bg-2);
-}
-@media (max-width: 767px) {
-  .cf-btn {
-    height: 2.75rem;
-    padding: 0 1rem;
-  }
-}
 .cf-root :focus-visible {
-  outline: 2px solid var(--cf-fg);
+  outline: 2px solid var(--cf-accent);
   outline-offset: 2px;
   border-radius: 6px;
 }
 
-/* ── motion ───────────────────────────────────────────────────────────── */
+/* type: one scale, as measured on the reference sites */
+.cf-display {
+  font-size: clamp(2.5rem, 5.2vw, 4rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.cf-h2 {
+  font-size: clamp(2rem, 3.6vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.cf-h3 {
+  font-size: 1.25rem;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+}
+.cf-lead {
+  font-size: clamp(1.0625rem, 1.4vw, 1.25rem);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--cf-muted);
+  text-wrap: pretty;
+}
+.cf-body {
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--cf-muted);
+  text-wrap: pretty;
+}
+.cf-eyebrow {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-weight: 500;
+  color: var(--cf-accent-text);
+}
+.cf-on-ink {
+  --cf-fg: #f5f2eb;
+  --cf-muted: #b5b1a8;
+  --cf-accent-text: #ff9a66;
+  color: var(--cf-fg);
+}
 
+/* motion: a quiet rise, once */
 .cf-ready [data-reveal] {
   opacity: 0;
-  transform: translate3d(0, 14px, 0);
+  transform: translate3d(0, 16px, 0);
   transition:
     opacity 700ms var(--cf-ease),
     transform 800ms var(--cf-ease);
@@ -240,86 +95,10 @@
   opacity: 1;
   transform: none;
 }
-
-@keyframes cf-marquee {
-  to {
-    transform: translateX(-50%);
-  }
-}
-.cf-marquee {
-  animation: cf-marquee var(--cf-marquee, 50s) linear infinite;
-}
-@keyframes cf-blink {
-  50% {
-    opacity: 0;
-  }
-}
-.cf-caret {
-  display: inline-block;
-  width: 1.5px;
-  height: 1em;
-  margin-left: 1px;
-  vertical-align: -0.12em;
-  background: currentColor;
-  animation: cf-blink 1s steps(1) infinite;
-}
-@keyframes cf-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgb(249 74 0 / 0.35);
-  }
-  100% {
-    box-shadow: 0 0 0 8px rgb(249 74 0 / 0);
-  }
-}
-.cf-live {
-  animation: cf-pulse 1.8s var(--cf-ease) infinite;
-}
-@keyframes cf-shimmer {
-  to {
-    background-position: -200% 0;
-  }
-}
-.cf-skeleton {
-  background: linear-gradient(90deg, var(--cf-bg-3) 0%, #ecebe8 40%, var(--cf-bg-3) 80%);
-  background-size: 200% 100%;
-  animation: cf-shimmer 1.6s linear infinite;
-}
-/* Something new arriving in a list: slides down and fades in. */
-@keyframes cf-arrive {
-  from {
-    opacity: 0;
-    transform: translateY(-6px) scale(0.98);
-  }
-}
-.cf-arrive {
-  animation: cf-arrive 480ms var(--cf-ease) both;
-}
-@keyframes cf-pop {
-  0% {
-    transform: scale(0.6);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.08);
-    opacity: 1;
-  }
-}
-.cf-pop {
-  animation: cf-pop 420ms var(--cf-ease) both;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .cf-ready [data-reveal] {
     opacity: 1;
     transform: none;
     transition: none;
-  }
-  .cf-marquee,
-  .cf-caret,
-  .cf-live,
-  .cf-skeleton,
-  .cf-arrive,
-  .cf-pop {
-    animation: none;
   }
 }

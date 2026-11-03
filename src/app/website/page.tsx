@@ -2,55 +2,50 @@ import { RevealRoot } from "./_components/motion";
 import { Nav } from "./_components/Nav";
 import { Footer } from "./_components/Footer";
 import { Hero } from "./_sections/Hero";
-import { PhoneStory } from "./_sections/PhoneStory";
-import { OsShowcase } from "./_sections/OsShowcase";
-import { Engine } from "./_sections/Engine";
-import { Types } from "./_sections/Types";
-import { Payments } from "./_sections/Payments";
-import { Facts } from "./_sections/Facts";
+import { Problem } from "./_sections/Problem";
+import { GoSection } from "./_sections/GoSection";
+import { OsSection } from "./_sections/OsSection";
+import { Bento } from "./_sections/Bento";
+import { Market } from "./_sections/Market";
 import { Pricing } from "./_sections/Pricing";
+import { Faq } from "./_sections/Faq";
 import { Cta } from "./_sections/Cta";
 
 /**
- * The Counterfoil website, in attio.com's manner — a white page inside
- * hairline rails, one story told section by section:
+ * The Counterfoil website, composed the way world-class SaaS sites are (measured
+ * from attio, linear, ramp, stripe, mercury, square, toast and shopify POS):
  *
- *   Hero        The real till selling, the real dashboard behind it
- *   PhoneStory  Counterfoil Go on a phone, chapter by chapter (sticky, scroll-driven)
- *   OsShowcase  Counterfoil OS: dashboard, calendar, customers, catalog, analytics
- *   Engine      Never sold twice — one capacity engine behind every counter
- *   Types       Fourteen ways to sell time, from one engine
- *   Payments    Built in Bangladesh. Ready anywhere.
- *   Facts       The product in four numbers
- *   Pricing     No cut of your tickets
- *   Cta         Start with one counter
+ *   Hero      A plain promise, then ONE large product frame nothing overlaps
+ *   Problem   Why a retail till is the wrong tool
+ *   GoSection The till: a feature list that swaps the real phone recording
+ *   OsSection The office: the same pattern with the real OS recording
+ *   Bento     Real UI cropped large, a card per capability
+ *   Market    Built in Bangladesh: the payment rails
+ *   Pricing   The real plans and the marketplace comparison
+ *   Faq       An accordion
+ *   Cta       The one dark band
  *
- * The product is shown as RECORDINGS of the running app (public/website/*.webm,
- * filmed with a scratchpad recorder), never as drawn mockups.
- *
- * Everything it shows is real: the screens and figures are this product's own,
- * the prices are the real Bangladesh price list (the same figures as /deck),
- * and there are no invented customers, logos, quotes or usage statistics.
+ * The product is only ever real: recordings (public/website/*.webm) and captures
+ * of the running app (_media). No drawn UI, floating bubbles or overlapping
+ * devices, and no invented customers, logos, quotes or usage statistics.
  */
 export default function WebsitePage() {
   return (
     <div id="cf-root" className="cf-root light">
       <RevealRoot rootId="cf-root" />
       <Nav />
-      <div className="cf-rails">
-        <main>
-          <Hero />
-          <PhoneStory />
-          <OsShowcase />
-          <Engine />
-          <Types />
-          <Payments />
-          <Facts />
-          <Pricing />
-          <Cta />
-        </main>
-        <Footer />
-      </div>
+      <main>
+        <Hero />
+        <Problem />
+        <GoSection />
+        <OsSection />
+        <Bento />
+        <Market />
+        <Pricing />
+        <Faq />
+        <Cta />
+      </main>
+      <Footer />
     </div>
   );
 }

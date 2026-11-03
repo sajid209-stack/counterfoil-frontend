@@ -19198,3 +19198,43 @@ names, no counters, no PIN, nothing assigned and manager: overflow, clipping, su
 an over-strict test (the button is on the row, centred rather than level with the name), corrected
 and passing in the 7-check run on the final build without the fixture. `tsc`, eslint on the
 touched files, `lint:tokens` and i18n parity clean. Bangla strings need a native review.
+
+---
+
+## Website v7 (2026-11-03): composed like a world-class SaaS site
+
+Owner, boxing the hero's phone: "looking too weird and basic ... standard SaaS website design, world
+class." Six rounds had added effects without fixing composition, so this one started from
+measurement: attio, linear, ramp, stripe, mercury, square, toast and shopify POS were rendered at
+1440 and measured.
+
+**What they share, now the rules of this site** (`_components/ui.tsx`, `website.css`):
+h1 about 64px semibold in plain ink; one product frame of 1080 to 1320px with readable UI; nothing
+overlapping product UI; real UI cropped large rather than whole screens shrunk; almost no
+decoration; one dark band. Hero, problem, product, bento, pricing, FAQ, CTA, big footer.
+
+- **Gone**: floating bubbles, the phone on the dashboard, peach mesh, tilts, fake status bar and
+  notch, accent words in headings, drawn diagrams and micro-animations.
+- **Hero**: one `Browser` at 1200px with `os-hero`, re-filmed so its first frame is full figures.
+- **Go**: `FeatureSwitcher` list beside a phone that always fits whole on one screen, heading in the
+  same column. **OS**: tabs above a full-width frame, because at 62% width the UI was unreadable.
+- **Bento**: six real captures in `_media`. Office captures were re-shot at narrower viewports so
+  the card reflows and stays legible instead of shrinking; till captures are phone-width.
+- **New**: FAQ accordion, plain payment rails, restyled pricing. Deleted: Engine, Types grid, Facts.
+- **`go-scan` re-filmed** to open on the verdict, so the "Camera scanning isn't available" notice
+  from the headless browser never shows. The refused re-scan is no longer in the clip, and the copy
+  no longer claims it. `gorec/rec.mjs` gained `finish(..., { pad })`: on a still screen the
+  screencast stops sending frames, so a final hold is otherwise lost.
+- **`ui-customer` is a composite**: real UI and data, but other cards on the record are hidden so the
+  hero and At a glance stack.
+
+**Gotcha**: a multi-file Bash heredoc with an unmatched quote fails to parse as a whole, so nothing in
+it runs, while parallel calls still proceed. Write shared foundation files with the Write tool.
+
+**Verified** (production build): 85/85 in `scratchpad/web7/run.mjs`, which turns the rules into
+checks: 64px h1, one frame at 1100px or wider, sampled points show nothing overlaps it, every phone
+whole and at least 260px, every OS clip at least 640px, tab keyboard, no blur/canvas/gradient
+text/3D, images load, real prices and the yearly toggle, FAQ opens, one dark band, no invented
+proof; and overflow, 12px floor, clipping, contrast (excluding the primary button's own white on
+ember), reduced motion and console at 320 to 1440, with 44px targets on phones. `tsc`,
+eslint on the site, `lint:tokens` and i18n clean.
