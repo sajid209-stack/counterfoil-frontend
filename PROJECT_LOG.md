@@ -19407,3 +19407,17 @@ Owner asked for sponsors centred and the cover height fixed at Medium with its c
 Production build, f19663fb scratchpad: `walk.mjs` (47, including a tap, arrow keys, Enter not moving the point, the chosen point reaching the public page on desktop and phone, and sponsors measured centred), `matrix.mjs` (38), `review.mjs` (3), `extra.mjs` (26), `pub.mjs` (33), `hs.mjs` (18). Viewed by eye: the panel and the six-card warm page.
 
 The next person to edit `Hero.tsx`, note a focus point chosen for one photo stays when the cover photo is replaced, so a new photo may want a new tap.
+
+---
+
+## Highlights: a text list, not boxes (2026-11-03)
+
+Owner rejected the grey tiles: one large and two small boxes holding only a few words. A box with nothing to show but a short phrase reads as an empty card, and the size difference claimed a rank these items do not have.
+
+- **Words only**: hairline above each, no fill, equal rank, laid out by `evenPlan`. Round two's bento stays where a card has something to fill it.
+- **With a photo**: photo above, words beneath on the page ground, in `bentoPlan` with `tallLead: false`. The scrim and white text are gone. Fixed heights per span so a row's photos line up.
+- **Mixed**: photos first, then words, order kept inside each group, so a words-only item never sits beside a photo with a hole under it. This does reorder what the operator entered. A photo that fails to load moves its item to the words.
+
+Verified on a production build, f19663fb scratchpad: `design/hl.mjs` (139: counts 1 to 6, words and photos, desktop and phone, mixed, broken photo, dark), `design/matrix.mjs`. Viewed by eye.
+
+Found, not changed: `public/demo/pages/badminton-1.jpg` has white bands baked into its left and right edges (93 and 66px of 1600), so it looks inset with square corners wherever it is used.

@@ -821,7 +821,7 @@
     "organiser": "আয়োজক",
     "organiserPlaceholder": "যেমন: ঢাকা মিউজিক ক্লাব",
     "organiserLine": "তাদের নিয়ে এক লাইন",
-    "highlightsNote": "কেন আসবেন, তার কয়েকটি ছোট কথা। প্রথমটি সবচেয়ে বড় দেখাবে। ছবি দেওয়া ঐচ্ছিক।",
+    "highlightsNote": "কেন আসবেন, তার কয়েকটি ছোট কথা। ছবি দেওয়া ঐচ্ছিক।",
     "highlightN": "বিশেষ কথা {n}",
     "removeHighlight": "বিশেষ কথা মুছুন: {name}",
     "highlightLabel": "বিশেষ কথা",

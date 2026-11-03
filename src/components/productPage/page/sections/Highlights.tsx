@@ -2,90 +2,76 @@
 
 import { useState } from "react";
 import type { EventHighlight } from "@/lib/api/events";
-import { bentoPlan, cellStyle, gridStyle, type Cell } from "../bento";
+import { bentoPlan, cellStyle, evenPlan, gridStyle, type Cell } from "../bento";
 import { usePage } from "../context";
 import { Section } from "../Section";
 import { clean, highlightsOf } from "./helpers";
 
 /**
- * Highlights: plain tiles, flat on the surface ground, laid out as a bento that
- * follows the count (`bentoPlan`). Words only, or a photo with the words over a
- * scrim. No icons, no tinted circles, no border: the tile's size and type do
- * the work. The lead tile states its label in the page's heading face; the
- * rest in the body face, semibold.
+ * Highlights. Words alone are a text list under hairlines, all of equal rank,
+ * laid out by count (`evenPlan`): a box with nothing to show but a short word
+ * is an empty card, so there is no box. A photo earns its own space: it sits
+ * above its words, on the page ground, in a bento by count (`bentoPlan`). No
+ * words over the photo, no icons, no numbers. Photos come first; a photo that
+ * fails to load moves its highlight into the words list so the layout stays whole.
  */
 export function HighlightsSection() {
   const ctx = usePage();
   const items = highlightsOf(ctx);
+  const [broken, setBroken] = useState<ReadonlySet<string>>(() => new Set());
   if (items.length === 0) return null;
 
-  const plan = bentoPlan(items.length, ctx.layout, { tallLead: !!clean(items[0].imageUrl) });
-  /* Words alone need less height than a picture does. */
-  const anyPhoto = items.some((h) => clean(h.imageUrl));
+  const withPhoto = items.filter((h) => clean(h.imageUrl) && !broken.has(h.id));
+  const wordsOnly = items.filter((h) => !(clean(h.imageUrl) && !broken.has(h.id)));
   const phone = ctx.layout === "phone";
+  const markBroken = (id: string) => setBroken((prev) => new Set(prev).add(id));
+
+  const photoPlan = withPhoto.length > 0 ? bentoPlan(withPhoto.length, ctx.layout, { tallLead: false }) : null;
+  const wordsPlan = wordsOnly.length > 0 ? evenPlan(wordsOnly.length, ctx.layout) : null;
+
   return (
     <Section id="highlights" title={ctx.labels.highlights}>
-      <ul style={{ ...gridStyle(plan), gap: "var(--pg-gap, 16px)", gridAutoRows: anyPhoto ? (phone ? "minmax(160px, auto)" : "minmax(200px, auto)") : "minmax(112px, auto)" }}>
-        {items.map((h, i) => (
-          <Tile key={h.id} item={h} cell={plan.cells[i]} lead={i === 0 && items.length > 1} phone={phone} />
-        ))}
-      </ul>
+      <div className="flex flex-col" style={{ gap: 32 }}>
+        {photoPlan && (
+          <ul style={{ ...gridStyle(photoPlan), columnGap: "var(--pg-gap, 16px)", rowGap: 28 }}>
+            {withPhoto.map((h, i) => (
+              <PhotoItem key={h.id} item={h} cell={photoPlan.cells[i]} phone={phone} onBroken={markBroken} />
+            ))}
+          </ul>
+        )}
+        {wordsPlan && (
+          <ul style={{ ...gridStyle(wordsPlan), columnGap: 24, rowGap: phone ? 20 : 28 }}>
+            {wordsOnly.map((h, i) => (
+              <li key={h.id} className="min-w-0" style={{ ...cellStyle(wordsPlan.cells[i]), borderTop: "1px solid var(--pg-line)", paddingTop: 16 }}>
+                <Words item={h} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </Section>
   );
 }
 
-function Tile({ item: h, cell, lead, phone }: { item: EventHighlight; cell: Cell; lead: boolean; phone: boolean }) {
-  const [broken, setBroken] = useState(false);
+function Words({ item: h, spaced }: { item: EventHighlight; spaced?: boolean }) {
   const text = clean(h.description);
-  const photo = clean(h.imageUrl) && !broken ? h.imageUrl : null;
-  const big = lead && cell.col >= 3;
-  /* A lead on two rows needs room for its photo or its words. */
-  const tall = cell.row > 1;
-
   return (
-    <li
-      className="pg-media relative isolate flex min-w-0 flex-col justify-end overflow-hidden"
-      style={{
-        ...cellStyle(cell),
-        background: "var(--pg-surface)",
-        padding: phone ? 20 : 28,
-        minHeight: tall && !phone ? 416 : undefined,
-        color: photo ? "#fff" : "var(--pg-fg)",
-      }}
-    >
-      {photo && (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element -- local / remote photos; next/image loader config is avoided app-wide (see PROJECT_LOG) */}
-          <img src={photo} alt="" loading="lazy" decoding="async" onError={() => setBroken(true)} className="absolute inset-0 -z-20 size-full object-cover" />
-          <div
-            aria-hidden
-            className="absolute inset-0 -z-10"
-            style={{ background: "linear-gradient(to top, rgb(0 0 0 / 0.82) 0%, rgb(0 0 0 / 0.5) 50%, rgb(0 0 0 / 0.1) 100%)" }}
-          />
-        </>
-      )}
-      <h3
-        className={big ? undefined : "text-[18px] font-semibold leading-6"}
-        style={
-          big
-            ? {
-                fontFamily: "var(--pg-display)",
-                fontSize: phone ? 22 : 26,
-                lineHeight: phone ? "28px" : "32px",
-                fontWeight: "var(--ps-heading-weight, 700)",
-                letterSpacing: "-0.01em",
-                overflowWrap: "anywhere",
-              }
-            : { overflowWrap: "anywhere" }
-        }
-      >
+    <>
+      <h3 className={spaced ? "mt-3 text-[17px] font-semibold leading-6" : "text-[17px] font-semibold leading-6"} style={{ overflowWrap: "anywhere" }}>
         {h.label}
       </h3>
-      {text && (
-        <p className="pg-meta mt-2 max-w-[48ch]" style={photo ? { color: "rgb(255 255 255 / 0.86)" } : undefined}>
-          {text}
-        </p>
-      )}
+      {text && <p className="pg-meta mt-1.5 max-w-[48ch]">{text}</p>}
+    </>
+  );
+}
+
+function PhotoItem({ item: h, cell, phone, onBroken }: { item: EventHighlight; cell: Cell; phone: boolean; onBroken: (id: string) => void }) {
+  const height = phone ? (cell.col === 2 ? 200 : 140) : cell.col === 6 ? 320 : 220;
+  return (
+    <li className="min-w-0" style={cellStyle(cell)}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- local / remote photos; next/image loader config is avoided app-wide (see PROJECT_LOG) */}
+      <img src={h.imageUrl} alt="" loading="lazy" decoding="async" onError={() => onBroken(h.id)} className="pg-media block w-full object-cover" style={{ height }} />
+      <Words item={h} spaced />
     </li>
   );
 }

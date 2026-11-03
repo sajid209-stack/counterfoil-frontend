@@ -821,7 +821,7 @@
     "organiser": "Hosted by",
     "organiserPlaceholder": "e.g. Dhaka Music Club",
     "organiserLine": "One line about them",
-    "highlightsNote": "A few short points on why to come. The first one shows largest. A photo is optional.",
+    "highlightsNote": "A few short points on why to come. A photo is optional.",
     "highlightN": "Highlight {n}",
     "removeHighlight": "Remove highlight: {name}",
     "highlightLabel": "Highlight",
