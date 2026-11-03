@@ -786,7 +786,7 @@
       "video": "Video",
       "sponsors": "Sponsors",
       "tickets": "Tickets",
-      "venue": "Where",
+      "venue": "Venue",
       "faq": "Questions",
       "host": "Meet your host"
     },
@@ -821,7 +821,7 @@
     "organiser": "Hosted by",
     "organiserPlaceholder": "e.g. Dhaka Music Club",
     "organiserLine": "One line about them",
-    "highlightsNote": "A few short points on why to come.",
+    "highlightsNote": "A few short points on why to come. The first one shows largest. A photo is optional.",
     "highlightN": "Highlight {n}",
     "removeHighlight": "Remove highlight: {name}",
     "highlightLabel": "Highlight",
@@ -978,24 +978,30 @@
       "more": {
         "title": "More options",
         "corners": "Corners",
-        "panel": "Tickets panel",
-        "photos": "Photos"
+        "height": "Cover height",
+        "button": "Button words",
+        "buttonHelp": "What the main button says, for example Register or Book a table. Up to 24 characters.",
+        "buttonDefault": "Get tickets",
+        "buttonDefaultShop": "Book tickets"
       },
       "corners": {
         "sharp": "Square",
         "soft": "Soft",
         "round": "Round"
       },
-      "panel": {
-        "sidebar": "Beside the page",
-        "inline": "Inside the page"
+      "useBrand": "Use my venue page's style",
+      "focus": {
+        "title": "Show this part of the photo",
+        "help": "Choose what stays in view when the photo is cropped.",
+        "top": "Top",
+        "center": "Middle",
+        "bottom": "Bottom"
       },
-      "photos": {
-        "mosaic": "Mosaic",
-        "grid": "Grid",
-        "strip": "Strip"
-      },
-      "useBrand": "Use my venue page's style"
+      "height": {
+        "short": "Short",
+        "medium": "Medium",
+        "tall": "Tall"
+      }
     },
     "onPage": "On your page",
     "onPageHelp": "Press a section to change it.",
@@ -1018,8 +1024,8 @@
       "knowMore": "Rules and {count, plural, one {# line} other {# lines}} of yours",
       "lineup": "{count, plural, one {# entry} other {# entries}}",
       "gallery": "{count, plural, one {# photo} other {# photos}}",
-      "video": "Linked",
-      "venue": "Set",
+      "video": "Video linked",
+      "venue": "Uses your venues",
       "faq": "{count, plural, one {# question} other {# questions}}",
       "sponsors": "{count, plural, one {# sponsor} other {# sponsors}}"
     },

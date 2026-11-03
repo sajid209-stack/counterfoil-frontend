@@ -3,7 +3,7 @@
 import { useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, ChevronDown, ImagePlus } from "lucide-react";
-import { Button, SegmentedControl, useToast } from "@/components/ui";
+import { Button, FormField, SegmentedControl, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { fileToStoredImage } from "@/lib/imageUpload";
 import type { PageStyle } from "@/lib/api/types";
@@ -51,6 +51,18 @@ function Group({ title, help, children }: { title: string; help?: string; childr
       {children}
     </section>
   );
+}
+
+/** What stays in view when the cover is cropped: the same words the page uses. */
+const FOCUS_POSITION = { top: "50% 0%", center: "50% 50%", bottom: "50% 100%" } as const;
+const CTA_MAX = 24;
+
+/** The shape the chosen layout crops the photo to, so the preview shows what will show.
+ *  Close to what the page draws; the page's own heights are the other renderer's. */
+function previewAspect(layout: LayoutId | null, height: "short" | "medium" | "tall"): string {
+  if (layout === "cover") return height === "short" ? "21 / 9" : height === "tall" ? "4 / 3" : "16 / 9";
+  if (layout === "split") return "4 / 3";
+  return "16 / 9";
 }
 
 const barCls = "block h-1.5 rounded-full bg-strong";
@@ -227,6 +239,9 @@ export function DesignPanel({ value, resolved, onChange, scope, coverUrl, fallba
   const customAccent = accent === null;
   const font = fontStyleOf(resolved);
   const cover = coverUrl ?? fallbackCover;
+  /* Cover height only matters where a cover photo is drawn: a page with a cover,
+     or a storefront whose layout is the cover one. */
+  const showHeight = page ? !!cover : layout === "cover";
   const coverState = coverUrl ? t("coverUploaded") : fallbackCover ? t("coverFirst") : t("coverDesigned");
 
   const pick = async (files: FileList | null) => {
@@ -270,11 +285,21 @@ export function DesignPanel({ value, resolved, onChange, scope, coverUrl, fallba
       {page && (
         <Group title={t("cover")} help={coverState}>
           {cover && (
-            <span
-              role="img"
-              aria-label={t("coverPreview")}
-              className="block aspect-video w-full rounded-inner bg-muted-wash bg-cover bg-center"
-              style={{ backgroundImage: `url("${cover}")` }}
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={cover}
+              alt={t("coverPreview")}
+              className="block w-full rounded-inner bg-muted-wash object-cover"
+              style={{ aspectRatio: previewAspect(layout, resolved.heroHeight), objectPosition: FOCUS_POSITION[resolved.coverFocus] }}
+            />
+          )}
+          {cover && (
+            <Choice
+              label={t("design.focus.title")}
+              help={t("design.focus.help")}
+              value={resolved.coverFocus}
+              onChange={(v) => set({ coverFocus: v as PageStyle["coverFocus"] })}
+              options={(["top", "center", "bottom"] as const).map((v) => ({ value: v, label: t(`design.focus.${v}`) }))}
             />
           )}
           <div className="flex flex-wrap gap-tight">
@@ -352,34 +377,34 @@ export function DesignPanel({ value, resolved, onChange, scope, coverUrl, fallba
         <FontPicker current={font} label={t("design.font.title")} onPick={(id) => set(fontStylePatch(id))} />
       </Group>
 
-      <details className="group rounded-inner border border-line">
-        <summary className="flex min-h-11 cursor-pointer list-none select-none items-center justify-between gap-tight rounded-inner px-comfortable text-md font-semibold text-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+      <details className="group overflow-hidden rounded-inner border border-line bg-card open:bg-card">
+        <summary className="flex min-h-11 cursor-pointer list-none select-none items-center justify-between gap-tight px-comfortable text-md font-semibold text-fg transition-colors duration-quick hover:bg-muted-wash focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
           {t("design.more.title")}
           <ChevronDown size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted transition-transform duration-quick group-open:rotate-180" />
         </summary>
-        <div className="flex flex-col gap-comfortable px-comfortable pb-comfortable">
+        <div className="flex flex-col gap-major border-t border-hairline p-comfortable">
           <Choice
             label={t("design.more.corners")}
             value={resolved.corners}
             onChange={(v) => set({ corners: v as PageStyle["corners"] })}
             options={(["sharp", "soft", "round"] as const).map((v) => ({ value: v, label: t(`design.corners.${v}`) }))}
           />
-          {page && (
-            <>
-              <Choice
-                label={t("design.more.panel")}
-                value={resolved.bookingPanel}
-                onChange={(v) => set({ bookingPanel: v as PageStyle["bookingPanel"] })}
-                options={(["sidebar", "inline"] as const).map((v) => ({ value: v, label: t(`design.panel.${v}`) }))}
-              />
-              <Choice
-                label={t("design.more.photos")}
-                value={resolved.gallery}
-                onChange={(v) => set({ gallery: v as PageStyle["gallery"] })}
-                options={(["mosaic", "grid", "strip"] as const).map((v) => ({ value: v, label: t(`design.photos.${v}`) }))}
-              />
-            </>
+          {showHeight && (
+            <Choice
+              label={t("design.more.height")}
+              value={resolved.heroHeight}
+              onChange={(v) => set({ heroHeight: v as PageStyle["heroHeight"] })}
+              options={(["short", "medium", "tall"] as const).map((v) => ({ value: v, label: t(`design.height.${v}`) }))}
+            />
           )}
+          <FormField
+            label={t("design.more.button")}
+            help={t("design.more.buttonHelp")}
+            placeholder={page ? t("design.more.buttonDefault") : t("design.more.buttonDefaultShop")}
+            value={value.ctaLabel ?? ""}
+            autoComplete="off"
+            onChange={(e) => set({ ctaLabel: e.target.value.slice(0, CTA_MAX) || undefined })}
+          />
         </div>
       </details>
 
@@ -392,10 +417,11 @@ export function DesignPanel({ value, resolved, onChange, scope, coverUrl, fallba
   );
 }
 
-function Choice({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
+function Choice({ label, help, value, onChange, options }: { label: string; help?: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-tight">
       <span className="text-sm font-medium text-fg">{label}</span>
+      {help && <span className="text-sm text-muted">{help}</span>}
       <SegmentedControl size="sm" fullWidth aria-label={label} value={value} onChange={onChange} options={options} />
     </div>
   );

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { useState, type CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 import { usePage } from "../context";
 import { Section } from "../Section";
@@ -9,52 +8,53 @@ import { externalHref } from "@/lib/externalLink";
 import type { EventSponsor } from "@/lib/api/events";
 import { clean, sponsorsOf } from "./helpers";
 
-/** The narrowest a card may be from a tablet up, by rank: the first tier is the
- *  largest. Cards share the row evenly; on a phone they sit two across. */
-const WIDTH = [220, 170, 140] as const;
-
-const initial = (name: string) => Array.from(clean(name))[0]?.toUpperCase() ?? "";
+/** The logo box's height, by tier: the first tier is a touch larger. */
+const BOX_H = [72, 64] as const;
+/** The widest a cell grows, so one sponsor is not stretched across the page. */
+const CELL_W = 220;
 
 /**
- * Sponsors, grouped by the operator's own word for the level (a small label per
- * group). Every card has the same anatomy: a fixed logo plate on top and the
- * name beneath it, ALWAYS printed. The plate is white — uploaded logos are
- * flattened on white, so it looks intended on a dark page too — with the logo
- * contained and generously inset; with no logo (or one that fails) it carries a
- * neat initial, so a row stays even. Cards in a group are one size, and wrap
- * left-aligned, so one sponsor or eight look right, two across on a phone. A
- * sponsor with a link makes the whole card that link.
+ * Sponsors: a logo wall on the page's own ground. No cards, no boxes, no
+ * borders. Grouped by the operator's own word for the level, a small label
+ * above each row. Every cell is the same: a fixed-height logo box and the name
+ * beneath it at 13px, muted.
+ *
+ * Logos are uploaded flattened on white. On a light page `multiply` makes the
+ * white disappear into the ground; on a dark page that would turn the logo to
+ * mud, so it sits on a small white plate in the style's radius. A sponsor with
+ * no logo (or one that fails to load) is its name as a wordmark in the same
+ * box. A sponsor with a link is a link as a whole cell.
  */
 export function SponsorsSection() {
   const ctx = usePage();
   const sponsors = sponsorsOf(ctx);
   if (sponsors.length === 0) return null;
 
-  const groups: { tier: string; items: typeof sponsors }[] = [];
+  const groups: { tier: string; items: EventSponsor[] }[] = [];
   for (const s of sponsors) {
     const tier = clean(s.tier);
     const g = groups.find((x) => x.tier === tier);
     if (g) g.items.push(s);
     else groups.push({ tier, items: [s] });
   }
-  /* No tiers at all is one flat wall at the middle size. */
-  const flat = groups.length === 1 && groups[0].tier === "";
+  const phone = ctx.layout === "phone";
+  const dark = ctx.style.colours.mode === "dark";
 
   return (
     <Section id="sponsors" title={ctx.labels.sponsors}>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-10">
         {groups.map((g, gi) => {
-          const width = flat ? WIDTH[1] : WIDTH[Math.min(gi, WIDTH.length - 1)];
+          const cols = Math.min(g.items.length, phone ? 2 : 4);
           return (
             <div key={g.tier || "all"}>
-              {g.tier && <h3 className="pg-meta mb-3 font-semibold">{g.tier}</h3>}
+              {g.tier && <h3 className="pg-meta mb-4 font-semibold">{g.tier}</h3>}
               <ul
-                className="grid grid-cols-2 gap-3 sm:[grid-template-columns:repeat(auto-fill,minmax(var(--sponsor-w),1fr))]"
-                style={{ "--sponsor-w": `${width}px` } as React.CSSProperties}
+                className="grid gap-x-8 gap-y-8"
+                style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, maxWidth: cols * CELL_W + (cols - 1) * 32 }}
               >
                 {g.items.map((s) => (
-                  <li key={s.id} className="flex">
-                    <SponsorCard sponsor={s} />
+                  <li key={s.id} className="flex min-w-0">
+                    <Cell sponsor={s} height={BOX_H[gi === 0 && groups.length > 1 ? 0 : 1]} dark={dark} />
                   </li>
                 ))}
               </ul>
@@ -66,37 +66,44 @@ export function SponsorsSection() {
   );
 }
 
-function SponsorCard({ sponsor: s }: { sponsor: EventSponsor }) {
+function Cell({ sponsor: s, height, dark }: { sponsor: EventSponsor; height: number; dark: boolean }) {
   const t = useTranslations("storefront");
   const [broken, setBroken] = useState(false);
   const href = externalHref(s.href);
   const logo = s.logoUrl && !broken ? s.logoUrl : null;
 
+  const boxStyle: CSSProperties = { height };
+  if (logo && dark) {
+    Object.assign(boxStyle, { background: "#fff", borderRadius: "var(--ps-radius-media, 12px)", padding: 10 });
+  }
+
   const inner = (
     <>
-      {/* The plate: white on purpose (logos are flattened on white), a fixed
-          3:2 so every card in a row is the same height. */}
-      <div className="relative w-full" style={{ aspectRatio: "3 / 2", background: "#fff", borderBottom: "1px solid var(--pg-line)" }}>
+      <span className="flex w-full items-center" style={boxStyle}>
         {logo ? (
           // eslint-disable-next-line @next/next/no-img-element -- uploaded data URL or bundled asset
-          <img src={logo} alt="" onError={() => setBroken(true)} className="absolute inset-0 size-full object-contain p-5" />
+          <img
+            src={logo}
+            alt=""
+            loading="lazy"
+            onError={() => setBroken(true)}
+            className="max-h-full max-w-full object-contain object-left"
+            style={dark ? undefined : { mixBlendMode: "multiply" }}
+          />
         ) : (
-          <span aria-hidden className="absolute inset-0 grid place-items-center">
-            <span className="grid size-14 place-items-center rounded-full text-[24px] font-semibold" style={{ background: "#f1f1ee", color: "#3a3a40" }}>
-              {initial(s.name)}
-            </span>
+          <span className="line-clamp-2 text-[18px] font-semibold leading-6" style={{ overflowWrap: "anywhere" }}>
+            {s.name}
           </span>
         )}
-      </div>
-      <div className="flex min-h-[3.5rem] flex-1 items-center justify-center gap-1.5 px-3 py-3 text-center">
-        <span className="min-w-0 text-[14px] font-semibold leading-5" style={{ overflowWrap: "anywhere" }}>
+      </span>
+      {logo && (
+        <span className="mt-3 text-[13px] leading-[18px]" style={{ color: "var(--pg-muted)", overflowWrap: "anywhere" }}>
           {s.name}
         </span>
-        {href && <ArrowUpRight size={16} strokeWidth={2} aria-hidden className="shrink-0" style={{ color: "var(--pg-muted)" }} />}
-      </div>
+      )}
     </>
   );
-  const base = "pg-card flex w-full min-w-0 flex-col overflow-hidden";
+  const base = "flex w-full min-w-0 flex-col items-stretch";
 
   if (!href) return <div className={base}>{inner}</div>;
   return (
@@ -104,7 +111,7 @@ function SponsorCard({ sponsor: s }: { sponsor: EventSponsor }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer sponsored"
-      className={`${base} outline-offset-2 transition-colors hover:border-[color:var(--pg-ink)] focus-visible:outline-2 focus-visible:outline-[var(--pg-accent)] motion-reduce:transition-none`}
+      className={`${base} rounded-[var(--ps-radius-control,12px)] outline-offset-4 transition-opacity hover:opacity-70 focus-visible:outline-2 focus-visible:outline-[var(--pg-accent)] motion-reduce:transition-none`}
     >
       {inner}
       <span className="sr-only">{t("pg.sec.opensNew")}</span>

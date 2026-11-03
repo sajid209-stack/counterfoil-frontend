@@ -127,8 +127,6 @@ export function BookingPage({ product, chrome }: { product: Product; chrome: "st
   };
 
   const desktop = layout === "desktop";
-  const inlinePanel = style.bookingPanel === "inline";
-  const showSidebar = desktop && !inlinePanel;
   const rootProps = styleRootProps(style, {
     /* The phone's bottom bar is fixed; the page reserves its height. */
     paddingBottom: desktop ? undefined : `calc(${BOOK_BAR_H}px + env(safe-area-inset-bottom))`,
@@ -142,22 +140,19 @@ export function BookingPage({ product, chrome }: { product: Product; chrome: "st
           <div ref={heroEnd} aria-hidden style={{ height: 1, marginTop: -1 }} />
           <SectionNav sentinelRef={heroEnd} />
 
-          <div className="pg-container pb-16 pt-8 md:pt-10">
+          <div className="pg-container pb-16 pt-8 md:pb-24 md:pt-10">
             <div
-              className={showSidebar ? "grid items-start" : inlinePanel ? "mx-auto max-w-[760px]" : undefined}
-              style={showSidebar ? { gridTemplateColumns: "minmax(0, 1fr) 380px", columnGap: 48 } : undefined}
+              className={desktop ? "grid items-start" : undefined}
+              style={desktop ? { gridTemplateColumns: "minmax(0, 1fr) 380px", columnGap: 48 } : undefined}
             >
               <div className="min-w-0">
-                {inlinePanel && (
-                  <BookingPanel inline panelRef={panelRef} pick={pick} onAdded={() => setToast({ name: product.name, key: Date.now() })} />
-                )}
                 {sections.map((id) => {
                   if (id === "tickets") return <TicketOptions key={id} />;
                   const C = BODY_SECTIONS[id];
                   return C ? <C key={id} /> : null;
                 })}
               </div>
-              {showSidebar && <BookingPanel panelRef={panelRef} pick={pick} onAdded={() => setToast({ name: product.name, key: Date.now() })} />}
+              {desktop && <BookingPanel panelRef={panelRef} pick={pick} onAdded={() => setToast({ name: product.name, key: Date.now() })} />}
             </div>
           </div>
 

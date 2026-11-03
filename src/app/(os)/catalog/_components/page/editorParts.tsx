@@ -65,11 +65,33 @@ export function ItemGroup({ title, removeLabel, onRemove, children }: { title: s
   );
 }
 
+/** Reads a picked image and reports failure with the same toast everywhere. */
+function usePicker(maxSide: number, quality: number | undefined, onChange: (url: string) => void) {
+  const tm = useTranslations("catalog.item");
+  const toast = useToast();
+  const file = useRef<HTMLInputElement>(null);
+  const input = (
+    <input
+      ref={file}
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={(e) => {
+        const f = e.target.files?.[0];
+        if (f) fileToStoredImage(f, maxSide, quality).then(onChange, () => toast.error(tm("imageUnreadable")));
+        e.target.value = "";
+      }}
+    />
+  );
+  return { open: () => file.current?.click(), input };
+}
+
 /**
- * A portrait for a person on the bill. With portraits the page draws a photo
- * grid; without, a clean list — never a placeholder face
- * (docs/product-page.md §3.5). Mock layer: the picked file is shrunk to a small
- * JPEG data URL so it is kept with the page, the same way the cover upload works.
+ * A photo for one item in a list: a person on the bill (`portrait`, tall) or a
+ * highlight (`tile`, wide). With photos the page draws them; without, a clean
+ * text version, never a placeholder face (docs/product-page.md §3.5). Mock
+ * layer: the picked file is shrunk to a JPEG data URL so it is kept with the
+ * page, the same way the cover upload works.
  */
 export function PortraitField({
   name,
@@ -80,46 +102,54 @@ export function PortraitField({
   name: string;
   url?: string;
   onChange: (url: string | undefined) => void;
-  /** A sponsor's logo is wide and sits contained on white, not cropped to a face. */
-  shape?: "portrait" | "logo";
+  shape?: "portrait" | "tile";
 }) {
   const t = useTranslations("catalog.page");
-  const tm = useTranslations("catalog.item");
-  const toast = useToast();
-  const file = useRef<HTMLInputElement>(null);
-  const k = shape === "logo" ? "logo" : "portrait";
+  const pick = usePicker(shape === "tile" ? 960 : 640, undefined, onChange);
   return (
     <div className="flex items-center gap-comfortable">
       <span
         aria-hidden
-        className={cn(
-          "block shrink-0 rounded-inner border border-line bg-muted-wash bg-center",
-          shape === "logo" ? "h-14 w-24 bg-contain bg-no-repeat" : "h-14 w-12 bg-cover",
-        )}
+        className={cn("block shrink-0 rounded-inner border border-line bg-muted-wash bg-cover bg-center", shape === "tile" ? "h-14 w-24" : "h-14 w-12")}
         style={url ? { backgroundImage: `url("${url}")` } : undefined}
       />
       <div className="flex flex-wrap gap-tight">
-        <Button variant="secondary" size="sm" icon={<ImagePlus size={15} strokeWidth={1.5} aria-hidden />} onClick={() => file.current?.click()} aria-label={t(url ? `${k}ReplaceFor` : `${k}AddFor`, { name })}>
-          {url ? t(`${k}Replace`) : t(`${k}Add`)}
+        <Button variant="secondary" size="sm" icon={<ImagePlus size={15} strokeWidth={1.5} aria-hidden />} onClick={pick.open} aria-label={t(url ? "portraitReplaceFor" : "portraitAddFor", { name })}>
+          {url ? t("portraitReplace") : t("portraitAdd")}
         </Button>
         {url && (
-          <Button variant="secondary" size="sm" onClick={() => onChange(undefined)} aria-label={t(`${k}RemoveFor`, { name })}>
-            {t(`${k}Remove`)}
+          <Button variant="secondary" size="sm" onClick={() => onChange(undefined)} aria-label={t("portraitRemoveFor", { name })}>
+            {t("portraitRemove")}
           </Button>
         )}
       </div>
-      <input
-        ref={file}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) fileToStoredImage(f, 640).then(onChange, () => toast.error(tm("imageUnreadable")));
-          e.target.value = "";
-        }}
-      />
+      {pick.input}
     </div>
+  );
+}
+
+/**
+ * A sponsor's logo as a small square you press to add or change. Logos are kept
+ * at a higher JPEG quality than photos: compression shows on flat colour and
+ * thin lines.
+ */
+export function LogoThumb({ name, url, onChange }: { name: string; url?: string; onChange: (url: string) => void }) {
+  const t = useTranslations("catalog.page");
+  const pick = usePicker(640, 0.9, onChange);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={pick.open}
+        aria-label={t(url ? "logoReplaceFor" : "logoAddFor", { name })}
+        title={t(url ? "logoReplace" : "logoAdd")}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-line bg-muted-wash bg-contain bg-center bg-no-repeat text-muted transition-colors duration-quick hover:border-strong"
+        style={url ? { backgroundImage: `url("${url}")` } : undefined}
+      >
+        {!url && <ImagePlus size={16} strokeWidth={1.5} aria-hidden />}
+      </button>
+      {pick.input}
+    </>
   );
 }
 

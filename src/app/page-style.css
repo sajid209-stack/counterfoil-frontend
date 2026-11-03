@@ -134,34 +134,14 @@
   pointer-events: none;
 }
 
-/* ── gallery: grid (uniform 1:1) and strip (scrolling row) ──────────────── */
-.pg.pg[data-ps-gallery="grid"] .pg-section [class*="grid-cols"] > div {
-  aspect-ratio: 1 / 1 !important;
-}
-.pg.pg[data-ps-gallery="strip"] .pg-section ul[aria-label],
-.pg.pg[data-ps-gallery="strip"] .pg-section > div > div[style*="grid"] {
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  gap: 12px;
-}
-.pg.pg[data-ps-gallery="strip"] .pg-section > div > div[style*="grid"] > div {
-  flex: 0 0 auto;
-  width: 200px;
-  aspect-ratio: 4 / 5 !important;
-  scroll-snap-align: start;
-}
+/* The gallery arranges itself by how many photos there are (bento.ts); there
+   is no gallery setting to read here. */
 
 /* ── secondary colour marks ──────────────────────────────────────────────
    chips / tags share this look everywhere a secondary mark is called for. */
 .pg.pg .pg-chip {
   background: var(--ps-secondary-soft);
   color: var(--ps-secondary-ink);
-}
-
-/* ── booking panel: inline (full width, no sidebar card chrome changes) ── */
-.pg.pg[data-ps-panel="inline"] aside[aria-label] {
-  width: 100%;
 }
 
 /* Icon weight on every icon of the page (lucide's own class), only when one

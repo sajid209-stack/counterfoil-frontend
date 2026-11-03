@@ -1298,6 +1298,8 @@ html.dark[data-contrast="more"] {
   --color-subtle: var(--pg-surface);
   background: var(--pg-bg);
   color: var(--pg-fg);
+  /* The ONE gap between cards, tiles and photos, everywhere on the page. */
+  --pg-gap: 16px;
 }
 .sf .pg-dark {
   color-scheme: dark;

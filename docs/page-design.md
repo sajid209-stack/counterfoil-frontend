@@ -69,3 +69,11 @@ They must keep working and must not need migrating:
 - Fixture rows keep both sides on one baseline and wrap gracefully on phones.
 - Sponsor cards show logo and name together: a logo in a fixed plate, the name beneath, the tier as a group label.
 - Section headings use one weight and size per page.
+
+## Round two (owner review)
+
+- **Title first** follows Stripe Sessions and Figma Config: the title block and the details start level at the top, the details sit flush with the photo's right edge, and the photo runs the full width beneath. No empty space above the title, no gap at the right.
+- **More options** holds only what an operator needs: Corners, Cover height, Button words. Cover position (Top, Middle, Bottom) sits with the cover photo. The tickets panel is always beside the page. The Photos choice is gone: it was never connected to the gallery, and the gallery now arranges itself by how many photos there are.
+- **Cards follow their count**: one card fills the row, two share it, more than that form a bento pattern (`bento.ts`).
+- **Highlights** are plain tiles with words and an optional photo. No icon badges.
+- **Sponsors** are a logo wall on the page itself: no boxes, tier as a small label. Logos are flattened on white, so on a light page they blend into it, and on a dark page they sit on a small white plate. The name stays beneath, small, because the owner asked to see it.

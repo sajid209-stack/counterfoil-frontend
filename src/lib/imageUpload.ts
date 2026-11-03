@@ -22,8 +22,10 @@ const decode = async (file: File): Promise<{ source: CanvasImageSource; width: n
   }
 };
 
-/** A JPEG data URL, its longest side at most `maxSide` (never enlarged). Rejects if the file is not a readable image. */
-export async function fileToStoredImage(file: File, maxSide = 1280): Promise<string> {
+/** A JPEG data URL, its longest side at most `maxSide` (never enlarged), at JPEG
+ *  `quality` (0 to 1; logos pass a higher one because compression shows on flat
+ *  colour and thin lines). Rejects if the file is not a readable image. */
+export async function fileToStoredImage(file: File, maxSide = 1280, quality = 0.72): Promise<string> {
   const img = await decode(file);
   try {
     if (!img.width || !img.height) throw new Error("Empty image");
@@ -38,7 +40,7 @@ export async function fileToStoredImage(file: File, maxSide = 1280): Promise<str
     ctx.fillStyle = "#ffffff"; // ds-exception: JPEG has no transparency, so a canvas is flattened on white
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(img.source, 0, 0, w, h);
-    return canvas.toDataURL("image/jpeg", 0.72);
+    return canvas.toDataURL("image/jpeg", quality);
   } finally {
     img.close();
   }

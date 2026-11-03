@@ -457,6 +457,8 @@ export interface PageStyle {
   cardStyle?: "flat" | "bordered" | "shadow" | "tinted";
   hero?: "split" | "cover" | "editorial" | "collage" | "text";
   heroHeight?: "short" | "medium" | "tall";
+  /** Which part of the cover photo stays in view when it is cropped. */
+  coverFocus?: "top" | "center" | "bottom";
   /** Darkness of the scrim over a cover photo, 0–80 (%). */
   overlay?: number;
   width?: "narrow" | "standard" | "wide";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { FormField } from "@/components/ui";
+import { Button, FormField } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { parseEventVideo } from "@/lib/events/video";
 import { listLocations } from "@/lib/api/locations";
@@ -9,7 +9,7 @@ import { useApiQuery } from "@/lib/useApi";
 import type { EventDay } from "@/lib/api/events";
 import type { PageSectionId, Product, ProductPage } from "@/lib/api/types";
 import { CountdownSettings } from "./CountdownSettings";
-import { AddButton, ItemGroup, LinkField, LinkRows, Note, PortraitField, ReadOnly } from "./editorParts";
+import { AddButton, ItemGroup, LinkField, LinkRows, LogoThumb, Note, PortraitField, ReadOnly, RemoveButton } from "./editorParts";
 import { newId } from "./pageOps";
 import { ProgrammeBody } from "./ProgrammeEditor";
 
@@ -192,6 +192,12 @@ function Editor({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) {
             >
               <FormField label={t("highlightLabel")} value={h.label} onChange={(e) => onChange({ highlights: page.highlights.map((x) => (x.id === h.id ? { ...x, label: e.target.value } : x)) })} />
               <FormField label={t("highlightLine")} value={h.description ?? ""} onChange={(e) => onChange({ highlights: page.highlights.map((x) => (x.id === h.id ? { ...x, description: e.target.value } : x)) })} />
+              <PortraitField
+                shape="tile"
+                name={h.label.trim() || t("highlightN", { n: i + 1 })}
+                url={h.imageUrl}
+                onChange={(imageUrl) => onChange({ highlights: page.highlights.map((x) => (x.id === h.id ? { ...x, imageUrl } : x)) })}
+              />
             </ItemGroup>
           ))}
           <AddButton onClick={() => onChange({ highlights: [...page.highlights, { id: newId("h"), label: "", description: "" }] })}>{t("addHighlight")}</AddButton>
@@ -247,29 +253,26 @@ function Editor({ id, ctx }: { id: PageSectionId; ctx: EditorCtx }) {
     case "sponsors":
       return (
         <>
-          {page.sponsors.map((s, i) => (
-            <ItemGroup
-              key={s.id}
-              title={s.name.trim() || t("sponsorN", { n: i + 1 })}
-              removeLabel={t("removeSponsor", { name: s.name.trim() || t("sponsorN", { n: i + 1 }) })}
-              onRemove={() => onChange({ sponsors: page.sponsors.filter((x) => x.id !== s.id) })}
-            >
-              <FormField label={t("sponsorName")} value={s.name} onChange={(e) => onChange({ sponsors: page.sponsors.map((x) => (x.id === s.id ? { ...x, name: e.target.value } : x)) })} />
-              <FormField label={t("sponsorLevel")} placeholder={t("sponsorLevelPlaceholder")} value={s.tier ?? ""} onChange={(e) => onChange({ sponsors: page.sponsors.map((x) => (x.id === s.id ? { ...x, tier: e.target.value } : x)) })} />
-              <PortraitField
-                shape="logo"
-                name={s.name.trim() || t("sponsorN", { n: i + 1 })}
-                url={s.logoUrl}
-                onChange={(logoUrl) => onChange({ sponsors: page.sponsors.map((x) => (x.id === s.id ? { ...x, logoUrl } : x)) })}
-              />
-              <LinkField
-                label={t("sponsorLink")}
-                placeholder={t("sponsorLinkPlaceholder")}
-                value={s.href ?? ""}
-                onChange={(href) => onChange({ sponsors: page.sponsors.map((x) => (x.id === s.id ? { ...x, href } : x)) })}
-              />
-            </ItemGroup>
-          ))}
+          {page.sponsors.map((s, i) => {
+            const name = s.name.trim() || t("sponsorN", { n: i + 1 });
+            const patch = (p: Partial<typeof s>) => onChange({ sponsors: page.sponsors.map((x) => (x.id === s.id ? { ...x, ...p } : x)) });
+            return (
+              <div key={s.id} className="flex flex-col gap-tight border-t border-hairline pt-comfortable first:border-t-0 first:pt-0">
+                <div className="flex items-end gap-tight">
+                  <LogoThumb name={name} url={s.logoUrl} onChange={(logoUrl) => patch({ logoUrl })} />
+                  <FormField className="min-w-0 flex-1" label={t("sponsorName")} value={s.name} onChange={(e) => patch({ name: e.target.value })} />
+                  <RemoveButton label={t("removeSponsor", { name })} onClick={() => onChange({ sponsors: page.sponsors.filter((x) => x.id !== s.id) })} />
+                </div>
+                {s.logoUrl && (
+                  <Button variant="tertiary" size="sm" className="self-start" aria-label={t("logoRemoveFor", { name })} onClick={() => patch({ logoUrl: undefined })}>
+                    {t("logoRemove")}
+                  </Button>
+                )}
+                <LinkField label={t("sponsorLink")} placeholder={t("sponsorLinkPlaceholder")} value={s.href ?? ""} onChange={(href) => patch({ href })} />
+                <FormField label={t("sponsorLevel")} placeholder={t("sponsorLevelPlaceholder")} value={s.tier ?? ""} onChange={(e) => patch({ tier: e.target.value })} />
+              </div>
+            );
+          })}
           <AddButton onClick={() => onChange({ sponsors: [...page.sponsors, { id: newId("sp"), name: "", tier: "" }] })}>{t("addSponsor")}</AddButton>
         </>
       );

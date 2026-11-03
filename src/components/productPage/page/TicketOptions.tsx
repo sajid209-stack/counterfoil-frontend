@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { isBundleTier, spansDays } from "@/lib/api/events";
 import { formatDay, formatPriceShort } from "@/lib/format";
+import { cellStyle, evenPlan, gridStyle } from "./bento";
 import { usePage, type PageCtx } from "./context";
 import { Section } from "./Section";
 import { buildTicketRows, hasTicketOptions, useTicketUnit, type TicketChip, type TicketRow } from "./ticketRows";
@@ -42,15 +43,12 @@ export function TicketOptions() {
 function Cards({ ctx }: { ctx: PageCtx }) {
   const rows = buildTicketRows(ctx);
   const unitOf = useTicketUnit(ctx.product);
+  const plan = evenPlan(rows.length, ctx.layout);
   return (
-    <ul
-      className="grid gap-4"
-      style={{ gridTemplateColumns: ctx.layout === "phone" ? "minmax(0, 1fr)" : "repeat(2, minmax(0, 1fr))" }}
-      aria-label={ctx.labels.tickets}
-    >
-      {rows.map((row) => (
-        <li key={row.id} className="flex min-w-0">
-          <TicketOption ctx={ctx} row={row} unit={unitOf(row.pt, row.state.tier.price)} />
+    <ul style={{ ...gridStyle(plan), gap: "var(--pg-gap, 16px)" }} aria-label={ctx.labels.tickets}>
+      {rows.map((row, i) => (
+        <li key={row.id} className="flex min-w-0" style={cellStyle(plan.cells[i])}>
+          <TicketOption ctx={ctx} row={row} unit={unitOf(row.pt, row.state.tier.price)} wide={plan.columns === 6 && plan.cells[i].col === 6} />
         </li>
       ))}
     </ul>
@@ -75,7 +73,7 @@ function StateChip({ chip }: { chip: TicketChip }) {
   );
 }
 
-function TicketOption({ ctx, row, unit }: { ctx: PageCtx; row: TicketRow; unit: string }) {
+function TicketOption({ ctx, row, unit, wide }: { ctx: PageCtx; row: TicketRow; unit: string; wide: boolean }) {
   const t = useTranslations("storefront");
   const { ev, labels } = ctx;
   const { state, pt, chip, gone } = row;
@@ -92,7 +90,11 @@ function TicketOption({ ctx, row, unit }: { ctx: PageCtx; row: TicketRow; unit: 
   const quiet = ctx.layout === "desktop";
 
   return (
-    <article className="pg-card flex w-full min-w-0 flex-col p-5" style={gone ? { background: "var(--pg-surface)" } : undefined}>
+    <article
+      className={`pg-card flex w-full min-w-0 p-5 ${wide ? "flex-row items-center gap-8" : "flex-col"}`}
+      style={gone ? { background: "var(--pg-surface)" } : undefined}
+    >
+      <div className={wide ? "flex min-w-0 flex-1 flex-col" : "contents"}>
       <div className="flex items-start justify-between gap-3">
         <h3 className="min-w-0 break-words text-[16px] font-semibold leading-6" style={{ color: gone ? muted : "var(--pg-fg)" }}>
           {tier.name}
@@ -141,7 +143,9 @@ function TicketOption({ ctx, row, unit }: { ctx: PageCtx; row: TicketRow; unit: 
         </div>
       )}
 
-      <div className="mt-auto flex items-end justify-between gap-3 pt-5">
+      </div>
+
+      <div className={wide ? "flex shrink-0 items-center gap-6" : "mt-auto flex items-end justify-between gap-3 pt-5"}>
         <div className="min-w-0">
           <p
             className={`tnum font-semibold ${quiet ? "text-[18px] leading-6" : "text-[22px] leading-7"}`}

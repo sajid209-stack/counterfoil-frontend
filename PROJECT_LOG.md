@@ -19367,3 +19367,25 @@ The owner asked for a friendlier, simpler customiser and a review of the public 
 ### Verified
 
 Production build, f19663fb scratchpad `design/` and `link/`: `walk.mjs` (30) runs a two-day event through the wizard on all three layouts, with fonts, sponsors, host, per-day programme and PM times, on desktop and phone. `extra.mjs` (26) covers five old seeded pages with text contrast of at least 7:1, the phone customiser and the venue page editor. `pub.mjs` (33), `hs.mjs` (18), `wiz.mjs` (24), `edge.mjs` (13) and `clocktest.mjs` (186) still pass. Publishing remains tested only against the local folder, and stays off on Vercel until the Blob store exists.
+
+---
+
+## Page customiser, round two: cards follow their count (2026-11-03)
+
+Owner review of v4. Spec: `docs/page-design.md` "Round two". References rendered and read: Stripe Sessions and Figma Config.
+
+- **Title first**: the title runs the page's full width. Beneath it, the words sit left and the price and button right, flush with the photo's edge. The first attempt, a right-hand details column beside the title, moved the empty space under the title rather than removing it, and was seen only in the render.
+- **Cards** (`productPage/page/bento.ts`): `evenPlan` for things of equal rank (tickets, included), `bentoPlan` for tiles with a lead (highlights, gallery). One card fills the row and no row is left short. Three highlights with no lead photo stack as [6,3,3], because a two-row lead holding only words is an empty box.
+- **Highlights**: icons and tinted circles removed; plain tiles with an optional photo (`EventHighlight.imageUrl`).
+- **Sponsors**: a logo wall with no boxes, aligned to the section heading. Logos are flattened on white, so a light page multiplies the white away and a dark page puts them on a small white plate. The name stays beneath, small, because the owner asked for names in the earlier round. Their latest reference shows logos alone, so this is a judgment call to raise.
+- **Lineup**: four people share one row, half-row portraits are square, and one person sits beside their words.
+- **More options**: Corners, Cover height, Button words. Cover position (Top, Middle, Bottom) sits with the cover photo.
+- **Removed**: Tickets panel (always beside the page) and Photos. Photos was **never connected**: `Gallery.tsx` never read `style.gallery`, and `page-style.css`'s `data-ps-gallery` rules matched any `ul[aria-label]` and would have broken the card grids, so they are gone too.
+- **Cover height** was retired last round and `--ps-hero-h` was never read by product pages; it now drives the hero directly.
+- **Words**: the editor's "Where" now says Venue, and the page's "Pictures" now says Photos.
+
+### Verified
+
+Production build, f19663fb scratchpad `design/matrix.mjs` (38): 1 to 6 cards of every kind across the three layouts, light, warm and dark, desktop and phone, using real photos, viewed by eye as well as checked. `walk.mjs` (41), `extra.mjs` (26), `pub.mjs` (33), `hs.mjs` (18), `wiz.mjs` (24), `edge.mjs` (13), `clocktest.mjs` (186).
+
+Not seen: real-world sponsor logos (the test logos are drawn on white), and the map in those captures, which hide it. It was seen drawing on its own the round before.

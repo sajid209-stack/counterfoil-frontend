@@ -116,6 +116,8 @@ export interface EventStat {
 export interface EventHighlight {
   id: string;
   label: string;
+  /** An optional photo: the tile becomes the picture, with its words on it. */
+  imageUrl?: string;
   /** One line saying what the visitor gets out of it.
    *
    *  A chip is a teaser and needs no more than its own word. A benefit — "Gain

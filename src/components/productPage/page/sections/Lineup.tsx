@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import type { EventLineupEntry } from "@/lib/api/events";
+import { cellStyle, evenPlan, gridStyle, type Cell, type Plan } from "../bento";
 import { usePage } from "../context";
 import { Section } from "../Section";
 import { ProgrammeBody } from "./Programme";
@@ -15,7 +16,9 @@ const initial = (name: string) => Array.from(clean(name))[0]?.toUpperCase() ?? "
 /**
  * Lineup — PEOPLE only (sessions never appear here).
  *
- *  - with photos: a portrait grid, 4:5;
+ *  - with photos: portraits, 4:5, arranged by how many there are (up to six:
+ *    `evenPlan`; more: four across). One person, or a card that spans the row,
+ *    sits photo beside words rather than as an enormous portrait;
  *  - without: a clean list (a neutral disc with the first letter);
  *  - an energetic look without photos: billing by type size, headliner first —
  *    the one claim a grid of equal cards structurally cannot make;
@@ -62,30 +65,52 @@ export function LineupSection() {
 
 /* ── with photos ─────────────────────────────────────────────────────── */
 
+/** Up to six people share the row by count; more than that, four across. On a
+ *  phone two across, with an odd one out spanning the row. */
+function portraitPlan(n: number, layout: "phone" | "tablet" | "desktop"): Plan {
+  if (n > 6) return { columns: layout === "phone" ? 2 : layout === "tablet" ? 3 : 4, cells: Array.from({ length: n }, () => ({ col: 1, row: 1 })) };
+  /* Four share one row: two rows of two would make each a poster. */
+  if (n === 4 && layout !== "phone") return { columns: 4, cells: Array.from({ length: 4 }, () => ({ col: 1, row: 1 })) };
+  if (layout !== "phone") return evenPlan(n, layout);
+  return { columns: 2, cells: Array.from({ length: n }, (_, i): Cell => ({ col: n % 2 === 1 && i === n - 1 ? 2 : 1, row: 1 })) };
+}
+
 function Portraits({ people }: { people: EventLineupEntry[] }) {
   const { layout } = usePage();
-  const cols = layout === "phone" ? 2 : layout === "tablet" ? 3 : 4;
+  const plan = portraitPlan(people.length, layout);
   return (
-    <ul className="grid gap-x-4 gap-y-6" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-      {people.map((p) => (
-        <li key={p.id} className="min-w-0">
-          <div className="pg-media relative aspect-[4/5] overflow-hidden" style={{ background: "var(--pg-surface)", border: LINE }}>
-            {clean(p.imageUrl) ? (
-              // eslint-disable-next-line @next/next/no-img-element -- local / remote photos; next/image loader config is avoided app-wide (see PROJECT_LOG)
-              <img src={p.imageUrl} alt={p.name} width={480} height={600} loading="lazy" decoding="async" className="size-full object-cover" />
-            ) : (
-              <span aria-hidden className="absolute inset-0 grid place-items-center text-[40px] font-semibold" style={{ color: "var(--pg-muted)" }}>
-                {initial(p.name)}
-              </span>
-            )}
-          </div>
-          <p className="mt-3 text-[16px] font-semibold leading-6" style={{ overflowWrap: "anywhere" }}>
-            {p.name}
-          </p>
-          {clean(p.role) && <p className="pg-meta" style={{ overflowWrap: "anywhere" }}>{p.role}</p>}
-          {clean(p.at) && <span className="pg-chip mt-2">{timeLabel(p.at)}</span>}
-        </li>
-      ))}
+    <ul style={{ ...gridStyle(plan), columnGap: "var(--pg-gap, 16px)", rowGap: 24 }}>
+      {people.map((p, i) => {
+        const cell = plan.cells[i];
+        /* A card that spans the whole row is read beside its photo. */
+        const row = cell.col === plan.columns;
+        /* Half a row is already wide: a tall portrait there would dwarf the page. */
+        const wide = plan.columns === 6 && cell.col === 3;
+        return (
+          <li key={p.id} className={row ? "flex min-w-0 items-center gap-5" : "min-w-0"} style={cellStyle(cell)}>
+            <div
+              className={`pg-media relative ${wide ? "aspect-square" : "aspect-[4/5]"} overflow-hidden ${row ? "w-[40%] max-w-[240px] shrink-0" : ""}`}
+              style={{ background: "var(--pg-surface)", border: LINE }}
+            >
+              {clean(p.imageUrl) ? (
+                // eslint-disable-next-line @next/next/no-img-element -- local / remote photos; next/image loader config is avoided app-wide (see PROJECT_LOG)
+                <img src={p.imageUrl} alt={p.name} width={480} height={600} loading="lazy" decoding="async" className="size-full object-cover" />
+              ) : (
+                <span aria-hidden className="absolute inset-0 grid place-items-center text-[40px] font-semibold" style={{ color: "var(--pg-muted)" }}>
+                  {initial(p.name)}
+                </span>
+              )}
+            </div>
+            <div className={row ? "min-w-0" : undefined}>
+              <p className={`${row ? "" : "mt-3 "}text-[16px] font-semibold leading-6`} style={{ overflowWrap: "anywhere" }}>
+                {p.name}
+              </p>
+              {clean(p.role) && <p className="pg-meta" style={{ overflowWrap: "anywhere" }}>{p.role}</p>}
+              {clean(p.at) && <span className="pg-chip mt-2">{timeLabel(p.at)}</span>}
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 }

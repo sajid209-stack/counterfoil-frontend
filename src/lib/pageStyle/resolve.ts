@@ -162,6 +162,7 @@ export interface ResolvedStyle {
   cardStyle: NonNullable<PageStyle["cardStyle"]>;
   hero: NonNullable<PageStyle["hero"]>;
   heroHeight: NonNullable<PageStyle["heroHeight"]>;
+  coverFocus: NonNullable<PageStyle["coverFocus"]>;
   overlay: number;
   width: NonNullable<PageStyle["width"]>;
   spacing: NonNullable<PageStyle["spacing"]>;
@@ -232,6 +233,7 @@ function resolve(style: PageStyle, d: Defaults, primaryRule: "page" | "storefron
     cardStyle: style.cardStyle ?? "bordered",
     hero: style.hero ?? d.hero,
     heroHeight: style.heroHeight ?? "medium",
+    coverFocus: style.coverFocus ?? "center",
     overlay: Math.max(0, Math.min(80, style.overlay ?? 45)),
     width: style.width ?? "standard",
     spacing: style.spacing ?? "standard",
@@ -264,7 +266,7 @@ export interface LookBase {
  *  tone draws clean. A storefront still honours them. */
 const RETIRED: (keyof PageStyle)[] = [
   "texture", "imageTone", "iconStroke", "dividers", "buttonStyle", "cardStyle", "typeScale", "headingWeight",
-  "heroHeight", "spacing", "width", "overlay", "ctaLabel", "priceLabel", "badge", "palette", "preset",
+  "spacing", "width", "overlay", "priceLabel", "bookingPanel", "gallery", "badge", "palette", "preset",
 ];
 
 /** The three layouts a product page has. The old collage is a split, the old text hero an editorial. */

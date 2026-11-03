@@ -30,6 +30,7 @@ import { cn } from "@/lib/cn";
 import type { EventDay } from "@/lib/api/events";
 import type { PageSectionId, Product, ProductPage } from "@/lib/api/types";
 import { addSection, canMove, edited, isRequired, keepSample, moveBefore, moveSection, removeSection, rowHasSample, rowsOf, sectionFill } from "./pageOps";
+import { Note } from "./editorParts";
 import { SectionBody, type EditorCtx } from "./SectionEditors";
 
 const ICON: Partial<Record<PageSectionId, LucideIcon>> = {
@@ -306,7 +307,7 @@ export function SectionList({
                       onPage(addSection(page, product, id));
                       setOpen(id);
                     }}
-                    className="inline-flex min-h-9 items-center gap-inline rounded-control border border-line bg-card px-comfortable text-sm font-medium text-fg transition-colors duration-quick hover:bg-muted-wash"
+                    className="inline-flex min-h-11 items-center md:min-h-9 gap-inline rounded-control border border-line bg-card px-comfortable text-sm font-medium text-fg transition-colors duration-quick hover:bg-muted-wash"
                   >
                     <Plus size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
                     <Icon size={15} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
@@ -322,6 +323,3 @@ export function SectionList({
   );
 }
 
-function Note({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-muted">{children}</p>;
-}

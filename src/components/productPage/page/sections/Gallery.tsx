@@ -3,16 +3,18 @@
 import { useState, type CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 import type { ProductImage } from "@/lib/api/types";
+import { bentoPlan, cellStyle, gridStyle } from "../bento";
 import { usePage } from "../context";
 import { Section } from "../Section";
 import { clean, galleryOf } from "./helpers";
 
-const MOSAIC = 5;
+const MOSAIC = 6;
 
 /**
- * Photos: the booking's own pictures as a mosaic — one large and up to four
- * small, radius 12. Real photos only; with none there is no section, never a
- * row of generated tiles.
+ * Photos: the booking's own pictures, arranged by how many there are
+ * (`bentoPlan`, up to six: one fills the row, two share it, three put a lead
+ * beside two, and so on) so no count leaves a hole. Past six, the rest sit
+ * behind "Show all". Real photos only; with none there is no section.
  */
 export function GallerySection() {
   const ctx = usePage();
@@ -40,49 +42,31 @@ export function GallerySection() {
   if (all) {
     const cols = layout === "phone" ? 2 : 3;
     body = (
-      <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+      <div className="grid" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: "var(--pg-gap, 16px)" }}>
         {photos.map((p, i) => tile(p, i, undefined, "4 / 3"))}
       </div>
     );
   } else {
     const shown = photos.slice(0, MOSAIC);
-    const n = shown.length;
-    if (n === 1) {
-      body = tile(shown[0], 0, undefined, layout === "phone" ? "16 / 10" : "21 / 9");
-    } else if (layout === "phone") {
-      /* One large, then the rest two across; an odd one out spans the row. */
-      const rest = shown.slice(1);
-      body = (
-        <div className="grid grid-cols-2 gap-3">
-          {tile(shown[0], 0, { gridColumn: "1 / -1" }, "16 / 10")}
-          {rest.map((p, k) => tile(p, k + 1, rest.length % 2 === 1 && k === rest.length - 1 ? { gridColumn: "1 / -1" } : undefined, rest.length % 2 === 1 && k === rest.length - 1 ? "16 / 9" : "4 / 3"))}
+    const plan = bentoPlan(shown.length, layout);
+    /* One photo keeps its own shape; the rest sit on rows of a set height, a
+       lead that spans two rows holding both. */
+    const row = layout === "phone" ? 168 : layout === "tablet" ? 200 : 232;
+    body =
+      shown.length === 1 ? (
+        tile(shown[0], 0, undefined, layout === "phone" ? "16 / 10" : "21 / 9")
+      ) : (
+        <div style={{ ...gridStyle(plan), gap: "var(--pg-gap, 16px)", gridAutoRows: row }}>
+          {shown.map((p, i) => tile(p, i, cellStyle(plan.cells[i])))}
         </div>
       );
-    } else if (n === 2) {
-      body = (
-        <div className="grid grid-cols-2 gap-3">{shown.map((p, i) => tile(p, i, undefined, "4 / 3"))}</div>
-      );
-    } else {
-      /* One large tile two rows tall; the smalls fill the rest exactly. */
-      const height = layout === "tablet" ? 340 : 420;
-      const cols = n === 3 ? "2fr 1fr" : "2fr 1fr 1fr";
-      const smalls = shown.slice(1);
-      body = (
-        <div className="grid gap-3" style={{ gridTemplateColumns: cols, gridTemplateRows: "repeat(2, minmax(0, 1fr))", height }}>
-          {tile(shown[0], 0, { gridRow: "1 / span 2" })}
-          {smalls.map((p, k) =>
-            tile(p, k + 1, n === 4 && k === 2 ? { gridColumn: "2 / span 2" } : undefined),
-          )}
-        </div>
-      );
-    }
   }
 
   return (
     <Section id="gallery" title={ctx.labels.gallery}>
       {body}
       {total > MOSAIC && (
-        <button type="button" onClick={() => setAll((v) => !v)} aria-expanded={all} className="pg-btn-secondary mt-4">
+        <button type="button" onClick={() => setAll((v) => !v)} aria-expanded={all} className="pg-btn-secondary mt-5">
           {all ? t("pg.sec.showFewer") : t("pg.sec.showAllPhotos", { count: total })}
         </button>
       )}

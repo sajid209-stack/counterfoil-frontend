@@ -30,7 +30,7 @@ export function VenueSection() {
   );
 
   const text = (
-    <div className={map ? "flex min-w-0 flex-col" : "flex min-w-0 flex-1 items-start gap-4"}>
+    <div className={map ? `flex min-w-0 flex-col ${phone ? "" : "justify-center"}` : "flex min-w-0 flex-1 items-start gap-4"}>
       {!map && (
         <span
           aria-hidden
@@ -63,9 +63,9 @@ export function VenueSection() {
   return (
     <Section id="venue" title={ctx.labels.venue}>
       {map ? (
-        <div className="pg-card grid gap-6 overflow-hidden p-5 md:p-6" style={{ gridTemplateColumns: phone ? "minmax(0, 1fr)" : "minmax(0, 1fr) minmax(0, 1.2fr)" }}>
+        <div className="pg-card grid items-stretch gap-6 overflow-hidden p-5 md:p-6" style={{ gridTemplateColumns: phone ? "minmax(0, 1fr)" : "minmax(0, 1fr) minmax(0, 1.2fr)" }}>
           {text}
-          <div className="pg-media relative overflow-hidden" style={{ aspectRatio: phone ? "16 / 10" : undefined, minHeight: phone ? undefined : 240, background: "var(--pg-surface)", border: "1px solid var(--pg-line)" }}>
+          <div className="pg-media relative overflow-hidden" style={{ aspectRatio: phone ? "16 / 10" : undefined, minHeight: phone ? undefined : 260, background: "var(--pg-surface)", border: "1px solid var(--pg-line)" }}>
             <iframe
               src={embed}
               title={t("pg.sec.mapTitle", { name: venue.name })}

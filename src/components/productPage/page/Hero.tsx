@@ -51,6 +51,19 @@ function usePhoto(ctx: PageCtx): { url: string | null; onError: () => void } {
   return { url: url && failed !== url ? url : null, onError: () => setFailed(url) };
 }
 
+/** Where the photo is anchored when it is cropped: the operator's choice, so
+ *  the people in it are not cut off. */
+const focusOf = (ctx: PageCtx): string =>
+  ctx.style.coverFocus === "top" ? "center top" : ctx.style.coverFocus === "bottom" ? "center bottom" : "center";
+
+type Size = "short" | "medium" | "tall";
+/** Cover: minimum height by size, for [desktop, tablet, phone]. */
+const COVER_H: Record<Size, [number, number, number]> = { short: [420, 380, 340], medium: [540, 480, 420], tall: [680, 600, 520] };
+/** Title first: the photo's shape by size, for [desktop and tablet, phone]. */
+const EDITORIAL_AR: Record<Size, [string, string]> = { short: ["3 / 1", "16 / 10"], medium: ["21 / 9", "16 / 10"], tall: ["16 / 9", "4 / 3"] };
+/** Classic on a desktop: the photo's shape by size. */
+const SPLIT_AR: Record<Size, string> = { short: "16 / 10", medium: "4 / 3", tall: "1 / 1" };
+
 /** A long name steps down a size so it stays within about two lines. */
 function titleStyle(ctx: PageCtx): CSSProperties {
   const phone = ctx.layout === "phone";
@@ -83,16 +96,16 @@ function Badge({ ctx, onPhoto }: { ctx: PageCtx; onPhoto?: boolean }) {
 
 function Title({ ctx }: { ctx: PageCtx }) {
   return (
-    <h1 className="pg-title" style={titleStyle(ctx)}>
+    <h1 className="pg-title min-w-0" style={{ overflowWrap: "anywhere", ...titleStyle(ctx) }}>
       {ctx.ev.title}
     </h1>
   );
 }
 
-function FactsRow({ facts, onPhoto }: { facts: HeroFact[]; onPhoto?: boolean }) {
+function FactsRow({ facts, onPhoto, stack }: { facts: HeroFact[]; onPhoto?: boolean; stack?: boolean }) {
   if (facts.length === 0) return null;
   return (
-    <ul className="flex flex-wrap gap-x-6 gap-y-2" style={{ color: onPhoto ? "rgb(255 255 255 / 0.92)" : "var(--pg-fg)" }}>
+    <ul className={stack ? "flex flex-col gap-3" : "flex flex-wrap gap-x-6 gap-y-2"} style={{ color: onPhoto ? "rgb(255 255 255 / 0.92)" : "var(--pg-fg)" }}>
       {facts.map((f) => (
         <li key={f.id} className="flex min-w-0 items-center gap-2 text-[15px] font-medium leading-[22px]">
           <f.icon size={18} strokeWidth={1.75} aria-hidden className="shrink-0" style={{ color: onPhoto ? "rgb(255 255 255 / 0.75)" : "var(--pg-muted)" }} />
@@ -104,7 +117,7 @@ function FactsRow({ facts, onPhoto }: { facts: HeroFact[]; onPhoto?: boolean }) 
 }
 
 /** "Starts in 12 days 04 hours 30 mins" as one compact row, not a band. */
-function CountdownRow({ ctx, onPhoto }: { ctx: PageCtx; onPhoto?: boolean }) {
+function CountdownRow({ ctx, onPhoto, stack }: { ctx: PageCtx; onPhoto?: boolean; stack?: boolean }) {
   const c = ctx.countdown;
   if (!c) return null;
   const ms = c.at.getTime() - ctx.now.getTime();
@@ -118,7 +131,7 @@ function CountdownRow({ ctx, onPhoto }: { ctx: PageCtx; onPhoto?: boolean }) {
     <div
       role="timer"
       aria-label={`${c.label} ${parts.map((p) => `${p.v} ${p.l}`).join(" ")}`}
-      className="inline-flex max-w-full flex-wrap items-center gap-x-4 gap-y-1 self-start rounded-full px-4 py-2 text-[14px] leading-5"
+      className={`max-w-full flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-[14px] leading-5 ${stack ? "flex w-full rounded-2xl" : "inline-flex self-start rounded-full"}`}
       style={{
         background: onPhoto ? "rgb(255 255 255 / 0.14)" : "var(--pg-soft)",
         color: onPhoto ? "#fff" : "var(--pg-fg)",
@@ -138,7 +151,7 @@ function CountdownRow({ ctx, onPhoto }: { ctx: PageCtx; onPhoto?: boolean }) {
 
 /** The primary action with its price beside it, and add to calendar when the
  *  page has a date. */
-function Actions({ ctx, onPhoto }: { ctx: PageCtx; onPhoto?: boolean }) {
+function Actions({ ctx, onPhoto, stack }: { ctx: PageCtx; onPhoto?: boolean; stack?: boolean }) {
   const t = useTranslations("storefront");
   const unitOf = useTicketUnit(ctx.product);
   const rows = buildTicketRows(ctx);
@@ -156,8 +169,10 @@ function Actions({ ctx, onPhoto }: { ctx: PageCtx; onPhoto?: boolean }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <button type="button" className="pg-btn" style={ctaStyle} disabled={!canBook} onClick={() => ctx.book()}>
+      {/* Stacked (the narrow details column): the price, then the button across
+          the column's full width. Otherwise the button with the price beside it. */}
+      <div className={stack ? "flex flex-col-reverse gap-4" : "flex flex-wrap items-center gap-x-6 gap-y-3"}>
+        <button type="button" className={stack ? "pg-btn w-full" : "pg-btn"} style={ctaStyle} disabled={!canBook} onClick={() => ctx.book()}>
           {label}
         </button>
         {price !== null ? (
@@ -214,12 +229,12 @@ function CalendarLink({ ctx, onPhoto }: { ctx: PageCtx; onPhoto?: boolean }) {
 type Photo = ReturnType<typeof usePhoto>;
 
 /** The photo, or nothing. The frame follows the page's media radius. */
-function Picture({ photo, aspect }: { photo: Photo; aspect: string }) {
+function Picture({ photo, aspect, focus }: { photo: Photo; aspect: string; focus: string }) {
   if (!photo.url) return null;
   return (
     <div className="pg-media relative w-full overflow-hidden" style={{ aspectRatio: aspect, background: "var(--pg-surface)" }}>
       {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets; next/image loader config avoided by design (see sf.tsx) */}
-      <img src={photo.url} alt="" onError={photo.onError} className="absolute inset-0 h-full w-full object-cover" />
+      <img src={photo.url} alt="" onError={photo.onError} className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: focus }} />
     </div>
   );
 }
@@ -270,11 +285,11 @@ function SplitHero({ ctx }: { ctx: PageCtx }) {
       {side ? (
         <div className="grid items-center gap-12" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }}>
           {body}
-          <Picture photo={photo} aspect="4 / 3" />
+          <Picture photo={photo} aspect={SPLIT_AR[ctx.style.heroHeight]} focus={focusOf(ctx)} />
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          <Picture photo={photo} aspect={ctx.layout === "tablet" ? "2 / 1" : "16 / 10"} />
+          <Picture photo={photo} aspect={ctx.layout === "tablet" ? "2 / 1" : "16 / 10"} focus={focusOf(ctx)} />
           {body}
         </div>
       )}
@@ -289,40 +304,39 @@ function EditorialHero({ ctx }: { ctx: PageCtx }) {
   const photo = usePhoto(ctx);
   const desktop = ctx.layout === "desktop";
 
-  /* Desktop: the title and tagline lead on the left; the details (facts,
-     countdown, the action) sit in a narrower column on the right, level with
-     the foot of the title. Narrower screens stack them in that order. */
-  const lead = (
-    <div className="flex min-w-0 flex-col gap-5">
-      <Badge ctx={ctx} />
-      <Title ctx={ctx} />
+  /* The title runs the page's full width. Beneath it, the words on the left and
+     the action on the right, flush with the photo's edge, so the two columns are
+     about as tall as each other and no empty block is left beside either. */
+  const words = (
+    <div className="flex min-w-0 flex-col gap-4">
       {ctx.ev.subtitle && <p className="pg-body pg-muted max-w-[60ch]">{ctx.ev.subtitle}</p>}
-    </div>
-  );
-  const details = (
-    <div className="flex min-w-0 flex-col gap-5">
       <FactsRow facts={facts} />
       <CountdownRow ctx={ctx} />
-      <Actions ctx={ctx} />
     </div>
   );
-  const top = desktop ? (
-    <div className="grid items-end gap-14" style={{ gridTemplateColumns: "minmax(0,1.5fr) minmax(0,1fr)" }}>
-      {lead}
-      {details}
-    </div>
-  ) : (
-    <div className="flex max-w-[920px] flex-col gap-5">
-      {lead}
-      {details}
+  const top = (
+    <div className="flex flex-col gap-5">
+      <Badge ctx={ctx} />
+      <Title ctx={ctx} />
+      {desktop ? (
+        <div className="grid items-start gap-12" style={{ gridTemplateColumns: "minmax(0, 1fr) 280px" }}>
+          {words}
+          <Actions ctx={ctx} stack />
+        </div>
+      ) : (
+        <>
+          {words}
+          <Actions ctx={ctx} />
+        </>
+      )}
     </div>
   );
   const inner = (
-    <div className="pg-container pb-8 pt-8 md:pb-12 md:pt-12">
+    <div className="pg-container pb-8 pt-6 md:pb-12 md:pt-8">
       {top}
       {photo.url && (
         <div className="mt-8 md:mt-10">
-          <Picture photo={photo} aspect={ctx.layout === "phone" ? "16 / 10" : "21 / 9"} />
+          <Picture photo={photo} aspect={EDITORIAL_AR[ctx.style.heroHeight][ctx.layout === "phone" ? 1 : 0]} focus={focusOf(ctx)} />
         </div>
       )}
     </div>
@@ -356,9 +370,9 @@ function CoverHero({ ctx }: { ctx: PageCtx }) {
      ornate or bright picture and no seam shows against a dark page. */
   const base = ctx.look.mode === "dark" ? "13 13 16" : "0 0 0";
   return (
-    <header className="pg-on-photo relative isolate overflow-hidden text-white" style={{ minHeight: phone ? 420 : ctx.layout === "tablet" ? 480 : 540 }}>
+    <header className="pg-on-photo relative isolate overflow-hidden text-white" style={{ minHeight: COVER_H[ctx.style.heroHeight][phone ? 2 : ctx.layout === "tablet" ? 1 : 0] }}>
       {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets; next/image loader config avoided by design (see sf.tsx) */}
-      <img src={photo.url} alt="" onError={photo.onError} className="absolute inset-0 -z-20 h-full w-full object-cover" />
+      <img src={photo.url} alt="" onError={photo.onError} className="absolute inset-0 -z-20 h-full w-full object-cover" style={{ objectPosition: focusOf(ctx) }} />
       <div
         aria-hidden
         className="absolute inset-0 -z-10"
