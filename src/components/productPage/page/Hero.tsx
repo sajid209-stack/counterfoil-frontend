@@ -54,15 +54,14 @@ function usePhoto(ctx: PageCtx): { url: string | null; onError: () => void } {
 /** Where the photo is anchored when it is cropped: the operator's choice, so
  *  the people in it are not cut off. */
 const focusOf = (ctx: PageCtx): string =>
-  ctx.style.coverFocus === "top" ? "center top" : ctx.style.coverFocus === "bottom" ? "center bottom" : "center";
+  ctx.style.coverFocus;
 
-type Size = "short" | "medium" | "tall";
-/** Cover: minimum height by size, for [desktop, tablet, phone]. */
-const COVER_H: Record<Size, [number, number, number]> = { short: [420, 380, 340], medium: [540, 480, 420], tall: [680, 600, 520] };
-/** Title first: the photo's shape by size, for [desktop and tablet, phone]. */
-const EDITORIAL_AR: Record<Size, [string, string]> = { short: ["3 / 1", "16 / 10"], medium: ["21 / 9", "16 / 10"], tall: ["16 / 9", "4 / 3"] };
-/** Classic on a desktop: the photo's shape by size. */
-const SPLIT_AR: Record<Size, string> = { short: "16 / 10", medium: "4 / 3", tall: "1 / 1" };
+/** Cover: minimum height for [desktop, tablet, phone]. One height for every page. */
+const COVER_H: [number, number, number] = [540, 480, 420];
+/** Title first: the photo's shape for [desktop and tablet, phone]. */
+const EDITORIAL_AR: [string, string] = ["21 / 9", "16 / 10"];
+/** Classic on a desktop: the photo's shape. */
+const SPLIT_AR = "4 / 3";
 
 /** A long name steps down a size so it stays within about two lines. */
 function titleStyle(ctx: PageCtx): CSSProperties {
@@ -285,7 +284,7 @@ function SplitHero({ ctx }: { ctx: PageCtx }) {
       {side ? (
         <div className="grid items-center gap-12" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }}>
           {body}
-          <Picture photo={photo} aspect={SPLIT_AR[ctx.style.heroHeight]} focus={focusOf(ctx)} />
+          <Picture photo={photo} aspect={SPLIT_AR} focus={focusOf(ctx)} />
         </div>
       ) : (
         <div className="flex flex-col gap-6">
@@ -336,7 +335,7 @@ function EditorialHero({ ctx }: { ctx: PageCtx }) {
       {top}
       {photo.url && (
         <div className="mt-8 md:mt-10">
-          <Picture photo={photo} aspect={EDITORIAL_AR[ctx.style.heroHeight][ctx.layout === "phone" ? 1 : 0]} focus={focusOf(ctx)} />
+          <Picture photo={photo} aspect={EDITORIAL_AR[ctx.layout === "phone" ? 1 : 0]} focus={focusOf(ctx)} />
         </div>
       )}
     </div>
@@ -370,7 +369,7 @@ function CoverHero({ ctx }: { ctx: PageCtx }) {
      ornate or bright picture and no seam shows against a dark page. */
   const base = ctx.look.mode === "dark" ? "13 13 16" : "0 0 0";
   return (
-    <header className="pg-on-photo relative isolate overflow-hidden text-white" style={{ minHeight: COVER_H[ctx.style.heroHeight][phone ? 2 : ctx.layout === "tablet" ? 1 : 0] }}>
+    <header className="pg-on-photo relative isolate overflow-hidden text-white" style={{ minHeight: COVER_H[phone ? 2 : ctx.layout === "tablet" ? 1 : 0] }}>
       {/* eslint-disable-next-line @next/next/no-img-element -- bundled/local assets; next/image loader config avoided by design (see sf.tsx) */}
       <img src={photo.url} alt="" onError={photo.onError} className="absolute inset-0 -z-20 h-full w-full object-cover" style={{ objectPosition: focusOf(ctx) }} />
       <div

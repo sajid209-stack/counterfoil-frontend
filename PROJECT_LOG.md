@@ -19389,3 +19389,21 @@ Owner review of v4. Spec: `docs/page-design.md` "Round two". References rendered
 Production build, f19663fb scratchpad `design/matrix.mjs` (38): 1 to 6 cards of every kind across the three layouts, light, warm and dark, desktop and phone, using real photos, viewed by eye as well as checked. `walk.mjs` (41), `extra.mjs` (26), `pub.mjs` (33), `hs.mjs` (18), `wiz.mjs` (24), `edge.mjs` (13), `clocktest.mjs` (186).
 
 Not seen: real-world sponsor logos (the test logos are drawn on white), and the map in those captures, which hide it. It was seen drawing on its own the round before.
+
+---
+
+## Page customiser, round three: one cover height, a point to keep in view (2026-11-03)
+
+Owner asked for sponsors centred and the cover height fixed at Medium with its control removed, and for a further review.
+
+- **Sponsors** are centred: logo and name in each cell, the tier label, and each row, so an odd count leaves no hole.
+- **Cover height** is gone from the panel and `heroHeight` is retired for product pages, so a page saved Tall draws Medium. `Hero.tsx` now holds one set of sizes. A storefront still honours a saved value, but nothing offers it there either.
+- **Top/Middle/Bottom replaced by a point** (`FocusPicker` in `DesignPanel`, stored as `coverFocus: "x% y%"`). The review found the three-way control did nothing on Classic and on phones: a wide photo in a squarer frame is cropped at its sides, so moving it vertically changes nothing. That is the same kind of dead control as the old Photos option. A point works for every crop. Tap, or arrow keys. `focusPosition` in `resolve.ts` maps the old words and refuses anything but "x% y%", because a page can arrive from another browser and this reaches a style attribute.
+- **More options is gone**: with two controls left it was a box hiding two things. Corners and Button words now sit in the panel like the rest.
+- **Section rows**: hover and open tints cover the whole row, including the drag handle, instead of a rounded box beside it. "Optional line, e.g. Main stag" (cut off) is now "Optional line".
+
+### Verified
+
+Production build, f19663fb scratchpad: `walk.mjs` (47, including a tap, arrow keys, Enter not moving the point, the chosen point reaching the public page on desktop and phone, and sponsors measured centred), `matrix.mjs` (38), `review.mjs` (3), `extra.mjs` (26), `pub.mjs` (33), `hs.mjs` (18). Viewed by eye: the panel and the six-card warm page.
+
+The next person to edit `Hero.tsx`, note a focus point chosen for one photo stays when the cover photo is replaced, so a new photo may want a new tap.

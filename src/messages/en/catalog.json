@@ -976,9 +976,7 @@
         "poster": "Poster"
       },
       "more": {
-        "title": "More options",
         "corners": "Corners",
-        "height": "Cover height",
         "button": "Button words",
         "buttonHelp": "What the main button says, for example Register or Book a table. Up to 24 characters.",
         "buttonDefault": "Get tickets",
@@ -991,16 +989,9 @@
       },
       "useBrand": "Use my venue page's style",
       "focus": {
-        "title": "Show this part of the photo",
-        "help": "Choose what stays in view when the photo is cropped.",
-        "top": "Top",
-        "center": "Middle",
-        "bottom": "Bottom"
-      },
-      "height": {
-        "short": "Short",
-        "medium": "Medium",
-        "tall": "Tall"
+        "title": "Keep in view",
+        "help": "Tap the part of the photo that must always show, like a face or a stage.",
+        "position": "Choose the part of the photo to keep in view. Now {x}% across and {y}% down. Use the arrow keys to move it."
       }
     },
     "onPage": "On your page",
@@ -1036,7 +1027,7 @@
     "entryTimePlaceholder": "e.g. 6:30 PM",
     "timeBad": "Not a time. Try 6:30 PM.",
     "entryTitlePlaceholder": "What happens",
-    "entryLinePlaceholder": "Optional line, e.g. Main stage",
+    "entryLinePlaceholder": "Optional line",
     "entryPerson": "Show {name} in the line-up as a person",
     "entryPersonOn": "Shown in the line-up as a person",
     "entryPersonOff": "In the schedule only"

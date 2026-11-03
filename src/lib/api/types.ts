@@ -457,8 +457,9 @@ export interface PageStyle {
   cardStyle?: "flat" | "bordered" | "shadow" | "tinted";
   hero?: "split" | "cover" | "editorial" | "collage" | "text";
   heroHeight?: "short" | "medium" | "tall";
-  /** Which part of the cover photo stays in view when it is cropped. */
-  coverFocus?: "top" | "center" | "bottom";
+  /** The point of the cover photo that stays in view when it is cropped: "x% y%".
+   *  Records from a short while ago may say "top", "center" or "bottom". */
+  coverFocus?: string;
   /** Darkness of the scrim over a cover photo, 0–80 (%). */
   overlay?: number;
   width?: "narrow" | "standard" | "wide";

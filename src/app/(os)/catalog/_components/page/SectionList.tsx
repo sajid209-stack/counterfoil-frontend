@@ -188,7 +188,7 @@ export function SectionList({
         }}
         className={cn("border-b border-hairline last:border-0", dragId === id && "opacity-50")}
       >
-        <div className="flex items-center pl-tight">
+        <div className={cn("flex items-center pl-tight transition-colors duration-quick hover:bg-muted-wash", isOpen && "bg-subtle")}>
           {id !== "hero" ? (
             <span
               aria-hidden
@@ -210,7 +210,7 @@ export function SectionList({
             type="button"
             onClick={() => setOpen(isOpen ? "" : id)}
             aria-expanded={isOpen}
-            className="flex min-h-11 min-w-0 flex-1 items-center gap-tight rounded-sm px-tight py-tight text-left transition-colors duration-quick hover:bg-muted-wash"
+            className="flex min-h-11 min-w-0 flex-1 items-center gap-tight rounded-sm px-tight py-tight text-left"
           >
             <Icon size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
             <span className="min-w-0 flex-1">

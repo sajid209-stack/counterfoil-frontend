@@ -26,6 +26,12 @@ import { fontById } from "./fontMeta";
 
 export type Mode = "light" | "dark";
 
+const OLD_FOCUS: Record<string, string> = { top: "50% 0%", center: "50% 50%", bottom: "50% 100%" };
+/** A cover's focus point as a CSS position. Anything else in a record (a page can come
+ *  from another browser) falls back to the middle rather than reach the style attribute. */
+export const focusPosition = (v: string | undefined): string =>
+  OLD_FOCUS[v ?? ""] ?? (v && /^\d{1,3}% \d{1,3}%$/.test(v) ? v : "50% 50%");
+
 export interface Ground {
   /** The page ground. */
   bg: string;
@@ -162,7 +168,8 @@ export interface ResolvedStyle {
   cardStyle: NonNullable<PageStyle["cardStyle"]>;
   hero: NonNullable<PageStyle["hero"]>;
   heroHeight: NonNullable<PageStyle["heroHeight"]>;
-  coverFocus: NonNullable<PageStyle["coverFocus"]>;
+  /** Ready for `object-position`. */
+  coverFocus: string;
   overlay: number;
   width: NonNullable<PageStyle["width"]>;
   spacing: NonNullable<PageStyle["spacing"]>;
@@ -233,7 +240,7 @@ function resolve(style: PageStyle, d: Defaults, primaryRule: "page" | "storefron
     cardStyle: style.cardStyle ?? "bordered",
     hero: style.hero ?? d.hero,
     heroHeight: style.heroHeight ?? "medium",
-    coverFocus: style.coverFocus ?? "center",
+    coverFocus: focusPosition(style.coverFocus),
     overlay: Math.max(0, Math.min(80, style.overlay ?? 45)),
     width: style.width ?? "standard",
     spacing: style.spacing ?? "standard",
@@ -266,7 +273,7 @@ export interface LookBase {
  *  tone draws clean. A storefront still honours them. */
 const RETIRED: (keyof PageStyle)[] = [
   "texture", "imageTone", "iconStroke", "dividers", "buttonStyle", "cardStyle", "typeScale", "headingWeight",
-  "spacing", "width", "overlay", "priceLabel", "bookingPanel", "gallery", "badge", "palette", "preset",
+  "heroHeight", "spacing", "width", "overlay", "priceLabel", "bookingPanel", "gallery", "badge", "palette", "preset",
 ];
 
 /** The three layouts a product page has. The old collage is a split, the old text hero an editorial. */

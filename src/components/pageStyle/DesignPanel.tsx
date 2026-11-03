@@ -54,15 +54,52 @@ function Group({ title, help, children }: { title: string; help?: string; childr
 }
 
 /** What stays in view when the cover is cropped: the same words the page uses. */
-const FOCUS_POSITION = { top: "50% 0%", center: "50% 50%", bottom: "50% 100%" } as const;
 const CTA_MAX = 24;
 
 /** The shape the chosen layout crops the photo to, so the preview shows what will show.
  *  Close to what the page draws; the page's own heights are the other renderer's. */
-function previewAspect(layout: LayoutId | null, height: "short" | "medium" | "tall"): string {
-  if (layout === "cover") return height === "short" ? "21 / 9" : height === "tall" ? "4 / 3" : "16 / 9";
-  if (layout === "split") return "4 / 3";
-  return "16 / 9";
+/**
+ * The whole photo, uncropped: tap what must stay in view. One point works for every
+ * crop, where Top/Middle/Bottom could not: a wide photo in a squarer frame is cut at its
+ * sides, so moving it up or down did nothing. The page's preview shows the result.
+ */
+function FocusPicker({ src, value, onChange }: { src: string; value: string; onChange: (position: string) => void }) {
+  const t = useTranslations("catalog.page");
+  const [x, y] = value.split(" ").map((v) => parseInt(v, 10));
+  const clamp = (n: number) => Math.round(Math.min(100, Math.max(0, n)));
+  const put = (nx: number, ny: number) => onChange(`${clamp(nx)}% ${clamp(ny)}%`);
+  const STEP = 5;
+  const keys: Record<string, [number, number]> = { ArrowLeft: [-STEP, 0], ArrowRight: [STEP, 0], ArrowUp: [0, -STEP], ArrowDown: [0, STEP] };
+  return (
+    <div className="flex flex-col gap-inline">
+      <span className="text-sm font-medium text-fg">{t("design.focus.title")}</span>
+      <span className="text-sm text-muted">{t("design.focus.help")}</span>
+      <button
+        type="button"
+        aria-label={t("design.focus.position", { x, y })}
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          // A keyboard press has no position: it must not throw the point to a corner.
+          if (e.detail > 0) put(((e.clientX - r.left) / r.width) * 100, ((e.clientY - r.top) / r.height) * 100);
+        }}
+        onKeyDown={(e) => {
+          const d = keys[e.key];
+          if (!d) return;
+          e.preventDefault();
+          put(x + d[0], y + d[1]);
+        }}
+        className="relative block w-full cursor-crosshair overflow-hidden rounded-inner bg-muted-wash focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt="" draggable={false} className="block h-auto w-full select-none" />
+        <span
+          aria-hidden
+          className="absolute size-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-on-solid shadow-md ring-2 ring-inverse transition-[left,top] duration-quick motion-reduce:transition-none"
+          style={{ left: `${x}%`, top: `${y}%` }}
+        />
+      </button>
+    </div>
+  );
 }
 
 const barCls = "block h-1.5 rounded-full bg-strong";
@@ -239,9 +276,6 @@ export function DesignPanel({ value, resolved, onChange, scope, coverUrl, fallba
   const customAccent = accent === null;
   const font = fontStyleOf(resolved);
   const cover = coverUrl ?? fallbackCover;
-  /* Cover height only matters where a cover photo is drawn: a page with a cover,
-     or a storefront whose layout is the cover one. */
-  const showHeight = page ? !!cover : layout === "cover";
   const coverState = coverUrl ? t("coverUploaded") : fallbackCover ? t("coverFirst") : t("coverDesigned");
 
   const pick = async (files: FileList | null) => {
@@ -284,24 +318,7 @@ export function DesignPanel({ value, resolved, onChange, scope, coverUrl, fallba
 
       {page && (
         <Group title={t("cover")} help={coverState}>
-          {cover && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={cover}
-              alt={t("coverPreview")}
-              className="block w-full rounded-inner bg-muted-wash object-cover"
-              style={{ aspectRatio: previewAspect(layout, resolved.heroHeight), objectPosition: FOCUS_POSITION[resolved.coverFocus] }}
-            />
-          )}
-          {cover && (
-            <Choice
-              label={t("design.focus.title")}
-              help={t("design.focus.help")}
-              value={resolved.coverFocus}
-              onChange={(v) => set({ coverFocus: v as PageStyle["coverFocus"] })}
-              options={(["top", "center", "bottom"] as const).map((v) => ({ value: v, label: t(`design.focus.${v}`) }))}
-            />
-          )}
+          {cover && <FocusPicker src={cover} value={resolved.coverFocus} onChange={(coverFocus) => set({ coverFocus })} />}
           <div className="flex flex-wrap gap-tight">
             <Button variant="secondary" size="sm" icon={<ImagePlus size={15} strokeWidth={1.5} aria-hidden />} onClick={() => file.current?.click()}>
               {coverUrl ? t("coverReplace") : t("coverUpload")}
@@ -377,36 +394,25 @@ export function DesignPanel({ value, resolved, onChange, scope, coverUrl, fallba
         <FontPicker current={font} label={t("design.font.title")} onPick={(id) => set(fontStylePatch(id))} />
       </Group>
 
-      <details className="group overflow-hidden rounded-inner border border-line bg-card open:bg-card">
-        <summary className="flex min-h-11 cursor-pointer list-none select-none items-center justify-between gap-tight px-comfortable text-md font-semibold text-fg transition-colors duration-quick hover:bg-muted-wash focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
-          {t("design.more.title")}
-          <ChevronDown size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted transition-transform duration-quick group-open:rotate-180" />
-        </summary>
-        <div className="flex flex-col gap-major border-t border-hairline p-comfortable">
-          <Choice
-            label={t("design.more.corners")}
-            value={resolved.corners}
-            onChange={(v) => set({ corners: v as PageStyle["corners"] })}
-            options={(["sharp", "soft", "round"] as const).map((v) => ({ value: v, label: t(`design.corners.${v}`) }))}
-          />
-          {showHeight && (
-            <Choice
-              label={t("design.more.height")}
-              value={resolved.heroHeight}
-              onChange={(v) => set({ heroHeight: v as PageStyle["heroHeight"] })}
-              options={(["short", "medium", "tall"] as const).map((v) => ({ value: v, label: t(`design.height.${v}`) }))}
-            />
-          )}
-          <FormField
-            label={t("design.more.button")}
-            help={t("design.more.buttonHelp")}
-            placeholder={page ? t("design.more.buttonDefault") : t("design.more.buttonDefaultShop")}
-            value={value.ctaLabel ?? ""}
-            autoComplete="off"
-            onChange={(e) => set({ ctaLabel: e.target.value.slice(0, CTA_MAX) || undefined })}
-          />
-        </div>
-      </details>
+      <Group title={t("design.more.corners")}>
+        <SegmentedControl
+          fullWidth
+          aria-label={t("design.more.corners")}
+          value={resolved.corners}
+          onChange={(v) => set({ corners: v as PageStyle["corners"] })}
+          options={(["sharp", "soft", "round"] as const).map((v) => ({ value: v, label: t(`design.corners.${v}`) }))}
+        />
+      </Group>
+
+      <Group title={t("design.more.button")} help={t("design.more.buttonHelp")}>
+        <FormField
+          aria-label={t("design.more.button")}
+          placeholder={page ? t("design.more.buttonDefault") : t("design.more.buttonDefaultShop")}
+          value={value.ctaLabel ?? ""}
+          autoComplete="off"
+          onChange={(e) => set({ ctaLabel: e.target.value.slice(0, CTA_MAX) || undefined })}
+        />
+      </Group>
 
       {page && onResetToBrand && (
         <Button variant="tertiary" size="sm" className="self-start" onClick={onResetToBrand}>
@@ -417,12 +423,3 @@ export function DesignPanel({ value, resolved, onChange, scope, coverUrl, fallba
   );
 }
 
-function Choice({ label, help, value, onChange, options }: { label: string; help?: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-tight">
-      <span className="text-sm font-medium text-fg">{label}</span>
-      {help && <span className="text-sm text-muted">{help}</span>}
-      <SegmentedControl size="sm" fullWidth aria-label={label} value={value} onChange={onChange} options={options} />
-    </div>
-  );
-}

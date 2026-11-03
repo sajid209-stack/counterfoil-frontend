@@ -44,16 +44,14 @@ export function SponsorsSection() {
     <Section id="sponsors" title={ctx.labels.sponsors}>
       <div className="flex flex-col gap-10">
         {groups.map((g, gi) => {
-          const cols = Math.min(g.items.length, phone ? 2 : 4);
           return (
             <div key={g.tier || "all"}>
-              {g.tier && <h3 className="pg-meta mb-4 font-semibold">{g.tier}</h3>}
+              {g.tier && <h3 className="pg-meta mb-4 text-center font-semibold">{g.tier}</h3>}
               <ul
-                className="grid gap-x-8 gap-y-8"
-                style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, maxWidth: cols * CELL_W + (cols - 1) * 32 }}
+                className="flex flex-wrap justify-center gap-x-8 gap-y-8"
               >
                 {g.items.map((s) => (
-                  <li key={s.id} className="flex min-w-0">
+                  <li key={s.id} className="flex min-w-0" style={{ width: phone ? "calc(50% - 16px)" : `min(${CELL_W}px, calc(25% - 24px))` }}>
                     <Cell sponsor={s} height={BOX_H[gi === 0 && groups.length > 1 ? 0 : 1]} dark={dark} />
                   </li>
                 ))}
@@ -79,7 +77,7 @@ function Cell({ sponsor: s, height, dark }: { sponsor: EventSponsor; height: num
 
   const inner = (
     <>
-      <span className="flex w-full items-center" style={boxStyle}>
+      <span className="flex w-full items-center justify-center" style={boxStyle}>
         {logo ? (
           // eslint-disable-next-line @next/next/no-img-element -- uploaded data URL or bundled asset
           <img
@@ -87,23 +85,23 @@ function Cell({ sponsor: s, height, dark }: { sponsor: EventSponsor; height: num
             alt=""
             loading="lazy"
             onError={() => setBroken(true)}
-            className="max-h-full max-w-full object-contain object-left"
+            className="max-h-full max-w-full object-contain"
             style={dark ? undefined : { mixBlendMode: "multiply" }}
           />
         ) : (
-          <span className="line-clamp-2 text-[18px] font-semibold leading-6" style={{ overflowWrap: "anywhere" }}>
+          <span className="line-clamp-2 text-center text-[18px] font-semibold leading-6" style={{ overflowWrap: "anywhere" }}>
             {s.name}
           </span>
         )}
       </span>
       {logo && (
-        <span className="mt-3 text-[13px] leading-[18px]" style={{ color: "var(--pg-muted)", overflowWrap: "anywhere" }}>
+        <span className="mt-3 text-center text-[13px] leading-[18px]" style={{ color: "var(--pg-muted)", overflowWrap: "anywhere" }}>
           {s.name}
         </span>
       )}
     </>
   );
-  const base = "flex w-full min-w-0 flex-col items-stretch";
+  const base = "flex w-full min-w-0 flex-col items-center";
 
   if (!href) return <div className={base}>{inner}</div>;
   return (

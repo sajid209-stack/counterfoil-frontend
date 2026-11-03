@@ -77,3 +77,10 @@ They must keep working and must not need migrating:
 - **Cards follow their count**: one card fills the row, two share it, more than that form a bento pattern (`bento.ts`).
 - **Highlights** are plain tiles with words and an optional photo. No icon badges.
 - **Sponsors** are a logo wall on the page itself: no boxes, tier as a small label. Logos are flattened on white, so on a light page they blend into it, and on a dark page they sit on a small white plate. The name stays beneath, small, because the owner asked to see it.
+
+## Round three (owner review)
+
+- **More options is gone.** Corners and Button words sit in the panel like everything else. This replaces the More options lines above.
+- **The cover has one height** on every page: Medium. No control.
+- **Keep in view** replaces Top, Middle and Bottom: tap the part of the photo that must always show. A single point works for every crop on every device.
+- **Sponsors are centred**: logo, name, tier label and each row.
