@@ -27,8 +27,8 @@ const isAvailable = (slug: string): boolean => {
  * segment's not-found.tsx), so nothing leaks about what exists but is not for sale.
  *
  * The server only knows the seeded catalogue and the demo businesses: an item
- * made in someone's browser this session is not known here, and its link answers
- * 404 until there is a real backend to ask.
+ * made in someone's browser is not known here, so its link answers 404 until there
+ * is a real backend to ask. The browser that made it still draws it: see LocalItem.
  */
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

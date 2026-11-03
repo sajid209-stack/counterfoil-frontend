@@ -3,7 +3,8 @@
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ImagePlus, Plus, Trash2 } from "lucide-react";
-import { Button, FormField, Tabs, TimeInput } from "@/components/ui";
+import { Button, FormField, Tabs, TimeInput, useToast } from "@/components/ui";
+import { fileToStoredImage } from "@/lib/imageUpload";
 import { cn } from "@/lib/cn";
 import { dayName } from "@/lib/events/days";
 import { parseEventVideo } from "@/lib/events/video";
@@ -482,11 +483,13 @@ export function InfoRows({ ctx }: { ctx: EditorCtx }) {
 /**
  * A portrait for a person on the bill. With portraits the page draws a photo
  * grid; without, a clean list — never a placeholder face
- * (docs/product-page.md §3.5). Mock layer: the picked file is shown from a
- * local object URL, the same way the cover upload works.
+ * (docs/product-page.md §3.5). Mock layer: the picked file is shrunk to a small
+ * JPEG data URL so it is kept with the page, the same way the cover upload works.
  */
 function PortraitField({ name, url, onChange }: { name: string; url?: string; onChange: (url: string | undefined) => void }) {
   const t = useTranslations("catalog.page");
+  const tm = useTranslations("catalog.item");
+  const toast = useToast();
   const file = useRef<HTMLInputElement>(null);
   return (
     <div className="flex items-center gap-comfortable">
@@ -512,7 +515,7 @@ function PortraitField({ name, url, onChange }: { name: string; url?: string; on
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
-          if (f) onChange(URL.createObjectURL(f));
+          if (f) fileToStoredImage(f, 640).then(onChange, () => toast.error(tm("imageUnreadable")));
           e.target.value = "";
         }}
       />

@@ -4,14 +4,17 @@ import { useRef } from "react";
 import { ImagePlus, X } from "lucide-react";
 
 import { useTranslations } from "next-intl";
+import { useToast } from "@/components/ui";
+import { fileToStoredImage } from "@/lib/imageUpload";
 export interface FormImage {
   id: string;
   url: string;
   alt?: string;
 }
 
-// Mock upload — no real storage. Selected files become in-session object URLs
-// so previews work; swapping in real storage is a lib/api concern later.
+// Mock upload — no real storage. Selected files are shrunk to small JPEG data
+// URLs so they survive a refresh in this browser; swapping in real storage is a
+// lib/api concern later.
 export function ImageUploadField({
   images,
   onChange,
@@ -20,16 +23,25 @@ export function ImageUploadField({
   onChange: (images: FormImage[]) => void;
 }) {
   const t = useTranslations("catalog.fields");
+  const tm = useTranslations("catalog.item");
+  const toast = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const addFiles = (files: FileList | null) => {
-    if (!files) return;
-    const added: FormImage[] = Array.from(files).map((f) => ({
-      id: `img_${globalThis.crypto.randomUUID().slice(0, 8)}`,
-      url: URL.createObjectURL(f),
-      alt: f.name,
-    }));
-    onChange([...images, ...added]);
+  const addFiles = async (files: File[]) => {
+    if (!files.length) return;
+    /* Convert all first, in the order chosen, then add once: `images` is read after the awaits. */
+    const done = await Promise.all(
+      files.map(async (f): Promise<FormImage | null> => {
+        try {
+          return { id: `img_${globalThis.crypto.randomUUID().slice(0, 8)}`, url: await fileToStoredImage(f), alt: f.name };
+        } catch {
+          return null;
+        }
+      }),
+    );
+    const added = done.filter((x): x is FormImage => x !== null);
+    if (added.length < files.length) toast.error(tm("imageUnreadable"));
+    if (added.length) onChange([...images, ...added]);
   };
 
   const remove = (id: string) => onChange(images.filter((img) => img.id !== id));
@@ -72,7 +84,7 @@ export function ImageUploadField({
           multiple
           className="hidden"
           onChange={(e) => {
-            addFiles(e.target.files);
+            void addFiles(Array.from(e.target.files ?? []));
             e.target.value = "";
           }}
         />

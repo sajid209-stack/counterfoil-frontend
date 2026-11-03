@@ -219,6 +219,7 @@ export function loadBusiness(name: string, currency: string, productIds: string[
   (store as Record<string, unknown[]>).writeOffRequests = [];
   (store as Record<string, unknown[]>).financeLines = [];
   (store as Record<string, unknown[]>).bookings = [...sales.bookings, ...keepBookings];
+  rebaseSaved("default");
 }
 
 /* ── Whole-business demos ──────────────────────────────────────────────────
@@ -251,6 +252,130 @@ const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
 };
 /** Each whole-business demo's catalogue, for telling its item links apart. */
 const BUNDLE_ITEMS: Record<string, () => Product[]> = { doers: () => doers.doersProducts };
+
+/** A slug from a name: lower case, words joined by hyphens, Latin letters and
+ *  digits only (a Bangla name falls back to "item"). */
+export function slugFromName(name: string): string {
+  const s = name
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60)
+    .replace(/-+$/g, "");
+  return s || "item";
+}
+
+/* ── The catalogue this browser has changed ─────────────────────────────────
+   There is no backend yet, so everything lives in the store above, and the store
+   is rebuilt from the seed on every page load. That made a new item vanish on
+   refresh and, worse, made its own link (`/b/<slug>`) answer "This page isn't
+   available": "Open link" starts a new tab, and a new tab has a new store.
+
+   So what the operator makes is kept in this browser: every row of these
+   collections that differs from what the demo started with is written to
+   localStorage on each change and laid back over the store on load, one set per
+   demo, because a Doers Club item means nothing in the museum's catalogue. Only
+   the difference is kept, so seed changes still arrive for everything untouched.
+   Orders and tickets stay per tab, as they were; this is about what is on sale.
+
+   This is the swap point's other half: with a real backend, all of it goes. */
+const SAVED_KEY = "cf_saved_catalog_v1";
+export const SAVE_FAILED_EVENT = "cf-catalog-save-failed";
+const SAVED_COLLECTIONS = ["products", "resources", "seatLayouts"];
+type SavedRows = Record<string, Row[]>;
+let savedScope = "default";
+let savedBaseline = new Map<string, string>();
+const savedKey = (collection: string, id: string) => `${collection}:${id}`;
+
+/** A row as compared. Links are minted into rows the first time one is read, and
+ *  a minted link is not an edit; a link somebody chose is. */
+function comparable(row: Row & { slug?: string; name?: string }, baseline?: string): string {
+  const before = baseline ? (JSON.parse(baseline) as { slug?: string }) : null;
+  const minted = before && !before.slug && row.slug && row.name && row.slug.startsWith(slugFromName(row.name));
+  return JSON.stringify(minted ? { ...row, slug: undefined } : row);
+}
+
+function readSaved(): Record<string, SavedRows> {
+  try {
+    return JSON.parse(localStorage.getItem(SAVED_KEY) ?? "{}") as Record<string, SavedRows>;
+  } catch {
+    // Blocked or corrupt storage: start from the demo rather than not at all.
+    return {};
+  }
+}
+
+function overlaySaved(rows: SavedRows | undefined): void {
+  for (const c of SAVED_COLLECTIONS) {
+    const list = store[c];
+    for (const row of rows?.[c] ?? []) {
+      const i = list.findIndex((r) => r.id === row.id);
+      if (i >= 0) list[i] = row;
+      else list.push(row);
+    }
+  }
+}
+
+/** The demo in front of the operator changed: remember how it started, then put back what they made in it. */
+function rebaseSaved(scope: string): void {
+  if (typeof window === "undefined") return;
+  savedScope = scope;
+  savedBaseline = new Map();
+  for (const c of SAVED_COLLECTIONS) for (const row of store[c]) savedBaseline.set(savedKey(c, row.id), JSON.stringify(row));
+  overlaySaved(readSaved()[scope]);
+}
+
+function writeSaved(): void {
+  if (typeof window === "undefined") return;
+  const rows: SavedRows = {};
+  for (const c of SAVED_COLLECTIONS) {
+    const changed = store[c].filter((row) => {
+      const before = savedBaseline.get(savedKey(c, row.id));
+      return !before || comparable(row, before) !== before;
+    });
+    if (changed.length) rows[c] = changed;
+  }
+  const file = readSaved();
+  if (Object.keys(rows).length) file[savedScope] = rows;
+  else delete file[savedScope];
+  try {
+    localStorage.setItem(SAVED_KEY, JSON.stringify(file));
+  } catch {
+    // Full, usually from photos. Say so: losing work silently is the bug this fixes.
+    window.dispatchEvent(new Event(SAVE_FAILED_EVENT));
+  }
+}
+
+/** Forget what this browser made in a demo: "Start fresh" means empty. */
+export function forgetSaved(scope: string): void {
+  const file = readSaved();
+  delete file[scope];
+  try {
+    localStorage.setItem(SAVED_KEY, JSON.stringify(file));
+  } catch {}
+}
+
+/** Made here rather than seeded, so no other browser can have it until there is a backend. */
+export const isCreatedInThisBrowser = (collection: string, id: string): boolean =>
+  typeof window !== "undefined" && !savedBaseline.has(savedKey(collection, id));
+
+/** Which whole-business demo this browser made an item in, from its link alone. */
+function savedBundleForSlug(slug: string): string | undefined {
+  const file = readSaved();
+  return Object.keys(BUNDLES).find((id) =>
+    ((file[id]?.products ?? []) as (Row & { slug?: string; name?: string })[]).some((p) => (p.slug ?? slugFromName(p.name ?? "")) === slug),
+  );
+}
+
+if (typeof window !== "undefined") {
+  // A change made in another tab is the same operator's: an open tab must not
+  // write its older copy of the catalogue over it.
+  window.addEventListener("storage", (e) => {
+    if (e.key === SAVED_KEY) overlaySaved(readSaved()[savedScope]);
+  });
+}
+
 export const isBundleDemo = (id: string) => id in BUNDLES;
 /** The catalogues of the whole-business demos, so a server that only holds the default seed can
  *  still tell a demo's item link from a made-up one (see `demoItemAtSlug`). */
@@ -259,6 +384,7 @@ export const bundleProductLists = (): Product[][] => [doers.doersProducts];
 export function loadBundleDemo(id: string): void {
   clearFreshAccount();
   BUNDLES[id]?.apply();
+  rebaseSaved(id);
   try { localStorage.setItem(DEMO_KEY, id); } catch {}
 }
 /** Forget any remembered whole-business demo (the other demos and "Start fresh"). */
@@ -278,11 +404,17 @@ if (typeof window !== "undefined") {
     const itemHit = itemSlug ? Object.entries(BUNDLE_ITEMS).find(([, list]) => list().some((p) => p.slug === itemSlug)) : undefined;
     if (slugHit) id = slugHit[0];
     else if (itemHit) id = itemHit[0];
+    else if (itemSlug && savedBundleForSlug(itemSlug)) id = savedBundleForSlug(itemSlug) ?? null;
     else if (path.startsWith("/s/") || itemSlug) id = null;
     const demoHit = path.match(/^\/demo\/([a-z-]+)/);
     if (demoHit) id = Object.keys(BUNDLES).find((k) => demoHit[1].startsWith(k)) ?? id;
-    if (id && BUNDLES[id]) BUNDLES[id].apply();
-    else restoreFreshAccount();
+    if (id && BUNDLES[id]) {
+      BUNDLES[id].apply();
+      rebaseSaved(id);
+    } else {
+      restoreFreshAccount();
+      if (!isFreshAccount()) rebaseSaved("default");
+    }
   } catch {}
 }
 
@@ -292,6 +424,7 @@ export function startFresh(): void {
   for (const k of ["products", "orders", "tickets", "ticketCredentials", "ticketScans", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries", "holds", "inventoryItems", "stockMovements", "financeLines", "expenses"]) {
     (store as Record<string, unknown[]>)[k] = [];
   }
+  rebaseSaved("fresh");
 }
 
 const nowISO = () => new Date().toISOString();
@@ -339,6 +472,9 @@ export function createResource<T extends Row>(
   config: ResourceConfig<T> = {},
 ): Resource<T> {
   const rows = () => store[name] as unknown as T[];
+  const keep = () => {
+    if (SAVED_COLLECTIONS.includes(name)) writeSaved();
+  };
 
   return {
     async list(params = {}) {
@@ -388,6 +524,7 @@ export function createResource<T extends Row>(
         updatedAt: ts,
       } as T;
       rows().push(created);
+      keep();
       return ok(created);
     },
 
@@ -400,6 +537,7 @@ export function createResource<T extends Row>(
         id: genId(name),
       } as T;
       rows().push(created);
+      keep();
       return created;
     },
 
@@ -410,6 +548,7 @@ export function createResource<T extends Row>(
       if (idx === -1) return fail<T>(notFoundError(label));
       const next = { ...list[idx], ...patch, updatedAt: nowISO() } as T;
       list[idx] = next;
+      keep();
       return ok(next);
     },
 
@@ -426,6 +565,7 @@ export function createResource<T extends Row>(
         updatedAt: nowISO(),
       } as unknown as T;
       list[idx] = next;
+      keep();
       return ok(next);
     },
 
@@ -435,6 +575,7 @@ export function createResource<T extends Row>(
       const idx = list.findIndex((r) => r.id === id);
       if (idx === -1) return fail<T>(notFoundError(label));
       const [removed] = list.splice(idx, 1);
+      keep();
       return ok(removed);
     },
 

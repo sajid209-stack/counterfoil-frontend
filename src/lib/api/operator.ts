@@ -1,4 +1,4 @@
-import { clearFreshAccount, forgetBundleDemo, getOperatorState, loadBundleDemo, loadBusiness, ok, patchOperatorState, startFresh } from "./client";
+import { clearFreshAccount, forgetBundleDemo, forgetSaved, getOperatorState, loadBundleDemo, loadBusiness, ok, patchOperatorState, startFresh } from "./client";
 import type { ApiResult, Operator, OperatorPatch } from "./types";
 
 /** The current operator (tenant) — reflects the loaded demo business. */
@@ -23,6 +23,7 @@ export function loadWholeDemo(id: string): void {
 export function startFreshBusiness(): void {
   forgetBundleDemo();
   clearFreshAccount();
+  forgetSaved("fresh");
   startFresh();
 }
 

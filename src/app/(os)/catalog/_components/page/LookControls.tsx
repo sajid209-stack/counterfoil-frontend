@@ -3,7 +3,8 @@
 import { useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Check, ImagePlus } from "lucide-react";
-import { Button, FormField } from "@/components/ui";
+import { Button, FormField, useToast } from "@/components/ui";
+import { fileToStoredImage } from "@/lib/imageUpload";
 import { cn } from "@/lib/cn";
 import { CATEGORIES } from "@/lib/events/catalog";
 import { templateFontVars } from "@/lib/events/fonts";
@@ -72,6 +73,8 @@ export function LookControls({
   const t = useTranslations("catalog.page");
   const ts = useTranslations("settings");
   const looks = ALL_LOOKS;
+  const tm = useTranslations("catalog.item");
+  const toast = useToast();
   const file = useRef<HTMLInputElement>(null);
 
   const classic = page.look === "standard";
@@ -82,9 +85,14 @@ export function LookControls({
   const cover = page.coverUrl ?? photo;
   const coverState = page.coverUrl ? t("coverUploaded") : photo ? t("coverFirst") : t("coverDesigned");
 
-  const pick = (files: FileList | null) => {
+  const pick = async (files: FileList | null) => {
     const f = files?.[0];
-    if (f) onPage({ coverUrl: URL.createObjectURL(f) });
+    if (!f) return;
+    try {
+      onPage({ coverUrl: await fileToStoredImage(f) });
+    } catch {
+      toast.error(tm("imageUnreadable"));
+    }
   };
 
   return (

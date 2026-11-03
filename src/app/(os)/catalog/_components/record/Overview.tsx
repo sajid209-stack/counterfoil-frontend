@@ -172,7 +172,7 @@ export function Overview({
         <SalesByTicket allRows={rows} />
       </div>
 
-      <ItsLink slug={slug} online={online} counter={counter} locations={locations} locationIds={locationIds} saved={saved} onSellOnline={onSellOnline} />
+      <ItsLink itemId={product.id} slug={slug} online={online} counter={counter} locations={locations} locationIds={locationIds} saved={saved} onSellOnline={onSellOnline} />
     </div>
   );
 }

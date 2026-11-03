@@ -1093,7 +1093,8 @@
       "sellOnline": "Sell it online",
       "saveFirst": "Save your changes to use this link.",
       "listedOn": "Listed on the page of {venues}.",
-      "counterAt": "Also sold at the counter of {venues}."
+      "counterAt": "Also sold at the counter of {venues}.",
+      "thisBrowserOnly": "Works in this browser for now. Other people and devices can't open this link until Counterfoil is connected to its server."
     },
     "overview": {
       "glance": "At a glance",
@@ -1130,7 +1131,9 @@
       "fixed": "To book it a different way, make a new booking. You can copy this one from the list."
     },
     "ticketFallback": "This ticket type",
-    "sectionLabel": "Section"
+    "sectionLabel": "Section",
+    "storageFull": "This browser's storage is full, so your latest change won't be kept after a refresh. Try smaller photos.",
+    "imageUnreadable": "That image could not be read. Try another."
   },
   "where": {
     "title": "Where it's sold",

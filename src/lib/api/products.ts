@@ -1,4 +1,4 @@
-import { bundleProductLists, createResource, fail, validationError } from "./client";
+import { bundleProductLists, createResource, isCreatedInThisBrowser, slugFromName, fail, validationError } from "./client";
 import type {
   ApiResult,
   ListParams,
@@ -102,19 +102,8 @@ export const peekProducts = () => resource.peek();
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-/** A slug from a name: lower case, words joined by hyphens, Latin letters and
- *  digits only (a Bangla name falls back to "item"). */
-export function slugFromName(name: string): string {
-  const s = name
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60)
-    .replace(/-+$/g, "");
-  return s || "item";
-}
+
+export { isCreatedInThisBrowser, slugFromName };
 
 /** Is this slug well formed? Refused in words by the caller when not. */
 export const isSlugValid = (slug: string) => SLUG_RE.test(slug) && slug.length <= 60;

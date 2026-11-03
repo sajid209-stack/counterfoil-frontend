@@ -19238,3 +19238,38 @@ text/3D, images load, real prices and the yearly toggle, FAQ opens, one dark ban
 proof; and overflow, 12px floor, clipping, contrast (excluding the primary button's own white on
 ember), reduced motion and console at 320 to 1440, with 44px targets on phones. `tsc`,
 eslint on the site, `lint:tokens` and i18n clean.
+
+---
+
+## An item's own link opens for whoever made it (2026-11-03)
+
+The owner made an event with a designed page, put it on sale, pressed Open link and got "This page isn't available". Four things stood in the way, one behind the other:
+
+1. `/b/[slug]/page.tsx` is a server component that only knows the seed, so it answered 404 for anything made in a browser.
+2. "Open link" starts a new tab, and a new tab builds a new store from the seed, so the item was not there either.
+3. Uploaded photos were `blob:` URLs, which die with the tab that made them.
+4. The same reset took new items out of Catalog on every refresh.
+
+### What changed
+
+- **The catalogue this browser changed** (`client.ts`). Rows of `products`, `resources` and `seatLayouts` that differ from what the demo started with are written to localStorage (`cf_saved_catalog_v1`) on every create, update, archive and remove, synchronously so Open link straight after Save finds them. They are laid back over the store on load, per scope: `default`, a bundle id such as `doers`, or `fresh`. Only the difference is kept, so seed changes still reach everything untouched. A `storage` listener merges another tab's changes in, so an open tab does not write an older copy over them. A slug minted on first read does not count as an edit. `slugFromName` moved into `client.ts` for the init block and is re-exported from `products.ts`.
+- **The 404 asks the browser** (`b/[slug]/not-found.tsx`, `b/_components/LocalItem.tsx`). HTTP 404 and noindex stay, so the server still says nothing about what exists. The page itself draws a skeleton on the server, then the real item if this browser has it, otherwise the usual message. `getItemPage` still decides, so a draft or stopped item is unavailable even to the person who made it.
+- **Photos are stored** (`lib/imageUpload.ts`). The four catalog upload sites make a downscaled JPEG data URL: 1280px, or 640px for lineup and host portraits.
+- **The card says the limit.** An item made here shows "Works in this browser for now..." under its link (`isCreatedInThisBrowser`). Full storage raises a toast from the new `catalog/layout.tsx`, because losing work silently is the bug being fixed.
+
+### Limits, stated
+
+- **Other people and devices still get "This page isn't available".** That needs the backend. All of the block above goes when `client.ts` is swapped.
+- Orders and tickets stay per tab, so a sale made on the link does not appear in OS.
+- Deleting a seeded item is not remembered: it returns on refresh, as it always did. Items made here stay deleted.
+- Editing a seeded item is kept in this browser only, and the card does not say so, because its link does work for everyone, with the seeded content.
+
+### Verified
+
+Production build on :3111, headless Chromium, harnesses in the f19663fb scratchpad `link/`:
+
+- `link.mjs` (21): copy an event, put it on sale, new tab, refresh, basket route, Catalog after reload, unknown slug, another browser.
+- `wiz.mjs` (21): the whole wizard with an uploaded photo, a chosen colour and a cover, as the seeded museum, a new sign-up and the Doers demo.
+- `edge.mjs` (13): browsing saves nothing, one row saved rather than the catalogue, draft and stopped items unavailable, a later tab sees both copies, full and corrupt storage, Start fresh forgets only its own scope.
+
+The later-tab check does not make the older tab write anything, so the `storage` merge itself was not exercised.

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Check, Copy, ExternalLink, Globe, Link2, Store } from "lucide-react";
 import { Button, ButtonLink, Card, Notice } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import type { Location, Product, ProductPage } from "@/lib/api";
+import { isCreatedInThisBrowser, type Location, type Product, type ProductPage } from "@/lib/api";
 import { isSlugFree, isSlugValid } from "@/lib/api/products";
 import { PageDesigner } from "../page/PageDesigner";
 import { SellChannels, type OnlineChoice } from "../sell/SellChannels";
@@ -144,6 +144,7 @@ export function PageTab({
  * and says so, with the way to change it.
  */
 export function ItsLink({
+  itemId,
   slug,
   online,
   counter,
@@ -153,6 +154,7 @@ export function ItsLink({
   onSellOnline,
   className,
 }: {
+  itemId: string;
   slug: string;
   online: OnlineChoice;
   counter: boolean;
@@ -214,6 +216,8 @@ export function ItsLink({
             )}
           </div>
           {!saved && <p className="text-xs text-muted">{t("link.saveFirst")}</p>}
+          {/* Nothing is on a server yet: a link to an item made here opens only in this browser. */}
+          {saved && isCreatedInThisBrowser("products", itemId) && <p className="text-xs text-muted">{t("link.thisBrowserOnly")}</p>}
           {copied === "failed" && <p role="alert" className="text-sm text-danger">{ts("copyFailed")}</p>}
           <p className={cn("text-sm", online === "listed" && venues.length ? "text-fg" : "text-muted")}>
             {online === "listed"

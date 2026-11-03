@@ -3,7 +3,8 @@
 import { useRef } from "react";
 import { useTranslations } from "next-intl";
 import { ImagePlus, Plus, RefreshCw, Trash2, X } from "lucide-react";
-import { Button, DateField, FormField, TimeInput } from "@/components/ui";
+import { Button, DateField, FormField, TimeInput, useToast } from "@/components/ui";
+import { fileToStoredImage } from "@/lib/imageUpload";
 import { cn } from "@/lib/cn";
 import { categoryById, type CategoryId } from "@/lib/events/catalog";
 import { DEMO_TODAY } from "@/lib/schedule";
@@ -158,14 +159,21 @@ function Labelled({ label, required, error, children }: { label: string; require
 }
 
 /** A cover is chosen from the computer or phone, like any photo — never typed
- *  in as a link. Mock storage: an in-session object URL, as the booking
+ *  in as a link. Mock storage: a shrunk JPEG data URL, as the booking
  *  images use, until real storage sits behind `lib/api`. */
 function CoverUpload({ value, onChange, className }: { value: string; onChange: (url: string) => void; className?: string }) {
   const td = useTranslations("catalog.eventDetails");
   const input = useRef<HTMLInputElement>(null);
-  const pick = (files: FileList | null) => {
+  const toast = useToast();
+  const tm = useTranslations("catalog.item");
+  const pick = async (files: FileList | null) => {
     const f = files?.[0];
-    if (f) onChange(URL.createObjectURL(f));
+    if (!f) return;
+    try {
+      onChange(await fileToStoredImage(f));
+    } catch {
+      toast.error(tm("imageUnreadable"));
+    }
   };
   return (
     <div className={cn("flex flex-col gap-tight", className)}>
