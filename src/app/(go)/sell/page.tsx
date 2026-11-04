@@ -86,6 +86,7 @@ const METHOD_ICON: Partial<Record<PaymentMethod, LucideIcon>> = {
   bkash: Send,
   bangla_qr: QrCode,
   card_terminal: CreditCard,
+  cashapp: QrCode,
 };
 
 /** One thing in the sale, and the questions it is still answering.

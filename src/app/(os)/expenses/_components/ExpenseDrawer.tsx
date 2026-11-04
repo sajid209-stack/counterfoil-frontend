@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, ImagePlus, Plus, Trash2, type LucideIcon } from "lucide-react";
@@ -356,7 +357,7 @@ export function ExpenseDrawer({
                   data-autofocus=""
                   inputMode="decimal"
                   autoComplete="off"
-                  prefix={<span aria-hidden className="text-3xl font-semibold">৳</span>}
+                  prefix={<span aria-hidden className="text-3xl font-semibold">{currencySymbol()}</span>}
                   value={form.amount}
                   placeholder="0"
                   invalid={!!problems.amount}

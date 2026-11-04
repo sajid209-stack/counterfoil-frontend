@@ -10,7 +10,7 @@ import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { listCounters, listDevices, listLocations, listPaymentAccounts, updateCounter, type Counter } from "@/lib/api";
 import { IconTile, RecordList, RecordRow, SectionSkeleton, Switch } from "../_components/SettingsKit";
-import { METHODS, METHOD_KEY, NEEDS_ACCOUNT } from "./_lib/methods";
+import { regionMethods, METHOD_KEY, NEEDS_ACCOUNT } from "./_lib/methods";
 
 type Tab = "all" | "open" | "closed";
 const TABS: Tab[] = ["all", "open", "closed"];
@@ -61,7 +61,7 @@ export default function CountersPage() {
 
   const methodsLine = (c: Counter): { text: string; warn: boolean } => {
     if (c.allowedPaymentMethods.length === 0) return { text: t("counters.noMethods"), warn: true };
-    const names = METHODS.filter((m) => c.allowedPaymentMethods.includes(m)).map((m) => t(`counters.method${METHOD_KEY[m]}`));
+    const names = regionMethods().filter((m) => c.allowedPaymentMethods.includes(m)).map((m) => t(`counters.method${METHOD_KEY[m]}`));
     const unbacked = !liveAccount && c.allowedPaymentMethods.some((m) => NEEDS_ACCOUNT.has(m));
     return { text: unbacked ? `${names.join(", ")} · ${t("counters.cashOnlyNow")}` : names.join(", "), warn: unbacked };
   };

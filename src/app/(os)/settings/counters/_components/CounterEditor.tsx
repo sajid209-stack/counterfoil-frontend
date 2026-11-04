@@ -15,7 +15,7 @@ import {
   type Product,
 } from "@/lib/api";
 import { CreateBar, SaveBar, SettingRow, SettingsSection, Switch, controlCls } from "../../_components/SettingsKit";
-import { METHODS, METHOD_KEY, NEEDS_ACCOUNT } from "../_lib/methods";
+import { regionMethods, METHOD_KEY, NEEDS_ACCOUNT } from "../_lib/methods";
 
 interface Draft {
   name: string;
@@ -25,7 +25,7 @@ interface Draft {
   productIds: string[];
 }
 
-const orderedMethods = (ms: PaymentMethod[]) => METHODS.filter((m) => ms.includes(m));
+const orderedMethods = (ms: PaymentMethod[]) => regionMethods().filter((m) => ms.includes(m));
 
 const fromCounter = (c: Counter): Draft => ({
   name: c.name,
@@ -185,7 +185,7 @@ export function CounterEditor({
 
       <SettingsSection title={t("counters.paymentsTitle")} description={t("counters.paymentsDesc")}>
         <ul className="divide-y divide-hairline">
-          {METHODS.map((m) => (
+          {regionMethods().map((m) => (
             <li key={m} className="px-card py-tight">
               <Checkbox
                 checked={form.methods.includes(m)}

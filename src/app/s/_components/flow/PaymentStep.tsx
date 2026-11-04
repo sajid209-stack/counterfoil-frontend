@@ -48,6 +48,9 @@ export function PaymentStep({
       {method === "bkash" && <BkashPay phone={phone} busy={busy} onSuccess={onSuccess} />}
       {method === "card_terminal" && <CardPay busy={busy} onSuccess={onSuccess} />}
       {method === "bangla_qr" && <QrPay amount={amount} busy={busy} onSuccess={onSuccess} />}
+      {method === "cashapp" && <QrPay amount={amount} busy={busy} onSuccess={onSuccess} cashApp />}
+      {method === "wallet" && <WalletPay amount={amount} busy={busy} onSuccess={onSuccess} />}
+      {method === "paylater" && <PayInFour amount={amount} busy={busy} onSuccess={onSuccess} />}
     </div>
   );
 }
@@ -196,16 +199,63 @@ function CardPay({ busy, onSuccess }: { busy: boolean; onSuccess: (r: string) =>
   );
 }
 
-function QrPay({ amount, busy, onSuccess }: { amount: Minor; busy: boolean; onSuccess: (r: string) => void }) {
+function QrPay({ amount, busy, onSuccess, cashApp = false }: { amount: Minor; busy: boolean; onSuccess: (r: string) => void; cashApp?: boolean }) {
   const t = useTranslations("storefront");
   const payload = `counterfoil-pay://amount=${amount}&ref=${ref("QR")}`;
   return (
     <div className="rounded-lg border border-line bg-card p-major shadow-card flex flex-col items-center gap-section text-center">
-      <p className="text-md font-semibold">{t("pay.qrTitle")}</p>
+      <p className="text-md font-semibold">{cashApp ? t("pay.cashappPayTitle") : t("pay.qrTitle")}</p>
       <Qr value={payload} size={176} className="rounded-sm border border-hairline" />
-      <p className="text-base text-muted">{t("pay.qrHint")}</p>
+      <p className="text-base text-muted">{cashApp ? t("pay.cashappHint") : t("pay.qrHint")}</p>
       <button type="button" disabled={busy} className={cn(sfBtn.primary, "w-full")} onClick={() => onSuccess(ref("QR"))}>
         {t("pay.ivePaid")}
+      </button>
+    </div>
+  );
+}
+
+/** Apple Pay / Google Pay: the phone's own sheet, drawn neutrally — the card on
+ *  file, the amount, and a confirm. No real wallet marks in a mock. */
+function WalletPay({ amount, busy, onSuccess }: { amount: Minor; busy: boolean; onSuccess: (r: string) => void }) {
+  const t = useTranslations("storefront");
+  return (
+    <div className="rounded-lg border border-line bg-card p-major shadow-card flex flex-col gap-section">
+      <p className="flex items-center gap-inline text-md font-semibold">
+        <Smartphone size={18} strokeWidth={1.75} aria-hidden /> {t("pay.walletTitle")}
+      </p>
+      <div className="flex items-center justify-between rounded-md border border-hairline bg-subtle px-section py-comfortable">
+        <span className="text-base text-muted">{t("pay.walletCard")}</span>
+        <span className="tnum text-base font-semibold">•••• 4242</span>
+      </div>
+      <p className="text-base text-muted">{t("pay.walletHint")}</p>
+      <button type="button" disabled={busy} className={cn(sfBtn.primary, "w-full")} onClick={() => onSuccess(ref("WAL"))}>
+        {t("pay.walletPay")} · {formatMoney(amount)}
+      </button>
+    </div>
+  );
+}
+
+/** Pay in 4: the whole schedule before the guest agrees — four equal parts,
+ *  today and then every two weeks, the last part absorbing any odd cent. */
+function PayInFour({ amount, busy, onSuccess }: { amount: Minor; busy: boolean; onSuccess: (r: string) => void }) {
+  const t = useTranslations("storefront");
+  const part = Math.floor(amount / 4);
+  const parts = [part, part, part, amount - part * 3];
+  return (
+    <div className="rounded-lg border border-line bg-card p-major shadow-card flex flex-col gap-section">
+      <p className="text-md font-semibold">{t("pay.paylaterTitle")}</p>
+      <p className="text-base text-muted">{t("pay.paylaterHint")}</p>
+      <ol className="flex flex-col divide-y divide-hairline rounded-md border border-hairline">
+        {parts.map((p, i) => (
+          <li key={i} className="flex items-center justify-between px-section py-comfortable text-base">
+            <span>{i === 0 ? t("pay.paylaterToday") : t("pay.paylaterIn", { weeks: i * 2 })}</span>
+            <span className="tnum font-semibold">{formatMoney(p)}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="text-sm text-muted">{t("pay.paylaterDemo")}</p>
+      <button type="button" disabled={busy} className={cn(sfBtn.primary, "w-full")} onClick={() => onSuccess(ref("PL4"))}>
+        {t("pay.paylaterConfirm", { amount: formatMoney(parts[0]) })}
       </button>
     </div>
   );

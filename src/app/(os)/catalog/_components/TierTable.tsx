@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol as regionSymbol } from "@/lib/region";
 import { useState } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, SlidersHorizontal, Trash2 } from "lucide-react";
 import { AffixInput, Button, controlClass } from "@/components/ui";
@@ -84,7 +85,7 @@ export interface TierTableLabels {
 export function TierTable({
   rows,
   labels,
-  currencySymbol = "৳",
+  currencySymbol = regionSymbol(),
 }: {
   rows: TierRowSpec[];
   labels: TierTableLabels;

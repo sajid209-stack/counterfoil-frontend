@@ -1,5 +1,6 @@
 "use client";
 
+import { DEMO_STAFF_ID } from "@/lib/session";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -30,6 +31,7 @@ import {
   orderOutstanding,
   isVoidedOrder,
   type Order,
+  getStaff,
 } from "@/lib/api";
 import { DEMO_TODAY, demoNow, isResourceType, isSlotBased, toMinutes, DEMO_NOW_MINUTES } from "@/lib/schedule";
 import { formatClock, formatDateTime, formatDay, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
@@ -135,6 +137,8 @@ export default function DashboardPage() {
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100, filters: { status: "active" } }), []);
   const counters = useApiQuery(() => listCounters({ pageSize: 1 }), []);
   const staffQ = useApiQuery(() => listStaff({ pageSize: 1 }), []);
+  // The mock shift is the signed-in till person's, so its name follows the business.
+  const shiftPersonQ = useApiQuery(() => getStaff(DEMO_STAFF_ID), []);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
   const devicesQ = useApiQuery(() => listDevices({ pageSize: 100 }), []);
   const ordersQ = useApiQuery(() => listOrders({ pageSize: 1000 }), []);
@@ -404,7 +408,7 @@ export default function DashboardPage() {
       value: "1",
       // Name only: at a quarter of 757px the location pushed this into an
       // ellipsis, and it was the one truncated string in the card.
-      sub: "Nadia Islam",
+      sub: shiftPersonQ.data?.name ?? "",
       href: undefined,
     },
     {
@@ -430,7 +434,7 @@ export default function DashboardPage() {
       sub: t("todayLower"),
       href: "/calendar",
     },
-  ], [mix, mixTotal, idle, idleTotal, freeSlots, t]);
+  ], [mix, mixTotal, idle, idleTotal, freeSlots, t, shiftPersonQ.data?.name]);
 
   const top = useMemo(() => {
     const m = new Map<string, { qty: number; rev: number }>();

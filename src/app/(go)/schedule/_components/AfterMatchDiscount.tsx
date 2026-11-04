@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { useTranslations } from "next-intl";
 import { Percent, X } from "lucide-react";
 import { Notice } from "@/components/ui";
@@ -129,7 +130,7 @@ export function AfterMatchDiscount({
               onClick={() => setState({ ...state, mode: m })}
               className={cn("flex h-11 w-11 items-center justify-center rounded-inner text-md font-semibold", state.mode === m ? "bg-ember-solid text-on-solid" : "bg-card text-fg shadow-card")}
             >
-              {m === "amount" ? "৳" : "%"}
+              {m === "amount" ? currencySymbol() : "%"}
             </button>
           ))}
         </div>

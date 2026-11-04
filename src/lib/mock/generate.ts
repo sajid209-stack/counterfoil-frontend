@@ -91,6 +91,7 @@ const STATUS_WEIGHTS: [OrderStatus, number][] = [
 
 export function generateSales({
   products, locations, staff, counters = [], taxRatePct, reducedRatePct = 7.5, count = 150,
+  roster = ROSTER, payMethods, cashStep = 50000,
 }: {
   products: Product[];
   locations: Location[];
@@ -101,6 +102,14 @@ export function generateSales({
   taxRatePct: number;
   reducedRatePct?: number;
   count?: number;
+  /** Who buys. Defaults to the Dhaka roster; a US demo passes its own. */
+  roster?: { name: string; phone: string | null; email: string | null }[];
+  /** How people pay, by channel, and the split-tender second method. Defaults
+   *  to Bangladesh's (bKash, Bangla QR, card, cash) — leaving it out keeps the
+   *  seeded figures exactly as they were. */
+  payMethods?: { counter: PaymentMethod[]; online: PaymentMethod[]; split: PaymentMethod[] };
+  /** What cash is rounded up to when tendered, in minor units (৳500 / $20). */
+  cashStep?: number;
 }): { orders: Order[]; tickets: Ticket[]; bookings: Booking[]; customers: Customer[] } {
   const rand = mulberry32(0x0c0ffee7);
   const pick = <T>(a: T[]): T => a[Math.floor(rand() * a.length)];
@@ -147,12 +156,12 @@ export function generateSales({
   // would shift every order, price and booking in the fixture.
   const RECENT_MIN = [12, 96, 380, 1810]; // newest-first, minutes before NOW
   const customerCreatedAt = (idx: number) => {
-    const fromEnd = ROSTER.length - 1 - idx;
+    const fromEnd = roster.length - 1 - idx;
     return fromEnd < RECENT_MIN.length
       ? new Date(NOW - RECENT_MIN[fromEnd] * 60000).toISOString()
       : new Date(NOW - (200 - idx) * DAY).toISOString();
   };
-  const customers: Customer[] = ROSTER.map((r, idx) => {
+  const customers: Customer[] = roster.map((r, idx) => {
     const createdAt = customerCreatedAt(idx);
     return {
       id: `cus_${String(idx + 1).padStart(3, "0")}`,
@@ -242,12 +251,14 @@ export function generateSales({
     const { lines, totals } = buildOrderLines(inputs, orderDiscount, reference);
     const total = totals.total;
 
-    const methods: PaymentMethod[] = channel === "online" ? ["card_terminal", "bkash", "bangla_qr"] : ["cash", "bkash", "bangla_qr", "card_terminal"];
+    const methods: PaymentMethod[] = payMethods
+      ? (channel === "online" ? payMethods.online : payMethods.counter)
+      : channel === "online" ? ["card_terminal", "bkash", "bangla_qr"] : ["cash", "bkash", "bangla_qr", "card_terminal"];
     const payments: Payment[] = [];
     const pay = (method: PaymentMethod, amount: number) =>
       payments.push({
         id: `${reference}-P${payments.length}`, method, amount, status: "confirmed", createdAt,
-        ...(method === "cash" ? { tendered: Math.ceil(amount / 50000) * 50000, change: Math.ceil(amount / 50000) * 50000 - amount } : {}),
+        ...(method === "cash" ? { tendered: Math.ceil(amount / cashStep) * cashStep, change: Math.ceil(amount / cashStep) * cashStep - amount } : {}),
         ...(method === "bkash" ? { reference: `TX${seq}${payments.length}` } : {}),
       });
     if (status === "paid" || status === "refunded") {
@@ -255,7 +266,7 @@ export function generateSales({
       if (channel === "counter" && rand() < 0.15 && total > 100000) {
         const first = Math.round(total * 0.6);
         pay("cash", first);
-        pay(pick(["bkash", "bangla_qr", "card_terminal"]), total - first);
+        pay(pick(payMethods?.split ?? ["bkash", "bangla_qr", "card_terminal"]), total - first);
       } else {
         pay(pick(methods), total);
       }

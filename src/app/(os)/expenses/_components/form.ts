@@ -42,7 +42,7 @@ const BANGLA_DIGITS = "০১২৩৪৫৬৭৮৯";
 export function parseMinor(text: string): number | null {
   const s = text
     .replace(/[০-৯]/g, (d) => String(BANGLA_DIGITS.indexOf(d)))
-    .replace(/[,\s৳]/g, "");
+    .replace(/[,\s৳$]/g, "");
   if (s === "") return null;
   if (!/^(\d+\.?\d*|\.\d+)$/.test(s)) return NaN;
   return Math.round(parseFloat(s) * 100);

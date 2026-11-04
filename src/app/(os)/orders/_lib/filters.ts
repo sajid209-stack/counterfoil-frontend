@@ -17,7 +17,7 @@ import { DEMO_TODAY } from "@/lib/schedule";
 
 export const CHANNELS: OrderChannel[] = ["counter", "online", "marketplace"];
 export const STATUSES: OrderStatus[] = ["paid", "pending", "partial", "partly_refunded", "refunded", "cancelled"];
-export const METHODS: OrderMethod[] = ["cash", "bkash", "bangla_qr", "card_terminal", "voucher", "credit", "split", "none"];
+export const METHODS: OrderMethod[] = ["cash", "bkash", "bangla_qr", "card_terminal", "cashapp", "wallet", "paylater", "voucher", "credit", "split", "none"];
 export const PAGE_SIZES = [10, 20, 50, 100];
 export const DEFAULT_SIZE = 20;
 export const DEFAULT_SORT = "createdAt";

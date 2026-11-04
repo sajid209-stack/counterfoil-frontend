@@ -1,5 +1,7 @@
 "use client";
 
+import { isUsRegion } from "@/lib/region";
+import { currencySymbol } from "@/lib/region";
 import { useEffect, useMemo, useState } from "react";
 import { useActiveCounterNow } from "@/lib/activeCounter";
 import { useRouter } from "next/navigation";
@@ -875,7 +877,7 @@ export default function PosPage() {
                     onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
                     className={`flex h-12 w-12 items-center justify-center rounded-sm border text-xs active:bg-ember-wash ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "border-ember text-brand-foreground" : "border-line"}`}
                   >
-                    {e.lineDiscountAmount ? "৳" : (e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
+                    {e.lineDiscountAmount ? currencySymbol() : (e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
                   </button>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
                     <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight text-xs active:bg-ember-wash">
@@ -1206,7 +1208,7 @@ export default function PosPage() {
                 <div className="mt-section flex gap-tight">
                   <button type="button" onClick={() => setTenderTaka(String(Math.ceil(dueNow / 100)))} className="h-12 flex-1 rounded-sm border border-inverse bg-card text-base active:bg-ember-wash">{t("cash.exact")}</button>
                   {[500, 1000, 2000].map((amt) => (
-                    <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-line bg-card text-base active:bg-ember-wash">৳{amt}</button>
+                    <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-line bg-card text-base active:bg-ember-wash">{currencySymbol()}{amt}</button>
                   ))}
                 </div>
 
@@ -1303,7 +1305,7 @@ export default function PosPage() {
             {settleOutstanding > 0 ? (
               <>
                 <div className="grid grid-cols-2 gap-tight">
-                  {(["cash", "bkash", "card_terminal", "bangla_qr"] as PaymentMethod[]).map((m) => (
+                  {((isUsRegion() ? ["cash", "card_terminal", "cashapp"] : ["cash", "bkash", "card_terminal", "bangla_qr"]) as PaymentMethod[]).map((m) => (
                     <Button key={m} variant={settleMethod === m ? "primary" : "secondary"} className="h-12" onClick={() => setSettleMethod(m)}>{enumL.method(m)}</Button>
                   ))}
                 </div>

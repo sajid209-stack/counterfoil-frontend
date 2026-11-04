@@ -1,7 +1,8 @@
 import type { Minor } from "@/lib/api";
+import { currencySymbol, regionCurrency } from "@/lib/region";
 
 /** Minor units → display string. 1050 → "৳10.50". Currency is the operator's. */
-export function formatMoney(minor: Minor, currency = "BDT"): string {
+export function formatMoney(minor: Minor, currency = regionCurrency()): string {
   // The sign goes OUTSIDE the symbol. Intl puts it inside — "৳-47,850.00" —
   // which breaks the optical alignment of a money column and reads as part of
   // the currency rather than as a direction. And it is a true minus (U+2212),
@@ -12,7 +13,7 @@ export function formatMoney(minor: Minor, currency = "BDT"): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Math.abs(minor) / 100);
-  const symbol = currency === "BDT" ? "৳" : `${currency} `;
+  const symbol = currencySymbol(currency);
   return `${negative ? "−" : ""}${symbol}${amount}`;
 }
 
@@ -23,18 +24,18 @@ export function formatMoney(minor: Minor, currency = "BDT"): string {
  *  whole prices. This drops a ZERO, never a value: anything with paisa still
  *  shows them. Totals, the cart, receipts and reports keep `formatMoney`,
  *  where two decimal places are an accounting convention rather than a style. */
-export function formatPriceShort(minor: Minor, currency = "BDT"): string {
+export function formatPriceShort(minor: Minor, currency = regionCurrency()): string {
   if (minor % 100 !== 0) return formatMoney(minor, currency);
   const amount = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(minor / 100);
-  const symbol = currency === "BDT" ? "৳" : `${currency} `;
+  const symbol = currencySymbol(currency);
   return `${symbol}${amount}`;
 }
 
 /** Minor units → a short axis label. 4500000 → "৳45k", 250000 → "৳2.5k".
  *  Chart axes need the magnitude, not the paisa — "৳45,000.00" repeated up a
  *  y-axis is noise that crowds out the plot. */
-export function formatMoneyCompact(minor: Minor, currency = "BDT"): string {
-  const symbol = currency === "BDT" ? "৳" : `${currency} `;
+export function formatMoneyCompact(minor: Minor, currency = regionCurrency()): string {
+  const symbol = currencySymbol(currency);
   const major = minor / 100;
   const abs = Math.abs(major);
   if (abs >= 1_000_000) return `${symbol}${trim(major / 1_000_000)}m`;

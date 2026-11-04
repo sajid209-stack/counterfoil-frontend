@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { useTranslations } from "next-intl";
 import { CalendarRange, Plus, Sparkles } from "lucide-react";
 import { Button, Chip, DateField, FormField, StatusPill } from "@/components/ui";
@@ -85,7 +86,7 @@ export function TicketEditor({
   const tc = useTranslations("common");
   const tev = useTranslations("catalog.editEvent");
   const f = { includes: true, note: true, admits: true, age: true, stop: true, max: true, donation: true, reorder: true, ...fields };
-  const symbol = currency === "BDT" ? "৳" : currency;
+  const symbol = currencySymbol(currency);
   const editing = Object.keys(sold).length > 0;
 
   const patch = (id: string, p: Partial<TicketRow>) => onChange(rows.map((r) => (r.id === id ? { ...r, ...p } : r)));

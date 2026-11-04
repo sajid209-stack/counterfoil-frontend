@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Plus, Landmark, Trophy, Disc3, Flower2, Clapperboard, Coffee, type LucideIcon } from "lucide-react";
+import { ArrowRight, Plus, Landmark, Trophy, Disc3, Flower2, Clapperboard, Coffee, Scissors, Dumbbell, Martini, Soup, type LucideIcon } from "lucide-react";
 import { loadDemoBusiness, loadWholeDemo, startFreshBusiness } from "@/lib/api";
 import { DEMOS } from "@/lib/demos";
 import { Logo } from "@/components/ui";
@@ -19,6 +19,10 @@ const DEMO_GLYPH: Record<string, LucideIcon> = {
   spa: Flower2,
   cinema: Clapperboard,
   doers: Coffee,
+  kinks: Scissors,
+  sweat: Dumbbell,
+  velvet: Martini,
+  mamajos: Soup,
 };
 
 export default function Home() {
@@ -35,33 +39,7 @@ export default function Home() {
     router.push("/sign-up");
   };
 
-  return (
-    <main className="relative min-h-full overflow-hidden">
-      {/* Ambient warmth — a soft ember glow bleeding in from the top-right, the
-          brand colour used as atmosphere rather than decoration. */}
-      <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 size-128 rounded-full bg-ember-wash blur-[120px]" />
-      <div aria-hidden className="pointer-events-none absolute -left-32 top-1/2 h-96 w-96 rounded-full bg-ember-wash blur-[120px]" />
-
-      <div className="relative mx-auto max-w-5xl px-gutter py-hero">
-        {/* Wordmark */}
-        <Logo size={30} />
-
-        {/* Hero — the thesis: this is the operating system for a real gate. */}
-        <div className="mt-hero max-w-2xl">
-          <p className="text-sm font-medium text-brand-foreground">Operating system for venues · tours · attractions</p>
-          <h1 className="type-display mt-comfortable text-5xl sm:text-6xl">
-            See it as <span className="text-brand-foreground">your</span> business.
-          </h1>
-          <p className="type-body mt-section max-w-xl text-md text-muted">
-            Load a demo operation configured end-to-end — tickets, bookings, pricing, the gate — and
-            walk it as if it were yours. Or start fresh and set one up.
-          </p>
-        </div>
-
-        {/* Pick a business — admission-ticket cards. */}
-        <p className="mt-hero text-sm font-medium text-muted">Pick a business to explore</p>
-        <div className="mt-tight grid gap-section sm:grid-cols-2 lg:grid-cols-3">
-          {DEMOS.map((d) => (
+  const card = (d: (typeof DEMOS)[number]) => (
             <button
               key={d.id}
               type="button"
@@ -96,7 +74,35 @@ export default function Home() {
                 </span>
               </div>
             </button>
-          ))}
+  );
+
+  return (
+    <main className="relative min-h-full overflow-hidden">
+      {/* Ambient warmth — a soft ember glow bleeding in from the top-right, the
+          brand colour used as atmosphere rather than decoration. */}
+      <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 size-128 rounded-full bg-ember-wash blur-[120px]" />
+      <div aria-hidden className="pointer-events-none absolute -left-32 top-1/2 h-96 w-96 rounded-full bg-ember-wash blur-[120px]" />
+
+      <div className="relative mx-auto max-w-5xl px-gutter py-hero">
+        {/* Wordmark */}
+        <Logo size={30} />
+
+        {/* Hero — the thesis: this is the operating system for a real gate. */}
+        <div className="mt-hero max-w-2xl">
+          <p className="text-sm font-medium text-brand-foreground">Operating system for venues · tours · attractions</p>
+          <h1 className="type-display mt-comfortable text-5xl sm:text-6xl">
+            See it as <span className="text-brand-foreground">your</span> business.
+          </h1>
+          <p className="type-body mt-section max-w-xl text-md text-muted">
+            Load a demo operation configured end-to-end — tickets, bookings, pricing, the gate — and
+            walk it as if it were yours. Or start fresh and set one up.
+          </p>
+        </div>
+
+        {/* Pick a business — admission-ticket cards. */}
+        <p className="mt-hero text-sm font-medium text-muted">Pick a business to explore</p>
+        <div className="mt-tight grid gap-section sm:grid-cols-2 lg:grid-cols-3">
+          {DEMOS.filter((d) => !d.group).map(card)}
 
           {/* Start fresh */}
           <button
@@ -110,6 +116,12 @@ export default function Home() {
             <span className="type-h2 mt-tight text-md">Start fresh</span>
             <span className="type-body text-sm text-muted">Set up your own from an empty account — the guided path.</span>
           </button>
+        </div>
+
+        {/* US partner demos: their own row, so a TrustHer operator finds her kind of business at once. */}
+        <p className="mt-hero text-sm font-medium text-muted">TrustHer partners · United States</p>
+        <div className="mt-tight grid gap-section sm:grid-cols-2 lg:grid-cols-3">
+          {DEMOS.filter((d) => d.group === "trusther").map(card)}
         </div>
 
         {/* Quiet dev/entry links. */}

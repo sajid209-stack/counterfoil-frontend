@@ -1,5 +1,6 @@
 "use client";
 
+import { isUsRegion } from "@/lib/region";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Lock } from "lucide-react";
@@ -19,6 +20,7 @@ import { sfBtn } from "../sf";
 import { PaymentStep } from "./PaymentStep";
 
 const PHONE_RE = /^01\d{9}$/;
+const US_PHONE_RE = /^1?\d{10}$/;
 
 /** The slots a sale needs to hold, from the basket's dated lines, so a
  *  storefront purchase decrements the same capacity the till reads. */
@@ -62,10 +64,14 @@ export function CheckoutScreen() {
   const privacyQ = useApiQuery(() => getPrivacySettings(), []);
   const showPrivacyLine = !!privacyQ.data?.showAtCheckout;
 
+  const us = isUsRegion();
   const onlineMethods = peekPaymentSettings()
     .methods.filter((m) => m.enabled && (m.method === "bkash" || m.method === "bangla_qr" || m.method === "card_terminal"))
     .map((m) => m.method);
-  const methods: PaymentMethod[] = onlineMethods.length ? onlineMethods : ["bkash", "bangla_qr", "card_terminal"];
+  // A US business takes cards, phone wallets, Cash App Pay and pay-in-4 online.
+  const methods: PaymentMethod[] = us
+    ? ["card_terminal", "wallet", "cashapp", "paylater"]
+    : onlineMethods.length ? onlineMethods : ["bkash", "bangla_qr", "card_terminal"];
 
   if (flow.basket.length === 0) {
     return (
@@ -83,7 +89,7 @@ export function CheckoutScreen() {
   const validate = (): boolean => {
     const e: Record<string, string> = {};
     if (!contact.name.trim()) e.name = t("checkout.nameRequired");
-    if (!PHONE_RE.test(contact.phone.trim())) e.phone = t("checkout.phoneInvalid");
+    if (!(us ? US_PHONE_RE : PHONE_RE).test(contact.phone.trim())) e.phone = us ? t("checkout.phoneInvalidUs") : t("checkout.phoneInvalid");
     if (contact.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email.trim())) e.email = t("checkout.emailInvalid");
     if (!method) e.method = t("checkout.methodRequired");
     if (!agreed) e.terms = t("checkout.termsRequired");
@@ -210,7 +216,7 @@ export function CheckoutScreen() {
                 className={inputCls}
               />
             </Labeled>
-            <Labeled label={t("checkout.phoneLabel")} error={errors.phone} help={t("checkout.phoneHelp")}>
+            <Labeled label={t("checkout.phoneLabel")} error={errors.phone} help={us ? t("checkout.phoneHelpUs") : t("checkout.phoneHelp")}>
               <input
                 value={contact.phone}
                 onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value.replace(/[^\d]/g, "") }))}
@@ -250,7 +256,7 @@ export function CheckoutScreen() {
                     label={
                       <>
                         <span className="block text-md font-semibold">{t(`checkout.method.${m}`)}</span>
-                        <span className="block text-base text-muted">{t(`checkout.methodHint.${m}`)}</span>
+                        <span className="block text-base text-muted">{us && m === "card_terminal" ? t("checkout.methodHintUs.card_terminal") : t(`checkout.methodHint.${m}`)}</span>
                       </>
                     }
                   />

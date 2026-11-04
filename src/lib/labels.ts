@@ -10,7 +10,7 @@ const KNOWN_STATUS = new Set([
   "void", "issued", "redeemed", "expired", "no_show", "draft",
 ]);
 
-const KNOWN_METHOD = new Set(["cash", "bkash", "bangla_qr", "card_terminal", "credits", "mixed", "voucher", "credit"]);
+const KNOWN_METHOD = new Set(["cash", "bkash", "bangla_qr", "card_terminal", "credits", "mixed", "voucher", "credit", "cashapp", "wallet", "paylater"]);
 const KNOWN_TAX = new Set(["standard", "reduced", "exempt"]);
 
 function humanize(v: string): string {

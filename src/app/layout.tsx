@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, DM_Mono, Hind_Siliguri } from "next/font/google";
-import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { ToastProvider } from "@/components/ui";
+import { RegionIntlProvider } from "@/components/RegionIntlProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { PREFS_BOOT } from "@/lib/prefsBoot";
 import { PwaSetup } from "@/components/PwaSetup";
@@ -83,9 +83,9 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full antialiased">
         <ThemeProvider>
-          <NextIntlClientProvider locale={locale} messages={messages}>
+          <RegionIntlProvider locale={locale} messages={messages}>
             <ToastProvider>{children}</ToastProvider>
-          </NextIntlClientProvider>
+          </RegionIntlProvider>
         </ThemeProvider>
         <PwaSetup />
         <ScrollActivity />

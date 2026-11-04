@@ -108,6 +108,13 @@
   color: var(--ps-ink);
   border: 1.5px solid var(--ps-ink);
 }
+/* A dark page: the secondary button is a card-coloured control, not the app's
+   white one — white on white was unreadable on a night-style storefront. */
+.sf[data-ps-mode="dark"] .sf-btn-secondary {
+  background: var(--ps-card);
+  border-color: var(--ps-line);
+  color: var(--ps-fg);
+}
 .sf[data-ps-mode][data-ps-button="pill"] .sf-btn-primary,
 .sf[data-ps-mode][data-ps-button="pill"] .sf-btn-secondary {
   border-radius: 999px;

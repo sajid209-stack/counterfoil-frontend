@@ -1,4 +1,5 @@
 import { ok } from "./client";
+import { isUsRegion } from "@/lib/region";
 import type { ApiResult, ISODate, PaymentSettings, TillMethod } from "./types";
 
 /*
@@ -32,11 +33,22 @@ const seed: PaymentSettings = {
 
 let state: PaymentSettings = structuredClone(seed);
 
+/** A US business takes cash, cards (tapped phones included) and Cash App Pay.
+ *  bKash and Bangla QR do not exist there, so its till never offers them —
+ *  whatever the Bangladesh settings say. Floats and tolerances are in cents. */
+const US_METHODS: PaymentSettings["methods"] = [
+  { method: "cash", enabled: true },
+  { method: "card_terminal", enabled: true },
+  { method: "cashapp", enabled: true },
+];
+const view = (): PaymentSettings =>
+  isUsRegion() ? { ...state, methods: US_METHODS, defaultFloat: 20_000, countTolerance: 500 } : state;
+
 const pause = () => new Promise((r) => setTimeout(r, 200));
 
 export async function getPaymentSettings(): Promise<ApiResult<PaymentSettings>> {
   await pause();
-  return ok(structuredClone(state));
+  return ok(structuredClone(view()));
 }
 
 export async function updatePaymentSettings(patch: Partial<PaymentSettings>): Promise<ApiResult<PaymentSettings>> {
@@ -45,18 +57,18 @@ export async function updatePaymentSettings(patch: Partial<PaymentSettings>): Pr
   // Cash is how a till still sells when everything else is down, so it can be
   // moved but never switched off — whatever a patch says.
   state.methods = state.methods.map((m) => (m.method === "cash" ? { ...m, enabled: true } : m));
-  return ok(structuredClone(state));
+  return ok(structuredClone(view()));
 }
 
 /** The current settings, synchronously — for screens that read one number once. */
-export const peekPaymentSettings = (): PaymentSettings => state;
+export const peekPaymentSettings = (): PaymentSettings => view();
 
 /**
  * The payment buttons a till offers, in the business's order: cash always, and
  * the rest when they are switched on and a live payment account can take them.
  */
 export function tillMethods(nonCashOk: boolean): TillMethod[] {
-  return state.methods.filter((m) => m.method === "cash" || (m.enabled && nonCashOk)).map((m) => m.method);
+  return view().methods.filter((m) => m.method === "cash" || (m.enabled && nonCashOk)).map((m) => m.method);
 }
 
 const isoDay = (d: Date) =>

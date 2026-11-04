@@ -12,8 +12,12 @@
 import * as seedAsWritten from "@/lib/mock/data";
 import { generateSales as generateAsWritten } from "@/lib/mock/generate";
 import * as doersAsWritten from "@/lib/mock/doers";
+import * as trustherAsWritten from "@/lib/mock/trusther";
+import type { TrustherId } from "@/lib/mock/trusther";
+import { setRegionCurrency } from "@/lib/region";
 import { rebaseSeed } from "@/lib/schedule";
 import type {
+  PaymentMethod,
   AdvancePolicy,
   ApiError,
   ApiResult,
@@ -55,6 +59,7 @@ type Row = { id: string; createdAt?: string; updatedAt?: string };
 // The seed, dated to the real today rather than the day it was written around.
 const seed = rebaseSeed(seedAsWritten);
 const doers = rebaseSeed(doersAsWritten);
+const trusther = rebaseSeed(trustherAsWritten);
 const generateSales = (input: Parameters<typeof generateAsWritten>[0]) => rebaseSeed(generateAsWritten(input));
 
 const store: Record<string, Row[]> = {
@@ -195,6 +200,8 @@ export function patchManualDiscountPolicyState(patch: Partial<ManualDiscountPoli
  *  fresh 30-day order history for them. Shared entities (locations, staff,
  *  counters, resources) stay so the demo is coherent. */
 export function loadBusiness(name: string, currency: string, productIds: string[]): void {
+  leaveUsBusiness();
+  setRegionCurrency(currency);
   // Contact details belong to the seeded business; another demo prints none.
   operatorState = { ...structuredClone(seed.operator), name, currency, contactPhone: undefined, contactEmail: undefined, website: undefined };
   // Events are catalogue items (BT-15) and stay whichever demo business is shown,
@@ -235,10 +242,65 @@ export function loadBusiness(name: string, currency: string, productIds: string[
    (and implied by its storefront address) so a reload or a shared link opens
    the same business instead of falling back to the default seed. */
 export const DEMO_KEY = "cf_demo";
+
+/* ── US businesses (the TrustHer partner demos, lib/mock/trusther) ─────────
+   A US demo also replaces what is Bangladeshi about the shared seed: staff
+   names, the bKash payment account, the customers and the tax. Those are
+   kept here when a US demo first loads and put back when any other business
+   is chosen, so switching back to a Dhaka demo is exactly the Dhaka demo. */
+const US_KEYS = ["staff", "paymentAccounts", "customers", "locations", "counters", "devices", "storefronts", "inventoryItems", "stockMovements", "expenses", "financeLines"] as const;
+let usBackup: { rows: Record<string, unknown[]>; tax: TaxConfig } | null = null;
+function leaveUsBusiness(): void {
+  if (!usBackup) return;
+  const S = store as Record<string, unknown[]>;
+  for (const k of US_KEYS) S[k] = usBackup.rows[k];
+  taxConfigState = usBackup.tax;
+  usBackup = null;
+}
+/** How a US business is paid: cards most, then Cash App, then cash; online adds
+ *  phone wallets and pay-in-4. */
+const US_PAY = {
+  counter: ["card_terminal", "card_terminal", "cashapp", "cash"] as PaymentMethod[],
+  online: ["card_terminal", "card_terminal", "wallet", "cashapp", "paylater"] as PaymentMethod[],
+  split: ["card_terminal", "cashapp"] as PaymentMethod[],
+};
+function applyUsBusiness(id: TrustherId): void {
+  const d = trusther.TRUSTHER_DEMOS[id];
+  const S = store as Record<string, unknown[]>;
+  if (!usBackup) usBackup = { rows: Object.fromEntries(US_KEYS.map((k) => [k, S[k]])), tax: taxConfigState };
+  const seedStaff = usBackup.rows.staff as typeof seed.staff;
+  operatorState = { ...structuredClone(seed.operator), ...d.operator };
+  S.products = structuredClone(d.products);
+  S.locations = structuredClone(d.locations);
+  S.counters = structuredClone(d.counters);
+  S.devices = structuredClone(seed.devices)
+    .filter((dv) => dv.counterId === "cnt_fort_main")
+    .map((dv) => ({ ...dv, name: `${d.counters[0].name} iPad` }));
+  S.storefronts = structuredClone(d.storefronts);
+  S.inventoryItems = structuredClone(d.inventoryItems);
+  S.stockMovements = structuredClone(d.stockMovements);
+  S.resources = structuredClone(d.resources);
+  S.staff = trusther.usStaff(structuredClone(seedStaff), d);
+  S.paymentAccounts = structuredClone(trusther.usPaymentAccounts);
+  for (const k of ["holds", "marketplaceConnections", "marketplaceListings", "ticketCredentials", "ticketScans", "refundRequests", "rescheduleRequests", "writeOffRequests", "expenses", "financeLines"]) S[k] = [];
+  const sales = generateSales({
+    products: d.products, locations: d.locations, staff: S.staff as typeof seed.staff, taxRatePct: d.operator.taxRatePct, reducedRatePct: 0, count: 60,
+    roster: trusther.usRoster(d.areaCode), payMethods: US_PAY, cashStep: 2000,
+  });
+  S.orders = sales.orders;
+  S.tickets = sales.tickets;
+  S.bookings = sales.bookings;
+  S.customers = sales.customers;
+  taxConfigState = structuredClone(d.tax);
+  setRegionCurrency("USD");
+}
+const usBundle = (id: TrustherId) => ({ slug: trusther.TRUSTHER_DEMOS[id].slug, apply: () => applyUsBusiness(id) });
 const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
   doers: {
     slug: "thedoersclub",
     apply: () => {
+      leaveUsBusiness();
+      setRegionCurrency("BDT");
       operatorState = { ...structuredClone(seed.operator), ...doers.doersOperator };
       const S = store as Record<string, unknown[]>;
       S.products = structuredClone(doers.doersProducts);
@@ -255,9 +317,19 @@ const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
       S.bookings = sales.bookings;
     },
   },
+  kinks: usBundle("kinks"),
+  sweat: usBundle("sweat"),
+  velvet: usBundle("velvet"),
+  mamajos: usBundle("mamajos"),
 };
 /** Each whole-business demo's catalogue, for telling its item links apart. */
-const BUNDLE_ITEMS: Record<string, () => Product[]> = { doers: () => doers.doersProducts };
+const BUNDLE_ITEMS: Record<string, () => Product[]> = {
+  doers: () => doers.doersProducts,
+  kinks: () => trusther.TRUSTHER_DEMOS.kinks.products,
+  sweat: () => trusther.TRUSTHER_DEMOS.sweat.products,
+  velvet: () => trusther.TRUSTHER_DEMOS.velvet.products,
+  mamajos: () => trusther.TRUSTHER_DEMOS.mamajos.products,
+};
 
 /** A slug from a name: lower case, words joined by hyphens, Latin letters and
  *  digits only (a Bangla name falls back to "item"). */
@@ -425,7 +497,7 @@ if (typeof window !== "undefined") {
 export const isBundleDemo = (id: string) => id in BUNDLES;
 /** The catalogues of the whole-business demos, so a server that only holds the default seed can
  *  still tell a demo's item link from a made-up one (see `demoItemAtSlug`). */
-export const bundleProductLists = (): Product[][] => [doers.doersProducts];
+export const bundleProductLists = (): Product[][] => [doers.doersProducts, ...Object.values(trusther.TRUSTHER_DEMOS).map((d) => d.products)];
 /** Load a whole-business demo and remember it for this browser. */
 export function loadBundleDemo(id: string): void {
   clearFreshAccount();
@@ -466,6 +538,8 @@ if (typeof window !== "undefined") {
 
 /** Empty the operator's data for the golden path ("Start fresh"). */
 export function startFresh(): void {
+  leaveUsBusiness();
+  setRegionCurrency("BDT");
   operatorState = { ...structuredClone(seed.operator), name: "" };
   for (const k of ["products", "orders", "tickets", "ticketCredentials", "ticketScans", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries", "holds", "inventoryItems", "stockMovements", "financeLines", "expenses"]) {
     (store as Record<string, unknown[]>)[k] = [];

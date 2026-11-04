@@ -200,7 +200,7 @@ export interface TransactionSummary {
 
 /** Methods whose money arrives by payout rather than in a drawer. Vouchers and
  *  pass credit are not money at all and appear in neither. */
-export const PAYOUT_METHODS: PaymentMethod[] = ["bkash", "bangla_qr", "card_terminal"];
+export const PAYOUT_METHODS: PaymentMethod[] = ["bkash", "bangla_qr", "card_terminal", "cashapp", "wallet", "paylater"];
 
 export async function getTransactionSummary(filters: TransactionFilters = {}, search = ""): Promise<ApiResult<TransactionSummary>> {
   await delay();

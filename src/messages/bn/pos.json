@@ -165,7 +165,10 @@
     "qrAlt": "পেমেন্ট QR কোড",
     "qrInstruction": "গ্রাহক যেকোনো Bangla QR অ্যাপে স্ক্যান করবেন। অ্যাপে পেমেন্ট হয়ে গেলে “পেমেন্ট পেয়েছি” চাপুন।",
     "bkashConfirmedNote": "bKash নিশ্চিত — txn {txn}",
-    "qrConfirmedNote": "Bangla QR পেমেন্ট নিশ্চিত"
+    "qrConfirmedNote": "Bangla QR পেমেন্ট নিশ্চিত",
+    "cashappTitle": "ক্যাশ অ্যাপ পে",
+    "cashappInstruction": "গ্রাহক ক্যাশ অ্যাপ দিয়ে কোডটি স্ক্যান করবেন। অ্যাপে পেমেন্ট দেখালে পেমেন্ট পেয়েছি চাপুন।",
+    "cashappConfirmedNote": "ক্যাশ অ্যাপ পে নিশ্চিত"
   },
   "complete": {
     "ticketIssued": "টিকিট তৈরি",
@@ -603,7 +606,8 @@
     "minimum": "সর্বনিম্ন",
     "partSummary": "এখন {now} দিন · আসার সময় {later}",
     "promoAdd": "যোগ করুন",
-    "summaryTitle": "বিক্রির সারাংশ"
+    "summaryTitle": "বিক্রির সারাংশ",
+    "cardHintUs": "ট্যাপ, চিপ বা সোয়াইপ — অ্যাপল পে ও গুগল পে-ও।"
   },
   "sellDate": {
     "today": "আজ",

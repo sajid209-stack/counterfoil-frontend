@@ -401,7 +401,10 @@
       "bangla_qr": "The customer scans a QR code with their bank app.",
       "card_terminal": "A card machine connected to this counter.",
       "voucher": "Gift and prepaid vouchers.",
-      "credit": "Passes and prepaid credit."
+      "credit": "Passes and prepaid credit.",
+      "cashapp": "The customer scans a code with Cash App.",
+      "wallet": "Apple Pay or Google Pay on a phone.",
+      "paylater": "Four payments, every two weeks."
     },
     "methodsRequired": "Choose at least one way to pay.",
     "needsAccount": "bKash, Bangla QR and card need a payment account. None is set up yet, so this counter can only take cash.",
@@ -442,7 +445,10 @@
     "closedTag": "Closed",
     "emptyTab": "No counters in this list.",
     "allBookings": "Everything",
-    "namePlaceholder": "e.g. Main gate counter"
+    "namePlaceholder": "e.g. Main gate counter",
+    "methodCashapp": "Cash App Pay",
+    "methodWallet": "Apple Pay / Google Pay",
+    "methodPaylater": "Pay in 4 with Afterpay"
   },
   "team": {
     "title": "Team",

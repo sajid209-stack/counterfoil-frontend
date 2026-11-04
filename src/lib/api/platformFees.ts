@@ -271,7 +271,7 @@ export interface PlatformFeeEntry {
 }
 
 const providerFor = (m: PaymentMethod): GatewayProvider => (m === "bkash" ? "bkash" : "sslcommerz");
-const MONEY: PaymentMethod[] = ["cash", "card_terminal", "bkash", "bangla_qr"];
+const MONEY: PaymentMethod[] = ["cash", "card_terminal", "bkash", "bangla_qr", "cashapp", "wallet", "paylater"];
 
 /** The rule, per payment — what fees_for_payment() does on the backend. */
 function entriesFor(o: Order): Omit<PlatformFeeEntry, "settlementId" | "settlementStatus">[] {

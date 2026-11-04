@@ -27,7 +27,7 @@ import { PaymentAccounts } from "./_components/PaymentAccounts";
 import { PayoutBank } from "./_components/PayoutBank";
 import { IconTile, SaveBar, SectionSkeleton, SettingRow, SettingsSection, SuffixInput, Switch } from "../_components/SettingsKit";
 
-const METHOD_ICON: Record<TillMethod, LucideIcon> = { cash: Wallet, bkash: Smartphone, bangla_qr: QrCode, card_terminal: CreditCard };
+const METHOD_ICON: Record<TillMethod, LucideIcon> = { cash: Wallet, bkash: Smartphone, bangla_qr: QrCode, card_terminal: CreditCard, cashapp: QrCode };
 
 const SCHEDULES: PayoutSchedule[] = ["daily", "weekly", "monthly"];
 

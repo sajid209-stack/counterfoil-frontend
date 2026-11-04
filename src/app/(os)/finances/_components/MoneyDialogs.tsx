@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { useId, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -26,7 +27,7 @@ function AmountField({ label, value, onChange, error }: { label: string; value: 
         data-autofocus
         inputMode="decimal"
         autoComplete="off"
-        prefix="৳"
+        prefix={currencySymbol()}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         invalid={!!error}

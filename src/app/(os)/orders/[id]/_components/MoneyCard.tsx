@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { useState } from "react";
 import { Check, Wallet } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -170,7 +171,7 @@ function CollectForm({ due, methods, onCollect }: { due: number; methods: Paymen
           type="text"
           inputMode="decimal"
           autoComplete="off"
-          prefix="৳"
+          prefix={currencySymbol()}
           value={text}
           onChange={(e) => { setText(e.target.value); setTouched(true); }}
           invalid={!!message}

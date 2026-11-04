@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Banknote, ChevronLeft, CreditCard, Pencil, QrCode, Send, Wallet, type LucideIcon } from "lucide-react";
@@ -34,6 +35,7 @@ const METHOD_ICON: Partial<Record<PaymentMethod, LucideIcon>> = {
   bkash: Send,
   bangla_qr: QrCode,
   card_terminal: CreditCard,
+  cashapp: QrCode,
 };
 
 export interface PaymentResult {
@@ -239,7 +241,7 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
               <label className="flex min-h-14 items-center justify-between gap-tight rounded-inner bg-subtle px-comfortable">
                 <span className="text-md">{tp("cash.tendered")}</span>
                 <span className="flex items-center gap-1 text-lg font-semibold">
-                  ৳
+                  {currencySymbol()}
                   <input
                     autoFocus
                     inputMode="numeric"

@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -213,7 +214,7 @@ export function RoleEditor({
                         id={id}
                         value={form.refund}
                         onChange={(v) => set({ refund: v })}
-                        suffix="৳"
+                        suffix={currencySymbol()}
                         placeholder={t("roles.noLimit")}
                         invalid={!!refundErr}
                         describedBy={describedBy}
@@ -253,7 +254,7 @@ export function RoleEditor({
                       id="counter-refund-limit"
                       value={form.refund}
                       onChange={(v) => set({ refund: v })}
-                      suffix="৳"
+                      suffix={currencySymbol()}
                       placeholder={t("roles.noLimit")}
                       invalid={!!refundErr}
                       describedBy={refundErr ? "counter-refund-limit-err" : undefined}

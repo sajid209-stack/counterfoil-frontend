@@ -28,7 +28,10 @@
     "credits": "Pass",
     "mixed": "Split payment",
     "voucher": "Voucher",
-    "credit": "Credit"
+    "credit": "Credit",
+    "cashapp": "Cash App Pay",
+    "wallet": "Apple Pay / Google Pay",
+    "paylater": "Pay in 4 with Afterpay"
   },
   "tax": {
     "standard": "Normal VAT",

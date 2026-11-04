@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -175,7 +176,7 @@ export function PricingRulesField({
             <div className="flex flex-wrap items-end gap-tight">
               <TimeInput label={t("from")} value={rule.fromTime} onChange={(v) => update(i, { fromTime: v })} />
               <TimeInput label={t("to")} value={rule.toTime} onChange={(v) => update(i, { toTime: v })} />
-              <FormField label={`${t("price")} (${currency === "BDT" ? "৳" : currency})`} variant="number" placeholder={t("bandPricePlaceholder")} value={rule.price} onChange={(e) => update(i, { price: e.target.value })} />
+              <FormField label={`${t("price")} (${currencySymbol(currency).trim()})`} variant="number" placeholder={t("bandPricePlaceholder")} value={rule.price} onChange={(e) => update(i, { price: e.target.value })} />
               <div className="flex items-center gap-inline pb-inline">
                 <Button variant="tertiary" size="icon" aria-label={t("earlier", { time: span })} title={t("earlier", { time: span })} onClick={(e) => { e.stopPropagation(); move(i, -1); }} disabled={i === 0} className="text-muted"><ChevronUp size={16} strokeWidth={1.5} aria-hidden /></Button>
                 <Button variant="tertiary" size="icon" aria-label={t("later", { time: span })} title={t("later", { time: span })} onClick={(e) => { e.stopPropagation(); move(i, 1); }} disabled={i === rules.length - 1} className="text-muted"><ChevronDown size={16} strokeWidth={1.5} aria-hidden /></Button>

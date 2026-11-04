@@ -1,8 +1,10 @@
+import { isUsRegion } from "@/lib/region";
 import { DEMO_TODAY, demoDay } from "@/lib/schedule";
 import type { Minor, Order, PaymentMethod } from "@/lib/api";
 
 /** The till methods a summary breaks the day down by, in till order. */
 export const SUMMARY_METHODS: PaymentMethod[] = ["cash", "bkash", "bangla_qr", "card_terminal"];
+const US_SUMMARY_METHODS: PaymentMethod[] = ["cash", "card_terminal", "cashapp"];
 
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
@@ -74,7 +76,7 @@ export function summarise(all: Order[], staffId: string, days: string[]): Summar
     items: itemCount,
     cashTaken,
     cashRefunds,
-    byMethod: SUMMARY_METHODS.map((method) => ({ method, ...(methods.get(method) ?? { amount: 0, count: 0 }) })),
+    byMethod: (isUsRegion() ? US_SUMMARY_METHODS : SUMMARY_METHODS).map((method) => ({ method, ...(methods.get(method) ?? { amount: 0, count: 0 }) })),
     best: [...items.entries()].map(([name, v]) => ({ name, ...v })).sort((a, b) => b.amount - a.amount).slice(0, 5),
     recent: [...mine].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
   };

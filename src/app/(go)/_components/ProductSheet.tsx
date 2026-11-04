@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { useEffect, useMemo, useState } from "react";
 import { Check, ChevronLeft, Clock, Lock, Minus, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -1516,7 +1517,7 @@ export function ProductSheet({
                   </div>
                   {row.donation ? (
                     <div className="flex items-center gap-tight">
-                      <span className="text-base text-muted">{currency === "BDT" ? "৳" : ""}</span>
+                      <span className="text-base text-muted">{currencySymbol(currency)}</span>
                       <input
                         type="number"
                         inputMode="numeric"

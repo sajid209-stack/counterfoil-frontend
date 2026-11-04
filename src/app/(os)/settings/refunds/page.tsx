@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -171,7 +172,7 @@ export default function RefundsSettingsPage() {
                   id={id}
                   value={form.writeOffAbove}
                   onChange={(v) => set({ writeOffAbove: v })}
-                  suffix="৳"
+                  suffix={currencySymbol()}
                   inputMode="numeric"
                   invalid={!!amountErr}
                   describedBy={describedBy}

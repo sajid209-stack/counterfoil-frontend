@@ -19421,3 +19421,63 @@ Owner rejected the grey tiles: one large and two small boxes holding only a few 
 Verified on a production build, f19663fb scratchpad: `design/hl.mjs` (139: counts 1 to 6, words and photos, desktop and phone, mixed, broken photo, dark), `design/matrix.mjs`. Viewed by eye.
 
 Found, not changed: `public/demo/pages/badminton-1.jpg` has white bands baked into its left and right edges (93 and 66px of 1600), so it looks inset with square corners wherever it is used.
+
+## TrustHer partner demos: four US businesses, in dollars, with US payments (2026-11-04)
+
+Owner: a US company (TrustHer, an app for Black woman–owned businesses) wants to
+integrate Counterfoil; build storefront and POS demos like The Doers Club for
+the kinds of businesses on it, and choose the US ways to pay.
+
+- **Four whole-business demos** (`src/lib/mock/trusther.ts`, registered in
+  `BUNDLES` like Doers): **Kinks & Crowns Hair Studio** (Detroit — a stylist to
+  pick on every service, 25% deposit, add-ons, salon retail), **Sweat Sisters
+  Studio** (Atlanta — a class timetable, capped classes, a $15 first-class tier,
+  a 10-class pack), **The Velvet Hour** (Miami — ticketed day party, mixer and
+  paint & sip, booths for six, lounge hire by the hour on a resource), **Mama
+  Jo's Supper Club** (New Orleans — seatings, a cooking class with a spice-kit
+  add-on, private dining by link only, counter retail). Each has its own
+  storefront style, product pages, staff names (same ids, so the till's signed-in
+  person still works), customers with US numbers, and ~60 generated sales.
+  Links: `/demo/kinks-crowns`, `/demo/sweat-sisters`, `/demo/velvet-hour`,
+  `/demo/mamajos-supper-club`; storefronts `/s/kinksandcrowns`,
+  `/s/sweatsisters`, `/s/thevelvethour`, `/s/mamajos`. The demo wall has a
+  "TrustHer partners · United States" row.
+- **A region, read from the currency** (`src/lib/region.ts`, hook in
+  `lib/useRegion`). A USD business sets it; every other business sets it back.
+  It drives the money symbol (`format.ts`, and ~20 inputs that had "৳" typed
+  in), the messages (`components/RegionIntlProvider` swaps VAT→tax, ৳→$, the
+  01… phone example and the bKash payment lines — the catalogue is not forked),
+  and payments (`paymentSettings` offers cash, card and Cash App Pay; bKash and
+  Bangla QR never show). Sales tax per state (MI 6%, GA 8.9%, FL 7%, LA 9.45%),
+  exclusive.
+- **US ways to pay** — three new `PaymentMethod`s: `cashapp` (counter and
+  online), `wallet` (Apple Pay / Google Pay, online) and `paylater` (pay in 4
+  with Afterpay, online). At the counter: Cash · Card (tap, chip or swipe —
+  phones tap here too) · Cash App Pay, which uses the QR confirm the till already
+  had. Online checkout: Card · Apple Pay / Google Pay · Cash App Pay · Pay in 4,
+  each with its own mock screen; US phone numbers validate as 10 digits.
+- **Leaving a US demo restores the Dhaka one exactly**: staff, payment
+  account, customers, venue, counter, shelf, expenses and tax are kept when a US
+  demo first loads and put back by `loadBusiness`, `startFresh` and the Doers
+  bundle. `generateSales` takes a roster, a payment mix and a cash step; with
+  none of them it produces the same figures as before.
+- Photos: every demo has a `*_PHOTOS` list (empty) in `trusther.ts`; a file in
+  `public/demo/<id>/` shows once its name is in the list.
+
+Fixed along the way: the dashboard's open-shift tile printed "Nadia Islam" as a
+literal; a dark storefront's secondary button was white text on white.
+
+Verified on a local production build with Playwright: all four demos — dashboard
+in $, the till's items and Cash / Card / Cash App Pay, a card sale and a Cash
+App sale completed on each; each storefront checked out with Apple Pay / Google
+Pay and pay-in-4 (and Cash App on three), with no ৳, bKash, VAT or Bangla QR on
+screen; switching back to Victory Turf Arena and The Doers Club shows taka,
+bKash and Nadia Islam again; the default seed is unchanged. `tsc`, the build,
+`lint:tokens` and i18n parity clean; eslint clean on touched files apart from
+the two existing set-state-in-effect errors in PosScreen.
+
+Open: the storefront books a provider service (BT-10) as a quantity — no
+stylist or time is chosen online, as for the seed's spa; a remembered bundle
+demo logs React #418 on a hard reload (server renders the seed, the browser the
+demo — the same as Doers on production); dates still print day-first ("4 Nov");
+the Bangla for the new strings is a draft.

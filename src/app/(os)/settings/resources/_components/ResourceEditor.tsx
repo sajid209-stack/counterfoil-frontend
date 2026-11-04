@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -237,7 +238,7 @@ export function ResourceEditor({
                 id={id}
                 value={form.rateAmount}
                 onChange={(v) => set({ rateAmount: v })}
-                suffix="৳"
+                suffix={currencySymbol()}
                 invalid={!!amountErr}
                 describedBy={describedBy}
               />

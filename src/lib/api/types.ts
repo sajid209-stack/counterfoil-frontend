@@ -629,7 +629,12 @@ export type PaymentMethod =
   | "bkash"
   | "bangla_qr"
   | "voucher"
-  | "credit";
+  | "credit"
+  // US businesses (lib/region): Cash App Pay at the counter and online; a phone
+  // wallet (Apple Pay / Google Pay) and pay-in-4 (Afterpay) online only.
+  | "cashapp"
+  | "wallet"
+  | "paylater";
 
 export interface Counter {
   id: ID;
@@ -1652,7 +1657,7 @@ export interface AccessPolicy {
 }
 
 // ── payments.v2 — the till's payment buttons, payouts and the cash drawer ────
-export type TillMethod = Extract<PaymentMethod, "cash" | "bkash" | "bangla_qr" | "card_terminal">;
+export type TillMethod = Extract<PaymentMethod, "cash" | "bkash" | "bangla_qr" | "card_terminal" | "cashapp">;
 export type PayoutSchedule = "daily" | "weekly" | "monthly";
 /**
  * What a ticket carries, and what the till listens for (ticketcodes.v1).

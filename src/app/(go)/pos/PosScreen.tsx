@@ -1,5 +1,6 @@
 "use client";
 
+import { isUsRegion } from "@/lib/region";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -54,6 +55,7 @@ const METHOD_ICON: Partial<Record<PaymentMethod, LucideIcon>> = {
   bkash: Send,
   bangla_qr: QrCode,
   card_terminal: CreditCard,
+  cashapp: QrCode,
 };
 const SIGNED_IN_STAFF_ID = "stf_nadia";
 
@@ -238,7 +240,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const [cartNotice, setCartNotice] = useState<string | null>(null); // refusal guidance
   // Non-cash simulated flow: bKash asks for the transaction ID, QR shows the
   // code to scan. Both pass pending → confirmed | failed before the sale lands.
-  const [nc, setNc] = useState<null | { method: "bkash" | "bangla_qr"; state: "pending" | "confirmed" | "failed"; txn: string }>(null);
+  const [nc, setNc] = useState<null | { method: "bkash" | "bangla_qr" | "cashapp"; state: "pending" | "confirmed" | "failed"; txn: string }>(null);
   // Inline cash checkout — replaces the /pos/payment page navigation.
   const [clearOpen, setClearOpen] = useState(false);
   /* Whether this till draws the number pad, and the way past it for one sale.
@@ -1088,7 +1090,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   /** What the orange button in the payment sheet does, by method. */
   const finishPayment = async (tenderedMinor: number, changeMinor: number) => {
     if (method === "cash") return completeCash(tenderedMinor, changeMinor);
-    if (method === "bkash" || method === "bangla_qr") {
+    if (method === "bkash" || method === "bangla_qr" || method === "cashapp") {
       // The sale only lands once the wallet payment is confirmed.
       setCashOpen(false);
       setNc({ method, state: "pending", txn: "" });
@@ -2014,6 +2016,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                         );
                       })}
                     </TileGrid>
+                    {method === "card_terminal" && isUsRegion() && <p className="text-sm text-muted">{t("pay.cardHintUs")}</p>}
                   </div>
                 )}
         </>);
@@ -2258,7 +2261,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
 
       {/* Non-cash wallet flow — pending → confirmed | failed. Nothing is
           charged and no tickets exist until the payment confirms. */}
-      <Modal open={!!nc} onClose={() => setNc(null)} title={nc?.method === "bkash" ? t("wallet.bkashTitle") : t("wallet.qrTitle")}>
+      <Modal open={!!nc} onClose={() => setNc(null)} title={nc?.method === "bkash" ? t("wallet.bkashTitle") : nc?.method === "cashapp" ? t("wallet.cashappTitle") : t("wallet.qrTitle")}>
         {nc?.state === "failed" ? (
           <div className="flex flex-col gap-section">
             <Notice tone="danger">
@@ -2289,10 +2292,10 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               ))}
             </div>
             <p className="text-center text-lg">{formatMoney(dueNow, currency)}</p>
-            <p className="text-center text-sm text-muted">{t("wallet.qrInstruction")}</p>
+            <p className="text-center text-sm text-muted">{nc.method === "cashapp" ? t("wallet.cashappInstruction") : t("wallet.qrInstruction")}</p>
             <div className="flex gap-tight">
               <Button variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>{t("wallet.itFailed")}</Button>
-              <Button fullWidth onClick={async () => { setNc({ ...nc, state: "confirmed" }); await settleInline(t("wallet.qrConfirmedNote")); setNc(null); }}>
+              <Button fullWidth onClick={async () => { setNc({ ...nc, state: "confirmed" }); await settleInline(nc.method === "cashapp" ? t("wallet.cashappConfirmedNote") : t("wallet.qrConfirmedNote")); setNc(null); }}>
                 {nc.state === "confirmed" ? t("wallet.confirming") : t("wallet.paymentReceived")}
               </Button>
             </div>

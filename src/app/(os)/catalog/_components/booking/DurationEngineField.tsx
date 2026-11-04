@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { useTranslations } from "next-intl";
 import { ChoiceCard, DurationInput, FormField, controlClass } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -45,7 +46,7 @@ export function DurationEngineField({
   const set = <K extends keyof DurationConfig>(k: K, v: DurationConfig[K]) => onChange({ ...value, [k]: v });
   const err = durationConfigError(value);
   const options = err ? [] : durationOptions(value);
-  const symbol = currency === "BDT" ? "৳" : currency;
+  const symbol = currencySymbol(currency);
 
   // Preview: every bookable duration with its resolved (unbanded) price, plus
   // one concrete banded example so the operator verifies real numbers.

@@ -165,7 +165,10 @@
     "qrAlt": "Payment QR code",
     "qrInstruction": "The customer scans with any Bangla QR app. When their app shows paid, tap Payment received.",
     "bkashConfirmedNote": "bKash confirmed — txn {txn}",
-    "qrConfirmedNote": "Bangla QR payment confirmed"
+    "qrConfirmedNote": "Bangla QR payment confirmed",
+    "cashappTitle": "Cash App Pay",
+    "cashappInstruction": "The customer scans this code with Cash App. When their app shows paid, tap Payment received.",
+    "cashappConfirmedNote": "Cash App Pay confirmed"
   },
   "complete": {
     "ticketIssued": "Ticket ready",
@@ -603,7 +606,8 @@
     "minimum": "Minimum",
     "partSummary": "Pay {now} now · {later} at arrival",
     "promoAdd": "Add",
-    "summaryTitle": "Sale summary"
+    "summaryTitle": "Sale summary",
+    "cardHintUs": "Tap, chip or swipe — Apple Pay and Google Pay too."
   },
   "sellDate": {
     "today": "Today",

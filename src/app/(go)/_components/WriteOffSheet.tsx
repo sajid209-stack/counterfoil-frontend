@@ -1,5 +1,6 @@
 "use client";
 
+import { currencySymbol } from "@/lib/region";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronLeft, HandCoins } from "lucide-react";
@@ -110,7 +111,7 @@ export function WriteOffSheet({
         <label data-focus-host className="flex flex-col gap-tight">
           <span className="text-md font-semibold text-fg">{t("pos.writeOff.amountLabel")}</span>
           <span className="flex h-12 items-center gap-tight rounded-inner bg-subtle ring-1 ring-inset ring-line px-comfortable focus-within:ring-2 focus-within:ring-ember">
-            <span aria-hidden className="text-md font-semibold text-muted">৳</span>
+            <span aria-hidden className="text-md font-semibold text-muted">{currencySymbol()}</span>
             <input
               id="wo-amount"
               inputMode="decimal"

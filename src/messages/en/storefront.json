@@ -76,7 +76,10 @@
     "method": {
       "bkash": "bKash",
       "card_terminal": "Card",
-      "bangla_qr": "Bangla QR"
+      "bangla_qr": "Bangla QR",
+      "cashapp": "Cash App Pay",
+      "wallet": "Apple Pay / Google Pay",
+      "paylater": "Pay in 4 with Afterpay"
     },
     "methodRequired": "Choose how you'd like to pay.",
     "terms": "I agree to the venue's booking terms and cancellation policy.",
@@ -89,10 +92,18 @@
     "methodHint": {
       "bkash": "Pay from your bKash app.",
       "card_terminal": "Visa or Mastercard.",
-      "bangla_qr": "Scan with any bank app."
+      "bangla_qr": "Scan with any bank app.",
+      "cashapp": "Scan a code with Cash App.",
+      "wallet": "Pay with the card on your phone.",
+      "paylater": "Four interest-free payments, every two weeks."
     },
     "secure": "You confirm your payment on the next step.",
-    "privacyLine": "By booking you agree to our <link>privacy policy</link>."
+    "privacyLine": "By booking you agree to our <link>privacy policy</link>.",
+    "methodHintUs": {
+      "card_terminal": "Visa, Mastercard, Amex or Discover."
+    },
+    "phoneHelpUs": "10 digits — we'll text your ticket here.",
+    "phoneInvalidUs": "Enter a 10-digit US phone number."
   },
   "pay": {
     "changeMethod": "Change payment method",
@@ -115,7 +126,19 @@
     "cardCvcInvalid": "Enter the 3-digit code on the back of the card.",
     "qrTitle": "Scan to pay",
     "qrHint": "Scan this code with your bKash or bank app, then confirm below.",
-    "ivePaid": "I've paid"
+    "ivePaid": "I've paid",
+    "walletTitle": "Pay with your phone",
+    "walletHint": "Confirm on your phone with Face ID, Touch ID or your passcode.",
+    "walletPay": "Confirm and pay",
+    "walletCard": "Card on this phone",
+    "cashappPayTitle": "Pay with Cash App",
+    "cashappHint": "Open Cash App, tap the scanner and point it at this code. Then confirm below.",
+    "paylaterTitle": "Pay in 4",
+    "paylaterHint": "Four equal payments. The first is taken today, then one every two weeks. No interest.",
+    "paylaterToday": "Today",
+    "paylaterIn": "In {weeks} weeks",
+    "paylaterConfirm": "Agree and pay {amount} today",
+    "paylaterDemo": "Demo mode — no account is needed."
   },
   "confirm": {
     "title": "Booking confirmed!",
