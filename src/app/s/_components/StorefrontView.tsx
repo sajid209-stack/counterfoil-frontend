@@ -164,17 +164,23 @@ export function StorefrontView() {
     /* Full-bleed cover photo, a scrim at `--ps-overlay`, height capped by
        `--ps-hero-h`/`--ps-hero-h-lg` (§5), text bottom-left in white. */
     heroSection = (
-      <section className="sf-section relative -mx-gutter overflow-hidden sm:mx-0 sm:rounded-lg">
-        <HeroArt
-          src={leadPhoto}
-          name={location.name}
-          city={location.city}
-          seed={sf.id}
-          stub={t("hero.stub")}
-          className="sf-hero-media aspect-[4/5] w-full sm:aspect-[16/9]"
-        />
+      <section className="sf-section relative -mx-gutter grid overflow-hidden sm:mx-0 sm:rounded-lg">
+        {/* The capped photo box sets the hero's least height; the text sits in
+            the same grid cell, so a long headline and intro on a phone grow
+            the hero instead of spilling out of its top. */}
+        <div aria-hidden className="sf-hero-media col-start-1 row-start-1 aspect-[4/5] w-full sm:aspect-[16/9]" />
+        <div className="absolute inset-0">
+          <HeroArt
+            src={leadPhoto}
+            name={location.name}
+            city={location.city}
+            seed={sf.id}
+            stub={t("hero.stub")}
+            className="h-full w-full"
+          />
+        </div>
         <div aria-hidden className="sf-hero-scrim absolute inset-0" />
-        <div className="absolute inset-0 flex flex-col items-start justify-end p-major sm:p-wide">
+        <div className="relative col-start-1 row-start-1 flex flex-col items-start justify-end p-major sm:p-wide">
           {heroBadge(true)}
           {heroHeadline(true)}
           {heroIntro(true)}

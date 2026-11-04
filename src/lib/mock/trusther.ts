@@ -109,7 +109,7 @@ const stock = (prefix: string, by: string, rows: [string, number, number][]): St
 
 /* ═══ 1 · Kinks & Crowns Hair Studio — Detroit ═══════════════════════════ */
 
-const KINKS_PHOTOS: string[] = [];
+const KINKS_PHOTOS: string[] = ["hero.jpg", "silk-press.jpg", "braids.jpg", "locs.jpg", "twist-out.jpg"];
 const kinksPh = photoKit("kinks", KINKS_PHOTOS, {
   prd_kc_silk: [{ file: "silk-press.jpg", alt: "A fresh silk press, glossy and full of movement" }],
   prd_kc_braids: [{ file: "braids.jpg", alt: "Long knotless braids, neatly parted" }],
@@ -237,7 +237,7 @@ const kinks: TrustherDemo = {
 
 /* ═══ 2 · Sweat Sisters Studio — Atlanta ═════════════════════════════════ */
 
-const SWEAT_PHOTOS: string[] = [];
+const SWEAT_PHOTOS: string[] = ["hero.jpg", "sculpt.jpg", "dance.jpg", "yoga.jpg", "pack.jpg"];
 const sweatPh = photoKit("sweat", SWEAT_PHOTOS, {
   prd_ss_sculpt: [{ file: "sculpt.jpg", alt: "A full sculpt class lifting dumbbells together" }],
   prd_ss_dance: [{ file: "dance.jpg", alt: "Women dancing in a bright studio, mid-move" }],
@@ -380,7 +380,7 @@ const sweat: TrustherDemo = {
 
 /* ═══ 3 · The Velvet Hour — Miami ════════════════════════════════════════ */
 
-const VELVET_PHOTOS: string[] = [];
+const VELVET_PHOTOS: string[] = ["hero.jpg", "brunch.jpg", "mixer.jpg", "paint-sip.jpg", "rental.jpg"];
 const velvetPh = photoKit("velvet", VELVET_PHOTOS, {
   prd_vh_brunch: [{ file: "brunch.jpg", alt: "A sunny day party with a DJ and brunch tables" }],
   prd_vh_mixer: [{ file: "mixer.jpg", alt: "Women talking in small groups at an evening mixer" }],
@@ -552,10 +552,13 @@ const velvet: TrustherDemo = {
 
 /* ═══ 4 · Mama Jo's Supper Club — New Orleans ════════════════════════════ */
 
-const MAMAJOS_PHOTOS: string[] = [];
+const MAMAJOS_PHOTOS: string[] = ["hero.jpg", "supper.jpg", "gumbo.jpg", "cooking-class.jpg", "private.jpg", "pralines.jpg"];
 const mamajosPh = photoKit("mamajos", MAMAJOS_PHOTOS, {
-  prd_mj_sunday: [{ file: "supper.jpg", alt: "A long family-style supper table, candles lit" }],
-  prd_mj_gumbo: [{ file: "supper.jpg", alt: "Bowls of gumbo passed down a long table" }],
+  prd_mj_sunday: [
+    { file: "supper.jpg", alt: "Guests passing dishes down a long candlelit table" },
+    { file: "pralines.jpg", alt: "Pecan pralines and house hot sauce from the counter" },
+  ],
+  prd_mj_gumbo: [{ file: "gumbo.jpg", alt: "Gumbo, cornbread, greens and shrimp, served family-style" }],
   prd_mj_class: [{ file: "cooking-class.jpg", alt: "Hands stirring a dark roux at a cooking class" }],
   prd_mj_private: [{ file: "private.jpg", alt: "A private dining room set for a celebration" }],
 });
