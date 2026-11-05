@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Check, ChevronRight, Clock, Mail, MessageSquare, Plus, Printer, ReceiptText, RotateCcw, Send, Ticket as TicketIcon } from "lucide-react";
 import { Button, Modal, Qr, useToast } from "@/components/ui";
-import { ActionTile, GoCard, TileGrid, TileLabel, tileClass } from "../../_components/Tiles";
+import { GoCard, TileLabel, tileClass } from "../../_components/Tiles";
+import { HandOverMenu, type HandOverItem } from "./_components/HandOverMenu";
 import { ChromeBackdrop } from "../../_components/ActionBar";
 import { cn } from "@/lib/cn";
 import { useMediaQuery } from "@/lib/useMedia";
@@ -15,6 +16,8 @@ import { useEnumLabels } from "@/lib/labels";
 import { formatClock, formatDay, formatMoney } from "@/lib/format";
 import { clockify } from "../../_components/Clock";
 import { R } from "../../_components/railType";
+import { T } from "../../_components/type";
+import { usePrefs, type Prefs } from "@/lib/prefs";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { DEFAULT_SMS_TEMPLATE, renderSms } from "@/lib/sms";
 import { DEFAULT_EMAIL_BODY, DEFAULT_EMAIL_SUBJECT } from "@/lib/email";
@@ -55,12 +58,63 @@ const isMobile = (value: string) => {
 /** Something shaped like an address: a name, an @, a domain with a dot. The mail server is the real test. */
 const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
 
+/**
+ * What the till did by itself when the sale landed, from this device's "After
+ * a sale" settings. Decided once per sale: the result is kept in session
+ * storage under the order, so a reload (or React's second render in
+ * development) shows the same status and does not print or send again.
+ */
+interface AutoDone {
+  /** What was printed, or null. */
+  print: "receipt" | "tickets" | "both" | null;
+  ticketCount: number;
+  sms: string | null;
+  email: string | null;
+  /** Why something the settings asked for was not sent. */
+  missing: "phone" | "email" | "contact" | null;
+}
+
+function autoHandOver(info: CompleteInfo, prefs: Pick<Prefs, "printAuto" | "sendAuto">): AutoDone {
+  const key = info.orderId ? `pos_complete_auto_${info.orderId}` : null;
+  if (key) {
+    try {
+      const prior = sessionStorage.getItem(key);
+      if (prior) return JSON.parse(prior) as AutoDone;
+    } catch {
+      // Unreadable: decide again.
+    }
+  }
+  const ticketsKnown = Array.isArray(info.tickets);
+  const count = ticketsKnown ? (info.tickets?.length ?? 0) : info.code ? 1 : 0;
+  const hasTickets = count > 0;
+  const wantReceipt = prefs.printAuto === "receipt" || prefs.printAuto === "both";
+  const wantTickets = (prefs.printAuto === "tickets" || prefs.printAuto === "both") && hasTickets;
+  const canPrint = !!info.orderId;
+  const print = !canPrint ? null : wantReceipt && wantTickets ? "both" : wantReceipt ? "receipt" : wantTickets ? "tickets" : null;
+
+  const wantSms = hasTickets && (prefs.sendAuto === "sms" || prefs.sendAuto === "both");
+  const wantEmail = hasTickets && (prefs.sendAuto === "email" || prefs.sendAuto === "both");
+  const phone = info.customer?.phone ?? "";
+  const address = info.customer?.email?.trim() ?? "";
+  const sms = wantSms && isMobile(phone) ? phone : null;
+  const email = wantEmail && isEmail(address) ? address : null;
+  const noPhone = wantSms && !sms;
+  const noEmail = wantEmail && !email;
+  const missing = noPhone && noEmail ? "contact" : noPhone ? "phone" : noEmail ? "email" : null;
+
+  const done: AutoDone = { print, ticketCount: count, sms, email, missing };
+  if (key) {
+    try {
+      sessionStorage.setItem(key, JSON.stringify(done));
+    } catch {
+      // Storage blocked: the status still shows for this visit.
+    }
+  }
+  return done;
+}
+
 export default function CompletePage() {
   const router = useRouter();
-  const toast = useToast();
-  const t = useTranslations("pos");
-  const tk = useTranslations("ticket");
-  const enumL = useEnumLabels();
 
   // Session storage is an external store; reading it this way keeps the server
   // render and the first client render in agreement.
@@ -78,6 +132,30 @@ export default function CompletePage() {
     if (hydrated && !raw && !leavingOnPurpose.current) router.replace("/pos");
   }, [hydrated, raw, router]);
 
+  // No sale handed over (first render, or on the way back to /pos): nothing to show.
+  if (!info) return null;
+
+  return (
+    <CompleteView
+      info={info}
+      onUndoing={() => {
+        leavingOnPurpose.current = true;
+      }}
+    />
+  );
+}
+
+function CompleteView({ info, onUndoing }: { info: CompleteInfo; onUndoing: () => void }) {
+  const router = useRouter();
+  const toast = useToast();
+  const t = useTranslations("pos");
+  const tk = useTranslations("ticket");
+  const enumL = useEnumLabels();
+  const prefs = usePrefs();
+  // Decided once, on this sale's first render (see autoHandOver); the same
+  // result seeds the "sent" state the Send menu shows.
+  const [auto] = useState(() => autoHandOver(info, prefs));
+
   const operatorQ = useApiQuery(() => getOperator(), []);
   const rail = useMediaQuery(RAIL);
 
@@ -86,8 +164,8 @@ export default function CompletePage() {
   const [email, setEmail] = useState("");
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
-  const [smsSentTo, setSmsSentTo] = useState<string | null>(null);
-  const [emailSentTo, setEmailSentTo] = useState<string | null>(null);
+  const [smsSentTo, setSmsSentTo] = useState<string | null>(auto.sms);
+  const [emailSentTo, setEmailSentTo] = useState<string | null>(auto.email);
   const [allTickets, setAllTickets] = useState(false);
   const [shown, setShown] = useState<CompleteTicket | null>(null);
   const phoneId = useId();
@@ -95,11 +173,11 @@ export default function CompletePage() {
   const emailId = useId();
   const emailHelpId = useId();
 
-  const tickets = info?.tickets ?? [];
+  const tickets = info.tickets ?? [];
   const business = operatorQ.data?.name ?? "Counterfoil";
   // The ticket’s own date, in the form a customer reads — so a message never names a different day from the ticket it confirms.
   const ticketDay = formatDay(tickets[0]?.date ?? DEMO_TODAY, { weekday: true });
-  const smsText = renderSms(operatorQ.data?.smsTemplate || DEFAULT_SMS_TEMPLATE, { business, code: info?.code ?? "", date: ticketDay });
+  const smsText = renderSms(operatorQ.data?.smsTemplate || DEFAULT_SMS_TEMPLATE, { business, code: info.code ?? "", date: ticketDay });
 
   if (!info) return <main className="min-h-[60vh]" aria-busy="true" />;
 
@@ -169,51 +247,50 @@ export default function CompletePage() {
     );
     setSending(null);
   };
-  const sentName = (name: string, sent: boolean) => (sent ? `${name} · ${t("complete.smsSentState")}` : name);
 
   const shownCount = rail ? TICKETS_SHOWN_RAIL : TICKETS_SHOWN;
   const visibleTickets = allTickets ? tickets : tickets.slice(0, shownCount);
 
-  /* The sale, as a receipt. On a desktop it sits in the left column under the
-     amount; on a phone it stays below the tickets. */
-  const receiptCard = (
-    info.receipt && (
-      <GoCard
-        title={t("complete.saleTitle")}
-        aside={info.reference ? <span className="min-w-0 truncate font-mono text-sm text-muted">{info.reference}</span> : undefined}
-      >
-        <ul className="flex flex-col gap-tight">
-          {info.receipt.lines.map((line, i) => (
-            <li key={i} className={cn("flex items-baseline justify-between gap-comfortable text-base", line.child && "pl-section")}>
-              <span className="min-w-0 text-fg">
-                <span className={cn(line.child && "text-muted")}>{clockify(line.name)}</span>
-                <span className="text-muted"> × {line.qty}</span>
-              </span>
-              <span className={`shrink-0 tabular-nums text-fg ${R.price}`}>{formatMoney(line.amount)}</span>
-            </li>
-          ))}
-        </ul>
+  /* The sale, as a receipt. On a desktop it is the left column; on a phone it
+     stays below the tickets. Lines are body text with a quiet quantity and a
+     price in its own weight; the total is the one bold line. */
+  const receiptCard = info.receipt && (
+    <GoCard
+      title={t("complete.saleTitle")}
+      aside={info.reference ? <span className="min-w-0 truncate font-mono text-sm text-muted">{info.reference}</span> : undefined}
+      className="rail:order-first"
+    >
+      <ul className="flex flex-col gap-tight">
+        {info.receipt.lines.map((line, i) => (
+          <li key={i} className={cn("flex items-baseline justify-between gap-comfortable text-base", line.child && "pl-section")}>
+            <span className={`min-w-0 text-fg ${R.body}`}>
+              <span className={cn(line.child && "text-muted")}>{clockify(line.name)}</span>
+              <span className={`text-muted ${R.meta}`}> × {line.qty}</span>
+            </span>
+            <span className={`shrink-0 tabular-nums text-fg ${R.price}`}>{formatMoney(line.amount)}</span>
+          </li>
+        ))}
+      </ul>
+      <dl className="flex flex-col gap-1.5 border-t border-line pt-comfortable text-base">
+        <Row label={t("complete.subtotal")} value={formatMoney(info.receipt.subtotal)} />
+        {info.receipt.lineDiscountTotal > 0 && <Row label={t("complete.lineDiscounts")} value={`−${formatMoney(info.receipt.lineDiscountTotal)}`} />}
+        {info.receipt.orderDiscount > 0 && <Row label={t("complete.discount")} value={`−${formatMoney(info.receipt.orderDiscount)}`} />}
+        <Row label={t("complete.vat")} value={formatMoney(info.receipt.tax)} />
+        <Row label={t("complete.total")} value={formatMoney(info.receipt.total)} kind="total" />
+      </dl>
+      {payment && (
         <dl className="flex flex-col gap-1.5 border-t border-line pt-comfortable text-base">
-          <Row label={t("complete.subtotal")} value={formatMoney(info.receipt.subtotal)} />
-          {info.receipt.lineDiscountTotal > 0 && <Row label={t("complete.lineDiscounts")} value={`−${formatMoney(info.receipt.lineDiscountTotal)}`} />}
-          {info.receipt.orderDiscount > 0 && <Row label={t("complete.discount")} value={`−${formatMoney(info.receipt.orderDiscount)}`} />}
-          <Row label={t("complete.vat")} value={formatMoney(info.receipt.tax)} />
-          <Row label={t("complete.total")} value={formatMoney(info.receipt.total)} strong />
+          <Row label={t("complete.paidMethod", { method })} value={formatMoney(paidNow)} kind="paid" />
+          {payment.tendered !== undefined && change > 0 && (
+            <>
+              <Row label={t("complete.receivedLabel")} value={formatMoney(payment.tendered)} />
+              <Row label={t("complete.changeLabel")} value={formatMoney(change)} kind="paid" />
+            </>
+          )}
+          {balance > 0 && <Row label={t("complete.balanceDueAtArrival")} value={formatMoney(balance)} kind="paid" />}
         </dl>
-        {payment && (
-          <dl className="flex flex-col gap-1.5 border-t border-line pt-comfortable text-base">
-            <Row label={t("complete.paidMethod", { method })} value={formatMoney(paidNow)} />
-            {payment.tendered !== undefined && change > 0 && (
-              <>
-                <Row label={t("complete.receivedLabel")} value={formatMoney(payment.tendered)} />
-                <Row label={t("complete.changeLabel")} value={formatMoney(change)} />
-              </>
-            )}
-            {balance > 0 && <Row label={t("complete.balanceDueAtArrival")} value={formatMoney(balance)} />}
-          </dl>
-        )}
-      </GoCard>
-    )
+      )}
+    </GoCard>
   );
 
   // The lead figure: change is an action, so when there is change it IS the figure.
@@ -229,6 +306,75 @@ export default function CompletePage() {
           amount: formatMoney(paidNow),
           note: balance > 0 ? t("complete.paidNowOfTotal", { paid: formatMoney(paidNow), total: formatMoney(total) }) : payment?.method === "cash" ? t("complete.noChange") : t("complete.paidInFull"),
         };
+  /* On a desktop the amount sits under the title with one line saying how it
+     was paid. With change to give, the figure is the change (its label stays)
+     and the line says what was received. */
+  const railNote = !payment
+    ? null
+    : balance > 0
+      ? t("complete.balanceNote", { method, paid: formatMoney(paidNow), total: formatMoney(total) })
+      : change > 0 && payment.tendered !== undefined
+        ? t("complete.paidByChange", { method, received: formatMoney(payment.tendered) })
+        : payment.method === "cash"
+          ? t("complete.paidByExact", { method })
+          : `${t("complete.paidBy", { method })} · ${t("complete.paidInFull")}`;
+
+  // What the till already did by itself, in one line, and what it could not do.
+  const printedText =
+    auto.print === "both"
+      ? t("complete.autoBothPrinted", { count: auto.ticketCount })
+      : auto.print === "tickets"
+        ? t("complete.autoTicketsPrinted", { count: auto.ticketCount })
+        : auto.print === "receipt"
+          ? t("complete.autoReceiptPrinted")
+          : null;
+  const sentText =
+    auto.sms && auto.email
+      ? t("complete.autoBothSent", { phone: auto.sms, email: auto.email })
+      : auto.sms
+        ? t("complete.autoSmsSent", { phone: auto.sms })
+        : auto.email
+          ? t("complete.autoEmailSent", { email: auto.email })
+          : null;
+  const doneText = [printedText, sentText].filter(Boolean).join(" · ");
+  const missingText =
+    auto.missing === "contact" ? t("complete.autoNoContact") : auto.missing === "phone" ? t("complete.autoNoPhone") : auto.missing === "email" ? t("complete.autoNoEmail") : null;
+
+  // The two menus. A way that cannot be used stays in the list and says why.
+  const noTicketsHint = !hasTickets ? t("complete.noTicketsToPrint") : undefined;
+  const unsavedHint = !orderId ? t("complete.notSavedYet") : undefined;
+  const printItems: HandOverItem[] = [
+    { key: "all", label: tk("printAll"), icon: <Printer />, disabled: !orderId || !hasTickets, hint: unsavedHint ?? noTicketsHint, onSelect: () => router.push(`/print/order/${orderId}`) },
+    { key: "tickets", label: tk("printTickets"), icon: <TicketIcon />, disabled: !orderId || !hasTickets, hint: unsavedHint ?? noTicketsHint, onSelect: () => router.push(`/print/tickets/${orderId}`) },
+    { key: "receipt", label: tk("printReceipt"), icon: <ReceiptText />, disabled: !orderId, hint: unsavedHint, onSelect: () => router.push(`/print/receipt/${orderId}`) },
+  ];
+  const sentState = t("complete.smsSentState");
+  const sendItems: HandOverItem[] = [
+    {
+      key: "sms",
+      label: t("complete.sendSms"),
+      icon: <MessageSquare />,
+      done: !!smsSentTo,
+      hint: smsSentTo ? sentState : knownPhone && isMobile(knownPhone) ? t("complete.useNumberOnFile", { phone: knownPhone }) : t("complete.askNumber"),
+      onSelect: () => openSend("sms"),
+    },
+    {
+      key: "email",
+      label: t("complete.sendEmail"),
+      icon: <Mail />,
+      done: !!emailSentTo,
+      hint: emailSentTo ? sentState : knownEmail && isEmail(knownEmail) ? t("complete.useEmailOnFile", { email: knownEmail }) : t("complete.askEmail"),
+      onSelect: () => openSend("email"),
+    },
+    {
+      key: "both",
+      label: t("complete.sendBoth"),
+      icon: <Send />,
+      done: !!smsSentTo && !!emailSentTo,
+      hint: smsSentTo && emailSentTo ? sentState : knownPhone && isMobile(knownPhone) && knownEmail && isEmail(knownEmail) ? undefined : t("complete.askBoth"),
+      onSelect: () => openSend("both"),
+    },
+  ];
 
   return (
     <main className="mx-auto w-full max-w-xl px-section pb-24 pt-major sm:max-w-3xl rail:max-w-[75rem] rail:px-major rail:pb-major rail:pt-major">
@@ -237,32 +383,35 @@ export default function CompletePage() {
           after reading past it. Gone entirely on a handover written before
           Undo existed, or once the order itself is too old for one. */}
       {info.completedAt && orderId && (
-        <UndoBar orderId={orderId} completedAt={info.completedAt} payment={payment} onUndoing={() => { leavingOnPurpose.current = true; }} />
+        <UndoBar orderId={orderId} completedAt={info.completedAt} payment={payment} onUndoing={onUndoing} />
       )}
-      <div className={rail ? "grid grid-cols-[26rem_minmax(0,1fr)] items-start gap-major" : "flex flex-col gap-wide"}>
-        {/* ── What just happened, and what to do now ── */}
-        <div className="flex flex-col gap-major">
-          <section className="flex flex-col items-center text-center rail:items-start rail:text-left" aria-labelledby="sale-complete">
+
+      <div className="flex flex-col gap-major">
+        {/* ── One header row: what happened on the left, what to do next on the right ── */}
+        <div className="flex flex-col gap-major rail:flex-row rail:items-start rail:justify-between rail:gap-major">
+          <section className="flex min-w-0 flex-col items-center text-center rail:items-start rail:text-left" aria-labelledby="sale-complete">
             <div id="sale-status" aria-live="polite" className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rail:justify-start">
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-success-wash text-success">
                 <Check size={16} strokeWidth={2.6} aria-hidden />
               </span>
-              <h1 id="sale-complete" className="text-md font-semibold text-fg rail:text-xl">
+              <h1 id="sale-complete" className={`text-md font-semibold text-fg ${R.page}`}>
                 {t("complete.saleComplete")}
               </h1>
               {ticketsKnown && (
                 <>
-                  <span aria-hidden className="text-muted">
+                  <span aria-hidden className="text-muted rail:hidden">
                     ·
                   </span>
-                  <span className={`text-md text-muted ${R.meta}`}>{t("complete.ticketsIssuedCount", { count: tickets.length })}</span>
+                  <span className="text-md text-muted rail:hidden">{t("complete.ticketsIssuedCount", { count: tickets.length })}</span>
                 </>
               )}
             </div>
 
-            <p className={`mt-major text-base font-medium text-muted rail:mt-comfortable ${R.label}`}>{lead.label}</p>
-            <p className="mt-1.5 text-[clamp(2.5rem,13vw,3.5rem)] font-semibold leading-none tracking-figure text-fg rail:text-[2.25rem]">{lead.amount}</p>{/* ds-exception: the desktop figure is 36px, between the scale's 28 and 40 */}
-            {lead.note && <p className={`mt-tight text-base text-muted rail:mt-inline ${R.meta}`}>{lead.note}</p>}
+            {/* The label names the figure on a phone. On a desktop only the change has one: a paid amount is named by the line under it. */}
+            <p className={cn(`mt-major text-base font-medium text-muted ${R.label}`, "rail:mt-comfortable", change <= 0 && "rail:hidden")}>{lead.label}</p>
+            <p className="mt-1.5 text-[clamp(2.5rem,13vw,3.5rem)] font-semibold leading-none tracking-figure text-fg rail:mt-tight rail:text-4xl rail:font-bold">{lead.amount}</p>
+            {lead.note && <p className={`mt-tight text-base text-muted rail:hidden`}>{lead.note}</p>}
+            {railNote && <p className={`mt-inline hidden ${T.meta} rail:block`}>{railNote}</p>}
             {balance > 0 && (
               <p className="mt-comfortable inline-flex items-center gap-1.5 rounded-full bg-warning-wash px-comfortable py-inline text-sm font-medium text-fg">
                 <Clock size={14} strokeWidth={2.2} aria-hidden className="shrink-0" />
@@ -271,82 +420,49 @@ export default function CompletePage() {
             )}
           </section>
 
-          {rail && receiptCard}
-
-          {/* Hand-over, as two decisions: printed or sent. Each way is its own
-              tile, in a group under a heading, so what belongs together reads
-              together; side by side once there is room, stacked on a phone. The
-              visible word is short; each tile's name says the whole action. */}
-          <section aria-labelledby="hand-over" className={cn("flex flex-col gap-comfortable rail:gap-tight", hasTickets && "sm:grid sm:grid-cols-2 rail:grid-cols-1")}>
-            <h2 id="hand-over" className="sr-only">
-              {hasTickets ? t("complete.handOverTitle") : t("complete.handOverReceiptTitle")}
-            </h2>
-            <HandOverGroup label={t("complete.printGroup")} cols={hasTickets ? 3 : 2}>
-              {hasTickets && (
-                <HandOver icon={<Printer />} label={t("complete.handOverAll")} name={tk("printAll")} disabled={!orderId} onClick={() => router.push(`/print/order/${orderId}`)} />
-              )}
-              {hasTickets && (
-                <HandOver icon={<TicketIcon />} label={t("complete.handOverTickets")} name={tk("printTickets")} disabled={!orderId} onClick={() => router.push(`/print/tickets/${orderId}`)} />
-              )}
-              <HandOver
-                icon={<ReceiptText />}
-                label={t("complete.handOverReceipt")}
-                name={tk("printReceipt")}
-                disabled={!orderId}
-                wide={!hasTickets}
-                onClick={() => router.push(`/print/receipt/${orderId}`)}
-              />
-            </HandOverGroup>
-            {hasTickets && (
-              <HandOverGroup label={t("complete.sendGroup")} cols={3}>
-                <HandOver
-                  icon={smsSentTo ? <Check className="text-success" /> : <MessageSquare />}
-                  label={t("complete.handOverSms")}
-                  name={sentName(t("complete.sendSms"), !!smsSentTo)}
-                  onClick={() => openSend("sms")}
-                />
-                <HandOver
-                  icon={emailSentTo ? <Check className="text-success" /> : <Mail />}
-                  label={t("complete.handOverEmail")}
-                  name={sentName(t("complete.sendEmail"), !!emailSentTo)}
-                  onClick={() => openSend("email")}
-                />
-                <HandOver
-                  icon={smsSentTo && emailSentTo ? <Check className="text-success" /> : <Send />}
-                  label={t("complete.handOverBoth")}
-                  name={sentName(t("complete.sendBoth"), !!smsSentTo && !!emailSentTo)}
-                  onClick={() => openSend("both")}
-                />
-              </HandOverGroup>
-            )}
-          </section>
-
-          {/* New sale: pinned above the tab bar on a phone, inline on a landscape tablet. Focused, so Enter starts the next sale.
-              It floats over the page, so the page colour runs behind it down to
-              the tab bar (with a short fade above), and the page is padded by
-              the button's height: the first ticket scrolls clear of it rather
-              than sitting under it. */}
-          <div className="fixed inset-x-comfortable z-30 pt-tight rail:static rail:z-auto rail:pt-0" style={{ bottom: "calc(84px + env(safe-area-inset-bottom))" }}>
-            <ChromeBackdrop />
-            {/* As wide as the content above it: 48rem less the page's 16px gutters from sm. */}
-            <div className="mx-auto max-w-[34rem] sm:max-w-[calc(48rem-32px)] rail:max-w-none">
-              <Button
-                size="lg"
-                fullWidth
-                autoFocus
-                aria-describedby="sale-status"
-                icon={<Plus size={20} strokeWidth={2.2} />}
-                className={`h-13 text-md font-semibold shadow-float rail:h-11 rail:shadow-none ${R.button} rail:font-semibold`}
-                onClick={() => router.push(takeReturnTo() ?? "/pos")}
-              >
-                {t("complete.newSale")}
-              </Button>
+          {/* Hand-over is two menus, not six tiles: what the till does by itself
+              is set once in Till settings, so this is only the exception. New
+              sale is the one primary action; pinned above the tab bar on a
+              phone, in the row on a desktop. Focused, so Enter starts the next sale. */}
+          <section aria-label={hasTickets ? t("complete.handOverTitle") : t("complete.handOverReceiptTitle")} className="flex flex-col gap-comfortable rail:flex-row rail:items-center rail:gap-tight">
+            <div className={cn("grid gap-tight rail:flex", hasTickets ? "grid-cols-2" : "grid-cols-1")}>
+              <HandOverMenu label={t("complete.printMenu")} icon={<Printer size={18} strokeWidth={2} aria-hidden />} items={printItems} />
+              {hasTickets && <HandOverMenu label={t("complete.sendMenu")} icon={<Send size={18} strokeWidth={2} aria-hidden />} items={sendItems} align="right" />}
             </div>
-          </div>
+            {/* The page colour runs behind the phone's floating button down to the tab bar (with a short fade above), and the page is padded by its height. */}
+            <div className="fixed inset-x-comfortable z-30 pt-tight rail:static rail:z-auto rail:pt-0" style={{ bottom: "calc(84px + env(safe-area-inset-bottom))" }}>
+              <ChromeBackdrop />
+              {/* As wide as the content above it: 48rem less the page's 16px gutters from sm. */}
+              <div className="mx-auto max-w-[34rem] sm:max-w-[calc(48rem-32px)] rail:max-w-none">
+                <Button
+                  size="lg"
+                  autoFocus
+                  aria-describedby="sale-status"
+                  icon={<Plus size={20} strokeWidth={2.2} />}
+                  className={`h-13 w-full text-md font-semibold shadow-float rail:h-10 rail:w-auto rail:px-section rail:shadow-none ${R.button} rail:font-semibold`}
+                  onClick={() => router.push(takeReturnTo() ?? "/pos")}
+                >
+                  {t("complete.newSale")}
+                </Button>
+              </div>
+            </div>
+          </section>
         </div>
 
-        {/* ── The tickets and the sale, for checking ── */}
-        <div className="flex flex-col gap-major">
+        {(doneText || missingText) && (
+          <div role="status" className="flex flex-col items-center gap-1 text-center rail:items-start rail:text-left">
+            {doneText && (
+              <p className={`flex items-center gap-1.5 ${T.meta}`}>
+                <Check size={16} strokeWidth={2.4} aria-hidden className="shrink-0 text-success" />
+                {doneText}
+              </p>
+            )}
+            {missingText && <p className={T.meta}>{missingText}</p>}
+          </div>
+        )}
+
+        {/* ── The sale and the tickets, for checking: two columns on a desktop ── */}
+        <div className={cn("flex flex-col gap-major rail:grid rail:items-start", info.receipt ? "rail:grid-cols-[26rem_minmax(0,1fr)]" : "rail:grid-cols-1")}>
           {ticketsKnown && tickets.length > 0 && (
             <section aria-labelledby="tickets-title" className="flex flex-col gap-tight">
               <TileLabel id="tickets-title">
@@ -390,8 +506,10 @@ export default function CompletePage() {
               </ul>
             </section>
           )}
+          {/* A sale with no tickets (a receipt-only sale) would leave the right column blank on a desktop: say so. */}
+          {ticketsKnown && tickets.length === 0 && <p className={`hidden ${T.meta} rail:block`}>{t("complete.noTicketsIssued")}</p>}
 
-          {!rail && receiptCard}
+          {receiptCard}
         </div>
       </div>
 
@@ -650,46 +768,11 @@ function UndoBar({
   );
 }
 
-/** A group of hand-over actions: a heading, then each way as its own tile. */
-function HandOverGroup({ label, cols, children }: { label: string; cols: 2 | 3; children: React.ReactNode }) {
-  const id = useId();
+function Row({ label, value, kind = "plain" }: { label: string; value: string; kind?: "plain" | "paid" | "total" }) {
   return (
-    <div role="group" aria-labelledby={id} className="flex min-w-0 flex-col gap-tight rail:flex-row rail:items-center rail:gap-comfortable">
-      <TileLabel id={id} className="rail:w-14 rail:shrink-0 rail:text-base">{label}</TileLabel>
-      <TileGrid cols={cols} className="rail:min-w-0 rail:flex-1">{children}</TileGrid>
-    </div>
-  );
-}
-
-/** One way to hand the tickets over: an icon in a soft round over a short word,
- *  the whole action as the tile's name. `wide` is for a tile that has its group
- *  to itself (the receipt, when no tickets were issued). */
-function HandOver({ icon, label, name, disabled, wide, onClick }: { icon: React.ReactNode; label: string; name: string; disabled?: boolean; wide?: boolean; onClick: () => void }) {
-  const rail = useMediaQuery(RAIL);
-  /* A desktop gets a compact button, the picture and the word side by side; a
-     phone keeps its tall tile. */
-  if (rail) {
-    return (
-      <button
-        type="button"
-        aria-label={name}
-        disabled={disabled}
-        onClick={onClick}
-        className={tileClass({ className: cn("h-10 flex-row gap-tight px-comfortable text-base font-medium disabled:opacity-40", wide && "col-span-full") })}
-      >
-        <span aria-hidden className="flex shrink-0 [&_svg]:size-4">{icon}</span>
-        <span className="truncate">{label}</span>
-      </button>
-    );
-  }
-  return <ActionTile icon={icon} label={label} aria-label={name} disabled={disabled} onClick={onClick} className={cn("disabled:opacity-40", wide && "col-span-full")} />;
-}
-
-function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
-  return (
-    <div className={cn("flex items-baseline justify-between gap-comfortable", strong && "text-md font-semibold")}>
-      <dt className={cn(strong ? "text-fg" : "text-muted", R.label)}>{label}</dt>
-      <dd className={cn("tabular-nums text-fg", strong ? R.total : R.price)}>{value}</dd>
+    <div className="flex items-baseline justify-between gap-comfortable">
+      <dt className={cn(kind === "total" ? "text-fg" : "text-muted", kind === "total" ? R.item : kind === "paid" ? R.body : R.meta)}>{label}</dt>
+      <dd className={cn("tabular-nums text-fg", kind === "total" ? R.total : kind === "paid" ? R.price : "rail:text-sm rail:text-muted")}>{value}</dd>
     </div>
   );
 }

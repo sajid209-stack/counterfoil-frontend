@@ -92,5 +92,9 @@
   "justScanned": "Just scanned",
   "strip_arrived": "Arrived",
   "strip_expected": "Expected",
-  "strip_notYet": "Not yet"
+  "strip_notYet": "Not yet",
+  "owes": "Owes {amount}",
+  "modeLabel": "Check in view",
+  "modeScan": "Scan",
+  "modeArrivals": "Arrivals"
 }

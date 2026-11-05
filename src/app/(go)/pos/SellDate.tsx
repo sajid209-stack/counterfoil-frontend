@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { CalendarCheck, CalendarDays, ChevronDown } from "lucide-react";
 import { DatePicker, Sheet } from "@/components/ui";
@@ -80,6 +81,11 @@ export function SellDateBar({
         </button>
       )}
 
+      {/* Portalled to the body: the bar sits in the wall's sticky, blurred toolbar, and a
+          backdrop-filter makes `fixed` relative to that toolbar, so the centred calendar
+          landed half above the top of the screen. `open` only becomes true after a tap, so
+          `document` exists whenever this renders. */}
+      {open && createPortal(
       <Sheet open={open} onClose={() => setOpen(false)} title={t("sellDate.choose")} closeLabel={t("cash.close")} className={`${SHEET_AS_DIALOG} rail:max-w-md`}>
         {/* The calendar's weekday letters are 12px in the shared picker, under
             the till's floor of 13, and its Today link is as wide as its word —
@@ -96,7 +102,9 @@ export function SellDateBar({
             labels={{ previousMonth: t("sellDate.previousMonth"), nextMonth: t("sellDate.nextMonth"), today: t("sellDate.today") }}
           />
         </div>
-      </Sheet>
+      </Sheet>,
+      document.body,
+      )}
     </>
   );
 }

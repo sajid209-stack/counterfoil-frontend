@@ -16,6 +16,7 @@ export const orderDay = (o: Order): string => ymd(new Date(o.createdAt));
  *  wall clock, and a cashier who has just sold something must see it. */
 export const todayDays = (): string[] => [DEMO_TODAY, ymd(new Date())];
 export const yesterdayDays = (): string[] => [demoDay(-1)];
+export const dayBeforeDays = (): string[] => [demoDay(-2)];
 
 /** Sales that count as this person's: the ones filed under them, and the
  *  counter-channel sales the till files with no name on them (it does not stamp
@@ -30,6 +31,9 @@ export interface Summary {
   items: number;
   cashTaken: Minor;
   cashRefunds: Minor;
+  /** Money given back on these sales, by any method. */
+  refunds: Minor;
+  refundCount: number;
   byMethod: { method: PaymentMethod; amount: Minor; count: number }[];
   best: { name: string; qty: number; amount: Minor }[];
   recent: Order[];
@@ -41,10 +45,17 @@ export function summarise(all: Order[], staffId: string, days: string[]): Summar
   const methods = new Map<PaymentMethod, { amount: Minor; count: number }>();
   let cashTaken = 0;
   let cashRefunds = 0;
+  let refunds = 0;
+  let refundCount = 0;
   for (const o of mine) {
+    let gaveBack = false;
     const seen = new Set<PaymentMethod>();
     for (const p of o.payments) {
       if (p.status !== "confirmed") continue;
+      if (p.amount < 0) {
+        refunds += -p.amount;
+        gaveBack = true;
+      }
       if (p.method === "cash") {
         if (p.amount >= 0) cashTaken += p.amount;
         else cashRefunds += -p.amount;
@@ -56,6 +67,7 @@ export function summarise(all: Order[], staffId: string, days: string[]): Summar
       seen.add(p.method);
       methods.set(p.method, m);
     }
+    if (gaveBack) refundCount += 1;
   }
   const items = new Map<string, { qty: number; amount: Minor }>();
   let itemCount = 0;
@@ -76,6 +88,8 @@ export function summarise(all: Order[], staffId: string, days: string[]): Summar
     items: itemCount,
     cashTaken,
     cashRefunds,
+    refunds,
+    refundCount,
     byMethod: (isUsRegion() ? US_SUMMARY_METHODS : SUMMARY_METHODS).map((method) => ({ method, ...(methods.get(method) ?? { amount: 0, count: 0 }) })),
     best: [...items.entries()].map(([name, v]) => ({ name, ...v })).sort((a, b) => b.amount - a.amount).slice(0, 5),
     recent: [...mine].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),

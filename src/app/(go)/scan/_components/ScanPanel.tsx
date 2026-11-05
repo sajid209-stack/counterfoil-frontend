@@ -67,7 +67,18 @@ export interface ScanReport {
  * screen (unchanged); `compact` is the desktop side panel beside the check-in
  * list, which reports each real scan so the list can find the guest.
  */
-export function ScanPanel({ variant = "page", onScan, summary }: { variant?: "page" | "compact"; onScan?: (r: ScanReport) => void; summary?: React.ReactNode }) {
+export function ScanPanel({
+  variant = "page",
+  embedded = false,
+  onScan,
+  summary,
+}: {
+  variant?: "page" | "compact";
+  /** The phone's Check in screen draws the page title and the frame itself. */
+  embedded?: boolean;
+  onScan?: (r: ScanReport) => void;
+  summary?: React.ReactNode;
+}) {
   const t = useTranslations("scan");
   const input = useRef<HTMLInputElement>(null);
   const [code, setCode] = useState("");
@@ -413,20 +424,30 @@ export function ScanPanel({ variant = "page", onScan, summary }: { variant?: "pa
   }
 
 
-  return (
-    <GoPage width="wide">
-    <main className="mx-auto flex w-full max-w-248 flex-col pt-tight pb-28 lg:pb-section rail:max-w-none rail:py-0 rail:pb-0">
+  const frame = (children: React.ReactNode) =>
+    embedded ? (
+      <div className="flex w-full min-w-0 flex-col pb-28 lg:pb-section">{children}</div>
+    ) : (
+      <GoPage width="wide">
+        <main className="mx-auto flex w-full max-w-248 flex-col pt-tight pb-28 lg:pb-section rail:max-w-none rail:py-0 rail:pb-0">{children}</main>
+      </GoPage>
+    );
+
+  return frame(
+    <>
       {/* Phone and tablet-upright: as before. From the desktop up both columns
           step aside (display: contents) so every card is a cell of one grid:
           the camera on the left, tall, and on the right the field, what this
           device has done, and the example screens under the log. */}
       <div className="flex w-full flex-col gap-comfortable lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start rail:grid-cols-12 rail:gap-section">
         <div className="flex min-w-0 flex-col gap-comfortable rail:contents">
-          <GoPageHeader
-            title={t("title")}
-            subtitle={t("subtitle")}
-            className="mb-0! rail:col-span-12 rail:col-start-1 rail:row-start-1 rail:mb-inline!"
-          />
+          {!embedded && (
+            <GoPageHeader
+              title={t("title")}
+              subtitle={t("subtitle")}
+              className="mb-0! rail:col-span-12 rail:col-start-1 rail:row-start-1 rail:mb-inline!"
+            />
+          )}
 
           {/* The camera view is always here, so the scanning area never moves. */}
           <div className="min-w-0 rail:col-span-7 rail:col-start-1 rail:row-span-4 rail:row-start-2">
@@ -556,7 +577,6 @@ export function ScanPanel({ variant = "page", onScan, summary }: { variant?: "pa
           onClose={close}
         />
       )}
-    </main>
-    </GoPage>
+    </>,
   );
 }

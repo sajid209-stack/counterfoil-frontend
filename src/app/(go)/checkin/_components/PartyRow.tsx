@@ -1,28 +1,43 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { CalendarClock, HandCoins, RotateCcw, User, Users } from "lucide-react";
+import { CalendarClock, HandCoins, RotateCcw } from "lucide-react";
 import { ActionMenu, Button, type ActionMenuItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
-import { Thumb } from "../../_components/Thumb";
 import { RequestNotes } from "../../_components/RequestNotes";
+import { T } from "../../_components/type";
 import type { Party } from "../_lib/parties";
 
 /**
- * One party at the door.
+ * The columns of a desktop party row. The list's group headers do not use it,
+ * but the row does, and so does anything that wants to line up with it: a fixed
+ * grid, so the status, the one primary action and the "..." menu sit in the
+ * same place on every row whatever the row happens to hold.
  *
- * The name leads and WRAPS — it is what a steward matches against the person in
- * front of them, so it is never cut off. Under it, quietly: how many people and
- * how many are in, then the booking code in mono on its own line (it is an
- * identifier, and after a "·" it wrapped to a line starting with a dot).
+ *   [ name + code ] [ people ] [ status ] [ primary action ] [ menu ]
+ */
+const RAIL_COLS = "rail:grid rail:grid-cols-[minmax(0,1fr)_5.5rem_9rem_9rem_2.25rem] rail:items-center rail:gap-x-comfortable";
+
+/**
+ * One party at the door (docs/pos-desktop.md section 8, "the arrivals list").
  *
- * The right-most thing in the row is ONE orange button, on every row, in the
- * same place — the till's rule: the button that moves things on is bottom-right.
- * It says the money when money is owed ("Take ৳1,537.50"), otherwise "Check in"
- * (or "+1" when part of the party is already in). Everything else is behind the
- * menu to its left, so a steward who cannot read the words still learns "orange,
- * on the right" once.
+ * Desktop: one 52px line on white with a hairline above it, in fixed columns.
+ * The session time is NOT repeated here (the group header above says it). The
+ * right-most column is always the "..." menu and the one before it always holds
+ * the one primary action, in a fixed width, so a steward's eye and hand learn
+ * both places once. When a party is fully in (or did not come) the primary slot
+ * is left empty but kept, so the menu still lines up.
+ *
+ * Phone: the same facts stacked for width. Name and status on the first line,
+ * the code and head count under it, then the action full width with the menu
+ * beside it.
+ *
+ * The name leads and WRAPS on a phone (it is what a steward matches against the
+ * person in front of them); on a desktop it truncates and the full name is in
+ * the title. The primary button says the money when money is owed
+ * ("Take 1,537.50"), otherwise "Check in" ("Check in 2" for a party of more) or
+ * "+1" when part of the party is already in.
  */
 export function PartyRow({
   party: p,
@@ -36,7 +51,6 @@ export function PartyRow({
   onCheckIn,
   rail = false,
   highlighted = false,
-  timeLabel,
 }: {
   party: Party;
   pending: boolean;
@@ -47,160 +61,142 @@ export function PartyRow({
   menuLabel: string;
   onTake: () => void;
   onCheckIn: (count: number) => void;
-  /** The desktop line: one 52px row. */
+  /** The desktop line: one 52px row in fixed columns. */
   rail?: boolean;
   /** The guest a scan just found. */
   highlighted?: boolean;
-  timeLabel?: string;
 }) {
   const t = useTranslations("checkin");
   const tr = useTranslations("refunds");
   const remaining = p.size - p.arrived;
+  const name = p.name || t("walkInDefaultName");
+  const showCode = !p.nameIsReference && !!p.reference;
 
-  /* Desktop: one 52px line per party. Name and what it is (code, party, who is
-     in) on the left, then time, status and the one action. Same data attributes
-     and button names as the phone row. */
-  if (rail) {
-    const status =
-      p.state === "noshow" ? (
-        <span className="inline-flex items-center rounded-full bg-danger-wash px-comfortable py-inline text-sm font-medium text-danger">
-          {p.booking.noShowReason ? t("noShowTagReason", { reason: p.booking.noShowReason }) : t("noShowTag")}
+  /* One pill per party. Money owed outranks the arrival state: it is the thing
+     a steward has to act on before anyone walks through. */
+  const pill = (tone: string, text: string) => (
+    <span data-status className={cn("inline-flex max-w-full items-center truncate rounded-full px-comfortable py-inline", T.status, tone)}>{text}</span>
+  );
+  const status =
+    p.state === "noshow"
+      ? pill("bg-danger-wash text-danger", p.booking.noShowReason ? t("noShowTagReason", { reason: p.booking.noShowReason }) : t("noShowTag"))
+      : p.due > 0
+        ? pill("bg-warning-wash text-fg", t("owes", { amount: formatMoney(p.due) }))
+        : p.state === "in"
+          ? pill("bg-success-wash text-success", t("allIn"))
+          : p.state === "partial"
+            ? pill("bg-warning-wash text-fg", t("inOfTotal", { done: p.arrived, total: p.size }))
+            : pill("bg-subtle text-muted", t("filterNotIn"));
+
+  const marks = (refundAsked || writeOffAsked || moveAsked) && (
+    <>
+      {refundAsked && (
+        <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
+          <RotateCcw size={12} strokeWidth={2.25} aria-hidden />
+          {t("refundAsked")}
         </span>
-      ) : p.state === "in" ? (
-        <span className="inline-flex items-center rounded-full bg-success-wash px-comfortable py-inline text-sm font-semibold text-success">{t("allIn")}</span>
-      ) : p.state === "partial" ? (
-        <span className="inline-flex items-center rounded-full bg-warning-wash px-comfortable py-inline text-sm font-semibold text-fg">{t("inOfTotal", { done: p.arrived, total: p.size })}</span>
-      ) : (
-        <span className="inline-flex items-center rounded-full bg-subtle px-comfortable py-inline text-sm font-medium text-muted">{t("filterNotIn")}</span>
-      );
+      )}
+      {writeOffAsked && (
+        <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
+          <HandCoins size={12} strokeWidth={2.25} aria-hidden />
+          {tr("pos.markers.writeOffAsked")}
+        </span>
+      )}
+      {moveAsked && (
+        <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
+          <CalendarClock size={12} strokeWidth={2.25} aria-hidden />
+          {t("moveAsked")}
+        </span>
+      )}
+    </>
+  );
+
+  /* The one primary action, or nothing. */
+  /* On a desktop a list of these sits one per row, so a solid orange fill on every
+     row would be ten primaries on one screen: there it is a 36px neutral button with
+     brand words. The phone keeps its solid, full-width button. */
+  const primaryCls = rail ? "w-full font-semibold text-brand-foreground" : "w-full";
+  const look = rail ? ({ variant: "secondary", size: "sm" } as const) : {};
+  const primary =
+    p.state === "noshow" ? null : p.due > 0 ? (
+      <Button {...look} data-primary="take" className={primaryCls} onClick={onTake}>
+        {t("takeAmount", { amount: formatMoney(p.due) })}
+      </Button>
+    ) : p.state === "in" ? null : p.state === "partial" ? (
+      <Button {...look} data-primary="plusone" className={primaryCls} loading={pending} aria-label={t("plusOneLabel")} onClick={() => onCheckIn(p.arrived + 1)}>
+        {t("plusOne")}
+      </Button>
+    ) : (
+      <Button {...look} data-primary="checkin" className={primaryCls} loading={pending} onClick={() => onCheckIn(p.size)}>
+        {p.size > 1 ? t("checkInCount", { count: remaining }) : t("checkIn")}
+      </Button>
+    );
+
+  const menuBtn = menu.length > 0 ? <ActionMenu shape="go" items={menu} label={menuLabel} /> : null;
+
+  const justScanned = highlighted && <span className="shrink-0 rounded-full bg-ember-solid px-tight text-sm font-semibold text-on-solid">{t("justScanned")}</span>;
+
+  if (rail) {
     return (
       <li
         data-party
         data-state={p.state}
         data-scanned={highlighted ? "" : undefined}
         className={cn(
-          "flex min-h-13 items-center gap-comfortable border-t border-line px-card py-tight first:border-t-0 hover:bg-nav-hover",
+          RAIL_COLS,
+          "min-h-13 border-t border-line bg-card px-card py-tight first:border-t-0 hover:bg-nav-hover",
           highlighted && "bg-ember-wash ring-2 ring-inset ring-ember hover:bg-ember-wash",
         )}
       >
-        <div className="min-w-0 flex-1">
-          <p className={cn("flex min-w-0 items-center gap-tight text-base font-semibold text-fg", p.nameIsReference && "font-mono")}>
-            <span className="min-w-0 truncate">{p.name || t("walkInDefaultName")}</span>
-            {highlighted && <span className="shrink-0 rounded-full bg-ember-solid px-tight text-sm font-semibold text-on-solid">{t("justScanned")}</span>}
+        <div className="min-w-0">
+          <p className={cn("flex min-w-0 items-center gap-tight", T.item, p.nameIsReference && "font-mono")}>
+            <span className="min-w-0 truncate" title={name}>{name}</span>
+            {justScanned}
           </p>
-          <p className="flex min-w-0 flex-wrap items-center gap-x-tight text-sm text-muted">
-            {!p.nameIsReference && p.reference && <span className="font-mono">{p.reference}</span>}
-            {!p.nameIsReference && p.reference && <span aria-hidden>·</span>}
-            <span>{t("guests", { count: p.size })}</span>
-            {refundAsked && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
-                <RotateCcw size={12} strokeWidth={2.25} aria-hidden />
-                {t("refundAsked")}
-              </span>
-            )}
-            {writeOffAsked && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
-                <HandCoins size={12} strokeWidth={2.25} aria-hidden />
-                {tr("pos.markers.writeOffAsked")}
-              </span>
-            )}
-            {moveAsked && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
-                <CalendarClock size={12} strokeWidth={2.25} aria-hidden />
-                {t("moveAsked")}
-              </span>
-            )}
+          <p className={cn("flex min-w-0 flex-wrap items-center gap-x-tight", T.meta)}>
+            {showCode && <span className="truncate font-mono">{p.reference}</span>}
+            {marks}
           </p>
           <RequestNotes variant="row" orderId={p.booking.orderId} bookingId={p.booking.id} className="mt-inline flex flex-col gap-inline" />
         </div>
-        {timeLabel && <span className="w-16 shrink-0 text-sm tabular-nums text-muted">{timeLabel}</span>}
-        <div className="flex w-28 shrink-0 justify-start">{status}</div>
-        <div className="flex shrink-0 items-center gap-tight">
-          {menu.length > 0 && <ActionMenu shape="go" items={menu} label={menuLabel} />}
-          {p.state === "noshow" ? (
-            <span aria-hidden className="w-24" />
-          ) : p.due > 0 ? (
-            <Button data-primary="take" className="h-9" onClick={onTake}>
-              {t("takeAmount", { amount: formatMoney(p.due) })}
-            </Button>
-          ) : p.state === "in" ? (
-            <span aria-hidden className="w-24" />
-          ) : p.state === "partial" ? (
-            <Button data-primary="plusone" className="h-9" loading={pending} aria-label={t("plusOneLabel")} onClick={() => onCheckIn(p.arrived + 1)}>
-              {t("plusOne")}
-            </Button>
-          ) : (
-            <Button data-primary="checkin" className="h-9" loading={pending} onClick={() => onCheckIn(p.size)}>
-              {p.size > 1 ? t("checkInCount", { count: remaining }) : t("checkIn")}
-            </Button>
-          )}
-        </div>
+        <span className={cn("whitespace-nowrap", T.meta)}>{t("guests", { count: p.size })}</span>
+        <div className="flex min-w-0 justify-start">{status}</div>
+        <div className="flex">{primary}</div>
+        <div className="flex size-9 items-center justify-center rail:[&_button[aria-haspopup=menu]]:size-9!">{menuBtn}</div>
       </li>
     );
   }
 
   return (
-    <li data-party data-state={p.state} className="card-surface flex flex-wrap items-center gap-x-comfortable gap-y-tight p-comfortable rail:rounded-none rail:border-t rail:border-line rail:bg-transparent rail:py-comfortable rail:pl-hero rail:pr-card rail:shadow-none rail:first:border-t-0 rail:hover:bg-nav-hover">
-      <Thumb
-        glyph={p.size > 1 ? <Users strokeWidth={1.5} /> : <User strokeWidth={1.5} />}
-        className={p.state === "in" ? "bg-success-wash text-success" : undefined}
-      />
-      {/* On the narrowest phones the actions drop under the name, right-aligned
-          — still the last thing on the row — instead of squeezing the name into
-          a column three letters wide. */}
-      <div className="min-w-24 flex-1">
-        <p className={cn("break-words text-md font-semibold text-fg", p.nameIsReference && "font-mono text-base")}>{p.name || t("walkInDefaultName")}</p>
-        <p className="mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline text-sm text-muted">
-          <span>{t("guests", { count: p.size })}</span>
-          {p.arrived > 0 && p.state !== "in" && <span>· {t("inOfTotal", { done: p.arrived, total: p.size })}</span>}
-          {refundAsked && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
-              <RotateCcw size={12} strokeWidth={2.25} aria-hidden />
-              {t("refundAsked")}
-            </span>
-          )}
-          {writeOffAsked && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
-              <HandCoins size={12} strokeWidth={2.25} aria-hidden />
-              {tr("pos.markers.writeOffAsked")}
-            </span>
-          )}
-          {moveAsked && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
-              <CalendarClock size={12} strokeWidth={2.25} aria-hidden />
-              {t("moveAsked")}
-            </span>
-          )}
-        </p>
-        {/* The code on its own line: it is what a guest reads off their phone. */}
-        {!p.nameIsReference && p.reference && <p className="mt-inline break-all font-mono text-sm text-muted">{p.reference}</p>}
-        {/* What a manager said about a refund or write-off asked for here — the
-            sentence the steward tells the guest. Only once it is answered. */}
-        <RequestNotes variant="row" orderId={p.booking.orderId} bookingId={p.booking.id} className="mt-inline flex flex-col gap-inline" />
+    <li
+      data-party
+      data-state={p.state}
+      data-scanned={highlighted ? "" : undefined}
+      className={cn("flex flex-col gap-tight border-t border-line bg-card px-comfortable py-comfortable first:border-t-0", highlighted && "bg-ember-wash ring-2 ring-inset ring-ember")}
+    >
+      <div className="flex items-start justify-between gap-tight">
+        <div className="min-w-0 flex-1">
+          <p className={cn("flex flex-wrap items-center gap-x-tight break-words text-md font-semibold text-fg", p.nameIsReference && "font-mono text-base")}>
+            <span>{name}</span>
+            {justScanned}
+          </p>
+          <p className={cn("mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline", T.meta)}>
+            <span>{t("guests", { count: p.size })}</span>
+            {p.arrived > 0 && p.state !== "in" && p.due > 0 && <span>· {t("inOfTotal", { done: p.arrived, total: p.size })}</span>}
+            {marks}
+          </p>
+          {/* The code on its own line: it is what a guest reads off their phone. */}
+          {showCode && <p className={cn("mt-inline break-all font-mono", T.meta)}>{p.reference}</p>}
+          <RequestNotes variant="row" orderId={p.booking.orderId} bookingId={p.booking.id} className="mt-inline flex flex-col gap-inline" />
+        </div>
+        <div className="shrink-0">{status}</div>
       </div>
-
-      <div className="ml-auto flex shrink-0 items-center gap-tight">
-        {menu.length > 0 && <ActionMenu shape="go" items={menu} label={menuLabel} />}
-        {p.state === "noshow" ? (
-          <span className="rounded-full bg-danger-wash px-comfortable py-inline text-sm font-medium text-danger">
-            {p.booking.noShowReason ? t("noShowTagReason", { reason: p.booking.noShowReason }) : t("noShowTag")}
-          </span>
-        ) : p.due > 0 ? (
-          <Button data-primary="take" onClick={onTake}>
-            {t("takeAmount", { amount: formatMoney(p.due) })}
-          </Button>
-        ) : p.state === "in" ? (
-          <span className="inline-flex items-center rounded-full bg-success-wash px-comfortable py-inline text-sm font-semibold text-success">{t("allIn")}</span>
-        ) : p.state === "partial" ? (
-          <Button data-primary="plusone" loading={pending} aria-label={t("plusOneLabel")} onClick={() => onCheckIn(p.arrived + 1)}>
-            {t("plusOne")}
-          </Button>
-        ) : (
-          <Button data-primary="checkin" loading={pending} onClick={() => onCheckIn(p.size)}>
-            {p.size > 1 ? t("checkInCount", { count: remaining }) : t("checkIn")}
-          </Button>
-        )}
-      </div>
+      {(primary || menuBtn) && (
+        <div className="flex items-center gap-tight">
+          <div className="flex min-w-0 flex-1">{primary}</div>
+          {menuBtn}
+        </div>
+      )}
     </li>
   );
 }

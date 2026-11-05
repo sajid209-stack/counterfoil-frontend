@@ -569,7 +569,7 @@ export default function SchedulePage() {
     <TileGrid
       role="tablist"
       aria-label={t("board.whatLabel")}
-      className={cn(frame, "rail:inline-flex rail:w-auto rail:gap-0.5 rail:rounded-control rail:bg-subtle rail:p-0.5 rail:ring-1 rail:ring-inset rail:ring-line")}
+      className={cn(frame, "rail:inline-flex rail:w-auto rail:shrink-0 rail:items-center rail:gap-1 rail:rounded-full rail:bg-subtle rail:p-1 rail:ring-1 rail:ring-inset rail:ring-line")}
       style={{ gridTemplateColumns: `repeat(${Math.min(groups.length, 4)}, minmax(0, 1fr))` }}
     >
       {groups.map((g) => {
@@ -582,7 +582,7 @@ export default function SchedulePage() {
             selected={on}
             aria-label={t("board.groupAria", { name: g.label, count: g.freeCount })}
             onClick={() => setGroupKey(g.key)}
-            className="min-h-12 px-1 text-base font-semibold leading-tight rail:h-8 rail:min-h-8 rail:whitespace-nowrap rail:rounded-sm rail:px-3 rail:font-medium rail:aria-[selected=false]:bg-transparent rail:aria-[selected=false]:text-fg-secondary rail:aria-[selected=false]:shadow-none rail:aria-[selected=false]:ring-0 rail:aria-[selected=false]:hover:bg-secondary-hover rail:aria-[selected=true]:bg-card rail:aria-[selected=true]:text-fg rail:aria-[selected=true]:shadow-sm rail:aria-[selected=true]:ring-0 rail:aria-[selected=true]:hover:bg-card rail:aria-[selected=true]:active:bg-card"
+            className="min-h-12 px-1 text-base font-semibold leading-tight rail:h-8 rail:min-h-8 rail:shrink-0 rail:whitespace-nowrap rail:rounded-full rail:px-3.5 rail:font-medium rail:aria-[selected=false]:bg-transparent rail:aria-[selected=false]:text-fg-secondary rail:aria-[selected=false]:shadow-none rail:aria-[selected=false]:ring-0 rail:aria-[selected=false]:hover:bg-secondary-hover rail:aria-[selected=true]:bg-card rail:aria-[selected=true]:text-fg rail:aria-[selected=true]:shadow-sm rail:aria-[selected=true]:ring-0 rail:aria-[selected=true]:hover:bg-card rail:aria-[selected=true]:active:bg-card"
           >
             {g.label}
           </Tile>

@@ -133,3 +133,23 @@ the chosen option on settings and profile white on solid orange at 3.5:1.
    received, Complete sale). No dialog. The phone keeps its own flow.
 3. **New customer opens in place**, inside the customer picker, under the search.
 4. **A chosen slot on the board is rounded**, inset from the grid lines.
+
+## 10. Round four: fewer decisions after a sale, one door screen on every device (2026-11-05)
+
+- **Till settings → After a sale** (per device, `lib/prefs` `printAuto` / `sendAuto`): print
+  Off · Receipt · Tickets · Both; send Off · SMS · Email · Both. Square, Shopify POS and
+  Lightspeed set the receipt default per register so the post-sale screen is one decision.
+- **Sale complete**: one header row (result and amount left; Print ▾, Send ▾ and New sale right),
+  a status line for what already happened automatically, then the receipt and the tickets.
+- **Check in list**: one white card; each session is a quiet sticky header (time, name, "4 of 4
+  in", a slim bar, chevron); parties are fixed-column rows (name and code, people, status,
+  action, menu) so actions line up. On a desktop the row action is a neutral 36px button: a
+  solid orange button on every row would be ten primaries on one screen.
+- **Phone**: Scan and Check in are one tab; `/checkin` opens on Scan with a Scan | Arrivals
+  switch.
+- **My sales**: Today | Yesterday, a KPI strip (sales, number, average, items, refunds, with the
+  change against the period before), the drawer, payment methods, a searchable transactions
+  table whose actions sit in a row menu, best sellers.
+- Fixed: the sell-date calendar opened half above the screen (a `fixed` popup inside the blurred
+  toolbar is positioned against the toolbar; it is now portalled to the body); the schedule's
+  resource switch is a standard pill segmented control that does not shrink and clip.

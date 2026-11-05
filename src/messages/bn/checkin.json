@@ -92,5 +92,9 @@
   "justScanned": "এইমাত্র স্ক্যান হয়েছে",
   "strip_arrived": "এসেছেন",
   "strip_expected": "প্রত্যাশিত",
-  "strip_notYet": "এখনও আসেননি"
+  "strip_notYet": "এখনও আসেননি",
+  "owes": "বাকি {amount}",
+  "modeLabel": "চেক-ইন দেখার ধরন",
+  "modeScan": "স্ক্যান",
+  "modeArrivals": "আগমন"
 }

@@ -16,7 +16,6 @@ import {
   Settings,
   Store,
   Ticket,
-  UserCheck,
   UserRound,
   Users,
   Layers,
@@ -70,8 +69,9 @@ const SM = "(min-width: 40rem)";
 const TABS = [
   { href: "/pos", key: "sell", icon: Store },
   { href: "/schedule", key: "schedule", icon: CalendarDays },
-  { href: "/scan", key: "scan", icon: ScanLine },
-  { href: "/checkin", key: "checkin", icon: UserCheck },
+  /* ONE tab for the door: Scan and Arrivals are two halves of /checkin on a
+     phone (a switch at its top), and /scan opens the same screen. */
+  { href: "/checkin", key: "checkin", icon: ScanLine },
 ] as const;
 
 /* In the order a shift reaches for them: the day's tools first, then the
@@ -189,11 +189,8 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   // Don't show an empty destination: Schedule only exists for slotted catalogues.
   const hasSlotted = (productsQ.data?.data ?? []).some((p) => isSlotBased(p.bookingType));
   const tabs = TABS.filter((t) => t.href !== "/schedule" || hasSlotted);
-  /* The desktop sidebar has ONE scan destination: Check in, with the scan panel
-     beside the arrivals. It stays lit on /scan too. The phone tab bar keeps both. */
-  const sidebarTabs: SidebarTab[] = tabs
-    .filter((t) => t.href !== "/scan")
-    .map((t) => (t.href === "/checkin" ? { href: t.href, key: t.key, icon: ScanLine, alsoActive: ["/scan"] } : t));
+  /* One door destination on every device: Check in. It stays lit on /scan too. */
+  const sidebarTabs: SidebarTab[] = tabs.map((t) => (t.href === "/checkin" ? { href: t.href, key: t.key, icon: t.icon, alsoActive: ["/scan"] } : t));
 
   /* The scrolling till is the Sell tab too: it is another design of the same
      job, and a till with no tab lit leaves a cashier asking where they are. */
@@ -202,7 +199,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   const onMorePage = (["/my-sales", "/my-requests", "/quick-pass", "/till-settings", "/reservations", "/profile", "/shift"] as const).some((r) => pathname === r || pathname.startsWith(`${r}/`));
   const moreLit = moreOpen || onMorePage;
   const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`) || (href === "/pos" && (pathname === "/sell" || pathname.startsWith("/sell/")));
+    pathname === href || pathname.startsWith(`${href}/`) || (href === "/checkin" && (pathname === "/scan" || pathname.startsWith("/scan/"))) || (href === "/pos" && (pathname === "/sell" || pathname.startsWith("/sell/")));
 
   /* The floating bar's tab. Five of them share the pill, so a tab is as wide
      as it needs to be and no wider: an outline icon in a 44px-or-wider target,

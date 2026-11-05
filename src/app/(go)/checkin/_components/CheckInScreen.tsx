@@ -1,10 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowUpCircle, Ban, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, HandCoins, PlusCircle, RotateCcw, Search, Timer, UserCheck, UserPlus } from "lucide-react";
-import { Button, DateField, EmptyState, FormField, Modal, Skeleton, useToast, type ActionMenuItem } from "@/components/ui";
+import { Button, DateField, EmptyState, FormField, Modal, SegmentedControl, Skeleton, useToast, type ActionMenuItem } from "@/components/ui";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay } from "@/lib/schedule";
 import { cn } from "@/lib/cn";
 import { useEnumLabels } from "@/lib/labels";
@@ -40,8 +40,7 @@ import { pendingRefundFor, refundableFor, withdrawRefundRequest } from "@/lib/ap
 import { pendingWriteOffFor, useWriteOffVersion, withdrawWriteOff } from "@/lib/api/writeOffRequests";
 import { pendingRescheduleFor, useRescheduleVersion, withdrawRescheduleRequest } from "@/lib/api/rescheduleRequests";
 import { Stepper } from "../../_components/Stepper";
-import { Thumb } from "../../_components/Thumb";
-import { BookingGlyph } from "../../_components/WallTile";
+import { T } from "../../_components/type";
 import { useActor, canRefundDirectly } from "../../schedule/_lib/actor";
 import { RefundFlowSheet } from "../../_components/RefundFlowSheet";
 import { WriteOffSheet } from "../../_components/WriteOffSheet";
@@ -74,17 +73,47 @@ const durationOf = (b: Booking, product?: Product): number => {
   return product?.schedule?.sessionMinutes || product?.schedule?.slotMinutes || 60;
 };
 
-export function CheckInPageRoot() {
+/* The phone's two halves of one screen. The last choice is kept for the
+   session, so a door person who flipped to Arrivals is not thrown back to the
+   camera by the next tab tap. sessionStorage fires no event in the tab that
+   wrote it, so a small one is sent by hand; the server (and the first paint)
+   read nothing, and the screen falls back to the default. */
+type PhoneMode = "scan" | "arrivals";
+const MODE_KEY = "cf_go_checkin_mode";
+const MODE_EVENT = "cf-checkin-mode";
+const readMode = (): PhoneMode | null => {
+  try {
+    const v = window.sessionStorage.getItem(MODE_KEY);
+    return v === "scan" || v === "arrivals" ? v : null;
+  } catch {
+    return null;
+  }
+};
+const subscribeMode = (cb: () => void) => {
+  window.addEventListener(MODE_EVENT, cb);
+  return () => window.removeEventListener(MODE_EVENT, cb);
+};
+const writeMode = (m: PhoneMode) => {
+  try {
+    window.sessionStorage.setItem(MODE_KEY, m);
+  } catch {
+    /* storage can be blocked; the choice then lasts only for this render */
+  }
+  window.dispatchEvent(new Event(MODE_EVENT));
+};
+
+/** `forceMode` is /scan: that address always opens on the camera. */
+export function CheckInPageRoot({ forceMode }: { forceMode?: PhoneMode } = {}) {
   return (
     <Suspense fallback={null}>
-      <CheckInScreen />
+      <CheckInScreen forceMode={forceMode} />
     </Suspense>
   );
 }
 
 /* A link can open the list on one guest and one day (?q=&date=) — the Arrivals
    list sends a steward straight to the party they tapped. */
-function CheckInScreen() {
+function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
   const params = useSearchParams();
   const t = useTranslations("checkin");
   const tc = useTranslations("common");
@@ -95,7 +124,7 @@ function CheckInScreen() {
   // A move asked for, answered or taken back changes a row's tag.
   useRescheduleVersion();
   useWriteOffVersion();
-  const [date, setDate] = useState(/^d{4}-d{2}-d{2}$/.test(params.get("date") ?? "") ? params.get("date")! : TODAY);
+  const [date, setDate] = useState(/^\d{4}-\d{2}-\d{2}$/.test(params.get("date") ?? "") ? params.get("date")! : TODAY);
   /* Who is at the door is the venue this counter stands in. */
   const activeCounter = useActiveCounterNow();
   const venueId = activeCounter.locationId;
@@ -124,6 +153,14 @@ function CheckInScreen() {
   const [writeOffFor, setWriteOffFor] = useState<Booking | null>(null);
   const [moveFor, setMoveFor] = useState<Booking | null>(null);
   const rail = useMediaQuery(RAIL);
+  /* Phone: a link that names a guest or a day (?q=, ?date=) is for the list;
+     otherwise the last choice this session, else the camera, which is what a
+     door person needs first. */
+  const storedMode = useSyncExternalStore(subscribeMode, readMode, () => null);
+  const [pickedMode, setPickedMode] = useState<PhoneMode | null>(null);
+  const linked = !!params.get("q") || !!params.get("date");
+  const mode: PhoneMode = pickedMode ?? forceMode ?? (linked ? "arrivals" : storedMode ?? "scan");
+  const chooseMode = (m: PhoneMode) => { setPickedMode(m); writeMode(m); };
   const [walkInOpen, setWalkInOpen] = useState(false);
   const [walkInProduct, setWalkInProduct] = useState("");
   const [walkInParty, setWalkInParty] = useState(2);
@@ -148,10 +185,10 @@ function CheckInScreen() {
   const groups = useMemo(() => groupBySession(visible, productName), [visible, productsQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sessionTotals = useMemo(() => {
-    const m = new Map<string, { expected: number; inCount: number }>();
+    const m = new Map<string, { expected: number; inCount: number; waiting: number }>();
     for (const p of dayParties) {
-      const cur = m.get(p.sessionKey) ?? { expected: 0, inCount: 0 };
-      m.set(p.sessionKey, { expected: cur.expected + p.size, inCount: cur.inCount + p.arrived });
+      const cur = m.get(p.sessionKey) ?? { expected: 0, inCount: 0, waiting: 0 };
+      m.set(p.sessionKey, { expected: cur.expected + p.size, inCount: cur.inCount + p.arrived, waiting: cur.waiting + (p.state === "notin" || p.state === "partial" ? 1 : 0) });
     }
     return m;
   }, [dayParties]);
@@ -167,17 +204,6 @@ function CheckInScreen() {
   }, [dayParties]);
   // The Due filter's headline: what is still to collect across what it lists.
   const dueNow = useMemo(() => totalDue(visible), [visible]);
-
-  /* The session a door is standing in. Everything used to open shut, so the
-     first thing a steward did on every arrival was tap a row open — and the
-     names, which are the whole point of the screen, were behind that tap. */
-  const nowKey = useMemo(() => {
-    const all = groupBySession(dayParties, productName);
-    if (all.length === 0) return null;
-    if (date !== TODAY) return all[0].key;
-    const started = all.filter((g) => toMinutes(time(g.start)) <= DEMO_NOW_MINUTES);
-    return (started[started.length - 1] ?? all[0]).key;
-  }, [dayParties, date, productsQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkIn = async (b: Booking, count: number) => {
     setPending(b.id);
@@ -498,40 +524,38 @@ function CheckInScreen() {
   ) : groups.length === 0 ? (
     <EmptyState title={filter === "all" ? t("noBookingsTitle") : filterLabels[filter]} message={search && filter === "all" ? t("noBookingsSearch") : emptyFor[filter]} />
   ) : (
-    <div className="flex flex-col gap-comfortable rail:rounded-card rail:bg-card rail:shadow-card rail:gap-0 rail:overflow-hidden">
+    /* One white card. Each session is a quiet section header (sticky, so the
+       session you are scrolling through stays named) over its parties, which
+       sit on white between hairlines. overflow-clip rather than hidden: hidden
+       would turn the card into a scroll container and break the sticky. */
+    <div data-arrivals className="flex flex-col overflow-clip rounded-card bg-card shadow-card">
       {groups.map((g) => {
-        const totals = sessionTotals.get(g.key) ?? { expected: 0, inCount: 0 };
+        const totals = sessionTotals.get(g.key) ?? { expected: 0, inCount: 0, waiting: 0 };
         const full = totals.inCount >= totals.expected;
-        /* Open where the door is standing, and open everything while a
-           search or a filter is running — a match hidden inside a shut
-           row is a match nobody finds. */
-        const isOpen = search || filter !== "all" ? true : (open[g.key] ?? g.key === nowKey);
+        /* Open while anyone in the session is still to come; a finished
+           session folds to its header. Everything opens while a search or a
+           filter is running: a match hidden inside a shut group is a match
+           nobody finds. A tap on the header overrides either. */
+        const isOpen = search || filter !== "all" ? true : (open[g.key] ?? totals.waiting > 0);
         return (
-          <section key={g.key} data-group className="flex flex-col gap-tight rail:gap-0 rail:border-t rail:border-line rail:first:border-t-0">
+          <section key={g.key} data-group className="flex flex-col border-t border-line first:border-t-0">
             <button
               type="button"
               onClick={() => setOpen((o) => ({ ...o, [g.key]: !isOpen }))}
               aria-expanded={isOpen}
-              className="card-surface flex min-h-16 w-full items-center gap-comfortable p-comfortable text-left rail:min-h-12 rail:rounded-none rail:bg-transparent rail:px-card rail:shadow-none rail:hover:bg-nav-hover"
+              className={cn("sticky top-0 z-10 flex min-h-11 w-full items-center gap-comfortable bg-surface px-comfortable py-tight text-left hover:bg-nav-hover rail:px-card", isOpen && "border-b border-line")}
             >
-              <Thumb image={productOf(g.productId)?.images?.[0]?.url} glyph={<BookingGlyph bookingType={productOf(g.productId)?.bookingType} />} />
-              <span className="min-w-0 flex-1">
-                <span className="flex items-baseline gap-tight">
-                  <span className="shrink-0 whitespace-nowrap text-md font-semibold tabular-nums rail:text-sm rail:font-medium rail:text-muted">{formatClock(time(g.start))}</span>
-                  <span className="min-w-0 break-words text-md font-semibold rail:text-base">{productName(g.productId)}</span>
-                </span>
-                <span className="mt-inline flex items-center gap-tight">
-                  <span aria-hidden className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-line">
-                    <span className={cn("block h-full rounded-full", full ? "bg-success" : "bg-inverse/40")} style={{ width: `${totals.expected ? Math.round((totals.inCount / totals.expected) * 100) : 0}%` }} />
-                  </span>
-                  <span className={cn("text-sm", full ? "font-semibold text-success rail:font-medium" : "text-muted")}>{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
-                </span>
+              <span className={cn("shrink-0 whitespace-nowrap tabular-nums", T.label)}>{formatClock(time(g.start))}</span>
+              <span className={cn("min-w-0 flex-1 truncate", T.item)} title={productName(g.productId)}>{productName(g.productId)}</span>
+              <span className={cn("shrink-0 whitespace-nowrap tabular-nums", T.meta, full && "font-medium text-success")}>{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
+              <span aria-hidden className="h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-line">
+                <span className={cn("block h-full rounded-full", full ? "bg-success" : "bg-inverse/40")} style={{ width: `${totals.expected ? Math.round((totals.inCount / totals.expected) * 100) : 0}%` }} />
               </span>
               {isOpen ? <ChevronDown size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" /> : <ChevronRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
             </button>
 
             {isOpen && (
-              <ul className="flex flex-col gap-tight pl-tight rail:gap-0 rail:bg-surface rail:pl-0">
+              <ul>
                 {g.parties.map((p) => (
                   <PartyRow
                     key={p.booking.id}
@@ -546,7 +570,6 @@ function CheckInScreen() {
                     onCheckIn={(count) => void checkIn(p.booking, count)}
                     rail={rail}
                     highlighted={!!scanned && p.booking.orderId === scanned}
-                    timeLabel={formatClock(time(p.booking.slotStart))}
                   />
                 ))}
               </ul>
@@ -591,37 +614,51 @@ function CheckInScreen() {
           </div>
         </>
       ) : (
-      <>
-      <div className="flex flex-col gap-section lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start rail:grid-cols-[minmax(0,1fr)_320px] rail:gap-major">
-        <div className="flex min-w-0 flex-col gap-section">
-          {!rail && (
-            <>
-              <div className="flex flex-wrap items-center justify-between gap-tight">
-                <div className="min-w-0">
-                  <h1 className="text-xl font-semibold tracking-title text-fg">{t("title")}</h1>
-                  {dayLabel && <p className="text-sm text-muted">{dayLabel}</p>}
-                </div>
-                {walkInBtn}
-              </div>
+      <div className="flex flex-col gap-section">
+        {/* One destination, two halves. The camera comes first: it is what a
+            door person needs when someone walks up; the list is for the guest
+            who has no code. */}
+        <div className="flex flex-wrap items-center justify-between gap-tight">
+          <div className="min-w-0">
+            <h1 className="text-xl font-semibold tracking-title text-fg">{t("title")}</h1>
+            {mode === "arrivals" && dayLabel && <p className="text-sm text-muted">{dayLabel}</p>}
+          </div>
+          {mode === "arrivals" && walkInBtn}
+        </div>
+        <SegmentedControl
+          fullWidth
+          aria-label={t("modeLabel")}
+          value={mode}
+          onChange={(v) => chooseMode(v as PhoneMode)}
+          options={[
+            { value: "scan", label: t("modeScan") },
+            { value: "arrivals", label: t("modeArrivals") },
+          ]}
+        />
+
+        {mode === "scan" ? (
+          <ScanPanel variant="page" embedded onScan={onScan} />
+        ) : (
+          <div className="flex flex-col gap-section lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+            <div className="flex min-w-0 flex-col gap-section">
               {searchEl}
               {dateEl}
-            </>
-          )}
 
-          <FilterCells value={filter} onChange={setFilter} counts={counts} labels={filterLabels} label={t("filterLabel")} />
+              <FilterCells value={filter} onChange={setFilter} counts={counts} labels={filterLabels} label={t("filterLabel")} />
 
-          {/* The Due view opens on the one number a steward collecting is
-              working toward: everything still to take, and from how many. */}
-          {dueBanner}
+              {/* The Due view opens on the one number a steward collecting is
+                  working toward: everything still to take, and from how many. */}
+              {dueBanner}
 
-          {listBody}
-        </div>
+              {listBody}
+            </div>
 
-        <aside className="flex flex-col gap-section rail:sticky rail:top-section">
-          <DaySummary expected={day.expected} arrived={day.arrived} owed={day.owed} owingParties={day.owingParties} onShowDue={() => { setFilter("due"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
-        </aside>
+            <aside className="flex flex-col gap-section">
+              <DaySummary expected={day.expected} arrived={day.arrived} owed={day.owed} owingParties={day.owingParties} onShowDue={() => { setFilter("due"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+            </aside>
+          </div>
+        )}
       </div>
-      </>
       )}
 
       {/* Take the balance — one sheet, drawn like the till's own payment step:

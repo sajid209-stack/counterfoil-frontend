@@ -19541,3 +19541,26 @@ Audit (ec29f026 scratchpad `pos/type.mjs`, eleven pages at 1440×900): styles pe
 my-sales 21 → 12, check-in 19 → 17, reservations 10 → 7; no text under 12px, nothing clipped.
 Remaining contrast flag: white words on the solid orange primary button (3.5:1), the app-wide
 on-solid rule, not changed here. `pos/shots.mjs` 73 of 76 pass (the 3 are harness selectors).
+
+---
+
+## POS, round four: after-sale defaults, the door screen, My sales (2026-11-05)
+
+Spec: docs/pos-desktop.md §10. Desktop and phone.
+
+- Till settings gains **After a sale** (`lib/prefs`: `printAuto`, `sendAuto`, default off); the
+  page is titled "Till settings". Sale complete runs the chosen actions once per sale (recorded in
+  sessionStorage `pos_complete_auto_<orderId>`, so a reload does not repeat them), says what it
+  did or why it could not, and offers Print ▾ / Send ▾ / New sale in one header row.
+- Check in: the arrivals list rebuilt as sticky session headers over fixed-column party rows; the
+  phone has one Check in tab (Scan | Arrivals). Fixed on the way: the `?date=` deep link never
+  matched (its pattern had `d` for `\d`).
+- My sales: period switch, KPI strip, drawer, payment methods, searchable transactions with a row
+  menu (the refund action moved into it; `data-ask-refund` is gone, `data-refund-asked` kept),
+  best sellers. "This shift" is not offered: no sale carries a shift id yet.
+- Fixed: sell-date calendar cropped above the screen (portalled out of the blurred toolbar);
+  schedule resource switch clipped.
+
+Verified on a production build, ec29f026 scratchpad `pos/shots.mjs` (77 of 80; the 3 are harness
+selectors) and `pos/more.mjs` (13 of 13: My sales desktop and phone, till settings, check-in
+desktop and phone, the phone tab bar). Viewed by eye.

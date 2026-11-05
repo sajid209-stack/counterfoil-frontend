@@ -2,14 +2,15 @@
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { ArrowUpRight, Calculator, Languages, Palette, Type } from "lucide-react";
+import { ArrowUpRight, Calculator, Languages, Palette, Printer, Send, Type } from "lucide-react";
 import { AppearancePicker } from "@/components/ThemeProvider";
 import { LanguagePicker } from "@/components/LocaleProvider";
 import { SegmentedControl, Switch } from "@/components/ui";
 import { GoCard } from "../_components/Tiles";
 import { GoPage, GoPageHeader } from "../_components/GoPage";
 import { RAIL_SEGMENT } from "../_components/railType";
-import { setPrefs, usePrefs, type TillText } from "@/lib/prefs";
+import { T } from "../_components/type";
+import { setPrefs, usePrefs, type PrintAuto, type SendAuto, type TillText } from "@/lib/prefs";
 
 /**
  * The till's own settings.
@@ -82,6 +83,33 @@ export default function TillSettingsPage() {
             <LanguagePicker className={RAIL_SEGMENT} showLabel={false} />
           </Row>
         </div>
+
+        {/* What happens after every sale on this device. The sale-complete page does these by itself, so the cashier's next step is only New sale. */}
+        <section aria-labelledby="after-sale" className="flex flex-col gap-tight">
+          <h2 id="after-sale" className={`${T.card}`}>{t("tillSettings.afterSale")}</h2>
+          <div className={GROUP}>
+            <Row icon={<Printer size={18} strokeWidth={1.75} />} title={t("tillSettings.printAuto")} body={t("tillSettings.printAutoBody")} stack>
+              <SegmentedControl
+                fullWidth
+                className={RAIL_SEGMENT}
+                aria-label={t("tillSettings.printAuto")}
+                value={prefs.printAuto}
+                onChange={(v) => setPrefs({ printAuto: v as PrintAuto })}
+                options={("off receipt tickets both".split(" ") as PrintAuto[]).map((v) => ({ value: v, label: t(`tillSettings.auto${v[0].toUpperCase()}${v.slice(1)}`) }))}
+              />
+            </Row>
+            <Row icon={<Send size={18} strokeWidth={1.75} />} title={t("tillSettings.sendAuto")} body={t("tillSettings.sendAutoBody")} stack>
+              <SegmentedControl
+                fullWidth
+                className={RAIL_SEGMENT}
+                aria-label={t("tillSettings.sendAuto")}
+                value={prefs.sendAuto}
+                onChange={(v) => setPrefs({ sendAuto: v as SendAuto })}
+                options={("off sms email both".split(" ") as SendAuto[]).map((v) => ({ value: v, label: t(`tillSettings.auto${v[0].toUpperCase()}${v.slice(1)}`) }))}
+              />
+            </Row>
+          </div>
+        </section>
 
         <div className={GROUP}>
           {/* Not a dead end: everything else a till obeys — payment methods, the
