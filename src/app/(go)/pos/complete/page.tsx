@@ -14,6 +14,7 @@ import { cancelSale, getOperator, UNDO_SALE_SECONDS } from "@/lib/api";
 import { useEnumLabels } from "@/lib/labels";
 import { formatClock, formatDay, formatMoney } from "@/lib/format";
 import { clockify } from "../../_components/Clock";
+import { R } from "../../_components/railType";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { DEFAULT_SMS_TEMPLATE, renderSms } from "@/lib/sms";
 import { DEFAULT_EMAIL_BODY, DEFAULT_EMAIL_SUBJECT } from "@/lib/email";
@@ -188,7 +189,7 @@ export default function CompletePage() {
                 <span className={cn(line.child && "text-muted")}>{clockify(line.name)}</span>
                 <span className="text-muted"> × {line.qty}</span>
               </span>
-              <span className="shrink-0 tabular-nums text-fg">{formatMoney(line.amount)}</span>
+              <span className={`shrink-0 tabular-nums text-fg ${R.price}`}>{formatMoney(line.amount)}</span>
             </li>
           ))}
         </ul>
@@ -254,14 +255,14 @@ export default function CompletePage() {
                   <span aria-hidden className="text-muted">
                     ·
                   </span>
-                  <span className="text-md text-muted">{t("complete.ticketsIssuedCount", { count: tickets.length })}</span>
+                  <span className={`text-md text-muted ${R.meta}`}>{t("complete.ticketsIssuedCount", { count: tickets.length })}</span>
                 </>
               )}
             </div>
 
-            <p className="mt-major text-base font-medium text-muted rail:mt-comfortable">{lead.label}</p>
+            <p className={`mt-major text-base font-medium text-muted rail:mt-comfortable ${R.label}`}>{lead.label}</p>
             <p className="mt-1.5 text-[clamp(2.5rem,13vw,3.5rem)] font-semibold leading-none tracking-figure text-fg rail:text-[2.25rem]">{lead.amount}</p>{/* ds-exception: the desktop figure is 36px, between the scale's 28 and 40 */}
-            {lead.note && <p className="mt-tight text-base text-muted rail:mt-inline">{lead.note}</p>}
+            {lead.note && <p className={`mt-tight text-base text-muted rail:mt-inline ${R.meta}`}>{lead.note}</p>}
             {balance > 0 && (
               <p className="mt-comfortable inline-flex items-center gap-1.5 rounded-full bg-warning-wash px-comfortable py-inline text-sm font-medium text-fg">
                 <Clock size={14} strokeWidth={2.2} aria-hidden className="shrink-0" />
@@ -335,7 +336,7 @@ export default function CompletePage() {
                 autoFocus
                 aria-describedby="sale-status"
                 icon={<Plus size={20} strokeWidth={2.2} />}
-                className="h-13 text-md font-semibold shadow-float rail:h-11 rail:shadow-none"
+                className={`h-13 text-md font-semibold shadow-float rail:h-11 rail:shadow-none ${R.button} rail:font-semibold`}
                 onClick={() => router.push(takeReturnTo() ?? "/pos")}
               >
                 {t("complete.newSale")}
@@ -367,7 +368,7 @@ export default function CompletePage() {
                         <Qr value={ticket.code} size={rail ? 72 : 44} />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block break-words text-md font-semibold leading-snug text-fg">{ticket.name}</span>
+                        <span className={`block break-words text-md font-semibold leading-snug text-fg ${R.item}`}>{ticket.name}</span>
                         <span className="mt-0.5 block truncate text-sm text-muted">{ticketMeta(ticket)}</span>
                         <span className="mt-0.5 block truncate font-mono text-sm text-muted">{ticket.code}</span>
                       </span>
@@ -687,8 +688,8 @@ function HandOver({ icon, label, name, disabled, wide, onClick }: { icon: React.
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className={cn("flex items-baseline justify-between gap-comfortable", strong && "text-md font-semibold")}>
-      <dt className={strong ? "text-fg" : "text-muted"}>{label}</dt>
-      <dd className="tabular-nums text-fg">{value}</dd>
+      <dt className={cn(strong ? "text-fg" : "text-muted", R.label)}>{label}</dt>
+      <dd className={cn("tabular-nums text-fg", strong ? R.total : R.price)}>{value}</dd>
     </div>
   );
 }

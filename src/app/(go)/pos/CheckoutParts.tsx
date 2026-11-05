@@ -52,8 +52,8 @@ export function SaleRow({
         className="flex min-h-14 w-full items-center gap-comfortable py-comfortable text-left rail:min-h-11 rail:gap-tight rail:py-0"
       >
         <Icon size={22} strokeWidth={1.6} className="shrink-0 text-muted rail:size-[18px]" aria-hidden />
-        <span className="min-w-0 flex-1 truncate text-md font-medium rail:text-base">{label}</span>
-        <span className="shrink-0 whitespace-nowrap text-md font-medium text-fg rail:text-base">{value}</span>
+        <span className="min-w-0 flex-1 truncate text-md font-medium rail:text-base rail:font-normal">{label}</span>
+        <span className="shrink-0 whitespace-nowrap text-md font-medium text-fg rail:text-sm rail:font-normal rail:text-muted">{value}</span>
         <ChevronRight size={16} strokeWidth={1.5} className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-90")} aria-hidden />
       </button>
       {open && <div className="pb-comfortable rail:pb-tight">{children}</div>}
@@ -71,26 +71,27 @@ export function CustomerRow({
   onRemove,
 }: {
   attached: AttachedCustomer | null;
-  onOpen: () => void;
+  /** Given the row's button, so a desktop can hang the picker under it. */
+  onOpen: (row: HTMLElement) => void;
   onRemove: () => void;
 }) {
   const t = useTranslations("pos");
   const detail = attached?.phone || attached?.email || "";
   return (
     <div className="flex items-center gap-tight border-b border-line last:border-b-0">
-      <button type="button" onClick={onOpen} className="flex min-h-14 min-w-0 flex-1 items-center gap-comfortable py-tight text-left rail:min-h-11 rail:gap-tight rail:py-0">
+      <button type="button" data-customer-anchor onClick={(e) => onOpen(e.currentTarget)} className="flex min-h-14 min-w-0 flex-1 items-center gap-comfortable py-tight text-left rail:min-h-11 rail:gap-tight rail:py-0">
         <UserRound size={22} strokeWidth={1.6} className="shrink-0 text-muted rail:size-[18px]" aria-hidden />
         <span className="min-w-0 flex-1">
           {attached ? (
             <>
-              <span className="block break-words text-md font-medium rail:text-base">{attached.name}</span>
+              <span className="block break-words text-md font-medium rail:text-base rail:font-semibold">{attached.name}</span>
               {detail && <span className="block truncate text-sm normal-nums text-muted">{detail}</span>}
             </>
           ) : (
-            <span className="block text-md font-medium rail:text-base">{t("cart.attachCustomer")}</span>
+            <span className="block text-md font-medium rail:text-base rail:font-normal">{t("cart.attachCustomer")}</span>
           )}
         </span>
-        {attached && <span className="shrink-0 whitespace-nowrap text-md font-medium text-fg rail:text-base">{t("cart.customerChange")}</span>}
+        {attached && <span className="shrink-0 whitespace-nowrap text-md font-medium text-fg rail:text-sm rail:font-normal rail:text-muted">{t("cart.customerChange")}</span>}
         <ChevronRight size={16} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
       </button>
       {attached && (
@@ -144,7 +145,7 @@ export function PromoCodeRow({
       <div className="flex items-start gap-comfortable border-b border-line py-comfortable last:border-b-0 rail:gap-tight rail:py-tight">
         <TicketPercent size={22} strokeWidth={1.6} className="mt-0.5 shrink-0 text-muted rail:size-[18px]" aria-hidden />
         <div className="min-w-0 flex-1">
-          <span id={id} className="block text-md font-medium rail:text-base">{t("pay.promoCode")}</span>
+          <span id={id} className="block text-md font-medium rail:text-base rail:font-normal">{t("pay.promoCode")}</span>
           <div className="mt-tight flex">
             <span aria-labelledby={id} className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-line bg-card pl-comfortable pr-1 text-md rail:min-h-9 rail:text-base">
               <Check size={16} strokeWidth={2.5} className="shrink-0 text-success" aria-hidden />
@@ -238,7 +239,7 @@ export function HowMuchNow({
           onClick={() => onChange(o.id)}
           label={o.label}
           sub={<span className="tabular-nums">{formatPriceShort(o.amount, currency)}</span>}
-          className="h-[4.25rem] rail:h-10 rail:flex-row rail:gap-tight rail:[&_span]:mt-0 rail:[&_span]:text-base"
+          className="h-[4.25rem] rail:h-9 rail:min-h-9 rail:flex-row rail:gap-tight rail:[&_span]:mt-0 rail:[&_span]:text-base"
         />
       ))}
     </TileGrid>

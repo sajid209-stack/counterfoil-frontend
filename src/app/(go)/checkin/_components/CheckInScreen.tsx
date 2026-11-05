@@ -517,14 +517,14 @@ function CheckInScreen() {
               <Thumb image={productOf(g.productId)?.images?.[0]?.url} glyph={<BookingGlyph bookingType={productOf(g.productId)?.bookingType} />} />
               <span className="min-w-0 flex-1">
                 <span className="flex items-baseline gap-tight">
-                  <span className="shrink-0 whitespace-nowrap text-md font-semibold tabular-nums">{formatClock(time(g.start))}</span>
-                  <span className="min-w-0 break-words text-md font-semibold">{productName(g.productId)}</span>
+                  <span className="shrink-0 whitespace-nowrap text-md font-semibold tabular-nums rail:text-sm rail:font-medium rail:text-muted">{formatClock(time(g.start))}</span>
+                  <span className="min-w-0 break-words text-md font-semibold rail:text-base">{productName(g.productId)}</span>
                 </span>
                 <span className="mt-inline flex items-center gap-tight">
                   <span aria-hidden className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-line">
                     <span className={cn("block h-full rounded-full", full ? "bg-success" : "bg-inverse/40")} style={{ width: `${totals.expected ? Math.round((totals.inCount / totals.expected) * 100) : 0}%` }} />
                   </span>
-                  <span className={cn("text-sm", full ? "font-semibold text-success" : "text-muted")}>{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
+                  <span className={cn("text-sm", full ? "font-semibold text-success rail:font-medium" : "text-muted")}>{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
                 </span>
               </span>
               {isOpen ? <ChevronDown size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" /> : <ChevronRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}

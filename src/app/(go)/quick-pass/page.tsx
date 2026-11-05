@@ -13,6 +13,10 @@ import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { GoCard } from "../_components/Tiles";
 import { GoPage, GoPageHeader } from "../_components/GoPage";
+import { R } from "../_components/railType";
+
+/* On a desktop a field's label is the label role (13px medium, secondary) and its help line 13px. */
+const FIELD = "rail:[&_label]:text-fg-secondary rail:[&_p]:text-sm";
 
 // BT-14 — field-issued pass. Quick issue on the spot: duration, price and the
 // identifier the product's config asks for ("Plate number"). Not in the grid.
@@ -74,7 +78,7 @@ export default function QuickPassPage() {
           <h1 className="text-xl font-semibold tracking-title text-fg">{t("passIssuedTitle")}</h1>
           <span className="break-all font-mono text-2xl text-fg">{code}</span>
         </GoCard>
-        <Button size="lg" fullWidth className="h-13 text-md font-semibold" onClick={() => { setCode(null); setIdentifier(""); }}>{t("issueAnother")}</Button>
+        <Button size="lg" fullWidth className={`h-13 text-md font-semibold rail:h-11! ${R.button} rail:font-semibold`} onClick={() => { setCode(null); setIdentifier(""); }}>{t("issueAnother")}</Button>
       </main>
       </GoPage>
     );
@@ -86,7 +90,7 @@ export default function QuickPassPage() {
   const pickDuration = (d: number) => { setDuration(d); setPriceEdit(null); };
   /* One filled, one quiet: "+" is the stronger move (a longer pass is the
      usual ask), "−" is the quiet way back. */
-  const stepBtn = "flex size-14 shrink-0 items-center justify-center rounded-full text-xl disabled:opacity-40";
+  const stepBtn = "flex size-14 shrink-0 items-center justify-center rounded-full text-xl disabled:opacity-40 rail:size-10";
   const minusCls = cn(stepBtn, "bg-subtle text-muted active:bg-nav-selected");
   const plusCls = cn(stepBtn, "bg-inverse text-inverse-fg");
 
@@ -105,7 +109,7 @@ export default function QuickPassPage() {
         <div className="flex items-center gap-tight rail:my-auto">
           <button type="button" aria-label={t("shorter")} disabled={prev == null} onClick={() => prev != null && pickDuration(prev)} className={minusCls}>−</button>
           <div className="flex min-w-0 flex-1 flex-col items-center justify-center py-tight">
-            <span className="text-lg font-semibold">{formatDuration(duration)}</span>
+            <span className={`text-lg font-semibold ${R.total}`}>{formatDuration(duration)}</span>
             {/* The price is stated once, in the field below. */}
             {cfg && isDealDuration(cfg, duration) && <span className="text-sm text-muted">{t("deal")}</span>}
           </div>
@@ -114,12 +118,12 @@ export default function QuickPassPage() {
       </GoCard>
 
       <GoCard>
-        <FormField label={t("priceLabel")} variant="number" value={price} onChange={(e) => setPriceEdit(e.target.value)} />
+        <FormField className={FIELD} label={t("priceLabel")} variant="number" value={price} onChange={(e) => setPriceEdit(e.target.value)} />
         {priceEdit == null && <p className="-mt-tight text-sm text-muted">{t("priceHelp")}</p>}
-        <FormField label={`${idLabel} (${t("optional")})`} placeholder={idLabel} value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
+        <FormField className={FIELD} label={`${idLabel} (${t("optional")})`} placeholder={idLabel} value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
       </GoCard>
 
-      <Button size="lg" fullWidth className="h-13 text-md font-semibold rail:col-span-2 rail:ml-auto rail:w-auto rail:min-w-72" loading={issuing} onClick={issue}>{t("issuePass", { amount: formatMoney(Math.round((parseFloat(price) || 0) * 100)) })}</Button>
+      <Button size="lg" fullWidth className={`h-13 text-md font-semibold rail:col-span-2 rail:ml-auto rail:h-11! rail:w-auto rail:min-w-72 ${R.button} rail:font-semibold`} loading={issuing} onClick={issue}>{t("issuePass", { amount: formatMoney(Math.round((parseFloat(price) || 0) * 100)) })}</Button>
     </main>
     </div>
     </GoPage>

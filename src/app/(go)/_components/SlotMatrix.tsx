@@ -143,7 +143,7 @@ export function SlotMatrix({
           }
           return (
             <Tile key={cell.time} selected={selected} className="min-h-14 gap-0.5 rail:min-h-10 rail:flex-row rail:gap-1.5 rail:px-2" onClick={() => onSelect(active.id, cell.time)}>
-              <ClockCell hhmm={cell.time} className="text-md font-semibold tabular-nums rail:text-base" />
+              <ClockCell hhmm={cell.time} className="text-md font-semibold tabular-nums rail:text-base rail:font-medium" />
               <span className={cn("whitespace-nowrap text-sm tabular-nums", selected ? "text-on-solid" : cell.price === base ? "text-muted" : "font-semibold text-fg")}>
                 {formatPriceShort(cell.price, currency)}
               </span>

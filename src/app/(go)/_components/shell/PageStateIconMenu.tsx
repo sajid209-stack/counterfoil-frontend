@@ -105,7 +105,7 @@ export function PageStateIconMenu() {
             style={{ top: at.top, left: at.left }}
             className="fixed z-50 min-w-48 rounded-card border border-line bg-card p-inline shadow-float"
           >
-            <p className="px-comfortable pb-inline pt-inline text-sm font-medium text-muted">{label}</p>
+            <p className="px-comfortable pb-inline pt-inline text-sm font-medium text-fg-secondary">{label}</p>
             {SCREEN_STATES.map((s) => {
               const Ic = ICON[s];
               const on = s === state;

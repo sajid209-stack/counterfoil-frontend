@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Search, UserPlus } from "lucide-react";
 import { Button, FormField, Modal, Skeleton, useToast } from "@/components/ui";
+import { cn } from "@/lib/cn";
+import { primaryButton } from "../_components/ActionBar";
+import { T } from "../_components/type";
 import {
   listCustomerRows,
   matchOrCreateCustomer,
@@ -29,18 +32,34 @@ export interface AttachedCustomer {
  * six records. This searches what already exists first, matches a walk-up on
  * their phone number, and only creates a record when nothing matches.
  */
+/** Where the desktop's dropdown hangs: the Customer row's box, in viewport
+ *  pixels, taken when the row is pressed. */
+export interface PickerAnchor {
+  left: number;
+  top: number;
+  width: number;
+  maxHeight: number;
+}
+
 export function CustomerPicker({
   open,
   onClose,
   attached,
   onAttach,
+  anchor = null,
 }: {
   open: boolean;
   onClose: () => void;
   attached: AttachedCustomer | null;
   onAttach: (customer: AttachedCustomer | null) => void;
+  /** Given on a desktop: the picker is a dropdown under the Customer row, not a modal. */
+  anchor?: PickerAnchor | null;
 }) {
   const t = useTranslations("pos");
+
+  if (anchor) {
+    return open ? <PickerPopover anchor={anchor} onAttach={onAttach} onClose={onClose} /> : null;
+  }
 
   return (
     <Modal
@@ -75,12 +94,61 @@ export function CustomerPicker({
   );
 }
 
-function PickerBody({
+/** The desktop's dropdown: hangs under the Customer row, closes on an outside
+ *  press or Escape. The new-customer form opens inside it, in place. */
+function PickerPopover({
+  anchor,
   onAttach,
   onClose,
 }: {
+  anchor: PickerAnchor;
   onAttach: (customer: AttachedCustomer | null) => void;
   onClose: () => void;
+}) {
+  const t = useTranslations("pos");
+  const box = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  useEffect(() => {
+    closeRef.current = onClose;
+  });
+  useEffect(() => {
+    const down = (e: PointerEvent) => {
+      const el = e.target as Element | null;
+      /* The Customer row toggles the dropdown itself. */
+      if (!el || box.current?.contains(el) || el.closest("[data-customer-anchor]")) return;
+      closeRef.current();
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeRef.current();
+    };
+    document.addEventListener("pointerdown", down);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("pointerdown", down);
+      document.removeEventListener("keydown", key);
+    };
+  }, []);
+  return (
+    <div
+      ref={box}
+      role="dialog"
+      aria-label={t("customerModal.title")}
+      style={{ left: anchor.left, top: anchor.top, width: anchor.width, maxHeight: anchor.maxHeight }}
+      className="fixed z-50 flex flex-col overflow-hidden rounded-card bg-card shadow-md ring-1 ring-line"
+    >
+      <PickerBody onAttach={onAttach} onClose={onClose} inline />
+    </div>
+  );
+}
+
+function PickerBody({
+  onAttach,
+  onClose,
+  inline = false,
+}: {
+  onAttach: (customer: AttachedCustomer | null) => void;
+  onClose: () => void;
+  inline?: boolean;
 }) {
   const t = useTranslations("pos");
   const toast = useToast();
@@ -91,6 +159,7 @@ function PickerBody({
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Debounced search. The latest keystroke wins: an earlier, slower response
@@ -126,7 +195,7 @@ function PickerBody({
 
   const createAndAttach = async () => {
     setSaving(true);
-    const res = await matchOrCreateCustomer({ name: newName, phone: newPhone });
+    const res = await matchOrCreateCustomer({ name: newName, phone: newPhone, email: newEmail.trim() || null });
     setSaving(false);
     if (!res.ok) {
       toast.error(res.error.fieldErrors?.name ?? res.error.message);
@@ -136,6 +205,77 @@ function PickerBody({
     toast.success(t("customerModal.attached", { name: res.data.name }));
     onClose();
   };
+
+  if (inline) {
+    const field = "h-10 w-full rounded-inner border border-line bg-card px-comfortable text-base text-fg placeholder:text-muted";
+    if (creating) {
+      return (
+        <div className="flex min-h-0 flex-col gap-comfortable overflow-y-auto p-comfortable">
+          <label className="flex flex-col gap-inline">
+            <span className={T.label}>{t("customerModal.nameLabel")}</span>
+            <input autoFocus value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t("customerModal.namePlaceholder")} className={field} />
+          </label>
+          <label className="flex flex-col gap-inline">
+            <span className={T.label}>{t("customerModal.phoneLabel")}</span>
+            <input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder={t("customerModal.phonePlaceholder")} inputMode="tel" className={field} />
+            <span className={T.meta}>{t("customerModal.phoneHelp")}</span>
+          </label>
+          <label className="flex flex-col gap-inline">
+            <span className={T.label}>{t("customerModal.emailLabel")}</span>
+            <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder={t("customerModal.emailPlaceholder")} inputMode="email" className={field} />
+          </label>
+          <div className="flex items-center gap-comfortable">
+            <button type="button" className={primaryButton("h-10", "flex-1")} disabled={!newName.trim() || saving} onClick={createAndAttach}>
+              <span className={T.button}>{t("cart.attachCustomer")}</span>
+            </button>
+            <button type="button" onClick={() => setCreating(false)} className={cn("h-10 shrink-0 rounded-inner px-comfortable text-muted hover:bg-nav-hover", T.button)}>
+              {t("custom.cancel")}
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <>
+        <div className="relative shrink-0 p-tight">
+          <Search size={16} strokeWidth={1.5} aria-hidden className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            autoFocus
+            aria-label={t("customerModal.searchPlaceholder")}
+            placeholder={t("customerModal.searchPlaceholder")}
+            className={cn(field, "pl-9")}
+          />
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {searching && <Skeleton h={44} className="mx-tight mb-tight rounded-inner" />}
+          {!searching && query.trim().length >= 2 && results.length === 0 && <p className={cn(T.meta, "px-comfortable pb-tight")}>{t("customerModal.noMatches")}</p>}
+          <ul className="divide-y divide-line">
+            {results.map((c) => (
+              <li key={c.id}>
+                <button type="button" onClick={() => attach(c)} className="flex min-h-11 w-full items-center justify-between gap-tight px-comfortable py-tight text-left hover:bg-nav-hover active:bg-nav-selected">
+                  <span className="min-w-0">
+                    <span className={cn(T.item, "block truncate")}>{c.name}</span>
+                    {c.phone && <span className={cn(T.meta, "block tabular-nums")}>{c.phone}</span>}
+                  </span>
+                  <span className={cn(T.meta, "shrink-0 whitespace-nowrap tabular-nums")}>{t("customerModal.spend", { orders: c.stats.orders, spent: formatMoney(c.stats.spent) })}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <button
+          type="button"
+          onClick={() => { setNewName(query.trim()); setCreating(true); }}
+          className="flex h-11 w-full shrink-0 items-center gap-tight border-t border-line px-comfortable text-left hover:bg-nav-hover"
+        >
+          <UserPlus size={18} strokeWidth={1.6} aria-hidden className="shrink-0 text-muted" />
+          <span className={cn(T.body, "font-medium")}>{t("customerModal.newCustomer")}</span>
+        </button>
+      </>
+    );
+  }
 
   if (creating) {
     return (

@@ -8,6 +8,7 @@ import { formatMoney } from "@/lib/format";
 import { peekPaymentSettings } from "@/lib/api";
 import { GoCard } from "../../_components/Tiles";
 import { GoPage, GoPageHeader } from "../../_components/GoPage";
+import { R } from "../../_components/railType";
 
 // Expected drawer is mocked here; the real screen sums the shift's cash sales.
 const EXPECTED = 4785000; // ৳47,850.00
@@ -46,19 +47,19 @@ export default function ShiftClosePage() {
         bottom-right under them. */}
     <main className="flex flex-col gap-comfortable rail:grid rail:grid-cols-2 rail:items-start rail:gap-section">
       <GoCard className="rail:row-span-2">
-        <div className="flex justify-between text-muted"><span>{t("expected")}</span><span className="text-lg font-semibold tabular-nums text-fg">{formatMoney(EXPECTED)}</span></div>
-        <div className="flex justify-between"><span>{t("counted")}</span><span className="text-lg font-semibold tabular-nums">{entered ? formatMoney(countedMinor) : <span className="text-muted">—</span>}</span></div>
-        <div className="flex justify-between text-lg font-semibold text-fg">
-          <span>{t("variance")}</span>
-          <span className="tabular-nums">{!entered ? "—" : `${variance > 0 ? "+" : ""}${formatMoney(variance)}`}</span>
+        <div className="flex items-baseline justify-between text-muted"><span className={R.label}>{t("expected")}</span><span className={`text-lg font-semibold tabular-nums text-fg ${R.price}`}>{formatMoney(EXPECTED)}</span></div>
+        <div className="flex items-baseline justify-between"><span className={R.label}>{t("counted")}</span><span className={`text-lg font-semibold tabular-nums ${R.price}`}>{entered ? formatMoney(countedMinor) : <span className="text-muted">—</span>}</span></div>
+        <div className="flex items-baseline justify-between text-lg font-semibold text-fg rail:border-t rail:border-line rail:pt-tight">
+          <span className={R.label}>{t("variance")}</span>
+          <span className={`tabular-nums ${R.total}`}>{!entered ? "—" : `${variance > 0 ? "+" : ""}${formatMoney(variance)}`}</span>
         </div>
         {/* Says what the difference means right now, not only when it is a
             problem — "square" is worth hearing at the end of a shift. */}
         {tier === "off" && (
-          <p className="text-sm text-warning">{t("varianceOff", { amount: formatMoney(TOLERANCE) })}</p>
+          <p className={`text-sm text-warning ${R.status}`}>{t("varianceOff", { amount: formatMoney(TOLERANCE) })}</p>
         )}
         {tier === "ok" && (
-          <p className="text-sm text-success">{t("varianceOk", { amount: formatMoney(TOLERANCE) })}</p>
+          <p className={`text-sm text-success ${R.status}`}>{t("varianceOk", { amount: formatMoney(TOLERANCE) })}</p>
         )}
       </GoCard>
 
@@ -93,7 +94,7 @@ export default function ShiftClosePage() {
       <Button
         size="lg"
         variant={blocked ? "secondary" : "primary"}
-        className="h-13 text-md font-semibold disabled:opacity-100 disabled:text-muted rail:col-span-2 rail:ml-auto rail:min-w-72 rail:w-auto"
+        className={`h-13 text-md font-semibold disabled:opacity-100 disabled:text-muted rail:col-span-2 rail:ml-auto rail:h-11! rail:min-w-72 rail:w-auto ${R.button} rail:font-semibold`}
         fullWidth
         disabled={blocked}
         aria-describedby={blocked ? "close-why" : undefined}

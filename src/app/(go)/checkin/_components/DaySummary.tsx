@@ -44,8 +44,8 @@ export function DaySummary({
             ] as const
           ).map(([key, value]) => (
             <div key={key} className="flex min-w-0 flex-col items-center border-l border-line first:border-l-0">
-              <span className="text-md font-semibold tabular-nums">{value}</span>
-              <span className="text-sm text-muted">{t(`strip_${key}`)}</span>
+              <span className="text-2xl font-semibold leading-tight tabular-nums text-fg">{value}</span>
+              <span className="text-sm font-medium text-fg-secondary">{t(`strip_${key}`)}</span>
             </div>
           ))}
         </div>
@@ -73,7 +73,7 @@ export function DaySummary({
           ).map(([key, value]) => (
             <div key={key} className="flex min-w-0 flex-col items-center gap-inline rounded-inner bg-subtle px-tight py-comfortable text-center rail:rounded-none rail:border-l rail:border-line rail:bg-transparent rail:first:border-l-0">
               <span className="text-xl font-semibold tabular-nums rail:text-2xl">{value}</span>
-              <span className="text-sm text-muted">{t(`stat_${key}`)}</span>
+              <span className="text-sm text-muted rail:font-medium rail:text-fg-secondary">{t(`stat_${key}`)}</span>
             </div>
           ))}
         </TileGrid>

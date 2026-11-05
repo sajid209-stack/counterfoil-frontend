@@ -13,6 +13,7 @@ import { getOperator, getStaff, listOrders, listProducts, peekPaymentSettings, t
 import { goodwillMaxFor, pendingRefundForOrder, useRefundVersion } from "@/lib/api/refundRequests";
 import { GoCard, TileLabel } from "../_components/Tiles";
 import { GoPage, GoPageHeader } from "../_components/GoPage";
+import { R } from "../_components/railType";
 import { Thumb } from "../_components/Thumb";
 import { RefundFlowSheet } from "../_components/RefundFlowSheet";
 import { useActor } from "../schedule/_lib/actor";
@@ -119,7 +120,7 @@ export default function MySalesPage() {
           /* The word is always visible (a bare printer glyph is a guess); the full
              action is the name and the tooltip. */
           actions={
-            <Button variant="secondary" size="lg" className="shrink-0 shadow-card print:hidden" aria-label={t("print")} title={t("print")} onClick={() => window.print()}>
+            <Button variant="secondary" size="lg" className={`shrink-0 shadow-card print:hidden rail:h-10! ${R.button}`} aria-label={t("print")} title={t("print")} onClick={() => window.print()}>
               <Printer size={18} strokeWidth={1.5} aria-hidden />
               {t("printShort")}
             </Button>
@@ -134,7 +135,7 @@ export default function MySalesPage() {
       <main className="flex flex-col gap-comfortable rail:grid rail:grid-cols-12 rail:items-start rail:gap-section">
         {/* The one number: what you sold. */}
         <GoCard className="gap-tight rail:col-span-4 rail:col-start-1 rail:row-start-1 rail:self-stretch" aria-labelledby="ms-hero">
-          <p id="ms-hero" className="text-sm font-semibold text-muted">
+          <p id="ms-hero" className={`text-sm font-semibold text-muted ${R.label}`}>
             {t("youSold")} · {t("today")}
           </p>
           <p className="text-3xl font-semibold tabular-nums rail:text-4xl">{money(today.total)}</p>
@@ -160,10 +161,10 @@ export default function MySalesPage() {
                     <li key={b.name} className={`${LIST_ROW} flex items-center gap-comfortable`}>
                       <Thumb image={imageOf(b.name)} glyph={<Ticket strokeWidth={1.5} />} />
                       <span className="min-w-0 flex-1">
-                        <span className="line-clamp-2 block text-md font-semibold">{b.name}</span>
+                        <span className={`line-clamp-2 block text-md font-semibold ${R.item}`}>{b.name}</span>
                         <span className="block text-sm text-muted">{t("soldQty", { count: b.qty })}</span>
                       </span>
-                      <span className="shrink-0 text-md font-semibold tabular-nums">{money(b.amount)}</span>
+                      <span className={`shrink-0 text-md font-semibold tabular-nums ${R.price}`}>{money(b.amount)}</span>
                     </li>
                   ))}
                 </ol>
@@ -175,10 +176,10 @@ export default function MySalesPage() {
             <div className="flex flex-col gap-comfortable lg:grid lg:grid-cols-2 lg:items-start rail:contents">
               <GoCard className="rail:col-span-4 rail:col-start-5 rail:row-start-1 rail:self-stretch" aria-labelledby="ms-drawer" title={<span id="ms-drawer">{t("drawerTitle")}</span>}>
                 <dl className="flex flex-col text-base tabular-nums">
-                  <div className="flex justify-between py-tight"><dt className="text-muted">{t("startCash")}</dt><dd>{money(float)}</dd></div>
-                  <div className="flex justify-between py-tight"><dt className="text-muted">+ {t("cashTaken")}</dt><dd>{money(today.cashTaken)}</dd></div>
-                  <div className="flex justify-between py-tight"><dt className="text-muted">− {t("cashRefunds")}</dt><dd>{money(today.cashRefunds)}</dd></div>
-                  <div className="flex justify-between mt-tight pt-tight text-lg font-semibold rail:border-t rail:border-line"><dt>{t("shouldHave")}</dt><dd>{money(shouldHave)}</dd></div>
+                  <div className="flex items-baseline justify-between py-tight"><dt className={`text-muted ${R.label}`}>{t("startCash")}</dt><dd className={R.price}>{money(float)}</dd></div>
+                  <div className="flex items-baseline justify-between py-tight"><dt className={`text-muted ${R.label}`}>+ {t("cashTaken")}</dt><dd className={R.price}>{money(today.cashTaken)}</dd></div>
+                  <div className="flex items-baseline justify-between py-tight"><dt className={`text-muted ${R.label}`}>− {t("cashRefunds")}</dt><dd className={R.price}>{money(today.cashRefunds)}</dd></div>
+                  <div className="flex items-baseline justify-between mt-tight pt-tight text-lg font-semibold rail:border-t rail:border-line"><dt className={R.label}>{t("shouldHave")}</dt><dd className={R.total}>{money(shouldHave)}</dd></div>
                 </dl>
                 <p className="text-sm text-muted">{t("drawerNote")}</p>
               </GoCard>
@@ -214,24 +215,24 @@ export default function MySalesPage() {
                       <div className="flex items-center gap-comfortable">
                       <Thumb glyph={<ReceiptText strokeWidth={1.5} />} />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate font-mono text-sm font-semibold">{o.reference}</span>
+                        <span className={`block truncate font-mono text-sm font-semibold ${R.item}`}>{o.reference}</span>
                         <span className="block truncate text-sm text-muted">
                           {formatClockOf(o.createdAt)} · {itemsShort(o)}
                           {method ? ` · ${labels.method(method)}` : ""}
                         </span>
                       </span>
                       <span className="flex shrink-0 flex-col items-end gap-inline">
-                        <span className="text-md font-semibold tabular-nums">{money(o.total)}</span>
+                        <span className={`text-md font-semibold tabular-nums ${R.price}`}>{money(o.total)}</span>
                         <StatusPill status={o.status} size="md" />
                       </span>
                       </div>
                       {asked ? (
-                        <p data-refund-asked className="inline-flex w-fit items-center gap-1 rounded-full bg-warning-wash px-comfortable py-inline text-sm font-semibold text-fg">
+                        <p data-refund-asked className={`inline-flex w-fit items-center gap-1 rounded-full bg-warning-wash px-comfortable py-inline text-sm font-semibold text-fg ${R.status}`}>
                           <RotateCcw size={14} strokeWidth={2.25} aria-hidden />
                           {t("refundAsked")}
                         </p>
                       ) : canAsk ? (
-                        <Button variant="link" data-ask-refund onClick={() => setRefundOrder(o)} className="min-h-11 self-end print:hidden">
+                        <Button variant="link" data-ask-refund onClick={() => setRefundOrder(o)} className={`min-h-11 self-end print:hidden rail:min-h-10 ${R.button}`}>
                           <RotateCcw size={16} strokeWidth={2} aria-hidden />
                           {t("askRefund")}
                         </Button>
@@ -243,9 +244,9 @@ export default function MySalesPage() {
               {today.recent.length > PAGE && (
                 <div className="print:hidden">
                   {shown < today.recent.length ? (
-                    <Button variant="secondary" size="lg" fullWidth onClick={() => setShown((n) => n + PAGE)}>{t("showMore")}</Button>
+                    <Button variant="secondary" size="lg" fullWidth className={`rail:h-10! ${R.button}`} onClick={() => setShown((n) => n + PAGE)}>{t("showMore")}</Button>
                   ) : (
-                    <Button variant="secondary" size="lg" fullWidth onClick={() => setShown(PAGE)}>{t("showLess")}</Button>
+                    <Button variant="secondary" size="lg" fullWidth className={`rail:h-10! ${R.button}`} onClick={() => setShown(PAGE)}>{t("showLess")}</Button>
                   )}
                 </div>
               )}

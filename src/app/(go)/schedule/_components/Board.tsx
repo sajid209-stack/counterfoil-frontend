@@ -403,10 +403,13 @@ function FreeCell({
       className={cn(
         // ds-exception: in-column layer z-1 (free cells) under the z-10 sticky gutter
         "group/cell absolute inset-x-0 z-[1] flex flex-col items-center justify-center gap-0.5 transition-colors duration-quick rail:flex-row rail:gap-1.5",
-        selected ? "bg-ember-solid text-on-solid rail:bg-ember-wash rail:text-brand-foreground rail:ring-2 rail:ring-inset rail:ring-ember" : "bg-card text-fg hover:bg-muted-wash active:bg-muted-wash",
+        selected ? "bg-ember-solid text-on-solid rail:bg-card rail:text-brand-foreground" : "bg-card text-fg hover:bg-muted-wash active:bg-muted-wash",
       )}
       style={{ top, height }}
     >
+      {/* A desktop draws the chosen hour as a rounded, tinted box inset 3px from the grid lines. */}
+      {/* ds-exception: 3px inset from the grid lines, matching the booked blocks */}
+      {selected && <span aria-hidden className="absolute inset-0 hidden rail:block"><span className="absolute inset-[3px] rounded-inner bg-ember-wash ring-2 ring-inset ring-ember" /></span>}
       {selected ? (
         <Check size={20} strokeWidth={3} aria-hidden className="rail:hidden" />
       ) : (
@@ -416,7 +419,7 @@ function FreeCell({
         <Plus size={18} strokeWidth={2.5} className="text-muted rail:size-3.5 rail:opacity-0 rail:group-hover/cell:opacity-100 rail:group-focus-visible/cell:opacity-100" aria-hidden />
       )}
       {height >= 44 && (
-        <span className={cn("text-sm tabular-nums", selected ? "font-semibold" : "font-medium rail:text-xs rail:text-muted rail:opacity-0 rail:group-hover/cell:opacity-100 rail:group-focus-visible/cell:opacity-100")}>{formatPriceShort(b.price)}</span>
+        <span className={cn("relative text-sm tabular-nums", selected ? "font-semibold rail:text-base" : "font-medium rail:text-xs rail:text-muted rail:opacity-0 rail:group-hover/cell:opacity-100 rail:group-focus-visible/cell:opacity-100")}>{formatPriceShort(b.price)}</span>
       )}
     </button>
   );
@@ -452,8 +455,8 @@ function BlockView({
   /* A small inset so two bookings back to back read as two, and a small
      corner — a calendar block, not a card. */
   // ds-exception: in-column layer z-3 (booked blocks) under the z-10 sticky gutter
-  const frame = "absolute inset-x-1 z-[3] overflow-hidden rounded-sm text-left";
-  const style = { top: top + 2, height: height - 3 };
+  const frame = "absolute inset-x-1 z-[3] overflow-hidden rounded-sm text-left rail:inset-x-[3px] rail:rounded-inner";
+  const style = rail ? { top: top + 3, height: height - 6 } : { top: top + 2, height: height - 3 };
 
   if (b.type === "booking") {
     const who = b.guest ?? t("board.walkIn");
@@ -511,7 +514,7 @@ function BlockView({
         {tall && (
           asked
             ? <span className="block truncate text-sm font-semibold leading-tight text-warning">{asked}</span>
-            : <span className="block truncate text-sm leading-tight opacity-80 rail:text-xs">{b.product?.name ?? ""}</span>
+            : <span className="block truncate text-sm leading-tight opacity-80 rail:text-xs rail:text-muted rail:opacity-100">{b.product?.name ?? ""}</span>
         )}
       </button>
     );
@@ -533,7 +536,7 @@ function BlockView({
           <Lock size={13} strokeWidth={2} className="shrink-0 text-muted" aria-hidden />
           <span className="truncate">{b.hold.heldFor}</span>
         </span>
-        {tall && <span className="block truncate text-sm leading-tight text-muted">{t("board.onHold")}</span>}
+        {tall && <span className="block truncate text-sm leading-tight text-muted rail:text-xs">{t("board.onHold")}</span>}
       </button>
     );
   }
@@ -555,6 +558,22 @@ function BlockView({
       )}
       style={style}
     >
+      {rail ? (
+        <>
+          {/* A desktop: what the cashier looks for (seats left) is strong, the time is quiet.
+              One hour tall is one line; taller blocks stack the two. */}
+          <span className="flex min-w-0 items-baseline gap-1.5">
+            <span className={cn("min-w-0 truncate text-sm font-semibold leading-tight", !full && !disabled && pct <= 0.2 && "text-brand-foreground")}>
+              {full ? t("board.full") : t("board.seatsLeft", { count: b.remaining })}
+            </span>
+            {height < 64 && <span className="shrink-0 whitespace-nowrap text-xs font-normal leading-tight text-muted">{formatClock(b.time)}</span>}
+            {!full && !disabled && <Plus size={14} strokeWidth={2.5} className="ml-auto shrink-0 self-center text-muted" aria-hidden />}
+          </span>
+          {height >= 64 && <span className="block truncate text-xs leading-tight text-muted">{formatClock(b.time)}</span>}
+          {height >= 88 && b.held.length > 0 && <span className="truncate text-xs leading-tight text-muted">{t("board.someHeld")}</span>}
+        </>
+      ) : (
+        <>
       <span className="flex items-baseline justify-between gap-1">
         <span className="text-sm font-semibold tabular-nums">{formatClock(b.time)}</span>
         {!full && !disabled && <Plus size={16} strokeWidth={2.5} className="shrink-0 text-muted" aria-hidden />}
@@ -568,6 +587,8 @@ function BlockView({
         </span>
       )}
       {tall && b.held.length > 0 && <span className="truncate text-sm leading-tight text-muted">{t("board.someHeld")}</span>}
+        </>
+      )}
     </button>
   );
 }

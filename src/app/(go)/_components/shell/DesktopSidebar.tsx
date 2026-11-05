@@ -237,7 +237,7 @@ export function DesktopSidebar({
               aria-expanded={moreOpen}
               aria-controls="go-more-pages"
               className={cn(
-                "flex h-11 w-full shrink-0 items-center gap-comfortable rounded-control px-comfortable text-left text-sm font-medium transition-colors duration-quick hover:bg-nav-hover",
+                "flex h-11 w-full shrink-0 items-center gap-comfortable rounded-control px-comfortable text-left text-base font-medium transition-colors duration-quick hover:bg-nav-hover",
                 inside && !moreOpen ? "text-fg" : "text-muted",
               )}
             >
@@ -357,8 +357,8 @@ function SidebarFoot({
             className="flex h-11 items-center gap-comfortable rounded-control px-comfortable transition-colors duration-quick hover:bg-nav-hover"
           >
             <span aria-hidden className="size-2 shrink-0 rounded-full bg-success-solid" />
-            <span className="min-w-0 flex-1 truncate text-sm text-fg-secondary">{shiftText}</span>
-            <span className="shrink-0 text-sm font-semibold text-fg">{tp("shell.endShift")}</span>
+            <span className="min-w-0 flex-1 truncate text-sm text-muted">{shiftText}</span>
+            <span className="shrink-0 text-base font-medium text-fg">{tp("shell.endShift")}</span>
           </Link>
 
           {rail && (

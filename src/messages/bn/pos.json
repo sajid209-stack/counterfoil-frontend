@@ -128,7 +128,9 @@
     "attach": "বিক্রিতে যোগ করুন",
     "attached": "{name} যোগ হয়েছেন।",
     "remove": "সরান",
-    "close": "বন্ধ"
+    "close": "বন্ধ",
+    "emailLabel": "ইমেইল (ঐচ্ছিক)",
+    "emailPlaceholder": "anika@example.com"
   },
   "parked": {
     "title": "থামানো বিক্রি",

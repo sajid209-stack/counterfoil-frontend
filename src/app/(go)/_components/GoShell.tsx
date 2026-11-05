@@ -265,7 +265,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-full flex-col bg-surface rail:flex-row">
+    <div className="flex min-h-full flex-col bg-surface text-fg rail:flex-row">
       {/* The desktop shell (the `rail:` variant): a white sidebar that carries
           the counter, the destinations, the shift and the person. It replaces
           the header row and the icon rail below. Not on /login, which is a

@@ -80,12 +80,12 @@ export default function GoBookingsPage() {
                 <Link href={href} className="card-surface flex min-h-14 items-center gap-comfortable p-comfortable rail:rounded-none rail:bg-transparent rail:px-card rail:py-comfortable rail:shadow-none rail:hover:bg-nav-hover">
                   <Thumb image={p?.images?.[0]?.url} glyph={<BookingGlyph bookingType={p?.bookingType} />} />
                   <div className="min-w-0 flex-1">
-                    <div className="break-words text-md font-semibold text-fg">{guest || tc("walkInDefaultName")}</div>
+                    <div className="break-words text-md font-semibold text-fg rail:text-base">{guest || tc("walkInDefaultName")}</div>
                     <div className="text-sm text-muted">{productName(b.productId)} · {t("partyOf", { size: b.partySize })}</div>
                     {reference && <div className="font-mono text-sm text-muted">{reference}</div>}
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-inline">
-                    <span className="whitespace-nowrap text-md font-semibold tabular-nums">{formatClockOf(b.slotStart)}</span>
+                    <span className="whitespace-nowrap text-md font-semibold tabular-nums rail:text-sm rail:font-normal rail:text-muted">{formatClockOf(b.slotStart)}</span>
                     <span className={cn("inline-flex items-center gap-inline text-sm font-medium", isIn ? "text-success" : "text-muted")}>
                       {isIn && <Check size={14} strokeWidth={2} aria-hidden />}
                       {isIn ? tc("filterIn") : tc("filterNotIn")}

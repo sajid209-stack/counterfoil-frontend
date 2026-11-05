@@ -8,6 +8,7 @@ import { Button } from "@/components/ui";
 import { peekPaymentSettings } from "@/lib/api";
 import { GoCard } from "../../_components/Tiles";
 import { GoPage, GoPageHeader } from "../../_components/GoPage";
+import { R } from "../../_components/railType";
 
 export default function ShiftOpenPage() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function ShiftOpenPage() {
         />
       </GoCard>
 
-      <Button size="lg" fullWidth className="h-13 text-md font-semibold" onClick={() => { startShiftClock(); router.push("/pos"); }}>
+      <Button size="lg" fullWidth className={`h-13 text-md font-semibold rail:ml-auto rail:h-11! rail:w-auto rail:min-w-72 ${R.button} rail:font-semibold`} onClick={() => { startShiftClock(); router.push("/pos"); }}>
         {t("openShift")}
       </Button>
     </main>

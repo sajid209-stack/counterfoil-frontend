@@ -437,7 +437,7 @@ function CompactVerdict({ outcome, preview, labels, admitted, busy, methods, met
       {admit ? (
         <>
           <span className="truncate text-base">{outcome.title}</span>
-          {labels.dated && <span className="text-sm opacity-90">{labels.dated}</span>}
+          {labels.dated && <span className="text-sm text-neutral-300">{labels.dated}</span>}
         </>
       ) : (
         <>
@@ -445,14 +445,14 @@ function CompactVerdict({ outcome, preview, labels, admitted, busy, methods, met
             {Kind && <Kind size={16} strokeWidth={2.25} aria-hidden className="shrink-0" />}
             {labels.reason}
           </span>
-          {labels.usedAt && <span className="text-sm opacity-90">{labels.usedAt}</span>}
-          {labels.note && <span className="text-sm opacity-90">{labels.note}</span>}
-          {outcome.title && <span className="text-sm opacity-80">{outcome.title}</span>}
-          <span className="text-sm opacity-90">{labels.advice}</span>
+          {labels.usedAt && <span className="text-sm">{labels.usedAt}</span>}
+          {labels.note && <span className="text-sm">{labels.note}</span>}
+          {outcome.title && <span className="text-sm">{outcome.title}</span>}
+          <span className="text-sm">{labels.advice}</span>
         </>
       )}
-      <span className="font-mono text-sm opacity-75">{labels.code}</span>
-      <span className="text-sm opacity-70">{preview ? labels.previewNote : labels.dismiss}</span>
+      <span className={cn("font-mono text-sm", admit && "text-neutral-400")}>{labels.code}</span>
+      <span className={cn("text-sm", admit && "text-neutral-400")}>{preview ? labels.previewNote : labels.dismiss}</span>
       {admit && !preview && (
         <span aria-hidden className="absolute inset-x-0 bottom-0 h-1 bg-neutral-800">
           <span className="verdict-timer block h-full w-full bg-neutral-300" />

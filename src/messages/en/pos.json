@@ -128,7 +128,9 @@
     "attach": "Add to sale",
     "attached": "{name} added.",
     "remove": "Remove",
-    "close": "Close"
+    "close": "Close",
+    "emailLabel": "Email (optional)",
+    "emailPlaceholder": "anika@example.com"
   },
   "parked": {
     "title": "Paused sales",

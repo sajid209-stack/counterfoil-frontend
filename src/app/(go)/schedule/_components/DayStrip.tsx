@@ -182,7 +182,7 @@ export function DayStrip({
         {middle ? <div className="hidden min-w-0 flex-1 px-tight lg:block rail:order-6 rail:ml-2 rail:flex-none rail:px-0">{middle}</div> : null}
         <span className={cn("flex-1", Boolean(middle) && "lg:hidden")} />
         {(date !== today || rail) && (
-          <button type="button" onClick={() => pick(today, true)} disabled={rail && date === today} className="inline-flex h-11 shrink-0 items-center rounded-full bg-card px-comfortable text-base font-semibold text-fg shadow-card hover:bg-muted-wash rail:order-2 rail:h-9 rail:rounded-control rail:px-3 rail:shadow-none rail:ring-1 rail:ring-inset rail:ring-line rail:disabled:text-muted">
+          <button type="button" onClick={() => pick(today, true)} disabled={rail && date === today} className="inline-flex h-11 shrink-0 items-center rounded-full bg-card px-comfortable text-base font-semibold text-fg shadow-card hover:bg-muted-wash rail:font-medium rail:order-2 rail:h-9 rail:rounded-control rail:px-3 rail:shadow-none rail:ring-1 rail:ring-inset rail:ring-line rail:disabled:text-muted">
             {t("today")}
           </button>
         )}
@@ -250,7 +250,7 @@ export function DayStrip({
               <span suppressHydrationWarning className={cn("text-sm font-medium rail:hidden", on ? "text-on-solid" : "text-muted")}>
                 {monthStart ? format.dateTime(dt, { month: "short" }) : format.dateTime(dt, { weekday: "narrow" })}
               </span>
-              <span suppressHydrationWarning className={cn("hidden whitespace-nowrap text-sm font-medium rail:inline", on ? "text-on-solid" : "text-muted")}>
+              <span suppressHydrationWarning className={cn("hidden whitespace-nowrap text-sm font-normal rail:inline", on ? "text-on-solid" : "text-muted")}>
                 {monthStart ? format.dateTime(dt, { month: "short" }) : format.dateTime(dt, { weekday: "short" })}
               </span>
               <span className="text-lg font-semibold tabular-nums leading-none rail:text-base">{dt.getDate()}</span>

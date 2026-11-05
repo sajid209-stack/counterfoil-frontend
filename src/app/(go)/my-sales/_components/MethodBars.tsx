@@ -1,3 +1,5 @@
+import { R } from "../../_components/railType";
+
 export interface MethodRow {
   key: string;
   label: string;
@@ -16,8 +18,8 @@ export function MethodBars({ rows }: { rows: MethodRow[] }) {
       {rows.map((r) => (
         <li key={r.key} className="flex flex-col gap-inline">
           <div className="flex items-baseline justify-between gap-tight">
-            <span className="text-base font-medium">{r.label}</span>
-            <span className="text-base font-semibold tabular-nums">{r.amount}</span>
+            <span className={`text-base font-medium ${R.body}`}>{r.label}</span>
+            <span className={`text-base font-semibold tabular-nums ${R.price}`}>{r.amount}</span>
           </div>
           <div role="img" aria-label={r.share} className="h-2 overflow-hidden rounded-full bg-subtle">
             <div className="h-full rounded-full bg-ember-solid" style={{ width: `${r.pct}%` }} />

@@ -19515,3 +19515,29 @@ Verified on a production build, ec29f026 scratchpad `pos/shots.mjs` (1440×900 a
 control over 56px, no text under 12px, nothing clipped, no sideways scroll, checkout fits the
 screen, hold dialog without a handle, one Check in in the sidebar). Viewed by eye. tsc, tokens and
 i18n clean; eslint at the known PosScreen baseline.
+
+---
+
+## POS desktop, round three: typography roles, checkout in the sale panel (2026-11-05)
+
+Spec: docs/pos-desktop.md §9. Desktop (`rail:`) only.
+
+- **Checkout happens in the sale panel**: "Take ৳X" turns the right-hand panel into the payment
+  step (Back, To pay, folded lines, customer / discount / promo, a 2×2 of methods, cash received,
+  Complete sale pinned). The desktop dialog is gone; the phone keeps its own. A wall tap while
+  paying returns the panel to the sale.
+- **Customer picker** is a dropdown under the Customer row; New customer opens as a form in the
+  same dropdown.
+- **Text roles** in `(go)/_components/type.ts` (`T.*`; `railType.ts` holds the same roles behind
+  `rail:` for screens whose phone differs). The till root sets `text-fg`: unstyled text inherited
+  the brand ink (#141413) beside fg (#22211f).
+- **Schedule**: a chosen slot and every block are rounded and inset 3px; session blocks lead with
+  the seats (semibold) and step the time down (12px muted), one line in a one-hour block.
+- **Pages swept**: my-sales, my-requests, quick-pass, till-settings, profile, shift, complete,
+  check-in, scan, reservations, the wall, the drawer and the sidebar. Settings and profile choices
+  are tint + ring on a desktop (they were white on solid orange, 3.5:1).
+
+Audit (ec29f026 scratchpad `pos/type.mjs`, eleven pages at 1440×900): styles per page fell, e.g.
+my-sales 21 → 12, check-in 19 → 17, reservations 10 → 7; no text under 12px, nothing clipped.
+Remaining contrast flag: white words on the solid orange primary button (3.5:1), the app-wide
+on-solid rule, not changed here. `pos/shots.mjs` 73 of 76 pass (the 3 are harness selectors).

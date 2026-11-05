@@ -34,7 +34,7 @@ export function TileText({
 }) {
   return (
     <>
-      <span className={cn("w-full break-words text-base font-semibold leading-tight", struck && "line-through", className)}>{label}</span>
+      <span className={cn("w-full break-words text-base font-semibold leading-tight rail:font-medium", struck && "line-through", className)}>{label}</span>
       {sub != null && <span className={cn("mt-0.5 w-full break-words text-sm leading-tight", selected ? "text-on-solid" : "text-muted", struck && "line-through")}>{sub}</span>}
       {extra != null && <span className={cn("mt-0.5 w-full break-words text-sm font-medium leading-tight", selected ? "text-on-solid" : "text-fg")}>{extra}</span>}
     </>
@@ -102,9 +102,9 @@ export function DateTiles({
           const cap = caption?.(d) ?? null;
           return (
             <Tile key={d} selected={on} onClick={() => onChange(d)} className="min-h-16 rail:h-10 rail:min-h-10 rail:w-auto rail:flex-row rail:gap-1 rail:px-3">
-              <span className="w-full break-words text-base font-semibold leading-tight rail:w-auto rail:whitespace-nowrap">{label(d)}</span>
+              <span className="w-full break-words text-base font-semibold leading-tight rail:w-auto rail:whitespace-nowrap rail:font-medium">{label(d)}</span>
               <span aria-hidden className="hidden text-muted rail:inline">·</span>
-              <span className={cn("mt-0.5 w-full break-words text-sm leading-tight rail:mt-0 rail:w-auto rail:whitespace-nowrap rail:text-base", on ? "text-on-solid" : "text-muted")}>{sub(d)}</span>
+              <span className={cn("mt-0.5 w-full break-words text-sm leading-tight rail:mt-0 rail:w-auto rail:whitespace-nowrap rail:text-sm", on ? "text-on-solid" : "text-muted")}>{sub(d)}</span>
               {cap && (
                 <span className={cn("w-full truncate text-sm leading-tight rail:ml-1 rail:w-auto rail:whitespace-nowrap", on ? "text-on-solid" : cap.low ? "font-medium text-warning" : "text-muted")}>{cap.text}</span>
               )}
@@ -118,7 +118,7 @@ export function DateTiles({
           className={tileClass({ className: "min-h-16 rail:h-10 rail:min-h-10 rail:flex-row rail:gap-1.5 rail:px-3" })}
         >
           <CalendarDays size={14} strokeWidth={2} aria-hidden className="absolute right-1.5 top-1.5 text-muted rail:static rail:size-4 rail:shrink-0 rail:text-fg" />
-          <span className="w-full break-words text-base font-semibold leading-tight rail:w-auto rail:whitespace-nowrap">{labels.pick}</span>
+          <span className="w-full break-words text-base font-semibold leading-tight rail:w-auto rail:whitespace-nowrap rail:font-medium">{labels.pick}</span>
           <span className="mt-0.5 w-full break-words text-sm leading-tight text-muted rail:hidden">{tp("dateTiles.pickDay")}</span>
         </button>
       </TileGrid>
@@ -179,7 +179,7 @@ export function OptionRow({
       {selected && <Check size={14} strokeWidth={2.5} aria-hidden className={cn(TICK, "right-2 top-2")} />}
       {lead}
       <span className={cn("min-w-0", !center && "flex-1")}>
-        <span className="block break-words text-md font-semibold leading-snug rail:text-base rail:leading-tight">{title}</span>
+        <span className="block break-words text-md font-semibold leading-snug rail:text-base rail:font-medium rail:leading-tight">{title}</span>
         {sub != null && <span className={cn("block break-words text-sm leading-snug rail:leading-tight", selected ? "text-on-solid" : "text-muted")}>{sub}</span>}
       </span>
       {trail != null && <span className={cn("shrink-0 whitespace-nowrap text-sm", selected ? "text-on-solid" : "text-fg-secondary", selected ? "mr-5 rail:mr-0" : "")}>{trail}</span>}
@@ -197,7 +197,7 @@ export function FooterSummary({ lead, price }: { lead: ReactNode; price: ReactNo
   return (
     <div className="flex items-baseline justify-between gap-comfortable text-base text-fg">
       <span className="min-w-0 flex-1">{lead}</span>
-      <span className="shrink-0 font-bold tabular-nums">{price}</span>
+      <span className="shrink-0 font-bold tabular-nums rail:font-semibold">{price}</span>
     </div>
   );
 }

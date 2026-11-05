@@ -24,6 +24,7 @@ import {
 import { useActor } from "../schedule/_lib/actor";
 import { GoCard, Tile, TileGrid } from "../_components/Tiles";
 import { GoPage, GoPageHeader } from "../_components/GoPage";
+import { R } from "../_components/railType";
 
 /* ── My requests ──────────────────────────────────────────────────────────
  *
@@ -119,10 +120,10 @@ export default function MyRequestsPage() {
             aria-selected={tab === x.key}
             selected={tab === x.key}
             onClick={() => setTab(x.key)}
-            className="min-h-12 flex-row gap-inline text-md font-semibold rail:min-h-24 rail:flex-col rail:items-start rail:justify-center rail:rounded-md rail:px-card rail:text-left"
+            className={`min-h-12 flex-row gap-inline text-md font-semibold rail:min-h-24 rail:flex-col rail:items-start rail:justify-center rail:rounded-md rail:px-card rail:text-left rail:text-sm rail:font-medium`}
           >
             {x.label}
-            <span className="tabular-nums opacity-80 rail:text-2xl rail:font-semibold rail:opacity-100">{counts[x.key]}</span>
+            <span className={`tabular-nums opacity-80 rail:text-2xl rail:font-semibold rail:opacity-100`}>{counts[x.key]}</span>
           </Tile>
         ))}
       </TileGrid>
@@ -176,34 +177,34 @@ function RequestCard({ item: i, busy, onTakeBack }: { item: Item; busy: boolean;
           <Icon strokeWidth={1.75} />
         </span>
         <div className="min-w-0 flex-1 rail:flex-none">
-          <p className="text-md font-semibold text-fg">{i.kind === "refund" ? t("pos.requests.kindRefund") : t("pos.requests.kindWriteOff")}</p>
+          <p className={`text-md font-semibold text-fg ${R.card}`}>{i.kind === "refund" ? t("pos.requests.kindRefund") : t("pos.requests.kindWriteOff")}</p>
           <p className="text-sm text-muted">{t("pos.requests.askedAt", { when: formatDateTime(r.requestedAt) })}</p>
         </div>
-        <span data-status-pill className={cn("shrink-0 rounded-full px-comfortable py-inline text-sm font-semibold", TONE[st.tone])}>
+        <span data-status-pill className={cn("shrink-0 rounded-full px-comfortable py-inline text-sm font-semibold", R.status, TONE[st.tone])}>
           {t(`pos.requests.status.${st.key}`)}
         </span>
       </div>
 
       <div className="flex items-end justify-between gap-comfortable rail:col-span-7 rail:items-center">
         <div className="min-w-0">
-          <p className="break-words text-md font-semibold text-fg">{r.productName || guest}</p>
+          <p className={`break-words text-md font-semibold text-fg ${R.item}`}>{r.productName || guest}</p>
           <p className="break-words text-sm text-muted">{[guest, slot].filter(Boolean).join(" · ")}</p>
         </div>
-        <p className="shrink-0 text-2xl font-semibold tabular-nums text-fg">{formatMoney(amount)}</p>
+        <p className={`shrink-0 text-2xl font-semibold tabular-nums text-fg ${R.stat}`}>{formatMoney(amount)}</p>
       </div>
 
       <p className="text-sm text-fg-secondary rail:col-span-12">{[what, why].filter(Boolean).join(" · ")}</p>
       {yourNote && (
         <p className="break-words text-sm text-muted rail:col-span-12">
-          <span className="font-semibold text-fg-secondary">{t("pos.requests.yourNote")}: </span>
+          <span className={`font-semibold text-fg-secondary ${R.label}`}>{t("pos.requests.yourNote")}: </span>
           {yourNote}
         </p>
       )}
 
       {answered && (
         <div data-manager-note className={cn("rounded-inner p-comfortable rail:col-span-12", approved ? "bg-success-wash" : "bg-subtle ring-1 ring-inset ring-line")}>
-          <p className="text-sm font-semibold text-fg">{t("pos.requests.managerNote")}</p>
-          <p className="break-words text-md text-fg">{decisionNote || t("pos.status.noNote")}</p>
+          <p className={`text-sm font-semibold text-fg ${R.label}`}>{t("pos.requests.managerNote")}</p>
+          <p className={`break-words text-md text-fg ${R.body}`}>{decisionNote || t("pos.status.noNote")}</p>
           {r.decidedBy && <p className="mt-inline text-sm text-muted">{t("pos.requests.decidedBy", { name: r.decidedBy })}</p>}
         </div>
       )}
@@ -211,7 +212,7 @@ function RequestCard({ item: i, busy, onTakeBack }: { item: Item; busy: boolean;
 
       {st.tone === "waiting" && (
         <div className="flex justify-end rail:col-span-12">
-          <Button variant="secondary" size="lg" className="rail:h-11" loading={busy} onClick={onTakeBack}>
+          <Button variant="secondary" size="lg" className={`rail:h-10! ${R.button}`} loading={busy} onClick={onTakeBack}>
             {t("pos.status.takeBack")}
           </Button>
         </div>

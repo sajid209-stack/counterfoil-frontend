@@ -105,3 +105,31 @@ was ≈210×320); lane tiles stay 4 a row so their status reads in full; the sch
 full-width columns (a 360px cap left an empty field); the Hold dialog is 440px; free board cells
 show their price on hover and focus only; `/scan` on a desktop renders the combined Check in
 screen; the scan logic lives once in `scan/_components/ScanPanel.tsx`.
+
+## 9. Round three: typography and the checkout in the sale panel (2026-11-05)
+
+Owner: the checkout dialog is too wide and odd ("or do the checkout in the right side where the
+cart is"); New customer should open in place, not as another popup; a chosen schedule slot should
+be rounded; the schedule's session blocks have no hierarchy; and every POS desktop page needs a
+typography pass.
+
+Research: hierarchy comes from weight and colour as much as size; labels are de-emphasised and
+values emphasised; a lighter weight reads as disabled, so secondary text steps down in colour, not
+weight below 400; data-dense screens use four sizes or fewer and three weights or fewer per
+component, tabular figures for money. Square, Toast and Lightspeed take payment in the same
+right-hand panel that held the sale, so the item wall stays in view and nothing jumps.
+
+An audit of eleven POS pages (1440×900) found: two near-black text colours (body inherited the
+brand ink #141413; components use fg #22211f), so the till root now sets `text-fg`; adjacent
+lines with the same size and weight (reservations names and times, my-sales names and amounts,
+schedule times and seats); 16px button words on a desktop; values and labels at the same weight;
+the chosen option on settings and profile white on solid orange at 3.5:1.
+
+1. **Text roles** live in `(go)/_components/type.ts` (`T.page`, `T.card`, `T.item`, `T.body`,
+   `T.meta`, `T.label`, `T.caption`, `T.button`, `T.price`, `T.total`, `T.stat`, `T.status`).
+   Every POS desktop text uses one. Desktop buttons are 14px.
+2. **Checkout on a desktop happens in the sale panel**: "Take ৳X" turns the panel into the
+   payment step (Back, To pay, customer / discount / promo, how they pay, how much now, cash
+   received, Complete sale). No dialog. The phone keeps its own flow.
+3. **New customer opens in place**, inside the customer picker, under the search.
+4. **A chosen slot on the board is rounded**, inset from the grid lines.

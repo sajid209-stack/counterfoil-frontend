@@ -1065,7 +1065,7 @@ export function ProductSheet({
                     const on = r ? resourceId === r.id : !resourceId;
                     return (
                       <Tile key={r?.id ?? "any"} selected={on} off={!!r?.outOfService} disabled={!!r?.outOfService} className="min-h-14 rail:h-14 rail:min-h-14 rail:items-stretch rail:px-3 rail:py-1 rail:text-left" title={r ? [liveState(r), rateLabel(r)].filter(Boolean).join(" · ") : undefined} onClick={() => setResourceId(r?.id)}>
-                        <span className={cn("w-full break-words text-base font-semibold leading-tight rail:truncate rail:text-left", r?.outOfService && "line-through")}>{r ? r.name : t("sheet.any")}</span>
+                        <span className={cn("w-full break-words text-base font-semibold leading-tight rail:truncate rail:text-left rail:font-medium", r?.outOfService && "line-through")}>{r ? r.name : t("sheet.any")}</span>
                         {r && (
                           <span className="flex w-full min-w-0 flex-col rail:flex-row rail:items-center rail:gap-1.5">
                             <span className={cn("mt-0.5 w-full break-words text-sm leading-tight rail:mt-0 rail:min-w-0 rail:flex-1 rail:truncate rail:text-left", on ? "text-on-solid" : "text-muted", r.outOfService && "line-through")}>{liveState(r)}</span>
@@ -1107,7 +1107,7 @@ export function ProductSheet({
                     }
                     const on = slotTime === tt;
                     return (
-                      <Tile key={tt} selected={on} className="min-h-12 text-md font-semibold tabular-nums rail:min-h-10 rail:text-base" onClick={() => { setSlotTime(tt); setBlocked(null); }}>
+                      <Tile key={tt} selected={on} className="min-h-12 text-md font-semibold tabular-nums rail:min-h-10 rail:text-base rail:font-medium" onClick={() => { setSlotTime(tt); setBlocked(null); }}>
                         <ClockCell hhmm={tt} ampmClassName="text-sm font-medium rail:text-base" />
                       </Tile>
                     );
@@ -1117,7 +1117,7 @@ export function ProductSheet({
               {!showEarlier && (() => {
                 const n = date === TODAY ? flexTimes.filter((tt) => toMinutes(tt) < DEMO_NOW_MINUTES && tt !== slotTime).length : 0;
                 return n > 0 ? (
-                  <button type="button" onClick={() => setShowEarlier(true)} className="min-h-11 self-start text-sm font-medium text-brand-foreground underline-offset-2 hover:underline">
+                  <button type="button" onClick={() => setShowEarlier(true)} className="min-h-11 self-start text-sm font-medium text-brand-foreground underline-offset-2 hover:underline rail:text-base">
                     {t("sheet.showEarlier", { count: n })}
                   </button>
                 ) : null;
@@ -1275,7 +1275,7 @@ export function ProductSheet({
                   <button
                     type="button"
                     onClick={() => setCourseDatesOpen((v) => !v)}
-                    className="mt-tight min-h-11 text-sm font-medium text-brand-foreground underline-offset-2 hover:underline"
+                    className="mt-tight min-h-11 text-sm font-medium text-brand-foreground underline-offset-2 hover:underline rail:text-base"
                   >
                     {t(courseDatesOpen ? "sheet.courseHideAll" : "sheet.courseShowAll")}
                   </button>
@@ -1383,7 +1383,7 @@ export function ProductSheet({
         {needsSchedule(bt) && !resourceMode && !flexible && openToday && !showEarlier && date === TODAY && (() => {
           const n = slots.filter((x) => toMinutes(x.time) < DEMO_NOW_MINUTES && x.time !== slotTime).length;
           return n > 0 ? (
-            <button type="button" onClick={() => setShowEarlier(true)} className="-mt-tight mb-section rail:mb-5 min-h-11 text-sm font-medium text-brand-foreground underline-offset-2 hover:underline">
+            <button type="button" onClick={() => setShowEarlier(true)} className="-mt-tight mb-section rail:mb-5 min-h-11 text-sm font-medium text-brand-foreground underline-offset-2 hover:underline rail:text-base">
               {t("sheet.showEarlier", { count: n })}
             </button>
           ) : null;

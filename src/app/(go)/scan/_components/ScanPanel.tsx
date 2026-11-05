@@ -336,7 +336,7 @@ export function ScanPanel({ variant = "page", onScan, summary }: { variant?: "pa
                 className="h-10 w-full min-w-0 rounded-control bg-subtle px-comfortable font-mono text-base tracking-wide transition-colors duration-quick focus:ring-2 focus:ring-ember"
               />
             </span>
-            <Button variant={code.trim() ? "primary" : "secondary"} className="h-10 shrink-0 text-base font-semibold" disabled={!code.trim() || busy} onClick={() => void submit(code)}>
+            <Button variant="primary" className="h-10 shrink-0 text-base font-medium" disabled={!code.trim() || busy} onClick={() => void submit(code)}>
               {t("check")}
             </Button>
           </div>
@@ -458,7 +458,7 @@ export function ScanPanel({ variant = "page", onScan, summary }: { variant?: "pa
                   className="h-14 w-full min-w-0 rounded-inner bg-subtle px-section font-mono text-lg tracking-wide transition-colors duration-quick focus:ring-2 focus:ring-ember"
                 />
               </span>
-              <Button size="lg" variant={code.trim() ? "primary" : "secondary"} className="h-14 shrink-0 text-md font-semibold" disabled={!code.trim() || busy} onClick={() => void submit(code)}>
+              <Button size="lg" variant="primary" className="h-14 shrink-0 text-md font-semibold" disabled={!code.trim() || busy} onClick={() => void submit(code)}>
                 {t("check")}
               </Button>
             </div>

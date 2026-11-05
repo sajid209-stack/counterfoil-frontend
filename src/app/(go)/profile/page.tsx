@@ -11,6 +11,7 @@ import { DEMO_STAFF_ID } from "@/lib/session";
 import { useActiveCounter } from "@/lib/activeCounter";
 import { GoCard } from "../_components/Tiles";
 import { GoPage, GoPageHeader } from "../_components/GoPage";
+import { R, RAIL_SEGMENT } from "../_components/railType";
 
 /**
  * My profile, at the counter.
@@ -51,7 +52,7 @@ export default function GoProfilePage() {
       <GoCard as="div" className="flex-row items-center">
         <Avatar name={me?.name ?? "?"} size={56} />
         <div className="min-w-0">
-          <p className="truncate text-md font-semibold">{me?.name ?? "…"}</p>
+          <p className={`truncate text-md font-semibold ${R.item}`}>{me?.name ?? "…"}</p>
           <p className="text-sm text-muted">{role?.name ?? t("noRole")}</p>
         </div>
       </GoCard>
@@ -61,12 +62,12 @@ export default function GoProfilePage() {
           <div className="flex items-center gap-tight">
             <Store size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
             <dt className="sr-only">{t("counter")}</dt>
-            <dd className="min-w-0 text-base">{counter?.name ?? "—"}</dd>
+            <dd className={`min-w-0 text-base ${R.body}`}>{counter?.name ?? "—"}</dd>
           </div>
           <div className="flex items-center gap-tight">
             <MapPin size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
             <dt className="sr-only">{t("venue")}</dt>
-            <dd className="min-w-0 text-base">{venue?.name ?? "—"}</dd>
+            <dd className={`min-w-0 text-base ${R.body}`}>{venue?.name ?? "—"}</dd>
           </div>
         </dl>
       </GoCard>
@@ -75,20 +76,20 @@ export default function GoProfilePage() {
         {/* The picker's own label is off: this card already names it, and the
             OS label it draws is 12px — below the 13px floor the till holds
             every other piece of text to. */}
-        <h2 id="go-language" className="text-md font-semibold">{t("language")}</h2>
+        <h2 id="go-language" className="text-md font-semibold text-fg">{t("language")}</h2>
         <p className="-mt-tight text-sm text-muted">{t("languageDesc")}</p>
-        <LanguagePicker showLabel={false} labelledBy="go-language" />
+        <LanguagePicker className={RAIL_SEGMENT} showLabel={false} labelledBy="go-language" />
       </GoCard>
 
       <GoCard title={t("detailsTitle")}>
         <dl className="flex flex-col gap-tight text-base">
           <div className="flex flex-wrap items-baseline gap-x-tight">
-            <dt className="text-muted">{t("email")}</dt>
-            <dd className="min-w-0 break-all">{me?.email || "—"}</dd>
+            <dt className={`text-muted ${R.label}`}>{t("email")}</dt>
+            <dd className={`min-w-0 break-all ${R.body}`}>{me?.email || "—"}</dd>
           </div>
           <div className="flex flex-wrap items-baseline gap-x-tight">
-            <dt className="text-muted">{t("phone")}</dt>
-            <dd className="min-w-0">{me?.phone || "—"}</dd>
+            <dt className={`text-muted ${R.label}`}>{t("phone")}</dt>
+            <dd className={`min-w-0 ${R.body}`}>{me?.phone || "—"}</dd>
           </div>
         </dl>
         <p className="text-sm text-muted">{t("managerChanges")}</p>
@@ -98,7 +99,7 @@ export default function GoProfilePage() {
           people actually come here for at the end of a shift. */}
       <Link
         href="/login"
-        className="card-surface flex min-h-14 items-center justify-center gap-tight text-md font-semibold text-brand-foreground active:scale-[0.99] rail:col-span-2 rail:hover:bg-nav-hover"
+        className="card-surface flex min-h-14 items-center justify-center gap-tight text-md font-semibold text-brand-foreground active:scale-[0.99] rail:col-span-2 rail:min-h-11 rail:hover:bg-nav-hover rail:text-base"
       >
         <LogOut size={18} strokeWidth={1.75} aria-hidden />
         {t("switchUser")}

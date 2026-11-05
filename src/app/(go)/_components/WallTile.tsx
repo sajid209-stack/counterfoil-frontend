@@ -188,7 +188,7 @@ export function WallTile({
         {live && (
           <span
             className={cn(
-              "flex items-start gap-inline text-sm leading-snug",
+              "flex items-start gap-inline text-sm leading-snug rail:font-medium",
               live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-warning" : "text-muted",
             )}
           >

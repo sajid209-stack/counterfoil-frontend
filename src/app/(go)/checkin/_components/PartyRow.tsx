@@ -63,7 +63,7 @@ export function PartyRow({
   if (rail) {
     const status =
       p.state === "noshow" ? (
-        <span className="inline-flex items-center rounded-full bg-danger-wash px-comfortable py-inline text-sm font-semibold text-danger">
+        <span className="inline-flex items-center rounded-full bg-danger-wash px-comfortable py-inline text-sm font-medium text-danger">
           {p.booking.noShowReason ? t("noShowTagReason", { reason: p.booking.noShowReason }) : t("noShowTag")}
         </span>
       ) : p.state === "in" ? (
@@ -182,7 +182,7 @@ export function PartyRow({
       <div className="ml-auto flex shrink-0 items-center gap-tight">
         {menu.length > 0 && <ActionMenu shape="go" items={menu} label={menuLabel} />}
         {p.state === "noshow" ? (
-          <span className="rounded-full bg-danger-wash px-comfortable py-inline text-sm font-semibold text-danger">
+          <span className="rounded-full bg-danger-wash px-comfortable py-inline text-sm font-medium text-danger">
             {p.booking.noShowReason ? t("noShowTagReason", { reason: p.booking.noShowReason }) : t("noShowTag")}
           </span>
         ) : p.due > 0 ? (

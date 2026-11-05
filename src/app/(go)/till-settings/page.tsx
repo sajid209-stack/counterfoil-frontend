@@ -8,6 +8,7 @@ import { LanguagePicker } from "@/components/LocaleProvider";
 import { SegmentedControl, Switch } from "@/components/ui";
 import { GoCard } from "../_components/Tiles";
 import { GoPage, GoPageHeader } from "../_components/GoPage";
+import { RAIL_SEGMENT } from "../_components/railType";
 import { setPrefs, usePrefs, type TillText } from "@/lib/prefs";
 
 /**
@@ -41,7 +42,7 @@ export default function TillSettingsPage() {
   return (
     <GoPage width="narrow">
       <div
-        className="mx-auto w-full max-w-160 pb-(--tab-clear) pt-tight rail:max-w-none rail:pb-0 rail:pt-0 [&_[role=radio]]:min-h-11"
+        className="mx-auto w-full max-w-160 pb-(--tab-clear) pt-tight rail:max-w-none rail:pb-0 rail:pt-0 [&_[role=radio]]:min-h-11 rail:[&_[role=radio]]:min-h-10"
         /* The Go tab bar is docked and 64px tall, so it owns
            the bottom 64px. Without this the last card sits under it. */
         style={{ "--tab-clear": "calc(88px + env(safe-area-inset-bottom))" } as React.CSSProperties}
@@ -65,6 +66,7 @@ export default function TillSettingsPage() {
           <Row icon={<Type size={18} strokeWidth={1.75} />} title={t("textSize")} body={t("tillSettings.textBody")} stack>
             <SegmentedControl
               fullWidth
+              className={RAIL_SEGMENT}
               aria-label={t("textSize")}
               value={prefs.tillText}
               onChange={(v) => setPrefs({ tillText: v as TillText })}
@@ -73,11 +75,11 @@ export default function TillSettingsPage() {
           </Row>
 
           <Row icon={<Palette size={18} strokeWidth={1.75} />} title={t("tillSettings.appearance")} body={t("tillSettings.appearanceBody")} stack>
-            <AppearancePicker showLabel={false} />
+            <AppearancePicker className={RAIL_SEGMENT} showLabel={false} />
           </Row>
 
           <Row icon={<Languages size={18} strokeWidth={1.75} />} title={t("tillSettings.language")} body={t("tillSettings.languageBody")} stack>
-            <LanguagePicker showLabel={false} />
+            <LanguagePicker className={RAIL_SEGMENT} showLabel={false} />
           </Row>
         </div>
 

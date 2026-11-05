@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
-import { Banknote, Check, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, CreditCard, Pause, QrCode, Send, Percent, Plus, Search, Ticket, Trash2, Wallet, X, type LucideIcon } from "lucide-react";
+import { Banknote, Check, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, ChevronRight, CreditCard, Pause, QrCode, Send, Percent, Plus, Search, Ticket, Trash2, Wallet, X, type LucideIcon } from "lucide-react";
 import { ActionMenu, BlockedNotice, Button, DiscountInput, FormField, Modal, Notice, SkeletonText, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { counterEvents, counterItems, eventDays, inventoryItem, inventoryLineId, levelOf, peekTicketCodeSettings, tillMethods, advanceMinimum, checkout, getAdvancePolicy, earnPoints, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isOpenOn, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, placeHold, releaseHold, activeHolds, HOLDS_EVENT, CHECKOUT_HELD_FOR, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type MembershipTier, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord, type HoldView } from "@/lib/api";
@@ -23,7 +23,7 @@ import { taxRateFor } from "@/lib/tax";
 import { FEATURES } from "@/lib/features";
 import { formatClock, formatDay, formatDayRange, formatMoney, formatPriceShort } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
+import { CustomerPicker, type AttachedCustomer, type PickerAnchor } from "./CustomerPicker";
 import { CustomerRow, HowMuchNow, PromoCodeRow, SaleRow, type PayChoice } from "./CheckoutParts";
 import { SellDateBar } from "./SellDate";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
@@ -31,10 +31,11 @@ import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 import { BookingGlyph, WallHeading, WallRow, WallTile } from "../_components/WallTile";
 import { SheetShell } from "../_components/SheetShell";
 import { Stepper } from "../_components/Stepper";
-import { ActionBar, primaryButton, secondaryButton } from "../_components/ActionBar";
+import { ActionBar, primaryButton } from "../_components/ActionBar";
 import { ActionTile, GoCard, Tile, TileGrid, TileLabel } from "../_components/Tiles";
 import { EventSheet } from "../_components/EventSheet";
 import { Keypad } from "../_components/Keypad";
+import { T } from "../_components/type";
 import { HeldButton, HeldSheet } from "./HeldSheet";
 import { holdEntries } from "../schedule/_lib/toCart";
 import { useMediaQuery } from "@/lib/useMedia";
@@ -60,7 +61,7 @@ const METHOD_ICON: Partial<Record<PaymentMethod, LucideIcon>> = {
 const SIGNED_IN_STAFF_ID = "stf_nadia";
 
 /** Animated money value (120ms count) — the cart total moves, staff notice. */
-function AnimatedMoney({ value, currency }: { value: number; currency: string }) {
+function AnimatedMoney({ value, currency, className = "text-2xl" }: { value: number; currency: string; className?: string }) {
   const [shown, setShown] = useState(value);
   useEffect(() => {
     const from = shown;
@@ -76,7 +77,7 @@ function AnimatedMoney({ value, currency }: { value: number; currency: string })
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
-  return <span className="text-2xl">{formatMoney(shown, currency)}</span>;
+  return <span className={className}>{formatMoney(shown, currency)}</span>;
 }
 
 /** The till. Rendered from the /pos LAYOUT rather than from a page file, so
@@ -249,6 +250,13 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const prefs = usePrefs();
   const [padOpen, setPadOpen] = useState(false);
   const [cashOpen, setCashOpen] = useState(false);
+  /* On a desktop the payment step is the sale panel's second state. It belongs
+     to the cart it was opened on: a product added from the wall is a new cart,
+     so the panel is back on the sale (the amount changed). */
+  const [payCart, setPayCart] = useState<typeof cart | null>(null);
+  const [sumOpen, setSumOpen] = useState(false);
+  /* Where the customer dropdown hangs, taken from the Customer row when pressed. */
+  const [customerAnchor, setCustomerAnchor] = useState<PickerAnchor | null>(null);
   /* What the cashier says they were handed. **Empty means the exact amount**,
      which is what every serious POS defaults to — Shopify POS pre-fills "the
      correct amount of the order" and offers suggestions under it. It saves a
@@ -1062,6 +1070,8 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     setTenderTaka("");
     setPadOpen(false);
     setCashOpen(true);
+    setPayCart(cart);
+    setSumOpen(false);
     /* A code taken off before the cart changed was quoted against the OLD
        cart, so what it took off is asked again as the step opens. A code that
        no longer applies is dropped, with the reason, rather than quietly
@@ -1071,6 +1081,17 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
       if ("applied" in r) setAppliedCoupon(r.applied);
       else { setAppliedCoupon(null); setCouponError(r.error); }
     }
+  };
+
+  /** The Customer row: on a desktop it toggles a dropdown hung under the row
+   *  (its box is taken now, in the press, not in render); elsewhere it opens the modal. */
+  const openCustomer = (row: HTMLElement) => {
+    if (customerOpen) { setCustomerOpen(false); return; }
+    if (rail) {
+      const r = (row.parentElement ?? row).getBoundingClientRect();
+      setCustomerAnchor({ left: r.left, top: r.bottom + 4, width: r.width, maxHeight: Math.max(220, Math.min(420, window.innerHeight - r.bottom - 16)) });
+    }
+    setCustomerOpen(true);
   };
 
   /** Notes a customer hands over for this amount: the next round hundred,
@@ -1267,14 +1288,14 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
    *  sale panel's foot and in the checkout's summary, so they cannot disagree. */
   const totalsRows = (
     <div className="flex flex-col gap-inline">
-      <div className="flex justify-between text-sm text-muted"><span>{t("summary.subtotal")}</span><span className="tabular-nums">{formatMoney(subtotal, currency)}</span></div>
+      <div className="flex justify-between text-sm text-muted"><span>{t("summary.subtotal")}</span><span className="font-medium tabular-nums text-fg">{formatMoney(subtotal, currency)}</span></div>
       {lineDiscountTotal > 0 && <div className="flex justify-between text-sm text-muted"><span>{t("summary.lineDiscounts")}</span><span className="tabular-nums text-danger">−{formatMoney(lineDiscountTotal, currency)}</span></div>}
       {manualDiscount > 0 && <div className="flex justify-between text-sm text-muted"><span>{discountMode === "percent" ? t("summary.discountPct", { pct: discountPct }) : t("summary.discountFlat")}</span><span className="tabular-nums text-danger">−{formatMoney(manualDiscount, currency)}</span></div>}
       {couponDiscount > 0 && <div className="flex justify-between text-sm text-muted"><span>{appliedCoupon?.code ?? appliedCoupon?.name}</span><span className="tabular-nums text-danger">−{formatMoney(couponDiscount, currency)}</span></div>}
       {memberDiscount > 0 && <div className="flex justify-between text-sm text-muted"><span className="min-w-0 truncate">{t("summary.memberDiscount", { tier: benefit?.tierName ?? "" })}</span><span className="shrink-0 tabular-nums text-danger">−{formatMoney(memberDiscount, currency)}</span></div>}
       {pointsDiscount > 0 && <div className="flex justify-between text-sm text-muted"><span>{t("summary.pointsSpent", { count: pointsToSpend })}</span><span className="tabular-nums text-danger">−{formatMoney(pointsDiscount, currency)}</span></div>}
-      <div className="flex justify-between text-sm text-muted"><span>{vatRatePct != null ? t("summary.vatRate", { pct: vatRatePct }) : t("summary.vat")}</span><span className="tabular-nums">{formatMoney(tax, currency)}</span></div>
-      <div className="mt-tight flex items-baseline justify-between border-t border-line pt-tight text-lg font-semibold"><span>{t("summary.total")}</span><AnimatedMoney value={total} currency={currency} /></div>
+      <div className="flex justify-between text-sm text-muted"><span>{vatRatePct != null ? t("summary.vatRate", { pct: vatRatePct }) : t("summary.vat")}</span><span className="font-medium tabular-nums text-fg">{formatMoney(tax, currency)}</span></div>
+      <div className={cn("mt-tight flex items-baseline justify-between border-t border-line pt-tight", T.total)}><span>{t("summary.total")}</span><AnimatedMoney value={total} currency={currency} className="" /></div>
       {balance > 0 && (
         <>
           <div className="flex justify-between text-sm"><span>{t("summary.dueNow")}</span><span className="tabular-nums">{formatMoney(dueNow, currency)}</span></div>
@@ -1296,8 +1317,8 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     const detail = lineDetail(e);
     const words = (
       <>
-        <span className="block break-words text-base font-semibold leading-snug">{e.productName}</span>
-        {detail && <span className="block text-sm text-muted">{detail}</span>}
+        <span className={cn("block truncate leading-snug", T.item)}>{e.productName}</span>
+        {detail && <span className={cn("block truncate", T.meta)}>{detail}</span>}
         {e.lineDiscountAmount ? (
           <span className="block text-sm text-danger">−{formatMoney(e.lineDiscountAmount, currency)}</span>
         ) : (e.lineDiscountPct ?? 0) > 0 ? (
@@ -1316,7 +1337,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
             <div className="flex min-h-12 min-w-0 flex-1 flex-col justify-center">{words}</div>
           )}
           <span className="shrink-0 text-right">
-            <span className="block whitespace-nowrap text-base font-semibold tabular-nums">{formatMoney(entryTotal(e), currency)}</span>
+            <span className={cn("block whitespace-nowrap", T.price)}>{formatMoney(entryTotal(e), currency)}</span>
             {e.items.length === 1 && e.fixedPrice == null && e.items[0].qty > 1 && (
               <span className="block whitespace-nowrap text-sm text-muted">{e.items[0].qty} × {formatMoney(e.items[0].unitPrice, currency)}</span>
             )}
@@ -1408,18 +1429,460 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     );
   };
 
+  /** The wallet / QR step's body: written once, drawn in the phone's modal and in the desktop's panel. */
+  const ncTitle = nc?.method === "bkash" ? t("wallet.bkashTitle") : nc?.method === "cashapp" ? t("wallet.cashappTitle") : t("wallet.qrTitle");
+  const ncBody = (
+    <>
+      {nc?.state === "failed" ? (
+        <div className="flex flex-col gap-section">
+          <Notice tone="danger">
+            {t("wallet.failed")}
+          </Notice>
+          <div className="flex gap-tight">
+            <Button variant="secondary" fullWidth onClick={() => setNc(null)}>{t("wallet.cancelSale")}</Button>
+            <Button fullWidth onClick={() => setNc({ ...nc, state: "pending", txn: "" })}>{t("wallet.tryAgain")}</Button>
+          </div>
+        </div>
+      ) : nc?.method === "bkash" ? (
+        <div className="flex flex-col gap-section">
+          <p className="text-base text-muted">{t("wallet.bkashInstruction", { amount: formatMoney(dueNow, currency), number: "01711-000000" })}</p>
+          <FormField label={t("wallet.txnLabel")} placeholder={t("wallet.txnPlaceholder")} value={nc.txn} onChange={(e) => setNc({ ...nc, txn: e.target.value.toUpperCase() })} />
+          <div className="flex gap-tight">
+            <Button variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>{t("wallet.itFailed")}</Button>
+            <Button fullWidth disabled={nc.txn.trim().length < 6} onClick={async () => { const txn = nc.txn.trim(); setNc({ ...nc, state: "confirmed" }); await settleInline(t("wallet.bkashConfirmedNote", { txn }), txn); setNc(null); }}>
+              {nc.state === "confirmed" ? t("wallet.confirming") : t("wallet.paymentReceived")}
+            </Button>
+          </div>
+        </div>
+      ) : nc ? (
+        <div className="flex flex-col gap-section">
+          {/* Stand-in QR — a real terminal renders the payload from the PSP. */}
+          <div className="mx-auto grid w-40 grid-cols-8 gap-px rounded-card border border-line bg-card p-tight" aria-label={t("wallet.qrAlt")}>
+            {Array.from({ length: 64 }, (_, i) => (
+              <span key={i} className={`aspect-square ${((i * 7 + 3) % 5 < 2 || i % 9 === 0) ? "bg-fg" : "bg-card"}`} />
+            ))}
+          </div>
+          <p className="text-center text-lg">{formatMoney(dueNow, currency)}</p>
+          <p className="text-center text-sm text-muted">{nc.method === "cashapp" ? t("wallet.cashappInstruction") : t("wallet.qrInstruction")}</p>
+          <div className="flex gap-tight">
+            <Button variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>{t("wallet.itFailed")}</Button>
+            <Button fullWidth onClick={async () => { setNc({ ...nc, state: "confirmed" }); await settleInline(nc.method === "cashapp" ? t("wallet.cashappConfirmedNote") : t("wallet.qrConfirmedNote")); setNc(null); }}>
+              {nc.state === "confirmed" ? t("wallet.confirming") : t("wallet.paymentReceived")}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+
+  const payView = cashOpen ? (() => {
+        const cash = method === "cash";
+        const typed = tenderTaka !== "";
+        const tenderedMinor = cash && typed ? (parseInt(tenderTaka, 10) || 0) * 100 : dueNow;
+        const changeMinor = tenderedMinor - dueNow;
+        const enough = tenderedMinor >= dueNow;
+        const exact = tenderedMinor === dueNow;
+        const blocked = overLimit || reasonNeeded;
+        /* A discount that cannot be given opens its own row, so the refusal is
+           read where it can be fixed, and cannot be folded away. */
+        const discountOpen = discOpen || blocked;
+        const discountValue = manualDiscount > 0 ? (discountMode === "percent" ? `${discountPct}%` : formatMoney(manualDiscount, currency)) : t("summary.none");
+
+        /* The payment step's pieces, as values, so the same pieces make the
+           phone's single column and the desktop's two. Each is written once. */
+        const amountBlock = (<>
+          {/* What is being paid, as large as the screen allows: it is the
+                    number the customer is told. It follows the discount, the
+                    code and how much is paid now — all of which come from the
+                    sale engine, not from arithmetic here. */}
+                <div className="text-center rail:text-left" data-pay-amount>
+                  <p className="text-base font-medium text-muted rail:text-sm rail:text-fg-secondary">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</p>
+                  <p className="mt-inline text-[clamp(2rem,10vw,2.75rem)] font-bold leading-tight tabular-nums text-fg rail:mt-0 rail:text-[1.75rem]">{formatMoney(dueNow, currency)}</p>{/* ds-exception: the desktop figure is 28px, the one big number in the panel */}
+                </div>
+        </>);
+        const rowsCard = (<>
+          {/* Who it is for, what comes off, and a promo code: one card of
+                    rows, each saying where it stands. */}
+                <div className={rail ? "border-y border-line" : "card-surface overflow-hidden px-comfortable"}>
+                  <CustomerRow attached={attached} onOpen={openCustomer} onRemove={() => setAttached(null)} />
+                  {(FEATURES.memberships || (pointsAccount && program?.enabled)) && (
+                    <div className="flex flex-wrap items-center gap-tight border-b border-line py-tight last:border-b-0">
+                      {FEATURES.memberships && <button type="button" onClick={() => setMembershipOpen(true)} className="h-11 rounded-full border border-line px-comfortable text-sm rail:h-9">{t("summary.sellMembership")}</button>}
+                      {pointsAccount && program?.enabled && (
+                        <button type="button" onClick={() => setPointsOpen(true)} className="h-11 min-w-0 rounded-full border border-line px-comfortable text-sm rail:h-9">
+                          <span className="truncate">{pointsToSpend > 0 ? t("summary.pointsApplied", { count: pointsToSpend }) : t("summary.spendPoints", { count: pointsAccount.balance })}</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {/* The member price is an entitlement, so say whose it is. */}
+                  {benefit && (
+                    <div className="border-b border-line py-tight last:border-b-0">
+                      <p className="min-w-0 break-words text-sm">
+                        <span className="font-medium">{benefit.tierName}</span>
+                        {" · "}
+                        {t("summary.memberRate", { pct: benefit.discountBps / 100 })}
+                        {benefit.visitsLeft != null && ` · ${t("summary.memberVisits", { count: benefit.visitsLeft })}`}
+                      </p>
+                    </div>
+                  )}
+                  <SaleRow icon={Percent} label={t("summary.discount")} value={discountValue} open={discountOpen} onToggle={() => setDiscOpen((v) => !v)}>
+                    {/* Four buttons meant a manager who agreed 12% had no way to
+                        say so and the till decided it was 10. The chips still
+                        fill the field; they are not the whole menu. The hint
+                        lines under it are 12px in the shared control, under
+                        this screen's 13px floor, so they are raised here. */}
+                    <DiscountInput
+                      shape="go"
+                      mode={discountMode}
+                      onMode={setDiscountMode}
+                      value={discountMode === "percent" ? discountPct : discountAmt}
+                      onChange={(v) => (discountMode === "percent" ? setDiscountPct(v) : setDiscountAmt(v))}
+                      base={Math.max(0, preBase)}
+                      currency={currency}
+                      className="[&_p]:text-sm"
+                    />
+                    {overLimit && (
+                      <Notice tone="warning" size="sm" className="mt-tight">
+                        {pt("pos.overPolicy", { limit: manualCapPct })}
+                      </Notice>
+                    )}
+                    {/* A reason is asked for whenever a manual discount is given
+                        and the business's policy requires one. */}
+                    {manualDiscount > 0 && policyQ.data?.requireReason && (
+                      <input
+                        value={discountReason}
+                        onChange={(e) => setDiscountReason(e.target.value)}
+                        aria-label={pt("pos.reasonPlaceholder")}
+                        placeholder={pt("pos.reasonPlaceholder")}
+                        className={cn("mt-tight h-11 w-full rounded-full border bg-card px-comfortable text-md placeholder:text-faint", reasonNeeded ? "border-danger" : "border-line")}
+                      />
+                    )}
+                  </SaleRow>
+                  <PromoCodeRow
+                    applied={appliedCoupon}
+                    taken={couponDiscount}
+                    input={couponInput}
+                    onInput={(v) => { setCouponInput(v); setCouponError(null); }}
+                    onApply={() => void applyCoupon()}
+                    onRemove={() => { setAppliedCoupon(null); setCouponError(null); }}
+                    error={couponError ? pt(`pos.rejected.${couponError}` as never) : null}
+                    currency={currency}
+                  />
+                </div>
+        </>);
+        const methodBlock = (<>
+          {/* How they are paying: each way is its own tile, a picture in a
+                    soft round and a word. Chosen is the till's one look for it:
+                    solid orange, white, a tick. Four across; two by two on the
+                    narrowest phones, where four would crowd the words. */}
+                {availableMethods.length > 1 && (
+                  <div className="flex flex-col gap-tight">
+                    <TileLabel>{t("pay.method")}</TileLabel>
+                    <TileGrid
+                      cols={availableMethods.length >= 4 ? 4 : (availableMethods.length as 2 | 3)}
+                      role="radiogroup"
+                      aria-label={t("pay.method")}
+                      className={availableMethods.length >= 4 ? "grid-cols-2 min-[360px]:grid-cols-4" : undefined}
+                    >
+                      {availableMethods.map((m) => {
+                        const Icon = METHOD_ICON[m.value] ?? Wallet;
+                        const on = method === m.value;
+                        return (
+                          <ActionTile
+                            key={m.value}
+                            role="radio"
+                            aria-checked={on}
+                            selected={on}
+                            icon={<Icon strokeWidth={1.75} />}
+                            label={enumL.method(m.value)}
+                            /* The orange fill already says which is chosen, and the tile's
+                               tick sat on top of the picture's round: no tick here. */
+                            className="[&>svg]:hidden"
+                            onClick={() => { setMethod(m.value); setTenderTaka(""); setPadOpen(false); }}
+                          />
+                        );
+                      })}
+                    </TileGrid>
+                    {method === "card_terminal" && isUsRegion() && <p className="text-sm text-muted">{t("pay.cardHintUs")}</p>}
+                  </div>
+                )}
+        </>);
+        const howMuchBlock = (<>
+          {/* How much of it now. Only where the business takes part
+                    payment, and only the choices that are really different:
+                    Minimum is left out when it is the whole amount or there is
+                    none. */}
+                {payOptions.length > 1 && (
+                  <div className="flex flex-col gap-tight">
+                    <TileLabel className="rail:text-sm rail:font-medium rail:text-fg-secondary">{t("pay.howMuch")}</TileLabel>
+                    <HowMuchNow options={payOptions} value={choice} onChange={setPayChoice} currency={currency} />
+                    {balance > 0 && (
+                      <p className="text-md font-medium text-fg rail:text-sm rail:font-normal rail:text-muted" data-pay-part>
+                        {t("pay.partSummary", { now: formatMoney(dueNow, currency), later: formatMoney(balance, currency) })}
+                      </p>
+                    )}
+                  </div>
+                )}
+        </>);
+        const cashBlockRail = cash ? (
+          <div className="flex flex-col gap-tight">
+            {/* Cash received is the way to the pad: press the figure and the
+                keypad opens, as on the phone. 40px, a quiet field. */}
+            <button
+              type="button"
+              onClick={() => setPadOpen(true)}
+              aria-label={`${t("cash.tendered")} ${formatMoney(tenderedMinor, currency)} — ${t("cash.tapToChange")}`}
+              className="flex h-10 w-full items-center justify-between gap-tight text-left"
+            >
+              <span className={cn("min-w-0", T.label)}>{t("cash.tendered")}</span>
+              <span
+                data-pay-tendered
+                className={cn(
+                  "flex h-10 min-w-[10rem] shrink-0 items-center justify-end rounded-inner bg-card px-comfortable text-md font-semibold tabular-nums ring-inset",
+                  padOpen || typed ? "ring-2 ring-ember" : "ring-1 ring-strong",
+                )}
+              >
+                {formatMoney(tenderedMinor, currency)}
+              </span>
+            </button>
+            <div className="flex flex-wrap gap-tight" data-pay-notes>
+              <Tile selected={exact} onClick={() => setTenderTaka("")} label={t("cash.exact")} className="h-9 min-h-9 px-comfortable [&>span]:text-base [&>span]:font-medium" />
+              {quickNotes(dueNow).map((amt) => {
+                const on = typed && parseInt(tenderTaka, 10) === amt;
+                return <Tile key={amt} selected={on} onClick={() => setTenderTaka(String(amt))} label={formatPriceShort(amt * 100, currency)} className="h-9 min-h-9 px-comfortable tabular-nums [&>span]:text-base [&>span]:font-medium" />;
+              })}
+            </div>
+            {exact ? (
+              <p className={cn("flex h-8 items-center text-success", T.status)}>{t("cash.noChange")}</p>
+            ) : (
+              <div className={cn("flex h-8 items-center justify-between gap-tight", T.status, enough ? "text-success" : "text-muted")}>
+                <span className="shrink-0">{t("complete.giveChange")}</span>
+                <span className="min-w-0 truncate text-right font-semibold tabular-nums">{enough ? formatMoney(changeMinor, currency) : "—"}</span>
+              </div>
+            )}
+            {(prefs.posKeypad || padOpen) && (
+              <Keypad onKey={(d) => setTenderTaka((t) => (t + d).slice(0, 7))} onBackspace={() => setTenderTaka((t) => t.slice(0, -1))} />
+            )}
+          </div>
+        ) : (
+          <p className="text-base text-muted">{method === "card_terminal" ? t("pay.cardHint") : t("pay.walletHint")}</p>
+        );
+        const cashBlock = (<>
+          {cash ? (
+                  <>
+                    {/* Cash: the figure handed over (the amount now, until a
+                        cashier says otherwise) and what to give back, on a card
+                        of its own. The notes that work out the change are
+                        separate tiles under it, on the page. */}
+                    <div className="card-surface divide-y divide-line overflow-hidden">
+                      {/* The received figure IS the way to the pad, which is how
+                          Square does it: tap the amount and the keypad appears. */}
+                      <button
+                        type="button"
+                        onClick={() => setPadOpen(true)}
+                        aria-label={`${t("cash.tendered")} ${formatMoney(tenderedMinor, currency)} — ${t("cash.tapToChange")}`}
+                        className="flex min-h-14 w-full items-center justify-between gap-tight px-comfortable py-1 text-left"
+                      >
+                        <span className="min-w-0 text-md">{t("cash.tendered")}</span>
+                        {/* A field you can tap: a recessed, bordered box showing the
+                            amount, 44px tall, with the same ring a focused field
+                            has once the pad is open. No pencil: the box says it. */}
+                        <span
+                          data-pay-tendered
+                          className={cn(
+                            "flex min-h-11 min-w-[8rem] shrink-0 items-center justify-end rounded-inner bg-surface px-comfortable text-lg font-semibold tabular-nums ring-inset",
+                            padOpen || typed ? "ring-2 ring-ember" : "ring-1 ring-strong",
+                          )}
+                        >
+                          {formatMoney(tenderedMinor, currency)}
+                        </span>
+                      </button>
+                      {/* Change is an ACTION (money to count back), so it is the
+                          largest thing here WHEN THERE IS ANY. At zero it is one
+                          quiet line, and the loud thing is the button. */}
+                      {exact ? (
+                        <p className="flex min-h-14 items-center px-comfortable text-md font-medium text-success">{t("cash.noChange")}</p>
+                      ) : (
+                        <div className={`flex min-h-14 items-baseline justify-between gap-tight px-comfortable py-tight font-semibold ${enough ? "text-success" : "text-muted"}`}>
+                          <span className="shrink-0 text-xl">{t("complete.giveChange")}</span>
+                          <span className="min-w-0 truncate text-right text-[clamp(1.75rem,9.5vw,2.5rem)]">
+                            {enough ? formatMoney(changeMinor, currency) : "—"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <TileGrid cols={2} className="min-[360px]:grid-cols-4" data-pay-notes>
+                      <Tile selected={exact} onClick={() => setTenderTaka("")} label={t("cash.exact")} className="h-11 [&>svg]:hidden" />
+                      {quickNotes(dueNow).map((amt) => {
+                        const on = typed && parseInt(tenderTaka, 10) === amt;
+                        return <Tile key={amt} selected={on} onClick={() => setTenderTaka(String(amt))} label={formatPriceShort(amt * 100, currency)} className="h-11 tabular-nums [&>svg]:hidden" />;
+                      })}
+                    </TileGrid>
+
+                    {/* The pad only where it is wanted: on for a till that keeps
+                        it, or once the received figure has been pressed. */}
+                    {(prefs.posKeypad || padOpen) && (
+                      <Keypad onKey={(d) => setTenderTaka((t) => (t + d).slice(0, 7))} onBackspace={() => setTenderTaka((t) => t.slice(0, -1))} />
+                    )}
+                  </>
+                ) : (
+                  <p className="card-surface px-comfortable py-section text-center text-md text-fg">
+                    {method === "card_terminal" ? t("pay.cardHint") : t("pay.walletHint")}
+                  </p>
+                )}
+        </>);
+        const footBar = (
+          <ActionBar
+                docked="panel"
+                tone="ground"
+                className="rail:px-card"
+                label={t("pay.title")}
+                secondary={{ label: t("cart.back"), icon: <ChevronLeft size={20} strokeWidth={2} aria-hidden />, onClick: () => setCashOpen(false), disabled: cashSaving }}
+                primary={{
+                  label: cash || method === "card_terminal" ? t("cash.completeSale") : t("pay.next"),
+                  icon: <Check size={20} strokeWidth={2.5} aria-hidden />,
+                  onClick: () => void finishPayment(tenderedMinor, changeMinor),
+                  disabled: (cash && !enough) || cashSaving || blocked,
+                }}
+              />
+        );
+        /* The desktop's foot: Complete sale, the panel's width, 44px. Back lives in
+           the head. */
+        const footRail = (
+          <section aria-label={t("pay.title")} className="shrink-0 border-t border-line px-card py-comfortable">
+            <button type="button" className={primaryButton("h-11", "w-full rail:text-base rail:font-medium")} onClick={() => void finishPayment(tenderedMinor, changeMinor)} disabled={(cash && !enough) || cashSaving || blocked}>
+              <Check size={18} strokeWidth={2.5} aria-hidden />
+              <span className="truncate">{cash || method === "card_terminal" ? t("cash.completeSale") : t("pay.next")}</span>
+              {(cash || method === "card_terminal") && <span aria-hidden className="tabular-nums">{formatPriceShort(dueNow, currency)}</span>}
+            </button>
+          </section>
+        );
+        const closeButton = (
+          /* 44px: Go is touch at every width. */
+          <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-muted-wash rail:size-9"><X size={20} strokeWidth={1.5} /></button>
+        );
+        const methodBlockRail = availableMethods.length > 1 && (
+          <div className="flex flex-col gap-tight">
+            <p className={T.label}>{t("pay.method")}</p>
+            <TileGrid cols={2} role="radiogroup" aria-label={t("pay.method")}>
+              {availableMethods.map((m) => {
+                const Icon = METHOD_ICON[m.value] ?? Wallet;
+                const on = method === m.value;
+                return (
+                  <Tile
+                    key={m.value}
+                    role="radio"
+                    aria-checked={on}
+                    selected={on}
+                    className="h-10 flex-row gap-tight"
+                    onClick={() => { setMethod(m.value); setTenderTaka(""); setPadOpen(false); }}
+                  >
+                    <Icon size={16} strokeWidth={1.75} aria-hidden className="shrink-0" />
+                    <span className={cn("truncate", T.button)}>{enumL.method(m.value)}</span>
+                  </Tile>
+                );
+              })}
+            </TileGrid>
+          </div>
+        );
+        /* The lines, folded to one muted line; pressing it opens them. */
+        const summaryBlock = (
+          <div data-pay-summary>
+            <button type="button" onClick={() => setSumOpen((v) => !v)} aria-expanded={sumOpen} className="flex min-h-9 w-full items-center gap-tight text-left">
+              <span className={cn("min-w-0 flex-1 truncate", T.meta)}>{t("phoneSummary", { count: unitCount })} · {cart.map((e) => e.productName).join(", ")}</span>
+              <ChevronRight size={16} strokeWidth={1.5} aria-hidden className={cn("shrink-0 text-muted transition-transform duration-quick", sumOpen && "rotate-90")} />
+            </button>
+            {sumOpen && (
+              <ul className="divide-y divide-line">
+                {cart.map((e) => (
+                  <li key={e.id} className="flex items-start gap-tight py-tight">
+                    <div className="min-w-0 flex-1">
+                      <p className={cn("truncate", T.item)}>{e.productName}</p>
+                      {lineDetail(e) && <p className={cn("truncate", T.meta)}>{lineDetail(e)}</p>}
+                    </div>
+                    <span className={cn("shrink-0", T.price)}>{formatMoney(entryTotal(e), currency)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+        const sumsRail = (
+          <div className="flex flex-col gap-inline">
+            <div className="flex items-baseline justify-between gap-tight"><span className={T.meta}>{t("summary.subtotal")}</span><span className="text-base font-medium tabular-nums text-fg">{formatMoney(subtotal, currency)}</span></div>
+            <div className="flex items-baseline justify-between gap-tight"><span className={T.meta}>{vatRatePct != null ? t("summary.vatRate", { pct: vatRatePct }) : t("summary.vat")}</span><span className="text-base font-medium tabular-nums text-fg">{formatMoney(tax, currency)}</span></div>
+          </div>
+        );
+        /* The sale panel's second state: Back and the title, then everything
+           that decides the money, then Complete sale pinned at the foot. */
+        const panel = (
+          <>
+            <div data-top-band className="flex h-16 shrink-0 items-center gap-tight px-card">
+              <button type="button" onClick={() => setCashOpen(false)} disabled={cashSaving} aria-label={t("cart.back")} className="flex size-9 shrink-0 items-center justify-center rounded-full text-fg hover:bg-nav-hover active:bg-muted-wash">
+                <ChevronLeft size={20} strokeWidth={1.75} aria-hidden />
+              </button>
+              <h2 id="pay-title" className={cn("min-w-0 flex-1 truncate", T.card)}>{t("pay.title")}</h2>
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col gap-comfortable overflow-y-auto px-card pb-comfortable [&>*]:shrink-0">
+              {amountBlock}
+              {summaryBlock}
+              {rowsCard}
+              {sumsRail}
+              {methodBlockRail}
+              {howMuchBlock}
+              {cashBlockRail}
+            </div>
+            {footRail}
+          </>
+        );
+        return {
+          panel,
+          dialog: (
+          <SheetShell
+            label={t("pay.title")}
+            labelledBy="pay-title"
+            desktop="dialog"
+            onClose={() => { if (!cashSaving) setCashOpen(false); }}
+            className="mx-auto flex max-h-[92vh] w-full max-w-[560px] flex-col bg-surface rail:max-w-[60rem] rail:bg-card"
+          >
+            {/* On a desktop the grabber gives way to a title; the heading is
+                always in the document, drawn only where it has the room. */}
+            <div className="flex items-center justify-between gap-tight px-section pb-tight pt-tight rail:h-14 rail:shrink-0 rail:px-card rail:py-0">
+              <span className="w-11 rail:hidden" aria-hidden />
+              <span className="h-1 w-10 rounded-full bg-line rail:hidden" aria-hidden />
+              <h2 id="pay-title" className="sr-only rail:not-sr-only rail:text-md rail:font-semibold rail:text-fg">{t("pay.title")}</h2>
+              {closeButton}
+            </div>
+            <>
+                <div className="flex min-h-0 flex-1 flex-col gap-comfortable overflow-y-auto px-section pb-section [&>*]:shrink-0">
+                  {amountBlock}
+                  {rowsCard}
+                  {methodBlock}
+                  {howMuchBlock}
+                  {cashBlock}
+                </div>
+                {footBar}
+            </>
+          </SheetShell>
+          ),
+        };
+  })() : null;
+  const payingHere = rail && cashOpen && payCart === cart;
+  const walletHere = rail && nc;
+
   /** The desktop's sale panel: white, full height, docked to the right edge.
    *  Head: the sale and how many things are in it, with Pause and Clear all
    *  behind one menu. Lines scroll on their own. The foot is pinned — the sums
    *  and ONE orange button the width of the panel, where the hand ends every
    *  sale. Who it is for, a discount and a promo code are asked at checkout. */
-  const railPanel = (
+  const salePanel = (
     <>
       <div data-top-band className="flex h-16 shrink-0 items-center gap-tight px-card">
         <div className="min-w-0 flex-1">
-          <h2 className="text-md font-semibold leading-tight text-fg">{t("cart.title")}</h2>
+          <h2 className={cn(T.card, "leading-tight")}>{t("cart.title")}</h2>
           {/* One atomic status — "2 items" — not a bare number read out of context. */}
-          <p role="status" aria-atomic="true" className="text-sm leading-tight text-muted">{t("phoneSummary", { count: unitCount })}</p>
+          <p role="status" aria-atomic="true" className={cn(T.meta, "leading-tight")}>{t("phoneSummary", { count: unitCount })}</p>
         </div>
         {cart.length > 0 && (
           <ActionMenu
@@ -1450,7 +1913,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         <section aria-label={t("cart.barLabel")} className="flex flex-col gap-comfortable border-t border-line px-card py-section">
           {totalsRows}
           {overLimit && <Notice tone="warning" size="sm">{pt("pos.overPolicy", { limit: manualCapPct })}</Notice>}
-          <button type="button" className={primaryButton("h-13", "w-full")} onClick={() => void charge()}>
+          <button type="button" className={primaryButton("h-11", "w-full rail:text-base rail:font-medium")} onClick={() => void charge()}>
             <Banknote size={20} strokeWidth={2} aria-hidden />
             <span className="truncate">{t("takeAmount", { amount: formatPriceShort(dueNow, currency) })}</span>
           </button>
@@ -1458,6 +1921,33 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
       )}
     </>
   );
+
+  const railPanel = walletHere ? (
+    <>
+      <div data-top-band className="flex h-16 shrink-0 items-center gap-tight px-card">
+        <button type="button" onClick={() => { setNc(null); setCashOpen(true); }} aria-label={t("cart.back")} className="flex size-9 shrink-0 items-center justify-center rounded-full text-fg hover:bg-nav-hover active:bg-muted-wash">
+          <ChevronLeft size={20} strokeWidth={1.75} aria-hidden />
+        </button>
+        <h2 className={cn("min-w-0 flex-1 truncate", T.card)}>{ncTitle}</h2>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-card pb-comfortable">{ncBody}</div>
+    </>
+  ) : payingHere && payView ? payView.panel : salePanel;
+
+  /* Escape is Back on a desktop's payment step, unless something opened over
+     it (the customer dropdown, a sheet) has its own Escape. */
+  const escBack = payingHere || walletHere;
+  useEffect(() => {
+    if (!escBack) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      if (customerOpen || membershipOpen || pointsOpen || sheet || eventSheet || clearOpen || parkOpen || customOpen) return;
+      if (nc) { setNc(null); setCashOpen(true); return; }
+      if (!cashSaving) setCashOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [escBack, customerOpen, membershipOpen, pointsOpen, sheet, eventSheet, clearOpen, parkOpen, customOpen, nc, cashSaving]);
 
   return (
     <div className={cn("grid h-full grid-cols-1 gap-comfortable p-comfortable lg:grid-cols-[1fr_23rem] lg:pb-comfortable", "pb-24", "rail:h-dvh rail:grid-cols-[minmax(0,1fr)_24rem] rail:gap-0 rail:p-0 rail:pb-0")}>
@@ -1887,390 +2377,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           discount, a promo code, how they pay, how much of it now, and — for
           cash — what they handed over. Footer pinned: Back on the left, the
           orange button on the right. */}
-      {cashOpen && (() => {
-        const cash = method === "cash";
-        const typed = tenderTaka !== "";
-        const tenderedMinor = cash && typed ? (parseInt(tenderTaka, 10) || 0) * 100 : dueNow;
-        const changeMinor = tenderedMinor - dueNow;
-        const enough = tenderedMinor >= dueNow;
-        const exact = tenderedMinor === dueNow;
-        const blocked = overLimit || reasonNeeded;
-        /* A discount that cannot be given opens its own row, so the refusal is
-           read where it can be fixed, and cannot be folded away. */
-        const discountOpen = discOpen || blocked;
-        const discountValue = manualDiscount > 0 ? (discountMode === "percent" ? `${discountPct}%` : formatMoney(manualDiscount, currency)) : t("summary.none");
-
-        /* The payment step's pieces, as values, so the same pieces make the
-           phone's single column and the desktop's two. Each is written once. */
-        const amountBlock = (<>
-          {/* What is being paid, as large as the screen allows: it is the
-                    number the customer is told. It follows the discount, the
-                    code and how much is paid now — all of which come from the
-                    sale engine, not from arithmetic here. */}
-                <div className="text-center rail:text-left" data-pay-amount>
-                  <p className="text-base font-medium text-muted rail:text-sm">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</p>
-                  <p className="mt-inline text-[clamp(2rem,10vw,2.75rem)] font-bold leading-tight tabular-nums text-fg rail:mt-0 rail:text-[2rem]">{formatMoney(dueNow, currency)}</p>{/* ds-exception: the desktop figure is 32px, between the scale's 28 and 40 */}
-                </div>
-        </>);
-        const rowsCard = (<>
-          {/* Who it is for, what comes off, and a promo code: one card of
-                    rows, each saying where it stands. */}
-                <div className={rail ? "border-y border-line" : "card-surface overflow-hidden px-comfortable"}>
-                  <CustomerRow attached={attached} onOpen={() => setCustomerOpen(true)} onRemove={() => setAttached(null)} />
-                  {(FEATURES.memberships || (pointsAccount && program?.enabled)) && (
-                    <div className="flex flex-wrap items-center gap-tight border-b border-line py-tight last:border-b-0">
-                      {FEATURES.memberships && <button type="button" onClick={() => setMembershipOpen(true)} className="h-11 rounded-full border border-line px-comfortable text-sm rail:h-9">{t("summary.sellMembership")}</button>}
-                      {pointsAccount && program?.enabled && (
-                        <button type="button" onClick={() => setPointsOpen(true)} className="h-11 min-w-0 rounded-full border border-line px-comfortable text-sm rail:h-9">
-                          <span className="truncate">{pointsToSpend > 0 ? t("summary.pointsApplied", { count: pointsToSpend }) : t("summary.spendPoints", { count: pointsAccount.balance })}</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  {/* The member price is an entitlement, so say whose it is. */}
-                  {benefit && (
-                    <div className="border-b border-line py-tight last:border-b-0">
-                      <p className="min-w-0 break-words text-sm">
-                        <span className="font-medium">{benefit.tierName}</span>
-                        {" · "}
-                        {t("summary.memberRate", { pct: benefit.discountBps / 100 })}
-                        {benefit.visitsLeft != null && ` · ${t("summary.memberVisits", { count: benefit.visitsLeft })}`}
-                      </p>
-                    </div>
-                  )}
-                  <SaleRow icon={Percent} label={t("summary.discount")} value={discountValue} open={discountOpen} onToggle={() => setDiscOpen((v) => !v)}>
-                    {/* Four buttons meant a manager who agreed 12% had no way to
-                        say so and the till decided it was 10. The chips still
-                        fill the field; they are not the whole menu. The hint
-                        lines under it are 12px in the shared control, under
-                        this screen's 13px floor, so they are raised here. */}
-                    <DiscountInput
-                      shape="go"
-                      mode={discountMode}
-                      onMode={setDiscountMode}
-                      value={discountMode === "percent" ? discountPct : discountAmt}
-                      onChange={(v) => (discountMode === "percent" ? setDiscountPct(v) : setDiscountAmt(v))}
-                      base={Math.max(0, preBase)}
-                      currency={currency}
-                      className="[&_p]:text-sm"
-                    />
-                    {overLimit && (
-                      <Notice tone="warning" size="sm" className="mt-tight">
-                        {pt("pos.overPolicy", { limit: manualCapPct })}
-                      </Notice>
-                    )}
-                    {/* A reason is asked for whenever a manual discount is given
-                        and the business's policy requires one. */}
-                    {manualDiscount > 0 && policyQ.data?.requireReason && (
-                      <input
-                        value={discountReason}
-                        onChange={(e) => setDiscountReason(e.target.value)}
-                        aria-label={pt("pos.reasonPlaceholder")}
-                        placeholder={pt("pos.reasonPlaceholder")}
-                        className={cn("mt-tight h-11 w-full rounded-full border bg-card px-comfortable text-md placeholder:text-faint", reasonNeeded ? "border-danger" : "border-line")}
-                      />
-                    )}
-                  </SaleRow>
-                  <PromoCodeRow
-                    applied={appliedCoupon}
-                    taken={couponDiscount}
-                    input={couponInput}
-                    onInput={(v) => { setCouponInput(v); setCouponError(null); }}
-                    onApply={() => void applyCoupon()}
-                    onRemove={() => { setAppliedCoupon(null); setCouponError(null); }}
-                    error={couponError ? pt(`pos.rejected.${couponError}` as never) : null}
-                    currency={currency}
-                  />
-                </div>
-        </>);
-        const methodBlock = (<>
-          {/* How they are paying: each way is its own tile, a picture in a
-                    soft round and a word. Chosen is the till's one look for it:
-                    solid orange, white, a tick. Four across; two by two on the
-                    narrowest phones, where four would crowd the words. */}
-                {availableMethods.length > 1 && rail && (
-                  <div className="flex flex-col gap-tight">
-                    <TileLabel className="text-base">{t("pay.method")}</TileLabel>
-                    <TileGrid cols={availableMethods.length >= 4 ? 4 : (availableMethods.length as 2 | 3)} role="radiogroup" aria-label={t("pay.method")}>
-                      {availableMethods.map((m) => {
-                        const Icon = METHOD_ICON[m.value] ?? Wallet;
-                        const on = method === m.value;
-                        return (
-                          <Tile
-                            key={m.value}
-                            role="radio"
-                            aria-checked={on}
-                            selected={on}
-                            className="h-10 flex-row gap-tight"
-                            onClick={() => { setMethod(m.value); setTenderTaka(""); setPadOpen(false); }}
-                          >
-                            <Icon size={16} strokeWidth={1.75} aria-hidden className="shrink-0" />
-                            <span className="truncate text-base font-medium">{enumL.method(m.value)}</span>
-                          </Tile>
-                        );
-                      })}
-                    </TileGrid>
-                  </div>
-                )}
-                {availableMethods.length > 1 && !rail && (
-                  <div className="flex flex-col gap-tight">
-                    <TileLabel>{t("pay.method")}</TileLabel>
-                    <TileGrid
-                      cols={availableMethods.length >= 4 ? 4 : (availableMethods.length as 2 | 3)}
-                      role="radiogroup"
-                      aria-label={t("pay.method")}
-                      className={availableMethods.length >= 4 ? "grid-cols-2 min-[360px]:grid-cols-4" : undefined}
-                    >
-                      {availableMethods.map((m) => {
-                        const Icon = METHOD_ICON[m.value] ?? Wallet;
-                        const on = method === m.value;
-                        return (
-                          <ActionTile
-                            key={m.value}
-                            role="radio"
-                            aria-checked={on}
-                            selected={on}
-                            icon={<Icon strokeWidth={1.75} />}
-                            label={enumL.method(m.value)}
-                            /* The orange fill already says which is chosen, and the tile's
-                               tick sat on top of the picture's round: no tick here. */
-                            className="[&>svg]:hidden"
-                            onClick={() => { setMethod(m.value); setTenderTaka(""); setPadOpen(false); }}
-                          />
-                        );
-                      })}
-                    </TileGrid>
-                    {method === "card_terminal" && isUsRegion() && <p className="text-sm text-muted">{t("pay.cardHintUs")}</p>}
-                  </div>
-                )}
-        </>);
-        const howMuchBlock = (<>
-          {/* How much of it now. Only where the business takes part
-                    payment, and only the choices that are really different:
-                    Minimum is left out when it is the whole amount or there is
-                    none. */}
-                {payOptions.length > 1 && (
-                  <div className="flex flex-col gap-tight">
-                    <TileLabel className="rail:text-base">{t("pay.howMuch")}</TileLabel>
-                    <HowMuchNow options={payOptions} value={choice} onChange={setPayChoice} currency={currency} />
-                    {balance > 0 && (
-                      <p className="text-md font-medium text-fg rail:text-sm" data-pay-part>
-                        {t("pay.partSummary", { now: formatMoney(dueNow, currency), later: formatMoney(balance, currency) })}
-                      </p>
-                    )}
-                  </div>
-                )}
-        </>);
-        const cashBlockRail = cash ? (
-          <div className="flex flex-col gap-tight">
-            {/* Cash received is the way to the pad: press the figure and the
-                keypad opens, as on the phone. 40px, a quiet field. */}
-            <button
-              type="button"
-              onClick={() => setPadOpen(true)}
-              aria-label={`${t("cash.tendered")} ${formatMoney(tenderedMinor, currency)} — ${t("cash.tapToChange")}`}
-              className="flex h-10 w-full items-center justify-between gap-tight text-left"
-            >
-              <span className="min-w-0 text-base font-medium">{t("cash.tendered")}</span>
-              <span
-                data-pay-tendered
-                className={cn(
-                  "flex h-10 min-w-[10rem] shrink-0 items-center justify-end rounded-inner bg-card px-comfortable text-md font-semibold tabular-nums ring-inset",
-                  padOpen || typed ? "ring-2 ring-ember" : "ring-1 ring-strong",
-                )}
-              >
-                {formatMoney(tenderedMinor, currency)}
-              </span>
-            </button>
-            <div className="flex flex-wrap gap-tight" data-pay-notes>
-              <Tile selected={exact} onClick={() => setTenderTaka("")} label={t("cash.exact")} className="h-9 min-h-9 px-comfortable [&>span]:text-base [&>span]:font-medium" />
-              {quickNotes(dueNow).map((amt) => {
-                const on = typed && parseInt(tenderTaka, 10) === amt;
-                return <Tile key={amt} selected={on} onClick={() => setTenderTaka(String(amt))} label={formatPriceShort(amt * 100, currency)} className="h-9 min-h-9 px-comfortable tabular-nums [&>span]:text-base [&>span]:font-medium" />;
-              })}
-            </div>
-            {exact ? (
-              <p className="flex h-8 items-center text-base font-medium text-success">{t("cash.noChange")}</p>
-            ) : (
-              <div className={`flex h-8 items-baseline justify-between gap-tight font-semibold ${enough ? "text-success" : "text-muted"}`}>
-                <span className="shrink-0 text-base">{t("complete.giveChange")}</span>
-                <span className="min-w-0 truncate text-right text-lg">{enough ? formatMoney(changeMinor, currency) : "—"}</span>
-              </div>
-            )}
-            {(prefs.posKeypad || padOpen) && (
-              <Keypad onKey={(d) => setTenderTaka((t) => (t + d).slice(0, 7))} onBackspace={() => setTenderTaka((t) => t.slice(0, -1))} />
-            )}
-          </div>
-        ) : (
-          <p className="text-base text-muted">{method === "card_terminal" ? t("pay.cardHint") : t("pay.walletHint")}</p>
-        );
-        const cashBlock = (<>
-          {cash ? (
-                  <>
-                    {/* Cash: the figure handed over (the amount now, until a
-                        cashier says otherwise) and what to give back, on a card
-                        of its own. The notes that work out the change are
-                        separate tiles under it, on the page. */}
-                    <div className="card-surface divide-y divide-line overflow-hidden">
-                      {/* The received figure IS the way to the pad, which is how
-                          Square does it: tap the amount and the keypad appears. */}
-                      <button
-                        type="button"
-                        onClick={() => setPadOpen(true)}
-                        aria-label={`${t("cash.tendered")} ${formatMoney(tenderedMinor, currency)} — ${t("cash.tapToChange")}`}
-                        className="flex min-h-14 w-full items-center justify-between gap-tight px-comfortable py-1 text-left"
-                      >
-                        <span className="min-w-0 text-md">{t("cash.tendered")}</span>
-                        {/* A field you can tap: a recessed, bordered box showing the
-                            amount, 44px tall, with the same ring a focused field
-                            has once the pad is open. No pencil: the box says it. */}
-                        <span
-                          data-pay-tendered
-                          className={cn(
-                            "flex min-h-11 min-w-[8rem] shrink-0 items-center justify-end rounded-inner bg-surface px-comfortable text-lg font-semibold tabular-nums ring-inset",
-                            padOpen || typed ? "ring-2 ring-ember" : "ring-1 ring-strong",
-                          )}
-                        >
-                          {formatMoney(tenderedMinor, currency)}
-                        </span>
-                      </button>
-                      {/* Change is an ACTION (money to count back), so it is the
-                          largest thing here WHEN THERE IS ANY. At zero it is one
-                          quiet line, and the loud thing is the button. */}
-                      {exact ? (
-                        <p className="flex min-h-14 items-center px-comfortable text-md font-medium text-success">{t("cash.noChange")}</p>
-                      ) : (
-                        <div className={`flex min-h-14 items-baseline justify-between gap-tight px-comfortable py-tight font-semibold ${enough ? "text-success" : "text-muted"}`}>
-                          <span className="shrink-0 text-xl">{t("complete.giveChange")}</span>
-                          <span className="min-w-0 truncate text-right text-[clamp(1.75rem,9.5vw,2.5rem)]">
-                            {enough ? formatMoney(changeMinor, currency) : "—"}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <TileGrid cols={2} className="min-[360px]:grid-cols-4" data-pay-notes>
-                      <Tile selected={exact} onClick={() => setTenderTaka("")} label={t("cash.exact")} className="h-11 [&>svg]:hidden" />
-                      {quickNotes(dueNow).map((amt) => {
-                        const on = typed && parseInt(tenderTaka, 10) === amt;
-                        return <Tile key={amt} selected={on} onClick={() => setTenderTaka(String(amt))} label={formatPriceShort(amt * 100, currency)} className="h-11 tabular-nums [&>svg]:hidden" />;
-                      })}
-                    </TileGrid>
-
-                    {/* The pad only where it is wanted: on for a till that keeps
-                        it, or once the received figure has been pressed. */}
-                    {(prefs.posKeypad || padOpen) && (
-                      <Keypad onKey={(d) => setTenderTaka((t) => (t + d).slice(0, 7))} onBackspace={() => setTenderTaka((t) => t.slice(0, -1))} />
-                    )}
-                  </>
-                ) : (
-                  <p className="card-surface px-comfortable py-section text-center text-md text-fg">
-                    {method === "card_terminal" ? t("pay.cardHint") : t("pay.walletHint")}
-                  </p>
-                )}
-        </>);
-        const footBar = (
-          <ActionBar
-                docked="panel"
-                tone="ground"
-                className="rail:px-card"
-                label={t("pay.title")}
-                secondary={{ label: t("cart.back"), icon: <ChevronLeft size={20} strokeWidth={2} aria-hidden />, onClick: () => setCashOpen(false), disabled: cashSaving }}
-                primary={{
-                  label: cash || method === "card_terminal" ? t("cash.completeSale") : t("pay.next"),
-                  icon: <Check size={20} strokeWidth={2.5} aria-hidden />,
-                  onClick: () => void finishPayment(tenderedMinor, changeMinor),
-                  disabled: (cash && !enough) || cashSaving || blocked,
-                }}
-              />
-        );
-        /* The desktop's foot: Back outlined, Complete sale filling the rest,
-           both 44px, on the right column's own floor. */
-        const footRail = (
-          <section aria-label={t("pay.title")} className="flex gap-tight border-t border-line px-card py-comfortable">
-            <button type="button" className={secondaryButton("h-11", "flex-none px-section")} onClick={() => setCashOpen(false)} disabled={cashSaving}>
-              <ChevronLeft size={18} strokeWidth={2} aria-hidden />
-              <span className="truncate">{t("cart.back")}</span>
-            </button>
-            <button type="button" className={primaryButton("h-11", "flex-1")} onClick={() => void finishPayment(tenderedMinor, changeMinor)} disabled={(cash && !enough) || cashSaving || blocked}>
-              <Check size={18} strokeWidth={2.5} aria-hidden />
-              <span className="truncate">{cash || method === "card_terminal" ? t("cash.completeSale") : t("pay.next")}</span>
-              {(cash || method === "card_terminal") && <span aria-hidden className="tabular-nums">{formatPriceShort(dueNow, currency)}</span>}
-            </button>
-          </section>
-        );
-        const closeButton = (
-          /* 44px: Go is touch at every width. */
-          <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-muted-wash rail:size-9"><X size={20} strokeWidth={1.5} /></button>
-        );
-        return (
-          <SheetShell
-            label={t("pay.title")}
-            labelledBy="pay-title"
-            desktop="dialog"
-            onClose={() => { if (!cashSaving) setCashOpen(false); }}
-            className="mx-auto flex max-h-[92vh] w-full max-w-[560px] flex-col bg-surface rail:max-w-[60rem] rail:bg-card"
-          >
-            {/* On a desktop the grabber gives way to a title; the heading is
-                always in the document, drawn only where it has the room. */}
-            <div className="flex items-center justify-between gap-tight px-section pb-tight pt-tight rail:h-14 rail:shrink-0 rail:px-card rail:py-0">
-              <span className="w-11 rail:hidden" aria-hidden />
-              <span className="h-1 w-10 rounded-full bg-line rail:hidden" aria-hidden />
-              <h2 id="pay-title" className="sr-only rail:not-sr-only rail:text-md rail:font-semibold rail:text-fg">{t("pay.title")}</h2>
-              {closeButton}
-            </div>
-            {rail ? (
-              <div className="grid min-h-0 flex-1 grid-cols-[25rem_minmax(0,1fr)] border-t border-line">
-                {/* The sale: what is being sold, who it is for, what comes off,
-                    and what it adds up to. */}
-                <div className="flex min-h-0 flex-col gap-section overflow-y-auto border-r border-line p-card [&>*]:shrink-0">
-                  <TileLabel className="text-base">{t("pay.summaryTitle")}</TileLabel>
-                  <div data-pay-summary>
-                    <ul className="divide-y divide-line">
-                      {cart.map((e) => {
-                        const prod = productById(e.productId);
-                        const shelf = shopItems.find((i) => inventoryLineId(i.id) === e.productId);
-                        return (
-                          <li key={e.id} className="flex items-center gap-comfortable py-tight">
-                            <CartThumb small compact image={prod?.images?.[0]?.url} glyph={prod ? <BookingGlyph bookingType={prod.bookingType} /> : shelf ? <ShopGlyph kind={shelf.kind} /> : <Plus strokeWidth={1.5} />} />
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-base font-medium">{e.productName}</p>
-                              {lineDetail(e) && <p className="truncate text-sm text-muted">{lineDetail(e)}</p>}
-                            </div>
-                            <span className="shrink-0 text-base font-medium tabular-nums">{formatMoney(entryTotal(e), currency)}</span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                  {rowsCard}
-                  <div className="[&_.text-lg]:font-bold">{totalsRows}</div>
-                </div>
-                {/* How they pay: the amount, the way, how much now, the cash. */}
-                <div className="flex min-h-0 flex-col">
-                  <div className="flex min-h-0 flex-1 flex-col gap-section overflow-y-auto p-card [&>*]:shrink-0">
-                    {amountBlock}
-                    {methodBlock}
-                    {howMuchBlock}
-                    {cashBlockRail}
-                  </div>
-                  {footRail}
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="flex min-h-0 flex-1 flex-col gap-comfortable overflow-y-auto px-section pb-section [&>*]:shrink-0">
-                  {amountBlock}
-                  {rowsCard}
-                  {methodBlock}
-                  {howMuchBlock}
-                  {cashBlock}
-                </div>
-                {footBar}
-              </>
-            )}
-          </SheetShell>
-        );
-      })()}
+      {payView && !rail && payView.dialog}
 
       <Modal
         open={clearOpen}
@@ -2289,7 +2396,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         </div>
       </Modal>
 
-      <CustomerPicker open={customerOpen} onClose={() => setCustomerOpen(false)} attached={attached} onAttach={setAttached} />
+      <CustomerPicker open={customerOpen} onClose={() => setCustomerOpen(false)} attached={attached} onAttach={setAttached} anchor={rail ? customerAnchor : null} />
 
       {FEATURES.memberships && (
       <MembershipSheet
@@ -2343,46 +2450,8 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
 
       {/* Non-cash wallet flow — pending → confirmed | failed. Nothing is
           charged and no tickets exist until the payment confirms. */}
-      <Modal open={!!nc} onClose={() => setNc(null)} title={nc?.method === "bkash" ? t("wallet.bkashTitle") : nc?.method === "cashapp" ? t("wallet.cashappTitle") : t("wallet.qrTitle")}>
-        {nc?.state === "failed" ? (
-          <div className="flex flex-col gap-section">
-            <Notice tone="danger">
-              {t("wallet.failed")}
-            </Notice>
-            <div className="flex gap-tight">
-              <Button variant="secondary" fullWidth onClick={() => setNc(null)}>{t("wallet.cancelSale")}</Button>
-              <Button fullWidth onClick={() => setNc({ ...nc, state: "pending", txn: "" })}>{t("wallet.tryAgain")}</Button>
-            </div>
-          </div>
-        ) : nc?.method === "bkash" ? (
-          <div className="flex flex-col gap-section">
-            <p className="text-base text-muted">{t("wallet.bkashInstruction", { amount: formatMoney(dueNow, currency), number: "01711-000000" })}</p>
-            <FormField label={t("wallet.txnLabel")} placeholder={t("wallet.txnPlaceholder")} value={nc.txn} onChange={(e) => setNc({ ...nc, txn: e.target.value.toUpperCase() })} />
-            <div className="flex gap-tight">
-              <Button variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>{t("wallet.itFailed")}</Button>
-              <Button fullWidth disabled={nc.txn.trim().length < 6} onClick={async () => { const txn = nc.txn.trim(); setNc({ ...nc, state: "confirmed" }); await settleInline(t("wallet.bkashConfirmedNote", { txn }), txn); setNc(null); }}>
-                {nc.state === "confirmed" ? t("wallet.confirming") : t("wallet.paymentReceived")}
-              </Button>
-            </div>
-          </div>
-        ) : nc ? (
-          <div className="flex flex-col gap-section">
-            {/* Stand-in QR — a real terminal renders the payload from the PSP. */}
-            <div className="mx-auto grid w-40 grid-cols-8 gap-px rounded-card border border-line bg-card p-tight" aria-label={t("wallet.qrAlt")}>
-              {Array.from({ length: 64 }, (_, i) => (
-                <span key={i} className={`aspect-square ${((i * 7 + 3) % 5 < 2 || i % 9 === 0) ? "bg-fg" : "bg-card"}`} />
-              ))}
-            </div>
-            <p className="text-center text-lg">{formatMoney(dueNow, currency)}</p>
-            <p className="text-center text-sm text-muted">{nc.method === "cashapp" ? t("wallet.cashappInstruction") : t("wallet.qrInstruction")}</p>
-            <div className="flex gap-tight">
-              <Button variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>{t("wallet.itFailed")}</Button>
-              <Button fullWidth onClick={async () => { setNc({ ...nc, state: "confirmed" }); await settleInline(nc.method === "cashapp" ? t("wallet.cashappConfirmedNote") : t("wallet.qrConfirmedNote")); setNc(null); }}>
-                {nc.state === "confirmed" ? t("wallet.confirming") : t("wallet.paymentReceived")}
-              </Button>
-            </div>
-          </div>
-        ) : null}
+      <Modal open={!!nc && !rail} onClose={() => setNc(null)} title={ncTitle}>
+        {ncBody}
       </Modal>
     </div>
   );
