@@ -35,11 +35,14 @@ function localize(node: unknown): unknown {
   return node;
 }
 
-export function RegionIntlProvider({ locale, messages, children }: { locale: string; messages: AbstractIntlMessages; children: ReactNode }) {
+/** `timeZone` comes from the server: a provider rendered inside a client
+ *  component does not inherit it, and without one every date formatted on the
+ *  client logs next-intl's ENVIRONMENT_FALLBACK and may differ from the server. */
+export function RegionIntlProvider({ locale, messages, timeZone, children }: { locale: string; messages: AbstractIntlMessages; timeZone: string; children: ReactNode }) {
   const currency = useRegionCurrency();
   const shown = useMemo(() => (currency === "USD" ? (localize(messages) as AbstractIntlMessages) : messages), [currency, messages]);
   return (
-    <NextIntlClientProvider locale={locale} messages={shown}>
+    <NextIntlClientProvider locale={locale} messages={shown} timeZone={timeZone}>
       {children}
     </NextIntlClientProvider>
   );

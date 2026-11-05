@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, DM_Mono, Hind_Siliguri } from "next/font/google";
-import { getLocale, getMessages } from "next-intl/server";
+import { getLocale, getMessages, getTimeZone } from "next-intl/server";
 import { ToastProvider } from "@/components/ui";
 import { RegionIntlProvider } from "@/components/RegionIntlProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -83,7 +83,7 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full antialiased">
         <ThemeProvider>
-          <RegionIntlProvider locale={locale} messages={messages}>
+          <RegionIntlProvider locale={locale} messages={messages} timeZone={await getTimeZone()}>
             <ToastProvider>{children}</ToastProvider>
           </RegionIntlProvider>
         </ThemeProvider>
