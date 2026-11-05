@@ -239,7 +239,7 @@ export function HowMuchNow({
           onClick={() => onChange(o.id)}
           label={o.label}
           sub={<span className="tabular-nums">{formatPriceShort(o.amount, currency)}</span>}
-          className="h-[4.25rem] rail:h-9 rail:min-h-9 rail:flex-row rail:gap-tight rail:[&_span]:mt-0 rail:[&_span]:text-base"
+          className="h-[4.25rem] rail:h-13 rail:min-h-13 rail:[&>span:last-child]:text-sm"
         />
       ))}
     </TileGrid>
