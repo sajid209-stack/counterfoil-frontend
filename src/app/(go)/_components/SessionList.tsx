@@ -6,6 +6,7 @@ import { formatClock, formatMoney } from "@/lib/format";
 import { Check } from "lucide-react";
 import { sessionPressure } from "@/lib/schedule";
 import { rowTileClass } from "./SheetParts";
+import { TICK, TILE_CHOSEN } from "./Tiles";
 
 export interface SessionRowData {
   time: string;
@@ -99,15 +100,15 @@ export function SessionList({
               key={s.time}
               type="button"
               aria-pressed={on}
-              className={rowTileClass({ selected: on, off: full && !on, className: "min-h-16 flex-col justify-center" })}
+              className={rowTileClass({ selected: on, off: full && !on, className: "min-h-16 flex-col justify-center rail:flex-row rail:items-center rail:gap-3" })}
               onClick={() => {
                 if (full && s.waitlist && onWaitlist) return onWaitlist(s.time);
                 if (full) return onBlocked(s.time, s.blockedReason ?? t("sheet.full"));
                 onSelect(s.time);
               }}
             >
-              {on && <Check size={14} strokeWidth={2.5} aria-hidden className="absolute right-2 top-2" />}
-              <span className="flex items-baseline gap-comfortable pr-5">
+              {on && <Check size={14} strokeWidth={2.5} aria-hidden className={cn(TICK, "right-2 top-2")} />}
+              <span className="flex items-baseline gap-comfortable pr-5 rail:min-w-0 rail:flex-1 rail:pr-0">
                 <span className={cn("shrink-0 text-md font-semibold", full && !on && "line-through")}>{formatClock(s.time)}</span>
                 {s.meta && <span className={cn("min-w-0 flex-1 truncate text-sm", on ? "text-on-solid" : "text-muted")}>{s.meta}</span>}
                 <span className={cn("ml-auto shrink-0 whitespace-nowrap text-sm font-semibold", tone)}>
@@ -120,11 +121,11 @@ export function SessionList({
                         : t("sheet.seatsLeft", { count: s.left })}
                 </span>
               </span>
-              <span className={cn("mt-0.5 text-base tabular-nums", on ? "text-on-solid" : s.price === basePrice ? "text-muted" : "font-semibold text-fg")}>
+              <span className={cn("mt-0.5 text-base tabular-nums rail:mt-0 rail:shrink-0", on ? "text-on-solid" : s.price === basePrice ? "text-muted" : "font-semibold text-fg")}>
                 {formatMoney(s.price, currency)}
               </span>
               {full && !closed && s.waitlist && (
-                <span className="mt-0.5 text-sm font-medium text-brand-foreground">{t("sheet.joinWaitlist")} →</span>
+                <span className="mt-0.5 text-sm font-medium text-brand-foreground rail:mt-0 rail:shrink-0">{t("sheet.joinWaitlist")} →</span>
               )}
             </button>
           );
@@ -161,9 +162,9 @@ export function SessionList({
             aria-pressed={isSelected}
             data-focus-inset
             className={cn(
-              "relative flex min-h-16 w-full items-center px-comfortable py-comfortable text-left transition-colors duration-quick",
+              "relative flex min-h-16 w-full items-center px-comfortable py-comfortable text-left transition-colors duration-quick rail:min-h-12 rail:px-3 rail:py-1.5",
               isSelected
-                ? "bg-ember-solid text-on-solid"
+                ? TILE_CHOSEN
                 : full
                   // Flat and *below* the card: an unavailable departure is not
                   // something you can pick up. The page's own colour, which is
@@ -172,12 +173,12 @@ export function SessionList({
                   : "bg-card hover:bg-muted-wash active:bg-muted-wash",
             )}
           >
-            <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <span className="flex items-baseline gap-comfortable">
+            <span className="flex min-w-0 flex-1 flex-col gap-1.5 rail:flex-row rail:items-center rail:gap-3">
+              <span className="flex items-baseline gap-comfortable rail:min-w-0 rail:flex-1">
                 {/* Time leads — it is what a cashier is scanning for. */}
                 <span
                   className={cn(
-                    "shrink-0 text-md font-semibold",
+                    "shrink-0 text-md font-semibold rail:text-base",
                     isSelected ? "text-on-solid" : full ? "text-muted" : "text-fg",
                   )}
                 >
@@ -191,7 +192,7 @@ export function SessionList({
                     on the row below, beside the fill. */}
                 <span
                   className={cn(
-                    "ml-auto shrink-0 whitespace-nowrap text-md font-semibold",
+                    "ml-auto shrink-0 whitespace-nowrap text-md font-semibold rail:text-base",
                     isSelected
                       ? "text-on-solid"
                       : closed
@@ -221,7 +222,7 @@ export function SessionList({
                   two screens now say it the same way. */}
               <span
                 className={cn(
-                  "whitespace-nowrap text-base tabular-nums",
+                  "whitespace-nowrap text-base tabular-nums rail:shrink-0",
                   isSelected ? "text-on-solid" : s.price === basePrice ? "text-muted" : "font-semibold text-fg",
                 )}
               >
@@ -229,7 +230,7 @@ export function SessionList({
               </span>
 
               {full && !closed && s.waitlist && (
-                <span className="text-sm font-medium text-brand-foreground">{t("sheet.joinWaitlist")} →</span>
+                <span className="text-sm font-medium text-brand-foreground rail:shrink-0">{t("sheet.joinWaitlist")} →</span>
               )}
             </span>
           </button>

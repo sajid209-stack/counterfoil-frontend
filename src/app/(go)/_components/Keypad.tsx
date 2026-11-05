@@ -4,6 +4,7 @@ import { Delete } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 // Big touch keypad (48px+ targets; ≥72px in large mode) for PIN and tender.
+// On a desktop (`rail:`) it is a compact 40px pad: a mouse needs no bigger.
 export function Keypad({
   onKey,
   onBackspace,
@@ -15,7 +16,7 @@ export function Keypad({
 }) {
   const t = useTranslations("pos");
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
-  const keyCls = `${large ? "h-20" : "h-16"} rounded-card border border-line bg-card text-2xl text-fg active:bg-muted-wash`;
+  const keyCls = `${large ? "h-20" : "h-16"} rounded-card border border-line bg-card text-2xl text-fg active:bg-muted-wash ${large ? "" : "rail:h-10 rail:text-lg"}`;
   return (
     <div className={`grid grid-cols-3 ${large ? "gap-comfortable" : "gap-tight"}`}>
       {keys.map((k) => (

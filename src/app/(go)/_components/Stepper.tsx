@@ -15,7 +15,7 @@ import { cn } from "@/lib/cn";
  * - `pill`: one bordered pill holding both buttons, for a cart line where the
  *   stepper sits among other quiet controls.
  *
- * Targets are 44px in both. Radius follows the Go product token (`rounded-control`
+ * Targets are 44px in both (40px on a desktop, `rail:`). Radius follows the Go product token (`rounded-control`
  * is a full pill under data-product="go"), so no radius is hand-typed here.
  */
 export function Stepper({
@@ -42,7 +42,7 @@ export function Stepper({
   const atMin = value <= min;
   const atMax = max !== undefined && value >= max;
   const button = cn(
-    "flex h-11 w-11 shrink-0 items-center justify-center rounded-control transition-colors duration-quick",
+    "flex h-11 w-11 shrink-0 items-center justify-center rounded-control rail:h-10 rail:w-10 transition-colors duration-quick",
     variant === "pair" && "border border-line",
   );
   const minus = cn(button, "text-fg active:bg-muted-wash disabled:text-faint disabled:active:bg-transparent", variant === "round" && "bg-subtle");
@@ -60,7 +60,7 @@ export function Stepper({
       <button type="button" aria-label={lessLabel} disabled={atMin} onClick={() => onChange(Math.max(min, value - 1))} className={minus}>
         <Minus size={16} strokeWidth={2} aria-hidden />
       </button>
-      <span className="min-w-6 text-center text-md font-semibold tabular-nums text-fg">{value}</span>
+      <span className="min-w-6 text-center text-md font-semibold rail:min-w-8 rail:text-base tabular-nums text-fg">{value}</span>
       <button type="button" aria-label={moreLabel} disabled={atMax} onClick={() => onChange(max === undefined ? value + 1 : Math.min(max, value + 1))} className={plus}>
         <Plus size={16} strokeWidth={2} aria-hidden />
       </button>

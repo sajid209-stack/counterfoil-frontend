@@ -31,7 +31,7 @@ import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 import { BookingGlyph, WallHeading, WallRow, WallTile } from "../_components/WallTile";
 import { SheetShell } from "../_components/SheetShell";
 import { Stepper } from "../_components/Stepper";
-import { ActionBar, primaryButton } from "../_components/ActionBar";
+import { ActionBar, primaryButton, secondaryButton } from "../_components/ActionBar";
 import { ActionTile, GoCard, Tile, TileGrid, TileLabel } from "../_components/Tiles";
 import { EventSheet } from "../_components/EventSheet";
 import { Keypad } from "../_components/Keypad";
@@ -98,13 +98,13 @@ function ShopGlyph({ kind }: { kind: "merch" | "food" | "equipment" | "service" 
 /** The 56px picture on a cart line: the item's photograph, or a soft panel with
  *  its glyph where it has none. The wall tile's own rule, so a line and the
  *  tile it came from show the same thing. */
-function CartThumb({ image, glyph, small = false }: { image?: string; glyph: React.ReactNode; small?: boolean }) {
+function CartThumb({ image, glyph, small = false, compact = false }: { image?: string; glyph: React.ReactNode; small?: boolean; compact?: boolean }) {
   const [broken, setBroken] = useState(false);
   return image && !broken ? (
     // eslint-disable-next-line @next/next/no-img-element -- bundled/local assets, as on the wall
-    <img src={image} alt="" decoding="async" onError={() => setBroken(true)} className={cn(small ? "size-12" : "size-14", "shrink-0 rounded-md object-cover")} />
+    <img src={image} alt="" decoding="async" onError={() => setBroken(true)} className={cn(compact ? "size-10" : small ? "size-12" : "size-14", "shrink-0 rounded-md object-cover")} />
   ) : (
-    <span aria-hidden className={cn(small ? "size-12 ring-1 ring-inset ring-line" : "size-14", "flex shrink-0 items-center justify-center rounded-md bg-subtle text-fg-secondary [&_svg]:size-6")}>
+    <span aria-hidden className={cn(compact ? "size-10 ring-1 ring-inset ring-line [&_svg]:size-5" : small ? "size-12 ring-1 ring-inset ring-line [&_svg]:size-6" : "size-14 [&_svg]:size-6", "flex shrink-0 items-center justify-center rounded-md bg-subtle text-fg-secondary")}>
       {glyph}
     </span>
   );
@@ -1518,7 +1518,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                two lines, and the sheet behind the card carries the rest. Two
                columns on a phone, more as the width allows. */
             <div>
-              <div className="grid grid-cols-2 gap-comfortable sm:grid-cols-3 xl:grid-cols-4 rail:grid-cols-[repeat(auto-fill,minmax(min(100%,11.5rem),1fr))] rail:gap-section">
+              <div className="grid grid-cols-2 gap-comfortable sm:grid-cols-3 xl:grid-cols-4 rail:grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] rail:gap-comfortable">
                 {shown.map((p) => {
                   const live = posLiveState(p, sellDate, nowMinutes, liveWords);
                   const n = inSale(p.id);
@@ -1908,20 +1908,20 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     code and how much is paid now — all of which come from the
                     sale engine, not from arithmetic here. */}
                 <div className="text-center rail:text-left" data-pay-amount>
-                  <p className="text-base font-medium text-muted">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</p>
-                  <p className="mt-inline text-[clamp(2rem,10vw,2.75rem)] font-bold leading-tight tabular-nums text-fg">{formatMoney(dueNow, currency)}</p>
+                  <p className="text-base font-medium text-muted rail:text-sm">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</p>
+                  <p className="mt-inline text-[clamp(2rem,10vw,2.75rem)] font-bold leading-tight tabular-nums text-fg rail:mt-0 rail:text-[2rem]">{formatMoney(dueNow, currency)}</p>{/* ds-exception: the desktop figure is 32px, between the scale's 28 and 40 */}
                 </div>
         </>);
         const rowsCard = (<>
           {/* Who it is for, what comes off, and a promo code: one card of
                     rows, each saying where it stands. */}
-                <div className="card-surface overflow-hidden px-comfortable">
+                <div className={rail ? "border-y border-line" : "card-surface overflow-hidden px-comfortable"}>
                   <CustomerRow attached={attached} onOpen={() => setCustomerOpen(true)} onRemove={() => setAttached(null)} />
                   {(FEATURES.memberships || (pointsAccount && program?.enabled)) && (
                     <div className="flex flex-wrap items-center gap-tight border-b border-line py-tight last:border-b-0">
-                      {FEATURES.memberships && <button type="button" onClick={() => setMembershipOpen(true)} className="h-11 rounded-full border border-line px-comfortable text-sm">{t("summary.sellMembership")}</button>}
+                      {FEATURES.memberships && <button type="button" onClick={() => setMembershipOpen(true)} className="h-11 rounded-full border border-line px-comfortable text-sm rail:h-9">{t("summary.sellMembership")}</button>}
                       {pointsAccount && program?.enabled && (
-                        <button type="button" onClick={() => setPointsOpen(true)} className="h-11 min-w-0 rounded-full border border-line px-comfortable text-sm">
+                        <button type="button" onClick={() => setPointsOpen(true)} className="h-11 min-w-0 rounded-full border border-line px-comfortable text-sm rail:h-9">
                           <span className="truncate">{pointsToSpend > 0 ? t("summary.pointsApplied", { count: pointsToSpend }) : t("summary.spendPoints", { count: pointsAccount.balance })}</span>
                         </button>
                       )}
@@ -1988,7 +1988,31 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     soft round and a word. Chosen is the till's one look for it:
                     solid orange, white, a tick. Four across; two by two on the
                     narrowest phones, where four would crowd the words. */}
-                {availableMethods.length > 1 && (
+                {availableMethods.length > 1 && rail && (
+                  <div className="flex flex-col gap-tight">
+                    <TileLabel className="text-base">{t("pay.method")}</TileLabel>
+                    <TileGrid cols={availableMethods.length >= 4 ? 4 : (availableMethods.length as 2 | 3)} role="radiogroup" aria-label={t("pay.method")}>
+                      {availableMethods.map((m) => {
+                        const Icon = METHOD_ICON[m.value] ?? Wallet;
+                        const on = method === m.value;
+                        return (
+                          <Tile
+                            key={m.value}
+                            role="radio"
+                            aria-checked={on}
+                            selected={on}
+                            className="h-10 flex-row gap-tight"
+                            onClick={() => { setMethod(m.value); setTenderTaka(""); setPadOpen(false); }}
+                          >
+                            <Icon size={16} strokeWidth={1.75} aria-hidden className="shrink-0" />
+                            <span className="truncate text-base font-medium">{enumL.method(m.value)}</span>
+                          </Tile>
+                        );
+                      })}
+                    </TileGrid>
+                  </div>
+                )}
+                {availableMethods.length > 1 && !rail && (
                   <div className="flex flex-col gap-tight">
                     <TileLabel>{t("pay.method")}</TileLabel>
                     <TileGrid
@@ -2027,16 +2051,59 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     none. */}
                 {payOptions.length > 1 && (
                   <div className="flex flex-col gap-tight">
-                    <TileLabel>{t("pay.howMuch")}</TileLabel>
+                    <TileLabel className="rail:text-base">{t("pay.howMuch")}</TileLabel>
                     <HowMuchNow options={payOptions} value={choice} onChange={setPayChoice} currency={currency} />
                     {balance > 0 && (
-                      <p className="text-md font-medium text-fg" data-pay-part>
+                      <p className="text-md font-medium text-fg rail:text-sm" data-pay-part>
                         {t("pay.partSummary", { now: formatMoney(dueNow, currency), later: formatMoney(balance, currency) })}
                       </p>
                     )}
                   </div>
                 )}
         </>);
+        const cashBlockRail = cash ? (
+          <div className="flex flex-col gap-tight">
+            {/* Cash received is the way to the pad: press the figure and the
+                keypad opens, as on the phone. 40px, a quiet field. */}
+            <button
+              type="button"
+              onClick={() => setPadOpen(true)}
+              aria-label={`${t("cash.tendered")} ${formatMoney(tenderedMinor, currency)} — ${t("cash.tapToChange")}`}
+              className="flex h-10 w-full items-center justify-between gap-tight text-left"
+            >
+              <span className="min-w-0 text-base font-medium">{t("cash.tendered")}</span>
+              <span
+                data-pay-tendered
+                className={cn(
+                  "flex h-10 min-w-[10rem] shrink-0 items-center justify-end rounded-inner bg-card px-comfortable text-md font-semibold tabular-nums ring-inset",
+                  padOpen || typed ? "ring-2 ring-ember" : "ring-1 ring-strong",
+                )}
+              >
+                {formatMoney(tenderedMinor, currency)}
+              </span>
+            </button>
+            <div className="flex flex-wrap gap-tight" data-pay-notes>
+              <Tile selected={exact} onClick={() => setTenderTaka("")} label={t("cash.exact")} className="h-9 min-h-9 px-comfortable [&>span]:text-base [&>span]:font-medium" />
+              {quickNotes(dueNow).map((amt) => {
+                const on = typed && parseInt(tenderTaka, 10) === amt;
+                return <Tile key={amt} selected={on} onClick={() => setTenderTaka(String(amt))} label={formatPriceShort(amt * 100, currency)} className="h-9 min-h-9 px-comfortable tabular-nums [&>span]:text-base [&>span]:font-medium" />;
+              })}
+            </div>
+            {exact ? (
+              <p className="flex h-8 items-center text-base font-medium text-success">{t("cash.noChange")}</p>
+            ) : (
+              <div className={`flex h-8 items-baseline justify-between gap-tight font-semibold ${enough ? "text-success" : "text-muted"}`}>
+                <span className="shrink-0 text-base">{t("complete.giveChange")}</span>
+                <span className="min-w-0 truncate text-right text-lg">{enough ? formatMoney(changeMinor, currency) : "—"}</span>
+              </div>
+            )}
+            {(prefs.posKeypad || padOpen) && (
+              <Keypad onKey={(d) => setTenderTaka((t) => (t + d).slice(0, 7))} onBackspace={() => setTenderTaka((t) => t.slice(0, -1))} />
+            )}
+          </div>
+        ) : (
+          <p className="text-base text-muted">{method === "card_terminal" ? t("pay.cardHint") : t("pay.walletHint")}</p>
+        );
         const cashBlock = (<>
           {cash ? (
                   <>
@@ -2116,9 +2183,24 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                 }}
               />
         );
+        /* The desktop's foot: Back outlined, Complete sale filling the rest,
+           both 44px, on the right column's own floor. */
+        const footRail = (
+          <section aria-label={t("pay.title")} className="flex gap-tight border-t border-line px-card py-comfortable">
+            <button type="button" className={secondaryButton("h-11", "flex-none px-section")} onClick={() => setCashOpen(false)} disabled={cashSaving}>
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden />
+              <span className="truncate">{t("cart.back")}</span>
+            </button>
+            <button type="button" className={primaryButton("h-11", "flex-1")} onClick={() => void finishPayment(tenderedMinor, changeMinor)} disabled={(cash && !enough) || cashSaving || blocked}>
+              <Check size={18} strokeWidth={2.5} aria-hidden />
+              <span className="truncate">{cash || method === "card_terminal" ? t("cash.completeSale") : t("pay.next")}</span>
+              {(cash || method === "card_terminal") && <span aria-hidden className="tabular-nums">{formatPriceShort(dueNow, currency)}</span>}
+            </button>
+          </section>
+        );
         const closeButton = (
           /* 44px: Go is touch at every width. */
-          <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-muted-wash"><X size={20} strokeWidth={1.5} /></button>
+          <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-muted-wash rail:size-9"><X size={20} strokeWidth={1.5} /></button>
         );
         return (
           <SheetShell
@@ -2126,52 +2208,52 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
             labelledBy="pay-title"
             desktop="dialog"
             onClose={() => { if (!cashSaving) setCashOpen(false); }}
-            className="mx-auto flex max-h-[92vh] w-full max-w-[560px] flex-col bg-surface rail:max-w-[55rem]"
+            className="mx-auto flex max-h-[92vh] w-full max-w-[560px] flex-col bg-surface rail:max-w-[60rem] rail:bg-card"
           >
             {/* On a desktop the grabber gives way to a title; the heading is
                 always in the document, drawn only where it has the room. */}
-            <div className="flex items-center justify-between gap-tight px-section pb-tight pt-tight rail:px-card rail:py-section">
+            <div className="flex items-center justify-between gap-tight px-section pb-tight pt-tight rail:h-14 rail:shrink-0 rail:px-card rail:py-0">
               <span className="w-11 rail:hidden" aria-hidden />
               <span className="h-1 w-10 rounded-full bg-line rail:hidden" aria-hidden />
-              <h2 id="pay-title" className="sr-only rail:not-sr-only rail:text-xl rail:font-semibold rail:text-fg">{t("pay.title")}</h2>
+              <h2 id="pay-title" className="sr-only rail:not-sr-only rail:text-md rail:font-semibold rail:text-fg">{t("pay.title")}</h2>
               {closeButton}
             </div>
             {rail ? (
-              <div className="grid min-h-0 flex-1 grid-cols-2 border-t border-line">
+              <div className="grid min-h-0 flex-1 grid-cols-[25rem_minmax(0,1fr)] border-t border-line">
                 {/* The sale: what is being sold, who it is for, what comes off,
                     and what it adds up to. */}
-                <div className="flex min-h-0 flex-col gap-comfortable overflow-y-auto border-r border-line p-card [&>*]:shrink-0">
-                  <TileLabel>{t("pay.summaryTitle")}</TileLabel>
-                  <div className="card-surface px-comfortable" data-pay-summary>
+                <div className="flex min-h-0 flex-col gap-section overflow-y-auto border-r border-line p-card [&>*]:shrink-0">
+                  <TileLabel className="text-base">{t("pay.summaryTitle")}</TileLabel>
+                  <div data-pay-summary>
                     <ul className="divide-y divide-line">
                       {cart.map((e) => {
                         const prod = productById(e.productId);
                         const shelf = shopItems.find((i) => inventoryLineId(i.id) === e.productId);
                         return (
-                          <li key={e.id} className="flex items-center gap-comfortable py-comfortable">
-                            <CartThumb small image={prod?.images?.[0]?.url} glyph={prod ? <BookingGlyph bookingType={prod.bookingType} /> : shelf ? <ShopGlyph kind={shelf.kind} /> : <Plus strokeWidth={1.5} />} />
+                          <li key={e.id} className="flex items-center gap-comfortable py-tight">
+                            <CartThumb small compact image={prod?.images?.[0]?.url} glyph={prod ? <BookingGlyph bookingType={prod.bookingType} /> : shelf ? <ShopGlyph kind={shelf.kind} /> : <Plus strokeWidth={1.5} />} />
                             <div className="min-w-0 flex-1">
-                              <p className="line-clamp-2 text-base font-semibold leading-snug">{e.productName}</p>
+                              <p className="truncate text-base font-medium">{e.productName}</p>
                               {lineDetail(e) && <p className="truncate text-sm text-muted">{lineDetail(e)}</p>}
                             </div>
-                            <span className="shrink-0 text-base font-semibold tabular-nums">{formatMoney(entryTotal(e), currency)}</span>
+                            <span className="shrink-0 text-base font-medium tabular-nums">{formatMoney(entryTotal(e), currency)}</span>
                           </li>
                         );
                       })}
                     </ul>
                   </div>
                   {rowsCard}
-                  <div className="card-surface p-card">{totalsRows}</div>
+                  <div className="[&_.text-lg]:font-bold">{totalsRows}</div>
                 </div>
                 {/* How they pay: the amount, the way, how much now, the cash. */}
                 <div className="flex min-h-0 flex-col">
-                  <div className="flex min-h-0 flex-1 flex-col gap-comfortable overflow-y-auto p-card [&>*]:shrink-0">
+                  <div className="flex min-h-0 flex-1 flex-col gap-section overflow-y-auto p-card [&>*]:shrink-0">
                     {amountBlock}
                     {methodBlock}
                     {howMuchBlock}
-                    {cashBlock}
+                    {cashBlockRail}
                   </div>
-                  {footBar}
+                  {footRail}
                 </div>
               </div>
             ) : (

@@ -38,21 +38,22 @@ import { ClockCell } from "../../_components/Clock";
 import { Stepper } from "../../_components/Stepper";
 import { Tile, TileGrid, TileLabel } from "../../_components/Tiles";
 import { DateTiles } from "../../_components/SheetParts";
+import { DIALOG_MD, DIALOG_SM } from "../_lib/dialog";
 
 /* The two big buttons every sheet here ends on, always in the same places:
    Hold on the LEFT, Add to sale on the RIGHT. A cashier who cannot read the
    words learns "orange on the right sells it" once and never has to look
    again — and it is the same pair, in the same order, as the bar under the
    board. */
-const BASE = "inline-flex min-w-0 items-center justify-center gap-tight rounded-full px-comfortable text-md font-semibold transition-transform duration-quick active:scale-[0.98] disabled:opacity-50";
+const BASE = "inline-flex min-w-0 items-center justify-center gap-tight rounded-full px-comfortable text-md font-semibold transition-transform duration-quick active:scale-[0.98] disabled:opacity-50 rail:min-h-10 rail:flex-none rail:rounded-control rail:px-5 rail:py-0 rail:text-base";
 /** On a counter tablet a bottom sheet stretched the whole screen; the till’s own
  *  sheets stop at about 560px, centred, and these do too. */
-export const SHEET_WIDTH = "mx-auto max-w-xl";
+export const SHEET_WIDTH = DIALOG_MD;
 /** The two buttons, at a height. Built here rather than overridden at the
  *  call site: `cn` does not merge conflicting utilities, so "h-14 h-13" is
  *  decided by stylesheet order, not by intent. */
-export const primary = (h = "h-13", grow = "flex-1") => `${BASE} ${h} ${grow} bg-ember-solid text-on-solid`;
-export const secondary = (h = "h-13", grow = "flex-1") => `${BASE} ${h} ${grow} bg-card text-fg shadow-card ring-1 ring-inset ring-line`;
+export const primary = (h = "h-13", grow = "flex-1") => `${BASE} ${h} rail:h-10 ${grow} bg-ember-solid text-on-solid`;
+export const secondary = (h = "h-13", grow = "flex-1") => `${BASE} ${h} rail:h-10 ${grow} bg-card text-fg shadow-card ring-1 ring-inset ring-line rail:shadow-none`;
 const PRIMARY = primary();
 const SECONDARY = secondary();
 /** Add to sale gets the larger share of the row: it is the common answer. */
@@ -92,7 +93,7 @@ function HoldForm({
       {/* The field draws its own ember border when focused; the app-wide ring
           on top of it read as two rings. The opt-out is on the host. */}
       <div data-focus-host className="flex flex-col gap-inline">
-        <label htmlFor="hold-name" className="text-md font-semibold text-fg">{t("sheet.holdName")}</label>
+        <label htmlFor="hold-name" className="text-md font-semibold text-fg rail:text-base rail:font-medium">{t("sheet.holdName")}</label>
         <input
           id="hold-name"
           autoFocus
@@ -102,13 +103,13 @@ function HoldForm({
           placeholder={t("sheet.holdNamePh")}
           aria-invalid={missing || undefined}
           aria-describedby={missing ? "hold-name-err" : undefined}
-          className={cn("h-14 rounded-inner bg-subtle px-comfortable text-md focus:ring-2 focus:ring-ember", missing && "ring-2 ring-danger")}
+          className={cn("h-14 rounded-inner bg-subtle px-comfortable text-md focus:ring-2 focus:ring-ember rail:h-10 rail:text-base", missing && "ring-2 ring-danger")}
         />
-        {missing && <p id="hold-name-err" className="text-base text-danger">{t("sheet.holdNameMissing")}</p>}
+        {missing && <p id="hold-name-err" className="text-base text-danger rail:text-sm">{t("sheet.holdNameMissing")}</p>}
       </div>
       <div role="radiogroup" aria-label={t("sheet.holdLength")} className="flex flex-col gap-tight">
-        <TileLabel>{t("sheet.holdLength")}</TileLabel>
-        <TileGrid cols={4} className="max-[400px]:grid-cols-2">
+        <TileLabel className="rail:text-base rail:font-medium">{t("sheet.holdLength")}</TileLabel>
+        <TileGrid cols={4} className="max-[400px]:grid-cols-2 rail:grid-cols-[1fr_1fr_1fr_1.6fr]">
           {LENGTHS.map((l) => (
             <Tile
               key={String(l)}
@@ -116,13 +117,13 @@ function HoldForm({
               aria-checked={length === l}
               selected={length === l}
               onClick={() => setLength(l)}
-              className="h-12 text-md font-semibold"
+              className="h-12 text-md font-semibold whitespace-nowrap rail:h-9 rail:min-h-9 rail:px-2 rail:text-base"
             >
               {l === "day" ? t("sheet.holdDay") : l === 60 ? t("sheet.hold1h") : t("sheet.holdMin", { count: l })}
             </Tile>
           ))}
         </TileGrid>
-        <p className="text-base text-muted">{t("sheet.holdHelp")}</p>
+        <p className="text-base text-muted rail:text-sm">{t("sheet.holdHelp")}</p>
       </div>
     </>
   );
@@ -167,9 +168,9 @@ export function HoldSheet({
       onClose={onClose}
       title={title}
       closeLabel={tc("close")}
-      className={SHEET_WIDTH}
+      className={DIALOG_SM}
       footer={
-        <div className="flex w-full gap-tight">
+        <div className="flex w-full gap-tight rail:justify-end">
           <button type="button" className={SECONDARY} onClick={onClose}>{t("sheet.back")}</button>
           <button type="button" className={PRIMARY} onClick={f.submit} disabled={busy}>
             <Lock size={20} strokeWidth={2} aria-hidden />
@@ -178,10 +179,10 @@ export function HoldSheet({
         </div>
       }
     >
-      <div className="flex flex-col gap-section p-card">
+      <div className="flex flex-col gap-section p-card rail:gap-4">
         {/* What is being held, under its title — the title says what the
             sheet does, this says to what. */}
-        <p className="-mt-tight text-base text-muted">{when}</p>
+        <p className="-mt-tight text-base text-muted rail:-mt-4 rail:text-sm">{when}</p>
         <HoldForm name={f.name} setName={f.setName} missing={f.missing} setMissing={f.setMissing} length={f.length} setLength={f.setLength} onEnter={f.submit} />
       </div>
     </Sheet>
@@ -262,7 +263,7 @@ export function SessionSheet({
       className={SHEET_WIDTH}
       footer={
         mode === "tickets" ? (
-          <div className="flex w-full gap-tight">
+          <div className="flex w-full gap-tight rail:justify-end">
             {onHold && (
               <button type="button" className={SECONDARY} onClick={() => setMode("hold")}>
                 <Lock size={20} strokeWidth={2} aria-hidden />
@@ -275,7 +276,7 @@ export function SessionSheet({
             </button>
           </div>
         ) : (
-          <div className="flex w-full gap-tight">
+          <div className="flex w-full gap-tight rail:justify-end">
             <button type="button" className={SECONDARY} onClick={() => { setMode("tickets"); f.setMissing(false); }}>{t("sheet.back")}</button>
             <button type="button" className={PRIMARY} onClick={f.submit} disabled={busy}>
               <Lock size={20} strokeWidth={2} aria-hidden />
@@ -285,17 +286,17 @@ export function SessionSheet({
         )
       }
     >
-      <div className="flex flex-col gap-section p-card">
-        <p className="-mt-tight text-base text-muted">{when}</p>
+      <div className="flex flex-col gap-section p-card rail:gap-4">
+        <p className="-mt-tight text-base text-muted rail:-mt-4 rail:text-sm">{when}</p>
         {mode === "tickets" ? (
           <>
             <ul className="flex flex-col gap-tight">
               {tiers.map((x) => {
                 const n = qty[x.id] ?? 0;
                 return (
-                  <li key={x.id} className="flex min-h-16 items-center gap-comfortable rounded-inner bg-subtle px-comfortable py-tight">
+                  <li key={x.id} className="flex min-h-16 items-center gap-comfortable rounded-inner bg-subtle px-comfortable py-tight rail:min-h-14">
                     <span className="min-w-0 flex-1">
-                      <span className="block text-md font-semibold text-fg">{x.name}</span>
+                      <span className="block text-md font-semibold text-fg rail:text-base">{x.name}</span>
                       <span className="block text-base tabular-nums text-muted">
                         {formatPriceShort(x.price)}
                         {(x.admits ?? 1) > 1 && ` · ${t("sheet.admitsCount", { count: x.admits ?? 1 })}`}
@@ -312,7 +313,7 @@ export function SessionSheet({
               })}
             </ul>
             <div className="flex items-baseline justify-between gap-comfortable">
-              <span className="text-base text-muted">{t("sheet.seatsLeftNow", { count: block.remaining })}</span>
+              <span className="text-base text-muted rail:text-sm">{t("sheet.seatsLeftNow", { count: block.remaining })}</span>
               <span className="text-xl font-semibold tabular-nums text-fg">{formatMoney(total)}</span>
             </div>
             {nothing && <Notice tone="danger" size="sm">{t("sheet.pickTickets")}</Notice>}
@@ -408,7 +409,7 @@ export function BlockSheet({
       className={SHEET_WIDTH}
         lead={<p className="flex items-center gap-1 text-base font-medium text-muted"><Lock size={14} aria-hidden />{t("board.onHold")}</p>}
         footer={
-          <div className="flex w-full gap-tight">
+          <div className="flex w-full gap-tight rail:justify-end">
             <button type="button" className={SECONDARY} onClick={onRelease} disabled={busy}>
               <Unlock size={20} strokeWidth={2} aria-hidden />
               {t("sheet.release")}
@@ -420,7 +421,7 @@ export function BlockSheet({
           </div>
         }
       >
-        <dl className="flex flex-col gap-tight p-card text-md">
+        <dl className="flex flex-col gap-tight p-card text-md rail:text-base">
           <Fact label={t("sheet.where")} value={when} />
           <Fact label={t("sheet.what")} value={h.productName} />
           <Fact
@@ -508,9 +509,9 @@ export function BlockSheet({
         ));
         const grow = secondaries.length && !stack ? "flex-[1.3]" : "flex-1";
         return (
-          <div className="flex w-full flex-col gap-tight">
-            {stack && <div className="flex gap-tight">{lead}</div>}
-            <div className="flex gap-tight">
+          <div className="flex w-full flex-col gap-tight rail:items-end">
+            {stack && <div className="flex gap-tight rail:justify-end">{lead}</div>}
+            <div className="flex gap-tight rail:justify-end">
               {!stack && lead}
               {take && (
                 <button type="button" data-block-primary className={primary("min-h-13 py-2", grow)} onClick={onTake} disabled={busy}>
@@ -546,7 +547,7 @@ export function BlockSheet({
           {t("refund.moveDeclined", { note: lastMove.decisionNote })}
         </Notice>
       )}
-      <dl className="flex flex-col gap-tight p-card text-md">
+      <dl className="flex flex-col gap-tight p-card text-md rail:text-base">
         <Fact label={t("sheet.where")} value={when} />
         <Fact label={t("sheet.people")} value={t("sheet.peopleCount", { count: b.partySize })} />
         <Fact
@@ -700,7 +701,7 @@ export function MoveSheet({
       className={SHEET_WIDTH}
       lead={<p className="text-base font-medium text-muted">{title} · {placeName} · {formatClockRange(time, toTime(toMinutes(time) + durationMinutes))}</p>}
       footer={
-        <div className="flex w-full gap-tight">
+        <div className="flex w-full gap-tight rail:justify-end">
           <button type="button" className={SECONDARY} onClick={onClose} disabled={busy || sending}>
             <ChevronLeft size={20} strokeWidth={2} aria-hidden />
             {t("sheet.back")}
@@ -718,7 +719,7 @@ export function MoveSheet({
         </div>
       }
     >
-      <div className="flex flex-col gap-section p-card">
+      <div className="flex flex-col gap-section p-card rail:gap-4">
         <DateTiles
           dates={dates}
           value={selDate}
@@ -732,11 +733,11 @@ export function MoveSheet({
         {times.length === 0 ? (
           <p className="text-base text-muted">{t("sheet.moveClosed")}</p>
         ) : (
-          <TileGrid cols={4}>
+          <TileGrid cols={4} className="rail:grid-cols-6">
             {times.map((cell) => {
               if (cell.isNow) {
                 return (
-                  <div key={cell.time} className="flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-inner bg-transparent px-1 py-1 text-muted ring-1 ring-inset ring-line">
+                  <div key={cell.time} className="flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-inner bg-transparent px-1 py-1 text-muted ring-1 ring-inset ring-line rail:min-h-10">
                     <ClockCell hhmm={cell.time} className="text-md font-semibold tabular-nums" />
                     <span className="text-sm font-medium">{t("sheet.moveNow")}</span>
                   </div>
@@ -744,7 +745,7 @@ export function MoveSheet({
               }
               if (!cell.free) {
                 return (
-                  <span key={cell.time} className="flex min-h-14 items-center justify-center rounded-inner bg-transparent px-1 py-1 text-base text-muted line-through ring-1 ring-inset ring-line">
+                  <span key={cell.time} className="flex min-h-14 items-center justify-center rounded-inner bg-transparent px-1 py-1 text-base text-muted line-through ring-1 ring-inset ring-line rail:min-h-10">
                     <ClockCell hhmm={cell.time} className="line-through" />
                   </span>
                 );
@@ -756,7 +757,7 @@ export function MoveSheet({
                   aria-pressed={chosen}
                   selected={chosen}
                   onClick={() => setSelTime(cell.time)}
-                  className="min-h-14 text-md font-semibold"
+                  className="min-h-14 text-md font-semibold rail:min-h-10 rail:text-base"
                 >
                   <ClockCell hhmm={cell.time} />
                 </Tile>
@@ -767,7 +768,7 @@ export function MoveSheet({
 
         {asking && changed && (
           <div className="flex flex-col gap-tight">
-            <p className="text-md font-semibold text-fg">{t("sheet.moveWhy")}</p>
+            <p className="text-md font-semibold text-fg rail:text-base">{t("sheet.moveWhy")}</p>
             <TileGrid cols={2} role="radiogroup" aria-label={t("sheet.moveWhy")}>
               {(["customer_asked", "weather", "venue_problem", "other"] as RescheduleReason[]).map((r) => {
                 const on = reason === r;
@@ -778,13 +779,14 @@ export function MoveSheet({
                     aria-checked={on}
                     selected={on}
                     onClick={() => { setReason(on ? null : r); setErr(null); }}
-                    className="min-h-11 text-base font-semibold"
+                    className="min-h-11 text-base font-semibold rail:min-h-9 rail:h-9"
                   >
                     {t(`refund.moveReasons.${r}`)}
                   </Tile>
                 );
               })}
             </TileGrid>
+            <label htmlFor="move-note" className="hidden text-base font-medium text-fg rail:block">{reason === "other" ? t("sheet.moveNoteRequired") : t("sheet.moveNoteLabel")}</label>
             <input
               id="move-note"
               value={note}
@@ -792,7 +794,7 @@ export function MoveSheet({
               aria-label={reason === "other" ? t("sheet.moveNoteRequired") : t("sheet.moveNoteLabel")}
               aria-invalid={!!err}
               placeholder={reason === "other" ? t("sheet.moveNoteRequired") : t("sheet.moveNoteLabel")}
-              className={cn("h-11 rounded-inner bg-subtle px-comfortable text-md", err && "ring-2 ring-danger")}
+              className={cn("h-11 rounded-inner bg-subtle px-comfortable text-md rail:h-10 rail:text-base", err && "ring-2 ring-danger")}
             />
             {err && <p role="alert" className="text-base font-medium text-danger">{err}</p>}
           </div>

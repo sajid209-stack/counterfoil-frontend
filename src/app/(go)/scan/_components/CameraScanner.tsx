@@ -61,7 +61,7 @@ const SCAN_CSS = `
 @media (prefers-reduced-motion: no-preference) { .cf-scanline { animation: cf-scan 2.6s ease-in-out infinite; } }
 `;
 
-export function CameraView({ onCode, labels }: { onCode: (code: string) => void; labels: CameraLabels }) {
+export function CameraView({ onCode, labels, compact = false }: { onCode: (code: string) => void; labels: CameraLabels; compact?: boolean }) {
   const supported = useCameraSupport();
   const video = useRef<HTMLVideoElement>(null);
   const stream = useRef<MediaStream | null>(null);
@@ -187,7 +187,7 @@ export function CameraView({ onCode, labels }: { onCode: (code: string) => void;
   return (
     <section aria-label={labels.viewfinder} className="flex flex-col gap-tight">
       <style>{SCAN_CSS}</style>
-      <div className="relative mx-auto aspect-square w-full max-w-xl overflow-hidden rounded-card bg-inverse sm:aspect-[4/3] rail:max-w-none">
+      <div className={cn("relative mx-auto w-full overflow-hidden bg-inverse", compact ? "aspect-video rounded-inner" : "aspect-square max-w-xl rounded-card sm:aspect-[4/3] rail:max-w-none")}>
         <video ref={video} playsInline muted className={cn("absolute inset-0 h-full w-full object-cover", !running && "invisible")} />
 
         {/* The calm placeholder, where there is no picture. */}
@@ -257,7 +257,7 @@ export function CameraView({ onCode, labels }: { onCode: (code: string) => void;
       {/* ONE instruction, chosen by what the camera is doing — never "hold the QR
           inside the square" under a message saying there is no camera. */}
       {!denied && (
-        <p className="text-center text-md font-semibold">{!supported ? labels.none : running ? labels.aim : labels.idle}</p>
+        <p className={cn("text-center font-semibold", compact ? "text-base" : "text-md")}>{!supported ? labels.none : running ? labels.aim : labels.idle}</p>
       )}
     </section>
   );

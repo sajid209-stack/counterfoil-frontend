@@ -11,6 +11,7 @@ import { useEnumLabels } from "@/lib/labels";
 import type { Minor, PaymentMethod } from "@/lib/api";
 import { primaryButton, secondaryButton } from "../../_components/ActionBar";
 import { Tile, TileGrid } from "../../_components/Tiles";
+import { DIALOG_MD } from "../_lib/dialog";
 import { AfterMatchDiscount, discountFromState, discountReasonText, emptyDiscount, type DiscountState } from "./AfterMatchDiscount";
 
 /* ── Take what a booking still owes ───────────────────────────────────────
@@ -140,7 +141,7 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
      label can run long ("Take ৳862.50 and check in", and longer in Bangla), so
      the button grows to two lines rather than cutting the amount short. */
   const footer: ReactNode = (
-    <div className="flex w-full flex-col gap-tight">
+    <div className="flex w-full flex-col gap-tight rail:items-end">
       {/* A guest who has paid ahead of turning up: take the money, leave them
           for the door. A quiet text button, never a second orange one. */}
       {checksIn && !nothingToTake && (
@@ -148,12 +149,12 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
           {t("pay.takeOnly", { amount: money })}
         </Button>
       )}
-      <div className="flex w-full gap-tight">
-        <button type="button" className={secondaryButton("h-13", "flex-none")} onClick={onClose} disabled={busy}>
+      <div className="flex w-full gap-tight rail:justify-end">
+        <button type="button" className={secondaryButton("h-13 rail:h-10 rail:min-h-10 rail:px-4 rail:text-base", "flex-none")} onClick={onClose} disabled={busy}>
           <ChevronLeft size={20} strokeWidth={2} aria-hidden />
           {t("sheet.back")}
         </button>
-        <button type="button" data-pay-primary className={primaryButton("min-h-13 py-2", "flex-1")} onClick={() => go(checksIn)} disabled={busy || !ready}>
+        <button type="button" data-pay-primary className={primaryButton("min-h-13 py-2 rail:h-10 rail:min-h-10 rail:py-0 rail:px-5 rail:text-base", "flex-1 rail:flex-none")} onClick={() => go(checksIn)} disabled={busy || !ready}>
           <span className="text-center leading-tight">{primaryLabel}</span>
         </button>
       </div>
@@ -161,15 +162,15 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
   );
 
   return (
-    <Sheet open onClose={onClose} title={t("sheet.takeTitle")} closeLabel={tc("close")} className="mx-auto max-w-xl" lead={<p className="text-base font-medium text-muted">{title} · {when}</p>} footer={footer}>
+    <Sheet open onClose={onClose} title={t("sheet.takeTitle")} closeLabel={tc("close")} className={DIALOG_MD} lead={<p className="text-base font-medium text-muted rail:text-sm">{title} · {when}</p>} footer={footer}>
       <div className="flex flex-col gap-section p-card">
         {/* What is being taken, as large as the screen allows: it is the number
             the guest is told. It follows the discount and any part-payment. */}
         <div className="text-center" data-pay-amount>
           <p className="text-base font-medium text-muted">{part != null ? t("pay.partNow") : t("pay.toTake")}</p>
-          <p className="mt-inline text-4xl font-semibold leading-tight tabular-nums text-fg">{money}</p>
+          <p className="mt-inline text-4xl rail:text-3xl font-semibold leading-tight tabular-nums text-fg">{money}</p>
           {(calc.hasAmount && calc.valid) || left > 0 ? (
-            <p className="mt-inline text-base text-muted">
+            <p className="mt-inline text-base text-muted rail:text-sm">
               {left > 0 ? t("pay.stillOwed", { amount: formatMoney(left) }) : t("pay.owedWas", { amount: formatMoney(owed) })}
             </p>
           ) : null}
@@ -189,16 +190,16 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
             </Button>
           ) : (
             <div className="flex flex-col gap-tight">
-              <label htmlFor="pay-part" className="text-md font-semibold text-fg">{t("pay.partLabel")}</label>
+              <label htmlFor="pay-part" className="text-md font-semibold text-fg rail:text-base rail:font-medium">{t("pay.partLabel")}</label>
               <div className="flex items-center gap-tight">
                 <input
                   id="pay-part"
                   inputMode="decimal"
                   value={part}
                   onChange={(e) => { setPart(e.target.value); setTender(""); }}
-                  className="h-11 min-w-0 flex-1 rounded-inner bg-subtle px-comfortable text-right text-md tabular-nums"
+                  className="h-11 min-w-0 flex-1 rounded-inner bg-subtle px-comfortable text-right text-md tabular-nums rail:h-10 rail:text-base"
                 />
-                <button type="button" onClick={() => setPart(null)} className="h-11 shrink-0 rounded-full bg-subtle px-comfortable text-md font-semibold text-fg hover:bg-muted-wash">
+                <button type="button" onClick={() => setPart(null)} className="h-11 shrink-0 rounded-full bg-subtle px-comfortable text-md font-semibold text-fg hover:bg-muted-wash rail:h-10 rail:rounded-control rail:text-base">
                   {t("pay.partAll")}
                 </button>
               </div>
@@ -208,7 +209,7 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
 
         {!nothingToTake && methods.length > 1 && (
           <div>
-            <p className="mb-tight text-md font-semibold text-fg">{tp("pay.method")}</p>
+            <p className="mb-tight text-md font-semibold text-fg rail:text-base rail:font-medium">{tp("pay.method")}</p>
             {/* Each way to pay its own tile, a picture and a word. Chosen is
                 solid orange, white, a tick. */}
             <TileGrid cols={Math.min(methods.length, 4) as 2 | 3 | 4} role="radiogroup" aria-label={tp("pay.method")}>
@@ -223,7 +224,7 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
                     selected={on}
                     data-method={m}
                     onClick={() => { setPicked(m); setTender(""); setTyping(false); }}
-                    className="min-h-[4.5rem] gap-inline text-base font-semibold leading-tight"
+                    className="min-h-[4.5rem] gap-inline text-base font-semibold leading-tight rail:min-h-16"
                   >
                     <Icon size={22} strokeWidth={1.75} aria-hidden />
                     <span className="max-w-full break-words">{enumL.method(m)}</span>
@@ -238,7 +239,7 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
           <div className="flex flex-col gap-tight">
             {/* The received figure IS the way to type another: tap it. */}
             {typing ? (
-              <label className="flex min-h-14 items-center justify-between gap-tight rounded-inner bg-subtle px-comfortable">
+              <label className="flex min-h-14 rail:min-h-12 items-center justify-between gap-tight rounded-inner bg-subtle px-comfortable">
                 <span className="text-md">{tp("cash.tendered")}</span>
                 <span className="flex items-center gap-1 text-lg font-semibold">
                   {currencySymbol()}
@@ -249,7 +250,7 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
                     placeholder={String(Math.ceil(payNow / 100))}
                     onChange={(e) => setTender(e.target.value.replace(/\D/g, "").slice(0, 7))}
                     aria-label={tp("cash.tendered")}
-                    className="h-11 w-28 rounded-inner bg-card px-tight text-right tabular-nums"
+                    className="h-11 w-28 rounded-inner bg-card px-tight text-right tabular-nums rail:h-10"
                   />
                 </span>
               </label>
@@ -258,7 +259,7 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
                 type="button"
                 onClick={() => setTyping(true)}
                 aria-label={`${tp("cash.tendered")} ${formatMoney(tenderedMinor)} — ${tp("cash.tapToChange")}`}
-                className="flex min-h-14 w-full items-center justify-between gap-tight rounded-inner bg-subtle px-comfortable text-left active:bg-muted-wash"
+                className="flex min-h-14 rail:min-h-12 w-full items-center justify-between gap-tight rounded-inner bg-subtle px-comfortable text-left active:bg-muted-wash"
               >
                 <span className="flex min-w-0 items-center gap-inline text-md">
                   {tp("cash.tendered")}
@@ -268,11 +269,11 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
               </button>
             )}
             {exact ? (
-              <p className="flex min-h-14 items-center rounded-inner bg-success-wash px-comfortable text-md font-medium text-success">{tp("cash.noChange")}</p>
+              <p className="flex min-h-14 rail:min-h-12 items-center rounded-inner bg-success-wash px-comfortable text-md font-medium text-success">{tp("cash.noChange")}</p>
             ) : (
-              <div className={cn("flex min-h-14 items-baseline justify-between gap-tight rounded-inner px-comfortable py-tight font-semibold", enough ? "bg-success-wash text-success" : "bg-subtle text-muted")}>
-                <span className="shrink-0 text-xl">{enough ? tp("complete.giveChange") : t("pay.notEnough")}</span>
-                <span className="min-w-0 truncate text-right text-3xl">{enough ? formatMoney(change) : "—"}</span>
+              <div className={cn("flex min-h-14 rail:min-h-12 items-baseline justify-between gap-tight rounded-inner px-comfortable py-tight font-semibold", enough ? "bg-success-wash text-success" : "bg-subtle text-muted")}>
+                <span className="shrink-0 text-xl rail:text-lg">{enough ? tp("complete.giveChange") : t("pay.notEnough")}</span>
+                <span className="min-w-0 truncate text-right text-3xl rail:text-2xl">{enough ? formatMoney(change) : "—"}</span>
               </div>
             )}
             <div className="flex flex-wrap gap-tight" data-pay-notes>
@@ -292,7 +293,7 @@ function PaymentSheetBody({ onClose, title, when, orderTotal, owed, limitPct, me
 
 function NoteChip({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) {
   return (
-    <Tile aria-pressed={on} selected={on} onClick={onClick} className="h-11 min-w-16 flex-1 text-md font-semibold tabular-nums">
+    <Tile aria-pressed={on} selected={on} onClick={onClick} className="h-11 min-w-16 flex-1 text-md font-semibold tabular-nums rail:h-9 rail:min-h-9 rail:text-base">
       <span className="truncate">{children}</span>
     </Tile>
   );

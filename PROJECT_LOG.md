@@ -19481,3 +19481,37 @@ stylist or time is chosen online, as for the seed's spa; a remembered bundle
 demo logs React #418 on a hard reload (server renders the seed, the browser the
 demo — the same as Doers on production); dates still print day-first ("4 Nov");
 the Bangla for the new strings is a draft.
+---
+
+## POS desktop, round two: a desktop is not a big phone (2026-11-05)
+
+Owner review of the Go desktop: cards and buttons too big, the booking drawer and popups not to
+standard, the schedule showing too few hours, checkout and sale complete wasting the screen, and
+Scan and Check in wanted as one place. Spec: docs/pos-desktop.md §8. Everything is `rail:`-only;
+the phone is unchanged.
+
+- **Choosing** (Tiles.tsx `TILE_CHOSEN`): on a desktop a tint, a 2px orange ring and brand text,
+  no tick; solid orange only for the screen's one primary action. `text-on-solid` inside a chosen
+  tile follows it to the brand colour through one descendant rule.
+- **Sizes**: 40px controls, 36px chips, 44px footer primaries; no 56–88px buttons on a desktop.
+- **Wall**: cards from 10rem, 16:10 picture, 14px name, 16px price, 28px mark.
+- **Booking drawer**: 560px, one-line date buttons, compact stepper, equal lane tiles with one
+  truncated status line, 6-across times, footer buttons right-aligned.
+- **Checkout**: one 960px white dialog, summary rows left, payment method as one row of inline
+  options, 44px Back + Complete sale; fits 1366×768.
+- **Sale complete**: two columns: amount, receipt, print/send buttons and New sale left; tickets
+  right.
+- **Schedule**: one toolbar (title, ‹ Today ›, the day, calendar, a neutral segmented resource
+  switch), a 14-day strip of 40px pills, 48px hours (12 visible at 900px), the chosen-slot bar
+  docked in the flow as one 56px row, centred dialogs with no drag handle (kit `Sheet` hides its
+  handle at `rail`).
+- **Check in**: one desktop destination; the scan panel (shared `ScanPanel`) left and today's
+  arrivals right; a scan marks and scrolls to the guest's row.
+
+Found and fixed in review: the chosen-slot bar's buttons measured 0px wide because the row was a
+size container (`@container`), so they spilled 148px off the screen; the bar's close now sits last.
+
+Verified on a production build, ec29f026 scratchpad `pos/shots.mjs` (1440×900 and 1366×768: no
+control over 56px, no text under 12px, nothing clipped, no sideways scroll, checkout fits the
+screen, hold dialog without a handle, one Check in in the sidebar). Viewed by eye. tsc, tokens and
+i18n clean; eslint at the known PosScreen baseline.

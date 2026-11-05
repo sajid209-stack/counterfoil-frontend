@@ -48,6 +48,7 @@ export function ActionBar({
   primary,
   docked = "screen",
   tone = "sheet",
+  row = false,
   className,
 }: {
   id?: string;
@@ -76,12 +77,19 @@ export function ActionBar({
    *  is cards on the page (the cart and the payment step), so the buttons sit
    *  on the same ground as the cards above them rather than on a white slab. */
   tone?: "sheet" | "ground";
+  /** From the desktop up (`rail:`), a `screen` bar stops floating: it is one
+   *  56px row in the flow, docked under the content it belongs to — words on
+   *  the left, the money and 40px buttons on the right (pos-desktop §8.5).
+   *  The phone is unchanged. */
+  row?: boolean;
   className?: string;
 }) {
+  const rowH = row ? " rail:h-10 rail:min-h-10 rail:px-4 rail:text-base" : "";
+  const rowGrow = row ? " rail:flex-none" : "";
   const buttons = (secondary || primary) && (
-    <div className="@container flex gap-tight">
+    <div className={cn("@container flex gap-tight", row && "rail:shrink-0 rail:[container-type:normal]")}>
       {secondary && (
-        <button type="button" className={secondaryButton("h-13", primary ? "flex-[0.8] min-[360px]:flex-1" : "flex-1")} onClick={secondary.onClick} disabled={secondary.disabled} aria-label={secondary.ariaLabel}>
+        <button type="button" className={secondaryButton(`h-13${rowH}`, `${primary ? "flex-[0.8] min-[360px]:flex-1" : "flex-1"}${rowGrow}`)} onClick={secondary.onClick} disabled={secondary.disabled} aria-label={secondary.ariaLabel}>
           {secondary.icon}
           {secondary.shortLabel != null ? (
             <>
@@ -94,7 +102,7 @@ export function ActionBar({
         </button>
       )}
       {primary && (
-        <button type="button" className={primaryButton("h-13", secondary ? "flex-[1.4]" : "flex-1")} onClick={primary.onClick} disabled={primary.disabled} aria-label={primary.ariaLabel}>
+        <button type="button" className={primaryButton(`h-13${rowH}`, `${secondary ? "flex-[1.4]" : "flex-1"}${rowGrow}`)} onClick={primary.onClick} disabled={primary.disabled} aria-label={primary.ariaLabel}>
           {primary.icon}
           <span className="truncate">{primary.label}</span>
         </button>
@@ -129,6 +137,7 @@ export function ActionBar({
                pill's top (76px + 8 + the device inset); on a landscape tablet
                there is no bar, so it floats 12px off the floor. */
             "inset-x-comfortable bottom-[calc(84px+env(safe-area-inset-bottom))] mx-auto max-w-md rail:bottom-comfortable",
+        row && docked === "screen" && "rail:static rail:inset-auto rail:left-auto rail:w-full rail:translate-x-0",
         className,
       )}
     >
@@ -141,7 +150,7 @@ export function ActionBar({
           /* In dark the card and the page are one step apart and the lift is a
              shadow on near-black, which is nothing: the bar's edge is a real
              1px line there, so it reads as an object at all. */
-          docked === "screen" ? "p-comfortable go-raised dark:border dark:border-strong" : "rounded-full go-raised p-tight dark:border dark:border-strong",
+          docked === "screen" ? cn("p-comfortable go-raised dark:border dark:border-strong", row && "rail:min-h-14 rail:flex-row rail:flex-wrap rail:items-center rail:gap-x-4 rail:gap-y-2 rail:px-4 rail:py-2") : "rounded-full go-raised p-tight dark:border dark:border-strong",
         )}
       >
         {summary}
@@ -171,18 +180,21 @@ export function ChromeBackdrop({ className }: { className?: string }) {
 /** The summary line every bar opens with: what on the left, money on the right. */
 export function BarSummary({ lead, sub, money, moneySub, trailing }: { lead: React.ReactNode; sub?: React.ReactNode; money?: React.ReactNode; moneySub?: React.ReactNode; trailing?: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-tight">
-      <div className="min-w-0 flex-1">
-        <p aria-live="polite" className="text-md font-semibold text-fg">{lead}</p>
-        {sub && <p className="line-clamp-2 text-sm text-muted">{sub}</p>}
+    /* From the desktop up the row dissolves (`contents`) into the bar, so the
+        words, the money, the buttons and the close are siblings in one 56px row. */
+    <div className="flex items-start gap-tight rail:contents">
+      <div className="min-w-0 flex-1 rail:flex rail:items-baseline rail:gap-2">
+        <p aria-live="polite" className="text-md font-semibold text-fg rail:shrink-0 rail:text-base">{lead}</p>
+        {sub && <p className="line-clamp-2 text-sm text-muted rail:min-w-0 rail:truncate rail:before:mr-2 rail:before:content-['·']">{sub}</p>}
       </div>
       {money != null && (
-        <div className="shrink-0 text-right">
-          <p className="text-lg font-semibold tabular-nums text-fg">{money}</p>
+        <div className="shrink-0 text-right rail:flex rail:items-baseline rail:gap-1.5">
+          <p className="text-lg font-semibold tabular-nums text-fg rail:text-md">{money}</p>
           {moneySub && <p className="text-sm text-muted">{moneySub}</p>}
         </div>
       )}
-      {trailing}
+      {/* Last in the desktop row, after the buttons. */}
+      {trailing != null && <div className="flex shrink-0 rail:order-last">{trailing}</div>}
     </div>
   );
 }

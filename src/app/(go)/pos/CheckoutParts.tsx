@@ -49,14 +49,14 @@ export function SaleRow({
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex min-h-14 w-full items-center gap-comfortable py-comfortable text-left"
+        className="flex min-h-14 w-full items-center gap-comfortable py-comfortable text-left rail:min-h-11 rail:gap-tight rail:py-0"
       >
-        <Icon size={22} strokeWidth={1.6} className="shrink-0 text-muted" aria-hidden />
-        <span className="min-w-0 flex-1 truncate text-md font-medium">{label}</span>
-        <span className="shrink-0 whitespace-nowrap text-md font-medium text-fg">{value}</span>
+        <Icon size={22} strokeWidth={1.6} className="shrink-0 text-muted rail:size-[18px]" aria-hidden />
+        <span className="min-w-0 flex-1 truncate text-md font-medium rail:text-base">{label}</span>
+        <span className="shrink-0 whitespace-nowrap text-md font-medium text-fg rail:text-base">{value}</span>
         <ChevronRight size={16} strokeWidth={1.5} className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-90")} aria-hidden />
       </button>
-      {open && <div className="pb-comfortable">{children}</div>}
+      {open && <div className="pb-comfortable rail:pb-tight">{children}</div>}
     </div>
   );
 }
@@ -78,19 +78,19 @@ export function CustomerRow({
   const detail = attached?.phone || attached?.email || "";
   return (
     <div className="flex items-center gap-tight border-b border-line last:border-b-0">
-      <button type="button" onClick={onOpen} className="flex min-h-14 min-w-0 flex-1 items-center gap-comfortable py-tight text-left">
-        <UserRound size={22} strokeWidth={1.6} className="shrink-0 text-muted" aria-hidden />
+      <button type="button" onClick={onOpen} className="flex min-h-14 min-w-0 flex-1 items-center gap-comfortable py-tight text-left rail:min-h-11 rail:gap-tight rail:py-0">
+        <UserRound size={22} strokeWidth={1.6} className="shrink-0 text-muted rail:size-[18px]" aria-hidden />
         <span className="min-w-0 flex-1">
           {attached ? (
             <>
-              <span className="block break-words text-md font-medium">{attached.name}</span>
+              <span className="block break-words text-md font-medium rail:text-base">{attached.name}</span>
               {detail && <span className="block truncate text-sm normal-nums text-muted">{detail}</span>}
             </>
           ) : (
-            <span className="block text-md font-medium">{t("cart.attachCustomer")}</span>
+            <span className="block text-md font-medium rail:text-base">{t("cart.attachCustomer")}</span>
           )}
         </span>
-        {attached && <span className="shrink-0 whitespace-nowrap text-md font-medium text-fg">{t("cart.customerChange")}</span>}
+        {attached && <span className="shrink-0 whitespace-nowrap text-md font-medium text-fg rail:text-base">{t("cart.customerChange")}</span>}
         <ChevronRight size={16} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
       </button>
       {attached && (
@@ -98,7 +98,7 @@ export function CustomerRow({
           type="button"
           onClick={onRemove}
           aria-label={t("pay.removeCustomer", { name: attached.name })}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted active:bg-muted-wash"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted active:bg-muted-wash rail:size-9"
         >
           <X size={18} strokeWidth={1.75} aria-hidden />
         </button>
@@ -141,12 +141,12 @@ export function PromoCodeRow({
 
   if (applied) {
     return (
-      <div className="flex items-start gap-comfortable border-b border-line py-comfortable last:border-b-0">
-        <TicketPercent size={22} strokeWidth={1.6} className="mt-0.5 shrink-0 text-muted" aria-hidden />
+      <div className="flex items-start gap-comfortable border-b border-line py-comfortable last:border-b-0 rail:gap-tight rail:py-tight">
+        <TicketPercent size={22} strokeWidth={1.6} className="mt-0.5 shrink-0 text-muted rail:size-[18px]" aria-hidden />
         <div className="min-w-0 flex-1">
-          <span id={id} className="block text-md font-medium">{t("pay.promoCode")}</span>
+          <span id={id} className="block text-md font-medium rail:text-base">{t("pay.promoCode")}</span>
           <div className="mt-tight flex">
-            <span aria-labelledby={id} className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-line bg-card pl-comfortable pr-1 text-md">
+            <span aria-labelledby={id} className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-line bg-card pl-comfortable pr-1 text-md rail:min-h-9 rail:text-base">
               <Check size={16} strokeWidth={2.5} className="shrink-0 text-success" aria-hidden />
               <span className="min-w-0 truncate font-semibold">{code}</span>
               <span className="shrink-0 whitespace-nowrap font-medium tabular-nums text-muted">−{formatMoney(taken, currency)}</span>
@@ -154,7 +154,7 @@ export function PromoCodeRow({
                 type="button"
                 onClick={onRemove}
                 aria-label={t("pay.removeCode", { code })}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted active:bg-muted-wash"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted active:bg-muted-wash rail:size-9"
               >
                 <X size={16} strokeWidth={1.75} aria-hidden />
               </button>
@@ -184,7 +184,7 @@ export function PromoCodeRow({
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-err` : undefined}
           className={cn(
-            "h-11 min-w-0 flex-1 rounded-full border bg-card px-comfortable text-md uppercase placeholder:normal-case placeholder:text-muted",
+            "h-11 min-w-0 flex-1 rounded-full border bg-card px-comfortable text-md uppercase rail:h-10 rail:text-base placeholder:normal-case placeholder:text-muted",
             error ? "border-danger" : "border-line",
           )}
         />
@@ -192,7 +192,7 @@ export function PromoCodeRow({
           type="button"
           onClick={onApply}
           disabled={!input.trim()}
-          className="h-11 shrink-0 rounded-full border-2 border-line bg-card px-section text-md font-semibold text-fg transition-transform duration-quick active:scale-[0.98] disabled:opacity-50"
+          className="h-11 shrink-0 rounded-full border-2 border-line bg-card px-section text-md font-semibold rail:h-10 rail:border rail:text-base rail:font-medium text-fg transition-transform duration-quick active:scale-[0.98] disabled:opacity-50"
         >
           {t("pay.apply")}
         </button>
@@ -238,7 +238,7 @@ export function HowMuchNow({
           onClick={() => onChange(o.id)}
           label={o.label}
           sub={<span className="tabular-nums">{formatPriceShort(o.amount, currency)}</span>}
-          className="h-[4.25rem]"
+          className="h-[4.25rem] rail:h-10 rail:flex-row rail:gap-tight rail:[&_span]:mt-0 rail:[&_span]:text-base"
         />
       ))}
     </TileGrid>

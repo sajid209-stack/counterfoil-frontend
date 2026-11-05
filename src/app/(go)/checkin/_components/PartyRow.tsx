@@ -34,6 +34,9 @@ export function PartyRow({
   menuLabel,
   onTake,
   onCheckIn,
+  rail = false,
+  highlighted = false,
+  timeLabel,
 }: {
   party: Party;
   pending: boolean;
@@ -44,10 +47,97 @@ export function PartyRow({
   menuLabel: string;
   onTake: () => void;
   onCheckIn: (count: number) => void;
+  /** The desktop line: one 52px row. */
+  rail?: boolean;
+  /** The guest a scan just found. */
+  highlighted?: boolean;
+  timeLabel?: string;
 }) {
   const t = useTranslations("checkin");
   const tr = useTranslations("refunds");
   const remaining = p.size - p.arrived;
+
+  /* Desktop: one 52px line per party. Name and what it is (code, party, who is
+     in) on the left, then time, status and the one action. Same data attributes
+     and button names as the phone row. */
+  if (rail) {
+    const status =
+      p.state === "noshow" ? (
+        <span className="inline-flex items-center rounded-full bg-danger-wash px-comfortable py-inline text-sm font-semibold text-danger">
+          {p.booking.noShowReason ? t("noShowTagReason", { reason: p.booking.noShowReason }) : t("noShowTag")}
+        </span>
+      ) : p.state === "in" ? (
+        <span className="inline-flex items-center rounded-full bg-success-wash px-comfortable py-inline text-sm font-semibold text-success">{t("allIn")}</span>
+      ) : p.state === "partial" ? (
+        <span className="inline-flex items-center rounded-full bg-warning-wash px-comfortable py-inline text-sm font-semibold text-fg">{t("inOfTotal", { done: p.arrived, total: p.size })}</span>
+      ) : (
+        <span className="inline-flex items-center rounded-full bg-subtle px-comfortable py-inline text-sm font-medium text-muted">{t("filterNotIn")}</span>
+      );
+    return (
+      <li
+        data-party
+        data-state={p.state}
+        data-scanned={highlighted ? "" : undefined}
+        className={cn(
+          "flex min-h-13 items-center gap-comfortable border-t border-line px-card py-tight first:border-t-0 hover:bg-nav-hover",
+          highlighted && "bg-ember-wash ring-2 ring-inset ring-ember hover:bg-ember-wash",
+        )}
+      >
+        <div className="min-w-0 flex-1">
+          <p className={cn("flex min-w-0 items-center gap-tight text-base font-semibold text-fg", p.nameIsReference && "font-mono")}>
+            <span className="min-w-0 truncate">{p.name || t("walkInDefaultName")}</span>
+            {highlighted && <span className="shrink-0 rounded-full bg-ember-solid px-tight text-sm font-semibold text-on-solid">{t("justScanned")}</span>}
+          </p>
+          <p className="flex min-w-0 flex-wrap items-center gap-x-tight text-sm text-muted">
+            {!p.nameIsReference && p.reference && <span className="font-mono">{p.reference}</span>}
+            {!p.nameIsReference && p.reference && <span aria-hidden>·</span>}
+            <span>{t("guests", { count: p.size })}</span>
+            {refundAsked && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
+                <RotateCcw size={12} strokeWidth={2.25} aria-hidden />
+                {t("refundAsked")}
+              </span>
+            )}
+            {writeOffAsked && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
+                <HandCoins size={12} strokeWidth={2.25} aria-hidden />
+                {tr("pos.markers.writeOffAsked")}
+              </span>
+            )}
+            {moveAsked && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-warning-wash px-tight font-medium text-fg">
+                <CalendarClock size={12} strokeWidth={2.25} aria-hidden />
+                {t("moveAsked")}
+              </span>
+            )}
+          </p>
+          <RequestNotes variant="row" orderId={p.booking.orderId} bookingId={p.booking.id} className="mt-inline flex flex-col gap-inline" />
+        </div>
+        {timeLabel && <span className="w-16 shrink-0 text-sm tabular-nums text-muted">{timeLabel}</span>}
+        <div className="flex w-28 shrink-0 justify-start">{status}</div>
+        <div className="flex shrink-0 items-center gap-tight">
+          {menu.length > 0 && <ActionMenu shape="go" items={menu} label={menuLabel} />}
+          {p.state === "noshow" ? (
+            <span aria-hidden className="w-24" />
+          ) : p.due > 0 ? (
+            <Button data-primary="take" className="h-9" onClick={onTake}>
+              {t("takeAmount", { amount: formatMoney(p.due) })}
+            </Button>
+          ) : p.state === "in" ? (
+            <span aria-hidden className="w-24" />
+          ) : p.state === "partial" ? (
+            <Button data-primary="plusone" className="h-9" loading={pending} aria-label={t("plusOneLabel")} onClick={() => onCheckIn(p.arrived + 1)}>
+              {t("plusOne")}
+            </Button>
+          ) : (
+            <Button data-primary="checkin" className="h-9" loading={pending} onClick={() => onCheckIn(p.size)}>
+              {p.size > 1 ? t("checkInCount", { count: remaining }) : t("checkIn")}
+            </Button>
+          )}
+        </div>
+      </li>
+    );
+  }
 
   return (
     <li data-party data-state={p.state} className="card-surface flex flex-wrap items-center gap-x-comfortable gap-y-tight p-comfortable rail:rounded-none rail:border-t rail:border-line rail:bg-transparent rail:py-comfortable rail:pl-hero rail:pr-card rail:shadow-none rail:first:border-t-0 rail:hover:bg-nav-hover">

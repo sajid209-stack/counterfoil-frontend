@@ -48,18 +48,18 @@ export function RepeatPicker({
   const blocked = plan.length - bookable;
 
   return (
-    <div className="mb-section flex flex-col gap-tight">
-      <TileLabel>{t("repeat.title")}</TileLabel>
+    <div className="mb-section rail:mb-5 flex flex-col gap-tight">
+      <TileLabel className="rail:text-base">{t("repeat.title")}</TileLabel>
 
       {/* One row of separate tiles at rest, the off state its own tile; the
           round stepper only appears once someone has asked to repeat, which
           is the only time a count between the presets is worth reaching for. */}
       <div className="grid grid-cols-2 gap-tight sm:grid-cols-4">
-        <Tile selected={count === 1} onClick={() => onCount(1)} className="min-h-12">
+        <Tile selected={count === 1} onClick={() => onCount(1)} className="min-h-12 rail:min-h-10">
           <TileText label={t("repeat.offChip")} selected={count === 1} />
         </Tile>
         {CHIPS.map((n) => (
-          <Tile key={n} selected={count === n} onClick={() => onCount(n)} className="min-h-12">
+          <Tile key={n} selected={count === n} onClick={() => onCount(n)} className="min-h-12 rail:min-h-10">
             <TileText label={t("repeat.weeks", { count: n })} selected={count === n} />
           </Tile>
         ))}
@@ -67,7 +67,7 @@ export function RepeatPicker({
 
       {/* Fine adjustment, only once repeating is on. The tiles FILL this. */}
       {count > 1 && (
-        <div className="card-surface flex items-center justify-between gap-comfortable p-comfortable">
+        <div className="card-surface flex items-center justify-between gap-comfortable p-comfortable rail:min-h-12 rail:px-3 rail:py-1.5">
           <span className="text-base font-semibold text-fg">{t("repeat.fine")}</span>
           <Stepper variant="round" value={count} min={1} max={max} onChange={onCount} lessLabel={t("repeat.fewer")} moreLabel={t("repeat.more")} />
         </div>
@@ -77,7 +77,7 @@ export function RepeatPicker({
         <>
           <ul className="card-surface flex flex-col p-comfortable">
             {plan.map((o) => (
-              <li key={o.date} className="flex min-h-11 items-center gap-comfortable">
+              <li key={o.date} className="flex min-h-11 items-center rail:min-h-9 gap-comfortable">
                 <span className={cn("shrink-0", o.ok ? "text-success" : "text-muted")}>
                   {o.ok ? <Check size={14} strokeWidth={2} /> : <X size={14} strokeWidth={2} />}
                 </span>

@@ -72,9 +72,23 @@ export function TileGrid({ cols = 3, className, children, ...rest }: { cols?: 2 
 
 export const TILE_BASE =
   "relative flex min-w-0 flex-col items-center justify-center rounded-inner px-tight py-tight text-center transition-colors duration-quick disabled:cursor-not-allowed";
-export const TILE_IDLE = "bg-card text-fg shadow-card hover:bg-nav-hover active:bg-nav-selected";
-export const TILE_CHOSEN = "bg-ember-solid text-on-solid shadow-none hover:bg-ember-hover active:bg-ember-active";
+export const TILE_IDLE = "bg-card text-fg shadow-card hover:bg-nav-hover active:bg-nav-selected rail:shadow-none rail:ring-1 rail:ring-inset rail:ring-line";
+/**
+ * Chosen. On a phone: the solid orange fill with white text. On a desktop
+ * (`rail:`) a tint and an orange ring with brand text instead: on a big screen
+ * many solid orange blocks compete with the one orange action on the screen
+ * (Add, Take, Complete sale), so a choice there is marked the way Square,
+ * Shopify and Toast mark it on a desktop. Text inside the tile that says
+ * `text-on-solid` follows it to the brand colour on a desktop, and the tick
+ * hides there (the ring is the mark). See docs/pos-desktop.md §8.
+ */
+export const TILE_CHOSEN =
+  "bg-ember-solid text-on-solid shadow-none hover:bg-ember-hover active:bg-ember-active rail:bg-ember-wash rail:text-brand-foreground rail:ring-2 rail:ring-inset rail:ring-ember rail:hover:bg-ember-wash rail:active:bg-ember-wash rail:[&_.text-on-solid]:text-brand-foreground";
 export const TILE_OFF = "bg-transparent text-muted shadow-none ring-1 ring-inset ring-line";
+/** The chosen tick: on a phone only (see TILE_CHOSEN). */
+export const TICK = "absolute right-1.5 top-1.5 rail:hidden";
+/** A desktop control's height: 40px, where a phone's tile is 44 and up. */
+export const RAIL_H = "rail:min-h-10";
 
 /** A caller's own height wins: the default is only added when none is passed,
  *  so two min-heights never compete on stylesheet order. */
@@ -82,7 +96,7 @@ const withHeight = (fallback: string, className?: string) => (className && /(^|\
 
 /** Class string for a tile in a given state, for callers that need their own element. */
 export function tileClass({ selected, off, className }: { selected?: boolean; off?: boolean; className?: string }) {
-  return cn(TILE_BASE, withHeight("min-h-11", className), selected ? TILE_CHOSEN : off ? TILE_OFF : TILE_IDLE, className);
+  return cn(TILE_BASE, withHeight("min-h-11 rail:min-h-10", className), selected ? TILE_CHOSEN : off ? TILE_OFF : TILE_IDLE, className);
 }
 
 /**
@@ -112,7 +126,7 @@ export function Tile({
   const ariaDefault = rest.role ? {} : { "aria-pressed": selected };
   return (
     <button type="button" {...ariaDefault} {...rest} className={tileClass({ selected, off, className })}>
-      {selected && <Check size={14} strokeWidth={2.5} aria-hidden className="absolute right-1.5 top-1.5" />}
+      {selected && <Check size={14} strokeWidth={2.5} aria-hidden className={TICK} />}
       {children ?? (
         <>
           {label != null && <span className={cn("text-base font-semibold leading-tight", struck && "line-through")}>{label}</span>}
@@ -147,12 +161,12 @@ export function ActionTile({
       {...rest}
       className={cn(TILE_BASE, withHeight("min-h-[5.5rem]", className), "gap-tight", selected ? TILE_CHOSEN : TILE_IDLE, className)}
     >
-      {selected && <Check size={14} strokeWidth={2.5} aria-hidden className="absolute right-1.5 top-1.5" />}
+      {selected && <Check size={14} strokeWidth={2.5} aria-hidden className={TICK} />}
       <span
         aria-hidden
         className={cn(
           "flex size-10 items-center justify-center rounded-full [&_svg]:size-5",
-          selected ? "bg-ember-active text-on-solid" : "bg-subtle text-fg",
+          selected ? "bg-ember-active text-on-solid rail:bg-card" : "bg-subtle text-fg",
         )}
       >
         {icon}

@@ -8,6 +8,7 @@ import { Button, Modal, Qr, useToast } from "@/components/ui";
 import { ActionTile, GoCard, TileGrid, TileLabel, tileClass } from "../../_components/Tiles";
 import { ChromeBackdrop } from "../../_components/ActionBar";
 import { cn } from "@/lib/cn";
+import { useMediaQuery } from "@/lib/useMedia";
 import { useApiQuery } from "@/lib/useApi";
 import { cancelSale, getOperator, UNDO_SALE_SECONDS } from "@/lib/api";
 import { useEnumLabels } from "@/lib/labels";
@@ -33,8 +34,11 @@ import { takeReturnTo, takeUndoSnapshot, writeLiveSale } from "../_lib/liveSale"
  * the network and a reload loses nothing.
  */
 
-/** Tickets drawn before the list offers to show the rest. */
+/** Tickets drawn before the list offers to show the rest. A desktop has the room for more. */
 const TICKETS_SHOWN = 3;
+const TICKETS_SHOWN_RAIL = 8;
+/** A desktop: 1024px and wider, held landscape (docs/pos-desktop.md §8). */
+const RAIL = "(min-width: 64rem) and (orientation: landscape)";
 
 type Channel = "sms" | "email" | "both";
 
@@ -74,6 +78,7 @@ export default function CompletePage() {
   }, [hydrated, raw, router]);
 
   const operatorQ = useApiQuery(() => getOperator(), []);
+  const rail = useMediaQuery(RAIL);
 
   const [sending, setSending] = useState<Channel | null>(null);
   const [phone, setPhone] = useState("");
@@ -165,7 +170,50 @@ export default function CompletePage() {
   };
   const sentName = (name: string, sent: boolean) => (sent ? `${name} · ${t("complete.smsSentState")}` : name);
 
-  const visibleTickets = allTickets ? tickets : tickets.slice(0, TICKETS_SHOWN);
+  const shownCount = rail ? TICKETS_SHOWN_RAIL : TICKETS_SHOWN;
+  const visibleTickets = allTickets ? tickets : tickets.slice(0, shownCount);
+
+  /* The sale, as a receipt. On a desktop it sits in the left column under the
+     amount; on a phone it stays below the tickets. */
+  const receiptCard = (
+    info.receipt && (
+      <GoCard
+        title={t("complete.saleTitle")}
+        aside={info.reference ? <span className="min-w-0 truncate font-mono text-sm text-muted">{info.reference}</span> : undefined}
+      >
+        <ul className="flex flex-col gap-tight">
+          {info.receipt.lines.map((line, i) => (
+            <li key={i} className={cn("flex items-baseline justify-between gap-comfortable text-base", line.child && "pl-section")}>
+              <span className="min-w-0 text-fg">
+                <span className={cn(line.child && "text-muted")}>{clockify(line.name)}</span>
+                <span className="text-muted"> × {line.qty}</span>
+              </span>
+              <span className="shrink-0 tabular-nums text-fg">{formatMoney(line.amount)}</span>
+            </li>
+          ))}
+        </ul>
+        <dl className="flex flex-col gap-1.5 border-t border-line pt-comfortable text-base">
+          <Row label={t("complete.subtotal")} value={formatMoney(info.receipt.subtotal)} />
+          {info.receipt.lineDiscountTotal > 0 && <Row label={t("complete.lineDiscounts")} value={`−${formatMoney(info.receipt.lineDiscountTotal)}`} />}
+          {info.receipt.orderDiscount > 0 && <Row label={t("complete.discount")} value={`−${formatMoney(info.receipt.orderDiscount)}`} />}
+          <Row label={t("complete.vat")} value={formatMoney(info.receipt.tax)} />
+          <Row label={t("complete.total")} value={formatMoney(info.receipt.total)} strong />
+        </dl>
+        {payment && (
+          <dl className="flex flex-col gap-1.5 border-t border-line pt-comfortable text-base">
+            <Row label={t("complete.paidMethod", { method })} value={formatMoney(paidNow)} />
+            {payment.tendered !== undefined && change > 0 && (
+              <>
+                <Row label={t("complete.receivedLabel")} value={formatMoney(payment.tendered)} />
+                <Row label={t("complete.changeLabel")} value={formatMoney(change)} />
+              </>
+            )}
+            {balance > 0 && <Row label={t("complete.balanceDueAtArrival")} value={formatMoney(balance)} />}
+          </dl>
+        )}
+      </GoCard>
+    )
+  );
 
   // The lead figure: change is an action, so when there is change it IS the figure.
   const lead =
@@ -182,7 +230,7 @@ export default function CompletePage() {
         };
 
   return (
-    <main className="mx-auto w-full max-w-xl px-section pb-24 pt-major sm:max-w-3xl rail:max-w-[40rem] rail:px-major rail:pb-major rail:pt-hero">
+    <main className="mx-auto w-full max-w-xl px-section pb-24 pt-major sm:max-w-3xl rail:max-w-[75rem] rail:px-major rail:pb-major rail:pt-major">
       {/* The 5-second Undo, above everything else: a cashier who has just
           tapped the wrong sale needs it before "Sale complete" even, not
           after reading past it. Gone entirely on a handover written before
@@ -190,15 +238,15 @@ export default function CompletePage() {
       {info.completedAt && orderId && (
         <UndoBar orderId={orderId} completedAt={info.completedAt} payment={payment} onUndoing={() => { leavingOnPurpose.current = true; }} />
       )}
-      <div className="flex flex-col gap-wide">
+      <div className={rail ? "grid grid-cols-[26rem_minmax(0,1fr)] items-start gap-major" : "flex flex-col gap-wide"}>
         {/* ── What just happened, and what to do now ── */}
         <div className="flex flex-col gap-major">
-          <section className="flex flex-col items-center text-center" aria-labelledby="sale-complete">
-            <div id="sale-status" aria-live="polite" className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+          <section className="flex flex-col items-center text-center rail:items-start rail:text-left" aria-labelledby="sale-complete">
+            <div id="sale-status" aria-live="polite" className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rail:justify-start">
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-success-wash text-success">
                 <Check size={16} strokeWidth={2.6} aria-hidden />
               </span>
-              <h1 id="sale-complete" className="text-md font-semibold text-fg">
+              <h1 id="sale-complete" className="text-md font-semibold text-fg rail:text-xl">
                 {t("complete.saleComplete")}
               </h1>
               {ticketsKnown && (
@@ -211,9 +259,9 @@ export default function CompletePage() {
               )}
             </div>
 
-            <p className="mt-major text-base font-medium text-muted">{lead.label}</p>
-            <p className="mt-1.5 text-[clamp(2.5rem,13vw,3.5rem)] font-semibold leading-none tracking-figure text-fg">{lead.amount}</p>
-            {lead.note && <p className="mt-tight text-base text-muted">{lead.note}</p>}
+            <p className="mt-major text-base font-medium text-muted rail:mt-comfortable">{lead.label}</p>
+            <p className="mt-1.5 text-[clamp(2.5rem,13vw,3.5rem)] font-semibold leading-none tracking-figure text-fg rail:text-[2.25rem]">{lead.amount}</p>{/* ds-exception: the desktop figure is 36px, between the scale's 28 and 40 */}
+            {lead.note && <p className="mt-tight text-base text-muted rail:mt-inline">{lead.note}</p>}
             {balance > 0 && (
               <p className="mt-comfortable inline-flex items-center gap-1.5 rounded-full bg-warning-wash px-comfortable py-inline text-sm font-medium text-fg">
                 <Clock size={14} strokeWidth={2.2} aria-hidden className="shrink-0" />
@@ -222,11 +270,13 @@ export default function CompletePage() {
             )}
           </section>
 
+          {rail && receiptCard}
+
           {/* Hand-over, as two decisions: printed or sent. Each way is its own
               tile, in a group under a heading, so what belongs together reads
               together; side by side once there is room, stacked on a phone. The
               visible word is short; each tile's name says the whole action. */}
-          <section aria-labelledby="hand-over" className={cn("flex flex-col gap-comfortable", hasTickets && "sm:grid sm:grid-cols-2 rail:grid-cols-1")}>
+          <section aria-labelledby="hand-over" className={cn("flex flex-col gap-comfortable rail:gap-tight", hasTickets && "sm:grid sm:grid-cols-2 rail:grid-cols-1")}>
             <h2 id="hand-over" className="sr-only">
               {hasTickets ? t("complete.handOverTitle") : t("complete.handOverReceiptTitle")}
             </h2>
@@ -285,7 +335,7 @@ export default function CompletePage() {
                 autoFocus
                 aria-describedby="sale-status"
                 icon={<Plus size={20} strokeWidth={2.2} />}
-                className="h-13 text-md font-semibold shadow-float rail:shadow-none"
+                className="h-13 text-md font-semibold shadow-float rail:h-11 rail:shadow-none"
                 onClick={() => router.push(takeReturnTo() ?? "/pos")}
               >
                 {t("complete.newSale")}
@@ -298,20 +348,23 @@ export default function CompletePage() {
         <div className="flex flex-col gap-major">
           {ticketsKnown && tickets.length > 0 && (
             <section aria-labelledby="tickets-title" className="flex flex-col gap-tight">
-              <TileLabel id="tickets-title">{t("complete.ticketsTitle")}</TileLabel>
+              <TileLabel id="tickets-title">
+                {t("complete.ticketsTitle")}
+                <span className="hidden font-normal text-muted rail:inline"> · {tickets.length}</span>
+              </TileLabel>
               {/* One card per ticket, a gap of page between: the wall's drawing. */}
-              <ul className="flex flex-col gap-comfortable">
+              <ul className={cn("flex flex-col gap-comfortable rail:gap-tight", rail && tickets.length > 2 && "grid grid-cols-2")}>
                 {visibleTickets.map((ticket) => (
                   <li key={ticket.code}>
                     {/* The whole card opens the QR large, for the guest to photograph or the gate to scan. */}
                     <button
                       type="button"
                       onClick={() => setShown(ticket)}
-                      className="card-surface flex w-full items-center gap-comfortable p-comfortable text-left transition-colors duration-quick active:bg-muted-wash"
+                      className="card-surface flex w-full items-center gap-comfortable p-comfortable text-left transition-colors duration-quick active:bg-muted-wash rail:p-tight"
                     >
                       {/* The QR is what the gate scans, so it is dark on white in either theme. */}
                       <span className="shrink-0 rounded-md bg-white p-1 ring-1 ring-line">
-                        <Qr value={ticket.code} size={44} />
+                        <Qr value={ticket.code} size={rail ? 72 : 44} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block break-words text-md font-semibold leading-snug text-fg">{ticket.name}</span>
@@ -322,8 +375,8 @@ export default function CompletePage() {
                     </button>
                   </li>
                 ))}
-                {!allTickets && tickets.length > TICKETS_SHOWN && (
-                  <li>
+                {!allTickets && tickets.length > shownCount && (
+                  <li className="col-span-full">
                     <button
                       type="button"
                       onClick={() => setAllTickets(true)}
@@ -337,43 +390,7 @@ export default function CompletePage() {
             </section>
           )}
 
-          {info.receipt && (
-            <GoCard
-              title={t("complete.saleTitle")}
-              aside={info.reference ? <span className="min-w-0 truncate font-mono text-sm text-muted">{info.reference}</span> : undefined}
-            >
-              <ul className="flex flex-col gap-tight">
-                {info.receipt.lines.map((line, i) => (
-                  <li key={i} className={cn("flex items-baseline justify-between gap-comfortable text-base", line.child && "pl-section")}>
-                    <span className="min-w-0 text-fg">
-                      <span className={cn(line.child && "text-muted")}>{clockify(line.name)}</span>
-                      <span className="text-muted"> × {line.qty}</span>
-                    </span>
-                    <span className="shrink-0 tabular-nums text-fg">{formatMoney(line.amount)}</span>
-                  </li>
-                ))}
-              </ul>
-              <dl className="flex flex-col gap-1.5 border-t border-line pt-comfortable text-base">
-                <Row label={t("complete.subtotal")} value={formatMoney(info.receipt.subtotal)} />
-                {info.receipt.lineDiscountTotal > 0 && <Row label={t("complete.lineDiscounts")} value={`−${formatMoney(info.receipt.lineDiscountTotal)}`} />}
-                {info.receipt.orderDiscount > 0 && <Row label={t("complete.discount")} value={`−${formatMoney(info.receipt.orderDiscount)}`} />}
-                <Row label={t("complete.vat")} value={formatMoney(info.receipt.tax)} />
-                <Row label={t("complete.total")} value={formatMoney(info.receipt.total)} strong />
-              </dl>
-              {payment && (
-                <dl className="flex flex-col gap-1.5 border-t border-line pt-comfortable text-base">
-                  <Row label={t("complete.paidMethod", { method })} value={formatMoney(paidNow)} />
-                  {payment.tendered !== undefined && change > 0 && (
-                    <>
-                      <Row label={t("complete.receivedLabel")} value={formatMoney(payment.tendered)} />
-                      <Row label={t("complete.changeLabel")} value={formatMoney(change)} />
-                    </>
-                  )}
-                  {balance > 0 && <Row label={t("complete.balanceDueAtArrival")} value={formatMoney(balance)} />}
-                </dl>
-              )}
-            </GoCard>
-          )}
+          {!rail && receiptCard}
         </div>
       </div>
 
@@ -636,9 +653,9 @@ function UndoBar({
 function HandOverGroup({ label, cols, children }: { label: string; cols: 2 | 3; children: React.ReactNode }) {
   const id = useId();
   return (
-    <div role="group" aria-labelledby={id} className="flex min-w-0 flex-col gap-tight">
-      <TileLabel id={id}>{label}</TileLabel>
-      <TileGrid cols={cols}>{children}</TileGrid>
+    <div role="group" aria-labelledby={id} className="flex min-w-0 flex-col gap-tight rail:flex-row rail:items-center rail:gap-comfortable">
+      <TileLabel id={id} className="rail:w-14 rail:shrink-0 rail:text-base">{label}</TileLabel>
+      <TileGrid cols={cols} className="rail:min-w-0 rail:flex-1">{children}</TileGrid>
     </div>
   );
 }
@@ -647,6 +664,23 @@ function HandOverGroup({ label, cols, children }: { label: string; cols: 2 | 3; 
  *  the whole action as the tile's name. `wide` is for a tile that has its group
  *  to itself (the receipt, when no tickets were issued). */
 function HandOver({ icon, label, name, disabled, wide, onClick }: { icon: React.ReactNode; label: string; name: string; disabled?: boolean; wide?: boolean; onClick: () => void }) {
+  const rail = useMediaQuery(RAIL);
+  /* A desktop gets a compact button, the picture and the word side by side; a
+     phone keeps its tall tile. */
+  if (rail) {
+    return (
+      <button
+        type="button"
+        aria-label={name}
+        disabled={disabled}
+        onClick={onClick}
+        className={tileClass({ className: cn("h-10 flex-row gap-tight px-comfortable text-base font-medium disabled:opacity-40", wide && "col-span-full") })}
+      >
+        <span aria-hidden className="flex shrink-0 [&_svg]:size-4">{icon}</span>
+        <span className="truncate">{label}</span>
+      </button>
+    );
+  }
   return <ActionTile icon={icon} label={label} aria-label={name} disabled={disabled} onClick={onClick} className={cn("disabled:opacity-40", wide && "col-span-full")} />;
 }
 

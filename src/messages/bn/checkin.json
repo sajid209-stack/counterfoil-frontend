@@ -86,5 +86,11 @@
   "checkInRest": "বাকি {count, number} জনকে চেক ইন করুন",
   "checkInSome": "১ জনকে চেক ইন করুন",
   "paidAndIn": "{method}-এ {amount} নেওয়া হয়েছে। {name} চেক ইন হয়েছেন।",
-  "discountAppliedIn": "{amount} ছাড় দেওয়া হয়েছে। {name} চেক ইন হয়েছেন।"
+  "discountAppliedIn": "{amount} ছাড় দেওয়া হয়েছে। {name} চেক ইন হয়েছেন।",
+  "deskSubtitle": "টিকিট স্ক্যান করুন বা অতিথিকে খুঁজুন",
+  "arrivalsTitle": "আগমন",
+  "justScanned": "এইমাত্র স্ক্যান হয়েছে",
+  "strip_arrived": "এসেছেন",
+  "strip_expected": "প্রত্যাশিত",
+  "strip_notYet": "এখনও আসেননি"
 }

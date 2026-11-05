@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Ban, RefreshCw, RotateCcw, SearchX, ShieldOff, Wallet } from "lucide-react";
+import { Ban, Check, X, RefreshCw, RotateCcw, SearchX, ShieldOff, Wallet } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { PaymentMethod } from "@/lib/api";
 import type { RefuseReason, ScanOutcome } from "../_lib/outcome";
@@ -132,6 +132,7 @@ function RefuseMark() {
 export function Verdict({
   outcome,
   preview = false,
+  compact = false,
   labels,
   admitted,
   busy,
@@ -146,6 +147,8 @@ export function Verdict({
   /** Opened from a screen button rather than a scan: nothing was written, and
    *  it stays up until it is dismissed, because it is there to be looked at. */
   preview?: boolean;
+  /** Desktop side panel: one card in the flow instead of a full-screen takeover. */
+  compact?: boolean;
   labels: VerdictLabels;
   admitted: number;
   busy: boolean;
@@ -176,6 +179,10 @@ export function Verdict({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  if (compact) {
+    return <CompactVerdict outcome={outcome} preview={preview} labels={labels} admitted={admitted} busy={busy} methods={methods} method={method} onMethod={onMethod} onAdmit={onAdmit} onSettle={onSettle} onClose={onClose} />;
+  }
 
   const shell = "fixed inset-0 z-50 flex flex-col items-center justify-center gap-comfortable px-section text-center";
 
@@ -315,6 +322,137 @@ export function Verdict({
       {!admit && <span className="mt-tight max-w-sm text-md opacity-90">{labels.advice}</span>}
       <span className="mt-tight text-sm opacity-70">{preview ? labels.previewNote : labels.dismiss}</span>
 
+      {admit && !preview && (
+        <span aria-hidden className="absolute inset-x-0 bottom-0 h-1 bg-neutral-800">
+          <span className="verdict-timer block h-full w-full bg-neutral-300" />
+        </span>
+      )}
+    </button>
+  );
+}
+
+type CompactProps = Pick<Parameters<typeof Verdict>[0], "outcome" | "preview" | "labels" | "admitted" | "busy" | "methods" | "method" | "onMethod" | "onAdmit" | "onSettle" | "onClose">;
+
+/** The desktop panel's verdict: one card in the flow, 40px buttons, no
+ *  full-screen takeover. Colour, the mark AND the words carry the answer, as on
+ *  the phone. */
+function CompactVerdict({ outcome, preview, labels, admitted, busy, methods, method, onMethod, onAdmit, onSettle, onClose }: CompactProps) {
+  const mark = (tone: string, children: React.ReactNode) => (
+    <span aria-hidden className={cn("flex size-8 shrink-0 items-center justify-center rounded-full", tone)}>
+      {children}
+    </span>
+  );
+
+  if (outcome.verdict === "balance" && outcome.balance) {
+    return (
+      <div data-verdict="balance" className="flex flex-col gap-tight rounded-card bg-warning-wash p-comfortable text-fg" role="dialog" aria-modal="false" aria-label={labels.balanceDue}>
+        <div className="flex items-center gap-tight">
+          {mark("border-2 border-current", <Wallet size={16} strokeWidth={2} />)}
+          <p className="min-w-0 flex-1 text-base font-semibold">{labels.balanceDue}</p>
+          <p className="text-md font-semibold tabular-nums">{labels.amount}</p>
+        </div>
+        <p className="truncate text-sm text-fg-secondary">
+          {outcome.title} · {labels.code}
+        </p>
+        {labels.paidOf && <p className="text-sm tabular-nums text-fg-secondary">{labels.paidOf}</p>}
+        {preview && <p className="text-sm text-fg-secondary">{labels.previewNote}</p>}
+        <div className={cn("grid gap-inline", methods.length > 2 ? "grid-cols-2" : "grid-cols-1")}>
+          {methods.map((m) => (
+            <button
+              key={m}
+              type="button"
+              aria-pressed={method === m}
+              onClick={() => onMethod(m)}
+              className={cn(
+                "h-9 rounded-control text-base font-medium transition-colors duration-quick",
+                method === m ? "bg-ember-wash text-brand-foreground ring-2 ring-inset ring-ember" : "bg-card ring-1 ring-inset ring-line hover:bg-nav-hover",
+              )}
+            >
+              {labels.methodLabel(m)}
+            </button>
+          ))}
+        </div>
+        <button type="button" disabled={busy} onClick={onSettle} className="h-10 rounded-control bg-ink text-base font-semibold text-paper disabled:opacity-50 active:bg-neutral-800">
+          {labels.takeAndAdmit}
+        </button>
+        <button type="button" onClick={onClose} className="h-9 self-start rounded-control px-tight text-sm text-muted underline-offset-4 hover:text-fg hover:underline">
+          {labels.dismiss}
+        </button>
+      </div>
+    );
+  }
+
+  if (outcome.verdict === "group" && outcome.group) {
+    const remaining = outcome.group.admits - admitted;
+    return (
+      <div data-verdict="group" className="flex flex-col gap-tight rounded-card bg-ink p-comfortable text-paper" role="dialog" aria-modal="false" aria-label={labels.admit}>
+        <div className="flex items-center gap-tight">
+          {mark("bg-paper text-ink", <Check size={16} strokeWidth={3} />)}
+          <p className="min-w-0 flex-1 text-md font-semibold">{remaining > 0 ? labels.admitCount(remaining) : labels.admit}</p>
+          <span aria-hidden className="flex shrink-0 items-center gap-1">
+            {Array.from({ length: outcome.group.admits }).map((_, i) => (
+              <span key={i} className={cn("size-2 rounded-full border border-paper", i < admitted && "bg-paper")} />
+            ))}
+          </span>
+        </div>
+        <p className="text-sm text-neutral-300">{labels.groupSummary}</p>
+        <p className="text-sm text-neutral-400">{labels.code}</p>
+        {preview && <p className="text-sm text-neutral-400">{labels.previewNote}</p>}
+        {remaining > 0 ? (
+          <div className="flex gap-tight">
+            <button type="button" disabled={busy} onClick={() => onAdmit(1)} aria-label={labels.plusOneLabel} className="h-10 rounded-control border border-paper px-comfortable text-base font-medium active:bg-neutral-800">
+              {labels.plusOne}
+            </button>
+            <button type="button" disabled={busy} onClick={() => onAdmit(remaining)} className="h-10 min-w-0 flex-1 rounded-control bg-paper px-comfortable text-base font-medium text-ink active:bg-neutral-200">
+              {labels.admitAll(remaining)}
+            </button>
+          </div>
+        ) : (
+          <p className="text-base">{labels.everyoneIn}</p>
+        )}
+        <button type="button" onClick={onClose} className="h-9 self-start rounded-control px-tight text-sm text-neutral-400 underline-offset-4 hover:underline">
+          {labels.dismiss}
+        </button>
+      </div>
+    );
+  }
+
+  const admit = outcome.verdict === "admit";
+  const Kind = outcome.reason ? KIND_ICON[outcome.reason] : null;
+  return (
+    <button
+      type="button"
+      onClick={onClose}
+      role="status"
+      aria-live="assertive"
+      aria-label={admit ? labels.admit : labels.doNotAdmit}
+      data-verdict={admit ? "admit" : "refuse"}
+      style={admit ? ({ "--verdict-hold": `${ADMIT_HOLD_MS}ms` } as React.CSSProperties) : undefined}
+      className={cn("relative flex w-full flex-col gap-inline overflow-hidden rounded-card p-comfortable text-left", admit ? "bg-ink text-paper" : "bg-danger-solid text-on-solid")}
+    >
+      <span className="flex items-center gap-tight">
+        {admit ? mark("bg-paper text-ink", <Check size={16} strokeWidth={3} />) : mark("border-2 border-current", <X size={16} strokeWidth={3} />)}
+        <span className="min-w-0 flex-1 text-md font-semibold">{admit ? labels.admit : labels.doNotAdmit}</span>
+      </span>
+      {admit ? (
+        <>
+          <span className="truncate text-base">{outcome.title}</span>
+          {labels.dated && <span className="text-sm opacity-90">{labels.dated}</span>}
+        </>
+      ) : (
+        <>
+          <span className="flex items-center gap-tight text-base font-medium">
+            {Kind && <Kind size={16} strokeWidth={2.25} aria-hidden className="shrink-0" />}
+            {labels.reason}
+          </span>
+          {labels.usedAt && <span className="text-sm opacity-90">{labels.usedAt}</span>}
+          {labels.note && <span className="text-sm opacity-90">{labels.note}</span>}
+          {outcome.title && <span className="text-sm opacity-80">{outcome.title}</span>}
+          <span className="text-sm opacity-90">{labels.advice}</span>
+        </>
+      )}
+      <span className="font-mono text-sm opacity-75">{labels.code}</span>
+      <span className="text-sm opacity-70">{preview ? labels.previewNote : labels.dismiss}</span>
       {admit && !preview && (
         <span aria-hidden className="absolute inset-x-0 bottom-0 h-1 bg-neutral-800">
           <span className="verdict-timer block h-full w-full bg-neutral-300" />

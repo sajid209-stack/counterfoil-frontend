@@ -5,7 +5,7 @@ import { CalendarDays, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DatePicker } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { GoCard, TILE_CHOSEN, TILE_IDLE, TILE_OFF, Tile, TileGrid, tileClass } from "./Tiles";
+import { GoCard, TICK, TILE_CHOSEN, TILE_IDLE, TILE_OFF, Tile, TileGrid, tileClass } from "./Tiles";
 
 /**
  * The booking sheets' shared pieces, composed from the till's card language
@@ -46,7 +46,7 @@ export function TileText({
  *  needs its own base rather than a class fighting the stacked one. */
 export function rowTileClass({ selected, off, className }: { selected?: boolean; off?: boolean; className?: string }) {
   return cn(
-    "relative flex min-h-14 w-full min-w-0 rounded-inner px-comfortable py-comfortable text-left transition-colors duration-quick disabled:cursor-not-allowed",
+    "relative flex min-h-14 w-full min-w-0 rounded-inner px-comfortable py-comfortable text-left rail:min-h-12 rail:px-3 rail:py-1.5 transition-colors duration-quick disabled:cursor-not-allowed",
     selected ? TILE_CHOSEN : off ? TILE_OFF : TILE_IDLE,
     className,
   );
@@ -96,15 +96,17 @@ export function DateTiles({
 
   return (
     <div className="flex flex-col gap-tight">
-      <TileGrid cols={3}>
+      <TileGrid cols={3} className="rail:flex rail:flex-wrap">
         {shown.map((d) => {
           const on = value === d;
           const cap = caption?.(d) ?? null;
           return (
-            <Tile key={d} selected={on} onClick={() => onChange(d)} className="min-h-16">
-              <TileText label={label(d)} sub={sub(d)} selected={on} />
+            <Tile key={d} selected={on} onClick={() => onChange(d)} className="min-h-16 rail:h-10 rail:min-h-10 rail:w-auto rail:flex-row rail:gap-1 rail:px-3">
+              <span className="w-full break-words text-base font-semibold leading-tight rail:w-auto rail:whitespace-nowrap">{label(d)}</span>
+              <span aria-hidden className="hidden text-muted rail:inline">·</span>
+              <span className={cn("mt-0.5 w-full break-words text-sm leading-tight rail:mt-0 rail:w-auto rail:whitespace-nowrap rail:text-base", on ? "text-on-solid" : "text-muted")}>{sub(d)}</span>
               {cap && (
-                <span className={cn("w-full truncate text-sm leading-tight", on ? "text-on-solid" : cap.low ? "font-medium text-warning" : "text-muted")}>{cap.text}</span>
+                <span className={cn("w-full truncate text-sm leading-tight rail:ml-1 rail:w-auto rail:whitespace-nowrap", on ? "text-on-solid" : cap.low ? "font-medium text-warning" : "text-muted")}>{cap.text}</span>
               )}
             </Tile>
           );
@@ -113,10 +115,11 @@ export function DateTiles({
           type="button"
           aria-expanded={pickerOpen}
           onClick={() => setPickerOpen((v) => !v)}
-          className={tileClass({ className: "min-h-16" })}
+          className={tileClass({ className: "min-h-16 rail:h-10 rail:min-h-10 rail:flex-row rail:gap-1.5 rail:px-3" })}
         >
-          <CalendarDays size={14} strokeWidth={2} aria-hidden className="absolute right-1.5 top-1.5 text-muted" />
-          <TileText label={labels.pick} sub={tp("dateTiles.pickDay")} />
+          <CalendarDays size={14} strokeWidth={2} aria-hidden className="absolute right-1.5 top-1.5 text-muted rail:static rail:size-4 rail:shrink-0 rail:text-fg" />
+          <span className="w-full break-words text-base font-semibold leading-tight rail:w-auto rail:whitespace-nowrap">{labels.pick}</span>
+          <span className="mt-0.5 w-full break-words text-sm leading-tight text-muted rail:hidden">{tp("dateTiles.pickDay")}</span>
         </button>
       </TileGrid>
       {pickerOpen && (
@@ -173,13 +176,13 @@ export function OptionRow({
       onClick={onClick}
       className={rowTileClass({ selected, off, className: cn("items-center gap-comfortable", center && "justify-center text-center") })}
     >
-      {selected && <Check size={14} strokeWidth={2.5} aria-hidden className="absolute right-2 top-2" />}
+      {selected && <Check size={14} strokeWidth={2.5} aria-hidden className={cn(TICK, "right-2 top-2")} />}
       {lead}
       <span className={cn("min-w-0", !center && "flex-1")}>
-        <span className="block break-words text-md font-semibold leading-snug">{title}</span>
-        {sub != null && <span className={cn("block break-words text-sm leading-snug", selected ? "text-on-solid" : "text-muted")}>{sub}</span>}
+        <span className="block break-words text-md font-semibold leading-snug rail:text-base rail:leading-tight">{title}</span>
+        {sub != null && <span className={cn("block break-words text-sm leading-snug rail:leading-tight", selected ? "text-on-solid" : "text-muted")}>{sub}</span>}
       </span>
-      {trail != null && <span className={cn("shrink-0 whitespace-nowrap text-sm", selected ? "text-on-solid" : "text-fg-secondary", selected ? "mr-5" : "")}>{trail}</span>}
+      {trail != null && <span className={cn("shrink-0 whitespace-nowrap text-sm", selected ? "text-on-solid" : "text-fg-secondary", selected ? "mr-5 rail:mr-0" : "")}>{trail}</span>}
     </button>
   );
 }
@@ -224,10 +227,17 @@ export const capitalFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1
  *  list) that sit over the wall. */
 export const SHEET_AS_DIALOG = "mx-auto rail:bottom-auto rail:top-1/2 rail:-translate-y-1/2 rail:animate-none rail:rounded-sheet";
 
+/** The foot on a desktop: 20px sides to match the body, a hairline above, 44px
+ *  buttons that keep their own width and sit on the right (Hold / Back outlined,
+ *  Add primary). The bar is the shared ActionBar and not ours to edit, so its
+ *  parts are reached from here. */
+export const FOOT_RAIL =
+  "rail:border-t rail:border-line rail:px-5 rail:py-3 rail:[&>div:last-child]:justify-end rail:[&>div:last-child>button]:h-11 rail:[&>div:last-child>button]:flex-none rail:[&>div:last-child>button]:px-5 rail:[&>div:last-child>button]:text-base";
+
 export function StickyFoot({ children }: { children: ReactNode }) {
   return (
-    <div className="sticky bottom-0 z-10 -mx-section mt-7 rail:mt-auto">
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-full h-5 bg-linear-to-t from-surface to-transparent" />
+    <div className="sticky bottom-0 z-10 -mx-section mt-7 rail:-mx-5 rail:mt-auto">
+      <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-full h-5 bg-linear-to-t from-surface to-transparent rail:hidden" />
       {children}
     </div>
   );

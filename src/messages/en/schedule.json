@@ -189,5 +189,7 @@
   "daysLabel": "Days",
   "previousMonth": "Previous month",
   "nextMonth": "Next month",
-  "close": "Close"
+  "close": "Close",
+  "prevDay": "Previous day",
+  "nextDay": "Next day"
 }

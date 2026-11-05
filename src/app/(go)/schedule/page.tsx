@@ -569,7 +569,7 @@ export default function SchedulePage() {
     <TileGrid
       role="tablist"
       aria-label={t("board.whatLabel")}
-      className={cn(frame, "rail:rounded-card rail:bg-card rail:shadow-card rail:gap-inline rail:p-inline")}
+      className={cn(frame, "rail:inline-flex rail:w-auto rail:gap-0.5 rail:rounded-control rail:bg-subtle rail:p-0.5 rail:ring-1 rail:ring-inset rail:ring-line")}
       style={{ gridTemplateColumns: `repeat(${Math.min(groups.length, 4)}, minmax(0, 1fr))` }}
     >
       {groups.map((g) => {
@@ -582,7 +582,7 @@ export default function SchedulePage() {
             selected={on}
             aria-label={t("board.groupAria", { name: g.label, count: g.freeCount })}
             onClick={() => setGroupKey(g.key)}
-            className="min-h-12 px-1 text-base font-semibold leading-tight rail:min-h-11 rail:rounded-sm rail:aria-[selected=false]:bg-transparent rail:aria-[selected=false]:shadow-none rail:aria-[selected=false]:hover:bg-nav-hover"
+            className="min-h-12 px-1 text-base font-semibold leading-tight rail:h-8 rail:min-h-8 rail:whitespace-nowrap rail:rounded-sm rail:px-3 rail:font-medium rail:aria-[selected=false]:bg-transparent rail:aria-[selected=false]:text-fg-secondary rail:aria-[selected=false]:shadow-none rail:aria-[selected=false]:ring-0 rail:aria-[selected=false]:hover:bg-secondary-hover rail:aria-[selected=true]:bg-card rail:aria-[selected=true]:text-fg rail:aria-[selected=true]:shadow-sm rail:aria-[selected=true]:ring-0 rail:aria-[selected=true]:hover:bg-card rail:aria-[selected=true]:active:bg-card"
           >
             {g.label}
           </Tile>
@@ -600,7 +600,7 @@ export default function SchedulePage() {
           One row of controls (which week, back to today, the calendar) over one
           strip of days that scrolls sideways. Every pixel above the board is an
           hour the cashier cannot see, so nothing here takes a line of its own. */}
-      <section className="flex flex-col gap-tight rail:gap-section">
+      <section className="flex flex-col gap-tight rail:gap-2">
         <DayStrip
           title={t("title")}
           date={date}
@@ -627,13 +627,13 @@ export default function SchedulePage() {
           corner={[format.dateTime(dayDate, { weekday: "short" }), format.dateTime(dayDate, { day: "numeric", ...latn })]}
           hideKey={picks.length > 0}
           notice={unassigned.length > 0 && (
-          <div className="flex flex-wrap items-center gap-tight px-comfortable pt-tight">
+          <div className="flex flex-wrap items-center gap-tight px-comfortable pt-tight rail:gap-x-4 rail:py-1">
             {unassigned.slice(0, 3).map(({ column, block }) => (
               <button
                 key={block.key}
                 type="button"
                 onClick={() => setBlockPick({ column, block })}
-                className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-line bg-card px-comfortable text-left text-base text-fg"
+                className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-line bg-card px-comfortable text-left text-base text-fg rail:min-h-8 rail:rounded-control rail:border-0 rail:bg-transparent rail:px-1 rail:text-sm rail:hover:bg-muted-wash"
               >
                 <MapPinOff size={16} strokeWidth={2} className="shrink-0 text-muted" aria-hidden />
                 <span className="min-w-0 truncate">
@@ -644,7 +644,7 @@ export default function SchedulePage() {
                 <ChevronRight size={16} strokeWidth={2} className="shrink-0 text-muted" aria-hidden />
               </button>
             ))}
-            {unassigned.length > 3 && <span className="text-base text-muted">{t("board.noPlaceMore", { count: unassigned.length - 3 })}</span>}
+            {unassigned.length > 3 && <span className="text-base text-muted rail:text-sm">{t("board.noPlaceMore", { count: unassigned.length - 3 })}</span>}
           </div>
         )}
           onFree={toggleFree}
@@ -662,6 +662,7 @@ export default function SchedulePage() {
       {picks.length > 0 && (
         <ActionBar
           id="sched-bar"
+          row
           label={t("bar.label")}
           summary={
             <BarSummary
@@ -676,7 +677,7 @@ export default function SchedulePage() {
                   type="button"
                   onClick={clearPicks}
                   aria-label={t("bar.clearAria")}
-                  className="-mr-1 -mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-muted-wash"
+                  className="-mr-1 -mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-muted-wash rail:m-0 rail:size-8 rail:rounded-control rail:order-last"
                 >
                   <X size={20} strokeWidth={2} aria-hidden />
                 </button>
@@ -687,7 +688,7 @@ export default function SchedulePage() {
           primary={{ label: t("bar.add"), icon: <ShoppingBag size={20} strokeWidth={2} aria-hidden />, onClick: addPicks }}
         >
           {offered.length > 1 && (
-            <div role="radiogroup" aria-label={t("bar.sellAs")} className="flex flex-wrap items-center gap-tight">
+            <div role="radiogroup" aria-label={t("bar.sellAs")} className="flex flex-wrap items-center gap-tight rail:order-first rail:w-full">
               <span className="text-sm font-semibold text-muted">{t("bar.sellAs")}</span>
               {offered.map((p) => {
                 const on = (choice ?? spans[0]?.product.id) === p.id;
@@ -699,8 +700,8 @@ export default function SchedulePage() {
                     aria-checked={on}
                     onClick={() => setChoice(p.id)}
                     className={cn(
-                      "inline-flex h-11 items-center gap-tight rounded-full pl-1 pr-comfortable text-md font-semibold",
-                      on ? "bg-ember-solid text-on-solid" : "bg-card text-fg shadow-card",
+                      "inline-flex h-11 items-center gap-tight rounded-full pl-1 pr-comfortable text-md font-semibold rail:h-9 rail:rounded-control rail:text-base",
+                      on ? "bg-ember-solid text-on-solid rail:bg-ember-wash rail:text-brand-foreground rail:ring-2 rail:ring-inset rail:ring-ember" : "bg-card text-fg shadow-card rail:shadow-none rail:ring-1 rail:ring-inset rail:ring-line",
                     )}
                   >
                     {/* The booking's own picture, so the choice can be made by

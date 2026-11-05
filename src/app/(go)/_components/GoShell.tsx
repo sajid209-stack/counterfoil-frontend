@@ -57,7 +57,7 @@ import { applyTillText, usePrefs } from "@/lib/prefs";
  */
 const BAR_CLEAR = "76px + env(safe-area-inset-bottom)";
 import { cn } from "@/lib/cn";
-import { DesktopSidebar } from "./shell/DesktopSidebar";
+import { DesktopSidebar, type SidebarTab } from "./shell/DesktopSidebar";
 import { RAIL_QUERY, useRailCollapsed } from "./shell/rail";
 
 /** Tailwind's sm: where the header has room for the page-state picker. */
@@ -189,6 +189,11 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   // Don't show an empty destination: Schedule only exists for slotted catalogues.
   const hasSlotted = (productsQ.data?.data ?? []).some((p) => isSlotBased(p.bookingType));
   const tabs = TABS.filter((t) => t.href !== "/schedule" || hasSlotted);
+  /* The desktop sidebar has ONE scan destination: Check in, with the scan panel
+     beside the arrivals. It stays lit on /scan too. The phone tab bar keeps both. */
+  const sidebarTabs: SidebarTab[] = tabs
+    .filter((t) => t.href !== "/scan")
+    .map((t) => (t.href === "/checkin" ? { href: t.href, key: t.key, icon: ScanLine, alsoActive: ["/scan"] } : t));
 
   /* The scrolling till is the Sell tab too: it is another design of the same
      job, and a till with no tab lit leaves a cashier asking where they are. */
@@ -267,7 +272,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
           door and gets nothing. */}
       {!bare && (
         <DesktopSidebar
-          tabs={tabs}
+          tabs={sidebarTabs}
           isActive={isActive}
           collapsed={collapsed}
           saleCount={liveCount}

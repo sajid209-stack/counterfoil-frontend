@@ -46,7 +46,7 @@ import { planWeekly, type OccurrenceBlock } from "@/lib/recurrence";
 import { formatClock, formatClockMin, formatClockRange, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { ClockCell } from "./Clock";
 import { ActionBar } from "./ActionBar";
-import { DateTiles, FooterSummary, OptionRow, StickyFoot, TileText, capitalFirst, summaryLead } from "./SheetParts";
+import { DateTiles, FOOT_RAIL, FooterSummary, OptionRow, StickyFoot, TileText, capitalFirst, summaryLead } from "./SheetParts";
 import { Tile, TileLabel } from "./Tiles";
 import { Stepper } from "./Stepper";
 import { SheetShell } from "./SheetShell";
@@ -150,6 +150,7 @@ function SheetFooter({
       <ActionBar
         docked="panel"
         tone="ground"
+        className={FOOT_RAIL}
         summary={
           <>
             {note}
@@ -402,7 +403,7 @@ export function ProductSheet({
 
   const renderGroup = () =>
     flatBasis ? (
-      <div className="flex items-center justify-between card-surface p-comfortable">
+      <div className="flex items-center justify-between card-surface p-comfortable rail:px-3 rail:py-2">
         <span className="text-base">{t("sheet.groupSize")}</span>
         <Stepper variant="round" value={group} min={partyMin} max={partyMax} onChange={setGroup} lessLabel={t("sheet.fewer")} moreLabel={t("sheet.morePeople")} />
       </div>
@@ -428,8 +429,8 @@ export function ProductSheet({
   };
   const renderAddOns = () =>
     (product.addOns?.length ?? 0) > 0 ? (
-      <div className="mt-section flex flex-col gap-tight">
-        <TileLabel>{t("sheet.addOns")}</TileLabel>
+      <div className="mt-section rail:mt-5 flex flex-col gap-tight">
+        <TileLabel className="rail:text-base">{t("sheet.addOns")}</TileLabel>
         {/* Each extra its own card, with the round + the wall uses. */}
         <div className="flex flex-col gap-tight">
         {(product.addOns ?? []).map((a) => {
@@ -442,16 +443,16 @@ export function ProductSheet({
           const cap = stock ? stock.onHand : Infinity;
           const out = cap <= 0;
           return (
-            <div key={a.id} className={cn("card-surface flex min-h-14 items-center gap-tight px-comfortable py-tight", out && "bg-transparent shadow-none ring-1 ring-inset ring-line")}>
+            <div key={a.id} className={cn("card-surface flex min-h-14 items-center gap-tight px-comfortable py-tight rail:min-h-12 rail:py-1.5", out && "bg-transparent shadow-none ring-1 ring-inset ring-line")}>
               <div className="min-w-0 flex-1">
-                <span className={cn("block truncate text-md font-semibold", out && "text-muted")}>{a.name}</span>
+                <span className={cn("block truncate text-md font-semibold rail:text-base", out && "text-muted")}>{a.name}</span>
                 <span className="text-sm text-muted">
                   {formatMoney(a.price, currency)}{a.perPerson ? t("sheet.perHead") : ""}{n > 0 ? ` × ${n} = ${formatMoney(a.price * n, currency)}` : ""}
                   {stock && (out ? ` · ${t("sheet.stockOut")}` : ` · ${t("sheet.stockLeft", { count: cap, unit: stock.unit })}`)}
                 </span>
               </div>
               {n === 0 ? (
-                <button type="button" disabled={out} aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.min(cap, a.perPerson ? headsFor() : 1) }))} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-inverse text-inverse-fg transition-colors duration-quick disabled:bg-subtle disabled:text-faint"><Plus size={18} strokeWidth={2} aria-hidden /></button>
+                <button type="button" disabled={out} aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.min(cap, a.perPerson ? headsFor() : 1) }))} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-inverse text-inverse-fg transition-colors duration-quick disabled:bg-subtle disabled:text-faint rail:h-10 rail:w-10"><Plus size={18} strokeWidth={2} aria-hidden /></button>
               ) : (
                 <Stepper variant="round" value={n} min={0} max={cap} onChange={(v) => setAddOnQty((q) => ({ ...q, [a.id]: v }))} lessLabel={t("sheet.less")} moreLabel={t("sheet.more")} />
               )}
@@ -601,7 +602,7 @@ export function ProductSheet({
         onKeyDown={(e) => { if (e.key === "Enter") void doHold(); }}
         placeholder={t("sheet.holdFor")}
         aria-label={t("sheet.holdFor")}
-        className="h-12 min-w-0 flex-1 rounded-control border border-line bg-card px-comfortable text-sm"
+        className="h-12 min-w-0 flex-1 rounded-control border border-line bg-card px-comfortable text-sm rail:h-10 rail:text-base"
       />
       {/* Secondary: the sale is what this screen is for, and
           an ember Hold beside a grey Add says the exception is
@@ -742,7 +743,7 @@ export function ProductSheet({
     waiverOk;
 
   return (
-    <SheetShell label={product.name} labelledBy="sheet-title" onClose={onClose} desktop="drawer" frameClassName="inset-y-0 left-0 right-0 lg:right-96" className="max-h-[88vh] overflow-y-auto bg-surface p-section pb-0">
+    <SheetShell label={product.name} labelledBy="sheet-title" onClose={onClose} desktop="drawer" frameClassName="inset-y-0 left-0 right-0 lg:right-96" className="max-h-[88vh] overflow-y-auto bg-surface p-section pb-0 rail:p-5 rail:pb-0">
         <div className="mx-auto w-full max-w-[680px] rail:flex rail:min-h-full rail:max-w-none rail:flex-col">
         <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-line rail:hidden" aria-hidden />
         {/* The reference leads with the product: a real thumbnail rather than a
@@ -750,20 +751,20 @@ export function ProductSheet({
             sheet is going to ask for. The subtitle is the SAME derived
             behaviour line the till tile shows, so the sheet opens on the words
             the operator just tapped rather than restating the name alone. */}
-        <div className="mb-section flex items-center gap-comfortable">
-          <ProductThumb images={product.images} name={product.name} bookingType={product.bookingType} size="thumb" />
+        <div className="mb-section rail:mb-5 flex shrink-0 items-center gap-comfortable rail:gap-3">
+          <ProductThumb images={product.images} name={product.name} bookingType={product.bookingType} size="thumb" className="rail:h-10 rail:w-10" />
           <div className="min-w-0 flex-1">
-            <h2 id="sheet-title" className="break-words text-lg font-semibold leading-snug text-fg sm:text-xl">{product.name}</h2>
-            <p className="mt-inline text-sm text-muted">{subtitle(product, { resources, team })}</p>
+            <h2 id="sheet-title" className="break-words text-lg font-semibold leading-snug text-fg sm:text-xl rail:text-md rail:leading-snug">{product.name}</h2>
+            <p className="mt-inline text-sm text-muted rail:truncate">{subtitle(product, { resources, team })}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-subtle text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash"><X size={20} strokeWidth={1.75} /></button>
+          <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-subtle text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash rail:h-9 rail:w-9"><X size={20} strokeWidth={1.75} /></button>
         </div>
 
         {/* Under two minutes it stops being information and becomes a
             deadline, so it changes register — the same threshold the rest of
             the app uses to switch a warning to a refusal. */}
         {heldUntil && holdLeft > 0 && (
-          <div className={`mb-section flex items-center gap-tight rounded-full border px-comfortable py-tight text-sm ${holdLeft < 120 ? "border-danger-line bg-danger-wash text-danger" : "border-warning-line bg-warning-wash text-warning"}`}>
+          <div className={`mb-section rail:mb-5 flex items-center gap-tight rounded-full border px-comfortable py-tight text-sm ${holdLeft < 120 ? "border-danger-line bg-danger-wash text-danger" : "border-warning-line bg-warning-wash text-warning"}`}>
             <Clock size={14} strokeWidth={1.75} className="shrink-0" />
             <span>
               {t(holdLeft < 120 ? "sheet.holdExpiring" : "sheet.holdRemaining", {
@@ -774,8 +775,8 @@ export function ProductSheet({
         )}
 
         {(needsSchedule(bt) || provider || bt === "BT-02") && !course && (
-          <div className="mb-section">
-            <TileLabel className="mb-tight">{t(bt === "BT-02" ? "sheet.whenLabel" : "sheet.dateLabel")}</TileLabel>
+          <div className="mb-section rail:mb-5">
+            <TileLabel className="rail:text-base mb-tight">{t(bt === "BT-02" ? "sheet.whenLabel" : "sheet.dateLabel")}</TileLabel>
             {/* A wrapping grid with the calendar beneath it — never a row
                 that scrolls sideways. A chip that has scrolled out of view is
                 a day nobody knows is on offer, and parking the calendar at the
@@ -820,13 +821,13 @@ export function ProductSheet({
             so on its own chip — the duration chips do the same, and a total
             that moves with no visible cause is the thing to avoid. */}
         {validityOptions.length > 1 && (
-          <div className="mb-section flex flex-col gap-tight">
-            <TileLabel>{t("sheet.validFor")}</TileLabel>
+          <div className="mb-section rail:mb-5 flex flex-col gap-tight">
+            <TileLabel className="rail:text-base">{t("sheet.validFor")}</TileLabel>
             <div className={cn("grid gap-tight", validityOptions.length === 3 ? "grid-cols-3" : "grid-cols-2")}>
               {validityOptions.map((v) => {
                 const on = v.id === validityId;
                 return (
-                  <Tile key={v.id} selected={on} className="min-h-14" onClick={() => setValidityId(v.id)}>
+                  <Tile key={v.id} selected={on} className="min-h-14 rail:min-h-10 rail:py-1" onClick={() => setValidityId(v.id)}>
                     <TileText label={v.label} sub={(v.priceDelta ?? 0) > 0 ? `+${formatMoney(v.priceDelta ?? 0, currency)}` : undefined} selected={on} />
                   </Tile>
                 );
@@ -835,7 +836,7 @@ export function ProductSheet({
           </div>
         )}
 
-        {!openToday && needsSchedule(bt) && <p className="mb-section text-sm text-danger">{t("sheet.closedOnDate")}</p>}
+        {!openToday && needsSchedule(bt) && <p className="mb-section rail:mb-5 text-sm text-danger">{t("sheet.closedOnDate")}</p>}
 
         {/* A day-capped product is run by one number, so it gets a panel rather
             than a footnote under a date chip. The allowance is the whole
@@ -845,7 +846,7 @@ export function ProductSheet({
           const left = getDailyRemaining(product, date);
           const low = left <= Math.max(1, Math.floor(total * 0.2));
           return (
-            <div className="card-surface mb-section p-comfortable">
+            <div className="card-surface mb-section rail:mb-5 p-comfortable">
               <div className="flex items-baseline justify-between gap-tight">
                 <span className="text-sm text-muted">{t("sheet.dailyCapacity")}</span>
                 <span className={`shrink-0 whitespace-nowrap text-sm font-medium ${left <= 0 ? "text-danger" : low ? "text-warning" : "text-success"}`}>
@@ -1014,24 +1015,24 @@ export function ProductSheet({
                   the operator's own rule expressed as a control — and the one
                   price that matters, the price of THIS duration, is on the
                   summary line above the button where the decision is made. */}
-              <TileLabel>{t("sheet.duration")}</TileLabel>
+              <TileLabel className="rail:text-base">{t("sheet.duration")}</TileLabel>
               {(() => {
                 const i = flexOptions.indexOf(duration);
                 const prev = i > 0 ? flexOptions[i - 1] : null;
                 const next = i >= 0 && i < flexOptions.length - 1 ? flexOptions[i + 1] : null;
                 return (
-                  <div className="flex items-center gap-tight">
+                  <div className="flex items-center gap-tight rail:self-start">
                     <button
                       type="button"
                       aria-label={t("sheet.shorter")}
                       disabled={prev == null}
                       onClick={() => prev != null && pickDuration(prev)}
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-subtle text-fg transition-colors duration-quick active:bg-muted-wash disabled:bg-subtle disabled:text-faint"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-subtle text-fg transition-colors duration-quick active:bg-muted-wash disabled:bg-subtle disabled:text-faint rail:h-10 rail:w-10"
                     >
                       <Minus size={18} strokeWidth={2} aria-hidden />
                     </button>
-                    <div className="flex min-w-0 flex-1 flex-col items-center justify-center card-surface py-tight">
-                      <span className="text-md font-medium">{formatDuration(duration)}</span>
+                    <div className="flex min-w-0 flex-1 flex-col items-center justify-center card-surface py-tight rail:h-10 rail:min-w-28 rail:flex-none rail:flex-row rail:gap-2 rail:px-3 rail:py-0">
+                      <span className="text-md font-medium rail:text-base">{formatDuration(duration)}</span>
                       {/* The footer states this duration's total. The stepper
                           repeats it only when it would say something else (an
                           "Any" lane whose best fit costs a different rate). */}
@@ -1046,7 +1047,7 @@ export function ProductSheet({
                       aria-label={t("sheet.longer")}
                       disabled={next == null}
                       onClick={() => next != null && pickDuration(next)}
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-inverse text-inverse-fg transition-colors duration-quick disabled:bg-subtle disabled:text-faint"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-inverse text-inverse-fg transition-colors duration-quick disabled:bg-subtle disabled:text-faint rail:h-10 rail:w-10"
                     >
                       <Plus size={18} strokeWidth={2} aria-hidden />
                     </button>
@@ -1054,23 +1055,23 @@ export function ProductSheet({
                 );
               })()}
 
-              {lanes.length > 1 && <TileLabel>{lanes[0]?.nounSingular ?? t("sheet.resource")}</TileLabel>}
+              {lanes.length > 1 && <TileLabel className="rail:mt-3 rail:text-base">{lanes[0]?.nounSingular ?? t("sheet.resource")}</TileLabel>}
               {/* One card of cells, as the Schedule draws its lanes: Any, then
                   each lane with what it is doing now. Chosen is a tint with a
                   ring and a tick. */}
               {lanes.length > 1 && (
-                <div className="grid grid-cols-3 gap-tight sm:grid-cols-5">
+                <div className="grid grid-cols-3 gap-tight sm:grid-cols-5 rail:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))]">
                   {[null, ...lanes].map((r) => {
                     const on = r ? resourceId === r.id : !resourceId;
                     return (
-                      <Tile key={r?.id ?? "any"} selected={on} off={!!r?.outOfService} disabled={!!r?.outOfService} className="min-h-14" onClick={() => setResourceId(r?.id)}>
-                        <TileText
-                          label={r ? r.name : t("sheet.any")}
-                          sub={r ? liveState(r) : undefined}
-                          extra={r && rateLabel(r) ? rateLabel(r) : undefined}
-                          selected={on}
-                          struck={!!r?.outOfService}
-                        />
+                      <Tile key={r?.id ?? "any"} selected={on} off={!!r?.outOfService} disabled={!!r?.outOfService} className="min-h-14 rail:h-14 rail:min-h-14 rail:items-stretch rail:px-3 rail:py-1 rail:text-left" title={r ? [liveState(r), rateLabel(r)].filter(Boolean).join(" · ") : undefined} onClick={() => setResourceId(r?.id)}>
+                        <span className={cn("w-full break-words text-base font-semibold leading-tight rail:truncate rail:text-left", r?.outOfService && "line-through")}>{r ? r.name : t("sheet.any")}</span>
+                        {r && (
+                          <span className="flex w-full min-w-0 flex-col rail:flex-row rail:items-center rail:gap-1.5">
+                            <span className={cn("mt-0.5 w-full break-words text-sm leading-tight rail:mt-0 rail:min-w-0 rail:flex-1 rail:truncate rail:text-left", on ? "text-on-solid" : "text-muted", r.outOfService && "line-through")}>{liveState(r)}</span>
+                            {rateLabel(r) && <span className={cn("mt-0.5 w-full break-words text-sm font-medium leading-tight rail:mt-0 rail:w-auto rail:shrink-0", on ? "text-on-solid" : "text-fg")}>{rateLabel(r)}</span>}
+                          </span>
+                        )}
                       </Tile>
                     );
                   })}
@@ -1092,22 +1093,22 @@ export function ProductSheet({
 
               {blocked && <BlockedNotice message={blocked.message} onDismiss={() => setBlocked(null)} />}
 
-              {flexTimes.length > 0 && <TileLabel>{t("sheet.startTime")}</TileLabel>}
+              {flexTimes.length > 0 && <TileLabel className="rail:mt-3 rail:text-base">{t("sheet.startTime")}</TileLabel>}
               {flexTimes.length > 0 && (
-                <div className="grid grid-cols-4 gap-tight sm:grid-cols-6">
+                <div className="grid grid-cols-4 gap-tight sm:grid-cols-6 rail:grid-cols-6">
                   {flexTimes.filter((tt) => showEarlier || !(date === TODAY && toMinutes(tt) < DEMO_NOW_MINUTES) || tt === slotTime).map((tt) => {
                     const st = startState(tt, duration, resourceId);
                     if (!st.ok) {
                       return (
-                        <Tile key={tt} off aria-pressed={undefined} className="min-h-12" title={st.reason} onClick={() => setBlocked({ message: t("sheet.unavailableStart", { time: formatClock(tt), reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })}>
-                          <ClockCell hhmm={tt} className="text-base font-semibold line-through" />
+                        <Tile key={tt} off aria-pressed={undefined} className="min-h-12 rail:min-h-10" title={st.reason} onClick={() => setBlocked({ message: t("sheet.unavailableStart", { time: formatClock(tt), reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })}>
+                          <ClockCell hhmm={tt} className="text-base font-semibold line-through" ampmClassName="text-sm font-medium rail:text-base" />
                         </Tile>
                       );
                     }
                     const on = slotTime === tt;
                     return (
-                      <Tile key={tt} selected={on} className="min-h-12 text-md font-semibold tabular-nums" onClick={() => { setSlotTime(tt); setBlocked(null); }}>
-                        <ClockCell hhmm={tt} />
+                      <Tile key={tt} selected={on} className="min-h-12 text-md font-semibold tabular-nums rail:min-h-10 rail:text-base" onClick={() => { setSlotTime(tt); setBlocked(null); }}>
+                        <ClockCell hhmm={tt} ampmClassName="text-sm font-medium rail:text-base" />
                       </Tile>
                     );
                   })}
@@ -1207,7 +1208,7 @@ export function ProductSheet({
                 name, when they are next free and what they cost, and those
                 three want a consistent left edge to be comparable. */}
             <div className="flex flex-col gap-tight">
-              {product.providerPickable && <TileLabel>{t("sheet.provider")}</TileLabel>}
+              {product.providerPickable && <TileLabel className="rail:text-base">{t("sheet.provider")}</TileLabel>}
               {product.providerPickable && providers.map((p) => {
                 const nextFree = providerTimes.find((t) => (date !== TODAY || toMinutes(t) >= DEMO_NOW_MINUTES) && isOwnerFree(p.id, date, t, providerDuration));
                 const prem = premiumOf(p.id);
@@ -1225,13 +1226,13 @@ export function ProductSheet({
               })}
               <OptionRow center selected={!providerId} onClick={() => setProviderId(undefined)} title={t("sheet.firstAvailable")} />
             </div>
-            {providerTimes.length > 0 && <TileLabel className="mt-tight">{t("sheet.startTimeDuration", { minutes: providerDuration })}</TileLabel>}
+            {providerTimes.length > 0 && <TileLabel className="mt-tight rail:mt-3 rail:text-base">{t("sheet.startTimeDuration", { minutes: providerDuration })}</TileLabel>}
             {providerTimes.length > 0 && (
-              <div className="grid grid-cols-4 gap-tight sm:grid-cols-5">
+              <div className="grid grid-cols-4 gap-tight sm:grid-cols-5 rail:grid-cols-6">
                 {providerTimes.map((tm) => {
                   const free = providerTimeFree(tm);
                   return (
-                    <Tile key={tm} selected={slotTime === tm} off={!free} disabled={!free} aria-pressed={free ? slotTime === tm : undefined} className="min-h-12" onClick={() => setSlotTime(tm)}>
+                    <Tile key={tm} selected={slotTime === tm} off={!free} disabled={!free} aria-pressed={free ? slotTime === tm : undefined} className="min-h-12 rail:min-h-10" onClick={() => setSlotTime(tm)}>
                       <TileText label={formatClock(tm)} selected={slotTime === tm} struck={!free} />
                     </Tile>
                   );
@@ -1261,7 +1262,7 @@ export function ProductSheet({
             ? `${new Intl.DateTimeFormat("en-GB", { day: "numeric" }).format(d(dates[0]))}–${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(d(dates[dates.length - 1]))}`
             : "";
           return (
-            <div className="card-surface mb-section p-comfortable">
+            <div className="card-surface mb-section rail:mb-5 p-comfortable">
               <p className="flex items-center gap-inline text-base font-medium text-success">
                 <Check size={14} strokeWidth={2.5} />
                 {t("sheet.readyToAdd")}
@@ -1295,7 +1296,7 @@ export function ProductSheet({
             where the tap happened — the flexible branch has its own notice
             beside the lane timeline. */}
         {blocked && !resourceMode && !flexible && (
-          <div className="mb-section">
+          <div className="mb-section rail:mb-5">
             <BlockedNotice
               message={blocked.message}
               /* The party it was held for is standing at the counter. Telling
@@ -1318,7 +1319,7 @@ export function ProductSheet({
             departure, and the operator's word for it is the one that should
             appear above the rows. */}
         {needsSchedule(bt) && !resourceMode && !flexible && openToday && slots.length > 0 && (
-          <TileLabel className="mb-tight">
+          <TileLabel className="rail:text-base mb-tight">
             {t(guided ? "sheet.departureLabel" : "sheet.sessionLabel")}
           </TileLabel>
         )}
@@ -1382,7 +1383,7 @@ export function ProductSheet({
         {needsSchedule(bt) && !resourceMode && !flexible && openToday && !showEarlier && date === TODAY && (() => {
           const n = slots.filter((x) => toMinutes(x.time) < DEMO_NOW_MINUTES && x.time !== slotTime).length;
           return n > 0 ? (
-            <button type="button" onClick={() => setShowEarlier(true)} className="-mt-tight mb-section min-h-11 text-sm font-medium text-brand-foreground underline-offset-2 hover:underline">
+            <button type="button" onClick={() => setShowEarlier(true)} className="-mt-tight mb-section rail:mb-5 min-h-11 text-sm font-medium text-brand-foreground underline-offset-2 hover:underline">
               {t("sheet.showEarlier", { count: n })}
             </button>
           ) : null;
@@ -1390,8 +1391,8 @@ export function ProductSheet({
 
         {/* Guided: pick who leads — busy guides (on ANY product) can't be chosen */}
         {guided && slotTime && guides.length > 0 && openToday && (
-          <div className="mb-section flex flex-col gap-tight">
-            <TileLabel>{t("sheet.ledBy")}</TileLabel>
+          <div className="mb-section rail:mb-5 flex flex-col gap-tight">
+            <TileLabel className="rail:text-base">{t("sheet.ledBy")}</TileLabel>
             <div className="flex flex-col gap-tight">
               {guides.map((g) => {
                 const free = slotGuides.includes(g.id);
@@ -1412,7 +1413,7 @@ export function ProductSheet({
           </div>
         )}
 
-        {bt === "BT-06" && openToday && (product.schedule?.dailyCapacity ?? 0) <= 0 && <p className="mb-section text-sm text-muted">{t("sheet.leftToday", { count: dailyLeft, when: date === TODAY ? t("sheet.leftTodayWord") : t("sheet.leftThatDay") })}</p>}
+        {bt === "BT-06" && openToday && (product.schedule?.dailyCapacity ?? 0) <= 0 && <p className="mb-section rail:mb-5 text-sm text-muted">{t("sheet.leftToday", { count: dailyLeft, when: date === TODAY ? t("sheet.leftTodayWord") : t("sheet.leftThatDay") })}</p>}
 
         {/* Tier / section steppers (not for exclusive resource / flexible) */}
         {!resourceMode && (
@@ -1494,7 +1495,7 @@ export function ProductSheet({
               })()
             ) : (
             <div className="flex flex-col">
-              <TileLabel className="mb-tight">{t("sheet.pickTickets")}</TileLabel>
+              <TileLabel className="rail:text-base mb-tight">{t("sheet.pickTickets")}</TileLabel>
               {/* One panel of hairline-separated rows, not four separate cards.
                   Each row says the three things in the order they are decided:
                   what it is, who it admits, what it costs — the price on its
@@ -1503,9 +1504,9 @@ export function ProductSheet({
                   and age note into one grey run-on line buried all three. */}
               <div className="flex flex-col gap-tight">
               {(sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: `${s.name}`, price: s.price, cap: s.capacity, note: "", donation: false })) : activeTiers.map((tier) => ({ id: tier.id, name: tier.name, price: tier.price, cap: undefined as number | undefined, note: [(tier.admits ?? 1) > 1 ? t("sheet.admits", { count: tier.admits ?? 1 }) : "", tier.ageNote ?? ""].filter(Boolean).join(" · "), donation: !!tier.donation }))).map((row) => (
-                <div key={row.id} role="group" aria-label={row.note ? t("sheet.ticketNoteFull", { name: row.name, note: row.note }) : row.name} className="card-surface flex items-center justify-between gap-comfortable p-comfortable">
+                <div key={row.id} role="group" aria-label={row.note ? t("sheet.ticketNoteFull", { name: row.name, note: row.note }) : row.name} className="card-surface flex items-center justify-between gap-comfortable p-comfortable rail:min-h-12 rail:px-3 rail:py-2">
                   <div className="min-w-0 flex-1">
-                    <div className="text-md font-semibold leading-snug">{row.name}</div>
+                    <div className="text-md font-semibold leading-snug rail:text-base">{row.name}</div>
                     {(row.cap != null || row.note) && (
                       <div className="mt-0.5 line-clamp-2 break-words text-sm text-muted" title={row.note || undefined}>
                         {[row.cap != null ? t("sheet.seatsCount", { count: row.cap }) : "", row.note].filter(Boolean).join(" · ")}
@@ -1528,7 +1529,7 @@ export function ProductSheet({
                           setDonationAmt((d) => ({ ...d, [row.id]: minor }));
                           setQty((q) => ({ ...q, [row.id]: minor >= row.price && minor > 0 ? 1 : 0 }));
                         }}
-                        className="h-12 w-28 rounded-inner border border-line bg-card px-comfortable text-right text-base"
+                        className="h-12 w-28 rounded-inner border border-line bg-card px-comfortable text-right text-base rail:h-10"
                       />
                     </div>
                   ) : (
@@ -1562,7 +1563,7 @@ export function ProductSheet({
             {renderAddOns()}
             {renderWaiver()}
             {depositPct > 0 && (
-              <p className="mt-section card-surface p-comfortable text-sm text-muted">
+              <p className="mt-section rail:mt-5 card-surface p-comfortable text-sm text-muted">
                 {t.rich("sheet.depositNote", { pct: depositPct, b: (chunks) => <span className="font-medium text-fg">{chunks}</span> })}
               </p>
             )}
@@ -1638,7 +1639,7 @@ export function ProductSheet({
                         onKeyDown={(e) => { if (e.key === "Enter") void doHold(); }}
                         placeholder={t("sheet.holdFor")}
                         aria-label={t("sheet.holdFor")}
-                        className="h-12 min-w-0 flex-1 rounded-control border border-line bg-card px-comfortable text-sm"
+                        className="h-12 min-w-0 flex-1 rounded-control border border-line bg-card px-comfortable text-sm rail:h-10 rail:text-base"
                       />
                       {/* Secondary: the sale is what this screen is for, and
                           an ember Hold beside a grey Add says the exception is
@@ -1687,7 +1688,7 @@ export function ProductSheet({
 
         {/* Waitlist mini-form */}
         {wl && (
-          <div className="mt-section rounded-card bg-warning-wash p-section">
+          <div className="mt-section rail:mt-5 rounded-card bg-warning-wash p-section">
             <p className="text-base font-medium">{t("sheet.joinWaitlistFor", { time: formatClock(wl.time) })}</p>
             <div className="mt-tight grid grid-cols-1 gap-tight sm:grid-cols-2">
               <FormField label={t("sheet.name")} value={wlName} onChange={(e) => setWlName(e.target.value)} />

@@ -169,7 +169,7 @@ export function WallTile({
       {/* The picture: 4:3, the card's inset all round and a radius concentric
           with the card's (18 − 6 = 12). Everything over it is a chip with its
           own ground, so it reads over any photograph. */}
-      <span className={cn("relative block w-full overflow-hidden rounded-md", image ? "aspect-[4/3]" : "aspect-[8/3]")}>
+      <span className={cn("relative block w-full overflow-hidden rounded-md", image ? "aspect-[4/3] rail:aspect-[16/10]" : "aspect-[8/3] rail:aspect-[16/5]")}>
         <Media image={image} glyph={glyph ?? thumb} dim={soldOut} />
         {soldOut ? (
           <span className="absolute left-1.5 top-1.5 max-w-[calc(100%-0.75rem)] truncate whitespace-nowrap rounded-full bg-danger-wash px-tight py-inline text-sm font-medium text-fg shadow-sm">{soldOutLabel}</span>
@@ -182,8 +182,8 @@ export function WallTile({
           </span>
         )}
       </span>
-      <span className="flex min-w-0 flex-1 flex-col gap-inline px-tight pb-0.5 pt-0.5">
-        <span className={cn("line-clamp-2 text-md font-semibold leading-snug", soldOut && "text-muted")}>{name}</span>
+      <span className="flex min-w-0 flex-1 flex-col gap-inline px-tight pb-0.5 pt-0.5 rail:gap-0.5 rail:px-1.5">
+        <span className={cn("line-clamp-2 text-md font-semibold leading-snug rail:text-base", soldOut && "text-muted")}>{name}</span>
         {meta && <span className="hidden text-sm leading-snug text-muted sm:line-clamp-1 sm:block">{meta}</span>}
         {live && (
           <span
@@ -198,9 +198,9 @@ export function WallTile({
             <span className="line-clamp-2 min-w-0">{live.text}</span>
           </span>
         )}
-        <span className="mt-auto flex min-h-9 flex-wrap items-center justify-between gap-x-tight gap-y-inline pt-inline">
+        <span className="mt-auto flex min-h-9 rail:min-h-8 flex-wrap items-center justify-between gap-x-tight gap-y-inline pt-inline">
           {price != null ? (
-            <span className={cn("shrink-0 whitespace-nowrap text-lg font-bold leading-none tabular-nums sm:text-xl", soldOut ? "text-muted" : "text-fg")}>{price}</span>
+            <span className={cn("shrink-0 whitespace-nowrap text-lg font-bold leading-none tabular-nums sm:text-xl rail:text-md", soldOut ? "text-muted" : "text-fg")}>{price}</span>
           ) : (
             <span />
           )}
@@ -214,7 +214,7 @@ export function WallTile({
             <span
               aria-hidden
               className={cn(
-                "ml-auto flex size-9 shrink-0 items-center justify-center rounded-full max-[360px]:size-8",
+                "ml-auto flex size-9 shrink-0 items-center justify-center rounded-full max-[360px]:size-8 rail:size-7 rail:[&_svg]:size-4",
                 opensSheet ? "bg-card text-fg ring-1 ring-inset ring-strong" : "bg-inverse text-inverse-fg",
               )}
             >
@@ -230,7 +230,7 @@ export function WallTile({
 /** The "Other amount" row: a slim full-width card, not a wall-sized empty one. */
 export function WallRow({ onClick, icon, children }: { onClick: () => void; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <button type="button" data-wall-tile data-focus-inset onClick={onClick} className={cn(WALL_CARD, "col-span-full min-h-14 flex-row items-center gap-tight px-comfortable text-fg hover:bg-muted-wash active:bg-muted-wash")}>
+    <button type="button" data-wall-tile data-focus-inset onClick={onClick} className={cn(WALL_CARD, "col-span-full min-h-14 rail:min-h-11 flex-row items-center gap-tight px-comfortable text-fg hover:bg-muted-wash active:bg-muted-wash")}>
       <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-full bg-subtle text-fg-secondary">{icon}</span>
       <span className="min-w-0 flex-1 text-md font-medium">{children}</span>
       <ChevronRight size={20} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />

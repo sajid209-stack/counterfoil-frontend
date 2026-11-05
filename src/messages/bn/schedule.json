@@ -189,5 +189,7 @@
   "daysLabel": "দিনগুলো",
   "previousMonth": "আগের মাস",
   "nextMonth": "পরের মাস",
-  "close": "বন্ধ করুন"
+  "close": "বন্ধ করুন",
+  "prevDay": "আগের দিন",
+  "nextDay": "পরের দিন"
 }

@@ -86,5 +86,11 @@
   "checkInRest": "Check in the {count, number} left",
   "checkInSome": "Check in 1 person",
   "paidAndIn": "{amount} taken by {method}. {name} is checked in.",
-  "discountAppliedIn": "Discount of {amount} applied. {name} is checked in."
+  "discountAppliedIn": "Discount of {amount} applied. {name} is checked in.",
+  "deskSubtitle": "Scan a ticket or find a guest",
+  "arrivalsTitle": "Arrivals",
+  "justScanned": "Just scanned",
+  "strip_arrived": "Arrived",
+  "strip_expected": "Expected",
+  "strip_notYet": "Not yet"
 }

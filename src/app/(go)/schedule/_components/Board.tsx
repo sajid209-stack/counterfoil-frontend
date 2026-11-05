@@ -8,6 +8,7 @@ import { pendingRefundFor, useRefundVersion } from "@/lib/api/refundRequests";
 import { pendingWriteOffFor, useWriteOffVersion } from "@/lib/api/writeOffRequests";
 import { pendingRescheduleFor, useRescheduleVersion } from "@/lib/api/rescheduleRequests";
 import { cn } from "@/lib/cn";
+import { useMediaQuery } from "@/lib/useMedia";
 import { formatClock, formatClockMin, formatPriceShort } from "@/lib/format";
 import { type Block, type Column, type Group } from "../_lib/board";
 
@@ -28,6 +29,12 @@ const HEADER = 52;
  *  under the board. A tablet held in landscape has a rail instead. */
 const TAB_RESERVE = 96;
 const RAIL = "(min-width: 64rem) and (orientation: landscape)";
+/* On a desktop (`rail`) the board is denser: 48px hours so ten or more fit a
+   768px-tall screen, a 56px gutter that holds "10 AM" on one line, a 40px head
+   (docs/pos-desktop.md section 8). */
+const HOUR_RAIL = 48;
+const GUTTER_RAIL = 56;
+const HEADER_RAIL = 40;
 
 /**
  * The board: hours down, places across — drawn as a GRID, the way a court or
@@ -93,10 +100,14 @@ export function Board({
   const t = useTranslations("schedule");
   const card = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
+  const rail = useMediaQuery(RAIL);
+  const hp = rail ? HOUR_RAIL : HOUR_PX;
+  const gutter = rail ? GUTTER_RAIL : GUTTER;
+  const header = rail ? HEADER_RAIL : HEADER;
   const hours: number[] = [];
   for (let m = group.from; m < group.to; m += 60) hours.push(m);
-  const height = hours.length * HOUR_PX;
-  const y = (m: number) => ((m - group.from) / 60) * HOUR_PX;
+  const height = hours.length * hp;
+  const y = (m: number) => ((m - group.from) / 60) * hp;
   const showNow = nowMinutes !== null && nowMinutes >= group.from && nowMinutes <= group.to;
   const hasSelection = selected.size > 0;
 
@@ -117,19 +128,23 @@ export function Board({
       const top = el.getBoundingClientRect().top + window.scrollY;
       const bar = document.getElementById("sched-bar");
       const floor = 240;
-      if (bar) {
+      const onRail = window.matchMedia(RAIL).matches;
+      if (bar && !onRail) {
         const limit = bar.getBoundingClientRect().top + window.scrollY - 12;
         el.style.height = `${Math.max(floor, limit - top)}px`;
         return;
       }
-      const reserve = window.matchMedia(RAIL).matches ? 24 : TAB_RESERVE;
+      /* On a desktop the chosen-slot bar is a row in the flow under the board,
+         so the board gives it its height (and a 12px gap). */
+      const reserve = onRail ? 24 + (bar ? bar.offsetHeight + 12 : 0) : TAB_RESERVE;
       /* …but never taller than the day itself: a four-hour day of shows
          left a white band under its last departure. */
       /* From the numbers this component drew, not from measuring the grid:
          at the moment this runs after a switch of group, the grid can still
          report the previous group's height. */
       const foot = el.querySelector<HTMLElement>("[data-board-foot]");
-      const natural = HEADER + height + (foot && !foot.hidden ? foot.offsetHeight : 0) + 2;
+      const noteEl = el.querySelector<HTMLElement>("[data-board-notice]");
+      const natural = (onRail ? HEADER_RAIL : HEADER) + height + (foot && !foot.hidden ? foot.offsetHeight : 0) + (noteEl ? noteEl.offsetHeight : 0) + 2;
       let h = Math.min(natural, Math.max(floor, window.innerHeight - top - reserve));
       el.style.height = `${h}px`;
       /* Whatever else the device keeps (a home indicator) shows up as the
@@ -145,7 +160,7 @@ export function Board({
     return () => window.removeEventListener("resize", fit);
     // `height` follows from group.from/to, which are listed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasSelection, group.key, group.from, group.to]);
+  }, [hasSelection, group.key, group.from, group.to, rail]);
 
   /* Keep the hour just tapped in view once the bar has taken its space. */
   useLayoutEffect(() => {
@@ -157,9 +172,10 @@ export function Board({
     const c = cell.getBoundingClientRect();
     /* Land on a whole hour, so the row at the top of the board still carries
        its time — a slice of a row with no label is an hour nobody can name. */
-    const snap = (v: number) => Math.max(0, Math.round(v / HOUR_PX) * HOUR_PX);
-    if (c.bottom > b.bottom) el.scrollTop = snap(el.scrollTop + c.bottom - b.bottom + HOUR_PX / 2);
-    else if (c.top < b.top + HEADER) el.scrollTop = snap(el.scrollTop - (b.top + HEADER - c.top));
+    const snap = (v: number) => Math.max(0, Math.round(v / hp) * hp);
+    if (c.bottom > b.bottom) el.scrollTop = snap(el.scrollTop + c.bottom - b.bottom + hp / 2);
+    else if (c.top < b.top + header) el.scrollTop = snap(el.scrollTop - (b.top + header - c.top));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusKey, hasSelection]);
 
   /* Open where the counter is: an hour before now, or at the top of the day
@@ -178,22 +194,24 @@ export function Board({
      the booking to "Sab… Bo…". The page names them above the board instead. */
   const columns = group.columns.filter((c) => c.kind !== "unassigned");
   const cols = columns.length;
-  const hourLines = `repeating-linear-gradient(to bottom, transparent 0, transparent ${HOUR_PX - 1}px, var(--color-line) ${HOUR_PX - 1}px, var(--color-line) ${HOUR_PX}px)`;
+  const hourLines = `repeating-linear-gradient(to bottom, transparent 0, transparent ${hp - 1}px, var(--color-line) ${hp - 1}px, var(--color-line) ${hp}px)`;
 
   return (
     <div ref={card} className="card-surface flex min-h-[240px] flex-col overflow-hidden">
+      {/* On a desktop what is not an hour (bookings with no place) is a quiet row above the board. */}
+      {rail && notice ? <div data-board-notice className="shrink-0 border-b border-line">{notice}</div> : null}
       <div
         ref={box}
         className="relative min-h-0 flex-1 overflow-auto overscroll-contain"
         /* A flick settles on an hour, with its label under the place names. */
-        style={{ scrollSnapType: "y proximity", scrollPaddingTop: HEADER }}
+        style={{ scrollSnapType: "y proximity", scrollPaddingTop: header }}
       >
-        <div className="relative" style={{ minWidth: GUTTER + cols * COL_MIN }}>
+        <div className="relative" style={{ minWidth: gutter + cols * COL_MIN }}>
           {/* Place names — pinned as the day scrolls under them. */}
-          <div className="sticky top-0 z-20 flex border-b border-line bg-card" style={{ height: HEADER }}>
-            <div className="sticky left-0 z-10 flex shrink-0 flex-col items-center justify-center bg-card text-center leading-tight" style={{ width: GUTTER }}>
-              <span className="text-sm text-muted">{corner[0]}</span>
-              <span className="text-md font-semibold tabular-nums leading-none text-fg">{corner[1]}</span>
+          <div className="sticky top-0 z-20 flex border-b border-line bg-card" style={{ height: header }}>
+            <div className="sticky left-0 z-10 flex shrink-0 flex-col items-center justify-center bg-card text-center leading-tight rail:flex-row rail:gap-1" style={{ width: gutter }}>
+              <span className="text-sm text-muted rail:text-xs">{corner[0]}</span>
+              <span className="text-md font-semibold tabular-nums leading-none text-fg rail:text-sm">{corner[1]}</span>
             </div>
             {columns.map((c) => {
               const closed = !!c.resource?.outOfService;
@@ -204,7 +222,7 @@ export function Board({
                  looks for. */
               const body = (
                 <>
-                  <span className="line-clamp-2 block w-full break-words text-base font-semibold leading-tight text-fg" title={name}>{name}</span>
+                  <span className="line-clamp-2 block w-full break-words text-base font-semibold leading-tight text-fg rail:line-clamp-1 rail:text-sm" title={name}>{name}</span>
                   {closed && (
                     <span className="mt-0.5 flex items-center justify-center gap-1 text-sm text-danger">
                       <Wrench size={12} strokeWidth={1.75} aria-hidden />
@@ -233,14 +251,15 @@ export function Board({
 
           <div className="relative flex" style={{ height }}>
             {/* The hours. Each label sits at the top of its own row. */}
-            <div className="sticky left-0 z-10 shrink-0 border-r border-line bg-card" style={{ width: GUTTER, backgroundImage: hourLines }}>
+            <div className="sticky left-0 z-10 shrink-0 border-r border-line bg-card" style={{ width: gutter, backgroundImage: hourLines }}>
               {hours.map((m) => (
-                <div key={m} className="relative" style={{ height: HOUR_PX, scrollSnapAlign: "start" }}>
+                <div key={m} className="relative" style={{ height: hp, scrollSnapAlign: "start" }}>
                   {/* The hour in ink, large, with its AM/PM under it: this column is
                       what a cashier reads first to find a time, and the
                       muted 13px it used to be was the faintest thing on
                       the board. */}
-                  <span className="absolute inset-x-0 top-1 flex flex-col items-center leading-none text-fg">
+                  <span className="absolute right-2 top-1 hidden whitespace-nowrap text-xs font-medium leading-none text-fg-secondary rail:block">{clockParts(m).h} {clockParts(m).ampm}</span>
+                  <span className="absolute inset-x-0 top-1 flex flex-col items-center leading-none text-fg rail:hidden">
                     <span className="text-md font-bold tabular-nums">{clockParts(m).h}</span>
                     <span className="mt-0.5 text-sm font-semibold">{clockParts(m).ampm}</span>
                   </span>
@@ -287,6 +306,7 @@ export function Board({
                         column={c}
                         top={y(Math.max(b.start, group.from))}
                         height={Math.max(28, y(Math.min(b.end, group.to)) - y(Math.max(b.start, group.from)))}
+                        rail={rail}
                         onBooking={onBooking}
                         onHold={onHold}
                         onSession={onSession}
@@ -299,7 +319,7 @@ export function Board({
 
             {showNow && (
               /* ds-exception: now-line sits above the in-column layers (z-1..3) but under the z-10 sticky gutter */
-              <div aria-hidden className="pointer-events-none absolute right-0 z-[5]" style={{ top: y(nowMinutes as number) + 1, left: GUTTER - 6 }}>
+              <div aria-hidden className="pointer-events-none absolute right-0 z-[5]" style={{ top: y(nowMinutes as number) + 1, left: gutter - 6 }}>
                 <div className="relative h-0.5 bg-danger">
                   <span className="absolute left-0 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-danger" />
                 </div>
@@ -311,13 +331,13 @@ export function Board({
 
       {/* The key, drawn with the same grounds the board uses, always under
           it — the board scrolls, the key never does. */}
-      <div data-board-foot hidden={hideKey} className="shrink-0 bg-card pb-inline">
-      {notice}
+      <div data-board-foot hidden={hideKey} className="shrink-0 bg-card pb-inline rail:border-t rail:border-line rail:pb-0">
+      {!rail && notice}
       {/* One line where it fits, wrapping at the items when it does not. Each
           item is told apart by SHAPE as well as colour: a plus (free), a stripe
           (booked), a stripe with a dot (marketplace), hatching (held), plain
           page colour (cannot be booked). */}
-      <ul aria-label={t("board.keyLabel")} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-comfortable py-1.5 text-sm text-muted">
+      <ul aria-label={t("board.keyLabel")} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-comfortable py-1.5 text-sm text-muted rail:gap-x-4 rail:py-1 rail:text-xs">
         <li className="flex items-center gap-1">
           <span aria-hidden className="flex h-4 w-4 items-center justify-center border border-line bg-card text-muted"><Plus size={11} strokeWidth={3} /></span>
           {t("board.keyFree")}
@@ -382,18 +402,21 @@ function FreeCell({
       data-focus-inset
       className={cn(
         // ds-exception: in-column layer z-1 (free cells) under the z-10 sticky gutter
-        "absolute inset-x-0 z-[1] flex flex-col items-center justify-center gap-0.5 transition-colors duration-quick",
-        selected ? "bg-ember-solid text-on-solid" : "bg-card text-fg hover:bg-muted-wash active:bg-muted-wash",
+        "group/cell absolute inset-x-0 z-[1] flex flex-col items-center justify-center gap-0.5 transition-colors duration-quick rail:flex-row rail:gap-1.5",
+        selected ? "bg-ember-solid text-on-solid rail:bg-ember-wash rail:text-brand-foreground rail:ring-2 rail:ring-inset rail:ring-ember" : "bg-card text-fg hover:bg-muted-wash active:bg-muted-wash",
       )}
       style={{ top, height }}
     >
       {selected ? (
-        <Check size={20} strokeWidth={3} aria-hidden />
+        <Check size={20} strokeWidth={3} aria-hidden className="rail:hidden" />
       ) : (
-        <Plus size={18} strokeWidth={2.5} className="text-muted" aria-hidden />
+        /* A desktop shows the plus and the price only under the pointer or the
+           keyboard focus: a column of identical prices is noise, the hour rules
+           already say free, and the price is in the accessible name. */
+        <Plus size={18} strokeWidth={2.5} className="text-muted rail:size-3.5 rail:opacity-0 rail:group-hover/cell:opacity-100 rail:group-focus-visible/cell:opacity-100" aria-hidden />
       )}
-      {height >= 48 && (
-        <span className={cn("text-sm tabular-nums", selected ? "font-semibold" : "font-medium")}>{formatPriceShort(b.price)}</span>
+      {height >= 44 && (
+        <span className={cn("text-sm tabular-nums", selected ? "font-semibold" : "font-medium rail:text-xs rail:text-muted rail:opacity-0 rail:group-hover/cell:opacity-100 rail:group-focus-visible/cell:opacity-100")}>{formatPriceShort(b.price)}</span>
       )}
     </button>
   );
@@ -404,6 +427,7 @@ function BlockView({
   column,
   top,
   height,
+  rail,
   onBooking,
   onHold,
   onSession,
@@ -412,6 +436,7 @@ function BlockView({
   column: Column;
   top: number;
   height: number;
+  rail: boolean;
   onBooking: (column: Column, block: Extract<Block, { type: "booking" }>) => void;
   onHold: (column: Column, block: Extract<Block, { type: "hold" }>) => void;
   onSession: (column: Column, block: Extract<Block, { type: "session" }>) => void;
@@ -419,7 +444,7 @@ function BlockView({
   const t = useTranslations("schedule");
   const tr = useTranslations("refunds");
   const place = column.kind === "unassigned" ? t("board.noPlace") : column.name;
-  const tall = height >= 52;
+  const tall = height >= (rail ? 40 : 52);
   // Re-draws the "asked" marks when a request is made, answered or taken back.
   useRescheduleVersion();
   useRefundVersion();
@@ -458,7 +483,7 @@ function BlockView({
              badge that crowds out the guest's name is worse than none. */
           "@container",
           frame,
-          "border-l-[3px] px-tight py-1",
+          "border-l-[3px] px-tight py-1 rail:py-0.5",
           /* Status wins once something has happened; a plain booking sold on
              a marketplace is info blue INSTEAD of orange. */
           b.noShow
@@ -486,7 +511,7 @@ function BlockView({
         {tall && (
           asked
             ? <span className="block truncate text-sm font-semibold leading-tight text-warning">{asked}</span>
-            : <span className="block truncate text-sm leading-tight opacity-80">{b.product?.name ?? ""}</span>
+            : <span className="block truncate text-sm leading-tight opacity-80 rail:text-xs">{b.product?.name ?? ""}</span>
         )}
       </button>
     );
@@ -538,7 +563,7 @@ function BlockView({
           at a glance. A bar beside it read as "full" when it was full of
           empty seats. */}
       {tall && (
-        <span className={cn("truncate text-md font-semibold leading-tight", !full && !disabled && pct <= 0.2 && "text-brand-foreground")}>
+        <span className={cn("truncate text-md font-semibold leading-tight rail:text-base", !full && !disabled && pct <= 0.2 && "text-brand-foreground")}>
           {full ? t("board.full") : t("board.seatsLeft", { count: b.remaining })}
         </span>
       )}

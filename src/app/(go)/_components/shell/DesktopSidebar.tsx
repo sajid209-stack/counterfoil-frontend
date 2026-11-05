@@ -65,6 +65,8 @@ export interface SidebarTab {
   href: string;
   key: string;
   icon: LucideIcon;
+  /** Other routes that light this destination (Check in is also /scan). */
+  alsoActive?: readonly string[];
 }
 
 /* The pages that live behind More on a phone, now the sidebar's "More" group.
@@ -119,7 +121,7 @@ export function DesktopSidebar({
      is a centred icon and the label is in the title and the aria-label. */
   const rowClass = (active: boolean) =>
     cn(
-      "relative flex h-11 w-full shrink-0 items-center rounded-control text-base transition-colors duration-quick",
+      "relative flex h-10 w-full shrink-0 items-center rounded-control text-base transition-colors duration-quick",
       collapsed ? "justify-center" : "justify-center xl:justify-start xl:gap-comfortable xl:px-comfortable",
       active ? NAV_SELECTED : cn("font-medium", NAV_IDLE),
     );
@@ -198,7 +200,7 @@ export function DesktopSidebar({
 
       <nav aria-label={tp("shell.menu")} className="no-scrollbar flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden px-tight py-tight">
         {tabs.map((tab) => {
-          const active = isActive(tab.href);
+          const active = isActive(tab.href) || !!tab.alsoActive?.some(isActive);
           const label = t(tab.key);
           const Icon = tab.icon;
           return (

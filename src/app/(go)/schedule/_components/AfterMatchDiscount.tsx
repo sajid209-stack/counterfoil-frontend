@@ -96,7 +96,7 @@ export function AfterMatchDiscount({
         type="button"
         data-after-match="closed"
         onClick={() => setState({ ...state, open: true })}
-        className="flex min-h-11 w-full items-center justify-center gap-tight rounded-card bg-subtle text-md font-semibold text-fg hover:bg-muted-wash active:bg-muted-wash"
+        className="flex min-h-11 rail:min-h-10 w-full items-center justify-center gap-tight rounded-card bg-subtle text-md rail:text-base font-semibold text-fg hover:bg-muted-wash active:bg-muted-wash"
       >
         <Percent size={18} strokeWidth={2} aria-hidden />
         {t("discount.give")}
@@ -110,10 +110,10 @@ export function AfterMatchDiscount({
     <div data-after-match="open" className="flex flex-col gap-tight rounded-card bg-subtle p-comfortable">
       <div className="flex items-start justify-between gap-tight">
         <div className="min-w-0">
-          <p className="text-md font-semibold text-fg">{t("discount.title")}</p>
+          <p className="text-md font-semibold text-fg rail:text-base">{t("discount.title")}</p>
           <p className="text-sm text-muted">{t("discount.help")}</p>
         </div>
-        <button type="button" aria-label={t("discount.remove")} onClick={() => setState(emptyDiscount())} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-muted-wash">
+        <button type="button" aria-label={t("discount.remove")} onClick={() => setState(emptyDiscount())} className="inline-flex h-11 w-11 rail:size-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-muted-wash">
           <X size={16} strokeWidth={2} aria-hidden />
         </button>
       </div>
@@ -128,7 +128,7 @@ export function AfterMatchDiscount({
               aria-checked={state.mode === m}
               aria-label={m === "amount" ? t("discount.modeAmount") : t("discount.modePercent")}
               onClick={() => setState({ ...state, mode: m })}
-              className={cn("flex h-11 w-11 items-center justify-center rounded-inner text-md font-semibold", state.mode === m ? "bg-ember-solid text-on-solid" : "bg-card text-fg shadow-card")}
+              className={cn("flex h-11 w-11 rail:size-10 items-center justify-center rounded-inner text-md font-semibold", state.mode === m ? "bg-ember-solid text-on-solid" : "bg-card text-fg shadow-card")}
             >
               {m === "amount" ? currencySymbol() : "%"}
             </button>
@@ -140,7 +140,7 @@ export function AfterMatchDiscount({
           value={state.raw}
           onChange={(e) => setState({ ...state, raw: e.target.value })}
           placeholder="0"
-          className="h-11 min-w-0 flex-1 rounded-inner bg-card px-comfortable text-md"
+          className="h-11 min-w-0 flex-1 rounded-inner bg-card px-comfortable text-md rail:h-10 rail:text-base"
         />
       </div>
 
@@ -152,7 +152,7 @@ export function AfterMatchDiscount({
             aria-checked={state.reasonKey === r}
             selected={state.reasonKey === r}
             onClick={() => setState({ ...state, reasonKey: r })}
-            className="min-h-11 text-base font-semibold"
+            className="min-h-11 text-base font-semibold rail:h-9 rail:min-h-9"
           >
             {t(`discount.reasons.${r}`)}
           </Tile>
@@ -165,7 +165,7 @@ export function AfterMatchDiscount({
           value={state.note}
           onChange={(e) => setState({ ...state, note: e.target.value })}
           placeholder={t("discount.notePlaceholder")}
-          className="h-11 rounded-inner bg-card px-comfortable text-md"
+          className="h-11 rounded-inner bg-card px-comfortable text-md rail:h-10 rail:text-base"
         />
       )}
 

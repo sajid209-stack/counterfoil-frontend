@@ -103,7 +103,7 @@ export function Sheet({
           onPointerMove={(e) => move(e.clientY)}
           onPointerUp={end}
           onPointerCancel={end}
-          className={cn("flex cursor-grab touch-none justify-center pb-inline pt-tight active:cursor-grabbing", side && "md:invisible")}
+          className={cn("flex cursor-grab touch-none justify-center pb-inline pt-tight active:cursor-grabbing rail:hidden", side && "md:invisible")}
         >
           <span aria-hidden className="h-1 w-10 rounded-full bg-strong" />
         </div>

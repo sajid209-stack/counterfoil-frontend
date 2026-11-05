@@ -77,7 +77,7 @@ export function SheetShell({
              animation — the desktop shapes name their own with `!`. The
              keyframes (sf-drawer-in, sf-fade-in) already exist for the
              storefront's sheet; reduced motion collapses their duration. */
-          desktop === "drawer" && "rail:h-full rail:max-h-none rail:w-[32.5rem] rail:max-w-full rail:rounded-none rail:border-l rail:border-line rail:shadow-float rail:[animation-name:sf-drawer-in]!",
+          desktop === "drawer" && "rail:h-full rail:max-h-none rail:w-[35rem] rail:max-w-full rail:rounded-none rail:border-l rail:border-line rail:shadow-float rail:[animation-name:sf-drawer-in]!",
           desktop === "dialog" && "rail:max-h-[90dvh] rail:rounded-sheet rail:shadow-float rail:[animation-name:sf-fade-in]!",
           className,
         )}

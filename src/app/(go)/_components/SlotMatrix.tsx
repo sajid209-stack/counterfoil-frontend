@@ -83,11 +83,11 @@ export function SlotMatrix({
      chosen one is solid orange with a tick, and an hour that is gone is the
      page's colour with a line and a struck time. */
   return (
-    <div className="mb-section flex flex-col gap-tight">
+    <div className="mb-section flex flex-col gap-tight rail:mb-5">
       {rows.length > 1 && (
         <>
-          <TileLabel>{resourceNoun}</TileLabel>
-          <TileGrid cols={rows.length <= 2 ? 2 : rows.length === 3 ? 3 : 4}>
+          <TileLabel className="rail:text-base">{resourceNoun}</TileLabel>
+          <TileGrid cols={rows.length <= 2 ? 2 : rows.length === 3 ? 3 : 4} className="rail:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))]">
             {rows.map((row) => {
               const on = row.id === active.id;
               const free = row.cells.filter((c) => c.available).length;
@@ -96,7 +96,7 @@ export function SlotMatrix({
                   key={row.id}
                   selected={on}
                   off={!!row.outOfService}
-                  className="min-h-14"
+                  className="min-h-14 rail:min-h-12 rail:py-1"
                   onClick={() => {
                     if (row.outOfService) return onBlocked(t("sheet.outOfService"));
                     setViewId(row.id);
@@ -118,8 +118,8 @@ export function SlotMatrix({
         </>
       )}
 
-      <TileLabel className="mt-tight">{t("sheet.time")}{rows.length === 1 ? ` · ${active.name}` : ""}</TileLabel>
-      <TileGrid cols={4}>
+      <TileLabel className="mt-tight rail:text-base">{t("sheet.time")}{rows.length === 1 ? ` · ${active.name}` : ""}</TileLabel>
+      <TileGrid cols={4} className="rail:grid-cols-4">
         {active.cells.map((cell) => {
           const selected = active.id === selectedResourceId && selectedTime === cell.time;
           if (!cell.available) {
@@ -128,7 +128,7 @@ export function SlotMatrix({
                 key={cell.time}
                 off
                 aria-pressed={undefined}
-                className="min-h-14"
+                className="min-h-14 rail:min-h-10 rail:px-2"
                 onClick={() =>
                   onBlocked(
                     active.outOfService
@@ -142,8 +142,8 @@ export function SlotMatrix({
             );
           }
           return (
-            <Tile key={cell.time} selected={selected} className="min-h-14 gap-0.5" onClick={() => onSelect(active.id, cell.time)}>
-              <ClockCell hhmm={cell.time} className="text-md font-semibold tabular-nums" />
+            <Tile key={cell.time} selected={selected} className="min-h-14 gap-0.5 rail:min-h-10 rail:flex-row rail:gap-1.5 rail:px-2" onClick={() => onSelect(active.id, cell.time)}>
+              <ClockCell hhmm={cell.time} className="text-md font-semibold tabular-nums rail:text-base" />
               <span className={cn("whitespace-nowrap text-sm tabular-nums", selected ? "text-on-solid" : cell.price === base ? "text-muted" : "font-semibold text-fg")}>
                 {formatPriceShort(cell.price, currency)}
               </span>

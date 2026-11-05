@@ -7,6 +7,8 @@ import { DatePicker, Sheet } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { shiftDay } from "@/lib/dayModel";
 import { MD, useMediaQuery } from "@/lib/useMedia";
+
+const RAIL = "(min-width: 64rem) and (orientation: landscape)";
 import { tileClass } from "../../_components/Tiles";
 
 /* ── The days, as one strip that scrolls sideways ─────────────────────────
@@ -50,6 +52,9 @@ export function DayStrip({
   const t = useTranslations("schedule");
   const format = useFormatter();
   const md = useMediaQuery(MD);
+  /* On a desktop the toolbar steps a day at a time and the strip has its own
+     arrows; on a phone the arrows turn a week, as they always did. */
+  const rail = useMediaQuery(RAIL);
   const [open, setOpen] = useState(false);
   const stripRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -115,6 +120,13 @@ export function DayStrip({
     };
   }, [open, md]);
 
+  /* The strip's own arrows page it by what is showing, without choosing a
+     day: they move the window, the toolbar moves the day. */
+  const scrollStrip = (dir: 1 | -1) => {
+    const el = stripRef.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.93, behavior: "smooth" });
+  };
+
   const pick = (iso: string, scroll: boolean) => {
     follow.current = scroll;
     onChange(iso);
@@ -156,23 +168,25 @@ export function DayStrip({
 
   return (
     <>
-      <div data-top-band className="flex items-center gap-inline rail:h-16 rail:gap-comfortable">
-        {title ? <h1 className="mr-section hidden shrink-0 text-xl font-semibold tracking-title text-fg rail:block">{title}</h1> : null}
-        <button type="button" onClick={() => pick(shiftDay(date, -7), true)} aria-label={t("prevWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card shadow-card hover:bg-muted-wash">
+      <div data-top-band className="flex items-center gap-inline rail:h-12 rail:gap-2">
+        {title ? <h1 className="mr-section hidden shrink-0 text-xl font-semibold tracking-title text-fg rail:order-first rail:mr-4 rail:block">{title}</h1> : null}
+        <button type="button" onClick={() => pick(shiftDay(date, rail ? -1 : -7), true)} aria-label={rail ? t("prevDay") : t("prevWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card shadow-card hover:bg-muted-wash rail:size-9 rail:rounded-control rail:shadow-none rail:ring-1 rail:ring-inset rail:ring-line rail:order-1">
           <ChevronLeft size={20} strokeWidth={2} aria-hidden />
         </button>
-        <p className="min-w-0 truncate text-center text-md font-semibold text-fg">{monthLabel}</p>
-        <button type="button" onClick={() => pick(shiftDay(date, 7), true)} aria-label={t("nextWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card shadow-card hover:bg-muted-wash">
+        <p className="min-w-0 truncate text-center text-md font-semibold text-fg rail:hidden">{monthLabel}</p>
+        {/* A desktop names the day itself, so the label can never disagree with the board (the strip may be scrolled to another month). */}
+        <p suppressHydrationWarning className="hidden shrink-0 whitespace-nowrap text-base font-semibold text-fg rail:order-4 rail:block">{chosen}</p>
+        <button type="button" onClick={() => pick(shiftDay(date, rail ? 1 : 7), true)} aria-label={rail ? t("nextDay") : t("nextWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card shadow-card hover:bg-muted-wash rail:size-9 rail:rounded-control rail:shadow-none rail:ring-1 rail:ring-inset rail:ring-line rail:order-3">
           <ChevronRight size={20} strokeWidth={2} aria-hidden />
         </button>
-        {middle ? <div className="hidden min-w-0 flex-1 px-tight lg:block">{middle}</div> : null}
+        {middle ? <div className="hidden min-w-0 flex-1 px-tight lg:block rail:order-6 rail:ml-2 rail:flex-none rail:px-0">{middle}</div> : null}
         <span className={cn("flex-1", Boolean(middle) && "lg:hidden")} />
-        {date !== today && (
-          <button type="button" onClick={() => pick(today, true)} className="inline-flex h-11 shrink-0 items-center rounded-full bg-card px-comfortable text-base font-semibold text-fg shadow-card hover:bg-muted-wash">
+        {(date !== today || rail) && (
+          <button type="button" onClick={() => pick(today, true)} disabled={rail && date === today} className="inline-flex h-11 shrink-0 items-center rounded-full bg-card px-comfortable text-base font-semibold text-fg shadow-card hover:bg-muted-wash rail:order-2 rail:h-9 rail:rounded-control rail:px-3 rail:shadow-none rail:ring-1 rail:ring-inset rail:ring-line rail:disabled:text-muted">
             {t("today")}
           </button>
         )}
-        <div ref={wrapRef} className="relative shrink-0">
+        <div ref={wrapRef} className="relative shrink-0 rail:order-5">
           <button
             ref={triggerRef}
             type="button"
@@ -184,12 +198,12 @@ export function DayStrip({
             suppressHydrationWarning
             title={t("chooseDate")}
             className={cn(
-              "inline-flex h-11 items-center justify-center gap-tight rounded-full bg-card text-base font-semibold text-fg shadow-card hover:bg-muted-wash",
+              "inline-flex h-11 items-center justify-center gap-tight rounded-full bg-card text-base font-semibold text-fg shadow-card hover:bg-muted-wash rail:size-9 rail:rounded-control rail:px-0 rail:shadow-none rail:ring-1 rail:ring-inset rail:ring-line",
               showChosen ? "px-comfortable" : "w-11",
             )}
           >
             <CalendarDays size={20} strokeWidth={2} aria-hidden />
-            {showChosen && <span suppressHydrationWarning className="whitespace-nowrap">{chosen}</span>}
+            {showChosen && <span suppressHydrationWarning className="whitespace-nowrap rail:hidden">{chosen}</span>}
           </button>
           {open && md && (
             <div id={panelId} role="dialog" aria-label={t("chooseDate")} className="absolute right-0 top-[calc(100%+4px)] z-40 w-max rounded-go border border-line bg-card shadow-lg">
@@ -199,13 +213,17 @@ export function DayStrip({
         </div>
       </div>
 
+      <div className="rail:flex rail:items-center rail:gap-2">
+      <button type="button" onClick={() => scrollStrip(-1)} aria-label={t("prevWeek")} className="hidden size-9 shrink-0 items-center justify-center rounded-control text-fg-secondary ring-1 ring-inset ring-line hover:bg-muted-wash rail:inline-flex">
+        <ChevronLeft size={18} strokeWidth={2} aria-hidden />
+      </button>
       <div
         ref={stripRef}
         role="group"
         aria-label={t("daysLabel")}
         onScroll={measure}
         onKeyDown={onKeyDown}
-        className="relative -mx-gutter flex snap-x snap-proximity gap-tight overflow-x-auto scroll-px-gutter px-gutter py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rail:-mx-major rail:scroll-px-major rail:px-major"
+        className="relative -mx-gutter flex snap-x snap-proximity gap-tight overflow-x-auto scroll-px-gutter px-gutter py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rail:mx-0 rail:min-w-0 rail:flex-1 rail:scroll-px-0 rail:gap-1.5 rail:px-0 rail:py-0.5"
       >
         {days.map((iso) => {
           const on = iso === date;
@@ -225,15 +243,18 @@ export function DayStrip({
               aria-label={format.dateTime(dt, { weekday: "long", day: "numeric", month: "long", ...latn })}
               className={tileClass({
                 selected: on,
-                className: cn("min-h-14 w-12 shrink-0 snap-start gap-0.5 px-0", monthStart && "ml-1", !on && isToday && "ring-2 ring-inset ring-ember-solid"),
+                className: cn("min-h-14 w-12 shrink-0 snap-start gap-0.5 px-0 rail:h-10 rail:min-h-10 rail:w-auto rail:basis-[calc((100%-13*6px)/14)] rail:flex-row rail:gap-1 rail:overflow-hidden rail:px-0.5", monthStart && "ml-1 rail:ml-0", !on && isToday && "ring-2 ring-inset ring-ember-solid"),
               })}
             >
               {/* Node and Chromium abbreviate some Bangla months differently, so the short month may differ after hydration. */}
-              <span suppressHydrationWarning className={cn("text-sm font-medium", on ? "text-on-solid" : "text-muted")}>
+              <span suppressHydrationWarning className={cn("text-sm font-medium rail:hidden", on ? "text-on-solid" : "text-muted")}>
                 {monthStart ? format.dateTime(dt, { month: "short" }) : format.dateTime(dt, { weekday: "narrow" })}
               </span>
-              <span className="text-lg font-semibold tabular-nums leading-none">{dt.getDate()}</span>
-              <span aria-hidden className="flex h-1.5 gap-0.5">
+              <span suppressHydrationWarning className={cn("hidden whitespace-nowrap text-sm font-medium rail:inline", on ? "text-on-solid" : "text-muted")}>
+                {monthStart ? format.dateTime(dt, { month: "short" }) : format.dateTime(dt, { weekday: "short" })}
+              </span>
+              <span className="text-lg font-semibold tabular-nums leading-none rail:text-base">{dt.getDate()}</span>
+              <span aria-hidden className="flex h-1.5 gap-0.5 rail:[&>span:nth-child(n+2)]:hidden">
                 {Array.from({ length: n }, (_, i) => (
                   <span key={i} className={cn("h-1.5 w-1.5 rounded-full", on ? "bg-on-solid" : "bg-ember")} />
                 ))}
@@ -241,6 +262,10 @@ export function DayStrip({
             </button>
           );
         })}
+      </div>
+      <button type="button" onClick={() => scrollStrip(1)} aria-label={t("nextWeek")} className="hidden size-9 shrink-0 items-center justify-center rounded-control text-fg-secondary ring-1 ring-inset ring-line hover:bg-muted-wash rail:inline-flex">
+        <ChevronRight size={18} strokeWidth={2} aria-hidden />
+      </button>
       </div>
 
       {!md && (
