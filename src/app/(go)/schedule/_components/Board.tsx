@@ -222,7 +222,7 @@ export function Board({
                  looks for. */
               const body = (
                 <>
-                  <span className="line-clamp-2 block w-full break-words text-base font-semibold leading-tight text-fg rail:line-clamp-1 rail:text-sm" title={name}>{name}</span>
+                  <span className="line-clamp-2 block w-full break-words text-base font-semibold leading-tight text-fg rail:line-clamp-1 rail:text-sm rail:font-medium" title={name}>{name}</span>
                   {closed && (
                     <span className="mt-0.5 flex items-center justify-center gap-1 text-sm text-danger">
                       <Wrench size={12} strokeWidth={1.75} aria-hidden />
@@ -251,14 +251,17 @@ export function Board({
 
           <div className="relative flex" style={{ height }}>
             {/* The hours. Each label sits at the top of its own row. */}
-            <div className="sticky left-0 z-10 shrink-0 border-r border-line bg-card" style={{ width: gutter, backgroundImage: hourLines }}>
-              {hours.map((m) => (
+            {/* On a desktop the gutter is drawn the way the OS calendar draws it:
+                no rules of its own, each hour a quiet 12px label centred ON its
+                rule (the first one below it, where the header would cut it). */}
+            <div className="sticky left-0 z-10 shrink-0 border-r border-line bg-card" style={{ width: gutter, backgroundImage: rail ? undefined : hourLines }}>
+              {hours.map((m, i) => (
                 <div key={m} className="relative" style={{ height: hp, scrollSnapAlign: "start" }}>
                   {/* The hour in ink, large, with its AM/PM under it: this column is
                       what a cashier reads first to find a time, and the
                       muted 13px it used to be was the faintest thing on
                       the board. */}
-                  <span className="absolute right-2 top-1 hidden whitespace-nowrap text-xs font-medium leading-none text-fg-secondary rail:block">{clockParts(m).h} {clockParts(m).ampm}</span>
+                  <span className={cn("absolute right-2 top-0 hidden whitespace-nowrap text-xs leading-none tabular-nums text-muted rail:block", i > 0 && "-translate-y-1/2")}>{clockParts(m).h} {clockParts(m).ampm}</span>
                   <span className="absolute inset-x-0 top-1 flex flex-col items-center leading-none text-fg rail:hidden">
                     <span className="text-md font-bold tabular-nums">{clockParts(m).h}</span>
                     <span className="mt-0.5 text-sm font-semibold">{clockParts(m).ampm}</span>
@@ -319,9 +322,9 @@ export function Board({
 
             {showNow && (
               /* ds-exception: now-line sits above the in-column layers (z-1..3) but under the z-10 sticky gutter */
-              <div aria-hidden className="pointer-events-none absolute right-0 z-[5]" style={{ top: y(nowMinutes as number) + 1, left: gutter - 6 }}>
+              <div aria-hidden className="pointer-events-none absolute right-0 z-[5]" style={{ top: y(nowMinutes as number) + 1, left: gutter - (rail ? 4 : 6) }}>
                 <div className="relative h-0.5 bg-danger">
-                  <span className="absolute left-0 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-danger" />
+                  <span className="absolute left-0 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-danger rail:h-2 rail:w-2" />
                 </div>
               </div>
             )}
@@ -455,7 +458,7 @@ function BlockView({
   /* A small inset so two bookings back to back read as two, and a small
      corner — a calendar block, not a card. */
   // ds-exception: in-column layer z-3 (booked blocks) under the z-10 sticky gutter
-  const frame = "absolute inset-x-1 z-[3] overflow-hidden rounded-sm text-left rail:inset-x-[3px] rail:rounded-inner";
+  const frame = "absolute inset-x-1 z-[3] overflow-hidden rounded-sm text-left rail:inset-x-[3px] rail:rounded-sm";
   const style = rail ? { top: top + 3, height: height - 6 } : { top: top + 2, height: height - 3 };
 
   if (b.type === "booking") {
@@ -486,7 +489,7 @@ function BlockView({
              badge that crowds out the guest's name is worse than none. */
           "@container",
           frame,
-          "border-l-[3px] px-tight py-1 rail:py-0.5",
+          "border-l-[3px] px-tight py-1 rail:px-1.5 rail:py-1",
           /* Status wins once something has happened; a plain booking sold on
              a marketplace is info blue INSTEAD of orange. */
           b.noShow
@@ -499,7 +502,7 @@ function BlockView({
         )}
         style={style}
       >
-        <span className="flex items-center gap-1 text-sm font-semibold leading-tight">
+        <span className="flex items-center gap-1 text-sm font-semibold leading-tight rail:text-xs rail:font-medium">
           {src && (
             <span className="hidden shrink-0 @min-[3rem]:inline-flex">
               <MarketBadge id={src.marketplaceId} size="go" />
@@ -513,7 +516,7 @@ function BlockView({
         </span>
         {tall && (
           asked
-            ? <span className="block truncate text-sm font-semibold leading-tight text-warning">{asked}</span>
+            ? <span className="block truncate text-sm font-semibold leading-tight text-warning rail:text-xs rail:font-medium">{asked}</span>
             : <span className="block truncate text-sm leading-tight opacity-80 rail:text-xs rail:text-muted rail:opacity-100">{b.product?.name ?? ""}</span>
         )}
       </button>
@@ -532,7 +535,7 @@ function BlockView({
           background: "repeating-linear-gradient(135deg, var(--color-muted-wash) 0 6px, var(--color-card) 6px 12px)",
         }}
       >
-        <span className="flex items-center gap-1 text-sm font-semibold leading-tight">
+        <span className="flex items-center gap-1 text-sm font-semibold leading-tight rail:text-xs rail:font-medium">
           <Lock size={13} strokeWidth={2} className="shrink-0 text-muted" aria-hidden />
           <span className="truncate">{b.hold.heldFor}</span>
         </span>
@@ -553,8 +556,8 @@ function BlockView({
       aria-label={t("board.sessionAria", { place, time: formatClock(b.time), left: b.remaining })}
       className={cn(
         frame,
-        "flex flex-col justify-start gap-0.5 border px-tight py-1",
-        disabled ? "border-line bg-surface text-muted" : full ? "border-line bg-muted-wash text-muted" : "border-line bg-card text-fg hover:border-ember",
+        "flex flex-col justify-start gap-0.5 border px-tight py-1 rail:border-l-[3px] rail:px-1.5",
+        disabled ? "border-line bg-surface text-muted" : full ? "border-line bg-muted-wash text-muted" : "border-line bg-card text-fg hover:border-ember rail:border-l-ember-line",
       )}
       style={style}
     >
@@ -563,7 +566,7 @@ function BlockView({
           {/* A desktop: what the cashier looks for (seats left) is strong, the time is quiet.
               One hour tall is one line; taller blocks stack the two. */}
           <span className="flex min-w-0 items-baseline gap-1.5">
-            <span className={cn("min-w-0 truncate text-sm font-semibold leading-tight", !full && !disabled && pct <= 0.2 && "text-brand-foreground")}>
+            <span className={cn("min-w-0 truncate text-xs font-semibold leading-tight", !full && !disabled && pct <= 0.2 && "text-brand-foreground")}>
               {full ? t("board.full") : t("board.seatsLeft", { count: b.remaining })}
             </span>
             {height < 64 && <span className="shrink-0 whitespace-nowrap text-xs font-normal leading-tight text-muted">{formatClock(b.time)}</span>}

@@ -19587,3 +19587,16 @@ Verified on a production build, ec29f026 scratchpad: `pos/btn.mjs` 84/84 (was 82
 duration and a truncated session name on the phone), `pos/sf.mjs` 8/8 (storefront tiles centred,
 equal, uncut on three timed items and a phone), `pos/more.mjs` 13/13, `pos/shots.mjs` 77/80 (the
 3 are harness selectors). Viewed by eye.
+
+---
+
+## POS schedule board drawn like the OS calendar (2026-11-05)
+
+Owner: the OS calendar's week view reads better; make the POS calendar like it. Desktop only
+(`rail:`), `schedule/_components/Board.tsx`: the hour gutter has no rules of its own and its labels
+are 12px regular muted, centred on their hour line (the first below it); lane names are medium
+weight; bookings, holds and sessions use the OS block anatomy (6px radius, 3px status edge, 12px
+text: the name medium, the detail muted); the now-line has an 8px dot at the gutter edge. Sessions
+carry an ember-line left edge. The grid structure, cells, selection and sizes are unchanged.
+Verified on a production build, ec29f026 scratchpad `pos/cal.mjs` (6/6, beside an OS capture) and
+`pos/shots.mjs` (77/80, the 3 are harness selectors). Viewed by eye.
