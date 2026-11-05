@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { HandCoins, Inbox, RotateCcw } from "lucide-react";
-import { Button, Skeleton, useToast } from "@/components/ui";
+import { Inbox } from "lucide-react";
+import { Button, SegmentedControl, Skeleton, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClock, formatDateTime, formatDay, formatMoney } from "@/lib/format";
 import {
@@ -22,9 +22,10 @@ import {
   type WriteOffRequest,
 } from "@/lib/api/writeOffRequests";
 import { useActor } from "../schedule/_lib/actor";
-import { GoCard, Tile, TileGrid } from "../_components/Tiles";
+import { GoCard } from "../_components/Tiles";
 import { GoPage, GoPageHeader } from "../_components/GoPage";
-import { R } from "../_components/railType";
+import { RAIL_SEGMENT } from "../_components/railType";
+import { T } from "../_components/type";
 
 /* ── My requests ──────────────────────────────────────────────────────────
  *
@@ -105,28 +106,21 @@ export default function MyRequestsPage() {
   ];
 
   return (
-    <GoPage width="wide">
-    <main className="mx-auto w-full max-w-160 pt-tight pb-28 lg:pb-section rail:max-w-none rail:pb-0 rail:pt-0">
+    <GoPage width="narrow">
+    <main className="mx-auto w-full max-w-160 pt-tight pb-40 rail:max-w-none rail:pb-0 rail:pt-0">
       <GoPageHeader title={t("pos.requests.title")} subtitle={<span className="-mt-inline block">{t("pos.requests.subtitle")}</span>} className="mb-comfortable! rail:mb-major!" />
 
       <div className="flex flex-col gap-comfortable rail:gap-section">
-      {/* The three groups are the summary: on a desktop a band of three cards
-          that each say how many, and the chosen one is the list below. */}
-      <TileGrid cols={3} role="tablist" aria-label={t("pos.requests.title")} className="rail:gap-section">
-        {tabs.map((x) => (
-          <Tile
-            key={x.key}
-            role="tab"
-            aria-selected={tab === x.key}
-            selected={tab === x.key}
-            onClick={() => setTab(x.key)}
-            className={`min-h-12 flex-row gap-inline text-md font-semibold rail:min-h-24 rail:flex-col rail:items-start rail:justify-center rail:rounded-md rail:px-card rail:text-left rail:text-sm rail:font-medium`}
-          >
-            {x.label}
-            <span className={`tabular-nums opacity-80 rail:text-2xl rail:font-semibold rail:opacity-100`}>{counts[x.key]}</span>
-          </Tile>
-        ))}
-      </TileGrid>
+      {/* Three views of one list: a standard segmented control, equal widths,
+          the count after the word ("Waiting · 4"), no tick. */}
+      <SegmentedControl
+        fullWidth
+        className={`rail:w-auto rail:max-w-md ${RAIL_SEGMENT}`}
+        aria-label={t("pos.requests.title")}
+        value={tab}
+        onChange={(v) => setTab(v as Tab)}
+        options={tabs.map((x) => ({ value: x.key, label: `${x.label} · ${counts[x.key]}` }))}
+      />
 
       {actor.loading ? (
         <div aria-busy="true" className="flex flex-col gap-tight">
@@ -155,6 +149,7 @@ export default function MyRequestsPage() {
 
 function RequestCard({ item: i, busy, onTakeBack }: { item: Item; busy: boolean; onTakeBack: () => void }) {
   const t = useTranslations("refunds");
+  const [open, setOpen] = useState(false);
   const st = statusOf(i);
   const r = i.req;
   const approved = st.tone === "good";
@@ -163,58 +158,73 @@ function RequestCard({ item: i, busy, onTakeBack }: { item: Item; busy: boolean;
   const guest = r.customerName?.trim() || t("pos.requests.noGuest");
   const why = i.kind === "refund" ? t(`reasons.${i.req.reason}`) : t(`pos.writeOff.category.${i.req.category}`);
   const what = i.kind === "refund" ? t(`pos.requests.scope.${scopeOf(i.req)}`) : null;
+  const reason = [what, why].filter(Boolean).join(" · ");
   const yourNote = r.note?.trim();
-  const decisionNote = r.decisionNote?.trim();
-  /* A manager said something — not a refund the cashier did on the spot (they
+  /* A manager said something: not a refund the cashier did on the spot (they
      asked and approved in one breath: there is nothing to relay). */
+  const decisionNote = r.decisionNote?.trim();
   const answered = !!r.decidedAt && st.tone !== "quiet" && r.decidedBy !== r.requestedBy;
-  const Icon = i.kind === "refund" ? RotateCcw : HandCoins;
+  const kind = i.kind === "refund" ? t("pos.requests.kindRefund") : t("pos.requests.kindWriteOff");
+  const hasMore = !!yourNote || reason.length > 48 || !!r.productName;
 
   return (
-    <li data-request={i.kind} data-status={st.key} className="card-surface flex flex-col gap-tight p-comfortable rail:grid rail:grid-cols-12 rail:items-center rail:gap-x-section rail:gap-y-tight rail:rounded-none rail:border-t rail:border-line rail:bg-transparent rail:px-card rail:py-comfortable rail:shadow-none rail:first:border-t-0">
-      <div className="flex items-center gap-comfortable rail:col-span-5">
-        <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-subtle text-fg [&_svg]:size-5">
-          <Icon strokeWidth={1.75} />
-        </span>
-        <div className="min-w-0 flex-1 rail:flex-none">
-          <p className={`text-md font-semibold text-fg ${R.card}`}>{i.kind === "refund" ? t("pos.requests.kindRefund") : t("pos.requests.kindWriteOff")}</p>
-          <p className="text-sm text-muted">{t("pos.requests.askedAt", { when: formatDateTime(r.requestedAt) })}</p>
-        </div>
-        <span data-status-pill className={cn("shrink-0 rounded-full px-comfortable py-inline text-sm font-semibold", R.status, TONE[st.tone])}>
+    <li data-request={i.kind} data-status={st.key} className="card-surface flex flex-col gap-tight p-comfortable rail:rounded-none rail:border-t rail:border-line rail:bg-transparent rail:px-card rail:py-comfortable rail:shadow-none rail:first:border-t-0">
+      <div className="flex items-baseline justify-between gap-comfortable">
+        <p className={`min-w-0 break-words ${T.item}`}>{r.productName || guest}</p>
+        <p className={`shrink-0 ${T.price}`}>{formatMoney(amount)}</p>
+      </div>
+
+      <div className="flex items-center justify-between gap-comfortable">
+        <p className={`min-w-0 ${T.meta}`}>
+          {kind} · {formatDateTime(r.requestedAt)}
+        </p>
+        <span data-status-pill className={cn("shrink-0 rounded-full px-comfortable py-inline", T.status, TONE[st.tone])}>
           {t(`pos.requests.status.${st.key}`)}
         </span>
       </div>
 
-      <div className="flex items-end justify-between gap-comfortable rail:col-span-7 rail:items-center">
-        <div className="min-w-0">
-          <p className={`break-words text-md font-semibold text-fg ${R.item}`}>{r.productName || guest}</p>
-          <p className="break-words text-sm text-muted">{[guest, slot].filter(Boolean).join(" · ")}</p>
-        </div>
-        <p className={`shrink-0 text-2xl font-semibold tabular-nums text-fg ${R.stat}`}>{formatMoney(amount)}</p>
-      </div>
+      <p className={cn(T.body, !open && "truncate")}>{reason}</p>
 
-      <p className="text-sm text-fg-secondary rail:col-span-12">{[what, why].filter(Boolean).join(" · ")}</p>
-      {yourNote && (
-        <p className="break-words text-sm text-muted rail:col-span-12">
-          <span className={`font-semibold text-fg-secondary ${R.label}`}>{t("pos.requests.yourNote")}: </span>
-          {yourNote}
-        </p>
+      {open && (
+        <div className="flex flex-col gap-inline">
+          <p className={T.meta}>{[guest, slot].filter(Boolean).join(" · ")}</p>
+          {yourNote && (
+            <p className={`break-words ${T.body}`}>
+              <span className={T.label}>{t("pos.requests.yourNote")}: </span>
+              {yourNote}
+            </p>
+          )}
+        </div>
       )}
 
       {answered && (
-        <div data-manager-note className={cn("rounded-inner p-comfortable rail:col-span-12", approved ? "bg-success-wash" : "bg-subtle ring-1 ring-inset ring-line")}>
-          <p className={`text-sm font-semibold text-fg ${R.label}`}>{t("pos.requests.managerNote")}</p>
-          <p className={`break-words text-md text-fg ${R.body}`}>{decisionNote || t("pos.status.noNote")}</p>
-          {r.decidedBy && <p className="mt-inline text-sm text-muted">{t("pos.requests.decidedBy", { name: r.decidedBy })}</p>}
+        <div data-manager-note className={cn("rounded-inner p-comfortable", approved ? "bg-success-wash" : "bg-subtle ring-1 ring-inset ring-line")}>
+          <p className={T.label}>{t("pos.requests.managerNote")}</p>
+          <p className={`break-words ${T.body}`}>{decisionNote || t("pos.status.noNote")}</p>
+          {r.decidedBy && <p className={`mt-inline ${T.meta}`}>{t("pos.requests.decidedBy", { name: r.decidedBy })}</p>}
         </div>
       )}
-      {st.key === "expired" && <p className="text-sm text-muted rail:col-span-12">{t("pos.status.expired")}</p>}
+      {st.key === "expired" && <p className={T.meta}>{t("pos.status.expired")}</p>}
 
-      {st.tone === "waiting" && (
-        <div className="flex justify-end rail:col-span-12">
-          <Button variant="secondary" size="lg" className={`rail:h-10! ${R.button}`} loading={busy} onClick={onTakeBack}>
-            {t("pos.status.takeBack")}
-          </Button>
+      {(hasMore || st.tone === "waiting") && (
+        <div className="flex items-center justify-between gap-comfortable">
+          {hasMore ? (
+            <button
+              type="button"
+              aria-expanded={open}
+              onClick={() => setOpen((v) => !v)}
+              className="inline-flex min-h-11 items-center text-sm font-medium text-brand-foreground underline-offset-2 hover:underline rail:min-h-10"
+            >
+              {open ? t("pos.requests.hideNote") : t("pos.requests.showNote")}
+            </button>
+          ) : (
+            <span />
+          )}
+          {st.tone === "waiting" && (
+            <Button variant="secondary" size="md" className="h-10! whitespace-nowrap text-sm! font-medium!" loading={busy} onClick={onTakeBack}>
+              {t("pos.status.takeBack")}
+            </Button>
+          )}
         </div>
       )}
     </li>

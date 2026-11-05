@@ -19564,3 +19564,26 @@ Spec: docs/pos-desktop.md §10. Desktop and phone.
 Verified on a production build, ec29f026 scratchpad `pos/shots.mjs` (77 of 80; the 3 are harness
 selectors) and `pos/more.mjs` (13 of 13: My sales desktop and phone, till settings, check-in
 desktop and phone, the phone tab bar). Viewed by eye.
+
+---
+
+## POS and storefront, round five: list grounds, names, two-fact buttons (2026-11-05)
+
+Spec: docs/pos-desktop.md §11. The three Sonnet builders hit their usage limit part way; the Opus
+session finished the work and reviewed what they had left.
+
+- Check-in list: card edge, header tint between page and card; names fall back to Guest / Walk-in
+  (new `checkin.guestDefault`), never the code in bold mono; phone filters as one chip row; the
+  phone progress bar hidden so session names do not truncate.
+- My requests: segmented tabs with counts (the old `role=tab` tiles are gone), short cards with
+  details folded (`refunds.pos.requests.showNote/hideNote`), narrow measure on a desktop, bottom
+  padding clears the tab bar.
+- Storefront booking flow: date, time and event-day tiles share `flow/tile.ts` (fixed 64px, centred
+  two lines, three across, selected main line in the accent text colour); "Pick a date" matches.
+  The lines carry their own `text-center` because ChoiceCard's base `text-left` won otherwise.
+- Quick pass: the duration is semibold, not bold (it is not money).
+
+Verified on a production build, ec29f026 scratchpad: `pos/btn.mjs` 84/84 (was 82/84: a 700-weight
+duration and a truncated session name on the phone), `pos/sf.mjs` 8/8 (storefront tiles centred,
+equal, uncut on three timed items and a phone), `pos/more.mjs` 13/13, `pos/shots.mjs` 77/80 (the
+3 are harness selectors). Viewed by eye.

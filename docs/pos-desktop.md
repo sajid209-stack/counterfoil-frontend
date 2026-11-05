@@ -153,3 +153,18 @@ the chosen option on settings and profile white on solid orange at 3.5:1.
 - Fixed: the sell-date calendar opened half above the screen (a `fixed` popup inside the blurred
   toolbar is positioned against the toolbar; it is now portalled to the body); the schedule's
   resource switch is a standard pill segmented control that does not shrink and clip.
+
+## 11. Round five: grounds, names and two-fact buttons (2026-11-05)
+
+- **Three grounds in a grouped list** (check-in): page, a white card with a 1px edge, and
+  session headers on a tint halfway between the two (Polaris draws grouped lists this way), so a
+  header never reads as a hole in the card.
+- **A code is never a title**: a party with no name is "Guest" (an order behind it) or "Walk-in",
+  with the code under it in 13px regular monospace.
+- **Phone check-in**: filters are one row of 40px chips; rows are name + status, one meta line,
+  then a 40px neutral action and the menu.
+- **Two-fact buttons** (a day and its date, a time and places left): one fixed height, both lines
+  centred, the main fact 14px 600 over the detail 13px muted, never truncated; three across on the
+  storefront so "Tomorrow" fits. `app/s/_components/flow/tile.ts` holds the anatomy.
+- **My requests**: a segmented control with counts, short cards (item and amount, kind and time
+  with status, the reason, details folded), the narrow page measure on a desktop.

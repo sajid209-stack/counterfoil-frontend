@@ -160,7 +160,9 @@
         "booking": "Booking cancelled",
         "tickets": "Some tickets",
         "goodwill": "An amount, tickets stay valid"
-      }
+      },
+      "showNote": "Show details",
+      "hideNote": "Hide details"
     }
   }
 }

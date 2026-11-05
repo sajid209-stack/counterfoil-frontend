@@ -5,11 +5,13 @@ import { useLocale } from "next-intl";
 import { CalendarDays } from "lucide-react";
 import { ChoiceCard, DatePicker } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { TILE, TILE_MAIN, TILE_SUB } from "./tile";
 
 /**
- * A compact date strip: the next 7 bookable days in a 4-column grid (so they
- * sit in two rows, not four) plus a calendar cell to reach anything further
- * out. Picking a date from the calendar joins the row, in order, the same fix
+ * A compact date strip: the next 5 bookable days in a 3-column grid (two rows
+ * with the calendar cell) plus a calendar cell to reach anything further out.
+ * Three across, not four: at four a tile was too narrow for "Tomorrow", which
+ * read "Tomorr…". Every tile is the same two-line anatomy (tile.ts). Picking a date from the calendar joins the row, in order, the same fix
  * the OS till's own date strip needed when a day outside the visible handful
  * had nowhere to show as chosen.
  */
@@ -20,7 +22,7 @@ export function DateChips({
   now,
   labels,
 }: {
-  /** The next bookable days; only the first 7 are shown as chips. */
+  /** The next bookable days; only the first 5 are shown as tiles. */
   dates: string[];
   value: string;
   onChange: (date: string) => void;
@@ -34,8 +36,8 @@ export function DateChips({
   const tomorrowIso = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`;
 
   const shown = useMemo(() => {
-    const first7 = dates.slice(0, 7);
-    return !value || first7.includes(value) ? first7 : [...first7, value].sort();
+    const first = dates.slice(0, 5);
+    return !value || first.includes(value) ? first : [...first.slice(0, 4), value].sort();
   }, [dates, value]);
 
   const label = (d: string) => {
@@ -47,7 +49,7 @@ export function DateChips({
 
   return (
     <div className="flex flex-col gap-tight">
-      <div className="grid grid-cols-4 gap-tight">
+      <div className="grid grid-cols-3 gap-tight">
         {shown.map((d) => {
           const on = value === d;
           return (
@@ -56,10 +58,10 @@ export function DateChips({
               selected={on}
               hideCheck
               onClick={() => onChange(d)}
-              className="flex min-h-14 flex-col items-center justify-center gap-0.5 px-inline py-tight text-center"
+              className={TILE}
             >
-              <span className="w-full truncate text-base font-medium">{label(d)}</span>
-              <span className="w-full truncate text-xs text-muted">{sub(d)}</span>
+              <span className={cn(TILE_MAIN, on && "text-brand-foreground")}>{label(d)}</span>
+              <span className={TILE_SUB}>{sub(d)}</span>
             </ChoiceCard>
           );
         })}
@@ -68,12 +70,13 @@ export function DateChips({
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
           className={cn(
-            "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-md border px-inline text-center text-xs font-medium transition-colors duration-quick",
-            open ? "border-fg bg-subtle text-fg" : "border-dashed border-strong bg-card text-fg hover:border-fg",
+            TILE,
+            "rounded-card border transition-colors duration-quick",
+            open ? "border-fg bg-subtle text-fg" : "border-line bg-card text-fg hover:border-strong",
           )}
         >
-          <CalendarDays size={16} strokeWidth={1.75} aria-hidden />
-          {labels.pickDate}
+          <CalendarDays size={18} strokeWidth={1.75} aria-hidden />
+          <span className={cn(TILE_SUB, "font-medium text-fg")}>{labels.pickDate}</span>
         </button>
       </div>
       {open && (

@@ -96,5 +96,6 @@
   "owes": "Owes {amount}",
   "modeLabel": "Check in view",
   "modeScan": "Scan",
-  "modeArrivals": "Arrivals"
+  "modeArrivals": "Arrivals",
+  "guestDefault": "Guest"
 }

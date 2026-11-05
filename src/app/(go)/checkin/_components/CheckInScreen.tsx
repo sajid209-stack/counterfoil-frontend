@@ -527,8 +527,11 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
     /* One white card. Each session is a quiet section header (sticky, so the
        session you are scrolling through stays named) over its parties, which
        sit on white between hairlines. overflow-clip rather than hidden: hidden
-       would turn the card into a scroll container and break the sticky. */
-    <div data-arrivals className="flex flex-col overflow-clip rounded-card bg-card shadow-card">
+       would turn the card into a scroll container and break the sticky.
+       Three distinct grounds, as Polaris draws a grouped list: the page, the
+       white card with a real 1px edge, and the session headers on a tint
+       halfway between the two, so a header never reads as a hole in the card. */
+    <div data-arrivals className="flex flex-col overflow-clip rounded-card border border-line bg-card shadow-card">
       {groups.map((g) => {
         const totals = sessionTotals.get(g.key) ?? { expected: 0, inCount: 0, waiting: 0 };
         const full = totals.inCount >= totals.expected;
@@ -543,12 +546,12 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
               type="button"
               onClick={() => setOpen((o) => ({ ...o, [g.key]: !isOpen }))}
               aria-expanded={isOpen}
-              className={cn("sticky top-0 z-10 flex min-h-11 w-full items-center gap-comfortable bg-surface px-comfortable py-tight text-left hover:bg-nav-hover rail:px-card", isOpen && "border-b border-line")}
+              className={cn("sticky top-0 z-10 flex min-h-11 w-full items-center gap-comfortable bg-[color-mix(in_srgb,var(--color-card)_50%,var(--color-surface))] px-comfortable py-tight text-left hover:bg-nav-hover rail:px-card", isOpen && "border-b border-line")}
             >
               <span className={cn("shrink-0 whitespace-nowrap tabular-nums", T.label)}>{formatClock(time(g.start))}</span>
               <span className={cn("min-w-0 flex-1 truncate", T.item)} title={productName(g.productId)}>{productName(g.productId)}</span>
               <span className={cn("shrink-0 whitespace-nowrap tabular-nums", T.meta, full && "font-medium text-success")}>{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
-              <span aria-hidden className="h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-line">
+              <span aria-hidden className="hidden h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-line sm:block">
                 <span className={cn("block h-full rounded-full", full ? "bg-success" : "bg-inverse/40")} style={{ width: `${totals.expected ? Math.round((totals.inCount / totals.expected) * 100) : 0}%` }} />
               </span>
               {isOpen ? <ChevronDown size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" /> : <ChevronRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}

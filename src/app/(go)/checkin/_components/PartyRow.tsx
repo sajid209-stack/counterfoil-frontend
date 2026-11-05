@@ -69,8 +69,10 @@ export function PartyRow({
   const t = useTranslations("checkin");
   const tr = useTranslations("refunds");
   const remaining = p.size - p.arrived;
-  const name = p.name || t("walkInDefaultName");
-  const showCode = !p.nameIsReference && !!p.reference;
+  /* Never the booking code as a title: a party with no name is a "Guest" (or a
+     "Walk-in" when no order stands behind it) and the code sits under it. */
+  const name = p.name || (p.order ? t("guestDefault") : t("walkInDefaultName"));
+  const showCode = !!p.reference;
 
   /* One pill per party. Money owed outranks the arrival state: it is the thing
      a steward has to act on before anyone walks through. */
@@ -115,11 +117,15 @@ export function PartyRow({
   /* On a desktop a list of these sits one per row, so a solid orange fill on every
      row would be ten primaries on one screen: there it is a 36px neutral button with
      brand words. The phone keeps its solid, full-width button. */
-  const primaryCls = rail ? "w-full font-semibold text-brand-foreground" : "w-full";
-  const look = rail ? ({ variant: "secondary", size: "sm" } as const) : {};
+  /* The phone is the same: a 40px neutral button with brand words for the
+     ordinary check-in; the solid orange is kept for the one thing that is
+     money owed ("Take ..."), so a list of ten still has no ten orange blocks. */
+  const primaryCls = rail ? "w-full font-semibold text-brand-foreground" : "h-10 w-full font-semibold text-brand-foreground md:h-10";
+  const look = { variant: "secondary", size: "sm" } as const;
+  const takeLook = rail ? look : ({ variant: "primary", size: "sm" } as const);
   const primary =
     p.state === "noshow" ? null : p.due > 0 ? (
-      <Button {...look} data-primary="take" className={primaryCls} onClick={onTake}>
+      <Button {...takeLook} data-primary="take" className={rail ? primaryCls : "h-10 w-full md:h-10"} onClick={onTake}>
         {t("takeAmount", { amount: formatMoney(p.due) })}
       </Button>
     ) : p.state === "in" ? null : p.state === "partial" ? (
@@ -149,12 +155,12 @@ export function PartyRow({
         )}
       >
         <div className="min-w-0">
-          <p className={cn("flex min-w-0 items-center gap-tight", T.item, p.nameIsReference && "font-mono")}>
+          <p className={cn("flex min-w-0 items-center gap-tight", T.item)}>
             <span className="min-w-0 truncate" title={name}>{name}</span>
             {justScanned}
           </p>
           <p className={cn("flex min-w-0 flex-wrap items-center gap-x-tight", T.meta)}>
-            {showCode && <span className="truncate font-mono">{p.reference}</span>}
+            {showCode && <span className="truncate font-mono font-normal">{p.reference}</span>}
             {marks}
           </p>
           <RequestNotes variant="row" orderId={p.booking.orderId} bookingId={p.booking.id} className="mt-inline flex flex-col gap-inline" />
@@ -176,17 +182,17 @@ export function PartyRow({
     >
       <div className="flex items-start justify-between gap-tight">
         <div className="min-w-0 flex-1">
-          <p className={cn("flex flex-wrap items-center gap-x-tight break-words text-md font-semibold text-fg", p.nameIsReference && "font-mono text-base")}>
+          <p className={cn("flex flex-wrap items-center gap-x-tight break-words", T.item)}>
             <span>{name}</span>
             {justScanned}
           </p>
           <p className={cn("mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline", T.meta)}>
             <span>{t("guests", { count: p.size })}</span>
             {p.arrived > 0 && p.state !== "in" && p.due > 0 && <span>· {t("inOfTotal", { done: p.arrived, total: p.size })}</span>}
+            {/* The code only when there is no name to go by; otherwise it is in search. */}
+            {p.nameIsReference && showCode && <span className="break-all font-mono font-normal">· {p.reference}</span>}
             {marks}
           </p>
-          {/* The code on its own line: it is what a guest reads off their phone. */}
-          {showCode && <p className={cn("mt-inline break-all font-mono", T.meta)}>{p.reference}</p>}
           <RequestNotes variant="row" orderId={p.booking.orderId} bookingId={p.booking.id} className="mt-inline flex flex-col gap-inline" />
         </div>
         <div className="shrink-0">{status}</div>
@@ -194,7 +200,7 @@ export function PartyRow({
       {(primary || menuBtn) && (
         <div className="flex items-center gap-tight">
           <div className="flex min-w-0 flex-1">{primary}</div>
-          {menuBtn}
+          <div className="flex size-10 shrink-0 items-center justify-center [&_button[aria-haspopup=menu]]:size-10!">{menuBtn}</div>
         </div>
       )}
     </li>

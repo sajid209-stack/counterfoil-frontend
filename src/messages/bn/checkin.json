@@ -96,5 +96,6 @@
   "owes": "বাকি {amount}",
   "modeLabel": "চেক-ইন দেখার ধরন",
   "modeScan": "স্ক্যান",
-  "modeArrivals": "আগমন"
+  "modeArrivals": "আগমন",
+  "guestDefault": "অতিথি"
 }

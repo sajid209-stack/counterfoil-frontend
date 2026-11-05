@@ -33,6 +33,7 @@ import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
 import type { PriceTier, Product } from "@/lib/api/types";
 import { sfBtn } from "../sf";
 import { DateChips } from "./DateChips";
+import { TILE, TILE_MAIN, TILE_SUB } from "./tile";
 
 const FALLBACK_CAP = 10;
 
@@ -477,10 +478,10 @@ function ResourceBooking({
                       selected={on}
                       hideCheck
                       onClick={() => setTime(opt.time)}
-                      className={cn(CHOICE, "min-h-12 flex-col px-tight py-tight", sold && "line-through")}
+                      className={TILE}
                     >
-                      <span>{formatClock(opt.time)}</span>
-                      {!sold && showPrice && <span className="tnum text-xs font-normal text-muted">{formatPriceShort(price)}</span>}
+                      <span className={cn(TILE_MAIN, on && "text-brand-foreground", sold && "line-through")}>{formatClock(opt.time)}</span>
+                      {!sold && showPrice && <span className={cn(TILE_SUB, "tnum")}>{formatPriceShort(price)}</span>}
                     </ChoiceCard>
                   );
                 })}
@@ -641,10 +642,10 @@ function TicketBooking({
                       selected={on}
                       hideCheck
                       onClick={() => setTime(opt.time)}
-                      className={cn(CHOICE, "min-h-12 flex-col px-tight py-tight", sold && "line-through")}
+                      className={TILE}
                     >
-                      <span>{formatClock(opt.time)}</span>
-                      {!sold && <span className="text-xs font-normal text-muted">{t("booking.left", { count: opt.remaining })}</span>}
+                      <span className={cn(TILE_MAIN, on && "text-brand-foreground", sold && "line-through")}>{formatClock(opt.time)}</span>
+                      <span className={TILE_SUB}>{sold ? t("event.soldOut") : t("booking.left", { count: opt.remaining })}</span>
                     </ChoiceCard>
                   );
                 })}
@@ -841,10 +842,10 @@ function EventBooking({ product, sheet, preselectTierId, compact, onAdded }: { p
                     disabled={!open}
                     hideCheck
                     onClick={() => changeDay(d.id)}
-                    className={cn(CHOICE, "min-h-14 flex-col gap-0.5 py-inline")}
+                    className={TILE}
                   >
-                    <span>{dayDate(d)}</span>
-                    <span className="text-xs font-normal text-muted">{open ? dayWord(i) : t("event.soldOut")}</span>
+                    <span className={cn(TILE_MAIN, dayId === d.id && "text-brand-foreground")}>{dayDate(d)}</span>
+                    <span className={TILE_SUB}>{open ? dayWord(i) : t("event.soldOut")}</span>
                   </ChoiceCard>
                 );
               })}

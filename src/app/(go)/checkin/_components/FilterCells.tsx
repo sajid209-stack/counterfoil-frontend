@@ -7,15 +7,13 @@ import { FILTERS, type CheckInFilter } from "../_lib/parties";
 /**
  * All · Due · Not in yet · In — four separate tiles, each saying how many.
  *
- * A segmented choice that fits a 320px phone: a word on top and the number
- * under it, so a steward who does not read the word reads the count. The chosen
- * cell is the till's one look for "chosen" (Tiles.tsx TILE_CHOSEN: solid orange
- * and a tick on a phone, a tint and a ring on a desktop). It is the radio-group
- * pattern (one tab stop, the arrow keys move and choose), and the same four
- * cells in the same order on every device.
- *
- * On a desktop it is a row of compact 36px chips (word, then its count), left
- * aligned in the list's toolbar rather than four wide tiles.
+ * One row of compact chips on every device, the word then its count ("Not in
+ * yet 8"): 40px on a phone (the row scrolls sideways rather than wrapping when a
+ * language runs long), 36px on a desktop. The four tall tiles this replaced
+ * spent 64px of a phone on a filter and put the chosen tick over the words.
+ * Chosen is the till's one look (Tiles.tsx TILE_CHOSEN) without the tick, which
+ * a chip this size has no corner for. It is the radio-group pattern (one tab
+ * stop, the arrow keys move and choose).
  */
 export function FilterCells({
   value,
@@ -38,7 +36,7 @@ export function FilterCells({
   };
   return (
     <div ref={group} className="rail:min-w-0">
-      <TileGrid cols={4} role="radiogroup" aria-label={label} className="rail:flex rail:flex-wrap rail:gap-inline">
+      <TileGrid cols={4} role="radiogroup" aria-label={label} className="flex gap-tight overflow-x-auto [scrollbar-width:none] rail:flex-wrap rail:gap-inline rail:overflow-visible">
         {FILTERS.map((f, i) => {
           const on = f === value;
           return (
@@ -54,10 +52,10 @@ export function FilterCells({
                 if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); move(i, 1); }
                 else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); move(i, -1); }
               }}
-              className="min-h-16 gap-0.5 px-1 rail:min-h-9 rail:flex-row-reverse rail:gap-tight rail:px-comfortable"
+              className="min-h-10 shrink-0 flex-row-reverse gap-tight px-comfortable [&>svg]:hidden rail:min-h-9"
             >
-              <span className="text-xl font-semibold tabular-nums leading-none rail:text-sm rail:font-medium">{counts[f]}</span>
-              <span className={`max-w-full text-sm font-medium leading-tight rail:text-base ${on ? "text-on-solid" : "text-muted"}`}>{labels[f]}</span>
+              <span className="text-base font-semibold tabular-nums leading-none rail:text-sm rail:font-medium">{counts[f]}</span>
+              <span className={`whitespace-nowrap text-base font-medium leading-tight ${on ? "text-on-solid" : "text-fg-secondary"}`}>{labels[f]}</span>
             </Tile>
           );
         })}
