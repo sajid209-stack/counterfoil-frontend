@@ -139,9 +139,6 @@
     "previewPlaces": "বিক্রি হওয়া জায়গা",
     "previewArrived": "পৌঁছেছে"
   },
-  "greetMorning": "শুভ সকাল",
-  "greetAfternoon": "শুভ অপরাহ্ন",
-  "greetEvening": "শুভ সন্ধ্যা",
-  "hereActivity": "আপনার সাম্প্রতিক কার্যক্রম",
+  "hereActivity": "এখন যা ঘটছে",
   "viewReport": "রিপোর্ট দেখুন"
 }

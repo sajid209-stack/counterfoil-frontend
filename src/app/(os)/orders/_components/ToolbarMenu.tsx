@@ -108,7 +108,7 @@ export function ToolbarMenu({ items, label }: { items: ToolbarMenuItem[]; label:
         className={cn(
           "grid h-11 w-11 shrink-0 place-items-center rounded-control border border-line bg-card text-muted transition-colors duration-quick hover:text-fg md:h-9 md:w-9",
           /* A phone's list toolbar: a round icon button on the subtle ground, beside the search pill. */
-          "max-sm:rounded-full max-sm:border-transparent max-sm:bg-subtle max-sm:text-fg",
+          "max-sm:rounded-card max-sm:text-fg",
           open && "border-strong text-fg",
         )}
       >

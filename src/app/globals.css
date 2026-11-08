@@ -1175,12 +1175,12 @@ html[data-motion="reduce"] *::after {
    --os-phone-bar  the compact top bar, 44px. It fades in once the large title
                    has scrolled away; anything sticky further down a phone page
                    pins to this (top-[var(--os-phone-bar)]), never to a number.
-   --os-fab-clear  the floating dock: 12px off the bottom + the 56px pill + 16px
-                   air, plus the device's safe area. The dock's top is 68px up,
-                   exactly where the sticky save bars already sit. */
+   --os-fab-clear  the docked tab bar: 60px + 16px air, plus the device's safe
+                   area. The bar's top is 60px up; the sticky save bars sit at
+                   68px, just above it. */
 :root {
   --os-phone-bar: 44px;
-  --os-fab-clear: calc(84px + env(safe-area-inset-bottom));
+  --os-fab-clear: calc(76px + env(safe-area-inset-bottom));
 }
 
 /* OS on a phone, v5: the page is white and a group that needs a container is an

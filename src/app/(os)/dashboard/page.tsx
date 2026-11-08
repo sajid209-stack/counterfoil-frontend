@@ -960,8 +960,6 @@ export default function DashboardPage() {
       : wide
         ? `${formatDay(dayShift(TODAY, -6), { weekday: true })} – ${formatDay(TODAY, { weekday: true })}`
         : `${formatDay(dayShift(TODAY, -6))} – ${formatDay(TODAY)}`;
-  /* The greeting follows the demo clock (DEMO_NOW_MINUTES, Dhaka time), the same one the schedule reads. */
-  const greeting = DEMO_NOW_MINUTES < 12 * 60 ? t("greetMorning") : DEMO_NOW_MINUTES < 17 * 60 ? t("greetAfternoon") : t("greetEvening");
   const scopeOptions = [
     { value: "today", label: t("today") },
     { value: "week", label: t("thisWeek") },
@@ -975,7 +973,7 @@ export default function DashboardPage() {
   return (
     <PageShell
       title={wide ? op.data?.name || t("title") : t("title")}
-      subtitle={phone && showPage ? <span aria-live="polite" className="text-base text-muted">{greeting} · {dateLine}</span> : undefined}
+      subtitle={phone && showPage ? <span aria-live="polite" className="text-base text-muted">{dateLine}</span> : undefined}
       scope={
         phone && showPage ? (
           <PeriodPill value={scope} onChange={(v) => setScope(v as "today" | "week")} label={t("scopeLabel")} options={scopeOptions} />

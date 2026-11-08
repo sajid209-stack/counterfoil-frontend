@@ -111,29 +111,31 @@ export function PhoneSheetHead({
   onClose,
   closeLabel,
 }: {
-  /** Drawn in the right-hand slot; the slot keeps its width without it so the title stays centred. */
+  /** Drawn left of the title (the business tile). */
   tile?: React.ReactNode;
   title: React.ReactNode;
   sub?: React.ReactNode;
   onClose: () => void;
   closeLabel: string;
 }) {
+  /* Counterfoil's own head (docs/mobile.md section 8, v6): the business tile and
+     its name on the left, read first; the close as a soft square on the right.
+     The close stays first in the DOM (the sheet's first focus) and is ordered last. */
   return (
-    <div className="grid shrink-0 grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-tight px-gutter pb-comfortable pt-inline">
+    <div className="flex shrink-0 items-center gap-comfortable px-gutter pb-comfortable pt-inline">
       <button
         type="button"
         onClick={onClose}
         aria-label={closeLabel}
-        className="relative grid h-10 w-10 place-items-center rounded-full border border-line bg-card text-fg shadow-sm transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] active:bg-muted-wash"
+        className="order-last grid h-10 w-10 shrink-0 place-items-center rounded-card bg-subtle text-fg transition-colors duration-quick active:bg-muted-wash"
       >
         <X size={18} strokeWidth={1.75} aria-hidden />
       </button>
-      <div className="min-w-0 text-center">
-        {/* ds-exception: 17px is the sheet title size in docs/mobile.md section 8; no step between md and lg */}
-        <p className="line-clamp-2 break-words text-[17px] font-semibold leading-snug text-fg">{title}</p>
+      {tile && <div className="shrink-0">{tile}</div>}
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-2 break-words text-lg font-semibold leading-snug text-fg">{title}</p>
         {sub !== undefined && <div className="mt-0.5 truncate text-sm leading-tight text-muted">{sub}</div>}
       </div>
-      <div className="justify-self-end">{tile}</div>
     </div>
   );
 }

@@ -19640,3 +19640,17 @@ Verified on a production build, ec29f026 scratchpad `os/check.mjs`: 16 pages at 
 sideways scroll, the dock, a large title, no text under 12px, no errors), the Settings list and back,
 the dock's tabs, Menu and Search, record pages, and desktop guards (no dock, /settings → Business):
 107 of 109, the 2 being transparent zero shadows the check counted. Viewed by eye.
+
+---
+
+## OS on a phone, v6: Counterfoil's own, not a copy of Shopify (2026-11-08)
+
+Owner: v5 copied Shopify too closely; take ideas, do better. docs/mobile.md §8 "v6" has the table of
+what changed and why. In short: a docked, labelled tab bar (Home · Orders · Calendar · Catalog · More)
+marked by the ember "here" bar; search and the venue (a pin chip) in a tool row above the title;
+ember-underline quick tabs and a 12px-radius search field; status as a dot and a word; sheets with the
+title on the left and a soft square close; the business tile leading the menu head; the greeting and
+"Here's your activity" replaced by the date and "What's happening"; figure chips with soft tone icons.
+`--os-fab-clear` is now 76px + safe area. Built by the Opus session (the Sonnet builders were at their
+usage limit). Verified on a production build with ec29f026 scratchpad `os/check.mjs` (107/109, the 2
+being transparent zero shadows) and by eye.

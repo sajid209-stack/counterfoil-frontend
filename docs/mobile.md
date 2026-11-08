@@ -322,3 +322,20 @@ information overload. Colours do not change. Desktop and tablet (≥ md) do not 
 - **Calendar**: soft round controls, a neutral Day/Week/Month switch, the strip and agenda edge to edge.
 - **Settings**: `/settings` is a page — on a phone the list of sections (Shopify's anatomy); from md it
   moves on to Business. A section's back button returns to the list.
+
+### v6: Counterfoil's own, not a copy (2026-11-08)
+
+Owner: v5 copied Shopify too closely (the floating search circle and icon pill, the grey search pill
+and chip tabs, round-close sheets with a centred title, even "Here's your activity"). Take the
+principles, draw them in Counterfoil's language. What changed from v5:
+
+| v5 (too close to Shopify) | v6 (Counterfoil) | Why it is better here |
+|---|---|---|
+| Floating round Search + a pill of bare icon tabs | A docked full-width tab bar with labels: Home · Orders · Calendar · Catalog · More; the current tab marked by a short ember bar on its top edge, as the till and the rail mark "here" | Labels are recognised faster than glyphs (an operator opens this a few times a day); the ember bar is the product's own sign for "here" |
+| Search in the dock | Search at the top of every page, in the header's tool row | Where a phone looks for it, beside the page's own actions |
+| Venue as a muted line under the title | The venue as a pin chip in the tool row | A multi-site attraction's scope reads as a control, and the title gets its line to itself |
+| Grey search pill, chip tabs on grey pills | A 12px-radius white field with a hairline; Counterfoil's ember-underline tabs (as Refunds already had) | One tab language across the product |
+| Grey status pills in rows | A coloured dot and the word in its tone | Status is a fact about a row, not its headline |
+| Round close top-left, centred title | Title on the left (18/600), close as a soft square on the right; the menu head leads with the business tile | Reads left to right; the soft tile is the menu's own icon ground |
+| "Good afternoon · …", "Here's your activity" | The date; "What's happening" | Our words |
+| Plain figure chips | Each chip leads with a soft icon tile in the figure's tone (the §6 language) | Figures are told apart before a word is read |

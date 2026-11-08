@@ -124,6 +124,15 @@ function ChipChange({ metric }: { metric: Metric }) {
 
 /** A phone's figures (docs/mobile.md section 8), shared by Dashboard and Analytics: one row of white chips that scrolls sideways and snaps,
  *  bleeding to the screen edge through the page gutter. Not buttons: the chart below draws one series. */
+const CHIP_TONE: Record<StatIconTone, string> = {
+  ember: "bg-ember-wash text-brand-foreground",
+  success: "bg-success-wash text-success",
+  info: "bg-info-wash text-info",
+  warning: "bg-warning-wash text-warning",
+  danger: "bg-danger-wash text-danger",
+  neutral: "bg-subtle text-fg-secondary",
+};
+
 export function MetricChips({ items, loading, label }: { items: Metric[]; loading: boolean; label: string }) {
   return (
     <div
@@ -134,7 +143,17 @@ export function MetricChips({ items, loading, label }: { items: Metric[]; loadin
     >
       {items.map((m) => (
         <div key={m.key} data-metric={m.key} className="min-w-37 shrink-0 snap-start rounded-lg border border-line bg-card p-comfortable">
-          <p className="truncate text-sm font-medium text-muted">{m.label}</p>
+          {/* Counterfoil's figure card (docs/mobile.md §6 and §8, v6): a soft icon
+              tile in the figure's own tone over the label, so a row of figures
+              can be told apart at a glance before a word is read. */}
+          <div className="flex items-center gap-tight">
+            {m.icon && (
+              <span aria-hidden className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-md [&_svg]:h-4 [&_svg]:w-4", CHIP_TONE[m.iconTone ?? "neutral"])}>
+                {m.icon}
+              </span>
+            )}
+            <p className="truncate text-sm font-medium text-muted">{m.label}</p>
+          </div>
           {loading ? (
             <Skeleton className="mt-inline h-6 w-20" />
           ) : (

@@ -661,8 +661,8 @@ function Catalog() {
                       title={selecting ? t("selectDone") : t("select")}
                       onClick={() => setSelecting((v) => !v)}
                       className={cn(
-                        "grid h-11 w-11 shrink-0 place-items-center rounded-full text-fg transition-colors duration-quick md:hidden",
-                        selecting ? "bg-nav-selected" : "bg-subtle active:bg-muted-wash",
+                        "grid h-11 w-11 shrink-0 place-items-center rounded-card border text-fg transition-colors duration-quick md:hidden",
+                        selecting ? "border-strong bg-nav-selected" : "border-line bg-card active:bg-muted-wash",
                       )}
                     >
                       {selecting ? <X size={18} strokeWidth={1.75} aria-hidden /> : <ListChecks size={18} strokeWidth={1.75} aria-hidden />}

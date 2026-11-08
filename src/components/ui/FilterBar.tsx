@@ -43,7 +43,7 @@ export function FilterSearch({
         className={cn(
           "h-11 w-full min-w-0 transition-colors duration-quick placeholder:text-muted md:h-9 md:w-64",
           pill
-            ? "rounded-full border border-transparent bg-subtle pl-11 pr-12 text-md focus:border-ember"
+            ? "rounded-card border border-line bg-card pl-11 pr-12 text-md focus:border-ember"
             : "rounded-control border border-line bg-card pl-8 pr-comfortable text-base hover:border-strong focus:border-ember",
         )}
       />
@@ -270,7 +270,7 @@ export function FilterBar({
       aria-label={count ? t("filtersApplied", { count }) : t("filters")}
       onClick={() => (open ? close(false) : setOpenFor(wide))}
       className={cn(
-        "absolute right-0 top-0 grid h-11 w-11 place-items-center rounded-full text-fg transition-colors duration-quick active:bg-nav-hover",
+        "absolute right-0 top-0 grid h-11 w-11 place-items-center rounded-card text-fg transition-colors duration-quick active:bg-nav-hover",
         (open || count > 0) && "bg-nav-selected",
       )}
     >

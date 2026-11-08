@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Search } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -18,92 +18,97 @@ import { BusinessTile, PhoneSheet, PhoneSheetHead } from "./mobile/PhoneSheet";
 import { initialsOf } from "./mobile/shared";
 
 /**
- * The phone's way around — a floating dock, and the full-height sheet its Menu
- * tab opens (docs/mobile.md section 8, rule 4).
+ * The phone's way around (docs/mobile.md section 8, v6): a tab bar docked to the
+ * foot of the screen, and the full-height sheet its More tab opens.
  *
- * Shopify admin's phone app has the same shape: a round Search, then a pill of
- * icon tabs for the places used all day, so the primary destinations are always
- * one thumb-tap away in the natural thumb zone instead of behind a hamburger
- * (NN/g: hidden navigation cost phone users ~15% in speed). Everything else —
- * every other destination, the other apps, Settings, the account — is the last
- * tab, Menu.
+ *   [ Home | Orders | Calendar | Catalog | More ]
  *
- *   ( Search )  [ Home  Orders  Calendar  Catalog  Menu ]
+ * The principle is the one every good phone app shares — the places used all day
+ * are always one thumb-tap away, never behind a hamburger (NN/g: hidden
+ * navigation cost phone users ~15% in speed; Apple: 3–5 tab destinations) — but
+ * the drawing is Counterfoil's own rather than a floating pill of bare glyphs:
  *
- * It floats 12px above the safe area, centred, at most 420px wide with a 16px
- * margin each side; frosted (the card at 85% over a blur), a 1px line and the
- * soft float shadow. The pill is 56px tall (2px inside each 52px tab), so its
- * top is 68px up — exactly where the sticky save bars already sit — and every
- * page reserves `--os-fab-clear` at its foot so it never covers a last row.
+ *   - Every tab says its name under its icon. A label is recognised faster than
+ *     a glyph and needs no learning; an operator opens this app a few times a
+ *     day, not all day.
+ *   - The current tab is marked the way Counterfoil marks "here" everywhere —
+ *     the till's tab bar and the admin rail: a short ember bar on its top edge,
+ *     the icon and the label in ink and semibold. Others are muted.
+ *   - It is docked full width on the card colour with a hairline above it, so it
+ *     reads as the floor of the app, not as an object over the content.
+ *   - Something waiting at the venue (a refund or a write-off) is a small ember
+ *     count on Orders, where Refunds and Write-offs live: orange because it asks
+ *     for a decision.
+ *   - Search is at the top of every page (the header's tool row), where a phone
+ *     looks for it; More holds everything else — other destinations, the other
+ *     apps, Settings and the account.
  *
- * The current tab is a `nav-selected` pill behind an ink icon, the rest are
- * muted. Menu is the current one while its sheet is open. A refund or write-off
- * waiting at the venue is a small ink dot on Orders (where Refunds and
- * Write-offs live), and Orders' name carries the count.
+ * The bar is 60px plus the safe area; every page reserves `--os-fab-clear` at its
+ * foot so it never covers a last row.
  */
 const DOCK_TABS = ["/dashboard", "/orders", "/calendar", "/catalog"] as const;
 const tabOf = (href: string) => NAV_MAIN.find((d) => d.href === href)!;
 
-const dockBtn =
-  "relative flex h-13 w-13 min-w-0 shrink items-center justify-center rounded-full transition-colors duration-quick active:scale-95 motion-reduce:transition-none";
+const tabCls = (on: boolean) =>
+  cn(
+    "relative flex min-w-0 flex-col items-center justify-center gap-0.5 pt-1 text-xs transition-colors duration-quick",
+    /* "Here": the ember bar on the top edge (24px wide, 3px tall). */
+    "before:absolute before:left-1/2 before:top-0 before:h-[3px] before:w-6 before:-translate-x-1/2 before:rounded-b-full before:content-['']",
+    on ? "font-semibold text-fg before:bg-ember-solid" : "font-medium text-muted before:bg-transparent active:text-fg",
+  );
 
-export function PhoneDock({ menuOpen, onOpenMenu, onOpenSearch }: { menuOpen: boolean; onOpenMenu: () => void; onOpenSearch: () => void }) {
+export function PhoneDock({ menuOpen, onOpenMenu }: { menuOpen: boolean; onOpenMenu: () => void }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const waiting = useWaitingTotal();
-  const tone = (on: boolean) => (on ? "bg-nav-selected text-fg" : "text-muted hover:text-fg");
   return (
     <nav
       aria-label={t("dock")}
       data-phone-dock
-      className="fixed bottom-[calc(12px+env(safe-area-inset-bottom))] left-1/2 z-30 flex w-[min(420px,calc(100%-32px))] -translate-x-1/2 items-center justify-center gap-tight md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden dark:bg-surface/95"
     >
+      {DOCK_TABS.map((href) => {
+        const d = tabOf(href);
+        const current = !menuOpen && (pathname === href || pathname.startsWith(`${href}/`));
+        const count = href === "/orders" ? waiting : 0;
+        const Icon = d.icon;
+        return (
+          <Link
+            key={href}
+            href={href}
+            aria-label={count > 0 ? t("ordersWaiting", { count }) : undefined}
+            aria-current={current ? "page" : undefined}
+            data-dock-tab={d.key}
+            data-waiting={count > 0 ? count : undefined}
+            className={cn(tabCls(current), "h-15")}
+          >
+            <span className="relative">
+              <Icon size={22} strokeWidth={current ? 2 : 1.5} aria-hidden />
+              {count > 0 && (
+                <span
+                  aria-hidden
+                  data-menu-dot
+                  className="absolute -right-2.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-ember-solid px-1 text-xs font-semibold leading-none text-on-solid ring-2 ring-card"
+                >
+                  {count > 9 ? "9+" : count}
+                </span>
+              )}
+            </span>
+            <span className="max-w-full truncate px-1">{t(d.key)}</span>
+          </Link>
+        );
+      })}
       <button
         type="button"
-        onClick={onOpenSearch}
-        aria-label={t("search")}
+        onClick={onOpenMenu}
         aria-haspopup="dialog"
-        data-dock-search
-        className="flex h-13 w-13 shrink-0 items-center justify-center rounded-full border border-line bg-card/85 text-fg shadow-float backdrop-blur-md transition-transform duration-quick active:scale-95 motion-reduce:transition-none"
+        aria-expanded={menuOpen}
+        data-menu-button
+        className={cn(tabCls(menuOpen), "h-15")}
       >
-        <Search size={22} strokeWidth={1.5} aria-hidden />
+        <MoreHorizontal size={22} strokeWidth={menuOpen ? 2 : 1.5} aria-hidden />
+        <span className="max-w-full truncate px-1">{t("more")}</span>
       </button>
-      <div className="flex min-w-0 shrink items-center rounded-full border border-line bg-card/85 p-0.5 shadow-float backdrop-blur-md">
-        {DOCK_TABS.map((href) => {
-          const d = tabOf(href);
-          const current = pathname === href || pathname.startsWith(`${href}/`);
-          const isOrders = href === "/orders";
-          const count = isOrders ? waiting : 0;
-          const Icon = d.icon;
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-label={count > 0 ? t("ordersWaiting", { count }) : t(d.key)}
-              aria-current={current ? "page" : undefined}
-              data-dock-tab={d.key}
-              data-waiting={count > 0 ? count : undefined}
-              className={cn(dockBtn, tone(current && !menuOpen))}
-            >
-              <Icon size={22} strokeWidth={1.5} aria-hidden />
-              {/* Something is waiting. Ink, not orange — orange means act, and this only
-                  says there is something to look at; the ring cuts it out of the tab. */}
-              {count > 0 && <span aria-hidden data-menu-dot className="absolute right-3 top-3 h-2 w-2 rounded-full bg-fg ring-2 ring-card" />}
-            </Link>
-          );
-        })}
-        <button
-          type="button"
-          onClick={onOpenMenu}
-          aria-label={t("menu")}
-          aria-haspopup="dialog"
-          aria-expanded={menuOpen}
-          data-menu-button
-          className={cn(dockBtn, tone(menuOpen))}
-        >
-          <Menu size={22} strokeWidth={1.5} aria-hidden />
-        </button>
-      </div>
     </nav>
   );
 }

@@ -139,9 +139,6 @@
     "previewPlaces": "Places sold",
     "previewArrived": "Arrived"
   },
-  "greetMorning": "Good morning",
-  "greetAfternoon": "Good afternoon",
-  "greetEvening": "Good evening",
-  "hereActivity": "Here's your activity",
+  "hereActivity": "What's happening",
   "viewReport": "View report"
 }

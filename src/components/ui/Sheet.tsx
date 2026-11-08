@@ -19,11 +19,12 @@ import { scrimClass, useDialogBehaviour } from "./Modal";
  * because a sheet with no handle does not look draggable.
  *
  * On an OS phone (below md, inside the OS shell — `data-os-shell`) the frame is
- * the v5 one (docs/mobile.md section 8, rule 7): a 40px round close button at the
- * top-left, the title centred at 17/600, an optional round action at the
- * top-right. Anywhere else — Go, the public pages, md and up — the title row is
- * what it always was. One DOM, restyled by the `max-md:in-data-[os-shell]:`
- * variants, so there is one close button either way.
+ * Counterfoil's own (docs/mobile.md section 8, v6): the title on the left at
+ * 18/600 where a left-to-right reader starts, an optional action, and the close
+ * as a 40px soft square on the right — the same soft tile the menu's icons sit
+ * on — with no rule under the head. Anywhere else — Go, the public pages, md
+ * and up — the title row is what it always was. One DOM, restyled by the
+ * `max-md:in-data-[os-shell]:` variants, so there is one close button either way.
  *
  * `wide` is where the same content belongs in a dropdown on a desktop: the
  * sheet stays a sheet on a phone and the caller positions the desktop copy.
@@ -120,7 +121,7 @@ export function Sheet({
 
         <div
           data-sheet-head
-          className="flex items-start justify-between gap-tight border-b border-hairline pb-tight pl-card pr-tight max-md:in-data-[os-shell]:grid max-md:in-data-[os-shell]:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] max-md:in-data-[os-shell]:items-center max-md:in-data-[os-shell]:border-b-0 max-md:in-data-[os-shell]:px-gutter max-md:in-data-[os-shell]:pb-comfortable max-md:in-data-[os-shell]:pt-0"
+          className="flex items-start justify-between gap-tight border-b border-hairline pb-tight pl-card pr-tight max-md:in-data-[os-shell]:grid max-md:in-data-[os-shell]:grid-cols-[minmax(0,1fr)_auto_2.5rem] max-md:in-data-[os-shell]:items-center max-md:in-data-[os-shell]:border-b-0 max-md:in-data-[os-shell]:px-gutter max-md:in-data-[os-shell]:pb-comfortable max-md:in-data-[os-shell]:pt-0"
         >
           {/* First in the DOM, so it is the first focus; on md and elsewhere it is
               ordered to the end, where it has always been. */}
@@ -128,20 +129,19 @@ export function Sheet({
             type="button"
             onClick={onClose}
             aria-label={closeLabel}
-            className="relative order-last -mt-inline flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash max-md:in-data-[os-shell]:order-none max-md:in-data-[os-shell]:col-start-1 max-md:in-data-[os-shell]:row-start-1 max-md:in-data-[os-shell]:mt-0 max-md:in-data-[os-shell]:h-10 max-md:in-data-[os-shell]:w-10 max-md:in-data-[os-shell]:rounded-full max-md:in-data-[os-shell]:border max-md:in-data-[os-shell]:border-line max-md:in-data-[os-shell]:bg-card max-md:in-data-[os-shell]:text-fg max-md:in-data-[os-shell]:shadow-sm max-md:in-data-[os-shell]:before:absolute max-md:in-data-[os-shell]:before:-inset-0.5 max-md:in-data-[os-shell]:before:content-['']"
+            className="relative order-last -mt-inline flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash max-md:in-data-[os-shell]:order-none max-md:in-data-[os-shell]:col-start-3 max-md:in-data-[os-shell]:row-start-1 max-md:in-data-[os-shell]:mt-0 max-md:in-data-[os-shell]:h-10 max-md:in-data-[os-shell]:w-10 max-md:in-data-[os-shell]:rounded-card max-md:in-data-[os-shell]:bg-subtle max-md:in-data-[os-shell]:text-fg max-md:in-data-[os-shell]:before:absolute max-md:in-data-[os-shell]:before:-inset-0.5 max-md:in-data-[os-shell]:before:content-['']"
           >
             <X size={18} strokeWidth={1.5} aria-hidden />
           </button>
-          <div className="min-w-0 flex-1 max-md:in-data-[os-shell]:col-start-2 max-md:in-data-[os-shell]:row-start-1 max-md:in-data-[os-shell]:text-center">
+          <div className="min-w-0 flex-1 max-md:in-data-[os-shell]:col-start-1 max-md:in-data-[os-shell]:row-start-1">
             {lead}
             {/* Wraps to a second line rather than cutting: a sheet's title is often
                 the name that tells two things apart ("…Walking Tour of Old
                 Dhaka" against "…Walking Tour of Old Dhaka with Rooftop Iftar"). */}
-            {/* ds-exception: 17px is the OS phone sheet title (docs/mobile.md section 8); no step between md and lg */}
-            <p id={titleId} className="line-clamp-2 break-words text-base font-semibold text-fg max-md:in-data-[os-shell]:text-[17px]">{title}</p>
+            <p id={titleId} className="line-clamp-2 break-words text-base font-semibold text-fg max-md:in-data-[os-shell]:text-lg">{title}</p>
           </div>
           {action && (
-            <div className="hidden max-md:in-data-[os-shell]:col-start-3 max-md:in-data-[os-shell]:row-start-1 max-md:in-data-[os-shell]:flex max-md:in-data-[os-shell]:justify-self-end">{action}</div>
+            <div className="hidden max-md:in-data-[os-shell]:col-start-2 max-md:in-data-[os-shell]:row-start-1 max-md:in-data-[os-shell]:flex max-md:in-data-[os-shell]:justify-self-end">{action}</div>
           )}
         </div>
 

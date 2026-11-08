@@ -229,6 +229,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             /* The Settings list itself is a top-level page: a large title, no back. */
             isSettings={isSettings && pathname !== "/settings"}
             venueScoped={venueScoped && !wide}
+            onOpenSearch={() => setSearchOpen(true)}
           />
 
           {/* Desktop — the page's name on the left; the venue and the account on
@@ -292,7 +293,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         {/* Phone: the floating dock (Search and five tabs, the last of which opens
             the menu sheet). Stood down while something is being made, so the
             form's own Back and Continue can have the bottom of the screen. */}
-        {!focused && <PhoneDock menuOpen={menuOpen} onOpenMenu={() => setMenuOpen(true)} onOpenSearch={() => setSearchOpen(true)} />}
+        {!focused && <PhoneDock menuOpen={menuOpen} onOpenMenu={() => setMenuOpen(true)} />}
         <MobileNav open={menuOpen} onClose={() => setMenuOpen(false)} business={operatorQ.data?.name} />
       </div>
     </BarTitleContext>
