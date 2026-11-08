@@ -15,6 +15,7 @@ import {
   Globe,
   LayoutGrid,
   Link2,
+  ListChecks,
   Pencil,
   Plus,
   Power,
@@ -22,6 +23,7 @@ import {
   RotateCcw,
   Store,
   Trash2,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -44,6 +46,8 @@ import {
   type PillTone,
 } from "@/components/ui";
 import { PageAction, PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
+import { MetaParts, PhoneRow } from "@/components/ui/PhoneRow";
+import { QuickTabs } from "@/components/ui/QuickTabs";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -89,6 +93,8 @@ const WHERE_FILTERS: WhereFilter[] = ["storefront", "link", "counter", "none"];
  *  needs somebody. */
 type Facet = "attention" | CatalogState;
 const FACETS: Facet[] = ["attention", "onSale", "soldOut", "offSale", "ended", "archived"];
+/** The phone's quick filters: the states a manager cuts the list by most. */
+const QUICK: Facet[] = ["onSale", "offSale", "ended"];
 const STATE_TONE: Record<CatalogState, PillTone> = {
   onSale: "success",
   needsSetup: "warning",
@@ -404,17 +410,18 @@ function Catalog() {
 
   /** One thumbnail for everything: its first photo (an event's cover, when it has
    *  no photo), else the glyph for how it is booked. */
-  const Thumb = ({ i }: { i: CatalogItem }) => {
+  const Thumb = ({ i, large }: { i: CatalogItem; large?: boolean }) => {
     const cover = i.event?.customisation.coverUrl;
     const images = i.product?.images ?? (cover ? [{ id: "cover", url: cover, alt: i.name }] : []);
-    return <ProductThumb images={images} name={i.name} bookingType={i.product?.bookingType ?? "BT-15"} size="chip" />;
+    /* `large` is the phone row's 48px rounded thumbnail; the `!` beats the chip's own 40px and 3px corner. */
+    return <ProductThumb images={images} name={i.name} bookingType={i.product?.bookingType ?? "BT-15"} size="chip" className={large ? "h-12! w-12! rounded-xl!" : undefined} />;
   };
 
-  const Sub = ({ i }: { i: CatalogItem }) => {
+  const Sub = ({ i, phone }: { i: CatalogItem; phone?: boolean }) => {
     if (i.blockers.length) {
       const text = i.blockers.map(blockerLabel).join(" · ");
       return (
-        <span className="flex min-w-0 items-center gap-inline text-xs text-warning" title={text}>
+        <span className={cn("flex min-w-0 items-center gap-inline text-warning", phone ? "text-base" : "text-xs")} title={text}>
           <AlertTriangle size={12} strokeWidth={2} className="shrink-0" aria-hidden />
           <span className="truncate">{text}</span>
         </span>
@@ -431,7 +438,7 @@ function Catalog() {
       );
     }
     const own = i.product ? subtitle(i.product, { resources, team }) : i.event!.venueName;
-    return <span className="block truncate text-xs text-muted">{own}</span>;
+    return <span className={cn("block truncate text-muted", phone ? "text-base" : "text-xs")}>{own}</span>;
   };
 
   const StatePill = ({ i }: { i: CatalogItem }) => (
@@ -467,11 +474,11 @@ function Catalog() {
   };
 
   /** The phone's version of the marks: words, not two tiny glyphs. The usual
-   *  case (storefront and counter) is silent; only an exception gets a line. */
-  const WhereWords = ({ w }: { w: CatalogItem["where"] }) => {
+   *  case (storefront and counter) is silent; only an exception gets words. */
+  const whereText = (w: CatalogItem["where"]): string | null => {
     if (w.storefront && w.counter && !w.link) return null;
     const words = [w.storefront && t("where.storefront"), w.link && t("where.link"), w.counter && t("where.counter")].filter(Boolean);
-    return <span className="truncate text-xs text-muted">{words.length ? words.join(" · ") : t("where.nowhere")}</span>;
+    return words.length ? words.join(" · ") : t("where.nowhere");
   };
 
   const somePicked = pageRows.some((r) => selected.has(r.key)) && !allOnPage;
@@ -583,34 +590,31 @@ function Catalog() {
             }}
             onRowClick={(i) => router.push(i.href)}
             cardVariant="list"
+            /* Flat row (docs/mobile.md section 8): a 48px rounded thumbnail, the name
+               (16/600, two lines before it clips), one meta line — a warning
+               replaces it, because that is the one thing on the row somebody has
+               to act on, else what it is, then where it is sold when that is the
+               exception — and a status pill only when it is not on sale. The row
+               menu is an icon button at the right. The hairline starts at the
+               text column, not under the thumbnail. */
+            phoneInset={`calc(var(--spacing-gutter) + 48px + var(--spacing-comfortable)${selecting ? " + 36px" : ""})`}
             renderCard={(i) => (
-              /* Two lines, the way a phone reads a long index: who it is, then
-                 what it is and where it is sold. A warning replaces the meta
-                 line, because that is the one thing on the row somebody has to
-                 act on. The status chip marks the exception only (docs/mobile.md
-                 O3): a published row carries none, and the others say why they
-                 are not selling. The name wraps to two lines before it clips. */
-              <span className="flex items-center gap-comfortable">
-                {selecting && (
-                  <span onClick={(e) => e.stopPropagation()} className="-my-inline -ml-tight flex shrink-0">
-                    <Checkbox checked={selected.has(i.key)} onCheckedChange={() => toggleOne(i.key)} aria-label={t("selectOne", { name: i.name })} />
+              <PhoneRow
+                lead={
+                  <span className="flex items-center gap-tight">
+                    {selecting && (
+                      <span onClick={(e) => e.stopPropagation()} className="-ml-tight flex shrink-0">
+                        <Checkbox checked={selected.has(i.key)} onCheckedChange={() => toggleOne(i.key)} aria-label={t("selectOne", { name: i.name })} />
+                      </span>
+                    )}
+                    <Thumb i={i} large />
                   </span>
-                )}
-                <Thumb i={i} />
-                <span className="flex min-w-0 flex-1 flex-col gap-inline">
-                  <span className="flex items-start gap-tight">
-                    <span className="line-clamp-2 min-w-0 flex-1 break-words text-base font-medium leading-snug" title={i.name}>{i.name}</span>
-                    {i.state !== "onSale" && <StatePill i={i} />}
-                  </span>
-                  <span className="flex min-w-0 items-center gap-tight text-sm text-muted">
-                    <span className="min-w-0 flex-1"><Sub i={i} /></span>
-                  </span>
-                  <WhereWords w={i.where} />
-                </span>
-                <span className="-mr-tight shrink-0" onClick={(e) => e.stopPropagation()}>
-                  <ActionMenu items={actionsFor(i)} label={t("rowActions", { name: i.name })} />
-                </span>
-              </span>
+                }
+                title={<span className="line-clamp-2 whitespace-normal break-words leading-snug" title={i.name}>{i.name}</span>}
+                meta={<MetaParts parts={[<Sub key="s" i={i} phone />, whereText(i.where)]} />}
+                pill={i.state !== "onSale" ? <StatePill i={i} /> : null}
+                action={<ActionMenu items={actionsFor(i)} label={t("rowActions", { name: i.name })} />}
+              />
             )}
             toolbar={
               /* The shared list-filter row: search, one Filters button that
@@ -618,6 +622,20 @@ function Catalog() {
                  facets and the sort live in the panel; nothing else is drawn
                  until it is chosen. */
               <FilterBar
+                pill
+                tabs={
+                  /* Shortcuts onto the state filter in the panel: All clears it, the others
+                     set that one state (a hand-picked mix selects none). */
+                  <QuickTabs
+                    label={t("quick.label")}
+                    value={states.length === 0 ? "all" : states.length === 1 && QUICK.includes(states[0]) ? states[0] : ""}
+                    onChange={(v) => {
+                      setPage(1);
+                      setStates(v === "all" ? [] : [v as Facet]);
+                    }}
+                    options={[{ value: "all", label: t("quick.all") }, ...QUICK.map((f) => ({ value: f, label: t(`state.${f}`) }))]}
+                  />
+                }
                 search={
                   <FilterSearch
                     value={search}
@@ -633,10 +651,22 @@ function Catalog() {
                 actions={
                   <>
                     {/* Ticking rows is a mode on a phone, where a checkbox on every
-                        row would take the room the name needs. */}
-                    <Button variant="secondary" size="sm" selected={selecting} onClick={() => setSelecting((v) => !v)} className="shrink-0 md:hidden">
-                      {selecting ? t("selectDone") : t("select")}
-                    </Button>
+                        row would take the room the name needs. A round icon button
+                        beside the search pill, like the other list toolbars (its
+                        word is the name); while selecting it reads Done and shows ×. */}
+                    <button
+                      type="button"
+                      aria-pressed={selecting}
+                      aria-label={selecting ? t("selectDone") : t("select")}
+                      title={selecting ? t("selectDone") : t("select")}
+                      onClick={() => setSelecting((v) => !v)}
+                      className={cn(
+                        "grid h-11 w-11 shrink-0 place-items-center rounded-full text-fg transition-colors duration-quick md:hidden",
+                        selecting ? "bg-nav-selected" : "bg-subtle active:bg-muted-wash",
+                      )}
+                    >
+                      {selecting ? <X size={18} strokeWidth={1.75} aria-hidden /> : <ListChecks size={18} strokeWidth={1.75} aria-hidden />}
+                    </button>
                     {!compact && <PageAction label={tp("seatLayouts")} icon={<LayoutGrid size={16} strokeWidth={1.5} />} onClick={() => router.push("/catalog/layouts")} />}
                     <PagePrimaryButton primary={primary} />
                   </>

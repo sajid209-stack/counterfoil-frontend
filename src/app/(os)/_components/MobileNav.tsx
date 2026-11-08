@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Menu } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Menu, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -9,84 +11,100 @@ import { getStaff, listLocations, listRoles } from "@/lib/api";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { cn } from "@/lib/cn";
+import { NAV_MAIN } from "./nav";
 import { useWaitingTotal } from "./navBadges";
 import { MenuBody } from "./mobile/MenuBody";
 import { BusinessTile, PhoneSheet, PhoneSheetHead } from "./mobile/PhoneSheet";
 import { initialsOf } from "./mobile/shared";
 
 /**
- * The phone's way around — a round menu button at the bottom-left, and the
- * full-height sheet it opens.
+ * The phone's way around — a floating dock, and the full-height sheet its Menu
+ * tab opens (docs/mobile.md section 8, rule 4).
  *
- * It replaces the old five-tab bar and its More sheet. Shopify admin's phone
- * app has the same shape: the top bar says where you are, and everything else
- * — every destination, the other apps, Settings, the account — is one thumb
- * reach away in a single sheet, rather than four favourite pages on a bar and
- * the rest behind a fifth button.
+ * Shopify admin's phone app has the same shape: a round Search, then a pill of
+ * icon tabs for the places used all day, so the primary destinations are always
+ * one thumb-tap away in the natural thumb zone instead of behind a hamburger
+ * (NN/g: hidden navigation cost phone users ~15% in speed). Everything else —
+ * every other destination, the other apps, Settings, the account — is the last
+ * tab, Menu.
  *
- * The button is 52px, frosted (the chrome at 90% over a blur) with a hairline
- * ring and a soft float, and sits 12px off the corner plus the device's safe
- * area, so a home indicator never covers it. Its top is 68px up — exactly where
- * the sticky save bars already sit — and every page reserves `--os-fab-clear`
- * at its foot, so it never covers a last row either. When a refund or a
- * write-off is waiting at the venue it wears a small ink dot, and its name says
- * so: a menu you can see needs something from you is a menu you open.
+ *   ( Search )  [ Home  Orders  Calendar  Catalog  Menu ]
  *
- * It is on the LEFT because the right-hand side of a phone's bottom edge is
- * where a page's own floating action lands, and a thumb reaching for the menu
- * should not have to pass one.
+ * It floats 12px above the safe area, centred, at most 420px wide with a 16px
+ * margin each side; frosted (the card at 85% over a blur), a 1px line and the
+ * soft float shadow. The pill is 56px tall (2px inside each 52px tab), so its
+ * top is 68px up — exactly where the sticky save bars already sit — and every
+ * page reserves `--os-fab-clear` at its foot so it never covers a last row.
+ *
+ * The current tab is a `nav-selected` pill behind an ink icon, the rest are
+ * muted. Menu is the current one while its sheet is open. A refund or write-off
+ * waiting at the venue is a small ink dot on Orders (where Refunds and
+ * Write-offs live), and Orders' name carries the count.
  */
-export function MenuButton({ open, onOpen }: { open: boolean; onOpen: () => void }) {
+const DOCK_TABS = ["/dashboard", "/orders", "/calendar", "/catalog"] as const;
+const tabOf = (href: string) => NAV_MAIN.find((d) => d.href === href)!;
+
+const dockBtn =
+  "relative flex h-13 w-13 min-w-0 shrink items-center justify-center rounded-full transition-colors duration-quick active:scale-95 motion-reduce:transition-none";
+
+export function PhoneDock({ menuOpen, onOpenMenu, onOpenSearch }: { menuOpen: boolean; onOpenMenu: () => void; onOpenSearch: () => void }) {
   const t = useTranslations("nav");
+  const pathname = usePathname();
   const waiting = useWaitingTotal();
-  /* It rides over the start of list rows, so it steps aside while the page is
-     being read: hidden on a scroll DOWN, back on a scroll UP and at either end
-     of the page. The state is worked out in the scroll handler (never in an
-     effect body); the effect only subscribes. On a phone the window scrolls;
-     the frame's own scroller is md and up, where this button is not drawn. */
-  const [away, setAway] = useState(false);
-  const lastY = useRef(0);
-  const ref = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    lastY.current = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      const doc = document.documentElement;
-      const atTop = y < 24;
-      const atBottom = y + window.innerHeight >= doc.scrollHeight - 24;
-      const dy = y - lastY.current;
-      /* While it holds the focus it stays: a keyboard user scrolling with it
-         focused must not lose it. */
-      if (atTop || atBottom || document.activeElement === ref.current) setAway(false);
-      else if (dy > 6) setAway(true);
-      else if (dy < -6) setAway(false);
-      if (Math.abs(dy) > 6 || atTop || atBottom) lastY.current = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const tone = (on: boolean) => (on ? "bg-nav-selected text-fg" : "text-muted hover:text-fg");
   return (
-    <button
-      ref={ref}
-      type="button"
-      onClick={onOpen}
-      onFocus={() => setAway(false)}
-      aria-label={waiting > 0 ? t("menuWaiting", { count: waiting }) : t("menu")}
-      aria-haspopup="dialog"
-      aria-expanded={open}
-      data-menu-button
-      data-away={away || undefined}
-      data-waiting={waiting > 0 ? waiting : undefined}
-      className={cn(
-        "fixed bottom-[calc(12px+env(safe-area-inset-bottom))] left-[calc(12px+env(safe-area-inset-left))] z-30 flex h-13 w-13 items-center justify-center rounded-full bg-chrome/90 text-fg shadow-float ring-1 ring-line backdrop-blur transition-[transform,opacity] duration-standard active:scale-95 motion-reduce:transition-none md:hidden",
-        away && !open && "pointer-events-none translate-y-[calc(100%+24px)] opacity-0 focus-visible:pointer-events-auto",
-      )}
+    <nav
+      aria-label={t("dock")}
+      data-phone-dock
+      className="fixed bottom-[calc(12px+env(safe-area-inset-bottom))] left-1/2 z-30 flex w-[min(420px,calc(100%-32px))] -translate-x-1/2 items-center justify-center gap-tight md:hidden"
     >
-      <Menu size={24} strokeWidth={1.5} aria-hidden />
-      {/* Something is waiting. Ink, not orange — orange means act, and this only
-          says there is something to look at; the ring cuts it out of the button. */}
-      {waiting > 0 && <span aria-hidden data-menu-dot className="absolute right-2 top-2 h-2 w-2 rounded-full bg-fg ring-2 ring-chrome" />}
-    </button>
+      <button
+        type="button"
+        onClick={onOpenSearch}
+        aria-label={t("search")}
+        aria-haspopup="dialog"
+        data-dock-search
+        className="flex h-13 w-13 shrink-0 items-center justify-center rounded-full border border-line bg-card/85 text-fg shadow-float backdrop-blur-md transition-transform duration-quick active:scale-95 motion-reduce:transition-none"
+      >
+        <Search size={22} strokeWidth={1.5} aria-hidden />
+      </button>
+      <div className="flex min-w-0 shrink items-center rounded-full border border-line bg-card/85 p-0.5 shadow-float backdrop-blur-md">
+        {DOCK_TABS.map((href) => {
+          const d = tabOf(href);
+          const current = pathname === href || pathname.startsWith(`${href}/`);
+          const isOrders = href === "/orders";
+          const count = isOrders ? waiting : 0;
+          const Icon = d.icon;
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-label={count > 0 ? t("ordersWaiting", { count }) : t(d.key)}
+              aria-current={current ? "page" : undefined}
+              data-dock-tab={d.key}
+              data-waiting={count > 0 ? count : undefined}
+              className={cn(dockBtn, tone(current && !menuOpen))}
+            >
+              <Icon size={22} strokeWidth={1.5} aria-hidden />
+              {/* Something is waiting. Ink, not orange — orange means act, and this only
+                  says there is something to look at; the ring cuts it out of the tab. */}
+              {count > 0 && <span aria-hidden data-menu-dot className="absolute right-3 top-3 h-2 w-2 rounded-full bg-fg ring-2 ring-card" />}
+            </Link>
+          );
+        })}
+        <button
+          type="button"
+          onClick={onOpenMenu}
+          aria-label={t("menu")}
+          aria-haspopup="dialog"
+          aria-expanded={menuOpen}
+          data-menu-button
+          className={cn(dockBtn, tone(menuOpen))}
+        >
+          <Menu size={22} strokeWidth={1.5} aria-hidden />
+        </button>
+      </div>
+    </nav>
   );
 }
 

@@ -40,7 +40,7 @@ import { useActiveLocation } from "@/lib/activeLocation";
 import { cn } from "@/lib/cn";
 import { MD, SM, useMediaQuery } from "@/lib/useMedia";
 import { ACTIVITY_ICON, SEVERITY_ICON_CLASS, useActivityText } from "../activity/_components/parts";
-import { MetricStrip, type Metric } from "./_components/MetricStrip";
+import { MetricChips, MetricStrip, type Metric } from "./_components/MetricStrip";
 import { SetupGuide } from "./_components/SetupGuide";
 import { useSetupGuideState } from "./_components/setupStore";
 
@@ -87,9 +87,9 @@ type ActivityFilter = "all" | ActivityGroup;
  *  if this card's anatomy changes. A phone has no column beside it and shows
  *  five: it is a glance, and the full log is one press away. */
 const ACTIVITY_ROWS = 11;
-const ACTIVITY_ROWS_PHONE = 3;
+const ACTIVITY_ROWS_PHONE = 4;
 /** Recent orders on a phone: a short list, not a table. */
-const ORDER_ROWS_PHONE = 3;
+const ORDER_ROWS_PHONE = 4;
 
 /** Events that are about a person: their name leads the row. */
 const PERSON_KINDS = new Set<ActivityEvent["kind"]>(["staff.signed_in", "staff.signed_out", "staff.wrong_pin", "staff.locked_out", "shift.opened", "shift.closed"]);
@@ -97,17 +97,18 @@ const PERSON_KINDS = new Set<ActivityEvent["kind"]>(["staff.signed_in", "staff.s
 /** The soft disc an activity row leads with. One glyph per kind; a warning or
  *  serious event also tints the disc, and says so in words for a screen reader
  *  (`word`) - there is no separate pill. */
-function Marker({ kind, severity, word }: { kind: ActivityEvent["kind"]; severity: ActivityEvent["severity"]; word?: string }) {
+function Marker({ kind, severity, word, large = false }: { kind: ActivityEvent["kind"]; severity: ActivityEvent["severity"]; word?: string; large?: boolean }) {
   const Icon = ACTIVITY_ICON[kind];
   return (
     <span
       className={cn(
-        "grid h-8 w-8 shrink-0 place-items-center rounded-full",
+        "grid shrink-0 place-items-center rounded-full",
+        large ? "h-9 w-9" : "h-8 w-8",
         severity === "critical" ? "bg-danger-wash" : severity === "warning" ? "bg-warning-wash" : "bg-muted-wash",
         SEVERITY_ICON_CLASS[severity],
       )}
     >
-      <Icon size={15} strokeWidth={1.5} aria-hidden />
+      <Icon size={large ? 16 : 15} strokeWidth={1.5} aria-hidden />
       {word && <span className="sr-only">{word}</span>}
     </span>
   );
@@ -118,6 +119,8 @@ function CardIcon({ children }: { children: React.ReactNode }) {
   return <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-subtle text-fg-secondary sm:hidden [&>svg]:h-3.5 [&>svg]:w-3.5">{children}</span>;
 }
 
+/** The change under a phone chip: an arrow and a percentage in success or danger, plain text with no pill.
+ *  Where there is no comparison the line says what the figure is a share of instead (the chip's `context`). */
 export default function DashboardPage() {
   const router = useRouter();
   const t = useTranslations("dashboard");
@@ -551,14 +554,17 @@ export default function DashboardPage() {
     </div>
   );
 
+  /* On a phone the folded sections are flat: no box, a 17px heading, the white page behind (docs/mobile.md section 8). */
+  const flatBox = phone ? "" : `${card} p-card`;
+  const flatHeading = phone ? "min-w-0 truncate text-lg font-semibold" : heading;
   const glanceCard = (
-    <div className={`${card} p-card`}>
-      <h2 className={cn(heading, "mb-section")}>{t("operations")}</h2>
+    <div className={flatBox}>
+      <h2 className={cn(flatHeading, "mb-section")}>{t("operations")}</h2>
       {/* One shape, four times — label, figure, sub-line — with the sub-lines
           pushed to the bottom of their cell so the base of the card is
           straight however tall the figures run. Labels are sentence case: an
           uppercase tracked label is the one thing a calm admin does not do. */}
-      <div className="grid gap-section sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-section max-sm:grid-cols-2 max-sm:gap-y-major sm:grid-cols-2 lg:grid-cols-4">
         {ops.map((o) => {
           const body = (
             <>
@@ -595,9 +601,9 @@ export default function DashboardPage() {
   );
 
   const bestCard = (
-    <div className={`${card} p-card`}>
+    <div className={flatBox}>
       <div className="mb-comfortable flex items-baseline justify-between gap-tight">
-        <h2 className={heading}>{t("topProducts")}</h2>
+        <h2 className={flatHeading}>{t("topProducts")}</h2>
         <button type="button" onClick={() => router.push("/analytics")} className="-my-tight flex min-h-11 shrink-0 items-center whitespace-nowrap px-tight text-xs text-muted transition-colors duration-quick hover:text-fg sm:min-h-0 sm:px-0">{t("viewAll")}</button>
       </div>
       {/* Name and money on the first line, then a full-width bar. The bar is
@@ -696,6 +702,132 @@ export default function DashboardPage() {
         <ArrowRight size={13} strokeWidth={1.75} className="shrink-0" aria-hidden />
       </button>
     </div>
+  );
+
+  // ── The phone's sections: flat, on the white page (docs/mobile.md section 8) ───────────────────
+  const viewAllBtn = "flex min-h-11 items-center gap-tight text-base font-medium text-brand-foreground";
+  const rowText = "hair min-w-0 flex-1 border-b border-hairline py-comfortable group-last:border-0";
+
+  const phoneTrend = (
+    <section aria-labelledby="dash-trend">
+      <div className="flex items-start justify-between gap-tight">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-baseline gap-x-tight">
+            <span className="type-figure whitespace-nowrap text-3xl font-bold">{formatMoney(trendTotal)}</span>
+            {deltaShows(trendTotal, trendPrev) && (
+              <span className={cn("text-sm", trendTotal >= trendPrev ? "text-success" : "text-danger")}>
+                <span aria-hidden>{trendTotal >= trendPrev ? "\u2197" : "\u2198"} </span>
+                {Math.abs(Math.round(((trendTotal - trendPrev) / trendPrev) * 100))}%
+              </span>
+            )}
+          </div>
+          <h2 id="dash-trend" className="mt-inline text-sm font-medium text-muted">
+            {t("revenueTrend")}
+            {comparable && <span className="font-normal"> · {t("vsPreviousDays", { count: trendDays })}</span>}
+          </h2>
+        </div>
+        <PeriodPill
+          value={String(trendDays)}
+          onChange={(v) => setTrendDays(Number(v) as 7 | 14 | 30)}
+          label={t("revenueTrend")}
+          options={([7, 14, 30] as const).map((d) => ({ value: String(d), label: t("lastNDays", { count: d }) }))}
+        />
+      </div>
+      <div className="mt-section">
+        <AreaChart
+          points={trend}
+          fmt={(v) => formatMoney(v)}
+          fmtAxis={(v) => formatMoneyCompact(v)}
+          height={150}
+          ticks={2}
+          valueLabel={comparable ? t("thisPeriod") : t("revenueTrend")}
+          compareLabel={t("previousPeriod")}
+        />
+      </div>
+      <Link href="/analytics" className={cn(viewAllBtn, "mt-inline")}>
+        {t("viewReport")}
+        <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
+      </Link>
+    </section>
+  );
+
+  const phoneActivity = (
+    <section aria-labelledby="dash-activity">
+      <h2 id="dash-activity" className="text-lg font-semibold">{t("hereActivity")}</h2>
+
+      <h3 className="mt-section text-sm font-medium text-muted">{t("activityTitle")}</h3>
+      {activityQ.loading && activity.length === 0 ? (
+        <div aria-busy="true">
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className="flex items-center gap-comfortable py-comfortable">
+              <Skeleton className="h-9 w-9 rounded-full" />
+              <Skeleton className="h-4 flex-1" />
+            </div>
+          ))}
+        </div>
+      ) : activity.length === 0 ? (
+        <p className="py-comfortable text-base text-muted">{t("noActivity")}</p>
+      ) : (
+        <div>
+          {activity.map((a) => {
+            const person = PERSON_KINDS.has(a.kind) && a.actor ? a.actor.name : null;
+            const meta = activityMeta(a);
+            return (
+              <Link key={a.id} href="/activity" className="group flex min-h-11 items-center gap-comfortable active:bg-muted-wash">
+                <Marker large kind={a.kind} severity={a.severity} word={a.severity === "info" ? undefined : ax.severityLabel(a.severity)} />
+                <div className={cn(rowText, "flex items-start justify-between gap-tight")}>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-base font-medium">
+                      {person && <b className="font-semibold">{person} · </b>}
+                      {ax.kindLabel(a)}
+                    </p>
+                    {meta && <p className="truncate text-sm text-muted">{meta}</p>}
+                  </div>
+                  <span className="shrink-0 whitespace-nowrap pt-0.5 text-sm text-muted">{ax.ago(a.at)}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+      <Link href="/activity" className={viewAllBtn}>
+        {t("viewAllActivity")}
+        <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
+      </Link>
+
+      <h3 className="mt-major text-sm font-medium text-muted">{t("recentOrders")}</h3>
+      {scopeOrders.length === 0 ? (
+        <p className="py-comfortable text-base text-muted">{scope === "today" ? t("noOrdersToday") : t("noOrdersThisWeek")}</p>
+      ) : (
+        <div>
+          {recentOrders.map((o) => {
+            const due = isVoidedOrder(o) ? 0 : orderOutstanding(o);
+            return (
+              <button key={o.id} type="button" onClick={() => router.push("/orders/" + o.id)} className="group flex min-h-11 w-full items-center text-left active:bg-muted-wash">
+                <span className={cn(rowText, "flex items-start justify-between gap-tight")}>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-md font-semibold">{o.reference}</span>
+                    <span className="block truncate text-sm text-muted">
+                      {o.customerName ?? to("walkIn")} · {formatRelative(o.createdAt, now)}
+                      {due > 0 && <span className="text-warning"> · {t("orderDue", { amount: formatMoney(due) })}</span>}
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 flex-col items-end gap-inline">
+                    <span className="whitespace-nowrap text-base font-semibold">{formatMoney(o.total)}</span>
+                    <span className={cn(o.status === "paid" && "hidden")}><StatusPill status={o.status} /></span>
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {scopeOwedCount > 0 && <p className="pt-tight text-sm text-muted">{t("ordersAwaitingPayment", { count: scopeOwedCount, amount: formatMoney(scopeOwed) })}</p>}
+      <Link href="/orders" className={viewAllBtn}>
+        {t("viewAllOrders")}
+        <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
+      </Link>
+    </section>
   );
 
   const ordersCard = (
@@ -828,6 +960,8 @@ export default function DashboardPage() {
       : wide
         ? `${formatDay(dayShift(TODAY, -6), { weekday: true })} – ${formatDay(TODAY, { weekday: true })}`
         : `${formatDay(dayShift(TODAY, -6))} – ${formatDay(TODAY)}`;
+  /* The greeting follows the demo clock (DEMO_NOW_MINUTES, Dhaka time), the same one the schedule reads. */
+  const greeting = DEMO_NOW_MINUTES < 12 * 60 ? t("greetMorning") : DEMO_NOW_MINUTES < 17 * 60 ? t("greetAfternoon") : t("greetEvening");
   const scopeOptions = [
     { value: "today", label: t("today") },
     { value: "week", label: t("thisWeek") },
@@ -841,13 +975,10 @@ export default function DashboardPage() {
   return (
     <PageShell
       title={wide ? op.data?.name || t("title") : t("title")}
-      subtitle={phone && showPage ? <span aria-live="polite">{dateLine}</span> : undefined}
+      subtitle={phone && showPage ? <span aria-live="polite" className="text-base text-muted">{greeting} · {dateLine}</span> : undefined}
       scope={
         phone && showPage ? (
-          <span className="flex items-center gap-tight">
-            <span aria-hidden className="text-sm text-muted">{t("figuresLabel")}</span>
-            <PeriodPill value={scope} onChange={(v) => setScope(v as "today" | "week")} label={t("scopeLabel")} options={scopeOptions} />
-          </span>
+          <PeriodPill value={scope} onChange={(v) => setScope(v as "today" | "week")} label={t("scopeLabel")} options={scopeOptions} />
         ) : undefined
       }
     >
@@ -896,10 +1027,12 @@ export default function DashboardPage() {
         /* The labels are known before the figures are, so the strip states
            what it is about to say and pulses only the numbers. */
         <div aria-busy="true">
-          {wide ? <StatStrip items={stats} loading variant="tiles" /> : <MetricStrip items={figures} loading label={t("metrics")} />}
+          {wide ? <StatStrip items={stats} loading variant="tiles" /> : phone ? <MetricChips items={figures} loading label={t("metrics")} /> : <MetricStrip items={figures} loading label={t("metrics")} />}
         </div>
       ) : wide ? (
         <StatStrip items={stats} variant="tiles" />
+      ) : phone ? (
+        <MetricChips items={figures} loading={false} label={t("metrics")} />
       ) : (
         <MetricStrip items={figures} label={t("metrics")} />
       )}
@@ -926,10 +1059,10 @@ export default function DashboardPage() {
         /* A phone, in the order it is read: how sales are going, what just
            happened, what sold. The two cards that are about the day's shape
            rather than its news fold behind one button. */
-        <div className="mt-section flex flex-col gap-section">
-          {trendCard}
-          {activityCard}
-          {ordersCard}
+        <div className={cn("flex flex-col", phone ? "mt-major gap-major" : "mt-section gap-section")}>
+          {phone ? phoneTrend : trendCard}
+          {phone ? phoneActivity : activityCard}
+          {!phone && ordersCard}
           <button
             type="button"
             aria-expanded={more}
@@ -941,7 +1074,7 @@ export default function DashboardPage() {
             <ChevronDown size={16} strokeWidth={1.75} aria-hidden className={cn("transition-transform duration-quick", more && "rotate-180")} />
           </button>
           {more && (
-            <div id="dash-more" className="flex flex-col gap-section">
+            <div id="dash-more" className={cn("flex flex-col", phone ? "gap-major" : "gap-section")}>
               {glanceCard}
               {bestCard}
             </div>

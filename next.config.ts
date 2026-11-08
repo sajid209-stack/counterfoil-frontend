@@ -41,10 +41,8 @@ const nextConfig: NextConfig = {
       // The breadcrumb is built from the path, so a record's trail has a
       // "bookings" or "events" crumb — which lands on its tab of the list.
       { source: "/catalog/bookings", destination: "/catalog", permanent: false },
-      // Settings opens on its first section; there is no index page. Not
-      // permanent: which section is first is a product decision, and a 308
-      // would be cached by browsers long after it changed.
-      { source: "/settings", destination: "/settings/business", permanent: false },
+      // /settings is a page (src/app/(os)/settings/page.tsx): a phone lists the
+      // sections there (docs/mobile.md §8); from md it moves on to the first section.
       { source: "/catalog/events", destination: "/catalog", permanent: false },
       // Adding opens the wizard directly (docs/catalog.md §10.3): the chooser and its
       // per-kind addresses are gone, so /catalog/new/<kind>, /catalog/new/booking?kind=

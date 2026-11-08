@@ -177,5 +177,11 @@
   "lastBookedToday": "শেষ বুকিং আজ",
   "lastBookedDays": "{days, plural, =1 {শেষ বুকিং গতকাল} other {শেষ বুকিং {days} দিন আগে}}",
   "lastBookedOn": "শেষ বুকিং {date}",
-  "moreActions": "আরও কাজ"
+  "moreActions": "আরও কাজ",
+  "quick": {
+    "label": "দ্রুত ফিল্টার",
+    "all": "সব",
+    "email": "ইমেইল সম্মতি",
+    "sms": "এসএমএস সম্মতি"
+  }
 }

@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { MarketBadge, StatusPill, type Column } from "@/components/ui";
+import { MetaParts, PhoneRow } from "@/components/ui/PhoneRow";
 import {
   isVoidedOrder,
   orderDue,
@@ -12,7 +13,7 @@ import {
   type Order,
 } from "@/lib/api";
 import { cn } from "@/lib/cn";
-import { formatDateTime, formatMoney, formatRelative } from "@/lib/format";
+import { formatClockOf, formatDateTime, formatMoney } from "@/lib/format";
 import type { Directory } from "../_lib/useReport";
 import type { SalesLabels } from "../_lib/labels";
 
@@ -141,29 +142,34 @@ export function useOrderColumns(dir: Directory, labels: SalesLabels): Column<Ord
   ];
 }
 
-/** The phone's row: two lines. Who and how much, then which and when. It was
- *  six lines and 142px — five orders to a screen — and every extra line
- *  restated something the filters already cut by. */
-export function OrderCard({ o, now }: { o: Order; now: Date }) {
+/** The phone's row, flat on the page (docs/mobile.md section 8): who (16/600) and
+ *  how much (15/600, muted for a void order), then one meta line — reference,
+ *  time, marketplace, what is owed — and a pill only when it is not plain paid.
+ *  The day is the heading above it. */
+export function OrderCard({ o }: { o: Order; now?: Date }) {
   const t = useTranslations("orders");
   const due = orderDue(o);
+  /* The normal state is silent: a settled order carries no pill, so the ones
+     that do (part paid, refunded, cancelled, pending, written off) are the ones
+     to look at. */
+  const pill = o.status !== "paid" ? <StatusPill status={o.status} /> : orderWrittenOff(o) > 0 ? <StatusPill tone="neutral">{t("summary.writtenOff")}</StatusPill> : null;
   return (
-    <div className="flex flex-col gap-inline">
-      <div className="flex items-baseline justify-between gap-tight">
-        <span className={cn("min-w-0 flex-1 truncate text-base font-medium", !o.customerName && "text-muted")}>{o.customerName ?? t("walkIn")}</span>
-        <span className={cn("shrink-0 text-sm font-medium tabular-nums", isVoidedOrder(o) && "text-muted")}>{formatMoney(o.total)}</span>
-      </div>
-      <div className="flex items-baseline justify-between gap-tight">
-        <span className="min-w-0 flex-1 truncate text-xs text-muted">
-          <span className="font-mono">{o.reference}</span> · {formatRelative(o.createdAt, now)}
-          {o.source && <> · {o.source.marketplaceName}</>}
-          {due > 0 && <span className="text-warning"> · {t("dueLabel", { amount: formatMoney(due) })}</span>}
-        </span>
-        {/* The normal state is silent: a settled order carries no chip, so the
-            ones that do (part paid, refunded, cancelled, pending, written off)
-            are the ones to look at. */}
-        {o.status !== "paid" ? <StatusPill status={o.status} /> : orderWrittenOff(o) > 0 ? <StatusPill tone="neutral">{t("summary.writtenOff")}</StatusPill> : null}
-      </div>
-    </div>
+    <PhoneRow
+      title={o.customerName ?? t("walkIn")}
+      titleMuted={!o.customerName}
+      meta={
+        <MetaParts
+          parts={[
+            <span key="ref" className="font-mono font-normal">{o.reference}</span>,
+            formatClockOf(o.createdAt),
+            o.source?.marketplaceName,
+            due > 0 && <span key="due" className="text-warning">{t("dueLabel", { amount: formatMoney(due) })}</span>,
+          ]}
+        />
+      }
+      trailing={formatMoney(o.total)}
+      trailingMuted={isVoidedOrder(o)}
+      pill={pill}
+    />
   );
 }

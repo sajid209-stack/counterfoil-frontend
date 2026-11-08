@@ -233,7 +233,7 @@ function ActivityView() {
   return (
     <PageShell title={t("title")} description={t("description")}>
       <div className="flex flex-col gap-section">
-        <FilterBar
+        <FilterBar pill
           search={
             <FilterSearch
               value={search}
@@ -301,11 +301,11 @@ function ActivityView() {
               <section key={day} aria-label={dayLabel(day)} className="flex flex-col">
                 {/* Sticky under the page bar, on the page's own colour so rows
                     slide cleanly beneath it. On a phone the document scrolls
-                    and the bar is pinned above it (53px); from md the content
-                    scrolls inside its own pane, which already starts below the
-                    bar, so the header pins to the pane's top. */}
-                {/* ds-exception: 53px is the phone top bar's height, set in OsShell; there is no token for it */}
-                <h2 className="sticky top-[53px] z-10 -mx-gutter bg-surface px-gutter py-tight text-sm font-semibold text-muted md:top-0">
+                    and the compact bar is pinned above it (--os-phone-bar); from md
+                    the content scrolls inside its own pane, which already starts
+                    below the bar, so the header pins to the pane's top. On a phone
+                    the page is white (docs/mobile.md §8), so the header is too. */}
+                <h2 className="sticky top-[var(--os-phone-bar)] z-10 -mx-gutter bg-card px-gutter py-tight text-sm font-semibold text-muted dark:bg-surface md:top-0 md:bg-surface">
                   {dayLabel(day)}
                   <span className="ml-tight font-normal">{day === DEMO_TODAY || day === shift(DEMO_TODAY, -1) ? formatDay(day, { weekday: true }) : ""}</span>
                 </h2>

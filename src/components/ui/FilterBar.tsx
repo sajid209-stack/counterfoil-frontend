@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { ListFilter, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import { MD, useMediaQuery } from "@/lib/useMedia";
+import { MD, SM, useMediaQuery } from "@/lib/useMedia";
 import { Button } from "./Button";
 import { Sheet } from "./Sheet";
 
@@ -14,6 +14,9 @@ import { Sheet } from "./Sheet";
  * apart: 44px on a touch screen, 36px from md, a soft stroke that firms (not
  * blackens) on focus, the glyph inside the left edge. Pass it as `search`.
  */
+/** True inside a `FilterBar pill` on a phone: the search draws as a full-width pill. */
+const PillContext = createContext(false);
+
 export function FilterSearch({
   value,
   onChange,
@@ -27,16 +30,22 @@ export function FilterSearch({
   "aria-label"?: string;
   className?: string;
 }) {
+  const pill = useContext(PillContext);
   return (
     <div className={cn("relative min-w-0", className)}>
-      <Search size={16} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
+      <Search size={16} strokeWidth={1.5} aria-hidden className={cn("pointer-events-none absolute top-1/2 -translate-y-1/2 text-muted", pill ? "left-section" : "left-comfortable")} />
       <input
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={ariaLabel ?? placeholder}
-        className="h-11 w-full min-w-0 rounded-control border border-line bg-card pl-8 pr-comfortable text-base transition-colors duration-quick placeholder:text-muted hover:border-strong focus:border-ember md:h-9 md:w-64"
+        className={cn(
+          "h-11 w-full min-w-0 transition-colors duration-quick placeholder:text-muted md:h-9 md:w-64",
+          pill
+            ? "rounded-full border border-transparent bg-subtle pl-11 pr-12 text-md focus:border-ember"
+            : "rounded-control border border-line bg-card pl-8 pr-comfortable text-base hover:border-strong focus:border-ember",
+        )}
       />
     </div>
   );
@@ -125,8 +134,16 @@ export function FilterBar({
    *  Put `max-md:hidden` on what a phone does not need — it renders at every
    *  width, because only the page knows which of its actions a thumb wants. */
   actions,
+  pill: pillProp,
+  tabs,
   className,
 }: {
+  /** Phone only (below `sm`): draw the search as a full-width pill with the
+   *  Filters control as a round icon button inside its right end, the actions
+   *  beside it, and `tabs` (a `QuickTabs` row) under it. Opt-in, so the lists
+   *  that have not been redesigned keep their row. */
+  pill?: boolean;
+  tabs?: React.ReactNode;
   search?: React.ReactNode;
   filters: FilterSpec[];
   lead?: React.ReactNode;
@@ -140,6 +157,8 @@ export function FilterBar({
      screen reader finds two of every control. This app has been caught by that
      three times — the sell wall, the page-header portal, the orders nav. */
   const wide = useMediaQuery(MD);
+  const phoneQuery = useMediaQuery(SM);
+  const pill = !!pillProp && !phoneQuery;
   /* Open for the form factor it was opened in. Remembering `true` alone would
      turn a desktop popover into a phone sheet the moment the window narrowed,
      and resetting it would need a setState in an effect. */
@@ -242,7 +261,29 @@ export function FilterBar({
 
   const chipText = (f: FilterSpec) => (f.active && f.active !== f.label ? `${f.label}: ${f.active}` : (f.active ?? ""));
 
-  const filtersButton = folded.length > 0 && (
+  const pillButton = folded.length > 0 && (
+    <button
+      ref={trigger}
+      type="button"
+      aria-haspopup="dialog"
+      aria-expanded={open}
+      aria-label={count ? t("filtersApplied", { count }) : t("filters")}
+      onClick={() => (open ? close(false) : setOpenFor(wide))}
+      className={cn(
+        "absolute right-0 top-0 grid h-11 w-11 place-items-center rounded-full text-fg transition-colors duration-quick active:bg-nav-hover",
+        (open || count > 0) && "bg-nav-selected",
+      )}
+    >
+      <ListFilter size={20} strokeWidth={1.75} aria-hidden />
+      {count > 0 && (
+        <span data-filter-count className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-ember-solid px-inline text-xs font-semibold leading-none text-on-solid">
+          {count}
+        </span>
+      )}
+    </button>
+  );
+
+  const filtersButton = folded.length > 0 && !pill && (
     <button
       ref={trigger}
       type="button"
@@ -289,7 +330,12 @@ export function FilterBar({
     <div className={cn("flex min-w-0", className)}>
       <div className="flex min-w-0 flex-1 flex-col gap-tight">
         <div className="flex flex-wrap items-center gap-tight">
-          {search && <div className="min-w-0 flex-1 md:flex-none">{search}</div>}
+          {search && (
+            <div className={cn("min-w-0 flex-1 md:flex-none", pill && "relative")}>
+              <PillContext value={pill}>{search}</PillContext>
+              {pill && pillButton}
+            </div>
+          )}
 
           {/* A phone's order is search, Filters, then the rest; from md the
               row reads search, the key filter, Filters. */}
@@ -300,6 +346,8 @@ export function FilterBar({
 
           {actions && <div className="flex items-center gap-tight md:ml-auto">{actions}</div>}
         </div>
+
+        {pill && tabs}
 
         {/* What is set, so a narrowed list never looks like the whole one.
             Wraps rather than scrolling: a chip that has scrolled out of view

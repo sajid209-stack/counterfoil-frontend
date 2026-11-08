@@ -325,7 +325,7 @@ function ExpensesView({ locationId, venueName, pending, locations }: { locationI
             most visits change), and one Filters button holding the rest. What
             is set comes back as a chip beneath it. A phone puts the range and
             the statement on their own row under search and Filters. */}
-        <FilterBar
+        <FilterBar pill
           search={
             <FilterSearch
               value={search}

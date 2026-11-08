@@ -177,5 +177,11 @@
   "lastBookedToday": "Last booked today",
   "lastBookedDays": "{days, plural, =1 {Last booked yesterday} other {Last booked {days} days ago}}",
   "lastBookedOn": "Last booked {date}",
-  "moreActions": "More actions"
+  "moreActions": "More actions",
+  "quick": {
+    "label": "Quick filters",
+    "all": "All",
+    "email": "Email consent",
+    "sms": "SMS consent"
+  }
 }

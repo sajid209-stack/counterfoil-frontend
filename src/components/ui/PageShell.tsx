@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, ChevronLeft, MoreHorizontal, Plus } from "lucide-react";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -12,30 +12,14 @@ import { useBarTitle } from "@/lib/barTitle";
 import { Button, type ButtonProps } from "./Button";
 
 /**
- * The longest label (in characters) the phone bar draws as a pill, by what else
- * the bar is holding.
- *
- * Measured at 320px, the narrowest screen anyone still has: the bar's 288px of
- * content must leave the page's name ~96px (enough for "Inventory" before it
- * truncates), and a pill is about 44px plus 7px a character. With the page's
- * glyph and nothing else that is 16 characters, so 14 is the rule; a way back
- * (or Settings' section chevron) in place of the glyph costs 24px (12), and a
- * round "⋯" beside the pill costs 52px more (8, or 6 with both). A longer label
- * is the plus disc with the words as its accessible name.
- */
-const pillLabelMax = ({ lead, overflow }: { lead: boolean; overflow: boolean }) => 14 - (lead ? 2 : 0) - (overflow ? 6 : 0);
-
-/**
  * A page's one create action.
  *
- * Separate from `actions` because the two want different room. On a phone a
- * full-width "Add to your catalog" is 151px of a 358px line, on a page that
- * already spends 451px before its first row — so the primary moves into the
- * top bar: a labelled pill while its label is short, a plus disc with the words
- * as its accessible name when it is not (see `pillLabelMax`). The page's other
- * `actions` go behind a round "⋯" beside it (`PhoneActions`), which is Shopify
- * admin mobile's header exactly: the one thing you came to do, and the rest one
- * tap away. Nothing is crammed into a bar that cannot hold it.
+ * Separate from `actions` because the two want different room. On a phone it
+ * moves up beside the large title as a 40px round icon button in the header's
+ * pill (docs/mobile.md section 8, rule 5) — icon only, the words are its
+ * accessible name and its tooltip. The page's other `actions` go behind a round
+ * "⋯" beside it (`PhoneActions`), which is Shopify admin mobile's header
+ * exactly: the one thing you came to do, and the rest one tap away.
  *
  * A page declares it rather than PageShell guessing which of its buttons is
  * the important one.
@@ -45,9 +29,8 @@ const pillLabelMax = ({ lead, overflow }: { lead: boolean; overflow: boolean }) 
  */
 export interface PagePrimary {
   label: string;
-  /** A shorter word for the phone's top bar only ("Invite" for "Invite a team
-   *  member"), so a long label still gets its pill instead of an icon-only
-   *  disc. The desktop button and the accessible name keep `label`. */
+  /** No longer drawn: the phone's button is icon-only and named by `label`.
+   *  Kept so existing callers still type-check. */
   shortLabel?: string;
   /** Defaults to a plus, which is what every one of these is. */
   icon?: React.ReactNode;
@@ -91,25 +74,43 @@ export function useBackInBar(): boolean {
 }
 
 /**
- * The phone bar's back arrow, portalled into the slot OsShell leaves at the left
- * of the bar. While it is there the bar's own page glyph (or the settings
- * section chevron) steps aside — the arrow takes that place.
+ * The phone's back button, portalled into the slots OsShell's PhoneBar leaves for
+ * it: a 40px round button left of the record's title in the large header, and the
+ * plain one in the compact bar that fades in once the header has scrolled away.
+ * While the first is there the header's own settings chevron steps aside.
  */
 export function BarBack({ href, label }: { href: string; label: string }) {
   const t = useTranslations("nav");
   const wide = useMediaQuery(MD);
   const slot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-back-mobile"), () => null);
+  const compact = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-back-compact"), () => null);
   if (wide || !slot) return null;
-  return createPortal(
-    <Link
-      href={href}
-      aria-label={t("backTo", { label })}
-      data-bar-back
-      className="-ml-tight flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-muted-wash active:bg-secondary-hover"
-    >
-      <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
-    </Link>,
-    slot,
+  const name = t("backTo", { label });
+  return (
+    <>
+      {createPortal(
+        <Link
+          href={href}
+          aria-label={name}
+          data-bar-back
+          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-card text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] hover:bg-muted-wash active:bg-secondary-hover"
+        >
+          <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
+        </Link>,
+        slot,
+      )}
+      {compact &&
+        createPortal(
+          <Link
+            href={href}
+            aria-label={name}
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] hover:bg-muted-wash active:bg-secondary-hover"
+          >
+            <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
+          </Link>,
+          compact,
+        )}
+    </>
   );
 }
 
@@ -205,8 +206,8 @@ export function PageToolbar({
 }
 
 /**
- * A page's secondary actions on a phone: a round "⋯" in the top bar that opens
- * them in a small panel under it.
+ * A page's secondary actions on a phone: a round "⋯" in the header's action pill
+ * that opens them in a small panel under it.
  *
  * `actions` is a ReactNode — a Save button, a Print button, an `ActionMenu` —
  * not a list of menu items, so it cannot be re-skinned as one. It is rendered
@@ -254,11 +255,11 @@ function PhoneActions({ children }: { children: React.ReactNode }) {
         aria-expanded={open}
         data-page-actions-toggle
         className={cn(
-          "flex h-11 w-11 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-muted-wash active:bg-secondary-hover",
+          "relative flex h-10 w-10 items-center justify-center rounded-full text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] hover:bg-muted-wash active:bg-secondary-hover",
           open && "bg-muted-wash",
         )}
       >
-        <MoreHorizontal size={22} strokeWidth={1.75} aria-hidden />
+        <MoreHorizontal size={20} strokeWidth={1.75} aria-hidden />
       </button>
       {open && (
         <div
@@ -342,16 +343,18 @@ export function PageShell({
   // call, which is what keeps the snapshot stable enough for the hook.
   const slot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-header"), () => null);
   const barSlot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-actions-mobile"), () => null);
+  /* A record's own title takes the phone header's title place (22/700 beside the
+     back button) and the compact bar's; the page's <h1> then stands down to a
+     screen-reader-only heading, so the name is read once. */
+  const titleSlot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-title-mobile"), () => null);
+  const titleCompact = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-title-compact"), () => null);
 
   /* A phone does not have room for a page's buttons beside its title, so they
      go behind the bar's round "⋯" — but only when there IS a bar to put it in:
      a PageShell rendered outside the OS shell keeps them in the page. */
   const phoneOverflow = !wide && !!barSlot && !!actions;
   const backInBar = useBackInBar();
-  const pathname = usePathname();
-  /* A way back — or Settings' section chevron — takes the bar's left slot, which
-     leaves less room for a pill. */
-  const leadInBar = (!!back && backInBar) || (pathname ?? "").startsWith("/settings");
+  const recordTitle = !!back && backInBar && !!titleSlot;
   /* A header row exists for a RECORD: a way back, a state. A list or a
      dashboard has no row — its buttons are in its toolbar. (`actions` alone
      still draws one, for pages not yet moved; see the prop's note.) On a phone
@@ -372,42 +375,22 @@ export function PageShell({
       {primary.label}
     </Button>
   );
-  /* Phone: the action, in the bar. A SHORT label is worth showing — "Add
-     customer" says what the button does before you press it, which a bare plus
-     cannot, and it is how Shopify admin mobile draws its one create action. So
-     up to `pillLabelMax` characters it is a pill (the icon and the words, the
-     same orange as every primary, 36px of fill inside a 44px target); a longer
-     label would eat the page's name, so it falls back to the 36px disc with the
-     words as its accessible name. Measured at 320px: the longest label that
-     takes the pill still leaves the page name room to truncate cleanly. */
+  /* Phone: the action, in the header's pill: a 40px round icon button (a 44px
+     target), icon only — the words are its accessible name and its tooltip. */
   const narrowPrimary = primary
     ? (() => {
-        const shown = (primary.shortLabel ?? primary.label).trim();
-        const pill = Array.from(shown).length <= pillLabelMax({ lead: leadInBar, overflow: phoneOverflow });
         const cls = cn(
-          "group flex h-11 items-center justify-center rounded-full",
-          pill ? "shrink-0" : "w-11",
+          "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] hover:bg-muted-wash active:bg-secondary-hover",
           primary.disabled && "pointer-events-none opacity-40",
         );
-        const body = pill ? (
-          <span className="flex h-9 items-center gap-inline whitespace-nowrap rounded-full bg-ember-solid px-comfortable text-sm font-medium text-on-solid transition-colors duration-quick group-hover:bg-ember-hover group-active:bg-ember-active">
-            <span aria-hidden className="flex shrink-0 items-center">
-              {primary.icon ?? <Plus size={16} strokeWidth={2} />}
-            </span>
-            {shown}
-          </span>
-        ) : (
-          <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-ember-solid text-on-solid transition-colors duration-quick group-hover:bg-ember-hover group-active:bg-ember-active">
-            {primary.icon ?? <Plus size={18} strokeWidth={2} />}
-          </span>
-        );
+        const glyph = primary.icon ?? <Plus size={20} strokeWidth={1.75} />;
         return primary.href && !primary.disabled ? (
-          <Link href={primary.href} aria-label={pill && !primary.shortLabel ? undefined : primary.label} className={cls}>
-            {body}
+          <Link href={primary.href} aria-label={primary.label} title={primary.label} className={cls}>
+            <span aria-hidden className="flex items-center">{glyph}</span>
           </Link>
         ) : (
-          <button type="button" onClick={primary.onClick} aria-label={pill && !primary.shortLabel ? undefined : primary.label} disabled={primary.disabled} className={cls}>
-            {body}
+          <button type="button" onClick={primary.onClick} aria-label={primary.label} title={primary.label} disabled={primary.disabled} className={cls}>
+            <span aria-hidden className="flex items-center">{glyph}</span>
           </button>
         );
       })()
@@ -435,7 +418,7 @@ export function PageShell({
           section ("Catalog") while this names the page ("Add to your
           catalog"), and that one has to stay. It stays in the document either
           way, because a page needs its heading. */}
-      <h1 className={cn("type-h1 break-words text-lg sm:text-xl", echoesBar && "max-sm:sr-only")}>{title}</h1>
+      <h1 className={cn("type-h1 break-words text-lg sm:text-xl", (echoesBar || recordTitle) && "max-md:sr-only")}>{title}</h1>
       {description && <p className="sr-only">{description}</p>}
     </div>
   );
@@ -447,15 +430,15 @@ export function PageShell({
      answers to the same question. The wrapper holds the gutter; nothing under
      it may add to it. What follows a visible heading, or a header row, is the
      smaller gap a heading and its content take. */
-  const afterHeading = !wide && (echoesBar ? "sm:mt-section" : "mt-section");
+  const afterHeading = !wide && (echoesBar || recordTitle ? "md:mt-section" : "mt-section");
 
   return (
     <div className="px-gutter pb-gutter pt-gutter">
       {/* Desktop: the title portals into the sticky bar. Below md they render
           here instead — one copy, either way. */}
       {wide && slot && createPortal(headerText, slot)}
-      {/* The plus and the "⋯" live in the phone's bar, at the right of the page's
-          name. */}
+      {/* The create icon and the "⋯" live in the phone header's pill, at the right
+          of the page's title. */}
       {!wide && (narrowPrimary || phoneOverflow) && barSlot &&
         createPortal(
           <>
@@ -465,8 +448,10 @@ export function PageShell({
           barSlot,
         )}
       {back && <BarBack href={back.href} label={back.label} />}
-      {/* Phone: the heading, unless the bar already said it. */}
-      {!wide && <div className={echoesBar ? "max-sm:sr-only" : undefined}>{headerText}</div>}
+      {recordTitle && titleSlot && createPortal(<span aria-hidden>{title}</span>, titleSlot)}
+      {recordTitle && titleCompact && createPortal(<span aria-hidden>{title}</span>, titleCompact)}
+      {/* Phone: the heading, unless the header already said it. */}
+      {!wide && <div className={echoesBar || recordTitle ? "max-md:sr-only" : undefined}>{headerText}</div>}
       {/* Phone head line (docs/mobile.md section 6): the date or scope, quiet, and the page's scope pill at the right. */}
       {(subtitle || scope) && (
         <div className="-mt-1 mb-tight flex min-h-11 items-center justify-between gap-tight sm:hidden">

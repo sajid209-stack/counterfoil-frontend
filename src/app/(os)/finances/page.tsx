@@ -329,7 +329,7 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
               </p>
             )}
             {wide && <TypeTabs value={filter} onChange={setFilter} />}
-            <FilterBar className="mt-comfortable pb-section" search={<FilterSearch value={search} onChange={setSearch} placeholder={t("activity.search")} />} lead={phone ? <div className="basis-full">{dateRange}</div> : dateRange} filters={wide ? [] : [typeFilter]} />
+            <FilterBar pill className="mt-comfortable pb-section" search={<FilterSearch value={search} onChange={setSearch} placeholder={t("activity.search")} />} lead={phone ? <div className="basis-full">{dateRange}</div> : dateRange} filters={wide ? [] : [typeFilter]} />
           </div>
           <div>
             <ActivityTable

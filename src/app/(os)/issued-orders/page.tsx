@@ -346,7 +346,7 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
      and above the list on a phone. The one action is Export, which on a phone is
      the download glyph beside Filters. */
   const toolbar = (
-    <FilterBar
+    <FilterBar pill
       search={
         <FilterSearch
           value={search}

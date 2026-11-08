@@ -262,7 +262,7 @@ export default function InventoryPage() {
           />
         </PageToolbar>
 
-        <FilterBar
+        <FilterBar pill
           search={
             <FilterSearch
               value={query}

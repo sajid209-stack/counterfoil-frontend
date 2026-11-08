@@ -19614,3 +19614,29 @@ keeps each file's line endings is in the ec29f026 scratchpad (`pos/msgpatch.mjs`
 Verified on a production build, ec29f026 scratchpad `pos/ms.mjs` 24/24 (desktop and phone: range
 drives the figures and the list, dated rows, drawer hidden outside today, the CSV's name, header,
 rows and amounts, Print listing every sale) and `pos/btn.mjs` 84/84. Viewed by eye.
+
+---
+
+## OS on a phone, v5: calm, flat, thumb-first (2026-11-08)
+
+Owner: research Shopify's app, foodpanda and the best SaaS phone apps and the theory behind them, and
+redesign Counterfoil OS on a phone — calmer, minimal, no information overload; colours unchanged.
+Spec and research: docs/mobile.md §8 (and "As built"). Desktop and tablet (≥ md) unchanged.
+
+- A floating dock replaces the lone menu button (NN/g: hidden navigation cut discoverability ~20%
+  and made phone users 15% slower; Apple HIG: 3–5 tab destinations).
+- White ground, inset-grouped cards without shadows, large titles collapsing to a compact bar, round
+  icon actions, flat list rows everywhere (every DataTable), search pills and quick-filter tabs,
+  figure chips instead of 2×2 boxes, a Settings list page, round-close sheets.
+- `next.config.ts` no longer redirects /settings: `src/app/(os)/settings/page.tsx` lists sections on
+  a phone and replaces itself with /settings/business from md.
+- Built by three Sonnet builders (shell, dashboard, lists); the second wave hit the Sonnet usage
+  limit before changing anything, and the Opus session built it: settings list, calendar and
+  analytics on a phone, flat rows for every table, chip widths, the catalogue's Select, record pages
+  without the venue line, the search pill on every filtered list, the activity heading under the new
+  compact bar.
+
+Verified on a production build, ec29f026 scratchpad `os/check.mjs`: 16 pages at 390×844 (no
+sideways scroll, the dock, a large title, no text under 12px, no errors), the Settings list and back,
+the dock's tabs, Menu and Search, record pages, and desktop guards (no dock, /settings → Business):
+107 of 109, the 2 being transparent zero shadows the check counted. Viewed by eye.

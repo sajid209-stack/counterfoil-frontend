@@ -83,5 +83,7 @@
   "menuWaiting": "Menu, {count} waiting",
   "venueNow": "Venue: {name}. Change venue",
   "venueChoose": "Choose a venue",
-  "reservations": "Reservations"
+  "reservations": "Reservations",
+  "dock": "Main navigation",
+  "ordersWaiting": "Orders, {count} waiting"
 }

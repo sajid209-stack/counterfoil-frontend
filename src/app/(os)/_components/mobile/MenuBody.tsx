@@ -207,7 +207,9 @@ export function MenuBody({
 
       <section className="card-surface p-1.5">
         <Link
-          href={NAV_SETTINGS.href}
+          /* The phone's Settings is its own list of sections (docs/mobile.md §8);
+             the desktop rail keeps going straight to the first section. */
+          href="/settings"
           data-menu-item={NAV_SETTINGS.key}
           aria-current={isAt(NAV_SETTINGS, pathname) ? "page" : undefined}
           data-autofocus={isAt(NAV_SETTINGS, pathname) ? "" : undefined}

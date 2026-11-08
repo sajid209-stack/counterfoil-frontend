@@ -1249,5 +1249,9 @@
     "keepOne": "অন্তত একটা টিকিটের ধরন রাখুন",
     "available": "{count}টি আছে",
     "soldOnly": "{count, number}টি বিক্রি"
+  },
+  "quick": {
+    "label": "দ্রুত ফিল্টার",
+    "all": "সব"
   }
 }

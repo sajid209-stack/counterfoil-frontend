@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui";
-import { FIGURES_SHOWN, FigureBand, type StatIconTone, type useFigureFold } from "@/components/ui/StatStrip";
+import { FIGURES_SHOWN, FigureBand, deltaShows, type StatIconTone, type useFigureFold } from "@/components/ui/StatStrip";
 import { cn } from "@/lib/cn";
 
 
@@ -99,6 +99,52 @@ export function MetricStrip({
             </div>
           )}
           {!loading && m.context && <p className={cn("mt-inline text-xs leading-snug", m.contextTone ?? "text-muted")}>{m.context}</p>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ChipChange({ metric }: { metric: Metric }) {
+  const d = metric.delta as React.ReactElement<{ now: number; then: number; goodWhen?: "up" | "down" }> | undefined;
+  const p = d?.props;
+  if (p && deltaShows(p.now, p.then, p.goodWhen)) {
+    const pct = Math.round(((p.now - p.then) / p.then) * 100);
+    const good = (p.goodWhen ?? "up") === "up" ? pct > 0 : pct < 0;
+    return (
+      <span className={cn("block text-sm", good ? "text-success" : "text-danger")}>
+        <span aria-hidden>{pct > 0 ? "\u2197" : "\u2198"} </span>
+        {Math.abs(pct)}%
+        {metric.context && <span className="sr-only"> {metric.context}</span>}
+      </span>
+    );
+  }
+  return metric.context ? <span className={cn("block truncate text-sm", metric.contextTone ?? "text-muted")}>{metric.context}</span> : null;
+}
+
+/** A phone's figures (docs/mobile.md section 8), shared by Dashboard and Analytics: one row of white chips that scrolls sideways and snaps,
+ *  bleeding to the screen edge through the page gutter. Not buttons: the chart below draws one series. */
+export function MetricChips({ items, loading, label }: { items: Metric[]; loading: boolean; label: string }) {
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      data-stat-band
+      className="-mx-gutter flex snap-x snap-mandatory gap-comfortable overflow-x-auto scroll-px-gutter px-gutter pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      {items.map((m) => (
+        <div key={m.key} data-metric={m.key} className="min-w-37 shrink-0 snap-start rounded-lg border border-line bg-card p-comfortable">
+          <p className="truncate text-sm font-medium text-muted">{m.label}</p>
+          {loading ? (
+            <Skeleton className="mt-inline h-6 w-20" />
+          ) : (
+            <>
+              <p className="type-figure mt-inline whitespace-nowrap text-xl font-bold leading-tight">{m.value}</p>
+              <div className="mt-inline min-h-5">
+                <ChipChange metric={m} />
+              </div>
+            </>
+          )}
         </div>
       ))}
     </div>

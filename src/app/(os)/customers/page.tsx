@@ -18,6 +18,8 @@ import {
   type Column,
 } from "@/components/ui";
 import { PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
+import { MetaParts, PhoneRow } from "@/components/ui/PhoneRow";
+import { QuickTabs } from "@/components/ui/QuickTabs";
 import { ToolbarMenu } from "../orders/_components/ToolbarMenu";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { useApiQuery } from "@/lib/useApi";
@@ -29,6 +31,8 @@ import {
 } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { formatDate, formatMoney } from "@/lib/format";
+
+const SHORT_DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
 
 type Segment = "all" | "email" | "sms";
 
@@ -238,6 +242,20 @@ export default function CustomersPage() {
         toolbarInCard
         toolbar={
           <FilterBar
+            pill
+            /* The quick filters are the same cut as the Reach filter in the panel. */
+            tabs={
+              <QuickTabs
+                label={t("quick.label")}
+                value={segment}
+                onChange={(v) => { setSegment(v); setPage(1); }}
+                options={[
+                  { value: "all", label: t("quick.all") },
+                  { value: "email", label: t("quick.email") },
+                  { value: "sms", label: t("quick.sms") },
+                ]}
+              />
+            }
             search={
               <FilterSearch
                 value={search}
@@ -289,32 +307,28 @@ export default function CustomersPage() {
         }
         cardVariant="list"
         renderCard={(c) => (
-          /* Two lines: who and what they are worth, then how to reach them and
-             how often they come. It was six lines and 141px — the generic
-             label/value dump, which put an e-mail address and two consent chips
-             above the two figures a list is ranked by. Both are on the record,
-             and consent is what the segments above filter on. */
-          <div className="flex flex-col gap-inline">
-            <div className="flex items-baseline justify-between gap-tight">
-              <span className="min-w-0 flex-1 truncate text-base font-medium">{c.name}</span>
-              <span className={cn("shrink-0 text-sm font-medium tabular-nums", c.stats.spent === 0 && "text-muted")}>
-                {formatMoney(c.stats.spent)}
-              </span>
-            </div>
-            <div className="flex items-baseline justify-between gap-tight text-xs text-muted">
-              <span className="min-w-0 flex-1 truncate">
-                {/* The phone, not the e-mail: two customers share a name far
-                    more often than a number, so it is the line that confirms
-                    the right person. */}
-                {c.phone ? <span className="tabular-nums">{c.phone}</span> : t("noContact")}
-                {" · "}
-                {t("ordersCount", { count: c.stats.orders })}
-              </span>
-              <span className="shrink-0 whitespace-nowrap">
-                {c.stats.lastSeen ? formatDate(c.stats.lastSeen) : "—"}
-              </span>
-            </div>
-          </div>
+          /* Flat row (docs/mobile.md section 8): the name, then one meta line — the
+             phone (not the e-mail: two customers share a name far more often
+             than a number, so it is what confirms the right person), how many
+             orders, and the last visit — with what they have spent at the right.
+             Both other facts are on the record, and consent is what the quick
+             filters above cut by. */
+          <PhoneRow
+            title={c.name}
+            meta={
+              <MetaParts
+                parts={[
+                  c.phone ? <span key="p" className="tabular-nums">{c.phone}</span> : t("noContact"),
+                  t("ordersCount", { count: c.stats.orders }),
+                  /* "3 Nov", not "03 Nov 2026": the long form ran out of room at
+                     390px and the year is nearly always this one. */
+                  c.stats.lastSeen ? <span key="d" className="whitespace-nowrap">{SHORT_DAY.format(new Date(c.stats.lastSeen))}</span> : null,
+                ]}
+              />
+            }
+            trailing={formatMoney(c.stats.spent)}
+            trailingMuted={c.stats.spent === 0}
+          />
         )}
         emptyState={
           <EmptyState

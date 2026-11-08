@@ -245,7 +245,7 @@ export default function TeamPage() {
             label={t("team.title")}
             header={
               <div className="border-b border-hairline px-card py-tight">
-                <FilterBar
+                <FilterBar pill
                   search={
                     <SearchField value={search} onChange={setSearch} label={t("team.searchLabel")} placeholder={t("team.searchPlaceholder")} />
                   }

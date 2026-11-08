@@ -1170,12 +1170,33 @@ html[data-motion="reduce"] *::after {
   [data-scrolling]::-webkit-scrollbar-thumb { background-color: var(--color-scrollbar); }
 }
 
-/* The floating menu button on a phone, and the room every page keeps clear for
-   it. The button is 56px, 12px off the bottom and left edge (plus the safe
-   area), so its top is 68px up — which is exactly where the sticky save bars
-   already sit (56 + 12), and they stay clear of it. A page that has to keep a
-   last row out from under the button reserves --os-fab-clear. */
-:root { --os-fab-clear: calc(84px + env(safe-area-inset-bottom)); }
+/* The OS phone's two fixed pieces of chrome and the room the page keeps for them
+   (docs/mobile.md section 8).
+   --os-phone-bar  the compact top bar, 44px. It fades in once the large title
+                   has scrolled away; anything sticky further down a phone page
+                   pins to this (top-[var(--os-phone-bar)]), never to a number.
+   --os-fab-clear  the floating dock: 12px off the bottom + the 56px pill + 16px
+                   air, plus the device's safe area. The dock's top is 68px up,
+                   exactly where the sticky save bars already sit. */
+:root {
+  --os-phone-bar: 44px;
+  --os-fab-clear: calc(84px + env(safe-area-inset-bottom));
+}
+
+/* OS on a phone, v5: the page is white and a group that needs a container is an
+   inset-grouped card (white, a 1px line, 20px radius, no shadow). Scoped to the
+   OS shell (data-os-shell, put on OsShell's root) and to below md, so Go, the
+   public pages and every desktop and tablet width keep the card they had. In
+   its own layer step (components) so a utility on the element still wins. */
+@layer components {
+  @media (max-width: 47.999rem) {
+    [data-os-shell] .card-surface {
+      border-color: var(--color-line);
+      border-radius: 20px;
+      box-shadow: none;
+    }
+  }
+}
 
 .scroll-x-hint {
   background:

@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import type { SalesSummary } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
-import { FIGURES_SHOWN, FigureBand, FigureToggle, useFigureFold } from "@/components/ui/StatStrip";
+import { FIGURES_SHOWN, FigureToggle, useFigureFold } from "@/components/ui/StatStrip";
 import { SM, useMediaQuery } from "@/lib/useMedia";
 import { CircleDollarSign, Clock, Package, ReceiptText, Wallet } from "lucide-react";
 
@@ -30,9 +30,11 @@ import { CircleDollarSign, Clock, Package, ReceiptText, Wallet } from "lucide-re
  * of 18px figures is ~190px, and a list page still reaches its list. The card's
  * own padding is the section's from md up; below it the cells carry theirs.
  *
- * The calm pass shows two of the five on a phone — Sales, then Still owed, the
- * two a person acts on — and a quiet "Show all 5" under them reveals the rest in
- * the same grid (docs/mobile.md §4). From `sm` all five are drawn.
+ * A phone draws the five as a horizontally scrolling row of figure chips (label
+ * 13/500 muted over the value 20/700, white, 1px line, 16px radius, ~148px) —
+ * not a grid of boxes, and not hidden: the whole row is one 64px strip, so the
+ * day's numbers stay a glance away and the list still starts on the first screen
+ * (docs/mobile.md section 8, rule 8). From `sm` all five are drawn as before.
  *
  * `data-figure` and `data-amount` carry the exact value, for checks that must
  * not parse "৳1,234.50".
@@ -47,15 +49,30 @@ export function SalesFigures({ summary: s, loading }: { summary: SalesSummary; l
     { key: "paid", label: t("paid"), value: formatMoney(s.paid), raw: s.paid },
   ];
   const fold = useFigureFold(items.length);
-  /* A phone draws the shared figure cards (docs/mobile.md section 6); from sm the band below is unchanged. */
+  /* A phone draws chips in a scrolling row; from sm the band below is unchanged. */
   const phone = !useMediaQuery(SM);
   const icons = { sales: [<CircleDollarSign key="i" />, "ember"], owed: [<Clock key="i" />, "warning"], orders: [<ReceiptText key="i" />, "info"], items: [<Package key="i" />, "neutral"], paid: [<Wallet key="i" />, "success"] } as const;
   if (phone) {
     return (
-      <FigureBand
-        loading={loading}
-        items={items.map((i) => ({ key: i.key, label: i.label, value: i.value, tone: i.tone, icon: icons[i.key as keyof typeof icons][0], iconTone: icons[i.key as keyof typeof icons][1] }))}
-      />
+      <dl
+        data-sales-figures
+        data-stat-band
+        aria-busy={loading || undefined}
+        className="no-scrollbar -mx-gutter flex gap-tight overflow-x-auto px-gutter"
+      >
+        {items.map((i) => (
+          <div key={i.key} title={i.hint} className="min-w-37 shrink-0 rounded-2xl border border-line bg-card px-section py-comfortable">
+            <dt className="truncate text-sm font-medium text-muted">{i.label}</dt>
+            <dd
+              data-figure={i.key}
+              data-amount={i.raw}
+              className={cn("mt-inline truncate text-xl font-bold leading-7 tabular-nums", i.tone === "warning" && "text-warning", loading && "opacity-50")}
+            >
+              {i.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
     );
   }
   return (

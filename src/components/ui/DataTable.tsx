@@ -1,10 +1,12 @@
 "use client";
 
+import { Fragment } from "react";
 import { ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { MD, SM, useMediaQuery } from "@/lib/useMedia";
 import { Pagination } from "./Pagination";
+import { MetaParts, PhoneRow } from "./PhoneRow";
 import { Skeleton } from "./Skeleton";
 
 export interface Column<T> {
@@ -95,6 +97,15 @@ export interface DataTableProps<T> {
   toolbarInCard?: boolean;
   /** A titled header drawn above the rows of a phone's list (below sm), e.g. "Orders" and a count pill. Not drawn from sm. */
   phoneHeader?: React.ReactNode;
+  /** Phone list only (`cardVariant="list"`, below sm): where the hairline between
+   *  rows starts, as a CSS length, so it is inset to the text column and not drawn
+   *  under a leading thumbnail. Default: the page gutter (a plain full-width rule).
+   *  Rows on a phone are flat (no card per row): full-width, tappable, 60px or
+   *  more, with the `nav-hover` tint under a finger. */
+  phoneInset?: string;
+  /** Phone list only: a heading above the first row of each run of rows that
+   *  return the same text (a day, say). Return null to draw none. */
+  phoneGroup?: (row: T) => string | null;
 }
 
 /** Deterministic block width for a loading cell — see the note at the call site. */
@@ -106,6 +117,27 @@ function skeletonWidth<T>(col: Column<T>, colIndex: number, rowIndex: number): s
 
 const alignClass = (a?: "left" | "right" | "center") =>
   a === "right" ? "text-right" : a === "center" ? "text-center" : "text-left";
+
+/** A flat phone row: full width (it bleeds to the page edges so the tint does), 60px or
+ *  more, 12px above and below, and a hairline drawn from `--phone-inset`. */
+const FLAT_ROW =
+  "relative -mx-gutter flex min-h-15 flex-col justify-center px-gutter py-comfortable after:absolute after:bottom-0 after:left-[var(--phone-inset)] after:right-gutter after:h-px after:bg-hairline after:content-[''] last:after:hidden";
+
+/** The generic phone row: the first column as the title, the last right-aligned
+ *  column as the money, every other visible column as one meta line. */
+function FlatGenericRow<T>({ row, columns }: { row: T; columns: Column<T>[] }) {
+  const cell = (col: Column<T>) => (col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? ""));
+  const rest = columns.slice(1).filter((c) => c.phone !== "hide");
+  const money = [...rest].reverse().find((c) => c.align === "right");
+  const meta = rest.filter((c) => c !== money);
+  return (
+    <PhoneRow
+      title={cell(columns[0])}
+      meta={meta.length ? <MetaParts parts={meta.map(cell)} /> : undefined}
+      trailing={money ? cell(money) : undefined}
+    />
+  );
+}
 
 export function DataTable<T>({
   columns,
@@ -127,6 +159,8 @@ export function DataTable<T>({
   height = "box",
   toolbarInCard = false,
   phoneHeader,
+  phoneInset,
+  phoneGroup,
 }: DataTableProps<T>) {
   const tc = useTranslations("common");
   const showEmpty = !loading && rows.length === 0;
@@ -135,55 +169,78 @@ export function DataTable<T>({
      never carries a second invisible copy of its search box. */
   const wide = useMediaQuery(MD);
   const inCard = toolbarInCard && wide && !!toolbar;
-  /* A phone (below sm) draws a list as calm separate cards, 12px apart, not one
-     card of hairline rows (docs/mobile.md section 6). A tablet keeps the rows. */
+  /* A phone (below sm) draws EVERY table as FLAT rows on the page
+     (docs/mobile.md section 8, rules 1 and 6): no card per row, a hairline
+     inset to the text column — whichever variant the page asked for, since
+     "cards" only ever meant a card per row on a phone. A tablet keeps the card
+     of rows (list) or the cards (cards). A page's own `renderCard` is drawn
+     inside the flat row. */
   const phone = !useMediaQuery(SM);
-  const cards = list && phone;
+  const cards = phone;
 
   return (
     <div className="flex flex-col gap-section">
       {toolbar && !inCard && <div>{toolbar}</div>}
 
       {/* Mobile (<768px): rows become tappable cards — primary line + labelled meta. */}
-      <div className={cn("md:hidden", cards ? "flex flex-col gap-comfortable" : list ? "card-surface overflow-hidden" : "flex flex-col gap-section")}>
+      <div
+        style={cards ? ({ "--phone-inset": phoneInset ?? "var(--spacing-gutter)" } as React.CSSProperties) : undefined}
+        className={cn("md:hidden", cards ? "flex flex-col" : list ? "card-surface overflow-hidden" : "flex flex-col gap-section")}
+      >
         {cards && phoneHeader}
         {loading &&
-          Array.from({ length: list ? 6 : 3 }).map((_, i) => (
+          Array.from({ length: list ? 6 : 3 }).map((_, i) =>
+            cards ? (
+              <div key={`csk-${i}`} aria-hidden className={cn(FLAT_ROW, "gap-inline")}>
+                <div className="flex items-center justify-between gap-section">
+                  <Skeleton h={16} w={`${52 + ((i * 7) % 4) * 8}%`} />
+                  <Skeleton h={14} w={56} />
+                </div>
+                <Skeleton h={12} w={`${40 + ((i * 11) % 4) * 8}%`} />
+              </div>
+            ) : (
             <div
               key={`csk-${i}`}
               className={cn(
                 "flex flex-col gap-tight",
-                cards ? "card-surface p-section" : list ? "border-b border-hairline px-card py-comfortable last:border-0" : "card-surface p-card",
+                list ? "border-b border-hairline px-card py-comfortable last:border-0" : "card-surface p-card",
               )}
             >
               <Skeleton h={16} w="66%" />
               <Skeleton h={12} w="50%" />
             </div>
-          ))}
+            ),
+          )}
         {showEmpty && (emptyState ?? <p className="py-section text-center text-sm text-muted">{tc("noResults")}</p>)}
         {!loading &&
-          rows.map((row) => (
+          rows.map((row, idx) => (
+            <Fragment key={`c-${getRowId(row)}`}>
+            {cards && phoneGroup && phoneGroup(row) !== (idx > 0 ? phoneGroup(rows[idx - 1]) : undefined) && phoneGroup(row) && (
+              /* ds-exception: 15/600 is the spec's day-heading size (docs/mobile.md section 8 rule 6) */
+              <h3 className="pb-tight pt-section text-[15px] font-semibold leading-6 text-muted first:pt-0">{phoneGroup(row)}</h3>
+            )}
             <div
-              key={`c-${getRowId(row)}`}
               role={onRowClick ? "button" : undefined}
               tabIndex={onRowClick ? 0 : undefined}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               onKeyDown={onRowClick ? (e) => e.key === "Enter" && onRowClick(row) : undefined}
               className={cn(
                 cards
-                  ? "card-surface min-h-11 p-section"
+                  ? FLAT_ROW
                   : list
                   /* A row, not a card: no gap, no second border, and the lift
                      goes with them — a row that rises out of its own list reads
                      as a card that has come loose. */
                   ? "border-b border-hairline px-card py-comfortable last:border-0"
                   : "card-surface p-card",
-                onRowClick && "cursor-pointer active:bg-muted-wash",
-                isSelected?.(row) && (list && !cards ? "bg-ember-wash" : "border-ember bg-ember-wash"),
+                onRowClick && (cards ? "cursor-pointer hover:bg-nav-hover active:bg-nav-hover" : "cursor-pointer active:bg-muted-wash"),
+                isSelected?.(row) && (list ? "bg-ember-wash" : "border-ember bg-ember-wash"),
               )}
             >
               {renderCard ? (
                 renderCard(row)
+              ) : cards ? (
+                <FlatGenericRow row={row} columns={columns} />
               ) : (
                 <>
               <div className="break-words text-base font-medium">
@@ -208,6 +265,7 @@ export function DataTable<T>({
                 </>
               )}
             </div>
+            </Fragment>
           ))}
       </div>
 

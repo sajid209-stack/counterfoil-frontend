@@ -112,14 +112,16 @@ export function Section({
 
   if (!wide && !pinned) {
     return (
-      <section data-card={id} aria-labelledby={`an-${id}`} className={cn("card-surface relative min-w-0 sm:rounded-none sm:border-0 sm:bg-transparent sm:shadow-none", className)}>
+      /* A phone (docs/mobile.md §8): the folded breakdowns are rows of one flat
+         list, edge to edge with a hairline under each, not a stack of boxes. */
+      <section data-card={id} aria-labelledby={`an-${id}`} className={cn("card-surface relative min-w-0 sm:rounded-none sm:border-0 sm:bg-transparent sm:shadow-none max-sm:-mx-gutter max-sm:rounded-none max-sm:border-x-0 max-sm:border-t-0", className)}>
         <h3 className="m-0 text-md font-normal">
           <button
             type="button"
             aria-expanded={open}
             aria-controls={bodyId}
             onClick={() => setOpen((o) => !o)}
-            className="flex min-h-14 w-full items-center gap-comfortable rounded-card px-card py-comfortable text-left transition-colors duration-quick active:bg-muted-wash"
+            className="flex min-h-14 w-full items-center gap-comfortable rounded-card px-card py-comfortable text-left transition-colors duration-quick active:bg-muted-wash max-sm:rounded-none max-sm:px-gutter"
           >
             <span className="min-w-0 flex-1">
               <span id={`an-${id}`} className="block text-base font-medium max-sm:text-sm max-sm:text-muted">
@@ -134,7 +136,7 @@ export function Section({
           </button>
         </h3>
         {open && (
-          <div id={bodyId} className="px-card pb-card">
+          <div id={bodyId} className="px-card pb-card max-sm:px-gutter">
             {sub && <p className="mb-comfortable text-xs text-muted">{sub}</p>}
             {children}
             {(view || info || actions) && (
@@ -153,7 +155,8 @@ export function Section({
   }
 
   return (
-    <section data-card={id} aria-labelledby={`an-${id}`} className={cn("group card-surface relative min-w-0 p-card", className)}>
+    /* A pinned chart on a phone is a flat section of the white page, not a box. */
+    <section data-card={id} aria-labelledby={`an-${id}`} className={cn("group card-surface relative min-w-0 p-card max-sm:rounded-none max-sm:border-0 max-sm:bg-transparent max-sm:px-0", className)}>
       <div className="mb-comfortable flex items-start justify-between gap-tight">
         <div className="min-w-0">
           <h3 id={`an-${id}`} className="min-w-0 text-md font-semibold">

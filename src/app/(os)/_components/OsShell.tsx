@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
@@ -14,7 +13,7 @@ import { PageStatePicker, ScreenPreview } from "@/components/screens";
 import { AccountMenu } from "./AccountMenu";
 import { LocationSwitcher } from "./LocationSwitcher";
 import { CommandPalette } from "./CommandPalette";
-import { MenuButton, MobileNav } from "./MobileNav";
+import { MobileNav, PhoneDock } from "./MobileNav";
 import { PhoneBar } from "./mobile/PhoneBar";
 import { LAST_APP_KEY, SettingsChrome } from "./SettingsChrome";
 import { Sidebar } from "./Sidebar";
@@ -29,11 +28,14 @@ import { SETTINGS_GROUPS } from "../settings/_lib/nav";
  *   frame ┘  the page itself: the warm paper ground in a rounded panel that
  *            scrolls on its own while the chrome stands still
  *
- * Below md there is no rail. The phone gets Shopify admin mobile's shape: a top
- * bar that says where you are (the page's glyph and name) with the page's one
- * create action and a round "⋯" for its other actions; and a round menu button
- * floating at the bottom-left that opens everything else in a full-height
- * sheet. No logo and no account in the bar — they are in the menu.
+ * Below md there is no rail. The phone gets Shopify admin mobile's shape
+ * (docs/mobile.md section 8): a large title at the top of the page (a compact
+ * 44px bar fades in once it scrolls away) with the page's actions as round icon
+ * buttons beside it; and a floating dock at the bottom — Search, then Home,
+ * Orders, Calendar, Catalog and Menu, which opens everything else in a
+ * full-height sheet. No logo and no account in the bar — they are in the menu.
+ * The phone's ground is white (dark: the paper) and a group is an inset-grouped
+ * card; the CSS keys off `data-os-shell` on the root.
  *
  * Settings, on md and up, adds a second chrome column beside the (folded) rail.
  * See `SettingsChrome`.
@@ -61,7 +63,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   const shortcutKey = useShortcutKey();
   const pathname = usePathname();
   /* Making something — a new booking or event, or editing an event — is a
-     task with its own way out; the floating menu button would only compete with
+     task with its own way out; the floating dock would only compete with
      the form's pinned Back and Continue for the bottom of the screen. */
   const focused = /^\/catalog\/(new(\/|$)|events\/[^/]+\/edit$)/.test(pathname);
   const isSettings = pathname.startsWith("/settings");
@@ -171,7 +173,6 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   );
   const page = pageFor(pathname);
   const pageName = section ? tSettings(`nav.items.${section.key}.title`) : page ? t(page.key) : "Counterfoil";
-  const PageIcon = page?.icon ?? LayoutDashboard;
 
   /* Which venue the console is looking at is a lens on the whole of it, so it
      lives in the bar rather than among a page's own filters — and it governs
@@ -201,8 +202,10 @@ export function OsShell({ children }: { children: React.ReactNode }) {
     <BarTitleContext value={pageName}>
       {/* The chrome's own white is the window's ground from md: the rail and the
           bar are painted ON it, and the frame is the paper panel set into it.
-          On a phone the ground is the paper, with the white bar on top. */}
-      <div className="flex min-h-screen bg-surface md:h-dvh md:overflow-hidden md:bg-chrome">
+          On a phone the ground is white too (the page is white, groups are
+          inset cards); in dark it stays the paper, one step darker than the
+          card, so a group still reads against it. */}
+      <div data-os-shell className="flex min-h-screen bg-card md:h-dvh md:overflow-hidden md:bg-chrome max-md:dark:bg-surface">
         <aside className="sticky top-0 hidden h-screen shrink-0 md:block md:h-dvh">
           <Sidebar collapsed={collapsed} locked={isSettings} onToggleCollapsed={toggleCollapsed} />
         </aside>
@@ -217,15 +220,15 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             way but creates no scroll container, so overflow-y stays visible and
             sticky resolves against the viewport. */}
         <main className="flex min-w-0 flex-1 flex-col overflow-x-clip md:h-dvh md:overflow-hidden">
-          {/* Phone — where you are, which venue, then the page's actions. See
-              `PhoneBar` (mobile/): 53px, and it must stay 53 — sticky headers
-              further down the page pin themselves to exactly that. */}
+          {/* Phone — the large title, the venue, the page's actions; and the
+              compact bar that replaces them on scroll. See `PhoneBar` (mobile/):
+              the compact bar's height is --os-phone-bar, and sticky headers
+              further down the page pin themselves to that variable. */}
           <PhoneBar
             pageName={pageName}
-            PageIcon={PageIcon}
-            isSettings={isSettings}
+            /* The Settings list itself is a top-level page: a large title, no back. */
+            isSettings={isSettings && pathname !== "/settings"}
             venueScoped={venueScoped && !wide}
-            onOpenSettings={() => setSettingsOpen(true)}
           />
 
           {/* Desktop — the page's name on the left; the venue and the account on
@@ -267,13 +270,13 @@ export function OsShell({ children }: { children: React.ReactNode }) {
               the page, edge to edge, and the window scrolls as it always did.
               The fade is a sibling of the scroller, not a child, so it stays put
               while the content moves. */}
-          <div className="os-frame relative min-w-0 flex-1 bg-surface md:mb-2 md:mr-2 md:min-h-0 md:overflow-hidden md:rounded-lg">
+          <div className="os-frame relative min-w-0 flex-1 bg-card md:mb-2 md:mr-2 md:min-h-0 md:overflow-hidden md:rounded-lg md:bg-surface dark:bg-surface">
             <div
               ref={frameRef}
               data-os-scroll
               className={cn(
                 "os-frame-scroll min-w-0 md:h-full md:overflow-y-auto md:overscroll-contain md:pb-0",
-                /* Room for the floating menu button, so it never covers the last row. */
+                /* Room for the floating dock, so it never covers the last row. */
                 focused ? "pb-0" : "pb-[var(--os-fab-clear)]",
               )}
             >
@@ -286,10 +289,10 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         {/* Mounted only while open, so it comes up empty by construction. */}
         {searchOpen && <CommandPalette onClose={() => setSearchOpen(false)} destinations={DESTINATIONS} shortcutKey={shortcutKey} />}
 
-        {/* Phone: the round menu button and the sheet it opens. Stood down while
-            something is being made, so the form's own Back and Continue can
-            have the bottom of the screen. */}
-        {!focused && <MenuButton open={menuOpen} onOpen={() => setMenuOpen(true)} />}
+        {/* Phone: the floating dock (Search and five tabs, the last of which opens
+            the menu sheet). Stood down while something is being made, so the
+            form's own Back and Continue can have the bottom of the screen. */}
+        {!focused && <PhoneDock menuOpen={menuOpen} onOpenMenu={() => setMenuOpen(true)} onOpenSearch={() => setSearchOpen(true)} />}
         <MobileNav open={menuOpen} onClose={() => setMenuOpen(false)} business={operatorQ.data?.name} />
       </div>
     </BarTitleContext>

@@ -12,7 +12,7 @@ import { formatDay, formatMoney } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
-import { MetricStrip } from "../dashboard/_components/MetricStrip";
+import { MetricChips } from "../dashboard/_components/MetricStrip";
 import { ComparePicker, type CompareValue } from "./_components/ComparePicker";
 import { Cards, Skeletons } from "./_components/Cards";
 import { num, percent, saveCsv, slugify } from "./_components/helpers";
@@ -246,7 +246,9 @@ function AnalyticsInner() {
         {wide ? (
           <StatStrip variant="band" columns={3} wideColumns={6} loading={first} items={o ? kpiItems(o, t) : placeholderItems(t)} />
         ) : (
-          <MetricStrip
+          /* A phone: one sideways row of figure chips, as on the dashboard
+             (docs/mobile.md §8), not a 2 x 2 of boxes and a "Show all". */
+          <MetricChips
             loading={first}
             label={t("kpi.label")}
             items={(o ? kpiItems(o, t) : placeholderItems(t)).map(({ key, label, value, delta, context, icon, iconTone }) => ({ key, label, value, delta, context, icon, iconTone }))}

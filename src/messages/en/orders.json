@@ -322,5 +322,12 @@
   },
   "showMore": "Show more details",
   "showLess": "Show less",
-  "keyFacts": "Order summary"
+  "keyFacts": "Order summary",
+  "quick": {
+    "label": "Quick filters",
+    "all": "All",
+    "unpaid": "Unpaid",
+    "refunds": "Refunds",
+    "cancelled": "Cancelled"
+  }
 }

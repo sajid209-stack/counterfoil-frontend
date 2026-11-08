@@ -91,7 +91,7 @@ export function RequestsList<T>({
   const panel = tabPanelProps("requests-tabs", tab);
 
   const toolbar = (
-    <FilterBar
+    <FilterBar pill
       search={<FilterSearch value={search} onChange={(v) => { onSearch(v); setPage(1); }} placeholder={searchPlaceholder} />}
       filters={filters}
     />

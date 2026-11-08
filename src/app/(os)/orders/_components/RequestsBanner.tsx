@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { ChevronRight, RotateCcw } from "lucide-react";
 import { Notice } from "@/components/ui";
+import { SM, useMediaQuery } from "@/lib/useMedia";
 import { listLocations } from "@/lib/api";
 import { refundSummary, useRefundVersion } from "@/lib/api/refundRequests";
 import { useWriteOffVersion, writeOffSummary } from "@/lib/api/writeOffRequests";
@@ -29,6 +31,7 @@ export function RequestsBanner() {
   const { id, pending } = useActiveLocation(locationsQ.data?.data ?? []);
   useRefundVersion();
   useWriteOffVersion();
+  const phone = !useMediaQuery(SM);
   if (pending) return null;
   const refunds = refundSummary(id).waiting;
   const writeOffs = writeOffSummary(id).waiting;
@@ -40,6 +43,22 @@ export function RequestsBanner() {
       : refunds > 0
         ? t("refundsOnly", { count: refunds })
         : t("writeOffsOnly", { count: writeOffs });
+
+  /* On a phone it is a slim single line with an icon and a chevron, not a box:
+     one tap goes to what is waiting (refunds first, then write-offs). */
+  if (phone) {
+    return (
+      <Link
+        href={refunds > 0 ? "/refunds" : "/write-offs"}
+        data-requests-banner
+        className="-mx-gutter flex min-h-11 items-center gap-comfortable px-gutter text-base transition-colors duration-quick hover:bg-nav-hover active:bg-nav-hover"
+      >
+        <RotateCcw size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-info" />
+        <span className="min-w-0 flex-1 truncate">{text}</span>
+        <ChevronRight size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
+      </Link>
+    );
+  }
 
   return (
     <Notice tone="info" size="sm">

@@ -125,7 +125,7 @@ export function FilterPanel({
       aria-label={words}
       title={words}
       onClick={() => (open ? close(false) : setOpenFor(wide))}
-      className={cn("shrink-0", glyphOnPhone && "max-md:w-11 max-md:px-0")}
+      className={cn("shrink-0", glyphOnPhone && "max-md:w-11 max-md:px-0 max-sm:rounded-full max-sm:border-transparent max-sm:bg-subtle max-sm:shadow-none")}
     >
       <ListFilter size={16} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
       <span className={cn(glyphOnPhone && "max-md:sr-only")}>{label(0)}</span>

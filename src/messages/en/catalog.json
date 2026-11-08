@@ -1249,5 +1249,9 @@
     "keepOne": "Keep at least one ticket type",
     "available": "{count} available",
     "soldOnly": "{count, number} sold"
+  },
+  "quick": {
+    "label": "Quick filters",
+    "all": "All"
   }
 }

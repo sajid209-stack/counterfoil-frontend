@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, DataTable, EmptyState, Notice, PageShell, Pagination, useToast } from "@/components/ui";
 import { NO_ONE, orderMethodOf } from "@/lib/api";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatDay } from "@/lib/format";
 import { demoNow } from "@/lib/schedule";
 import { RefundRequests } from "@/components/RefundRequests";
 import { OrderCard, firstDirection, useOrderColumns } from "./_components/columns";
@@ -176,6 +176,18 @@ function OrdersPageInner() {
 
   const narrowed = activeCount(f) > 0;
 
+  /* A phone's rows sit under a heading per day — Today, Yesterday, then "Thu 5 Nov"
+     — when the list runs newest first, which is the order a day means anything in. */
+  const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const todayKey = dayKey(now);
+  const yesterdayKey = dayKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+  const dayHeading = (iso: string) => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return null;
+    const k = dayKey(d);
+    return k === todayKey ? t("range.today") : k === yesterdayKey ? t("range.yesterday") : formatDay(k, { weekday: true });
+  };
+
   /* One toolbar object, drawn as the top row of the table's own card from md up
      and above the list on a phone — `DataTable` decides which. */
   const toolbar = (
@@ -236,7 +248,8 @@ function OrdersPageInner() {
           cardVariant="list"
           toolbar={toolbar}
           toolbarInCard
-          renderCard={(o) => <OrderCard o={o} now={now} />}
+          renderCard={(o) => <OrderCard o={o} />}
+          phoneGroup={f.sort === "createdAt" ? (o) => dayHeading(o.createdAt) : undefined}
           emptyState={
             <EmptyState
               title={t("emptyTitle")}

@@ -256,3 +256,69 @@ should be more modern and minimal. Desktop and tablet (≥ 768px) are unchanged.
    and its field share one left edge.
 6. **Calendar agenda**: a day is one white card of rows divided by hairlines — the time on the left,
    a 3px tone bar, then what and who. No grey boxes inside the card.
+
+## 8. OS on a phone, v5: calm, flat, thumb-first (2026-11-08)
+
+Owner: research the Shopify app, foodpanda and the best SaaS phone apps down to the pixel, and the
+theory behind them, and redesign Counterfoil OS on a phone to be calmer, minimal, easy, with no
+information overload. Colours do not change. Desktop and tablet (≥ md) do not change.
+
+### What the references do, and why
+
+| Detail (Shopify admin iOS unless noted) | Why it works | What we take |
+|---|---|---|
+| A floating dock at the foot: a round Search, a pill of 4 icon tabs (Home, Orders, Products, Menu), a round assistant; the current tab sits on a soft grey pill | Primary destinations always one thumb-tap away in the natural thumb zone (Hoober); NN/g: hidden navigation cut discoverability ~20% and made phone users 15% slower; Apple HIG: 3–5 tab destinations | A dock replaces the lone hamburger: Search ○ + [Home · Orders · Calendar · Catalog · Menu] |
+| Large titles (≈34pt bold) at the top of each tab, collapsing to a small centred title as you scroll (iOS) | Says "you are at the top of this section"; the big title becomes chrome only once content needs the space | Large title 28/700 on top-level pages; a 44px compact bar with the 16/600 title fades in on scroll |
+| Page actions as small round icon buttons in one pill (＋ ⋯) beside the title | One primary per screen, and it is not a shouting orange bar; actions are tools, not headlines | Phone actions become 40px round icon buttons in a pill; the words stay as the accessible name |
+| Lists flat on white: no card per row, a date as a section heading, row = bold reference, one meta line split by thin rules, a grey status pill, the amount right in muted ink | A card per row repeats a border and a shadow per item and halves the density; whitespace and alignment group better than boxes (Gestalt proximity) | Lists are flat rows on the white page with inset hairlines; sections by day; one meta line |
+| Search is a full-width pill with sort and filter icons inside; filters are a row of text tabs (All, Unfulfilled, Unpaid…), the current one on a grey pill | The commonest filters are one tap; the full filter set lives in a sheet so the list stays calm (progressive disclosure) | Search pill with a filter icon inside; quick-filter text tabs; the rest in the filter sheet |
+| Sheets: a drag handle, a round close button top-left, a centred title, an optional round action top-right; the content is plain rows with chevrons | A consistent, predictable sheet frame; the close is where the thumb expects it and always the same | Kit Sheet on an OS phone: round 40px close left, centred 17/600 title, optional action right |
+| Settings: a large title and plain rows (outline 24px icon, 17pt label, chevron), no cards; a sub-page has a round back button and a title; grouped content in rounded white cards with hairlines | Settings is navigation, not content — a list is the fastest scan | An OS phone has a Settings index list; a section is a sub-page with a round back button |
+| Home: the numbers that matter as a horizontally scrolling row of figures above a chart, then "Here's your activity" | The day's state at a glance without a grid of boxes; one chart, not four | Dashboard: a scrolling figure row, the chart, then flat Activity and Recent orders lists |
+| foodpanda: generous tap targets, sticky search, one primary action per screen, strong photography on item rows | Thumb ergonomics and recognisable items | 48px thumbnails on catalogue rows; ≥44px targets |
+| Shopify POS: section labels as muted small text above plain rows; one full-width primary at the foot | Labels group; the primary is unmistakable and in the thumb zone | Section labels 13/500 muted; the one primary full-width at the foot of a form |
+
+### Rules (below md, OS only)
+
+1. **Ground.** The page is white (`card`), not the paper. A group that needs a container is a white
+   rounded card (20px radius) with a 1px `line` edge and no shadow (inset grouped). No card per
+   list row, no box inside a box.
+2. **Type** (phone): large title 28/700, −0.02em; section heading 17/600; row title 16/600 (a
+   reference or a name); body 15/400; meta 14/400 muted; caption and section labels 13/500 muted.
+   Money: 15/600 in rows, 28/700 as a hero figure. Weights 400/500/600/700 only.
+3. **Spacing.** 20px page gutter; 24px between sections; rows 60–72px with 12px vertical padding;
+   hairlines inset to the text column; ≥44px targets everywhere.
+4. **Navigation.** A floating dock 12px above the safe area: a 52px round Search (opens the command
+   palette) and a pill of five 52px icon tabs — Home (dashboard), Orders, Calendar, Catalog, Menu
+   (opens the existing menu sheet). Frosted card ground, 1px line, soft shadow. The current tab:
+   `nav-selected` pill behind an ink icon; others muted. A waiting refund or write-off puts a dot
+   on Orders. Each tab has its name as its accessible name. Pages keep room for the dock.
+5. **Header.** Top-level pages open with the large title and, on venue-scoped pages, the venue
+   under it (14px muted, chevron, opens the venue picker); the page's actions sit to the right of
+   the title as 40px round icon buttons in one pill. A 44px compact bar (centred 16/600 title,
+   back button on records) appears once the large title has scrolled away. Records (an order, a
+   customer) open with a round back button and the title.
+6. **Lists.** Flat rows on white with inset hairlines; a search pill with a filter icon inside; up
+   to five quick-filter text tabs in a horizontal row (current on a grey pill); the full filter
+   set in a sheet; dated lists grouped under day headings (15/600 muted).
+7. **Sheets.** Round 40px close at the top-left, centred 17/600 title, optional round action at
+   the top-right, the drag handle above. Content as plain rows.
+8. **Figures.** No 2×2 grid of boxes on a phone: a horizontally scrolling row of figure chips
+   (label 13 muted over value 20/700), or a single hero figure.
+
+### As built (2026-11-08)
+
+- **Shell** (`OsShell`, `MobileNav` `PhoneDock`, `PhoneBar`, `PageShell`, kit `Sheet`): white phone ground
+  (dark keeps the darker page so cards still step out); `.card-surface` on an OS phone is an inset group
+  (white, 1px line, 20px, no shadow — globals.css, `[data-os-shell]`); the dock (Search + Home · Orders ·
+  Calendar · Catalog · Menu, the waiting dot on Orders); large titles with the venue line, a 44px compact
+  bar on scroll (`--os-phone-bar`), page actions as round icon buttons; records get a round back and no
+  venue line; OS sheets get a round close at the top-left and a centred title.
+- **Lists** (`DataTable` phone branch, `PhoneRow`, `QuickTabs`, `FilterBar pill`): every table is flat
+  rows on a phone; search pill with the filter inside; quick-filter tabs on Orders, Customers, Catalog;
+  Orders grouped by day.
+- **Dashboard and Analytics**: `MetricChips` (dashboard/_components/MetricStrip) — a sideways row of
+  figure chips that grow to fit their figure; flat chart sections; "Here's your activity" lists.
+- **Calendar**: soft round controls, a neutral Day/Week/Month switch, the strip and agenda edge to edge.
+- **Settings**: `/settings` is a page — on a phone the list of sections (Shopify's anatomy); from md it
+  moves on to Business. A section's back button returns to the list.

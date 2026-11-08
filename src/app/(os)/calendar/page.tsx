@@ -978,11 +978,11 @@ export default function CalendarPage() {
             of that row. */}
         <div className="flex flex-wrap items-center justify-between gap-x-comfortable gap-y-tight">
           <div className="flex min-w-0 flex-wrap items-center gap-tight">
-            <Button variant="secondary" size="sm" className="max-sm:rounded-full" onClick={() => setCursor(openingDate())}>
+            <Button variant="secondary" size="sm" className="max-sm:rounded-full max-sm:border-transparent max-sm:bg-subtle max-sm:shadow-none" onClick={() => setCursor(openingDate())}>
               {t("today")}
             </Button>
             <div className="flex items-center gap-inline">
-              <Button variant="secondary" size="icon" className="max-sm:rounded-full" aria-label={t("previous")} onClick={() => step(-1)}>
+              <Button variant="secondary" size="icon" className="max-sm:rounded-full max-sm:border-transparent max-sm:bg-subtle max-sm:shadow-none" aria-label={t("previous")} onClick={() => step(-1)}>
                 <ChevronLeft size={16} strokeWidth={1.5} />
               </Button>
               {/* Between the arrows, which is where you look for it — and a
@@ -998,7 +998,7 @@ export default function CalendarPage() {
               >
                 {rangeLabel}
               </h2>
-              <Button variant="secondary" size="icon" className="max-sm:rounded-full" aria-label={t("next")} onClick={() => step(1)}>
+              <Button variant="secondary" size="icon" className="max-sm:rounded-full max-sm:border-transparent max-sm:bg-subtle max-sm:shadow-none" aria-label={t("next")} onClick={() => step(1)}>
                 <ChevronRight size={16} strokeWidth={1.5} />
               </Button>
             </div>
@@ -1052,7 +1052,9 @@ export default function CalendarPage() {
                 aria-label={t("title")}
                 size="sm"
                 fullWidth
-                className="rounded-full [&>button]:rounded-full"
+                /* Neutral, not the brand fill (docs/mobile.md §8): a subtle track
+                   with the chosen grain lifted out in white. */
+                className="rounded-full [&>button]:rounded-full [&_[aria-checked=true]]:bg-card [&_[aria-checked=true]]:font-semibold [&_[aria-checked=true]]:text-fg [&_[aria-checked=true]]:shadow-sm"
                 options={[
                   { value: "day", label: t("tabDay") },
                   { value: "week", label: t("tabWeek") },
@@ -1123,7 +1125,9 @@ export default function CalendarPage() {
           </Notice>
         )}
 
-        <div className="card-surface overflow-hidden">
+        {/* On a phone the strip and the day's list run flat on the white page
+            (docs/mobile.md §8): no box around them. */}
+        <div className="card-surface overflow-hidden max-sm:-mx-gutter max-sm:rounded-none max-sm:border-x-0 max-sm:border-b-0">
           {loading ? (
             <div aria-busy="true"><Skeleton h="28rem" /></div>
           ) : view === "day" ? (

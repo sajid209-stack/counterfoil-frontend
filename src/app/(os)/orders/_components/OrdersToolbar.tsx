@@ -3,6 +3,7 @@
 import { BarChart3, Columns3, Download, Printer } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button, FilterBar, FilterSearch, type FilterSpec } from "@/components/ui";
+import { QuickTabs } from "@/components/ui/QuickTabs";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import type { SalesFilters } from "../_lib/filters";
 import type { SalesLabels } from "../_lib/labels";
@@ -79,6 +80,17 @@ export function OrdersToolbar({
     control: <Checklist label={label} options={opts} value={value} onChange={onChange} empty={empty} />,
   });
 
+  /* The quick filters of a phone are shortcuts onto the status filter: the one
+     whose set of statuses matches is current, and a hand-picked mix selects none. */
+  const QUICK: { key: string; statuses: SalesFilters["statuses"] }[] = [
+    { key: "all", statuses: [] },
+    { key: "unpaid", statuses: ["pending", "partial"] },
+    { key: "refunds", statuses: ["partly_refunded", "refunded"] },
+    { key: "cancelled", statuses: ["cancelled"] },
+  ];
+  const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
+  const quick = QUICK.find((q) => sameSet(q.statuses, f.statuses))?.key ?? "";
+
   const filters: FilterSpec[] = [
     {
       key: "date",
@@ -136,5 +148,20 @@ export function OrdersToolbar({
     </>
   );
 
-  return <FilterBar search={search} filters={filters} actions={actions} />;
+  return (
+    <FilterBar
+      pill
+      search={search}
+      filters={filters}
+      actions={actions}
+      tabs={
+        <QuickTabs
+          label={to("quick.label")}
+          value={quick}
+          onChange={(k) => set({ statuses: QUICK.find((q) => q.key === k)?.statuses ?? [] })}
+          options={QUICK.map((q) => ({ value: q.key, label: to(`quick.${q.key}` as never) }))}
+        />
+      }
+    />
+  );
 }

@@ -83,5 +83,7 @@
   "menuWaiting": "মেনু, {count}টি অপেক্ষায়",
   "venueNow": "ভেন্যু: {name}। বদলান",
   "venueChoose": "ভেন্যু বেছে নিন",
-  "reservations": "রিজার্ভেশন"
+  "reservations": "রিজার্ভেশন",
+  "dock": "প্রধান নেভিগেশন",
+  "ordersWaiting": "অর্ডার, {count}টি অপেক্ষায়"
 }
