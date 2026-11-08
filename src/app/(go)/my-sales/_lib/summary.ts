@@ -18,6 +18,30 @@ export const todayDays = (): string[] => [DEMO_TODAY, ymd(new Date())];
 export const yesterdayDays = (): string[] => [demoDay(-1)];
 export const dayBeforeDays = (): string[] => [demoDay(-2)];
 
+const shiftIso = (iso: string, n: number) => {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + n);
+  return ymd(d);
+};
+
+/** Every day from `from` to `to`, inclusive. A range that holds the demo's
+ *  today also holds the real present (see `todayDays`). */
+export function daysIn(from: string, to: string): string[] {
+  const out: string[] = [];
+  for (let d = from; d <= to && out.length < 400; d = shiftIso(d, 1)) out.push(d);
+  if (out.includes(DEMO_TODAY)) out.push(ymd(new Date()));
+  return out;
+}
+
+/** How many days a range covers, both ends included. */
+export const rangeLength = (from: string, to: string): number =>
+  Math.round((Date.parse(`${to}T12:00:00`) - Date.parse(`${from}T12:00:00`)) / 86_400_000) + 1;
+
+/** The same number of days immediately before the range: what it is compared with. */
+export const previousRange = (from: string, to: string): [string, string] => [shiftIso(from, -rangeLength(from, to)), shiftIso(from, -1)];
+
+export { shiftIso };
+
 /** Sales that count as this person's: the ones filed under them, and the
  *  counter-channel sales the till files with no name on them (it does not stamp
  *  a staff id yet). */

@@ -1,31 +1,46 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowDown, ArrowUp, Printer, ReceiptText, RotateCcw, Search, Ticket } from "lucide-react";
-import { ActionMenu, Button, Notice, SegmentedControl, Skeleton, StatusPill } from "@/components/ui";
+import { ArrowDown, ArrowUp, Download, Printer, ReceiptText, RotateCcw, Search, Ticket } from "lucide-react";
+import { ActionMenu, Button, DateRangePicker, formatRange, Notice, Skeleton, StatusPill, type DateRangeValue } from "@/components/ui";
+import { saveCsv, toCsv } from "@/lib/csv";
 import { AffixInput } from "@/components/ui/Field";
 import { useApiQuery } from "@/lib/useApi";
 import { useEnumLabels } from "@/lib/labels";
-import { formatClockOf, formatDay, formatMoney } from "@/lib/format";
-import { DEMO_TODAY, demoDay } from "@/lib/schedule";
+import { formatClockOf, formatMoney } from "@/lib/format";
+import { DEMO_TODAY } from "@/lib/schedule";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { getOperator, getStaff, listOrders, listProducts, peekPaymentSettings, type Order } from "@/lib/api";
 import { goodwillMaxFor, pendingRefundForOrder, useRefundVersion } from "@/lib/api/refundRequests";
 import { GoCard } from "../_components/Tiles";
 import { GoPage, GoPageHeader } from "../_components/GoPage";
-import { R, RAIL_SEGMENT } from "../_components/railType";
+import { R } from "../_components/railType";
 import { T } from "../_components/type";
 import { Thumb } from "../_components/Thumb";
 import { RefundFlowSheet } from "../_components/RefundFlowSheet";
 import { useActor } from "../schedule/_lib/actor";
-import { dayBeforeDays, summarise, todayDays, yesterdayDays } from "./_lib/summary";
+import { daysIn, orderDay, previousRange, rangeLength, shiftIso, summarise } from "./_lib/summary";
 import { MethodBars } from "./_components/MethodBars";
 
 const PAGE = 10;
 
-type Period = "today" | "yesterday";
+/* The named ranges, the way Square's sales summary and Shopify POS's reports
+   offer them: the ones a cashier or a supervisor actually asks for, newest
+   first. Anything else is drawn on the calendar ("Pick dates"). Weeks start on
+   Monday, as the till's day strip does. */
+const monthStart = (iso: string) => `${iso.slice(0, 8)}01`;
+const weekStart = (iso: string) => shiftIso(iso, -((new Date(`${iso}T12:00:00`).getDay() + 6) % 7));
+const PRESETS: { value: string; range: () => [string, string] }[] = [
+  { value: "today", range: () => [DEMO_TODAY, DEMO_TODAY] },
+  { value: "yesterday", range: () => [shiftIso(DEMO_TODAY, -1), shiftIso(DEMO_TODAY, -1)] },
+  { value: "7d", range: () => [shiftIso(DEMO_TODAY, -6), DEMO_TODAY] },
+  { value: "week", range: () => [weekStart(DEMO_TODAY), DEMO_TODAY] },
+  { value: "month", range: () => [monthStart(DEMO_TODAY), DEMO_TODAY] },
+  { value: "lastmonth", range: () => [monthStart(shiftIso(monthStart(DEMO_TODAY), -1)), shiftIso(monthStart(DEMO_TODAY), -1)] },
+];
 
 /* The phone body, exactly as it was before the page sat in GoPage (16px above,
    room for the tab bar below); on a desktop GoPage's own rhythm takes over. */
@@ -34,8 +49,11 @@ const PHONE = "mx-auto w-full max-w-216 pt-tight pb-28 lg:pb-section rail:max-w-
 /* One row of the sales list. Phone: time and code over the amount, the items
    under them, the status and the menu at the right. Desktop: one line of
    columns, the same ones as the header row. */
+/* The first column holds the time on one day, or "8 Nov · 11:05 AM" over
+   several, so it widens when the range does. */
 const COLS = "rail:grid-cols-[64px_128px_minmax(0,1fr)_72px_96px_96px_44px]";
-const ROW = `grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-comfortable gap-y-inline px-comfortable py-comfortable rail:gap-y-0 rail:px-card rail:py-tight rail:min-h-12 ${COLS}`;
+const COLS_RANGE = "rail:grid-cols-[124px_128px_minmax(0,1fr)_72px_96px_96px_44px]";
+const ROW_BASE = "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-comfortable gap-y-inline px-comfortable py-comfortable rail:gap-y-0 rail:px-card rail:py-tight rail:min-h-12";
 
 /** "2× Adult, Child" — short enough for one line. */
 const itemsShort = (o: Order) =>
@@ -48,9 +66,10 @@ const itemsShort = (o: Order) =>
 const methodOf = (o: Order) => o.payments.find((p) => p.amount > 0)?.method;
 
 /** "▲ ৳9,384 more than yesterday" — only when there is a previous figure. */
-function Delta({ diff, show, fmt, name }: { diff: number; show: boolean; fmt: (n: number) => string; name: string }) {
+function Delta({ diff, show, fmt, name, lead = false }: { diff: number; show: boolean; fmt: (n: number) => string; name: string; lead?: boolean }) {
   const t = useTranslations("mysales");
-  if (!show) return <p className={T.meta}>{t("noCompare", { name })}</p>;
+  /* Nothing to compare with is said once, under the lead figure, not four times. */
+  if (!show) return lead ? <p className={T.meta}>{t("noCompare", { name })}</p> : null;
   if (diff === 0) return <p className={T.meta}>{t("cmpSame", { name })}</p>;
   const up = diff > 0;
   const Arrow = up ? ArrowUp : ArrowDown;
@@ -66,7 +85,7 @@ export default function MySalesPage() {
   const t = useTranslations("mysales");
   const labels = useEnumLabels();
   const router = useRouter();
-  const [period, setPeriod] = useState<Period>("today");
+  const [range, setRange] = useState<DateRangeValue>({ preset: "today", from: DEMO_TODAY, to: DEMO_TODAY });
   const [query, setQuery] = useState("");
   const [shown, setShown] = useState(PAGE);
   /* A sale the cashier is asking to give money back on. There is no booking
@@ -84,15 +103,14 @@ export default function MySalesPage() {
   const money = (m: number) => formatMoney(m, currency);
 
   const orders = ordersQ.data?.data;
-  /* The period shown, and the one before it for the "more than…" lines. */
-  const cur = useMemo(
-    () => (orders ? summarise(orders, DEMO_STAFF_ID, period === "today" ? todayDays() : yesterdayDays()) : null),
-    [orders, period],
-  );
-  const prev = useMemo(
-    () => (orders ? summarise(orders, DEMO_STAFF_ID, period === "today" ? yesterdayDays() : dayBeforeDays()) : null),
-    [orders, period],
-  );
+  /* The dates shown, and the same number of days before them for the
+     "more than…" lines. */
+  const cur = useMemo(() => (orders ? summarise(orders, DEMO_STAFF_ID, daysIn(range.from, range.to)) : null), [orders, range.from, range.to]);
+  const prev = useMemo(() => {
+    if (!orders) return null;
+    const [a, b] = previousRange(range.from, range.to);
+    return summarise(orders, DEMO_STAFF_ID, daysIn(a, b));
+  }, [orders, range.from, range.to]);
 
   if (ordersQ.error) {
     return (
@@ -120,8 +138,12 @@ export default function MySalesPage() {
     );
   }
 
-  const isToday = period === "today";
-  const refName = isToday ? t("refYesterday") : t("refDayBefore");
+  const isToday = range.from === DEMO_TODAY && range.to === DEMO_TODAY;
+  const days = rangeLength(range.from, range.to);
+  const oneDay = days === 1;
+  const refName = isToday ? t("refYesterday") : t("refPrevious", { count: days });
+  /* The range in words: the preset's name, or its dates. */
+  const rangeName = range.preset !== "custom" && PRESETS.some((p) => p.value === range.preset) ? t(`presets.${range.preset}` as never) : formatRange(range.from, range.to);
   const float = peekPaymentSettings().defaultFloat;
   const shouldHave = float + cur.cashTaken - cur.cashRefunds;
   const hasPrev = prev.orders > 0;
@@ -132,6 +154,26 @@ export default function MySalesPage() {
   const q = query.trim().toLocaleLowerCase();
   const found = q ? cur.recent.filter((o) => o.reference.toLocaleLowerCase().includes(q) || itemsShort(o).toLocaleLowerCase().includes(q)) : cur.recent;
   const rows = found.slice(0, shown);
+
+  /* Export: the sales in these dates (and any search), one row each, as a CSV a
+     spreadsheet opens. Amounts in major units with two decimals, so a sum in
+     the spreadsheet is the sum on screen. */
+  const exportCsv = () => {
+    const head = [t("csv.date"), t("csv.time"), t("csv.code"), t("csv.items"), t("csv.method"), t("csv.amount"), t("csv.refunded"), t("csv.status")];
+    const body = found.map((o) => {
+      const m = methodOf(o);
+      const back = o.payments.filter((p) => p.status === "confirmed" && p.amount < 0).reduce((n, p) => n - p.amount, 0);
+      return [orderDay(o), formatClockOf(o.createdAt), o.reference, itemsShort(o), m ? labels.method(m) : "", (o.total / 100).toFixed(2), (back / 100).toFixed(2), labels.status(o.status)];
+    });
+    saveCsv(`my-sales_${range.from}_${range.to}.csv`, toCsv([head, ...body]));
+  };
+  /* Print every sale in the range, not the first page of the list: the list is
+     opened in full first (flushSync, so it is in the page before the dialog
+     takes its snapshot), and stays open afterwards. */
+  const printAll = () => {
+    flushSync(() => setShown(Number.POSITIVE_INFINITY));
+    window.print();
+  };
 
   return (
     <GoPage width="wide">
@@ -146,48 +188,60 @@ export default function MySalesPage() {
           subtitle={
             <>
               <span className="print:hidden">{t("subtitle")}</span>
-              <span className="hidden print:inline">{t("printedFor", { name: meQ.data?.name ?? "", date: formatDay(isToday ? DEMO_TODAY : demoDay(-1)) })}</span>
+              <span className="hidden print:inline">{t("printedFor", { name: meQ.data?.name ?? "", date: formatRange(range.from, range.to) })}</span>
             </>
           }
-          /* The word is always visible (a bare printer glyph is a guess); the full
-             action is the name and the tooltip. */
-          actions={
-            <Button variant="secondary" size="lg" className={`shrink-0 shadow-card print:hidden rail:h-10! ${R.button}`} aria-label={t("print")} title={t("print")} onClick={() => window.print()}>
-              <Printer size={18} strokeWidth={1.5} aria-hidden />
-              {t("printShort")}
-            </Button>
-          } className="mb-comfortable! rail:mb-major!"
+          className="mb-comfortable! rail:mb-major!"
         />
       </div>
 
       <main className="flex flex-col gap-comfortable rail:gap-section">
-        {/* Which day. "This shift" waits for the till to stamp a shift on a sale
-            (orders carry a shiftId field that nothing fills in yet). */}
-        <div className="print:hidden">
-          <SegmentedControl
-            size="sm"
-            className={`w-full rail:w-auto ${RAIL_SEGMENT} rail:[&_[role=radio]]:min-h-9 rail:[&_[role=radio]]:h-9`}
-            fullWidth
-            aria-label={t("periodLabel")}
-            value={period}
-            onChange={(v) => {
-              setPeriod(v as Period);
+        {/* Which dates, and what to do with them. One button names the range and
+            opens the named ranges beside a two-month calendar (the picker the
+            admin's reports use); Export and Print act on exactly what is shown.
+            "This shift" waits for the till to stamp a shift on a sale. */}
+        <div className="flex items-center gap-tight print:hidden rail:gap-comfortable">
+          <DateRangePicker
+            value={range}
+            onChange={(r) => {
+              setRange({ preset: r.preset, from: r.from, to: r.to });
               setShown(PAGE);
             }}
-            options={[
-              { value: "today", label: t("today") },
-              { value: "yesterday", label: t("yesterday") },
-            ]}
+            presets={PRESETS.map((p) => ({ ...p, label: t(`presets.${p.value}` as never) }))}
+            today={DEMO_TODAY}
+            max={DEMO_TODAY}
+            labels={{
+              choose: t("range.choose"),
+              custom: t("range.custom"),
+              from: t("range.from"),
+              to: t("range.to"),
+              apply: t("range.apply"),
+              cancel: t("range.cancel"),
+              previousMonth: t("range.previousMonth"),
+              nextMonth: t("range.nextMonth"),
+              days: (count: number) => t("range.days", { count }),
+              pickEnd: t("range.pickEnd"),
+            }}
+            className="min-w-0 flex-1 rail:w-auto rail:flex-none"
           />
+          <span className="hidden flex-1 rail:block" />
+          <Button variant="secondary" size="sm" className={`w-11 shrink-0 px-0 rail:w-auto rail:px-comfortable ${R.button}`} aria-label={t("exportAria")} title={t("exportAria")} onClick={exportCsv} disabled={found.length === 0}>
+            <Download size={16} strokeWidth={1.75} aria-hidden />
+            <span className="sr-only rail:not-sr-only">{t("export")}</span>
+          </Button>
+          <Button variant="secondary" size="sm" className={`w-11 shrink-0 px-0 rail:w-auto rail:px-comfortable ${R.button}`} aria-label={t("print")} title={t("print")} onClick={printAll}>
+            <Printer size={16} strokeWidth={1.75} aria-hidden />
+            <span className="sr-only rail:not-sr-only">{t("printShort")}</span>
+          </Button>
         </div>
 
         {/* The figures: what you sold is the one that leads. */}
         <GoCard className="rail:p-card" aria-labelledby="ms-hero">
           <div className="grid grid-cols-2 gap-x-comfortable gap-y-section rail:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] rail:gap-x-section">
             <div className="col-span-2 flex flex-col gap-inline rail:col-span-1">
-              <p id="ms-hero" className={T.label}>{t("youSold")} · {isToday ? t("today") : t("yesterday")}</p>
+              <p id="ms-hero" className={T.label}>{t("youSold")} · {rangeName}</p>
               <p className="text-3xl font-semibold tabular-nums text-fg rail:text-4xl">{money(cur.total)}</p>
-              <Delta diff={cur.total - prev.total} show={hasPrev} fmt={money} name={refName} />
+              <Delta lead diff={cur.total - prev.total} show={hasPrev} fmt={money} name={refName} />
             </div>
             <div className="flex flex-col gap-inline">
               <p className={T.label}>{t("kpiCount")}</p>
@@ -270,8 +324,8 @@ export default function MySalesPage() {
             {cur.recent.length === 0 ? (
               <GoCard className="items-center py-major text-center">
                 <ReceiptText size={32} strokeWidth={1.5} aria-hidden className="text-muted" />
-                <p className={T.card}>{isToday ? t("empty") : t("emptyDay")}</p>
-                <p className={T.meta}>{isToday ? t("emptyHint") : t("emptyDayHint")}</p>
+                <p className={T.card}>{isToday ? t("empty") : oneDay ? t("emptyDay") : t("emptyRange")}</p>
+                <p className={T.meta}>{isToday ? t("emptyHint") : oneDay ? t("emptyDayHint") : t("emptyRangeHint")}</p>
               </GoCard>
             ) : found.length === 0 ? (
               <GoCard className="items-center py-major text-center">
@@ -281,7 +335,7 @@ export default function MySalesPage() {
               </GoCard>
             ) : (
               <div className="overflow-hidden rounded-card bg-card shadow-card">
-                <div aria-hidden className={`hidden border-b border-line bg-subtle px-card py-tight ${T.label} rail:grid rail:items-center rail:gap-0 ${COLS}`}>
+                <div aria-hidden className={`hidden border-b border-line bg-subtle px-card py-tight ${T.label} rail:grid rail:items-center rail:gap-0 ${oneDay ? COLS : COLS_RANGE}`}>
                   <span>{t("colTime")}</span>
                   <span>{t("colCode")}</span>
                   <span>{t("colItems")}</span>
@@ -297,9 +351,9 @@ export default function MySalesPage() {
                     const asked = !!pendingRefundForOrder(o.id);
                     const canAsk = !asked && !actor.loading && actor.refundMode !== "off" && goodwillMaxFor(o.id) > 0;
                     return (
-                      <li key={o.id} className={ROW}>
+                      <li key={o.id} className={`${ROW_BASE} ${oneDay ? COLS : COLS_RANGE}`}>
                         <div className="col-start-1 row-start-1 flex min-w-0 items-baseline gap-tight rail:contents">
-                          <span className={`${T.meta} tabular-nums`}>{formatClockOf(o.createdAt)}</span>
+                          <span className={`${T.meta} whitespace-nowrap tabular-nums`}>{oneDay ? formatClockOf(o.createdAt) : `${formatRange(orderDay(o), orderDay(o)).replace(/ \d{4}$/, "")} · ${formatClockOf(o.createdAt)}`}</span>
                           <span className={`truncate font-mono ${T.meta} font-medium text-fg-secondary`}>{o.reference}</span>
                         </div>
                         <span className={`col-start-1 row-start-2 truncate ${T.body} rail:col-auto rail:row-auto`}>

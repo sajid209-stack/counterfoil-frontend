@@ -63,5 +63,42 @@
   "rowActions": "Actions for {code}",
   "reprint": "Reprint receipt",
   "emptyDay": "No sales on this day.",
-  "emptyDayHint": "Nothing was sold at the till on this day."
+  "emptyDayHint": "Nothing was sold at the till on this day.",
+  "presets": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "7d": "Last 7 days",
+    "week": "This week",
+    "month": "This month",
+    "lastmonth": "Last month"
+  },
+  "range": {
+    "label": "Dates",
+    "choose": "Choose dates",
+    "custom": "Pick dates",
+    "from": "From",
+    "to": "To",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "pickEnd": "Pick the last day",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
+  },
+  "refPrevious": "{count, plural, one {the day before} other {the previous # days}}",
+  "export": "Export",
+  "exportAria": "Export these sales as a spreadsheet (CSV)",
+  "emptyRange": "No sales in these dates.",
+  "emptyRangeHint": "Choose other dates, or sell something at the till.",
+  "drawerTodayOnly": "The cash drawer is shown for today only.",
+  "csv": {
+    "date": "Date",
+    "time": "Time",
+    "code": "Sale code",
+    "items": "Items",
+    "method": "Paid with",
+    "amount": "Amount",
+    "refunded": "Refunded",
+    "status": "Status"
+  }
 }

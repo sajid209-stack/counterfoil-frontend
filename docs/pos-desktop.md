@@ -168,3 +168,19 @@ the chosen option on settings and profile white on solid orange at 3.5:1.
   storefront so "Tomorrow" fits. `app/s/_components/flow/tile.ts` holds the anatomy.
 - **My requests**: a segmented control with counts, short cards (item and amount, kind and time
   with status, the reason, details folded), the narrow page measure on a desktop.
+
+## 12. My sales by date range, with Export and Print (2026-11-08)
+
+Square's sales summary and Shopify POS's reports put one date-range control above the figures and
+let the same range drive export and print. My sales does the same with the admin's own
+`DateRangePicker` (named ranges beside a two-month calendar): Today, Yesterday, Last 7 days, This
+week (from Monday), This month, Last month, or any dates drawn on the calendar; nothing after today.
+- The figures compare with the same number of days just before the range; "nothing to compare
+  with" is said once, under the lead figure.
+- The cash drawer shows for today only.
+- Over several days each sale shows its date and time, in a wider first column.
+- **Export** saves the range's sales (and any search) as CSV: date, time, code, items, method,
+  amount, refunded, status; amounts in major units; a byte-order mark so Excel reads Bangla and ৳.
+- **Print** opens the whole list first, so the printout holds every sale in the range, and prints
+  the range under the title.
+- On a phone the range button takes the row and Export and Print are 44px icon buttons with names.

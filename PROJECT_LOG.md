@@ -19600,3 +19600,17 @@ text: the name medium, the detail muted); the now-line has an 8px dot at the gut
 carry an ember-line left edge. The grid structure, cells, selection and sizes are unchanged.
 Verified on a production build, ec29f026 scratchpad `pos/cal.mjs` (6/6, beside an OS capture) and
 `pos/shots.mjs` (77/80, the 3 are harness selectors). Viewed by eye.
+
+---
+
+## My sales: date range, Export (CSV), Print (2026-11-08)
+
+Spec: docs/pos-desktop.md §12. `(go)/my-sales/page.tsx` replaces the Today/Yesterday switch with the
+kit `DateRangePicker`; `_lib/summary.ts` gains `daysIn`, `previousRange`, `rangeLength`; new
+`src/lib/csv.ts` (`csvCell`, `toCsv` with a BOM, `saveCsv`). New `mysales` keys: `presets.*`,
+`range.*`, `refPrevious`, `export`, `exportAria`, `emptyRange*`, `csv.*` (en and bn).
+The old message helper (ac8e396c scratchpad msgpatch.mjs) is gone with that scratchpad; a copy that
+keeps each file's line endings is in the ec29f026 scratchpad (`pos/msgpatch.mjs`).
+Verified on a production build, ec29f026 scratchpad `pos/ms.mjs` 24/24 (desktop and phone: range
+drives the figures and the list, dated rows, drawer hidden outside today, the CSV's name, header,
+rows and amounts, Print listing every sale) and `pos/btn.mjs` 84/84. Viewed by eye.
