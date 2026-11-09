@@ -15,6 +15,15 @@ export interface DemoBusiness {
 // prospect sees Counterfoil as *their* kind of business.
 export const DEMOS: DemoBusiness[] = [
   {
+    id: "bcd",
+    name: "Breakfast Club Dhaka",
+    currency: "BDT",
+    tagline: "Morning raves — coffee, DJs and breakfast from 9 AM",
+    types: "Dated special · group pass · shuttle add-on · weekly mornings · workshop · merch",
+    productIds: [],
+    bundle: true,
+  },
+  {
     id: "doers",
     name: "The Doers Club",
     currency: "BDT",

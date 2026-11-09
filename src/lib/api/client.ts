@@ -12,6 +12,7 @@
 import * as seedAsWritten from "@/lib/mock/data";
 import { generateSales as generateAsWritten } from "@/lib/mock/generate";
 import * as doersAsWritten from "@/lib/mock/doers";
+import * as bcdAsWritten from "@/lib/mock/bcd";
 import * as trustherAsWritten from "@/lib/mock/trusther";
 import type { TrustherId } from "@/lib/mock/trusther";
 import { setRegionCurrency } from "@/lib/region";
@@ -59,6 +60,7 @@ type Row = { id: string; createdAt?: string; updatedAt?: string };
 // The seed, dated to the real today rather than the day it was written around.
 const seed = rebaseSeed(seedAsWritten);
 const doers = rebaseSeed(doersAsWritten);
+const bcd = rebaseSeed(bcdAsWritten);
 const trusther = rebaseSeed(trustherAsWritten);
 const generateSales = (input: Parameters<typeof generateAsWritten>[0]) => rebaseSeed(generateAsWritten(input));
 
@@ -317,6 +319,27 @@ const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
       S.bookings = sales.bookings;
     },
   },
+  bcd: {
+    slug: "breakfastclubdhaka",
+    apply: () => {
+      leaveUsBusiness();
+      setRegionCurrency("BDT");
+      operatorState = { ...structuredClone(seed.operator), ...bcd.bcdOperator };
+      const S = store as Record<string, unknown[]>;
+      S.products = structuredClone(bcd.bcdProducts);
+      S.locations = structuredClone(bcd.bcdLocations);
+      S.counters = structuredClone(bcd.bcdCounters);
+      S.devices = structuredClone(seed.devices).filter((d) => d.counterId === "cnt_fort_main");
+      S.storefronts = structuredClone(bcd.bcdStorefronts);
+      S.inventoryItems = structuredClone(bcd.bcdInventoryItems);
+      S.stockMovements = structuredClone(bcd.bcdStockMovements);
+      for (const k of ["resources", "holds", "marketplaceConnections", "marketplaceListings", "ticketCredentials", "ticketScans", "refundRequests", "rescheduleRequests", "writeOffRequests"]) S[k] = [];
+      const sales = generateSales({ products: bcd.bcdProducts, locations: bcd.bcdLocations, staff: seed.staff, taxRatePct: operatorState.taxRatePct, reducedRatePct: operatorState.reducedRatePct, count: 60 });
+      S.orders = sales.orders;
+      S.tickets = sales.tickets;
+      S.bookings = sales.bookings;
+    },
+  },
   kinks: usBundle("kinks"),
   sweat: usBundle("sweat"),
   velvet: usBundle("velvet"),
@@ -325,6 +348,7 @@ const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
 /** Each whole-business demo's catalogue, for telling its item links apart. */
 const BUNDLE_ITEMS: Record<string, () => Product[]> = {
   doers: () => doers.doersProducts,
+  bcd: () => bcd.bcdProducts,
   kinks: () => trusther.TRUSTHER_DEMOS.kinks.products,
   sweat: () => trusther.TRUSTHER_DEMOS.sweat.products,
   velvet: () => trusther.TRUSTHER_DEMOS.velvet.products,
@@ -497,7 +521,7 @@ if (typeof window !== "undefined") {
 export const isBundleDemo = (id: string) => id in BUNDLES;
 /** The catalogues of the whole-business demos, so a server that only holds the default seed can
  *  still tell a demo's item link from a made-up one (see `demoItemAtSlug`). */
-export const bundleProductLists = (): Product[][] => [doers.doersProducts, ...Object.values(trusther.TRUSTHER_DEMOS).map((d) => d.products)];
+export const bundleProductLists = (): Product[][] => [doers.doersProducts, bcd.bcdProducts, ...Object.values(trusther.TRUSTHER_DEMOS).map((d) => d.products)];
 /** Load a whole-business demo and remember it for this browser. */
 export function loadBundleDemo(id: string): void {
   clearFreshAccount();

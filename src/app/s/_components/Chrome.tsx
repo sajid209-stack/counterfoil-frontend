@@ -121,7 +121,10 @@ function FullChrome({
   const showPrivacy = !!privacyQ.data?.showInFooter;
   const mark = initials(location.name);
 
-  const brand = (
+  const brand = storefront.logo ? (
+    // eslint-disable-next-line @next/next/no-img-element -- the venue's own uploaded logo
+    <img src={storefront.logo} alt={location.name} className="h-10 w-auto max-w-[180px] object-contain" />
+  ) : (
     <>
       <span
         aria-hidden
@@ -356,7 +359,10 @@ function LinkChrome({ storefront, location, poweredBy, showMore, accent, bleed, 
   const more = link ? !!moreHref : !!showMore;
   const showPrivacy = !!privacyQ.data?.showInFooter && !!moreHref;
 
-  const brand = (
+  const brand = storefront.logo ? (
+    // eslint-disable-next-line @next/next/no-img-element -- the venue's own uploaded logo
+    <img src={storefront.logo} alt={location.name} className="h-10 w-auto max-w-[180px] object-contain" />
+  ) : (
     <>
       <span
         aria-hidden

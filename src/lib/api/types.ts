@@ -613,6 +613,8 @@ export interface Storefront {
   /** The cover photo: the address of one of this venue's own booking images.
    *  Absent means the page draws its designed cover instead. */
   heroImage?: string | null;
+  /** The venue's own logo for the page header, in place of its initials. */
+  logo?: string | null;
   /** The storefront's brand style (colours, fonts, shape, layout). Its item
    *  pages follow it unless they carry their own. */
   style?: PageStyle;
