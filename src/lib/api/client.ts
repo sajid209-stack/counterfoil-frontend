@@ -253,6 +253,10 @@ export const DEMO_KEY = "cf_demo";
 const US_KEYS = ["staff", "paymentAccounts", "customers", "locations", "counters", "devices", "storefronts", "inventoryItems", "stockMovements", "expenses", "financeLines"] as const;
 let usBackup: { rows: Record<string, unknown[]>; tax: TaxConfig } | null = null;
 function leaveUsBusiness(): void {
+  // Every business switch passes through here. A demo with its own seating plan
+  // (Breakfast Club's boat) replaces the seeded hall, so put the seeded one back
+  // first; that demo then lays its own over it.
+  (store as Record<string, unknown[]>).seatLayouts = structuredClone(seed.seatLayouts);
   if (!usBackup) return;
   const S = store as Record<string, unknown[]>;
   for (const k of US_KEYS) S[k] = usBackup.rows[k];
@@ -333,6 +337,7 @@ const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
       S.storefronts = structuredClone(bcd.bcdStorefronts);
       S.inventoryItems = structuredClone(bcd.bcdInventoryItems);
       S.stockMovements = structuredClone(bcd.bcdStockMovements);
+      S.seatLayouts = structuredClone(bcd.bcdSeatLayouts);
       for (const k of ["resources", "holds", "marketplaceConnections", "marketplaceListings", "ticketCredentials", "ticketScans", "refundRequests", "rescheduleRequests", "writeOffRequests"]) S[k] = [];
       const sales = generateSales({ products: bcd.bcdProducts, locations: bcd.bcdLocations, staff: seed.staff, taxRatePct: operatorState.taxRatePct, reducedRatePct: operatorState.reducedRatePct, count: 60 });
       S.orders = sales.orders;

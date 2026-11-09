@@ -14,7 +14,7 @@
 
    IMPORTANT: like data.ts, nothing outside `src/lib/api/client.ts` imports this.
    ────────────────────────────────────────────────────────────────────────── */
-import type { Counter, InventoryItem, Location, Product, ProductPage, ScheduleException, StockMovement, Storefront } from "@/lib/api/types";
+import type { Counter, InventoryItem, LayoutSeat, Location, Product, ProductPage, ScheduleException, SeatLayout, StockMovement, Storefront } from "@/lib/api/types";
 import { seedDay as demoDay } from "@/lib/schedule";
 
 const T = "2026-11-01T09:00:00+06:00";
@@ -178,6 +178,33 @@ const baseProducts: Product[] = [
     updatedAt: T,
   },
   {
+    id: "prd_bcd_tables",
+    name: "Decks & Deck — Reserve a Table",
+    description:
+      "Want a home base for the day? Reserve a booth, a deck table or a seat on the rail on the 2nd deck, next to the dance floor and in the shade. Each table comes with breakfast for everyone at it; entry passes are included.",
+    images: imgs("prd_bcd_tables", [
+      ["deck-ship.jpg", "The Breakfast Club Dhaka boat on the river"],
+      ["stage.jpg", "The lights over the floor"],
+    ]),
+    bookingType: "BT-07",
+    tiers: [{ id: "tier_bcd_tbl", name: "Table", price: 300000, active: true }],
+    layoutId: "layout_bcd_boat",
+    locationIds: [LOC],
+    /* Counter only: the storefront cannot draw a seating plan yet, and selling a
+       table online as a plain quantity would sell nobody a particular table. */
+    channels: ["counter"],
+    status: "active",
+    archivedAt: null,
+    schedule: {
+      slotMinutes: 540, sessionMinutes: 480, startTime: "10:00", endTime: "18:00",
+      capacityPerSession: 120, dailyCapacity: null, openDays: [6], guideIds: [], exceptions: closed(notFinale),
+    },
+    sessionNames: { "10:00": "All day on the river" },
+    policies: { ...POLICY, salesWindowDays: 90 },
+    createdAt: T,
+    updatedAt: T,
+  },
+  {
     id: "prd_bcd_private",
     name: "A Private Morning for Your Team",
     description:
@@ -323,6 +350,64 @@ const PAGES: Record<string, { slug: string; page: ProductPage }> = {
     }),
   },
 };
+
+/* ── The boat's 2nd deck, as a seating plan ──────────────────────────────────
+   Drawn for the meeting: the DJ booth and dance floor at the bow, VIP booths
+   either side of the floor, deck tables behind them, a row of rail seats along
+   the side and the bar at the stern. Ids are written out (not minted) so the
+   server and the browser draw the same plan. */
+const seat = (id: string, name: string, kind: LayoutSeat["kind"], posX: number, posY: number, cat: string, o: Partial<LayoutSeat> = {}): LayoutSeat => ({
+  id, name, kind, posX, posY, seatRow: "", seatNumber: 1, seatCategoryId: cat, isAvailable: true,
+  capacity: 1, shape: "square", width: 1, height: 1, rotation: 0, assignOrder: 0, ...o,
+});
+const boatSeats: LayoutSeat[] = [
+  // VIP booths: six people, either side of the dance floor
+  seat("bt_v1", "V1", "table", 0, 2.6, "cat_bcd_vip", { capacity: 6, seatNumber: 6, shape: "rounded", width: 3.1, height: 2.2, assignOrder: 0 }),
+  seat("bt_v2", "V2", "table", 0, 5.4, "cat_bcd_vip", { capacity: 6, seatNumber: 6, shape: "rounded", width: 3.1, height: 2.2, assignOrder: 1 }),
+  seat("bt_v3", "V3", "table", 14.9, 2.6, "cat_bcd_vip", { capacity: 6, seatNumber: 6, shape: "rounded", width: 3.1, height: 2.2, assignOrder: 2 }),
+  seat("bt_v4", "V4", "table", 14.9, 5.4, "cat_bcd_vip", { capacity: 6, seatNumber: 6, shape: "rounded", width: 3.1, height: 2.2, assignOrder: 3 }),
+  // GA: the dance floor itself
+  { ...seat("bt_floor", "Dance floor", "ga", 4.5, 2.4, "cat_bcd_floor", { capacity: 120, shape: "rounded", width: 9, height: 5.2 }) },
+  // Deck tables for four
+  ...[0, 1, 2, 3, 4].map((i) => seat(`bt_t${i + 1}`, `T${i + 1}`, "table", 1 + i * 3.4, 9, "cat_bcd_deck", { capacity: 4, seatNumber: 4, shape: "circle", width: 1.9, height: 1.9, assignOrder: 10 + i })),
+  ...[0, 1, 2, 3].map((i) => seat(`bt_t${i + 6}`, `T${i + 6}`, "table", 2.7 + i * 3.4, 11.6, "cat_bcd_deck", { capacity: 4, seatNumber: 4, shape: "circle", width: 1.9, height: 1.9, assignOrder: 15 + i })),
+  // Rail seats along the starboard side, two by two
+  ...Array.from({ length: 10 }, (_, i) => seat(`bt_r${i + 1}`, `R${i + 1}`, "seat", 1 + i * 1.6, 14.2, "cat_bcd_rail", { seatRow: "R", seatNumber: i + 1, assignOrder: 30 + i })),
+];
+/* A few already gone, so the plan reads like a week before the finale. */
+for (const id of ["bt_v2", "bt_t3", "bt_t7", "bt_r4", "bt_r5"]) {
+  const s = boatSeats.find((x) => x.id === id);
+  if (s) s.isAvailable = false;
+}
+
+export const bcdSeatLayouts: SeatLayout[] = [
+  {
+    id: "layout_bcd_boat",
+    locationId: LOC,
+    name: "The boat — 2nd deck",
+    rows: 1,
+    seatsPerRow: boatSeats.length,
+    rowLabels: ["R"],
+    bufferAfterMinutes: 0,
+    seatCount: boatSeats.length,
+    experience: "restaurant",
+    categories: [
+      { uid: "cat_bcd_vip", name: "VIP booth (6)", color: "#F94A00", price: 2400000, pricingMode: "fixed", isGeneralAdmission: false },
+      { uid: "cat_bcd_deck", name: "Deck table (4)", color: "#2563EB", price: 1400000, pricingMode: "fixed", isGeneralAdmission: false },
+      { uid: "cat_bcd_rail", name: "Rail seat", color: "#16A34A", price: 350000, pricingMode: "fixed", isGeneralAdmission: false },
+      { uid: "cat_bcd_floor", name: "Dance floor", color: "#F59E0B", price: 300000, pricingMode: "fixed", isGeneralAdmission: true, gaCapacity: 120 },
+    ],
+    seats: boatSeats,
+    fixtures: [
+      { id: "fx_bcd_dj", kind: "stage", label: "DJ BOOTH", posX: 6, posY: 0, width: 6, height: 1.6, rotation: 0 },
+      { id: "fx_bcd_bow", kind: "text", label: "BOW", posX: 7.5, posY: -1.4, width: 3, height: 0.75, rotation: 0 },
+      { id: "fx_bcd_bar", kind: "bar", label: "Bar & breakfast", posX: 3, posY: 16, width: 7, height: 1.25, rotation: 0 },
+      { id: "fx_bcd_gang", kind: "door", label: "Gangway", posX: 12.5, posY: 16.4, width: 2, height: 0.5, rotation: 0 },
+    ],
+    createdAt: T,
+    updatedAt: T,
+  },
+];
 
 export const bcdProducts: Product[] = baseProducts.map((p) => ({ ...p, ...PAGES[p.id] }));
 
