@@ -210,3 +210,8 @@
 /* ── Dark mode: shared controls (date picker, inputs, ticket card) stay
    readable — they already take their colours from the tokens above. */
 .sf[data-ps-mode="dark"] { color-scheme: dark; }
+
+/* A venue logo is uploaded once, usually dark ink on transparent. On a dark
+   page it would vanish, so it is drawn in the page's light ink instead. */
+.sf[data-ps-mode="dark"] .sf-logo,
+.pg-dark .sf-logo { filter: invert(1) brightness(1.1); }

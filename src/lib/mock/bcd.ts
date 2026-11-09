@@ -125,12 +125,15 @@ const baseProducts: Product[] = [
     description:
       "The original. Every other Saturday we take over a café from 9 AM: good coffee, a DJ, breakfast and a dance floor full of people who would rather start the day than end the night. A different café and a different line-up each edition.",
     images: imgs("prd_bcd_morning", [
+      ["crowd-night.jpg", "Friends dancing at a Breakfast Club edition"],
+      ["fans.jpg", "The crowd singing along"],
       ["morning-1.jpg", "Friends at a Breakfast Club morning"],
       ["hero.jpg", "A DJ playing to a packed morning crowd"],
       ["morning-2.jpg", "The crowd at a morning edition"],
       ["morning-3.jpg", "Families and friends on the dance floor"],
       ["morning-4.jpg", "Dancing by the decks"],
       ["friends.jpg", "Big smiles at 10 AM"],
+      ["smoke.jpg", "Hands up when the drop lands"],
     ]),
     bookingType: "BT-03",
     tiers: [{ id: "tier_bcd_morning", name: "Regular pass", price: 200000, active: true, note: "Entry + one drink + small bites" }],
@@ -153,9 +156,11 @@ const baseProducts: Product[] = [
     description:
       "Learn to DJ from the ground up, from reading a track to mixing your first transition, with Tonmoy (OMDG), co-founder of Breakfast Club Dhaka. Small group, hands on the decks the whole time. No gear or experience needed.",
     images: imgs("prd_bcd_workshop", [
+      ["dj-decks.jpg", "A DJ at the controller, lit in red and blue"],
+      ["decks-hands.jpg", "Hands on the mixer"],
       ["workshop-poster.jpg", "Behind the Decks: your first DJ set, 11:00 AM to 12:20 PM"],
       ["workshop-dj.jpg", "A DJ with headphones at the decks"],
-      ["workshop-2.jpg", "Headphones on, mid-set"],
+      ["stage.jpg", "The lights over the floor"],
     ]),
     bookingType: "BT-03",
     tiers: [{ id: "tier_bcd_ws", name: "Seat", price: 350000, active: true, note: "80 minutes, your own time on the decks" }],
@@ -169,6 +174,36 @@ const baseProducts: Product[] = [
     },
     sessionNames: { "11:00": "Workshop" },
     policies: { ...POLICY, partyMax: 2 },
+    createdAt: T,
+    updatedAt: T,
+  },
+  {
+    id: "prd_bcd_private",
+    name: "A Private Morning for Your Team",
+    description:
+      "Breakfast Club, just for you: an office offsite, a launch or a birthday. We bring the DJ, the coffee bar and the crew to your space or a partner café, from 9 AM. You pick the date; we plan the rest with you.",
+    images: imgs("prd_bcd_private", [
+      ["crew-wide.jpg", "The Breakfast Club crew"],
+      ["crew.jpg", "The crew at a partner café"],
+      ["mic.jpg", "A guest artist on the mic"],
+    ]),
+    bookingType: "BT-03",
+    tiers: [
+      { id: "tier_bcd_pv_40", name: "Up to 40 guests", price: 6000000, active: true, note: "DJ, sound, coffee bar and crew for the morning" },
+      { id: "tier_bcd_pv_80", name: "Up to 80 guests", price: 10000000, active: true, note: "The same, with a second DJ and a bigger bar" },
+    ],
+    locationIds: [LOC],
+    channels: ["online"],
+    online: "link",
+    pricingBasis: "per_booking",
+    status: "active",
+    archivedAt: null,
+    schedule: {
+      slotMinutes: 300, sessionMinutes: 240, startTime: "09:00", endTime: "13:00",
+      capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4], guideIds: [], exceptions: [],
+    },
+    sessionNames: { "09:00": "Your morning" },
+    policies: { ...POLICY, deposit: "percent", depositPct: 30, cancelHours: 168, partyMax: 1 },
     createdAt: T,
     updatedAt: T,
   },
@@ -218,10 +253,13 @@ const PAGES: Record<string, { slug: string; page: ProductPage }> = {
   prd_bcd_morning: {
     slug: "breakfast-club-morning",
     page: page({
-      look: "nightlife",
-      /* The club's own brand, untouched: what every regular edition looks like. */
+      look: "entertainment",
+      /* Sunrise: a full-bleed crowd photo, yolk and ink, round shapes and a big display face. */
+      styleSource: "custom",
+      coverUrl: "/demo/bcd/crowd-night.jpg",
+      style: { primary: "#f2a900", secondary: "#e4572e", background: "#fff6dc", surface: "#ffffff", text: "#1c1406", headingFont: "unbounded", bodyFont: "figtree", headingWeight: 700, typeScale: "large", corners: "round", buttonStyle: "pill", cardStyle: "shadow", hero: "cover", heroHeight: "tall", coverFocus: "50% 35%", overlay: 40, spacing: "airy", imageTone: "warm", badge: "Every other Saturday", ctaLabel: "Save me a spot" },
       tagline: "Coffee, a DJ and breakfast. From 9 AM.",
-      sections: ["hero", "stats", "highlights", "about", "gallery", "faq", "know", "tickets"],
+      sections: ["hero", "stats", "gallery", "highlights", "about", "faq", "know", "tickets"],
       stats: [
         { id: "s1", value: "9 AM", label: "doors open" },
         { id: "s2", value: "16K", label: "on Instagram" },
@@ -242,9 +280,11 @@ const PAGES: Record<string, { slug: string; page: ProductPage }> = {
   prd_bcd_workshop: {
     slug: "behind-the-decks",
     page: page({
-      look: "arts",
+      look: "nightlife",
+      /* After hours: near-black, booth-light orange, a tech grotesk and hard edges. */
       styleSource: "custom",
-      style: { primary: "#111111", secondary: "#e8742c", background: "#f3efe6", surface: "#ffffff", text: "#111111", headingFont: "archivo-black", bodyFont: "plex", headingCase: "upper", typeScale: "compact", corners: "sharp", buttonStyle: "solid", cardStyle: "flat", hero: "split", spacing: "tight", iconStroke: "bold", badge: "12 seats", ctaLabel: "Save my seat" },
+      coverUrl: "/demo/bcd/dj-decks.jpg",
+      style: { primary: "#ff7a2f", secondary: "#38bdf8", background: "#0b0b0d", surface: "#17171b", text: "#f4f4f5", headingFont: "space-grotesk", bodyFont: "plex", headingWeight: 700, headingCase: "upper", typeScale: "standard", corners: "sharp", buttonStyle: "solid", cardStyle: "bordered", hero: "editorial", coverFocus: "45% 40%", spacing: "tight", dividers: "line", texture: "lines", iconStroke: "bold", badge: "12 seats", ctaLabel: "Save my seat" },
       tagline: "Your first DJ set, in eighty minutes.",
       sections: ["hero", "highlights", "lineup", "about", "gallery", "faq", "know", "tickets"],
       highlights: [
@@ -259,6 +299,27 @@ const PAGES: Record<string, { slug: string; page: ProductPage }> = {
         { id: "w4", kind: "session", at: "12:10", name: "Your set", role: "Three tracks, start to finish" },
       ],
       faq: [{ id: "f1", q: "Do I need my own controller?", a: "No. Bring headphones if you have a pair you like." }],
+    }),
+  },
+  prd_bcd_private: {
+    slug: "private-morning",
+    page: page({
+      look: "business",
+      /* Quiet and formal for the people who sign the invoice: white, a serif, underlined links. */
+      styleSource: "custom",
+      coverUrl: "/demo/bcd/crew-wide.jpg",
+      style: { primary: "#1f2937", secondary: "#f2a900", background: "#ffffff", surface: "#f7f5f0", text: "#111827", headingFont: "instrument", bodyFont: "inter", headingWeight: 400, typeScale: "large", corners: "soft", buttonStyle: "underline", cardStyle: "flat", hero: "split", coverFocus: "50% 45%", width: "narrow", spacing: "airy", dividers: "line", imageTone: "mono", badge: "By invitation link", ctaLabel: "Hold a date" },
+      tagline: "Your people, our DJs, a morning nobody forgets.",
+      sections: ["hero", "about", "included", "highlights", "faq", "know", "tickets"],
+      highlights: [
+        { id: "h1", label: "We come to you", description: "Your office, a rooftop or one of our partner cafés." },
+        { id: "h2", label: "One crew, start to finish", description: "DJ, sound, coffee bar and someone to run the morning." },
+        { id: "h3", label: "Sober and early", description: "Done by lunch, so everyone is back at their desks." },
+      ],
+      faq: [
+        { id: "f1", q: "How far ahead should we book?", a: "Three weeks is comfortable. A 30% deposit holds the date." },
+        { id: "f2", q: "Can you play our playlist?", a: "Send it over. The DJ will build the set around it." },
+      ],
     }),
   },
 };

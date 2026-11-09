@@ -123,7 +123,7 @@ function FullChrome({
 
   const brand = storefront.logo ? (
     // eslint-disable-next-line @next/next/no-img-element -- the venue's own uploaded logo
-    <img src={storefront.logo} alt={location.name} className="h-10 w-auto max-w-[180px] object-contain" />
+    <img src={storefront.logo} alt={location.name} className="sf-logo h-10 w-auto max-w-[180px] object-contain" />
   ) : (
     <>
       <span
@@ -361,7 +361,7 @@ function LinkChrome({ storefront, location, poweredBy, showMore, accent, bleed, 
 
   const brand = storefront.logo ? (
     // eslint-disable-next-line @next/next/no-img-element -- the venue's own uploaded logo
-    <img src={storefront.logo} alt={location.name} className="h-10 w-auto max-w-[180px] object-contain" />
+    <img src={storefront.logo} alt={location.name} className="sf-logo h-10 w-auto max-w-[180px] object-contain" />
   ) : (
     <>
       <span
