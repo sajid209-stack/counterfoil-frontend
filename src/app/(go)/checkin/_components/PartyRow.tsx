@@ -27,6 +27,10 @@ import type { Party } from "../_lib/parties";
  */
 const RAIL_COLS = "rail:grid rail:grid-cols-[2.5rem_minmax(0,1fr)_auto_2.25rem] rail:items-center rail:gap-x-comfortable";
 
+/* The "..." trigger as a ghost: no ring at rest, a tint on hover. Next to an
+   outlined action, a second outlined circle made every row two buttons. */
+const GHOST_MENU = "[&_button[aria-haspopup=menu]]:border-transparent [&_button[aria-haspopup=menu]]:text-muted [&_button[aria-haspopup=menu]:hover]:bg-muted-wash";
+
 /** Initials for the avatar; a party with no name gets none (the glyph shows). */
 const initials = (name: string) =>
   name
@@ -206,7 +210,7 @@ export function PartyRow({
         data-scanned={highlighted ? "" : undefined}
         className={cn(
           RAIL_COLS,
-          "min-h-16 border-t border-hairline px-section py-comfortable first:border-t-0 hover:bg-nav-hover",
+          "min-h-16 rounded-inner px-tight py-comfortable transition-colors duration-quick hover:bg-nav-hover",
           (p.state === "in" || p.state === "noshow") && !highlighted && "[&_[data-name]]:text-fg-secondary",
           highlighted && "bg-ember-wash ring-2 ring-inset ring-ember hover:bg-ember-wash",
         )}
@@ -231,7 +235,7 @@ export function PartyRow({
           <RequestNotes variant="row" orderId={p.booking.orderId} bookingId={p.booking.id} className="mt-inline flex flex-col gap-inline" />
         </div>
         <div data-slot className="flex justify-end">{slot}</div>
-        <div className="flex size-9 items-center justify-center rail:[&_button[aria-haspopup=menu]]:size-9!">{menuBtn}</div>
+        <div className={cn("flex size-9 items-center justify-center rail:[&_button[aria-haspopup=menu]]:size-9!", GHOST_MENU)}>{menuBtn}</div>
       </li>
     );
   }
@@ -242,7 +246,7 @@ export function PartyRow({
       data-party
       data-state={p.state}
       data-scanned={highlighted ? "" : undefined}
-      className={cn("flex flex-col gap-comfortable border-t border-hairline px-section py-comfortable first:border-t-0", highlighted && "bg-ember-wash ring-2 ring-inset ring-ember")}
+      className={cn("flex flex-col gap-comfortable rounded-inner px-tight py-comfortable", highlighted && "bg-ember-wash ring-2 ring-inset ring-ember")}
     >
       <div className="flex flex-wrap items-center gap-comfortable">
         {avatar}
@@ -265,7 +269,7 @@ export function PartyRow({
             name, right-aligned, instead of squeezing it to a word a line. */}
         <div className="ml-auto flex shrink-0 items-center gap-comfortable">
           {!takeOnOwnLine && <div data-slot className="flex shrink-0 items-center">{slot}</div>}
-          {menuBtn && <div className="flex size-11 shrink-0 items-center justify-center [&_button[aria-haspopup=menu]]:size-11!">{menuBtn}</div>}
+          {menuBtn && <div className={cn("flex size-11 shrink-0 items-center justify-center [&_button[aria-haspopup=menu]]:size-11!", GHOST_MENU)}>{menuBtn}</div>}
         </div>
       </div>
       {takeOnOwnLine && (

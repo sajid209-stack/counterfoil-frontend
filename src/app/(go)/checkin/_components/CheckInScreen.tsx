@@ -514,7 +514,7 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
     return i === -1 ? groups.length : i;
   })();
   const nowLine = (
-    <div data-now-line role="separator" aria-label={`${t("nowLine")} ${formatClock(toTime(DEMO_NOW_MINUTES))}`} className="flex items-center gap-tight border-t border-hairline px-section py-tight">
+    <div data-now-line role="separator" aria-label={`${t("nowLine")} ${formatClock(toTime(DEMO_NOW_MINUTES))}`} className="flex items-center gap-tight px-tight py-inline">
       <span className="shrink-0 whitespace-nowrap rounded-full bg-ember-solid px-tight py-0.5 text-xs font-semibold tabular-nums text-on-solid">
         {t("nowLine")} · {formatClock(toTime(DEMO_NOW_MINUTES))}
       </span>
@@ -541,7 +541,7 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
        drew down the left cost every row 7rem to say one word per session, so
        the time moved into the subheader and the rows got the width back.
        Today, a "Now" rule sits between what has started and what is to come. */
-    <div data-arrivals className="flex flex-col">
+    <div data-arrivals className="flex flex-col gap-tight px-tight pb-tight">
       {groups.map((g, i) => {
         const totals = sessionTotals.get(g.key) ?? { expected: 0, inCount: 0, waiting: 0 };
         const full = totals.expected > 0 && totals.inCount >= totals.expected;
@@ -553,10 +553,13 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
         return (
           <Fragment key={g.key}>
             {showNow && nowLine}
-            <section data-group data-started={started ? "" : undefined} aria-label={`${clock} ${productName(g.productId)}`}>
-              <header className="sticky top-0 z-10 flex min-h-11 items-center gap-comfortable border-y border-hairline bg-subtle px-section py-tight">
-                <span data-session-time className={cn("min-w-16 shrink-0 whitespace-nowrap text-sm font-semibold tabular-nums", started ? "text-fg-secondary" : "text-fg")}>{clock}</span>
-                <h3 className="min-w-0 flex-1 truncate text-sm font-semibold text-fg" title={productName(g.productId)}>{productName(g.productId)}</h3>
+            <section data-group data-started={started ? "" : undefined} aria-label={`${clock} ${productName(g.productId)}`} className="border-t border-hairline pt-tight first:border-t-0 first:pt-0">
+              {/* A quiet line on white, not a filled band: the time leads in ink,
+                  the session name follows in grey, the progress sits right. */}
+              <header className="sticky top-0 z-10 flex min-h-10 items-center gap-tight bg-card px-tight">
+                <span data-session-time className={cn("shrink-0 whitespace-nowrap text-sm font-semibold tabular-nums", started ? "text-fg-secondary" : "text-fg")}>{clock}</span>
+                <span aria-hidden className="text-muted">·</span>
+                <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-muted" title={productName(g.productId)}>{productName(g.productId)}</h3>
                 {full ? (
                   <span data-session-progress className="inline-flex shrink-0 items-center gap-inline whitespace-nowrap text-sm font-medium text-success">
                     <Check size={14} strokeWidth={2.5} aria-hidden />
@@ -564,8 +567,8 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
                   </span>
                 ) : (
                   <span data-session-progress className="flex shrink-0 items-center gap-tight">
-                    <span className="whitespace-nowrap text-sm font-medium tabular-nums text-fg-secondary">{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
-                    <span aria-hidden className="hidden h-1.5 w-12 overflow-hidden rounded-full bg-line sm:block">
+                    <span className="whitespace-nowrap text-sm tabular-nums text-muted">{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
+                    <span aria-hidden className="hidden h-1 w-10 overflow-hidden rounded-full bg-subtle sm:block">
                       <span className="block h-full rounded-full bg-success" style={{ width: `${pct}%` }} />
                     </span>
                   </span>

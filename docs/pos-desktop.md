@@ -232,3 +232,8 @@ What changed, and why (Linear and Luma's guest lists, Apple's segmented controls
   text ("✓ All in", "No-show"), not a pill. On a phone the check-in button sits on the guest's own
   line; only "Take ৳…" (a long label) gets a second line.
 - **The Now rule** spans the card between what has started and what is to come.
+
+**v3.1 (same day).** The owner: the grey session bands looked odd, and a hovered row (beige) merged
+into the band above it. Sessions are now a quiet line on white (time in ink · name in grey, progress
+right), separated by one hairline and space; rows are inset with a rounded hover tint and no rules
+between them; the "…" is a ghost button, so each row has one outlined control: its action.
