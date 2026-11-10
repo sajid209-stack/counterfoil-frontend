@@ -512,7 +512,11 @@ export default function CalendarPage() {
        row onto a second line. */
     const year = compact ? {} : { year: "numeric" as const };
     if (view === "day") {
-      return fmt(cursor, { weekday: "long", day: "numeric", month: "long", ...year });
+      /* "Tue 10 Nov": short enough that the arrows, the label, Today and the
+         filter share one line on a phone. */
+      /* Built from parts: en-GB puts a comma after the weekday once a year is
+         asked for ("Tue, 10 Nov 2026"). */
+      return `${fmt(cursor, { weekday: "short" })} ${cursor.getDate()} ${fmt(cursor, { month: "short" })}${compact ? "" : ` ${cursor.getFullYear()}`}`;
     }
     if (view === "week") {
       const end = addDays(wkStart, 6);
@@ -521,6 +525,15 @@ export default function CalendarPage() {
     }
     return fmt(cursor, { month: "long", year: "numeric" });
   }, [view, cursor, wkStart, compact]);
+
+  /* Is today on screen? Then "Today" has nothing to do and is not drawn: it
+     appears only once someone has moved away, as a way back. */
+  const showsToday = useMemo(() => {
+    const today = openingDate();
+    if (view === "day") return sameDay(cursor, today);
+    if (view === "week") return today >= wkStart && today < addDays(wkStart, 7);
+    return cursor.getFullYear() === today.getFullYear() && cursor.getMonth() === today.getMonth();
+  }, [view, cursor, wkStart]);
 
   /** Where a booking leads once you have decided it is the one you wanted.
    *  A hold leads nowhere: everything it can do, it does in the panel. */
@@ -977,10 +990,7 @@ export default function CalendarPage() {
             screen, not which screen — and on a phone it is the glyph at the end
             of that row. */}
         <div className="flex flex-wrap items-center justify-between gap-x-comfortable gap-y-tight">
-          <div className="flex min-w-0 flex-wrap items-center gap-tight">
-            <Button variant="secondary" size="sm" className="max-sm:rounded-full max-sm:border-transparent max-sm:bg-subtle max-sm:shadow-none" onClick={() => setCursor(openingDate())}>
-              {t("today")}
-            </Button>
+          <div className="flex min-w-0 flex-nowrap items-center gap-tight md:flex-wrap">
             <div className="flex items-center gap-inline">
               <Button variant="secondary" size="icon" className="max-sm:rounded-full max-sm:border-transparent max-sm:bg-subtle max-sm:shadow-none" aria-label={t("previous")} onClick={() => step(-1)}>
                 <ChevronLeft size={16} strokeWidth={1.5} />
@@ -994,7 +1004,7 @@ export default function CalendarPage() {
                    changes width — worth it on a desktop. On a phone the label
                    takes the width it needs and drops the year, which the week
                    strip and the month view already say. */
-                className="whitespace-nowrap px-tight text-center text-md font-medium sm:min-w-44"
+                className="whitespace-nowrap px-inline text-center text-md font-medium sm:min-w-36"
               >
                 {rangeLabel}
               </h2>
@@ -1002,6 +1012,12 @@ export default function CalendarPage() {
                 <ChevronRight size={16} strokeWidth={1.5} />
               </Button>
             </div>
+            {/* After the arrows, so its coming and going never moves them. */}
+            {!showsToday && (
+              <Button variant="secondary" size="sm" className="shrink-0 max-sm:rounded-full max-sm:border-transparent max-sm:bg-subtle max-sm:shadow-none" onClick={() => setCursor(openingDate())}>
+                {t("today")}
+              </Button>
+            )}
             {/* Ours — the native control rendered 07/29/2026 beside a range
                 label reading "27 Jul – 2 Aug 2026". A glyph: the label beside
                 it already says which week this is. A phone jumps by the month

@@ -19654,3 +19654,14 @@ title on the left and a soft square close; the business tile leading the menu he
 `--os-fab-clear` is now 76px + safe area. Built by the Opus session (the Sonnet builders were at their
 usage limit). Verified on a production build with ec29f026 scratchpad `os/check.mjs` (107/109, the 2
 being transparent zero shadows) and by eye.
+
+---
+
+## Calendar toolbar: one line, Today only when away (2026-11-10)
+
+Owner: fit the date on one line ("Tue 10 Nov") and show Today only after another date is chosen, on
+phone and desktop. `calendar/page.tsx`: the day label is "Tue 10 Nov" (plus the year on a desktop,
+built from parts to avoid en-GB's comma); `showsToday` hides Today while today is in view (day, week
+or month); Today sits after the arrows so its coming and going never moves them; the date row no
+longer wraps on a phone. Verified on a production build, ec29f026 scratchpad `os/cal.mjs` 32/32
+(390 and 1440, all three views: hidden on today, one line, appears after Next, brings it back).
