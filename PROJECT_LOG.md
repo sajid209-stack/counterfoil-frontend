@@ -19713,3 +19713,7 @@ Spec docs/pos-desktop.md §13. Verified: `pos/ci2.mjs` 20/20, `pos/btn.mjs` 84/8
 Arrivals is one card: search and a segmented filter in its top bar, sessions as sticky subheaders (time,
 name, progress) instead of separate cards and a time column, quiet done-states, compact actions; the
 phone keeps the check-in button on the guest's line. Spec docs/pos-desktop.md §14.
+
+### OS phone: Customers in the tab bar (2026-11-10)
+The phone tab bar gains Customers between Calendar and Catalog (six tabs). Under 360px the circles step
+from 48 to 44px so six fit a 320 phone with equal padding. Verified: os v8 39/39, v9 52/52, v10 24/24.

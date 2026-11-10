@@ -403,3 +403,5 @@ Owner review of v6:
 
 - **v10.1 (2026-11-10):** the header bell hides on the Activity log itself (it would open the page
   you are on).
+
+**v10.2 (2026-11-10):** Customers joins the tab bar (Dashboard, Orders, Calendar, Customers, Catalog, More). Below 360px the circles are 44px so six fit a 320 phone.

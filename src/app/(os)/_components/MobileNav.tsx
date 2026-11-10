@@ -27,7 +27,7 @@ import { initialsOf } from "./mobile/shared";
  * the content as an object you hold, 12px off the floor, so the page runs under
  * it to the edge. The drawing is Counterfoil's:
  *
- *   - Icons only, at 24px (v9, the owner's call): five glyphs the operator
+ *   - Icons only, at 24px (v9, the owner's call): six glyphs the operator
  *     learns in a day read faster than five truncated words ("Dashbo…"). Each
  *     tab keeps its name as its accessible name, so nothing is lost to a
  *     screen reader.
@@ -41,17 +41,18 @@ import { initialsOf } from "./mobile/shared";
  * Every page reserves `--os-fab-clear` at its foot so the bar never covers a
  * last row.
  */
-const DOCK_TABS = ["/dashboard", "/orders", "/calendar", "/catalog"] as const;
+const DOCK_TABS = ["/dashboard", "/orders", "/calendar", "/customers", "/catalog"] as const;
 const tabOf = (href: string) => NAV_MAIN.find((d) => d.href === href)!;
 
 /* Each tab IS its 48px circle, and the capsule pads every side by the same
    6px, so the current circle sits concentric in the bar's rounded end (outer
    radius = inner radius + padding) instead of floating closer to the top than
-   to the side. The five circles spread edge to edge with equal gaps. */
-const tabCls = "relative grid h-12 w-12 shrink-0 place-items-center rounded-full transition-transform duration-quick active:scale-95 motion-reduce:transition-none";
+   to the side. The six circles spread edge to edge with equal gaps; under
+   360px they step down to 44px (still the touch floor) so six fit a 320 phone. */
+const tabCls = "relative grid size-12 max-[359px]:size-11 shrink-0 place-items-center rounded-full transition-transform duration-quick active:scale-95 motion-reduce:transition-none";
 const dotCls = (on: boolean) =>
   cn(
-    "relative grid h-12 w-12 place-items-center rounded-full transition-colors duration-quick",
+    "relative grid size-12 max-[359px]:size-11 place-items-center rounded-full transition-colors duration-quick",
     on ? "bg-ember-solid text-on-solid" : "text-muted",
   );
 
