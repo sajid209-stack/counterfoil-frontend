@@ -16,7 +16,7 @@ import { Select, type SelectOption } from "./Select";
  * `sm` up). Put them on the picker's `className`: the 44px target is kept by a pseudo-element, as `Select pill` does.
  */
 export const DATE_PILL_PHONE =
-  "max-sm:w-fit max-sm:[&>button]:relative max-sm:[&>button]:h-9 max-sm:[&>button]:w-auto max-sm:[&>button]:rounded-full max-sm:[&>button]:border-transparent max-sm:[&>button]:bg-subtle max-sm:[&>button]:pl-comfortable max-sm:[&>button]:pr-tight max-sm:[&>button]:text-sm max-sm:[&>button]:before:absolute max-sm:[&>button]:before:inset-x-0 max-sm:[&>button]:before:-inset-y-1.5 max-sm:[&>button_.text-muted]:text-fg-secondary max-sm:[&>button]:before:content-['']";
+  "max-sm:w-fit max-sm:[&>button]:relative max-sm:[&>button]:h-9 max-sm:[&>button]:w-auto max-sm:[&>button]:rounded-control max-sm:[&>button]:border-transparent max-sm:[&>button]:bg-subtle max-sm:[&>button]:pl-comfortable max-sm:[&>button]:pr-tight max-sm:[&>button]:text-sm max-sm:[&>button]:before:absolute max-sm:[&>button]:before:inset-x-0 max-sm:[&>button]:before:-inset-y-1.5 max-sm:[&>button_.text-muted]:text-fg-secondary max-sm:[&>button]:before:content-['']";
 
 export function PeriodPill({
   value,

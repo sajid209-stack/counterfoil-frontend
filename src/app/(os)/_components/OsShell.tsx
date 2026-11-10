@@ -228,8 +228,6 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             pageName={pageName}
             /* The Settings list itself is a top-level page: a large title, no back. */
             isSettings={isSettings && pathname !== "/settings"}
-            venueScoped={venueScoped && !wide}
-            onOpenSearch={() => setSearchOpen(true)}
           />
 
           {/* Desktop — the page's name on the left; the venue and the account on

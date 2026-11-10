@@ -753,49 +753,9 @@ export default function DashboardPage() {
 
   const phoneActivity = (
     <section aria-labelledby="dash-activity">
-      <h2 id="dash-activity" className="text-lg font-semibold">{t("hereActivity")}</h2>
-
-      <h3 className="mt-section text-sm font-medium text-muted">{t("activityTitle")}</h3>
-      {activityQ.loading && activity.length === 0 ? (
-        <div aria-busy="true">
-          {Array.from({ length: 3 }, (_, i) => (
-            <div key={i} className="flex items-center gap-comfortable py-comfortable">
-              <Skeleton className="h-9 w-9 rounded-full" />
-              <Skeleton className="h-4 flex-1" />
-            </div>
-          ))}
-        </div>
-      ) : activity.length === 0 ? (
-        <p className="py-comfortable text-base text-muted">{t("noActivity")}</p>
-      ) : (
-        <div>
-          {activity.map((a) => {
-            const person = PERSON_KINDS.has(a.kind) && a.actor ? a.actor.name : null;
-            const meta = activityMeta(a);
-            return (
-              <Link key={a.id} href="/activity" className="group flex min-h-11 items-center gap-comfortable active:bg-muted-wash">
-                <Marker large kind={a.kind} severity={a.severity} word={a.severity === "info" ? undefined : ax.severityLabel(a.severity)} />
-                <div className={cn(rowText, "flex items-start justify-between gap-tight")}>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-base font-medium">
-                      {person && <b className="font-semibold">{person} · </b>}
-                      {ax.kindLabel(a)}
-                    </p>
-                    {meta && <p className="truncate text-sm text-muted">{meta}</p>}
-                  </div>
-                  <span className="shrink-0 whitespace-nowrap pt-0.5 text-sm text-muted">{ax.ago(a.at)}</span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
-      <Link href="/activity" className={viewAllBtn}>
-        {t("viewAllActivity")}
-        <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
-      </Link>
-
-      <h3 className="mt-major text-sm font-medium text-muted">{t("recentOrders")}</h3>
+      {/* The activity feed lives behind the header's bell on a phone (the
+          activity log), so the dashboard's list here is the sales. */}
+      <h2 id="dash-activity" className="text-lg font-semibold">{t("recentOrders")}</h2>
       {scopeOrders.length === 0 ? (
         <p className="py-comfortable text-base text-muted">{scope === "today" ? t("noOrdersToday") : t("noOrdersThisWeek")}</p>
       ) : (

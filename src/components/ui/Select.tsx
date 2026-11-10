@@ -317,7 +317,7 @@ export function Select({
         className={cn(
           "flex min-w-0 items-center text-left transition-colors duration-quick",
           bare && pill
-            ? "relative h-9 max-w-[14rem] gap-inline rounded-full bg-subtle pl-comfortable pr-tight text-sm font-medium text-fg before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] hover:bg-muted-wash"
+            ? "relative h-9 max-w-[14rem] gap-inline rounded-control bg-subtle pl-comfortable pr-tight text-sm font-medium text-fg before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] hover:bg-muted-wash"
             : bare
             ? "max-w-[14rem] gap-tight bg-transparent pl-inline pr-0 text-sm font-medium"
             : /* The chevron sits in a reserved gutter rather than floating at

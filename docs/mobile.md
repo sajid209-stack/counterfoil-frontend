@@ -339,3 +339,19 @@ principles, draw them in Counterfoil's language. What changed from v5:
 | Round close top-left, centred title | Title on the left (18/600), close as a soft square on the right; the menu head leads with the business tile | Reads left to right; the soft tile is the menu's own icon ground |
 | "Good afternoon · …", "Here's your activity" | The date; "What's happening" | Our words |
 | Plain figure chips | Each chip leads with a soft icon tile in the figure's tone (the §6 language) | Figures are told apart before a word is read |
+
+### v7: quieter header, menu like the rail, one radius (2026-11-10)
+
+Owner review of v6:
+- **Header**: no search and no venue on phone pages; the venue is chosen in the menu only. One row:
+  the way back on a record, the title, then a bell (the activity log, with an ember dot when a refund
+  or write-off waits) and the page's primary action as an orange 40px button, the colour the desktop
+  header's primary has. The dashboard's activity list moved behind the bell.
+- **Menu** (the More tab): drawn like the desktop rail — plain 20px icons, rows with the rail's
+  selected fill (`navStyles`), children indented under the label, sections separated by space and a
+  small label; no cards, borders or guide lines. Other apps are rows with ↗.
+- **Colour**: the primary action is ember on a phone as it is on a desktop; Day/Week/Month uses the
+  desktop's ember-underline tabs.
+- **One radius**: on an OS phone every container and control is 12px (`body:has([data-os-shell])`
+  sets the radius tokens: control, inner, card, sheet, lg, xl, 2xl, 3xl). Round stays only for round
+  things — avatars, dots, count badges, progress bars. The 3px and 6px steps stay for tiny marks.

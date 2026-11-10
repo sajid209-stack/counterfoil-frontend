@@ -85,5 +85,6 @@
   "venueChoose": "ভেন্যু বেছে নিন",
   "reservations": "রিজার্ভেশন",
   "dock": "প্রধান নেভিগেশন",
-  "ordersWaiting": "অর্ডার, {count}টি অপেক্ষায়"
+  "ordersWaiting": "অর্ডার, {count}টি অপেক্ষায়",
+  "activityWaiting": "কার্যক্রমের লগ, {count}টি বিষয় সিদ্ধান্তের অপেক্ষায়"
 }

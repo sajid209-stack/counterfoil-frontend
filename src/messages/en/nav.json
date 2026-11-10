@@ -85,5 +85,6 @@
   "venueChoose": "Choose a venue",
   "reservations": "Reservations",
   "dock": "Main navigation",
-  "ordersWaiting": "Orders, {count} waiting"
+  "ordersWaiting": "Orders, {count} waiting",
+  "activityWaiting": "Activity log, {count, plural, one {# thing waits} other {# things wait}} for a decision"
 }

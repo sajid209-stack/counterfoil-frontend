@@ -11,6 +11,7 @@ import { PageStatePicker } from "@/components/screens";
 import { LOCALE_COOKIE, LOCALE_LABELS, LOCALES, type Locale } from "@/i18n/locale";
 import type { Location, Staff } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { NAV_IDLE, NAV_PARENT_OF_SELECTED, NAV_SELECTED } from "@/components/ui/navStyles";
 import { NAV_MAIN, NAV_OPEN, NAV_SETTINGS, groupOf, isAt, type NavDestination } from "../nav";
 import { NavBadge, useNavBadges, badgeCount } from "../navBadges";
 import { IconTile, initialsOf } from "./shared";
@@ -91,13 +92,16 @@ export function MenuBody({
                or screen-reader user starts inside the dialog, where they are. */
             data-autofocus={exact ? "" : undefined}
             onClick={onClose}
+            /* The desktop rail's row (navStyles): the light fill and 600 on the
+               page you are on, the parent of that page in ink and 600. */
             className={cn(
-              "flex min-h-12 min-w-0 flex-1 items-center gap-comfortable rounded-md pl-comfortable transition-colors duration-quick active:bg-nav-hover",
+              "flex min-h-11 min-w-0 flex-1 items-center gap-comfortable rounded-card pl-comfortable text-md transition-colors duration-quick",
               kids.length > 0 ? "pr-tight" : "pr-comfortable",
+              exact ? NAV_SELECTED : parentOf ? NAV_PARENT_OF_SELECTED : NAV_IDLE,
             )}
           >
-            <IconTile icon={d.icon} current={exact} />
-            <span className={cn("min-w-0 flex-1 truncate text-md text-fg", (exact || parentOf) && "font-semibold")}>{t(d.key)}</span>
+            <IconTile icon={d.icon} current={exact || parentOf} />
+            <span className="min-w-0 flex-1 truncate">{t(d.key)}</span>
             <NavBadge count={count} />
             {count ? <span className="sr-only">{t("waiting", { count })}</span> : null}
           </Link>
@@ -109,7 +113,7 @@ export function MenuBody({
               aria-controls={listId}
               aria-label={t("showPages", { name: t(d.key) })}
               data-menu-expand={d.key}
-              className="grid h-12 w-11 shrink-0 place-items-center rounded-md text-fg-secondary transition-colors duration-quick active:bg-nav-hover"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-card text-muted transition-colors duration-quick active:bg-nav-hover"
             >
               <ChevronDown
                 size={18}
@@ -121,14 +125,10 @@ export function MenuBody({
           )}
         </div>
         {kids.length > 0 && (
-          /* A 1px guide in the icon column, and children that start where the
-             parent's label starts (12 pad + 32 tile + 12 gap = 56px). Hidden, not
+          /* Children start where the parent's label starts (12 pad + 24 icon + 12
+             gap = 48px), as on the desktop rail; no guide line. Hidden, not
              unmounted, so the chevron's aria-controls always names a real node. */
-          <ul
-            id={listId}
-            hidden={!expanded}
-            className="relative pb-1 before:absolute before:bottom-3 before:left-7 before:top-0 before:w-px before:bg-hairline"
-          >
+          <ul id={listId} hidden={!expanded} className="pb-1">
             {kids.map((c) => {
               const sel = isAt(c, pathname);
               return (
@@ -140,8 +140,8 @@ export function MenuBody({
                     data-autofocus={sel ? "" : undefined}
                     onClick={onClose}
                     className={cn(
-                      "ml-11 flex min-h-11 items-center rounded-sm px-comfortable text-md transition-colors duration-quick",
-                      sel ? "bg-nav-selected font-semibold text-fg" : "text-muted active:bg-nav-hover",
+                      "ml-9 flex min-h-11 items-center rounded-card px-comfortable text-md transition-colors duration-quick",
+                      sel ? NAV_SELECTED : NAV_IDLE,
                     )}
                   >
                     <span className="min-w-0 flex-1 truncate">{t(c.key)}</span>
@@ -158,27 +158,27 @@ export function MenuBody({
   };
 
   return (
-    <div className="flex flex-col gap-comfortable px-gutter pb-4 pt-1">
+    <div className="flex flex-col gap-section px-gutter pb-4 pt-1">
       {/* The venue first: it qualifies every list behind this sheet. */}
-      <section className="card-surface p-1.5">
+      <section className="">
         {many ? (
           <button
             type="button"
             onClick={() => setVenuesOpen(true)}
             aria-haspopup="dialog"
             data-menu-venue
-            className="flex min-h-13 w-full items-center gap-comfortable rounded-md px-comfortable text-start transition-colors duration-quick active:bg-nav-hover"
+            className="flex min-h-11 w-full items-center gap-comfortable rounded-card px-comfortable text-start transition-colors duration-quick active:bg-nav-hover"
           >
             <VenueRowBody name={data.location?.name} chevron />
           </button>
         ) : (
-          <div className="flex min-h-13 w-full items-center gap-comfortable px-comfortable">
+          <div className="flex min-h-11 w-full items-center gap-comfortable px-comfortable">
             <VenueRowBody name={data.location?.name} />
           </div>
         )}
       </section>
 
-      <nav aria-label={t("main")} className="card-surface p-1.5">
+      <nav aria-label={t("main")} className="">
         <ul className="flex flex-col">{NAV_MAIN.map(parentRow)}</ul>
       </nav>
 
@@ -188,24 +188,26 @@ export function MenuBody({
         <p id={appsId} className="px-comfortable pb-1.5 text-xs font-medium text-muted">
           {t("otherApps")}
         </p>
-        <ul className="card-surface grid grid-cols-2 gap-1 p-1.5">
+        {/* Rows, as the desktop rail lists them: icon, name, the ↗ that says it opens elsewhere. */}
+        <ul className="flex flex-col">
           {NAV_OPEN.map((d) => (
-            <li key={d.key} className="flex">
+            <li key={d.key}>
               <Link
                 href={d.href}
                 data-menu-item={d.key}
                 onClick={onClose}
-                className="flex min-h-20 w-full flex-col items-center gap-1.5 rounded-md px-1 py-comfortable text-center transition-colors duration-quick active:bg-nav-hover"
+                className={cn("flex min-h-11 items-center gap-comfortable rounded-card px-comfortable text-md transition-colors duration-quick", NAV_IDLE)}
               >
                 <IconTile icon={d.icon} />
-                <AppLabel text={t(d.key)} />
+                <span className="min-w-0 flex-1 truncate">{t(d.key)}</span>
+                <ArrowUpRight size={16} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
               </Link>
             </li>
           ))}
         </ul>
       </section>
 
-      <section className="card-surface p-1.5">
+      <section className="">
         <Link
           /* The phone's Settings is its own list of sections (docs/mobile.md §8);
              the desktop rail keeps going straight to the first section. */
@@ -214,10 +216,10 @@ export function MenuBody({
           aria-current={isAt(NAV_SETTINGS, pathname) ? "page" : undefined}
           data-autofocus={isAt(NAV_SETTINGS, pathname) ? "" : undefined}
           onClick={onClose}
-          className="flex min-h-12 items-center gap-comfortable rounded-md px-comfortable transition-colors duration-quick active:bg-nav-hover"
+          className={cn("flex min-h-11 items-center gap-comfortable rounded-card px-comfortable text-md transition-colors duration-quick", isAt(NAV_SETTINGS, pathname) ? NAV_SELECTED : NAV_IDLE)}
         >
           <IconTile icon={NAV_SETTINGS.icon} current={isAt(NAV_SETTINGS, pathname)} />
-          <span className={cn("min-w-0 flex-1 truncate text-md text-fg", isAt(NAV_SETTINGS, pathname) && "font-semibold")}>
+          <span className="min-w-0 flex-1 truncate">
             {t(NAV_SETTINGS.key)}
           </span>
           <ChevronRight size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
@@ -241,24 +243,6 @@ export function MenuBody({
   );
 }
 
-/**
- * An app's name with its ↗ — the arrow is tied to the LAST word, so a name that
- * wraps ("Counterfoil Deck") never leaves the arrow alone on a line of its own.
- */
-function AppLabel({ text }: { text: string }) {
-  const at = text.lastIndexOf(" ");
-  const lead = at > 0 ? text.slice(0, at + 1) : "";
-  const last = at > 0 ? text.slice(at + 1) : text;
-  return (
-    <span className="text-sm leading-tight text-fg">
-      {lead}
-      <span className="whitespace-nowrap">
-        {last}
-        <ArrowUpRight size={12} strokeWidth={1.75} aria-hidden className="ml-0.5 inline-block align-baseline text-muted" />
-      </span>
-    </span>
-  );
-}
 
 function VenueRowBody({ name, chevron = false }: { name: string | undefined; chevron?: boolean }) {
   const t = useTranslations("nav");
@@ -307,7 +291,7 @@ function YouCard({ me, role, onClose }: { me: Staff | undefined; role: string | 
   };
 
   return (
-    <section aria-label={t("account")} className="card-surface flex flex-col gap-section p-section">
+    <section aria-label={t("account")} className="flex flex-col gap-section px-comfortable pt-tight">
       <div className="flex items-center gap-comfortable">
         <span
           aria-hidden

@@ -19665,3 +19665,17 @@ built from parts to avoid en-GB's comma); `showsToday` hides Today while today i
 or month); Today sits after the arrows so its coming and going never moves them; the date row no
 longer wraps on a phone. Verified on a production build, ec29f026 scratchpad `os/cal.mjs` 32/32
 (390 and 1440, all three views: hidden on today, one line, appears after Next, brings it back).
+
+---
+
+## OS on a phone, v7: quieter header, menu like the rail, one radius (2026-11-10)
+
+docs/mobile.md §8 "v7". Phone header is one row: back, title, a bell (the activity log; ember dot
+when a refund or write-off waits) and the page's primary as an orange 40px button; no search and no
+venue (the venue is in the menu). The phone dashboard's activity list moved behind the bell. The menu
+is drawn like the desktop rail (plain icons, navStyles fills, no cards/borders/guide lines; other apps
+as rows). Calendar uses the desktop's ember-underline Day/Week/Month tabs. One radius: on an OS phone
+the radius tokens are all 12px (`body:has([data-os-shell])` in globals.css), period pills use the
+control radius; round stays for avatars, dots, badges and bars. Verified on a production build,
+ec29f026 scratchpad `os/check.mjs` (109/111, the 2 being transparent zero shadows; adds: no search or
+venue in the header, the bell opens /activity, one radius on the dashboard) and `os/cal.mjs` 32/32.

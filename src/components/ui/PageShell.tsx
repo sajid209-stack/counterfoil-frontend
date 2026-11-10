@@ -93,7 +93,7 @@ export function BarBack({ href, label }: { href: string; label: string }) {
           href={href}
           aria-label={name}
           data-bar-back
-          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-card text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] hover:bg-muted-wash active:bg-secondary-hover"
+          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-card border border-line bg-card text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] hover:bg-muted-wash active:bg-secondary-hover"
         >
           <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
         </Link>,
@@ -104,7 +104,7 @@ export function BarBack({ href, label }: { href: string; label: string }) {
           <Link
             href={href}
             aria-label={name}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] hover:bg-muted-wash active:bg-secondary-hover"
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-card text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] hover:bg-muted-wash active:bg-secondary-hover"
           >
             <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
           </Link>,
@@ -255,7 +255,7 @@ function PhoneActions({ children }: { children: React.ReactNode }) {
         aria-expanded={open}
         data-page-actions-toggle
         className={cn(
-          "relative flex h-10 w-10 items-center justify-center rounded-full text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] hover:bg-muted-wash active:bg-secondary-hover",
+          "relative flex h-10 w-10 items-center justify-center rounded-card text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] hover:bg-muted-wash active:bg-secondary-hover",
           open && "bg-muted-wash",
         )}
       >
@@ -375,12 +375,13 @@ export function PageShell({
       {primary.label}
     </Button>
   );
-  /* Phone: the action, in the header's pill: a 40px round icon button (a 44px
-     target), icon only — the words are its accessible name and its tooltip. */
+  /* Phone: the action beside the title — the same orange primary the desktop
+     header carries, as a 40px icon button (a 44px target) with the page's one
+     corner; the words are its accessible name and its tooltip. */
   const narrowPrimary = primary
     ? (() => {
         const cls = cn(
-          "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] hover:bg-muted-wash active:bg-secondary-hover",
+          "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-card bg-ember-solid text-on-solid transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] hover:bg-ember-hover active:bg-ember-active",
           primary.disabled && "pointer-events-none opacity-40",
         );
         const glyph = primary.icon ?? <Plus size={20} strokeWidth={1.75} />;

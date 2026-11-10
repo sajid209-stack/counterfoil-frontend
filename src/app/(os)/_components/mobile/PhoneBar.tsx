@@ -1,15 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronLeft, MapPin, Search } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Bell, ChevronLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { PreviewChip } from "@/components/screens";
-import { listLocations } from "@/lib/api";
-import { useActiveLocation } from "@/lib/activeLocation";
-import { useApiQuery } from "@/lib/useApi";
 import { cn } from "@/lib/cn";
-import { VenueSheet } from "./VenueSheet";
+import { useWaitingTotal } from "../navBadges";
 
 /**
  * The phone's header — the large-title pattern (docs/mobile.md section 8, rule 5).
@@ -50,28 +47,14 @@ import { VenueSheet } from "./VenueSheet";
    pill. A record (a back button in the header) or a Settings section steps down
    to 22 — no step on the scale, hence the exceptions. */
 const TITLE = "min-w-0 truncate font-bold leading-10 tracking-title text-fg";
-/* A record (an order, a customer: PageShell has filled the back slot) is not
-   venue navigation, so the venue line under its title stands down. */
-const ON_RECORD_HIDE = "group-has-[#os-page-back-mobile:not(:empty)]/head:hidden";
 const TITLE_TOP = "text-3xl group-has-[#os-page-back-mobile:not(:empty)]/head:text-[22px]"; // ds-exception: 22px record title, docs/mobile.md section 8; no step between xl and 2xl
 const TITLE_SECTION = "text-[22px]"; // ds-exception: 22px section title, docs/mobile.md section 8; no step between xl and 2xl
 
-export function PhoneBar({
-  pageName,
-  isSettings,
-  venueScoped,
-  onOpenSearch,
-}: {
-  pageName: string;
-  isSettings: boolean;
-  venueScoped: boolean;
-  /** Opens the command palette: search lives at the top of every page on a phone. */
-  onOpenSearch: () => void;
-}) {
+export function PhoneBar({ pageName, isSettings }: { pageName: string; isSettings: boolean }) {
   const t = useTranslations("nav");
   const bar = useRef<HTMLDivElement>(null);
   const head = useRef<HTMLDivElement>(null);
-  const [venuesOpen, setVenuesOpen] = useState(false);
+  const waiting = useWaitingTotal();
 
   useEffect(() => {
     const barEl = bar.current;
@@ -114,52 +97,47 @@ export function PhoneBar({
         </p>
       </div>
 
-      {/* The header, Counterfoil's own (docs/mobile.md §8, v6): a tool row on
-          top — the way back or the venue as a pin chip on the left; search and
-          the page's actions on the right — then the page's title, large, on its
-          own line. Where you are (the venue) and what you can do sit together
-          above what this is (the title), so the title is never squeezed by them. */}
+      {/* The header (docs/mobile.md section 8, v7): one row — the way back on a
+          record, the page's title, then the bell and the page's orange action.
+          No search and no venue here: the venue is chosen in the menu, and a
+          phone header that carries three tools before the title is the
+          clutter it was asked to lose. */}
       <div
         ref={head}
         data-os-bar="phone"
-        className="group/head flex shrink-0 flex-col gap-tight bg-card px-gutter pb-2 pt-2 md:hidden dark:bg-surface"
+        className="group/head flex min-h-14 shrink-0 items-center gap-tight bg-card px-gutter pb-2 pt-2 md:hidden dark:bg-surface"
       >
-        <div className="flex min-h-11 items-center gap-tight">
-          {/* A page with a way back puts it here (PageShell's BarBack), and
-              Settings' section chevron steps aside — see `peer`. */}
-          <div id="os-page-back-mobile" className="peer flex shrink-0 items-center empty:hidden" />
-          {isSettings && (
-            <Link
-              href="/settings"
-              aria-label={t("settingsSections")}
-              data-settings-back-phone
-              className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-line bg-card text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] active:bg-muted-wash peer-[:not(:empty)]:hidden"
-            >
-              <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
-            </Link>
-          )}
-          <div className="min-w-0 flex-1">
-            {venueScoped && <VenueChip onOpenVenues={() => setVenuesOpen(true)} />}
-          </div>
-          {/* A phone has no picker in the bar: this says a preview is running, and ends it. */}
-          <PreviewChip />
-          <button
-            type="button"
-            onClick={onOpenSearch}
-            aria-label={t("search")}
-            aria-haspopup="dialog"
-            data-bar-search
-            className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] active:bg-muted-wash"
+        {/* A page with a way back puts it here (PageShell's BarBack), and
+            Settings' section chevron steps aside — see `peer`. */}
+        <div id="os-page-back-mobile" className="peer flex shrink-0 items-center empty:hidden" />
+        {isSettings && (
+          <Link
+            href="/settings"
+            aria-label={t("settingsSections")}
+            data-settings-back-phone
+            className="relative grid h-10 w-10 shrink-0 place-items-center rounded-card border border-line bg-card text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] active:bg-muted-wash peer-[:not(:empty)]:hidden"
           >
-            <Search size={20} strokeWidth={1.75} aria-hidden />
-          </button>
-          <div id="os-page-actions-mobile" className="flex shrink-0 items-center gap-inline empty:hidden" />
-        </div>
+            <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
+          </Link>
+        )}
         <BarTitle pageName={pageName} isSettings={isSettings} />
+        {/* A phone has no picker in the bar: this says a preview is running, and ends it. */}
+        <PreviewChip />
+        {/* What has happened lately, as a bell (it is the activity log): an ember
+            dot when something waits for a decision (a refund or a write-off). */}
+        <Link
+          href="/activity"
+          aria-label={waiting > 0 ? t("activityWaiting", { count: waiting }) : t("activityLog")}
+          data-bar-activity
+          className="relative grid h-10 w-10 shrink-0 place-items-center rounded-card text-fg transition-colors duration-quick before:absolute before:-inset-0.5 before:content-[''] active:bg-muted-wash"
+        >
+          <Bell size={20} strokeWidth={1.75} aria-hidden />
+          {waiting > 0 && <span aria-hidden className="absolute right-2 top-2 h-2 w-2 rounded-full bg-ember-solid ring-2 ring-card" />}
+        </Link>
+        <div id="os-page-actions-mobile" className="flex shrink-0 items-center gap-inline empty:hidden" />
       </div>
       {/* Outside both bars: the compact bar is a z-30 stacking context and the
           dock is z-30 too, later in the page — a sheet inside would sit under it. */}
-      {venueScoped && <VenueSheet open={venuesOpen} onClose={() => setVenuesOpen(false)} />}
     </>
   );
 }
@@ -168,47 +146,9 @@ export function PhoneBar({
 function BarTitle({ pageName, isSettings }: { pageName: string; isSettings: boolean }) {
   const size = cn(TITLE, isSettings ? TITLE_SECTION : TITLE_TOP);
   return (
-    <div className="min-w-0">
+    <div className="min-w-0 flex-1">
       <p id="os-page-title-mobile" className={cn(size, "empty:hidden")} />
       <p className={cn(size, "group-has-[#os-page-title-mobile:not(:empty)]/head:hidden")}>{pageName}</p>
     </div>
-  );
-}
-
-/**
- * Which venue the console is looking at, as a pin chip in the tool row — an
- * attraction business runs several sites, and every figure below belongs to
- * one of them. With two or more venues it is a 44px-target button that opens
- * the picker; with one it is just said. A record (an order, a customer) is not
- * venue navigation, so the chip stands down there.
- */
-function VenueChip({ onOpenVenues }: { onOpenVenues: () => void }) {
-  const t = useTranslations("nav");
-  const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
-  const locations = locationsQ.data?.data ?? [];
-  const { location } = useActiveLocation(locations);
-  const chip = "inline-flex h-9 max-w-full items-center gap-1.5 rounded-full bg-subtle px-comfortable text-sm font-medium text-fg";
-  if (!location) return <span aria-hidden className={cn("inline-block h-9 w-32 rounded-full bg-subtle", ON_RECORD_HIDE)} />;
-  if (locations.length < 2) {
-    return (
-      <span className={cn(chip, ON_RECORD_HIDE)}>
-        <MapPin size={14} strokeWidth={1.75} aria-hidden className="shrink-0 text-brand-foreground" />
-        <span className="truncate">{location.name}</span>
-      </span>
-    );
-  }
-  return (
-    <button
-      type="button"
-      onClick={onOpenVenues}
-      aria-haspopup="dialog"
-      data-bar-venue
-      className={cn(chip, "relative before:absolute before:-inset-y-1 before:inset-x-0 before:content-[''] active:bg-muted-wash", ON_RECORD_HIDE)}
-    >
-      <MapPin size={14} strokeWidth={1.75} aria-hidden className="shrink-0 text-brand-foreground" />
-      <span className="sr-only">{t("venueNow", { name: location.name })}</span>
-      <span aria-hidden className="truncate">{location.name}</span>
-      <ChevronDown size={14} strokeWidth={2} aria-hidden className="shrink-0 text-muted" />
-    </button>
   );
 }

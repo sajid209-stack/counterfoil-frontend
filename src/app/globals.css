@@ -1192,9 +1192,27 @@ html[data-motion="reduce"] *::after {
   @media (max-width: 47.999rem) {
     [data-os-shell] .card-surface {
       border-color: var(--color-line);
-      border-radius: 20px;
+      border-radius: var(--radius-card);
       box-shadow: none;
     }
+  }
+}
+
+/* One corner on an OS phone (docs/mobile.md section 8, v7): cards, buttons,
+   fields, chips, sheets and tiles all take 12px, so nothing on a page competes
+   in shape; only round things (avatars, dots, count badges) stay round, and the
+   3px/6px steps stay for tiny marks (a checkbox, a swatch). Set on the body while
+   the OS shell is mounted, so portalled sheets and menus follow too. */
+@media (max-width: 47.999rem) {
+  body:has([data-os-shell]) {
+    --radius-control: 12px;
+    --radius-inner: 12px;
+    --radius-card: 12px;
+    --radius-sheet: 12px;
+    --radius-lg: 12px;
+    --radius-xl: 12px;
+    --radius-2xl: 12px;
+    --radius-3xl: 12px;
   }
 }
 

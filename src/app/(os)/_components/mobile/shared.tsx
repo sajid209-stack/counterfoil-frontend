@@ -17,13 +17,9 @@ export const initialsOf = (name: string | undefined): string => {
 };
 
 /**
- * A 32px soft tile with a glyph in it.
- *
- * Idle it is a quiet fill with a secondary-ink glyph; the page you are on is
- * solid ink with a knocked-out glyph — the language of the till's tab bar, and
- * Material 3's "filled indicator" for a drawer. `muted-wash` rather than
- * `subtle` for the fill: in dark the card and `subtle` are the same value, so a
- * `subtle` tile would vanish.
+ * A menu row's glyph: a plain 20px icon in a 24px box, as the desktop rail draws
+ * it (docs/mobile.md section 8, v7) — no tile behind it. Ink on the page you are
+ * on, muted otherwise; the row's own fill says "here".
  */
 export function IconTile({
   icon: Icon,
@@ -38,12 +34,9 @@ export function IconTile({
   return (
     <span
       aria-hidden
-      className={cn(
-        "grid h-8 w-8 shrink-0 place-items-center rounded-sm transition-colors duration-quick",
-        current ? "bg-inverse text-inverse-fg" : cn("bg-muted-wash", danger ? "text-danger-soft-fg" : "text-fg-secondary"),
-      )}
+      className={cn("grid h-6 w-6 shrink-0 place-items-center transition-colors duration-quick", danger ? "text-danger-soft-fg" : current ? "text-fg" : "text-muted")}
     >
-      <Icon size={18} strokeWidth={1.5} />
+      <Icon size={20} strokeWidth={1.75} />
     </span>
   );
 }
