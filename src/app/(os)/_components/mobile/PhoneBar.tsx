@@ -7,6 +7,10 @@ import { useTranslations } from "next-intl";
 import { PreviewChip } from "@/components/screens";
 import { cn } from "@/lib/cn";
 import { useWaitingTotal } from "../navBadges";
+import { getStaff } from "@/lib/api";
+import { useApiQuery } from "@/lib/useApi";
+import { DEMO_STAFF_ID } from "@/lib/session";
+import { initialsOf } from "./shared";
 
 /**
  * The phone's header — the large-title pattern (docs/mobile.md section 8, rule 5).
@@ -18,9 +22,10 @@ import { useWaitingTotal } from "../navBadges";
  * Two pieces:
  *
  * 1. The HEADER, in the page's flow: the title at 28/700 (−0.02em) with the
- *    venue under it (14px muted, a chevron, opens the venue picker), and the
- *    page's actions to the right as 40px round icon buttons grouped in one white
- *    pill (`#os-page-actions-mobile`, which PageShell portals into). A page with
+ *    venue under it (14px muted, a chevron, opens the venue picker), and to the
+ *    right the bell (activity) and your profile, two 40px circles. The page's
+ *    own actions are NOT here (v8): PageShell puts them at the right end of the
+ *    page's first toolbar row (`PhoneActionsSlot`). A page with
  *    a way back — a record — gets PageShell's 40px round back button
  *    (`#os-page-back-mobile`) and its own title at 22/700
  *    (`#os-page-title-mobile`) in place of the destination's name; a Settings
@@ -55,6 +60,8 @@ export function PhoneBar({ pageName, isSettings }: { pageName: string; isSetting
   const bar = useRef<HTMLDivElement>(null);
   const head = useRef<HTMLDivElement>(null);
   const waiting = useWaitingTotal();
+  const meQ = useApiQuery(() => getStaff(DEMO_STAFF_ID), []);
+  const me = meQ.data;
 
   useEffect(() => {
     const barEl = bar.current;
@@ -134,7 +141,16 @@ export function PhoneBar({ pageName, isSettings }: { pageName: string; isSetting
           <Bell size={20} strokeWidth={1.75} aria-hidden />
           {waiting > 0 && <span aria-hidden className="absolute right-2 top-2 h-2 w-2 rounded-full bg-ember-solid ring-2 ring-card" />}
         </Link>
-        <div id="os-page-actions-mobile" className="flex shrink-0 items-center gap-inline empty:hidden" />
+        {/* You: your profile, the same size as the bell. A page's own actions are
+            not up here; they end its first toolbar row (PhoneActionsSlot). */}
+        <Link
+          href="/settings/profile"
+          aria-label={me ? t("profileOf", { name: me.name }) : t("myProfile")}
+          data-bar-profile
+          className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-inverse text-sm font-semibold text-inverse-fg transition-opacity duration-quick before:absolute before:-inset-0.5 before:content-[''] active:opacity-80"
+        >
+          {me ? initialsOf(me.name) : ""}
+        </Link>
       </div>
       {/* Outside both bars: the compact bar is a z-30 stacking context and the
           dock is z-30 too, later in the page — a sheet inside would sit under it. */}

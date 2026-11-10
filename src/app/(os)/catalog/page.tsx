@@ -769,7 +769,7 @@ function Catalog() {
           off-screen by the time the eighth row is ticked. Above the phone's
           tab bar there; bottom-centre from md. */}
       {selected.size > 0 && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom)+0.75rem)] z-40 flex justify-center px-gutter md:bottom-section">
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(82px+env(safe-area-inset-bottom))] z-40 flex justify-center px-gutter md:bottom-section">
                 <Card role="region" aria-label={t("bulk.region")} padding="none" className="pointer-events-auto flex w-full max-w-3xl flex-wrap items-center gap-tight px-comfortable py-tight shadow-float">
                   <span className="text-sm font-medium">{t("selectedCount", { count: selected.size })}</span>
                   {/* The whole filtered list, not only this page — "everything

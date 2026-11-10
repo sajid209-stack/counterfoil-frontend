@@ -86,5 +86,6 @@
   "reservations": "Reservations",
   "dock": "Main navigation",
   "ordersWaiting": "Orders, {count} waiting",
-  "activityWaiting": "Activity log, {count, plural, one {# thing waits} other {# things wait}} for a decision"
+  "activityWaiting": "Activity log, {count, plural, one {# thing waits} other {# things wait}} for a decision",
+  "profileOf": "Your profile, {name}"
 }

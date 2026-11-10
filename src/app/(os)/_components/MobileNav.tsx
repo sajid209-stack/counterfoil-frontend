@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -18,43 +18,34 @@ import { BusinessTile, PhoneSheet, PhoneSheetHead } from "./mobile/PhoneSheet";
 import { initialsOf } from "./mobile/shared";
 
 /**
- * The phone's way around (docs/mobile.md section 8, v6): a tab bar docked to the
- * foot of the screen, and the full-height sheet its More tab opens.
+ * The phone's way around (docs/mobile.md section 8, v8): a floating tab bar, and
+ * the full-height sheet its More tab opens.
  *
- *   [ Home | Orders | Calendar | Catalog | More ]
+ *     ( Home  Orders  Calendar  Catalog  More )
  *
- * The principle is the one every good phone app shares — the places used all day
- * are always one thumb-tap away, never behind a hamburger (NN/g: hidden
- * navigation cost phone users ~15% in speed; Apple: 3–5 tab destinations) — but
- * the drawing is Counterfoil's own rather than a floating pill of bare glyphs:
+ * The idea taken from the best phone apps is the floating bar — it sits above
+ * the content as an object you hold, 12px off the floor, so the page runs under
+ * it to the edge. The drawing is Counterfoil's:
  *
- *   - Every tab says its name under its icon. A label is recognised faster than
- *     a glyph and needs no learning; an operator opens this app a few times a
- *     day, not all day.
- *   - The current tab is marked the way Counterfoil marks "here" everywhere —
- *     the till's tab bar and the admin rail: a short ember bar on its top edge,
- *     the icon and the label in ink and semibold. Others are muted.
- *   - It is docked full width on the card colour with a hairline above it, so it
- *     reads as the floor of the app, not as an object over the content.
- *   - Something waiting at the venue (a refund or a write-off) is a small ember
- *     count on Orders, where Refunds and Write-offs live: orange because it asks
- *     for a decision.
- *   - Search is at the top of every page (the header's tool row), where a phone
- *     looks for it; More holds everything else — other destinations, the other
- *     apps, Settings and the account.
+ *   - Every tab keeps its name under its icon (recognised faster than a glyph,
+ *     and an operator opens this a few times a day, not all day).
+ *   - The current tab sits in a soft ember bubble, the icon and the name in the
+ *     brand's text colour: the product's accent marks "here", where a grey
+ *     bubble would only mark "different".
+ *   - A refund or write-off waiting puts a small ember count on Orders.
+ *   - More opens the menu sheet; while it is open the sheet's own foot (your
+ *     profile and a close button) takes this bar's place under the thumb.
  *
- * The bar is 60px plus the safe area; every page reserves `--os-fab-clear` at its
- * foot so it never covers a last row.
+ * Every page reserves `--os-fab-clear` at its foot so the bar never covers a
+ * last row.
  */
 const DOCK_TABS = ["/dashboard", "/orders", "/calendar", "/catalog"] as const;
 const tabOf = (href: string) => NAV_MAIN.find((d) => d.href === href)!;
 
 const tabCls = (on: boolean) =>
   cn(
-    "relative flex min-w-0 flex-col items-center justify-center gap-0.5 pt-1 text-xs transition-colors duration-quick",
-    /* "Here": the ember bar on the top edge (24px wide, 3px tall). */
-    "before:absolute before:left-1/2 before:top-0 before:h-[3px] before:w-6 before:-translate-x-1/2 before:rounded-b-full before:content-['']",
-    on ? "font-semibold text-fg before:bg-ember-solid" : "font-medium text-muted before:bg-transparent active:text-fg",
+    "relative flex h-13 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-xs transition-colors duration-quick active:scale-95 motion-reduce:transition-none",
+    on ? "bg-ember-wash font-semibold text-brand-foreground" : "font-medium text-muted active:text-fg",
   );
 
 export function PhoneDock({ menuOpen, onOpenMenu }: { menuOpen: boolean; onOpenMenu: () => void }) {
@@ -65,7 +56,7 @@ export function PhoneDock({ menuOpen, onOpenMenu }: { menuOpen: boolean; onOpenM
     <nav
       aria-label={t("dock")}
       data-phone-dock
-      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden dark:bg-surface/95"
+      className="fixed inset-x-gutter bottom-[calc(12px+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md items-center gap-0.5 rounded-full border border-line bg-card/90 p-1 shadow-float backdrop-blur-md md:hidden dark:bg-surface/90"
     >
       {DOCK_TABS.map((href) => {
         const d = tabOf(href);
@@ -80,10 +71,10 @@ export function PhoneDock({ menuOpen, onOpenMenu }: { menuOpen: boolean; onOpenM
             aria-current={current ? "page" : undefined}
             data-dock-tab={d.key}
             data-waiting={count > 0 ? count : undefined}
-            className={cn(tabCls(current), "h-15")}
+            className={tabCls(current)}
           >
             <span className="relative">
-              <Icon size={22} strokeWidth={current ? 2 : 1.5} aria-hidden />
+              <Icon size={20} strokeWidth={current ? 2 : 1.75} aria-hidden />
               {count > 0 && (
                 <span
                   aria-hidden
@@ -94,20 +85,13 @@ export function PhoneDock({ menuOpen, onOpenMenu }: { menuOpen: boolean; onOpenM
                 </span>
               )}
             </span>
-            <span className="max-w-full truncate px-1">{t(d.key)}</span>
+            <span className="max-w-full truncate px-0.5">{t(d.key)}</span>
           </Link>
         );
       })}
-      <button
-        type="button"
-        onClick={onOpenMenu}
-        aria-haspopup="dialog"
-        aria-expanded={menuOpen}
-        data-menu-button
-        className={cn(tabCls(menuOpen), "h-15")}
-      >
-        <MoreHorizontal size={22} strokeWidth={menuOpen ? 2 : 1.5} aria-hidden />
-        <span className="max-w-full truncate px-1">{t("more")}</span>
+      <button type="button" onClick={onOpenMenu} aria-haspopup="dialog" aria-expanded={menuOpen} data-menu-button className={tabCls(menuOpen)}>
+        <MoreHorizontal size={20} strokeWidth={menuOpen ? 2 : 1.75} aria-hidden />
+        <span className="max-w-full truncate px-0.5">{t("more")}</span>
       </button>
     </nav>
   );
@@ -148,9 +132,33 @@ function MenuSurface({ onClose, business }: { onClose: () => void; business?: st
           tile={<BusinessTile initials={initialsOf(business)} />}
           title={business ?? "Counterfoil"}
           sub={locationsQ.data ? t("menuHeadSub", { count: locations.length }) : <Skeleton className="h-3 w-28" />}
-          onClose={onClose}
-          closeLabel={tCommon("close")}
         />
+      }
+      /* The foot, where the bar was under the thumb: you (your profile — the
+         appearance and the language live there) and a round close. */
+      foot={
+        <>
+          <Link
+            href="/settings/profile"
+            onClick={onClose}
+            data-menu-item="myProfile"
+            className="flex h-13 min-w-0 items-center gap-tight rounded-full border border-line bg-card pl-1.5 pr-section shadow-float transition-colors duration-quick active:bg-nav-hover dark:bg-surface"
+          >
+            <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-inverse text-sm font-semibold text-inverse-fg">
+              {me ? initialsOf(me.name) : ""}
+            </span>
+            <span className="min-w-0 truncate text-md font-semibold text-fg">{me?.name ?? t("myProfile")}</span>
+          </Link>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={tCommon("close")}
+            data-menu-close
+            className="grid h-13 w-13 shrink-0 place-items-center rounded-full border border-line bg-card text-fg shadow-float transition-colors duration-quick active:bg-nav-hover dark:bg-surface"
+          >
+            <X size={22} strokeWidth={1.75} aria-hidden />
+          </button>
+        </>
       }
     >
       <MenuBody

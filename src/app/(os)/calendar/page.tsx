@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { Button, Checkbox, DateField, Notice, SegmentedControl, Select, Skeleton, Tabs, useToast } from "@/components/ui";
+import { Button, Checkbox, DateField, Notice, PhoneActionsSlot, SegmentedControl, Select, Skeleton, Tabs, useToast } from "@/components/ui";
 import { PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -988,7 +988,7 @@ export default function CalendarPage() {
             screen, not which screen — and on a phone it is the glyph at the end
             of that row. */}
         <div className="flex flex-wrap items-center justify-between gap-x-comfortable gap-y-tight">
-          <div className="flex min-w-0 flex-nowrap items-center gap-tight md:flex-wrap">
+          <div className="flex min-w-0 flex-nowrap items-center gap-tight max-md:flex-1 md:flex-wrap">
             <div className="flex items-center gap-inline">
               <Button variant="secondary" size="icon" className="max-sm:rounded-card max-sm:border-transparent max-sm:bg-subtle max-sm:shadow-none" aria-label={t("previous")} onClick={() => step(-1)}>
                 <ChevronLeft size={16} strokeWidth={1.5} />
@@ -1053,6 +1053,8 @@ export default function CalendarPage() {
             >
               {filterBody}
             </FilterPanel>
+            {/* A phone: New booking (orange) at the right end of this row. */}
+            <PhoneActionsSlot className="ml-auto" />
           </div>
 
           {/* The view switch on the right, the date controls on the left —

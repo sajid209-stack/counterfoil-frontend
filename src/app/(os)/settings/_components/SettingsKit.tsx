@@ -232,7 +232,7 @@ export function SaveBar({
   useUnsavedGuard(dirty);
   if (!dirty) return null;
   return (
-    <div className="sticky bottom-section z-10 max-md:bottom-[calc(56px+env(safe-area-inset-bottom)+12px)]">
+    <div className="sticky bottom-section z-10 max-md:bottom-[calc(82px+env(safe-area-inset-bottom))]">
       <div
         role="region"
         aria-label={t("save.unsaved")}
@@ -514,7 +514,7 @@ export function CreateBar({
   const t = useTranslations("settings");
   useUnsavedGuard(dirty);
   return (
-    <div className="sticky bottom-section z-10 max-md:bottom-[calc(56px+env(safe-area-inset-bottom)+12px)]">
+    <div className="sticky bottom-section z-10 max-md:bottom-[calc(82px+env(safe-area-inset-bottom))]">
       <div className="flex flex-wrap items-center justify-between gap-tight rounded-card border border-line bg-card px-section py-tight shadow-float">
         <p className="min-w-0 text-sm text-muted">{invalid ? invalidNote : note}</p>
         <div className="flex shrink-0 gap-tight">

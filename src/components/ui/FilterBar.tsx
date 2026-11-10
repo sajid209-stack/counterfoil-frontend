@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { MD, SM, useMediaQuery } from "@/lib/useMedia";
 import { Button } from "./Button";
+import { PhoneActionsSlot } from "./PageShell";
 import { Sheet } from "./Sheet";
 
 /**
@@ -345,6 +346,8 @@ export function FilterBar({
           {wide && filtersButton}
 
           {actions && <div className="flex items-center gap-tight md:ml-auto">{actions}</div>}
+          {/* A phone: the page's create button and "⋯" end this row (PageShell portals them in). */}
+          <PhoneActionsSlot />
         </div>
 
         {pill && tabs}

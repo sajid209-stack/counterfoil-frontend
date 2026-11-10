@@ -11,7 +11,7 @@ export type { FieldVariant } from "./Field";
 export { Select } from "./Select";
 export type { SelectOption } from "./Select";
 export { PeriodPill } from "./PeriodPill";
-export { PageShell } from "./PageShell";
+export { PageShell, PhoneActionsSlot } from "./PageShell";
 export { EmptyState } from "./EmptyState";
 export { Modal, ConfirmDialog, scrimClass, useDialogBehaviour } from "./Modal";
 export { Notice } from "./Notice";

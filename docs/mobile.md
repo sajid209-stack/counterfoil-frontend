@@ -355,3 +355,20 @@ Owner review of v6:
 - **One radius**: on an OS phone every container and control is 12px (`body:has([data-os-shell])`
   sets the radius tokens: control, inner, card, sheet, lg, xl, 2xl, 3xl). Round stays only for round
   things — avatars, dots, count badges, progress bars. The 3px and 6px steps stay for tiny marks.
+
+### v8: a floating bar, a menu you close from the bottom, you in the header (2026-11-10)
+
+- **Bar.** The idea taken from the best phone apps is the floating bar: a capsule 12px off the floor
+  and 16px in from each side, frosted card with a line and the float shadow, so the page runs under
+  it. The drawing is Counterfoil's: every tab keeps its name under its icon, and the current tab sits
+  in a soft ember bubble with brand-text icon and name (ember marks "here"; a grey bubble would only
+  mark "different"). The waiting count stays on Orders. `--os-fab-clear` is 90px + safe area; sticky
+  save bars sit at 82px.
+- **Menu.** No close at the top. Its foot, where the thumb already is, holds your profile (avatar
+  + name, to /settings/profile) and a round close, over a fade from the sheet colour so the last
+  rows dissolve instead of being cut. Other apps, Appearance and Language left the menu; Appearance
+  and Language live on your profile. Sign out stays, last, in danger text. (`PhoneSheet` `foot`.)
+- **Header.** Your profile sits beside the bell, the same 40px circle, initials on ink.
+- **Page actions.** No longer in the header. `PhoneActionsSlot` (PageShell) puts them at the right
+  end of the page's first toolbar row: the calendar's date row, every FilterBar's search row. A page
+  without a slot gets its own right-aligned row above the content. Desktop is unchanged.

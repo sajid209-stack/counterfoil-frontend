@@ -19679,3 +19679,11 @@ the radius tokens are all 12px (`body:has([data-os-shell])` in globals.css), per
 control radius; round stays for avatars, dots, badges and bars. Verified on a production build,
 ec29f026 scratchpad `os/check.mjs` (109/111, the 2 being transparent zero shadows; adds: no search or
 venue in the header, the bell opens /activity, one radius on the dashboard) and `os/cal.mjs` 32/32.
+
+### OS phone v8 (2026-11-10)
+Floating labelled tab bar (current tab in an ember bubble), menu closed from its foot (profile pill +
+round close, over a fade), Other apps / Appearance / Language out of the menu, a profile circle
+beside the bell, and page actions (Add) moved from the header to the right end of the page's first
+toolbar row via `PhoneActionsSlot`. Spec docs/mobile.md §8 v8. Verified on a production build:
+ec29f026 scratchpad `os/v8.mjs` 39/39, `os/check.mjs` 109/111 (the same 2 known transparent-shadow
+false positives), `os/cal.mjs` 32/32; desktop /catalog controls identical to live.

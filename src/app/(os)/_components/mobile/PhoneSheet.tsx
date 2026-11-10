@@ -27,6 +27,7 @@ export function PhoneSheet({
   onClose,
   label,
   head,
+  foot,
   children,
   className,
 }: {
@@ -36,6 +37,9 @@ export function PhoneSheet({
   label: string;
   /** Drawn above the scrolling body — normally a `PhoneSheetHead`. */
   head: React.ReactNode;
+  /** Floats over the bottom of the body, which fades out under it (the menu's
+   *  profile and close buttons, in the thumb's reach). */
+  foot?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }) {
@@ -90,7 +94,14 @@ export function PhoneSheet({
           <span aria-hidden className="h-1 w-10 rounded-full bg-strong" />
         </div>
         {head}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
+        <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain", foot ? "pb-28" : undefined)}>{children}</div>
+        {foot && (
+          /* The list fades out as it reaches the buttons, so they float over the
+             end of it rather than sitting on a hard edge. */
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-card from-55% to-transparent pb-[calc(12px+env(safe-area-inset-bottom))] pt-12 dark:from-surface">
+            <div className="pointer-events-auto flex items-center justify-center gap-tight px-gutter">{foot}</div>
+          </div>
+        )}
       </div>
     </>
   );
@@ -115,22 +126,25 @@ export function PhoneSheetHead({
   tile?: React.ReactNode;
   title: React.ReactNode;
   sub?: React.ReactNode;
-  onClose: () => void;
-  closeLabel: string;
+  /** Omit when the sheet closes from its foot instead (the menu). */
+  onClose?: () => void;
+  closeLabel?: string;
 }) {
   /* Counterfoil's own head (docs/mobile.md section 8, v6): the business tile and
      its name on the left, read first; the close as a soft square on the right.
      The close stays first in the DOM (the sheet's first focus) and is ordered last. */
   return (
     <div className="flex shrink-0 items-center gap-comfortable px-gutter pb-comfortable pt-inline">
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label={closeLabel}
-        className="order-last grid h-10 w-10 shrink-0 place-items-center rounded-card bg-subtle text-fg transition-colors duration-quick active:bg-muted-wash"
-      >
-        <X size={18} strokeWidth={1.75} aria-hidden />
-      </button>
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={closeLabel}
+          className="order-last grid h-10 w-10 shrink-0 place-items-center rounded-card bg-subtle text-fg transition-colors duration-quick active:bg-muted-wash"
+        >
+          <X size={18} strokeWidth={1.75} aria-hidden />
+        </button>
+      )}
       {tile && <div className="shrink-0">{tile}</div>}
       <div className="min-w-0 flex-1">
         <p className="line-clamp-2 break-words text-lg font-semibold leading-snug text-fg">{title}</p>

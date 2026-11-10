@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -342,7 +342,12 @@ export function PageShell({
   // snapshot is just the node. getElementById returns the same object on every
   // call, which is what keeps the snapshot stable enough for the hook.
   const slot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-header"), () => null);
-  const barSlot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-actions-mobile"), () => null);
+  /* A phone's page actions (the orange create button, the "⋯") sit in the page's
+     own first toolbar row, at its right (docs/mobile.md section 8, v8): a page
+     marks the spot with <PhoneActionsSlot /> (FilterBar does it for every list).
+     The slot hands its node back through a ref callback; without one, the
+     actions take a right-aligned row of their own above the content. */
+  const [inlineSlot, setInlineSlot] = useState<HTMLElement | null>(null);
   /* A record's own title takes the phone header's title place (22/700 beside the
      back button) and the compact bar's; the page's <h1> then stands down to a
      screen-reader-only heading, so the name is read once. */
@@ -352,7 +357,7 @@ export function PageShell({
   /* A phone does not have room for a page's buttons beside its title, so they
      go behind the bar's round "⋯" — but only when there IS a bar to put it in:
      a PageShell rendered outside the OS shell keeps them in the page. */
-  const phoneOverflow = !wide && !!barSlot && !!actions;
+  const phoneOverflow = !wide && !!actions;
   const backInBar = useBackInBar();
   const recordTitle = !!back && backInBar && !!titleSlot;
   /* A header row exists for a RECORD: a way back, a state. A list or a
@@ -431,6 +436,14 @@ export function PageShell({
      answers to the same question. The wrapper holds the gutter; nothing under
      it may add to it. What follows a visible heading, or a header row, is the
      smaller gap a heading and its content take. */
+  const phoneActions =
+    !wide && (narrowPrimary || phoneOverflow) ? (
+      <>
+        {phoneOverflow && <PhoneActions>{actions}</PhoneActions>}
+        {narrowPrimary}
+      </>
+    ) : null;
+
   const afterHeading = !wide && (echoesBar || recordTitle ? "md:mt-section" : "mt-section");
 
   return (
@@ -438,16 +451,6 @@ export function PageShell({
       {/* Desktop: the title portals into the sticky bar. Below md they render
           here instead — one copy, either way. */}
       {wide && slot && createPortal(headerText, slot)}
-      {/* The create icon and the "⋯" live in the phone header's pill, at the right
-          of the page's title. */}
-      {!wide && (narrowPrimary || phoneOverflow) && barSlot &&
-        createPortal(
-          <>
-            {narrowPrimary}
-            {phoneOverflow && <PhoneActions>{actions}</PhoneActions>}
-          </>,
-          barSlot,
-        )}
       {back && <BarBack href={back.href} label={back.label} />}
       {recordTitle && titleSlot && createPortal(<span aria-hidden>{title}</span>, titleSlot)}
       {recordTitle && titleCompact && createPortal(<span aria-hidden>{title}</span>, titleCompact)}
@@ -487,7 +490,24 @@ export function PageShell({
           )}
         </div>
       )}
-      <div className={hasRow ? "mt-tight" : afterHeading || undefined}>{children}</div>
+      <div className={hasRow ? "mt-tight" : afterHeading || undefined}>
+        {phoneActions && !inlineSlot && <div className="mb-tight flex items-center justify-end gap-inline md:hidden">{phoneActions}</div>}
+        {phoneActions && inlineSlot && createPortal(phoneActions, inlineSlot)}
+        <PhoneActionsContext value={setInlineSlot}>{children}</PhoneActionsContext>
+      </div>
     </div>
   );
+}
+
+const PhoneActionsContext = createContext<((el: HTMLElement | null) => void) | null>(null);
+
+/**
+ * Where a phone page's actions go: the orange create button and the "⋯", at the
+ * right of the page's first toolbar row (docs/mobile.md section 8, v8). Drawn
+ * only below md, and only inside a PageShell; elsewhere it renders nothing.
+ */
+export function PhoneActionsSlot({ className }: { className?: string }) {
+  const set = useContext(PhoneActionsContext);
+  if (!set) return null;
+  return <div ref={set} data-phone-actions className={cn("flex shrink-0 items-center gap-inline empty:hidden md:hidden", className)} />;
 }
