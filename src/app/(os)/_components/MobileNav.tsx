@@ -44,13 +44,15 @@ import { initialsOf } from "./mobile/shared";
 const DOCK_TABS = ["/dashboard", "/orders", "/calendar", "/catalog"] as const;
 const tabOf = (href: string) => NAV_MAIN.find((d) => d.href === href)!;
 
-/* The tab is the full slot (a fat target); the circle inside it is what
-   shows "here". */
-const tabCls = "relative flex h-13 min-w-0 flex-1 items-center justify-center rounded-full transition-transform duration-quick active:scale-95 motion-reduce:transition-none";
+/* Each tab IS its 48px circle, and the capsule pads every side by the same
+   6px, so the current circle sits concentric in the bar's rounded end (outer
+   radius = inner radius + padding) instead of floating closer to the top than
+   to the side. The five circles spread edge to edge with equal gaps. */
+const tabCls = "relative grid h-12 w-12 shrink-0 place-items-center rounded-full transition-transform duration-quick active:scale-95 motion-reduce:transition-none";
 const dotCls = (on: boolean) =>
   cn(
     "relative grid h-12 w-12 place-items-center rounded-full transition-colors duration-quick",
-    on ? "bg-ember-solid text-on-solid shadow-sm" : "text-muted",
+    on ? "bg-ember-solid text-on-solid" : "text-muted",
   );
 
 export function PhoneDock({ menuOpen, onOpenMenu }: { menuOpen: boolean; onOpenMenu: () => void }) {
@@ -61,7 +63,7 @@ export function PhoneDock({ menuOpen, onOpenMenu }: { menuOpen: boolean; onOpenM
     <nav
       aria-label={t("dock")}
       data-phone-dock
-      className="fixed inset-x-gutter bottom-[calc(12px+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md items-center gap-0.5 rounded-full border border-line bg-card/90 p-1 shadow-float backdrop-blur-md md:hidden dark:bg-surface/90"
+      className="fixed inset-x-gutter bottom-[calc(12px+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-sm items-center justify-between rounded-full border border-line bg-card/90 p-1.5 shadow-float backdrop-blur-md md:hidden dark:bg-surface/90"
     >
       {DOCK_TABS.map((href) => {
         const d = tabOf(href);

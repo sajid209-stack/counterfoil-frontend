@@ -12,7 +12,7 @@ import { cn } from "@/lib/cn";
 import { NAV_IDLE, NAV_PARENT_OF_SELECTED, NAV_SELECTED } from "@/components/ui/navStyles";
 import { NAV_MAIN, NAV_SETTINGS, groupOf, isAt, type NavDestination } from "../nav";
 import { NavBadge, useNavBadges, badgeCount } from "../navBadges";
-import { IconTile } from "./shared";
+import { IconTile, initialsOf } from "./shared";
 import { setActiveLocation } from "@/lib/activeLocation";
 
 /*
@@ -94,7 +94,7 @@ export function MenuBody({
             /* The desktop rail's row (navStyles): the light fill and 600 on the
                page you are on, the parent of that page in ink and 600. */
             className={cn(
-              "flex min-h-11 min-w-0 flex-1 items-center gap-comfortable rounded-card pl-comfortable text-md transition-colors duration-quick",
+              "flex h-12 min-w-0 flex-1 items-center gap-comfortable rounded-card pl-comfortable text-md transition-colors duration-quick",
               kids.length > 0 ? "pr-tight" : "pr-comfortable",
               exact ? NAV_SELECTED : parentOf ? NAV_PARENT_OF_SELECTED : NAV_IDLE,
             )}
@@ -112,7 +112,7 @@ export function MenuBody({
               aria-controls={listId}
               aria-label={t("showPages", { name: t(d.key) })}
               data-menu-expand={d.key}
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-card text-muted transition-colors duration-quick active:bg-nav-hover"
+              className="grid h-12 w-12 shrink-0 place-items-center rounded-card text-muted transition-colors duration-quick active:bg-nav-hover"
             >
               <ChevronDown
                 size={18}
@@ -127,7 +127,7 @@ export function MenuBody({
           /* Children start where the parent's label starts (12 pad + 24 icon + 12
              gap = 48px), as on the desktop rail; no guide line. Hidden, not
              unmounted, so the chevron's aria-controls always names a real node. */
-          <ul id={listId} hidden={!expanded} className="pb-1">
+          <ul id={listId} hidden={!expanded}>
             {kids.map((c) => {
               const sel = isAt(c, pathname);
               return (
@@ -139,7 +139,7 @@ export function MenuBody({
                     data-autofocus={sel ? "" : undefined}
                     onClick={onClose}
                     className={cn(
-                      "ml-9 flex min-h-11 items-center rounded-card px-comfortable text-md transition-colors duration-quick",
+                      "ml-9 flex h-11 items-center rounded-card px-comfortable text-md transition-colors duration-quick",
                       sel ? NAV_SELECTED : NAV_IDLE,
                     )}
                   >
@@ -157,13 +157,13 @@ export function MenuBody({
   };
 
   return (
-    <div className="flex flex-col gap-section px-gutter pb-4 pt-1">
+    <div className="flex flex-col gap-section px-gutter pb-section">
       {/* The venue first: it qualifies every list behind this sheet. Switching
           is a dropdown in place (v9), not a second sheet over this one: the
           choice is two or three names, and a popup over a popup loses where
           you were. The venues open right under the row, indented like a
           parent's pages; choosing one applies at once and folds the list. */}
-      <section className="">
+      <section>
         {many ? (
           <>
             <button
@@ -172,11 +172,22 @@ export function MenuBody({
               aria-expanded={venuesOpen}
               aria-controls={`${baseId}-venues`}
               data-menu-venue
-              className="flex min-h-11 w-full items-center gap-comfortable rounded-card px-comfortable text-start transition-colors duration-quick active:bg-nav-hover"
+              className="flex h-12 w-full items-center gap-comfortable rounded-card px-comfortable text-start transition-colors duration-quick active:bg-nav-hover"
             >
               <VenueRowBody name={data.location?.name} expanded={venuesOpen} />
             </button>
-            <ul id={`${baseId}-venues`} hidden={!venuesOpen} aria-label={t("venueChoose")} className="pb-1">
+            {/* The venues as one contained list (v10): a card under the row, rows
+                split by hairlines, each led by the venue's initials so three
+                names read as three places rather than three lines of text. The
+                one you are on is ink-tiled, bold and ticked; a venue that has
+                stopped selling carries a quiet pill instead of a second line. */}
+            <ul
+              id={`${baseId}-venues`}
+              hidden={!venuesOpen}
+              aria-label={t("venueChoose")}
+              data-menu-venues
+              className="mt-tight divide-y divide-hairline overflow-hidden rounded-card border border-line bg-card dark:bg-surface"
+            >
               {data.locations.map((l) => {
                 const on = l.id === data.location?.id;
                 return (
@@ -189,16 +200,22 @@ export function MenuBody({
                         setActiveLocation(l.id);
                         setVenuesOpen(false);
                       }}
-                      className={cn(
-                        "ml-9 flex min-h-11 w-[calc(100%-2.25rem)] items-center gap-comfortable rounded-card px-comfortable text-start text-md transition-colors duration-quick",
-                        on ? NAV_SELECTED : NAV_IDLE,
-                      )}
+                      className="flex h-14 w-full items-center gap-comfortable px-comfortable text-start transition-colors duration-quick active:bg-nav-hover"
                     >
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate">{l.name}</span>
-                        {l.status !== "active" && <span className="block truncate text-sm font-normal text-muted">{t("venueNotSelling")}</span>}
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "grid h-8 w-8 shrink-0 place-items-center rounded-control text-xs font-semibold",
+                          on ? "bg-inverse text-inverse-fg" : "bg-subtle text-muted",
+                        )}
+                      >
+                        {initialsOf(l.name)}
                       </span>
-                      {on && <Check size={18} strokeWidth={2} aria-hidden className="shrink-0" />}
+                      <span className={cn("min-w-0 flex-1 truncate text-md", on ? "font-semibold text-fg" : "text-fg")}>{l.name}</span>
+                      {l.status !== "active" && (
+                        <span className="shrink-0 rounded-full bg-subtle px-tight py-0.5 text-xs font-medium text-muted">{t("venueNotSelling")}</span>
+                      )}
+                      {on && <Check size={18} strokeWidth={2.25} aria-hidden className="shrink-0 text-brand-foreground" />}
                     </button>
                   </li>
                 );
@@ -206,7 +223,7 @@ export function MenuBody({
             </ul>
           </>
         ) : (
-          <div className="flex min-h-11 w-full items-center gap-comfortable px-comfortable">
+          <div className="flex h-12 w-full items-center gap-comfortable px-comfortable">
             <VenueRowBody name={data.location?.name} />
           </div>
         )}
@@ -216,7 +233,9 @@ export function MenuBody({
         <ul className="flex flex-col">{NAV_MAIN.map(parentRow)}</ul>
       </nav>
 
-      <section className="">
+      {/* Settings and Sign out are one group: both are about the account,
+          not a page of the business. */}
+      <section className="flex flex-col">
         <Link
           /* The phone's Settings is its own list of sections (docs/mobile.md §8);
              the desktop rail keeps going straight to the first section. */
@@ -225,7 +244,7 @@ export function MenuBody({
           aria-current={isAt(NAV_SETTINGS, pathname) ? "page" : undefined}
           data-autofocus={isAt(NAV_SETTINGS, pathname) ? "" : undefined}
           onClick={onClose}
-          className={cn("flex min-h-11 items-center gap-comfortable rounded-card px-comfortable text-md transition-colors duration-quick", isAt(NAV_SETTINGS, pathname) ? NAV_SELECTED : NAV_IDLE)}
+          className={cn("flex h-12 items-center gap-comfortable rounded-card px-comfortable text-md transition-colors duration-quick", isAt(NAV_SETTINGS, pathname) ? NAV_SELECTED : NAV_IDLE)}
         >
           <IconTile icon={NAV_SETTINGS.icon} current={isAt(NAV_SETTINGS, pathname)} />
           <span className="min-w-0 flex-1 truncate">
@@ -233,7 +252,6 @@ export function MenuBody({
           </span>
           <ChevronRight size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
         </Link>
-      </section>
 
       {/* The way out of the account, last and quiet. Your profile is the round
           button at the foot of this sheet (and in every page's header); the
@@ -241,16 +259,17 @@ export function MenuBody({
       <Link
         href="/signed-out"
         data-menu-item="signOut"
-        className="flex min-h-11 items-center gap-comfortable rounded-card px-comfortable text-md text-danger-soft-fg transition-colors duration-quick active:bg-nav-hover"
+        className="flex h-12 items-center gap-comfortable rounded-card px-comfortable text-md text-danger-soft-fg transition-colors duration-quick active:bg-nav-hover"
       >
         <IconTile icon={LogOut} danger />
         <span className="min-w-0 flex-1 truncate">{t("signOut")}</span>
       </Link>
+      </section>
 
       {/* The page-state preview is a developer's tool, so it sits at the very
           foot, quiet: below every destination and the account, where nobody who
           came to do something reaches it by accident. */}
-      <div className="px-comfortable pb-1 pt-1">
+      <div className="px-comfortable">
         <PageStatePicker full />
       </div>
     </div>

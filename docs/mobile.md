@@ -386,3 +386,17 @@ Owner review of v6:
 - **You.** The header's profile circle opens the account menu, the desktop bar's `AccountMenu` in
   its `person` variant: your name and "Signed in as …", Appearance, Language, My profile, Settings
   (the phone's list of sections) and Sign out. Tap outside or Escape closes it.
+
+### v10: one rhythm (2026-11-10)
+
+- **Menu spacing, on the 8pt grid.** Rows that are destinations are 48px and sit flush (0 gap; the
+  fill marks the current one, so no gap is needed to tell rows apart); a parent's pages are 44px,
+  flush under it. Groups are 16px apart: Venue · the business's pages · Settings + Sign out (both are
+  about the account) · Page state. No stray padding under an open group.
+- **Bar padding.** Each tab is its 48px circle, and the capsule pads every side by the same 6px, so
+  the current circle sits concentric in the bar's round end (outer radius = inner radius +
+  padding). The five circles spread edge to edge with equal gaps. Height unchanged (62px).
+- **Venue picker.** A contained card 8px under the Venue row, on the row's own edges, rows split by
+  hairlines. Each 56px option is led by the venue's initials (ink tile on the current one, soft on the
+  rest), the name, then a "Not selling now" pill where it applies, and an ember tick on the current
+  one. Choosing applies at once and folds the card.

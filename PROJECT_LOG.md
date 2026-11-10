@@ -19695,3 +19695,10 @@ dropdown in the menu (VenueSheet removed), and the header profile opening the ac
 docs/mobile.md §8 v9. Verified on a production build: ec29f026 scratchpad `os/v9.mjs` 44/44 (light
 and dark, 320 and 390), `os/v8.mjs` 39/39 (updated to the icon tabs and the profile menu),
 `os/check.mjs` 109/111 (the 2 known transparent-shadow false positives), `os/cal.mjs` 32/32.
+
+### OS phone v10 (2026-11-10)
+Menu on one 8pt rhythm (48px flush rows, 44px child rows, 16px between groups; Settings + Sign out one
+group), the tab bar's circle concentric with equal 6px padding all round and equal gaps, and the venue
+switcher as a contained card (initials tiles, hairlines, status pill, ember tick). Spec docs/mobile.md §8
+v10. Verified on a production build, ec29f026 scratchpad: `os/v10.mjs` 24/24 (measured at 320/390/430),
+`os/v9.mjs` 44/44, `os/v8.mjs` 39/39, `os/check.mjs` 109/111 (the 2 known false positives), `os/cal.mjs` 32/32.
