@@ -21,17 +21,19 @@ import { initialsOf } from "./mobile/shared";
  * The phone's way around (docs/mobile.md section 8, v8): a floating tab bar, and
  * the full-height sheet its More tab opens.
  *
- *     ( Home  Orders  Calendar  Catalog  More )
+ *     (  ◉   ▢   ▢   ▢   ⋯  )
  *
  * The idea taken from the best phone apps is the floating bar — it sits above
  * the content as an object you hold, 12px off the floor, so the page runs under
  * it to the edge. The drawing is Counterfoil's:
  *
- *   - Every tab keeps its name under its icon (recognised faster than a glyph,
- *     and an operator opens this a few times a day, not all day).
- *   - The current tab sits in a soft ember bubble, the icon and the name in the
- *     brand's text colour: the product's accent marks "here", where a grey
- *     bubble would only mark "different".
+ *   - Icons only, at 24px (v9, the owner's call): five glyphs the operator
+ *     learns in a day read faster than five truncated words ("Dashbo…"). Each
+ *     tab keeps its name as its accessible name, so nothing is lost to a
+ *     screen reader.
+ *   - The current tab is a solid ember circle with a white icon — the
+ *     product's primary marks "here", and a filled shape is the one signal
+ *     that does not depend on reading a colour difference between two greys.
  *   - A refund or write-off waiting puts a small ember count on Orders.
  *   - More opens the menu sheet; while it is open the sheet's own foot (your
  *     profile and a close button) takes this bar's place under the thumb.
@@ -42,10 +44,13 @@ import { initialsOf } from "./mobile/shared";
 const DOCK_TABS = ["/dashboard", "/orders", "/calendar", "/catalog"] as const;
 const tabOf = (href: string) => NAV_MAIN.find((d) => d.href === href)!;
 
-const tabCls = (on: boolean) =>
+/* The tab is the full slot (a fat target); the circle inside it is what
+   shows "here". */
+const tabCls = "relative flex h-13 min-w-0 flex-1 items-center justify-center rounded-full transition-transform duration-quick active:scale-95 motion-reduce:transition-none";
+const dotCls = (on: boolean) =>
   cn(
-    "relative flex h-13 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-xs transition-colors duration-quick active:scale-95 motion-reduce:transition-none",
-    on ? "bg-ember-wash font-semibold text-brand-foreground" : "font-medium text-muted active:text-fg",
+    "relative grid h-12 w-12 place-items-center rounded-full transition-colors duration-quick",
+    on ? "bg-ember-solid text-on-solid shadow-sm" : "text-muted",
   );
 
 export function PhoneDock({ menuOpen, onOpenMenu }: { menuOpen: boolean; onOpenMenu: () => void }) {
@@ -67,31 +72,36 @@ export function PhoneDock({ menuOpen, onOpenMenu }: { menuOpen: boolean; onOpenM
           <Link
             key={href}
             href={href}
-            aria-label={count > 0 ? t("ordersWaiting", { count }) : undefined}
+            aria-label={count > 0 ? t("ordersWaiting", { count }) : t(d.key)}
             aria-current={current ? "page" : undefined}
             data-dock-tab={d.key}
             data-waiting={count > 0 ? count : undefined}
-            className={tabCls(current)}
+            className={tabCls}
           >
-            <span className="relative">
-              <Icon size={20} strokeWidth={current ? 2 : 1.75} aria-hidden />
+            <span className={dotCls(current)}>
+              <Icon size={24} strokeWidth={current ? 2 : 1.75} aria-hidden />
               {count > 0 && (
+                /* On the current tab the count would be ember on ember, so it
+                   turns ink there. */
                 <span
                   aria-hidden
                   data-menu-dot
-                  className="absolute -right-2.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-ember-solid px-1 text-xs font-semibold leading-none text-on-solid ring-2 ring-card"
+                  className={cn(
+                    "absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full px-1 text-xs font-semibold leading-none ring-2 ring-card",
+                    current ? "bg-inverse text-inverse-fg" : "bg-ember-solid text-on-solid",
+                  )}
                 >
                   {count > 9 ? "9+" : count}
                 </span>
               )}
             </span>
-            <span className="max-w-full truncate px-0.5">{t(d.key)}</span>
           </Link>
         );
       })}
-      <button type="button" onClick={onOpenMenu} aria-haspopup="dialog" aria-expanded={menuOpen} data-menu-button className={tabCls(menuOpen)}>
-        <MoreHorizontal size={20} strokeWidth={menuOpen ? 2 : 1.75} aria-hidden />
-        <span className="max-w-full truncate px-0.5">{t("more")}</span>
+      <button type="button" onClick={onOpenMenu} aria-haspopup="dialog" aria-expanded={menuOpen} aria-label={t("more")} data-menu-button className={tabCls}>
+        <span className={dotCls(menuOpen)}>
+          <MoreHorizontal size={24} strokeWidth={menuOpen ? 2 : 1.75} aria-hidden />
+        </span>
       </button>
     </nav>
   );
@@ -122,8 +132,9 @@ function MenuSurface({ onClose, business }: { onClose: () => void; business?: st
   return (
     <PhoneSheet
       open
-      /* Escape closes the top layer: the venue picker if it is up, else the menu. */
-      onClose={() => (venuesOpen ? setVenuesOpen(false) : onClose())}
+      /* The venue list is a dropdown inside the menu now, not a layer of its
+         own, so Escape and the backdrop close the menu itself. */
+      onClose={onClose}
       label={t("menu")}
       /* Full height: the menu is a place you go, not a note over the page. */
       className="h-[calc(100dvh-0.5rem)]"

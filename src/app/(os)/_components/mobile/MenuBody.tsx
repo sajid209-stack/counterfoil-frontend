@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, ChevronRight, LogOut, MapPin } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, LogOut, MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui";
 import { PageStatePicker } from "@/components/screens";
@@ -13,14 +13,14 @@ import { NAV_IDLE, NAV_PARENT_OF_SELECTED, NAV_SELECTED } from "@/components/ui/
 import { NAV_MAIN, NAV_SETTINGS, groupOf, isAt, type NavDestination } from "../nav";
 import { NavBadge, useNavBadges, badgeCount } from "../navBadges";
 import { IconTile } from "./shared";
-import { VenueSheet } from "./VenueSheet";
+import { setActiveLocation } from "@/lib/activeLocation";
 
 /*
  * What the menu sheet holds — white cards on the paper ground, 12px apart
  * (docs/mobile.md §7, rule 2). Every destination is still here: the cards only
  * decide how they are grouped and how loudly.
  *
- *   Venue         one row → the venue picker
+ *   Venue         one row; opens the venues right under it (a dropdown, v9)
  *   Destinations  NAV_MAIN; a parent with pages has a separate chevron
  *   Settings      one row
  *   Sign out      one row, danger text
@@ -158,18 +158,53 @@ export function MenuBody({
 
   return (
     <div className="flex flex-col gap-section px-gutter pb-4 pt-1">
-      {/* The venue first: it qualifies every list behind this sheet. */}
+      {/* The venue first: it qualifies every list behind this sheet. Switching
+          is a dropdown in place (v9), not a second sheet over this one: the
+          choice is two or three names, and a popup over a popup loses where
+          you were. The venues open right under the row, indented like a
+          parent's pages; choosing one applies at once and folds the list. */}
       <section className="">
         {many ? (
-          <button
-            type="button"
-            onClick={() => setVenuesOpen(true)}
-            aria-haspopup="dialog"
-            data-menu-venue
-            className="flex min-h-11 w-full items-center gap-comfortable rounded-card px-comfortable text-start transition-colors duration-quick active:bg-nav-hover"
-          >
-            <VenueRowBody name={data.location?.name} chevron />
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setVenuesOpen(!venuesOpen)}
+              aria-expanded={venuesOpen}
+              aria-controls={`${baseId}-venues`}
+              data-menu-venue
+              className="flex min-h-11 w-full items-center gap-comfortable rounded-card px-comfortable text-start transition-colors duration-quick active:bg-nav-hover"
+            >
+              <VenueRowBody name={data.location?.name} expanded={venuesOpen} />
+            </button>
+            <ul id={`${baseId}-venues`} hidden={!venuesOpen} aria-label={t("venueChoose")} className="pb-1">
+              {data.locations.map((l) => {
+                const on = l.id === data.location?.id;
+                return (
+                  <li key={l.id}>
+                    <button
+                      type="button"
+                      aria-current={on ? "true" : undefined}
+                      data-menu-venue-option={l.id}
+                      onClick={() => {
+                        setActiveLocation(l.id);
+                        setVenuesOpen(false);
+                      }}
+                      className={cn(
+                        "ml-9 flex min-h-11 w-[calc(100%-2.25rem)] items-center gap-comfortable rounded-card px-comfortable text-start text-md transition-colors duration-quick",
+                        on ? NAV_SELECTED : NAV_IDLE,
+                      )}
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate">{l.name}</span>
+                        {l.status !== "active" && <span className="block truncate text-sm font-normal text-muted">{t("venueNotSelling")}</span>}
+                      </span>
+                      {on && <Check size={18} strokeWidth={2} aria-hidden className="shrink-0" />}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         ) : (
           <div className="flex min-h-11 w-full items-center gap-comfortable px-comfortable">
             <VenueRowBody name={data.location?.name} />
@@ -218,17 +253,12 @@ export function MenuBody({
       <div className="px-comfortable pb-1 pt-1">
         <PageStatePicker full />
       </div>
-
-      {/* Inside the sheet's own DOM, not beside it: the sheet traps Tab by what is
-          inside its panel, and a second dialog outside that panel would be
-          fought over by two traps. */}
-      <VenueSheet open={venuesOpen} onClose={() => setVenuesOpen(false)} />
     </div>
   );
 }
 
 
-function VenueRowBody({ name, chevron = false }: { name: string | undefined; chevron?: boolean }) {
+function VenueRowBody({ name, expanded }: { name: string | undefined; expanded?: boolean }) {
   const t = useTranslations("nav");
   return (
     <>
@@ -237,7 +267,14 @@ function VenueRowBody({ name, chevron = false }: { name: string | undefined; che
       <span className="min-w-0 flex-1 truncate text-end text-md text-muted">
         {name ?? <Skeleton className="ml-auto h-3.5 w-24" />}
       </span>
-      {chevron && <ChevronRight size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />}
+      {expanded !== undefined && (
+        <ChevronDown
+          size={18}
+          strokeWidth={1.75}
+          aria-hidden
+          className={cn("shrink-0 text-muted transition-transform duration-standard motion-reduce:transition-none", expanded && "rotate-180")}
+        />
+      )}
     </>
   );
 }

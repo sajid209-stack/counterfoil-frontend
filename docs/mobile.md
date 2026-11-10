@@ -372,3 +372,17 @@ Owner review of v6:
 - **Page actions.** No longer in the header. `PhoneActionsSlot` (PageShell) puts them at the right
   end of the page's first toolbar row: the calendar's date row, every FilterBar's search row. A page
   without a slot gets its own right-aligned row above the content. Desktop is unchanged.
+
+### v9: icon tabs, the venue in place, you as a menu (2026-11-10)
+
+- **Bar.** Icons only, 24px; each tab keeps its name as its accessible name ("Orders, 4 waiting").
+  Five truncated words ("Dashbo…") read slower than five glyphs learnt in a day. The current tab is a
+  solid ember circle with a white icon (48px); idle tabs have no fill. On the current tab the Orders
+  count turns ink so it does not vanish into the ember.
+- **Venue.** A dropdown in place inside the menu, not a second sheet: the row's chevron turns, the
+  venues open right under it indented like a parent's pages, the current one filled and ticked, one
+  that has stopped selling says so. Choosing applies at once and folds the list; the menu stays open.
+  `VenueSheet` is gone.
+- **You.** The header's profile circle opens the account menu, the desktop bar's `AccountMenu` in
+  its `person` variant: your name and "Signed in as …", Appearance, Language, My profile, Settings
+  (the phone's list of sections) and Sign out. Tap outside or Escape closes it.

@@ -19687,3 +19687,11 @@ beside the bell, and page actions (Add) moved from the header to the right end o
 toolbar row via `PhoneActionsSlot`. Spec docs/mobile.md §8 v8. Verified on a production build:
 ec29f026 scratchpad `os/v8.mjs` 39/39, `os/check.mjs` 109/111 (the same 2 known transparent-shadow
 false positives), `os/cal.mjs` 32/32; desktop /catalog controls identical to live.
+
+### OS phone v9 (2026-11-10)
+Icon-only tab bar with a solid ember circle on the current tab, the venue switcher as an in-place
+dropdown in the menu (VenueSheet removed), and the header profile opening the account menu
+(`AccountMenu` `person` variant: appearance, language, profile, settings, sign out). Spec
+docs/mobile.md §8 v9. Verified on a production build: ec29f026 scratchpad `os/v9.mjs` 44/44 (light
+and dark, 320 and 390), `os/v8.mjs` 39/39 (updated to the icon tabs and the profile menu),
+`os/check.mjs` 109/111 (the 2 known transparent-shadow false positives), `os/cal.mjs` 32/32.

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AccountMenu } from "../AccountMenu";
 import { useEffect, useRef } from "react";
 import { Bell, ChevronLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -143,14 +144,16 @@ export function PhoneBar({ pageName, isSettings }: { pageName: string; isSetting
         </Link>
         {/* You: your profile, the same size as the bell. A page's own actions are
             not up here; they end its first toolbar row (PhoneActionsSlot). */}
-        <Link
-          href="/settings/profile"
-          aria-label={me ? t("profileOf", { name: me.name }) : t("myProfile")}
-          data-bar-profile
-          className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-inverse text-sm font-semibold text-inverse-fg transition-opacity duration-quick before:absolute before:-inset-0.5 before:content-[''] active:opacity-80"
-        >
-          {me ? initialsOf(me.name) : ""}
-        </Link>
+        {/* You: opens the account menu (appearance, language, profile,
+            settings, sign out), the desktop bar's menu headed by you. */}
+        <AccountMenu
+          person={{
+            name: me?.name,
+            sub: me ? t("signedInAs", { name: me.email ?? me.phone ?? me.name }) : undefined,
+            label: me ? t("profileOf", { name: me.name }) : t("myProfile"),
+            initials: me ? initialsOf(me.name) : "",
+          }}
+        />
       </div>
       {/* Outside both bars: the compact bar is a z-30 stacking context and the
           dock is z-30 too, later in the page — a sheet inside would sit under it. */}
