@@ -400,3 +400,6 @@ Owner review of v6:
   hairlines. Each 56px option is led by the venue's initials (ink tile on the current one, soft on the
   rest), the name, then a "Not selling now" pill where it applies, and an ember tick on the current
   one. Choosing applies at once and folds the card.
+
+- **v10.1 (2026-11-10):** the header bell hides on the Activity log itself (it would open the page
+  you are on).

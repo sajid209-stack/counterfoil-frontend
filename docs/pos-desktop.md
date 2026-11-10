@@ -184,3 +184,30 @@ week (from Monday), This month, Last month, or any dates drawn on the calendar; 
 - **Print** opens the whole list first, so the printout holds every sale in the range, and prints
   the range under the title.
 - On a phone the range button takes the row and Export and Print are 44px icon buttons with names.
+
+## 13. Arrivals v2: the day as an agenda (2026-11-10)
+
+The owner: the arrivals list's dropdowns were bad UI and UX. What the best door and front-desk lists do
+(OpenTable and Resy's host list, Mindbody and Zenoti's front desk, Luma's and Eventbrite Organizer's
+check-in): every guest is on screen, grouped by time, with one obvious action per guest and the state
+readable without reading. None of them makes the host open a group to find the person standing there.
+
+- **No accordions.** Each session is a card; every party is visible. A finished session says
+  "✓ Everyone's in" in its header instead of folding away. Search, filters and a scan still narrow
+  the list, and a scan still marks the guest's row.
+- **Time down the left** (desktop): a 5.5rem sticky column, so the session you are scrolling through
+  stays named, the way the OS calendar's agenda reads. A phone has no room for a column, so the time
+  leads the card's header as a chip.
+- **A "Now" line** (today only), ember, between what has started and what is still to come: the
+  question at a door is "who is next".
+- **The row:** avatar · name over "size · (n of m in) · place · code" · ONE right-hand slot · menu.
+  The slot is the action when there is something to do (Check in n / +1 / Take ৳…), else the status
+  (All in / No-show). The old row put a "Not in yet" pill beside a "Check in" button and gave the head
+  count its own column; together they cost the name ~14rem and truncated the code. The avatar carries
+  the state at a glance: initials while expected, a success tick once in, a stop for a no-show.
+- **Phone:** the same row stacked; a party with nothing to do is one line (status + menu), not a line
+  and a lone "…".
+
+Verified on a production build: f19663fb (ec29f026) scratchpad `pos/ci2.mjs` 20/20 at 1440, 1280 and
+390 (every party visible, no expanders, time + progress per session, Now line with nothing started
+after it, avatars, check-in flips the row), `pos/btn.mjs` 84/84.

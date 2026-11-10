@@ -19702,3 +19702,9 @@ group), the tab bar's circle concentric with equal 6px padding all round and equ
 switcher as a contained card (initials tiles, hairlines, status pill, ember tick). Spec docs/mobile.md §8
 v10. Verified on a production build, ec29f026 scratchpad: `os/v10.mjs` 24/24 (measured at 320/390/430),
 `os/v9.mjs` 44/44, `os/v8.mjs` 39/39, `os/check.mjs` 109/111 (the 2 known false positives), `os/cal.mjs` 32/32.
+
+### POS Arrivals v2 + no bell on the Activity log (2026-11-10)
+Arrivals is an agenda: no accordions, a card per session with "Everyone's in" when done, a sticky time
+column on desktop (time chip on phone), an ember "Now" line today, and rows with a state avatar, one
+fact line and one right-hand slot (action, else status). The phone header's bell hides on /activity.
+Spec docs/pos-desktop.md §13. Verified: `pos/ci2.mjs` 20/20, `pos/btn.mjs` 84/84, tsc, lint, tokens, i18n.

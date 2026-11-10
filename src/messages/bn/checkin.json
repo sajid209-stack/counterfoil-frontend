@@ -97,5 +97,7 @@
   "modeLabel": "চেক-ইন দেখার ধরন",
   "modeScan": "স্ক্যান",
   "modeArrivals": "আগমন",
-  "guestDefault": "অতিথি"
+  "guestDefault": "অতিথি",
+  "nowLine": "এখন",
+  "sessionAllIn": "সবাই এসেছেন"
 }

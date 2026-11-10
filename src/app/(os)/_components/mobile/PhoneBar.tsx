@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AccountMenu } from "../AccountMenu";
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { Bell, ChevronLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { PreviewChip } from "@/components/screens";
@@ -61,6 +62,8 @@ export function PhoneBar({ pageName, isSettings }: { pageName: string; isSetting
   const bar = useRef<HTMLDivElement>(null);
   const head = useRef<HTMLDivElement>(null);
   const waiting = useWaitingTotal();
+  /* On the Activity log the bell would open the page you are on. */
+  const onActivity = usePathname().startsWith("/activity");
   const meQ = useApiQuery(() => getStaff(DEMO_STAFF_ID), []);
   const me = meQ.data;
 
@@ -133,6 +136,7 @@ export function PhoneBar({ pageName, isSettings }: { pageName: string; isSetting
         <PreviewChip />
         {/* What has happened lately, as a bell (it is the activity log): an ember
             dot when something waits for a decision (a refund or a write-off). */}
+        {!onActivity && (
         <Link
           href="/activity"
           aria-label={waiting > 0 ? t("activityWaiting", { count: waiting }) : t("activityLog")}
@@ -142,8 +146,7 @@ export function PhoneBar({ pageName, isSettings }: { pageName: string; isSetting
           <Bell size={20} strokeWidth={1.75} aria-hidden />
           {waiting > 0 && <span aria-hidden className="absolute right-2 top-2 h-2 w-2 rounded-full bg-ember-solid ring-2 ring-card" />}
         </Link>
-        {/* You: your profile, the same size as the bell. A page's own actions are
-            not up here; they end its first toolbar row (PhoneActionsSlot). */}
+        )}
         {/* You: opens the account menu (appearance, language, profile,
             settings, sign out), the desktop bar's menu headed by you. */}
         <AccountMenu

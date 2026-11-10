@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { CalendarClock, HandCoins, RotateCcw } from "lucide-react";
+import { Ban, CalendarClock, Check, HandCoins, RotateCcw } from "lucide-react";
 import { ActionMenu, Button, type ActionMenuItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
@@ -10,14 +10,29 @@ import { T } from "../../_components/type";
 import type { Party } from "../_lib/parties";
 
 /**
- * The columns of a desktop party row. The list's group headers do not use it,
- * but the row does, and so does anything that wants to line up with it: a fixed
- * grid, so the status, the one primary action and the "..." menu sit in the
- * same place on every row whatever the row happens to hold.
+ * The columns of a desktop party row: a fixed grid, so the status, the one
+ * primary action and the "..." menu sit in the same place on every row
+ * whatever the row happens to hold (docs/pos-desktop.md section 8, v2).
  *
- *   [ name + code ] [ people ] [ status ] [ primary action ] [ menu ]
+ *   [ who ] [ name / size · place · code ] [ action OR status ] [ menu ]
+ *
+ * ONE right-hand slot: the action when there is something to do ("Check in 2",
+ * "+1", "Take ৳1,537.50"), the status when there is not ("All in", "No-show").
+ * A "Not in yet" pill beside a "Check in" button said the same thing twice and
+ * cost the name 9rem, which is what truncated the booking code. The avatar
+ * carries the state at a glance; a part-arrived party says "1 of 2 in" under
+ * its name. The head count left its own column for the same reason.
  */
-const RAIL_COLS = "rail:grid rail:grid-cols-[minmax(0,1fr)_5.5rem_9rem_9rem_2.25rem] rail:items-center rail:gap-x-comfortable";
+const RAIL_COLS = "rail:grid rail:grid-cols-[2.5rem_minmax(0,1fr)_9.5rem_2.25rem] rail:items-center rail:gap-x-comfortable";
+
+/** Initials for the avatar; a party with no name gets none (the glyph shows). */
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter((w) => /^\p{L}/u.test(w))
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
 
 /**
  * One party at the door (docs/pos-desktop.md section 8, "the arrivals list").
@@ -51,6 +66,7 @@ export function PartyRow({
   onCheckIn,
   rail = false,
   highlighted = false,
+  place,
 }: {
   party: Party;
   pending: boolean;
@@ -65,6 +81,8 @@ export function PartyRow({
   rail?: boolean;
   /** The guest a scan just found. */
   highlighted?: boolean;
+  /** Where in the session they are: the lane, field or court, when there is one. */
+  place?: string | null;
 }) {
   const t = useTranslations("checkin");
   const tr = useTranslations("refunds");
@@ -142,6 +160,41 @@ export function PartyRow({
 
   const justScanned = highlighted && <span className="shrink-0 rounded-full bg-ember-solid px-tight text-sm font-semibold text-on-solid">{t("justScanned")}</span>;
 
+  /* Who, at a glance: the party's initials, and once they are in, a tick in
+     the success tint, so a steward scanning the list sees who is through
+     before reading a word. A no-show is the danger tint with a stop. */
+  const ini = initials(p.name && !p.nameIsReference ? p.name : "");
+  const avatar = (
+    <span
+      aria-hidden
+      data-avatar={p.state}
+      className={cn(
+        "grid size-10 shrink-0 place-items-center rounded-full text-sm font-semibold",
+        p.state === "in"
+          ? "bg-success-wash text-success"
+          : p.state === "noshow"
+            ? "bg-danger-wash text-danger"
+            : p.state === "partial"
+              ? "bg-warning-wash text-fg"
+              : "bg-subtle text-fg-secondary",
+      )}
+    >
+      {p.state === "in" ? <Check size={18} strokeWidth={2.5} /> : p.state === "noshow" ? <Ban size={16} strokeWidth={2} /> : ini || "·"}
+    </span>
+  );
+
+  /* One line of facts under the name, in the order a steward asks them: how
+     many, where, which booking. */
+  const facts = [
+    t("guests", { count: p.size }),
+    p.state === "partial" ? t("inOfTotal", { done: p.arrived, total: p.size }) : null,
+    place,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  /* The right-hand slot: the action, else the status. */
+  const slot = primary ?? status;
+
   if (rail) {
     return (
       <li
@@ -150,24 +203,31 @@ export function PartyRow({
         data-scanned={highlighted ? "" : undefined}
         className={cn(
           RAIL_COLS,
-          "min-h-13 border-t border-line bg-card px-card py-tight first:border-t-0 hover:bg-nav-hover",
+          "min-h-16 border-t border-hairline bg-card px-section py-comfortable first:border-t-0 hover:bg-nav-hover",
+          (p.state === "in" || p.state === "noshow") && !highlighted && "[&_[data-name]]:text-fg-secondary",
           highlighted && "bg-ember-wash ring-2 ring-inset ring-ember hover:bg-ember-wash",
         )}
       >
+        {avatar}
         <div className="min-w-0">
           <p className={cn("flex min-w-0 items-center gap-tight", T.item)}>
-            <span className="min-w-0 truncate" title={name}>{name}</span>
+            <span data-name className="min-w-0 truncate" title={name}>{name}</span>
             {justScanned}
           </p>
-          <p className={cn("flex min-w-0 flex-wrap items-center gap-x-tight", T.meta)}>
-            {showCode && <span className="truncate font-mono font-normal">{p.reference}</span>}
-            {marks}
+          {/* One line: the facts never wrap, the code gives way (it truncates,
+              and search still finds it). Request marks get their own line. */}
+          <p className={cn("mt-0.5 flex min-w-0 items-center gap-x-tight", T.meta)}>
+            <span className="shrink-0 whitespace-nowrap">{facts}</span>
+            {showCode && (
+              <span className="min-w-0 truncate font-mono font-normal" title={p.reference}>
+                · {p.reference}
+              </span>
+            )}
           </p>
+          {marks && <p className={cn("mt-inline flex min-w-0 flex-wrap items-center gap-tight", T.meta)}>{marks}</p>}
           <RequestNotes variant="row" orderId={p.booking.orderId} bookingId={p.booking.id} className="mt-inline flex flex-col gap-inline" />
         </div>
-        <span className={cn("whitespace-nowrap", T.meta)}>{t("guests", { count: p.size })}</span>
-        <div className="flex min-w-0 justify-start">{status}</div>
-        <div className="flex">{primary}</div>
+        <div data-slot className="flex min-w-0 justify-end">{slot}</div>
         <div className="flex size-9 items-center justify-center rail:[&_button[aria-haspopup=menu]]:size-9!">{menuBtn}</div>
       </li>
     );
@@ -178,29 +238,36 @@ export function PartyRow({
       data-party
       data-state={p.state}
       data-scanned={highlighted ? "" : undefined}
-      className={cn("flex flex-col gap-tight border-t border-line bg-card px-comfortable py-comfortable first:border-t-0", highlighted && "bg-ember-wash ring-2 ring-inset ring-ember")}
+      className={cn("flex flex-col gap-comfortable border-t border-hairline bg-card px-section py-section first:border-t-0", highlighted && "bg-ember-wash ring-2 ring-inset ring-ember")}
     >
-      <div className="flex items-start justify-between gap-tight">
+      <div className="flex items-start gap-comfortable">
+        {avatar}
         <div className="min-w-0 flex-1">
           <p className={cn("flex flex-wrap items-center gap-x-tight break-words", T.item)}>
-            <span>{name}</span>
+            <span data-name>{name}</span>
             {justScanned}
           </p>
-          <p className={cn("mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline", T.meta)}>
-            <span>{t("guests", { count: p.size })}</span>
-            {p.arrived > 0 && p.state !== "in" && p.due > 0 && <span>· {t("inOfTotal", { done: p.arrived, total: p.size })}</span>}
+          <p className={cn("mt-0.5 flex flex-wrap items-center gap-x-tight gap-y-inline", T.meta)}>
+            <span>{facts}</span>
             {/* The code only when there is no name to go by; otherwise it is in search. */}
             {p.nameIsReference && showCode && <span className="break-all font-mono font-normal">· {p.reference}</span>}
             {marks}
           </p>
           <RequestNotes variant="row" orderId={p.booking.orderId} bookingId={p.booking.id} className="mt-inline flex flex-col gap-inline" />
         </div>
-        <div className="shrink-0">{status}</div>
+        {/* Nothing to do: the status and the menu share the first line, so a
+            party that is all in is one line, not a line and a lone "...". */}
+        {!primary && (
+          <div className="flex shrink-0 items-center gap-tight">
+            {status}
+            {menuBtn && <div className="flex size-10 items-center justify-center [&_button[aria-haspopup=menu]]:size-10!">{menuBtn}</div>}
+          </div>
+        )}
       </div>
-      {(primary || menuBtn) && (
-        <div className="flex items-center gap-tight">
-          <div className="flex min-w-0 flex-1">{primary}</div>
-          <div className="flex size-10 shrink-0 items-center justify-center [&_button[aria-haspopup=menu]]:size-10!">{menuBtn}</div>
+      {primary && (
+        <div className="flex items-center gap-tight pl-13">
+          <div data-slot className="flex min-w-0 flex-1">{primary}</div>
+          {menuBtn && <div className="flex size-10 shrink-0 items-center justify-center [&_button[aria-haspopup=menu]]:size-10!">{menuBtn}</div>}
         </div>
       )}
     </li>

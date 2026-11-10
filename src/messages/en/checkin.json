@@ -97,5 +97,7 @@
   "modeLabel": "Check in view",
   "modeScan": "Scan",
   "modeArrivals": "Arrivals",
-  "guestDefault": "Guest"
+  "guestDefault": "Guest",
+  "nowLine": "Now",
+  "sessionAllIn": "Everyone's in"
 }

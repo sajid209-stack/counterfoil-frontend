@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { Fragment, Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowUpCircle, Ban, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, HandCoins, PlusCircle, RotateCcw, Search, Timer, UserCheck, UserPlus } from "lucide-react";
+import { ArrowUpCircle, Ban, CalendarClock, Check, ChevronLeft, ChevronRight, HandCoins, PlusCircle, RotateCcw, Search, Timer, UserCheck, UserPlus } from "lucide-react";
 import { Button, DateField, EmptyState, FormField, Modal, SegmentedControl, Skeleton, useToast, type ActionMenuItem } from "@/components/ui";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay } from "@/lib/schedule";
 import { cn } from "@/lib/cn";
@@ -128,7 +128,6 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
   /* Who is at the door is the venue this counter stands in. */
   const activeCounter = useActiveCounterNow();
   const venueId = activeCounter.locationId;
-  const [open, setOpen] = useState<Record<string, boolean>>({});
   const [pending, setPending] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState(params.get("q") ?? "");
@@ -387,8 +386,8 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
   };
 
   /* A scan found a guest: look the day up again (a scan may have changed who
-     is in), open the session they are in, clear any search or filter hiding
-     them, and mark the row for a few seconds. Only what the scan resolved to,
+     is in), clear any search or filter hiding them, and mark the row for a few
+     seconds. Only what the scan resolved to,
      nothing invented: if the ticket is not on this day's list, nothing marks. */
   const [scanned, setScanned] = useState<string | null>(null);
   const onScan = ({ orderId }: ScanReport) => {
@@ -399,11 +398,6 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
     setScanned(orderId);
     setFilter("all");
     setSearch("");
-    setOpen((o) => {
-      const next = { ...o };
-      for (const x of hit) next[x.sessionKey] = true;
-      return next;
-    });
   };
   useEffect(() => {
     if (!scanned) return;
@@ -512,6 +506,21 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
     </div>
     );
 
+  /* Where "now" falls among today's sessions: before the first one that has
+     not started yet (after the last when all have). */
+  const nowIdx = (() => {
+    const i = groups.findIndex((g) => toMinutes(time(g.start)) >= DEMO_NOW_MINUTES);
+    return i === -1 ? groups.length : i;
+  })();
+  const nowLine = (
+    <div data-now-line role="separator" aria-label={`${t("nowLine")} ${formatClock(toTime(DEMO_NOW_MINUTES))}`} className="flex items-center gap-tight rail:grid rail:grid-cols-[5.5rem_minmax(0,1fr)] rail:gap-x-section">
+      <span className="shrink-0 whitespace-nowrap rounded-full bg-ember-solid px-tight py-0.5 text-xs font-semibold tabular-nums text-on-solid rail:justify-self-end">
+        {t("nowLine")} · {formatClock(toTime(DEMO_NOW_MINUTES))}
+      </span>
+      <span aria-hidden className="h-0.5 flex-1 rounded-full bg-ember-solid" />
+    </div>
+  );
+
   const listBody =
     bookingsQ.loading ? (
     <div aria-busy="true" className="flex flex-col gap-tight">
@@ -524,62 +533,79 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
   ) : groups.length === 0 ? (
     <EmptyState title={filter === "all" ? t("noBookingsTitle") : filterLabels[filter]} message={search && filter === "all" ? t("noBookingsSearch") : emptyFor[filter]} />
   ) : (
-    /* One white card. Each session is a quiet section header (sticky, so the
-       session you are scrolling through stays named) over its parties, which
-       sit on white between hairlines. overflow-clip rather than hidden: hidden
-       would turn the card into a scroll container and break the sticky.
-       Three distinct grounds, as Polaris draws a grouped list: the page, the
-       white card with a real 1px edge, and the session headers on a tint
-       halfway between the two, so a header never reads as a hole in the card. */
-    <div data-arrivals className="flex flex-col overflow-clip rounded-card border border-line bg-card shadow-card">
-      {groups.map((g) => {
-        const totals = sessionTotals.get(g.key) ?? { expected: 0, inCount: 0, waiting: 0 };
-        const full = totals.inCount >= totals.expected;
-        /* Open while anyone in the session is still to come; a finished
-           session folds to its header. Everything opens while a search or a
-           filter is running: a match hidden inside a shut group is a match
-           nobody finds. A tap on the header overrides either. */
-        const isOpen = search || filter !== "all" ? true : (open[g.key] ?? totals.waiting > 0);
-        return (
-          <section key={g.key} data-group className="flex flex-col border-t border-line first:border-t-0">
-            <button
-              type="button"
-              onClick={() => setOpen((o) => ({ ...o, [g.key]: !isOpen }))}
-              aria-expanded={isOpen}
-              className={cn("sticky top-0 z-10 flex min-h-11 w-full items-center gap-comfortable bg-[color-mix(in_srgb,var(--color-card)_50%,var(--color-surface))] px-comfortable py-tight text-left hover:bg-nav-hover rail:px-card", isOpen && "border-b border-line")}
-            >
-              <span className={cn("shrink-0 whitespace-nowrap tabular-nums", T.label)}>{formatClock(time(g.start))}</span>
-              <span className={cn("min-w-0 flex-1 truncate", T.item)} title={productName(g.productId)}>{productName(g.productId)}</span>
-              <span className={cn("shrink-0 whitespace-nowrap tabular-nums", T.meta, full && "font-medium text-success")}>{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
-              <span aria-hidden className="hidden h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-line sm:block">
-                <span className={cn("block h-full rounded-full", full ? "bg-success" : "bg-inverse/40")} style={{ width: `${totals.expected ? Math.round((totals.inCount / totals.expected) * 100) : 0}%` }} />
-              </span>
-              {isOpen ? <ChevronDown size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" /> : <ChevronRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
-            </button>
+    /* The day as an agenda (docs/pos-desktop.md section 8, v2), drawn the way
+       the best host stands and front desks draw a day (OpenTable and Resy's
+       host list, Mindbody's front desk, Luma's check-in): time down the left,
+       one card per session, every party visible. Nothing folds: an accordion
+       made a steward open a group to find the guest standing in front of them,
+       and a shut group hid its own count. A finished session says so in its
+       header ("Everyone's in") instead of disappearing.
 
-            {isOpen && (
-              <ul>
-                {g.parties.map((p) => (
-                  <PartyRow
-                    key={p.booking.id}
-                    party={p}
-                    pending={pending === p.booking.id}
-                    refundAsked={!!pendingRefundFor(p.booking.id)}
-                    writeOffAsked={!!pendingWriteOffFor(p.booking.orderId)}
-                    moveAsked={!!pendingRescheduleFor(p.booking.id)}
-                    menu={menuFor(p)}
-                    menuLabel={t("rowMenu", { name: p.name || t("walkInDefaultName") })}
-                    onTake={() => setPayFor(p.booking)}
-                    onCheckIn={(count) => void checkIn(p.booking, count)}
-                    rail={rail}
-                    highlighted={!!scanned && p.booking.orderId === scanned}
-                  />
-                ))}
-              </ul>
-            )}
-          </section>
+       Desktop: the time is its own column, sticky, so the session you are
+       scrolling through stays named; a phone has no room for a column, so the
+       time leads the card's header. Today, a "Now" line sits between what has
+       started and what is still to come. */
+    <div data-arrivals className="flex flex-col gap-section">
+      {groups.map((g, i) => {
+        const totals = sessionTotals.get(g.key) ?? { expected: 0, inCount: 0, waiting: 0 };
+        const full = totals.expected > 0 && totals.inCount >= totals.expected;
+        const startMin = toMinutes(time(g.start));
+        const started = date < TODAY || (date === TODAY && startMin < DEMO_NOW_MINUTES);
+        const showNow = date === TODAY && i === nowIdx;
+        const clock = formatClock(time(g.start));
+        const pct = totals.expected ? Math.round((totals.inCount / totals.expected) * 100) : 0;
+        return (
+          <Fragment key={g.key}>
+            {showNow && nowLine}
+            <section data-group data-started={started ? "" : undefined} aria-label={`${clock} ${productName(g.productId)}`} className="rail:grid rail:grid-cols-[5.5rem_minmax(0,1fr)] rail:items-start rail:gap-x-section">
+              {rail && (
+                <div className="sticky top-section pt-section text-right">
+                  <p data-session-time className={cn("whitespace-nowrap text-md font-semibold tabular-nums", started ? "text-fg-secondary" : "text-fg")}>{clock}</p>
+                </div>
+              )}
+              <div className="min-w-0 overflow-clip rounded-card border border-line bg-card shadow-card">
+                <header className="flex min-h-14 items-center gap-comfortable border-b border-hairline px-section py-comfortable">
+                  {!rail && <span data-session-time className="shrink-0 whitespace-nowrap rounded-control bg-subtle px-tight py-inline text-sm font-semibold tabular-nums text-fg">{clock}</span>}
+                  <h3 className={cn("min-w-0 flex-1 truncate", T.card)} title={productName(g.productId)}>{productName(g.productId)}</h3>
+                  {full ? (
+                    <span data-session-progress className="inline-flex shrink-0 items-center gap-inline whitespace-nowrap text-sm font-semibold text-success">
+                      <Check size={16} strokeWidth={2.5} aria-hidden />
+                      {t("sessionAllIn")}
+                    </span>
+                  ) : (
+                    <span data-session-progress className="flex shrink-0 items-center gap-tight">
+                      <span className={cn("whitespace-nowrap tabular-nums", T.label)}>{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
+                      <span aria-hidden className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-line sm:block">
+                        <span className="block h-full rounded-full bg-success" style={{ width: `${pct}%` }} />
+                      </span>
+                    </span>
+                  )}
+                </header>
+                <ul>
+                  {g.parties.map((p) => (
+                    <PartyRow
+                      key={p.booking.id}
+                      party={p}
+                      place={resourceName(p.booking.resourceId)}
+                      pending={pending === p.booking.id}
+                      refundAsked={!!pendingRefundFor(p.booking.id)}
+                      writeOffAsked={!!pendingWriteOffFor(p.booking.orderId)}
+                      moveAsked={!!pendingRescheduleFor(p.booking.id)}
+                      menu={menuFor(p)}
+                      menuLabel={t("rowMenu", { name: p.name || t("walkInDefaultName") })}
+                      onTake={() => setPayFor(p.booking)}
+                      onCheckIn={(count) => void checkIn(p.booking, count)}
+                      rail={rail}
+                      highlighted={!!scanned && p.booking.orderId === scanned}
+                    />
+                  ))}
+                </ul>
+              </div>
+            </section>
+          </Fragment>
         );
       })}
+      {date === TODAY && nowIdx === groups.length && nowLine}
     </div>
   );
 
