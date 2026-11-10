@@ -211,3 +211,24 @@ readable without reading. None of them makes the host open a group to find the p
 Verified on a production build: f19663fb (ec29f026) scratchpad `pos/ci2.mjs` 20/20 at 1440, 1280 and
 390 (every party visible, no expanders, time + progress per session, Now line with nothing started
 after it, avatars, check-in flips the row), `pos/btn.mjs` 84/84.
+
+## 14. Check in v3: one list, one card (2026-11-10)
+
+The owner marked four things on the v2 desktop: the scan card and the arrivals column started at
+different heights, the "Arrivals · Today" heading spent a row saying what the page title already
+said, the filter chips were heavy (a loud orange "All"), and the time column was mostly empty space.
+The phone carried the same weight: search, a date row and the chips stacked before the first guest.
+
+What changed, and why (Linear and Luma's guest lists, Apple's segmented controls, Resy's host list):
+
+- **One card holds the list.** Its top bar is the search and the filter, so the controls sit with
+  what they act on. On a desktop its top lines up with the scan card beside it. The visible
+  "Arrivals" heading is gone (kept for screen readers): the page title and the date already say it.
+- **Sessions are sticky subheaders,** not cards: a thin tinted row with the time, the name and
+  "n of m in" (or "✓ Everyone's in"). The 7rem time column is gone, so every row gets that width back.
+- **The filter is a quiet segmented track:** grey track, the chosen option a white thumb. Orange
+  stays for actions. 44px tall on a phone, 32px on a desktop.
+- **Rows:** the action button sizes to its words, right-aligned; a done party shows plain coloured
+  text ("✓ All in", "No-show"), not a pill. On a phone the check-in button sits on the guest's own
+  line; only "Take ৳…" (a long label) gets a second line.
+- **The Now rule** spans the card between what has started and what is to come.

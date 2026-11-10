@@ -16,6 +16,8 @@ import type { Party } from "../_lib/parties";
  *
  *   [ who ] [ name / size · place · code ] [ action OR status ] [ menu ]
  *
+ * The action slot sizes to its content and is right-aligned, so a short "Check in"
+ * button and a long "Take ৳1,537.50" both sit against the menu.
  * ONE right-hand slot: the action when there is something to do ("Check in 2",
  * "+1", "Take ৳1,537.50"), the status when there is not ("All in", "No-show").
  * A "Not in yet" pill beside a "Check in" button said the same thing twice and
@@ -23,7 +25,7 @@ import type { Party } from "../_lib/parties";
  * carries the state at a glance; a part-arrived party says "1 of 2 in" under
  * its name. The head count left its own column for the same reason.
  */
-const RAIL_COLS = "rail:grid rail:grid-cols-[2.5rem_minmax(0,1fr)_9.5rem_2.25rem] rail:items-center rail:gap-x-comfortable";
+const RAIL_COLS = "rail:grid rail:grid-cols-[2.5rem_minmax(0,1fr)_auto_2.25rem] rail:items-center rail:gap-x-comfortable";
 
 /** Initials for the avatar; a party with no name gets none (the glyph shows). */
 const initials = (name: string) =>
@@ -37,18 +39,19 @@ const initials = (name: string) =>
 /**
  * One party at the door (docs/pos-desktop.md section 8, "the arrivals list").
  *
- * Desktop: one 52px line on white with a hairline above it, in fixed columns.
- * The session time is NOT repeated here (the group header above says it). The
- * right-most column is always the "..." menu and the one before it always holds
- * the one primary action, in a fixed width, so a steward's eye and hand learn
- * both places once. When a party is fully in (or did not come) the primary slot
- * is left empty but kept, so the menu still lines up.
+ * The row sits inside one white card that the parent draws, with the session
+ * subheaders; rows are separated by hairlines and carry no background of their
+ * own. The session time is not repeated here (the subheader says it).
  *
- * Phone: the same facts stacked for width. Name and status on the first line,
- * the code and head count under it, then the action full width with the menu
- * beside it.
+ * Desktop: one line in fixed columns: avatar, name with facts, the one primary
+ * action (auto width, right-aligned) and the "..." menu. When a party is fully in
+ * (or did not come) the action slot shows quiet status text instead.
  *
- * The name leads and WRAPS on a phone (it is what a steward matches against the
+ * Phone: one line too: avatar, name with facts, then the check-in or +1 button
+ * (or the status text), then the menu. Only when money is owed does the "Take"
+ * button, whose label is wide, move to a second line under the text, full width.
+ *
+ * The name leads and wraps on a phone (it is what a steward matches against the
  * person in front of them); on a desktop it truncates and the full name is in
  * the title. The primary button says the money when money is owed
  * ("Take 1,537.50"), otherwise "Check in" ("Check in 2" for a party of more) or
@@ -92,21 +95,24 @@ export function PartyRow({
   const name = p.name || (p.order ? t("guestDefault") : t("walkInDefaultName"));
   const showCode = !!p.reference;
 
-  /* One pill per party. Money owed outranks the arrival state: it is the thing
-     a steward has to act on before anyone walks through. */
-  const pill = (tone: string, text: string) => (
-    <span data-status className={cn("inline-flex max-w-full items-center truncate rounded-full px-comfortable py-inline", T.status, tone)}>{text}</span>
+  /* Quiet status text, not a pill. Money owed outranks the arrival state: it is
+     the thing a steward has to act on before anyone walks through. */
+  const quiet = (tone: string, text: string, icon?: React.ReactNode, clip?: boolean) => (
+    <span data-status className={cn("inline-flex items-center gap-inline whitespace-nowrap text-sm font-medium", clip && "max-w-full", tone)}>
+      {icon}
+      {clip ? <span className="truncate">{text}</span> : text}
+    </span>
   );
   const status =
     p.state === "noshow"
-      ? pill("bg-danger-wash text-danger", p.booking.noShowReason ? t("noShowTagReason", { reason: p.booking.noShowReason }) : t("noShowTag"))
+      ? quiet("text-danger", p.booking.noShowReason ? t("noShowTagReason", { reason: p.booking.noShowReason }) : t("noShowTag"), undefined, true)
       : p.due > 0
-        ? pill("bg-warning-wash text-fg", t("owes", { amount: formatMoney(p.due) }))
+        ? quiet("text-fg-secondary", t("owes", { amount: formatMoney(p.due) }))
         : p.state === "in"
-          ? pill("bg-success-wash text-success", t("allIn"))
+          ? quiet("text-success", t("allIn"), <Check size={14} strokeWidth={2.5} aria-hidden />)
           : p.state === "partial"
-            ? pill("bg-warning-wash text-fg", t("inOfTotal", { done: p.arrived, total: p.size }))
-            : pill("bg-subtle text-muted", t("filterNotIn"));
+            ? quiet("text-fg-secondary", t("inOfTotal", { done: p.arrived, total: p.size }))
+            : quiet("text-fg-secondary", t("filterNotIn"));
 
   const marks = (refundAsked || writeOffAsked || moveAsked) && (
     <>
@@ -131,24 +137,21 @@ export function PartyRow({
     </>
   );
 
-  /* The one primary action, or nothing. */
-  /* On a desktop a list of these sits one per row, so a solid orange fill on every
-     row would be ten primaries on one screen: there it is a 36px neutral button with
-     brand words. The phone keeps its solid, full-width button. */
-  /* The phone is the same: a 40px neutral button with brand words for the
-     ordinary check-in; the solid orange is kept for the one thing that is
-     money owed ("Take ..."), so a list of ten still has no ten orange blocks. */
-  const primaryCls = rail ? "w-full font-semibold text-brand-foreground" : "h-10 w-full font-semibold text-brand-foreground md:h-10";
+  /* The one primary action, or nothing. Auto width everywhere: on a desktop a
+     list of these sits one per row, so each is a neutral button with brand
+     words; on a phone it shares the line with the name. Only "Take" (money owed,
+     a wide label) is solid and, on a phone, full width on its own line. */
+  const primaryCls = rail ? "h-9 min-w-28 px-comfortable font-semibold text-brand-foreground" : "h-11 shrink-0 px-comfortable font-semibold text-brand-foreground";
   const look = { variant: "secondary", size: "sm" } as const;
   const takeLook = rail ? look : ({ variant: "primary", size: "sm" } as const);
   const primary =
     p.state === "noshow" ? null : p.due > 0 ? (
-      <Button {...takeLook} data-primary="take" className={rail ? primaryCls : "h-10 w-full md:h-10"} onClick={onTake}>
+      <Button {...takeLook} data-primary="take" className={rail ? primaryCls : "h-11 w-full"} onClick={onTake}>
         {t("takeAmount", { amount: formatMoney(p.due) })}
       </Button>
     ) : p.state === "in" ? null : p.state === "partial" ? (
       <Button {...look} data-primary="plusone" className={primaryCls} loading={pending} aria-label={t("plusOneLabel")} onClick={() => onCheckIn(p.arrived + 1)}>
-        {t("plusOne")}
+        {t("checkInCount", { count: 1 })}
       </Button>
     ) : (
       <Button {...look} data-primary="checkin" className={primaryCls} loading={pending} onClick={() => onCheckIn(p.size)}>
@@ -176,7 +179,7 @@ export function PartyRow({
             ? "bg-danger-wash text-danger"
             : p.state === "partial"
               ? "bg-warning-wash text-fg"
-              : "bg-subtle text-fg-secondary",
+              : "bg-subtle text-fg-secondary ring-1 ring-inset ring-line",
       )}
     >
       {p.state === "in" ? <Check size={18} strokeWidth={2.5} /> : p.state === "noshow" ? <Ban size={16} strokeWidth={2} /> : ini || "·"}
@@ -203,7 +206,7 @@ export function PartyRow({
         data-scanned={highlighted ? "" : undefined}
         className={cn(
           RAIL_COLS,
-          "min-h-16 border-t border-hairline bg-card px-section py-comfortable first:border-t-0 hover:bg-nav-hover",
+          "min-h-16 border-t border-hairline px-section py-comfortable first:border-t-0 hover:bg-nav-hover",
           (p.state === "in" || p.state === "noshow") && !highlighted && "[&_[data-name]]:text-fg-secondary",
           highlighted && "bg-ember-wash ring-2 ring-inset ring-ember hover:bg-ember-wash",
         )}
@@ -227,22 +230,23 @@ export function PartyRow({
           {marks && <p className={cn("mt-inline flex min-w-0 flex-wrap items-center gap-tight", T.meta)}>{marks}</p>}
           <RequestNotes variant="row" orderId={p.booking.orderId} bookingId={p.booking.id} className="mt-inline flex flex-col gap-inline" />
         </div>
-        <div data-slot className="flex min-w-0 justify-end">{slot}</div>
+        <div data-slot className="flex justify-end">{slot}</div>
         <div className="flex size-9 items-center justify-center rail:[&_button[aria-haspopup=menu]]:size-9!">{menuBtn}</div>
       </li>
     );
   }
 
+  const takeOnOwnLine = p.due > 0 && p.state !== "noshow";
   return (
     <li
       data-party
       data-state={p.state}
       data-scanned={highlighted ? "" : undefined}
-      className={cn("flex flex-col gap-comfortable border-t border-hairline bg-card px-section py-section first:border-t-0", highlighted && "bg-ember-wash ring-2 ring-inset ring-ember")}
+      className={cn("flex flex-col gap-comfortable border-t border-hairline px-section py-comfortable first:border-t-0", highlighted && "bg-ember-wash ring-2 ring-inset ring-ember")}
     >
-      <div className="flex items-start gap-comfortable">
+      <div className="flex flex-wrap items-center gap-comfortable">
         {avatar}
-        <div className="min-w-0 flex-1">
+        <div className="min-w-24 flex-1">
           <p className={cn("flex flex-wrap items-center gap-x-tight break-words", T.item)}>
             <span data-name>{name}</span>
             {justScanned}
@@ -255,19 +259,18 @@ export function PartyRow({
           </p>
           <RequestNotes variant="row" orderId={p.booking.orderId} bookingId={p.booking.id} className="mt-inline flex flex-col gap-inline" />
         </div>
-        {/* Nothing to do: the status and the menu share the first line, so a
-            party that is all in is one line, not a line and a lone "...". */}
-        {!primary && (
-          <div className="flex shrink-0 items-center gap-tight">
-            {status}
-            {menuBtn && <div className="flex size-10 items-center justify-center [&_button[aria-haspopup=menu]]:size-10!">{menuBtn}</div>}
-          </div>
-        )}
+        {/* The check-in / +1 button, or the status, on the same line; the
+            "Take" button has a wide label and drops to its own line below. */}
+        {/* Slot and menu travel together; on a narrow phone they wrap under the
+            name, right-aligned, instead of squeezing it to a word a line. */}
+        <div className="ml-auto flex shrink-0 items-center gap-comfortable">
+          {!takeOnOwnLine && <div data-slot className="flex shrink-0 items-center">{slot}</div>}
+          {menuBtn && <div className="flex size-11 shrink-0 items-center justify-center [&_button[aria-haspopup=menu]]:size-11!">{menuBtn}</div>}
+        </div>
       </div>
-      {primary && (
-        <div className="flex items-center gap-tight pl-13">
-          <div data-slot className="flex min-w-0 flex-1">{primary}</div>
-          {menuBtn && <div className="flex size-10 shrink-0 items-center justify-center [&_button[aria-haspopup=menu]]:size-10!">{menuBtn}</div>}
+      {takeOnOwnLine && (
+        <div data-slot className="flex pl-13">
+          {primary}
         </div>
       )}
     </li>

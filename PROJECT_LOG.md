@@ -19708,3 +19708,8 @@ Arrivals is an agenda: no accordions, a card per session with "Everyone's in" wh
 column on desktop (time chip on phone), an ember "Now" line today, and rows with a state avatar, one
 fact line and one right-hand slot (action, else status). The phone header's bell hides on /activity.
 Spec docs/pos-desktop.md §13. Verified: `pos/ci2.mjs` 20/20, `pos/btn.mjs` 84/84, tsc, lint, tokens, i18n.
+
+### POS Check in v3: one list in one card (2026-11-10)
+Arrivals is one card: search and a segmented filter in its top bar, sessions as sticky subheaders (time,
+name, progress) instead of separate cards and a time column, quiet done-states, compact actions; the
+phone keeps the check-in button on the guest's line. Spec docs/pos-desktop.md §14.

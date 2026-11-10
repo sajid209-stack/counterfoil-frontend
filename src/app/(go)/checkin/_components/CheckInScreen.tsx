@@ -40,7 +40,6 @@ import { pendingRefundFor, refundableFor, withdrawRefundRequest } from "@/lib/ap
 import { pendingWriteOffFor, useWriteOffVersion, withdrawWriteOff } from "@/lib/api/writeOffRequests";
 import { pendingRescheduleFor, useRescheduleVersion, withdrawRescheduleRequest } from "@/lib/api/rescheduleRequests";
 import { Stepper } from "../../_components/Stepper";
-import { T } from "../../_components/type";
 import { useActor, canRefundDirectly } from "../../schedule/_lib/actor";
 import { RefundFlowSheet } from "../../_components/RefundFlowSheet";
 import { WriteOffSheet } from "../../_components/WriteOffSheet";
@@ -472,9 +471,11 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
       {t("addWalkIn")}
     </Button>
   );
-  /* Search leads: it is the first thing done when a guest walks up. */
+  /* Search leads: it is the first thing done when a guest walks up. A filled,
+     borderless field: it sits inside the arrivals card's top bar, so a ring
+     would draw a box inside a box. */
   const searchEl = (
-    <div data-focus-host className={cn("flex items-center gap-tight bg-card px-comfortable focus-within:ring-2 focus-within:ring-ember", rail ? "h-10 min-w-0 flex-1 rounded-control ring-1 ring-inset ring-line" : "h-12 rounded-full shadow-card")}>
+    <div data-focus-host className="flex h-11 min-w-0 items-center gap-tight rounded-full bg-subtle px-comfortable focus-within:ring-2 focus-within:ring-ember rail:h-10 rail:flex-1">
       <Search size={18} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
       <input value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("searchPlaceholder")} placeholder={t("searchPlaceholder")} className="h-full w-full min-w-0 bg-transparent text-base"/>
     </div>
@@ -500,7 +501,7 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
 
   const dueBanner =
     filter === "due" && dueNow.parties > 0 && (
-    <div data-due-banner className="flex flex-wrap items-baseline justify-between gap-x-comfortable gap-y-inline rounded-card bg-warning-wash p-card">
+    <div data-due-banner className="mx-section mb-section flex flex-wrap items-baseline justify-between gap-x-comfortable gap-y-inline rounded-inner bg-warning-wash p-section">
       <p className="text-2xl font-bold tabular-nums text-fg">{t("dueBannerAmount", { amount: formatMoney(dueNow.amount) })}</p>
       <p className="text-md font-semibold text-fg-secondary">{t("dueBannerCount", { count: dueNow.parties })}</p>
     </div>
@@ -513,8 +514,8 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
     return i === -1 ? groups.length : i;
   })();
   const nowLine = (
-    <div data-now-line role="separator" aria-label={`${t("nowLine")} ${formatClock(toTime(DEMO_NOW_MINUTES))}`} className="flex items-center gap-tight rail:grid rail:grid-cols-[5.5rem_minmax(0,1fr)] rail:gap-x-section">
-      <span className="shrink-0 whitespace-nowrap rounded-full bg-ember-solid px-tight py-0.5 text-xs font-semibold tabular-nums text-on-solid rail:justify-self-end">
+    <div data-now-line role="separator" aria-label={`${t("nowLine")} ${formatClock(toTime(DEMO_NOW_MINUTES))}`} className="flex items-center gap-tight border-t border-hairline px-section py-tight">
+      <span className="shrink-0 whitespace-nowrap rounded-full bg-ember-solid px-tight py-0.5 text-xs font-semibold tabular-nums text-on-solid">
         {t("nowLine")} · {formatClock(toTime(DEMO_NOW_MINUTES))}
       </span>
       <span aria-hidden className="h-0.5 flex-1 rounded-full bg-ember-solid" />
@@ -523,29 +524,24 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
 
   const listBody =
     bookingsQ.loading ? (
-    <div aria-busy="true" className="flex flex-col gap-tight">
+    <div aria-busy="true" className="flex flex-col gap-tight p-section">
       <Skeleton h={16} w="33%" className="rounded-full" />
-      <Skeleton h={64} className="rounded-card" />
-      <Skeleton h={64} className="rounded-card" />
+      <Skeleton h={56} className="rounded-inner" />
+      <Skeleton h={56} className="rounded-inner" />
     </div>
   ) : dayParties.length === 0 ? (
-    <EmptyState title={t("noBookingsTitle")} message={t("noBookingsDay")} />
+    <div className="p-section"><EmptyState title={t("noBookingsTitle")} message={t("noBookingsDay")} /></div>
   ) : groups.length === 0 ? (
-    <EmptyState title={filter === "all" ? t("noBookingsTitle") : filterLabels[filter]} message={search && filter === "all" ? t("noBookingsSearch") : emptyFor[filter]} />
+    <div className="p-section"><EmptyState title={filter === "all" ? t("noBookingsTitle") : filterLabels[filter]} message={search && filter === "all" ? t("noBookingsSearch") : emptyFor[filter]} /></div>
   ) : (
-    /* The day as an agenda (docs/pos-desktop.md section 8, v2), drawn the way
-       the best host stands and front desks draw a day (OpenTable and Resy's
-       host list, Mindbody's front desk, Luma's check-in): time down the left,
-       one card per session, every party visible. Nothing folds: an accordion
-       made a steward open a group to find the guest standing in front of them,
-       and a shut group hid its own count. A finished session says so in its
-       header ("Everyone's in") instead of disappearing.
-
-       Desktop: the time is its own column, sticky, so the session you are
-       scrolling through stays named; a phone has no room for a column, so the
-       time leads the card's header. Today, a "Now" line sits between what has
-       started and what is still to come. */
-    <div data-arrivals className="flex flex-col gap-section">
+    /* The day as one list (docs/pos-desktop.md section 13, v3). Every party is
+       visible; nothing folds. Each session is a thin subheader that sticks
+       while its guests scroll under it (time, name, how many are in), the way
+       a host stand or Luma's guest list reads: the time column the v2 agenda
+       drew down the left cost every row 7rem to say one word per session, so
+       the time moved into the subheader and the rows got the width back.
+       Today, a "Now" rule sits between what has started and what is to come. */
+    <div data-arrivals className="flex flex-col">
       {groups.map((g, i) => {
         const totals = sessionTotals.get(g.key) ?? { expected: 0, inCount: 0, waiting: 0 };
         const full = totals.expected > 0 && totals.inCount >= totals.expected;
@@ -557,56 +553,67 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
         return (
           <Fragment key={g.key}>
             {showNow && nowLine}
-            <section data-group data-started={started ? "" : undefined} aria-label={`${clock} ${productName(g.productId)}`} className="rail:grid rail:grid-cols-[5.5rem_minmax(0,1fr)] rail:items-start rail:gap-x-section">
-              {rail && (
-                <div className="sticky top-section pt-section text-right">
-                  <p data-session-time className={cn("whitespace-nowrap text-md font-semibold tabular-nums", started ? "text-fg-secondary" : "text-fg")}>{clock}</p>
-                </div>
-              )}
-              <div className="min-w-0 overflow-clip rounded-card border border-line bg-card shadow-card">
-                <header className="flex min-h-14 items-center gap-comfortable border-b border-hairline px-section py-comfortable">
-                  {!rail && <span data-session-time className="shrink-0 whitespace-nowrap rounded-control bg-subtle px-tight py-inline text-sm font-semibold tabular-nums text-fg">{clock}</span>}
-                  <h3 className={cn("min-w-0 flex-1 truncate", T.card)} title={productName(g.productId)}>{productName(g.productId)}</h3>
-                  {full ? (
-                    <span data-session-progress className="inline-flex shrink-0 items-center gap-inline whitespace-nowrap text-sm font-semibold text-success">
-                      <Check size={16} strokeWidth={2.5} aria-hidden />
-                      {t("sessionAllIn")}
+            <section data-group data-started={started ? "" : undefined} aria-label={`${clock} ${productName(g.productId)}`}>
+              <header className="sticky top-0 z-10 flex min-h-11 items-center gap-comfortable border-y border-hairline bg-subtle px-section py-tight">
+                <span data-session-time className={cn("min-w-16 shrink-0 whitespace-nowrap text-sm font-semibold tabular-nums", started ? "text-fg-secondary" : "text-fg")}>{clock}</span>
+                <h3 className="min-w-0 flex-1 truncate text-sm font-semibold text-fg" title={productName(g.productId)}>{productName(g.productId)}</h3>
+                {full ? (
+                  <span data-session-progress className="inline-flex shrink-0 items-center gap-inline whitespace-nowrap text-sm font-medium text-success">
+                    <Check size={14} strokeWidth={2.5} aria-hidden />
+                    {t("sessionAllIn")}
+                  </span>
+                ) : (
+                  <span data-session-progress className="flex shrink-0 items-center gap-tight">
+                    <span className="whitespace-nowrap text-sm font-medium tabular-nums text-fg-secondary">{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
+                    <span aria-hidden className="hidden h-1.5 w-12 overflow-hidden rounded-full bg-line sm:block">
+                      <span className="block h-full rounded-full bg-success" style={{ width: `${pct}%` }} />
                     </span>
-                  ) : (
-                    <span data-session-progress className="flex shrink-0 items-center gap-tight">
-                      <span className={cn("whitespace-nowrap tabular-nums", T.label)}>{t("inOfTotal", { done: totals.inCount, total: totals.expected })}</span>
-                      <span aria-hidden className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-line sm:block">
-                        <span className="block h-full rounded-full bg-success" style={{ width: `${pct}%` }} />
-                      </span>
-                    </span>
-                  )}
-                </header>
-                <ul>
-                  {g.parties.map((p) => (
-                    <PartyRow
-                      key={p.booking.id}
-                      party={p}
-                      place={resourceName(p.booking.resourceId)}
-                      pending={pending === p.booking.id}
-                      refundAsked={!!pendingRefundFor(p.booking.id)}
-                      writeOffAsked={!!pendingWriteOffFor(p.booking.orderId)}
-                      moveAsked={!!pendingRescheduleFor(p.booking.id)}
-                      menu={menuFor(p)}
-                      menuLabel={t("rowMenu", { name: p.name || t("walkInDefaultName") })}
-                      onTake={() => setPayFor(p.booking)}
-                      onCheckIn={(count) => void checkIn(p.booking, count)}
-                      rail={rail}
-                      highlighted={!!scanned && p.booking.orderId === scanned}
-                    />
-                  ))}
-                </ul>
-              </div>
+                  </span>
+                )}
+              </header>
+              <ul>
+                {g.parties.map((p) => (
+                  <PartyRow
+                    key={p.booking.id}
+                    party={p}
+                    place={resourceName(p.booking.resourceId)}
+                    pending={pending === p.booking.id}
+                    refundAsked={!!pendingRefundFor(p.booking.id)}
+                    writeOffAsked={!!pendingWriteOffFor(p.booking.orderId)}
+                    moveAsked={!!pendingRescheduleFor(p.booking.id)}
+                    menu={menuFor(p)}
+                    menuLabel={t("rowMenu", { name: p.name || t("walkInDefaultName") })}
+                    onTake={() => setPayFor(p.booking)}
+                    onCheckIn={(count) => void checkIn(p.booking, count)}
+                    rail={rail}
+                    highlighted={!!scanned && p.booking.orderId === scanned}
+                  />
+                ))}
+              </ul>
             </section>
           </Fragment>
         );
       })}
       {date === TODAY && nowIdx === groups.length && nowLine}
     </div>
+  );
+
+  /* One card holds the whole list: its top bar is the search and the filter,
+     so the controls sit with what they act on, and on a desktop the card's
+     top lines up with the scan card beside it. */
+  const arrivalsCard = (
+    <section aria-labelledby="arrivals-title" className="card-surface flex min-w-0 flex-col overflow-clip">
+      <h2 id="arrivals-title" className="sr-only">
+        {t("arrivalsTitle")}
+        {dayLabel && ` · ${dayLabel}`}
+      </h2>
+      <div className="flex flex-col gap-comfortable p-section rail:flex-row rail:items-center">
+        {searchEl}
+        <FilterCells value={filter} onChange={setFilter} counts={counts} labels={filterLabels} label={t("filterLabel")} />
+      </div>
+      {dueBanner}
+      {listBody}
+    </section>
   );
 
   return (
@@ -626,20 +633,7 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
                 summary={<DaySummary compact expected={day.expected} arrived={day.arrived} owed={day.owed} owingParties={day.owingParties} onShowDue={() => setFilter("due")} />}
               />
             </aside>
-            <section aria-label={t("arrivalsTitle")} className="flex min-w-0 flex-col gap-comfortable">
-              <div className="flex flex-wrap items-center gap-x-comfortable gap-y-tight">
-                <h2 className="mr-auto text-md font-semibold text-fg">
-                  {t("arrivalsTitle")}
-                  {dayLabel && <span className="ml-tight text-base font-normal text-muted">{dayLabel}</span>}
-                </h2>
-              </div>
-              <div className="flex flex-wrap items-center gap-comfortable">
-                {searchEl}
-                <FilterCells value={filter} onChange={setFilter} counts={counts} labels={filterLabels} label={t("filterLabel")} />
-              </div>
-              {dueBanner}
-              {listBody}
-            </section>
+            {arrivalsCard}
           </div>
         </>
       ) : (
@@ -669,17 +663,9 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
           <ScanPanel variant="page" embedded onScan={onScan} />
         ) : (
           <div className="flex flex-col gap-section lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
-            <div className="flex min-w-0 flex-col gap-section">
-              {searchEl}
+            <div className="flex min-w-0 flex-col gap-comfortable">
               {dateEl}
-
-              <FilterCells value={filter} onChange={setFilter} counts={counts} labels={filterLabels} label={t("filterLabel")} />
-
-              {/* The Due view opens on the one number a steward collecting is
-                  working toward: everything still to take, and from how many. */}
-              {dueBanner}
-
-              {listBody}
+              {arrivalsCard}
             </div>
 
             <aside className="flex flex-col gap-section">
