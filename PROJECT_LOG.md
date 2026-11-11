@@ -19717,3 +19717,11 @@ phone keeps the check-in button on the guest's line. Spec docs/pos-desktop.md §
 ### OS phone: Customers in the tab bar (2026-11-10)
 The phone tab bar gains Customers between Calendar and Catalog (six tabs). Under 360px the circles step
 from 48 to 44px so six fit a 320 phone with equal padding. Verified: os v8 39/39, v9 52/52, v10 24/24.
+
+### OS phone: menu motion + Analytics in the tab bar (2026-11-11)
+The menu sheet now has a real exit: every way out (X, backdrop, Escape, drag, a destination) slides it down
+over 200ms on an accelerating curve while the backdrop fades, then unmounts; the entrance is a 360ms glide
+on the iOS sheet curve with the backdrop fading in, the profile + close foot rising in 120ms later and the X
+turning a quarter into place. Reduced motion closes at once. Analytics joins the tab bar (seven tabs:
+48px circles from 430px, 44px from 360px, 40px at 320 with an 8px gutter). Verified: os motion 7/7, v8
+39/39, v9 60/60, v10 24/24.

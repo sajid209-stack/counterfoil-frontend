@@ -28,6 +28,7 @@ export function PhoneSheet({
   label,
   head,
   foot,
+  closing = false,
   children,
   className,
 }: {
@@ -40,6 +41,9 @@ export function PhoneSheet({
   /** Floats over the bottom of the body, which fades out under it (the menu's
    *  profile and close buttons, in the thumb's reach). */
   foot?: React.ReactNode;
+  /** The sheet is on its way out: it slides down and the backdrop fades while
+   *  the owner waits `SHEET_EXIT_MS` before unmounting it. */
+  closing?: boolean;
   children: React.ReactNode;
   className?: string;
 }) {
@@ -62,7 +66,15 @@ export function PhoneSheet({
 
   return (
     <>
-      <div aria-hidden onClick={onClose} className={cn("fixed inset-0 z-50 md:hidden", scrimClass)} />
+      <div
+        aria-hidden
+        onClick={onClose}
+        className={cn(
+          "fixed inset-0 z-50 transition-opacity duration-standard ease-in md:hidden",
+          scrimClass,
+          closing ? "pointer-events-none opacity-0" : "animate-[go-scrim-in_280ms_ease-out_backwards]",
+        )}
+      />
       <div
         ref={panel}
         role="dialog"
@@ -70,12 +82,18 @@ export function PhoneSheet({
         aria-label={label}
         tabIndex={-1}
         data-phone-sheet
-        style={drag ? { transform: `translateY(${drag}px)` } : undefined}
+        style={closing ? { transform: "translateY(100%)" } : drag ? { transform: `translateY(${drag}px)` } : undefined}
         className={cn(
           "fixed inset-x-0 bottom-0 z-50 flex flex-col overflow-hidden rounded-t-sheet bg-card shadow-lg outline-none md:hidden dark:bg-surface",
-          // `backwards`, so no transform is left behind to create a containing
-          // block; the global reduced-motion block neutralises it.
-          !drag && "animate-[sheet-up_220ms_cubic-bezier(0.32,0.72,0,1)_backwards]",
+          /* In: a long, decelerating glide (360ms on the iOS sheet curve). Out:
+             shorter and accelerating (200ms), the way Material 3 and iOS both
+             time an exit, so dismissing never feels like waiting. The exit is
+             a transition, so a sheet let go mid-drag carries on from where the
+             finger left it rather than jumping back first. `backwards` leaves
+             no transform behind to create a containing block. */
+          closing
+            ? "pointer-events-none transition-transform duration-standard ease-in"
+            : !drag && "animate-[sheet-up_360ms_cubic-bezier(0.32,0.72,0,1)_backwards]",
           className,
         )}
       >
@@ -99,13 +117,25 @@ export function PhoneSheet({
           /* The list fades out as it reaches the buttons, so they float over the
              end of it rather than sitting on a hard edge. */
           <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-card from-55% to-transparent pb-[calc(12px+env(safe-area-inset-bottom))] pt-12 dark:from-surface">
-            <div className="pointer-events-auto flex items-center justify-center gap-tight px-gutter">{foot}</div>
+            {/* The buttons arrive a beat after the sheet, rising into place, and
+                leave first. */}
+            <div
+              className={cn(
+                "pointer-events-auto flex items-center justify-center gap-tight px-gutter transition-opacity duration-150",
+                closing ? "opacity-0" : "animate-[menu-foot-in_300ms_cubic-bezier(0.32,0.72,0,1)_120ms_backwards]",
+              )}
+            >
+              {foot}
+            </div>
           </div>
         )}
       </div>
     </>
   );
 }
+
+/** How long a closing sheet takes to leave; unmount it after this. */
+export const SHEET_EXIT_MS = 200;
 
 /**
  * A sheet's head, in the kit Sheet's frame (docs/mobile.md section 8, rule 7):

@@ -405,3 +405,5 @@ Owner review of v6:
   you are on).
 
 **v10.2 (2026-11-10):** Customers joins the tab bar (Dashboard, Orders, Calendar, Customers, Catalog, More). Below 360px the circles are 44px so six fit a 320 phone.
+
+**v10.3 (2026-11-11):** the menu sheet enters in 360ms (iOS sheet curve) with the backdrop fading in and the foot rising in after it; it now EXITS too (200ms, accelerating, from wherever a drag let go) before unmounting; reduced motion closes at once. Analytics joins the tab bar: seven tabs, circles 48/44/40px at 430/360/320.

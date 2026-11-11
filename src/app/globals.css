@@ -955,6 +955,16 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+/* The phone menu's foot (profile + close) rises into place after the sheet. */
+@keyframes menu-foot-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+/* The close glyph turns a quarter into place: the "..." became an X. */
+@keyframes menu-x-in {
+  from { opacity: 0; transform: rotate(-90deg) scale(0.6); }
+  to   { opacity: 1; transform: none; }
+}
 .go-sheet-panel {
   animation: sheet-up var(--duration-considered) var(--ease-counterfoil) backwards;
 }

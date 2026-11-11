@@ -14,7 +14,7 @@ import { cn } from "@/lib/cn";
 import { NAV_MAIN } from "./nav";
 import { useWaitingTotal } from "./navBadges";
 import { MenuBody } from "./mobile/MenuBody";
-import { BusinessTile, PhoneSheet, PhoneSheetHead } from "./mobile/PhoneSheet";
+import { BusinessTile, PhoneSheet, PhoneSheetHead, SHEET_EXIT_MS } from "./mobile/PhoneSheet";
 import { initialsOf } from "./mobile/shared";
 
 /**
@@ -27,7 +27,7 @@ import { initialsOf } from "./mobile/shared";
  * the content as an object you hold, 12px off the floor, so the page runs under
  * it to the edge. The drawing is Counterfoil's:
  *
- *   - Icons only, at 24px (v9, the owner's call): six glyphs the operator
+ *   - Icons only, at 24px (v9, the owner's call): seven glyphs the operator
  *     learns in a day read faster than five truncated words ("Dashbo…"). Each
  *     tab keeps its name as its accessible name, so nothing is lost to a
  *     screen reader.
@@ -41,18 +41,19 @@ import { initialsOf } from "./mobile/shared";
  * Every page reserves `--os-fab-clear` at its foot so the bar never covers a
  * last row.
  */
-const DOCK_TABS = ["/dashboard", "/orders", "/calendar", "/customers", "/catalog"] as const;
+const DOCK_TABS = ["/dashboard", "/orders", "/calendar", "/customers", "/catalog", "/analytics"] as const;
 const tabOf = (href: string) => NAV_MAIN.find((d) => d.href === href)!;
 
 /* Each tab IS its 48px circle, and the capsule pads every side by the same
    6px, so the current circle sits concentric in the bar's rounded end (outer
    radius = inner radius + padding) instead of floating closer to the top than
-   to the side. The six circles spread edge to edge with equal gaps; under
-   360px they step down to 44px (still the touch floor) so six fit a 320 phone. */
-const tabCls = "relative grid size-12 max-[359px]:size-11 shrink-0 place-items-center rounded-full transition-transform duration-quick active:scale-95 motion-reduce:transition-none";
+   to the side. Seven circles spread edge to edge with equal gaps: 48px from
+   430px wide, 44px from 360px, and 40px on a 320 phone, where the bar also
+   widens to an 8px gutter so seven fit at all. */
+const tabCls = "relative grid size-10 shrink-0 min-[360px]:size-11 min-[430px]:size-12 place-items-center rounded-full transition-transform duration-quick active:scale-95 motion-reduce:transition-none";
 const dotCls = (on: boolean) =>
   cn(
-    "relative grid size-12 max-[359px]:size-11 place-items-center rounded-full transition-colors duration-quick",
+    "relative grid size-10 min-[360px]:size-11 min-[430px]:size-12 place-items-center rounded-full transition-colors duration-quick",
     on ? "bg-ember-solid text-on-solid" : "text-muted",
   );
 
@@ -64,7 +65,7 @@ export function PhoneDock({ menuOpen, onOpenMenu }: { menuOpen: boolean; onOpenM
     <nav
       aria-label={t("dock")}
       data-phone-dock
-      className="fixed inset-x-gutter bottom-[calc(12px+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-sm items-center justify-between rounded-full border border-line bg-card/90 p-1.5 shadow-float backdrop-blur-md md:hidden dark:bg-surface/90"
+      className="fixed inset-x-tight min-[360px]:inset-x-gutter bottom-[calc(12px+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-sm items-center justify-between rounded-full border border-line bg-card/90 p-1.5 shadow-float backdrop-blur-md md:hidden dark:bg-surface/90"
     >
       {DOCK_TABS.map((href) => {
         const d = tabOf(href);
@@ -123,6 +124,15 @@ function MenuSurface({ onClose, business }: { onClose: () => void; business?: st
   const t = useTranslations("nav");
   const tCommon = useTranslations("common");
   const [venuesOpen, setVenuesOpen] = useState(false);
+  /* Every way out (the X, the backdrop, Escape, a drag, a destination) plays
+     the exit first and unmounts after it. Reduced motion closes at once. */
+  const [leaving, setLeaving] = useState(false);
+  const close = () => {
+    if (leaving) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { onClose(); return; }
+    setLeaving(true);
+    window.setTimeout(onClose, SHEET_EXIT_MS);
+  };
 
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
   const locations = locationsQ.data?.data ?? [];
@@ -137,7 +147,8 @@ function MenuSurface({ onClose, business }: { onClose: () => void; business?: st
       open
       /* The venue list is a dropdown inside the menu now, not a layer of its
          own, so Escape and the backdrop close the menu itself. */
-      onClose={onClose}
+      onClose={close}
+      closing={leaving}
       label={t("menu")}
       /* Full height: the menu is a place you go, not a note over the page. */
       className="h-[calc(100dvh-0.5rem)]"
@@ -154,7 +165,7 @@ function MenuSurface({ onClose, business }: { onClose: () => void; business?: st
         <>
           <Link
             href="/settings/profile"
-            onClick={onClose}
+            onClick={close}
             data-menu-item="myProfile"
             className="flex h-13 min-w-0 items-center gap-tight rounded-full border border-line bg-card pl-1.5 pr-section shadow-float transition-colors duration-quick active:bg-nav-hover dark:bg-surface"
           >
@@ -165,19 +176,19 @@ function MenuSurface({ onClose, business }: { onClose: () => void; business?: st
           </Link>
           <button
             type="button"
-            onClick={onClose}
+            onClick={close}
             aria-label={tCommon("close")}
             data-menu-close
             className="grid h-13 w-13 shrink-0 place-items-center rounded-full border border-line bg-card text-fg shadow-float transition-colors duration-quick active:bg-nav-hover dark:bg-surface"
           >
-            <X size={22} strokeWidth={1.75} aria-hidden />
+            <X size={22} strokeWidth={1.75} aria-hidden className="animate-[menu-x-in_320ms_cubic-bezier(0.32,0.72,0,1)_160ms_backwards]" />
           </button>
         </>
       }
     >
       <MenuBody
         data={{ locations, location, me, role }}
-        onClose={onClose}
+        onClose={close}
         venuesOpen={venuesOpen}
         setVenuesOpen={setVenuesOpen}
       />
