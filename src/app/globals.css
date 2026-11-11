@@ -965,6 +965,13 @@
   from { opacity: 0; transform: rotate(-90deg) scale(0.6); }
   to   { opacity: 1; transform: none; }
 }
+/* The phone menu's entrance, as named classes (the .go-sheet-panel pattern):
+   a 360ms glide on the house curve, the backdrop fading in, then the foot and
+   the X a beat later. `backwards` leaves no transform behind. */
+.phone-scrim-in { animation: go-scrim-in 280ms ease-out backwards; }
+.phone-sheet-in { animation: sheet-up 360ms var(--ease-counterfoil) backwards; }
+.menu-foot-in { animation: menu-foot-in 300ms var(--ease-counterfoil) 120ms backwards; }
+.menu-x-in { animation: menu-x-in 320ms var(--ease-counterfoil) 160ms backwards; }
 .go-sheet-panel {
   animation: sheet-up var(--duration-considered) var(--ease-counterfoil) backwards;
 }

@@ -181,7 +181,7 @@ function MenuSurface({ onClose, business }: { onClose: () => void; business?: st
             data-menu-close
             className="grid h-13 w-13 shrink-0 place-items-center rounded-full border border-line bg-card text-fg shadow-float transition-colors duration-quick active:bg-nav-hover dark:bg-surface"
           >
-            <X size={22} strokeWidth={1.75} aria-hidden className="animate-[menu-x-in_320ms_cubic-bezier(0.32,0.72,0,1)_160ms_backwards]" />
+            <X size={22} strokeWidth={1.75} aria-hidden className="menu-x-in" />
           </button>
         </>
       }

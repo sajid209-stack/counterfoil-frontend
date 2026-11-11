@@ -72,7 +72,7 @@ export function PhoneSheet({
         className={cn(
           "fixed inset-0 z-50 transition-opacity duration-standard ease-in md:hidden",
           scrimClass,
-          closing ? "pointer-events-none opacity-0" : "animate-[go-scrim-in_280ms_ease-out_backwards]",
+          closing ? "pointer-events-none opacity-0" : "phone-scrim-in",
         )}
       />
       <div
@@ -93,7 +93,7 @@ export function PhoneSheet({
              no transform behind to create a containing block. */
           closing
             ? "pointer-events-none transition-transform duration-standard ease-in"
-            : !drag && "animate-[sheet-up_360ms_cubic-bezier(0.32,0.72,0,1)_backwards]",
+            : !drag && "phone-sheet-in",
           className,
         )}
       >
@@ -122,7 +122,7 @@ export function PhoneSheet({
             <div
               className={cn(
                 "pointer-events-auto flex items-center justify-center gap-tight px-gutter transition-opacity duration-150",
-                closing ? "opacity-0" : "animate-[menu-foot-in_300ms_cubic-bezier(0.32,0.72,0,1)_120ms_backwards]",
+                closing ? "opacity-0" : "menu-foot-in",
               )}
             >
               {foot}
