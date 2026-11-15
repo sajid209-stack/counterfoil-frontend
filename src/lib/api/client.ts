@@ -91,6 +91,9 @@ const store: Record<string, Row[]> = {
   // Expenses are seeded by lib/api/expenses when it loads (it holds the seed, so
   // this module need not import it) and kept for the session like any other row.
   expenses: [],
+  // Sequences seed themselves when lib/api/sequences loads; their runs on first read.
+  sequences: [],
+  sequenceRuns: [],
   bookings: structuredClone(seed.bookings),
   paymentAccounts: structuredClone(seed.paymentAccounts),
   seatLayouts: structuredClone(seed.seatLayouts),

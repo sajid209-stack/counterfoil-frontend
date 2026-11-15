@@ -39,6 +39,7 @@ import {
   Users,
   UsersRound,
   Wallet,
+  Workflow,
 } from "lucide-react";
 import type { ScreenEntry } from "./types";
 
@@ -70,6 +71,9 @@ export const OS_ENTRIES: readonly ScreenEntry[] = [
   { pattern: "/memberships", surface: "os", shape: "list", empty: { id: "memberships", icon: BadgeCheck, action: "/pos" } },
   { pattern: "/pricing", surface: "os", shape: "list", empty: { id: "pricing", icon: Tags, action: "/pricing/new" } },
   { pattern: "/pricing/[id]", surface: "os", shape: "form", empty: { id: "pricing-detail", icon: Tags, action: "/pricing" } },
+  { pattern: "/sequences", surface: "os", shape: "list", empty: { id: "sequences", icon: Workflow, action: "/sequences/new" } },
+  { pattern: "/sequences/new", surface: "os", shape: "cards", empty: { id: "sequence-new", icon: Workflow, action: "self" } },
+  { pattern: "/sequences/[id]", surface: "os", shape: "form", empty: { id: "sequence-detail", icon: Workflow, action: "/sequences" } },
   { pattern: "/promotions", surface: "os", shape: "list", empty: { id: "promotions", icon: Gift, action: "self" } },
   { pattern: "/promotions/[id]", surface: "os", shape: "form", empty: { id: "promotion-detail", icon: Gift, action: "/promotions" } },
   { pattern: "/booking-rules", surface: "os", shape: "list", empty: { id: "booking-rules", icon: ClipboardList, action: "/booking-rules/new" } },

@@ -1,0 +1,127 @@
+{
+  "title": "Sequences",
+  "description": "Steps Counterfoil does for you.",
+  "newSequence": "New sequence",
+  "close": "Close",
+  "untitled": "Not named yet",
+  "never": "Never",
+  "tabs": {
+    "label": "Sequences views",
+    "sequences": "Sequences",
+    "outbox": "Sent and waiting"
+  },
+  "figures": {
+    "label": "Sequences at a glance",
+    "on": "On now",
+    "working": "{count} working now",
+    "runsWeek": "Runs this week",
+    "sent": "Messages sent",
+    "sentContext": "this week",
+    "needLook": "Need a look",
+    "needLookContext": "Show these runs"
+  },
+  "quick": {
+    "label": "Show sequences",
+    "all": "All",
+    "on": "On",
+    "off": "Off",
+    "unfinished": "Not finished"
+  },
+  "search": {
+    "sequences": "Search sequences",
+    "runs": "Search by customer, booking or sequence"
+  },
+  "col": {
+    "sequence": "Sequence",
+    "runs": "Runs (30 days)",
+    "lastRun": "Last run",
+    "on": "On",
+    "actions": "Actions",
+    "when": "When",
+    "who": "Who",
+    "step": "Step",
+    "status": "Status"
+  },
+  "working": "{count} working",
+  "needLookRuns": "{count, plural, one {# run needs a look} other {# runs need a look}}",
+  "notFinishedHint": "Finish this sequence first: {problem}",
+  "switchLabel": "Switch {name} on or off",
+  "toast": {
+    "on": "Switched on",
+    "off": "Switched off",
+    "finishFirst": "Finish this sequence first: {problem}",
+    "copied": "Copied as {name}",
+    "deleted": "Deleted {name}",
+    "undo": "Undo",
+    "restored": "Brought back {name}",
+    "failed": "That did not work. Try again.",
+    "sent": "Sent"
+  },
+  "copyName": "Copy of {name}",
+  "action": {
+    "open": "Open",
+    "copy": "Copy",
+    "delete": "Delete",
+    "rows": "Actions for {name}"
+  },
+  "stop": {
+    "title": "{count, plural, one {# run is waiting} other {# runs are waiting}}. What should happen to them?",
+    "letFinish": "Let them finish",
+    "stopNow": "Stop them now",
+    "cancel": "Cancel"
+  },
+  "empty": {
+    "title": "No sequences match",
+    "message": "Try another word or filter.",
+    "clear": "Clear search"
+  },
+  "ideas": {
+    "title": "Start with an idea",
+    "body": "Pick one. You can change every word.",
+    "all": "See all ideas"
+  },
+  "outbox": {
+    "emptyTitle": "Nothing sent yet",
+    "emptyBody": "Runs appear here when a sequence is on.",
+    "filteredTitle": "No runs match",
+    "filteredBody": "Try another filter or word.",
+    "clear": "Clear filters",
+    "quickLabel": "Show runs",
+    "all": "All",
+    "working": "Working",
+    "done": "Done",
+    "stopped": "Stopped",
+    "problem": "Needs a look",
+    "onlySequence": "Showing runs of {name}",
+    "showAll": "Show all",
+    "until": "until {when}",
+    "nothingYet": "Not started"
+  },
+  "run": {
+    "title": "Run",
+    "started": "Started",
+    "booking": "Booking",
+    "order": "Order",
+    "openSequence": "Open sequence",
+    "history": "What happened",
+    "waitingUntil": "Waiting until {when}",
+    "notYet": "Not yet",
+    "checked": "Checked: {took}",
+    "tryAgain": "Try again",
+    "loadFailed": "This run could not be opened.",
+    "subject": "Subject"
+  },
+  "new": {
+    "title": "New sequence",
+    "description": "Start from an idea. You can change every word.",
+    "back": "Sequences",
+    "search": "Search ideas",
+    "steps": "{count, plural, one {# step} other {# steps}}",
+    "noneTitle": "Start with nothing",
+    "noneBody": "An empty sequence. You choose what starts it and every step.",
+    "noMatchTitle": "No ideas match",
+    "noMatchBody": "Try another word.",
+    "showAll": "Show all ideas",
+    "failed": "Could not start the sequence. Try again."
+  }
+}

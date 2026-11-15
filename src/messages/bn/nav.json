@@ -4,6 +4,7 @@
   "orders": "অর্ডার",
   "issuedOrders": "ইস্যু করা অর্ডার",
   "customers": "গ্রাহক",
+  "sequences": "সিকোয়েন্স",
   "memberships": "সদস্যপদ",
   "analytics": "বিশ্লেষণ",
   "promotions": "প্রোমোশন",
@@ -49,7 +50,8 @@
     "expenses": "খরচ ব্যয় বিল কেনাকাটা সরবরাহকারী expenses expense cost spending bill",
     "issuedOrders": "ইস্যু টিকিট কোড বুকিং নম্বর ব্যবহার বাতিল issued tickets",
     "refunds": "রিফান্ড টাকা ফেরত ফেরত বাতিল refunds refund money back",
-    "writeOffs": "বাকি মাফ মাফ বকেয়া write-offs write-off write off bad debt owed balance"
+    "writeOffs": "বাকি মাফ মাফ বকেয়া write-offs write-off write off bad debt owed balance",
+    "sequences": "সিকোয়েন্স অটোমেশন নিজে নিজে রিমাইন্ডার মনে করানো মেসেজ এসএমএস ইমেইল ধাপ sequences automation reminders messages"
   },
   "inventory": "ইনভেন্টরি",
   "cartFab": "কার্ট — {count, plural, one {#টি আইটেম} other {#টি আইটেম}}",

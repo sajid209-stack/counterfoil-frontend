@@ -4,6 +4,7 @@
   "orders": "Orders",
   "issuedOrders": "Issued orders",
   "customers": "Customers",
+  "sequences": "Sequences",
   "memberships": "Memberships",
   "analytics": "Analytics",
   "promotions": "Promotions",
@@ -49,7 +50,8 @@
     "expenses": "expenses expense cost costs spending spend bill bills purchases supplier",
     "issuedOrders": "issued tickets codes booking number qr used unused voided",
     "refunds": "refunds refund money back return returned cancel cancelled give back",
-    "writeOffs": "write-offs write-off write off writeoff bad debt owed balance forgive unpaid"
+    "writeOffs": "write-offs write-off write off writeoff bad debt owed balance forgive unpaid",
+    "sequences": "sequences sequence automation automatic workflow reminders reminder follow-up messages texts sms email zapier steps outbox"
   },
   "inventory": "Inventory",
   "cartFab": "Cart — {count, plural, one {# item} other {# items}}",

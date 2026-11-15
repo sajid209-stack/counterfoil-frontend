@@ -1,0 +1,393 @@
+{
+  "span": {
+    "day": "{count, plural, one {# day} other {# days}}",
+    "hr": "{count} hr",
+    "min": "{count} min"
+  },
+  "state": {
+    "on": "On",
+    "off": "Off",
+    "unfinished": "Not finished"
+  },
+  "start": {
+    "label": "Starts when",
+    "group": {
+      "customer": "About customers",
+      "team": "About your team"
+    },
+    "booked": {
+      "name": "A booking is made",
+      "hint": "Right after someone books or buys.",
+      "sentence": "When a booking is made"
+    },
+    "beforeVisit": {
+      "name": "Before a visit",
+      "hint": "A set time before the booked time.",
+      "sentence": "{span} before a visit"
+    },
+    "afterVisit": {
+      "name": "After a visit",
+      "hint": "A set time after the booked time.",
+      "sentence": "{span} after a visit"
+    },
+    "cancelled": {
+      "name": "A booking is cancelled",
+      "hint": "When you or the customer cancels.",
+      "sentence": "When a booking is cancelled"
+    },
+    "noShow": {
+      "name": "A customer does not come",
+      "hint": "When a booking is marked \"didn't come\".",
+      "sentence": "When a customer does not come"
+    },
+    "balanceOwed": {
+      "name": "Money is still owed",
+      "hint": "A set time before a visit that is not fully paid.",
+      "sentence": "{span} before a visit that is not fully paid"
+    },
+    "placeOpens": {
+      "name": "A place opens on a full slot",
+      "hint": "When a cancelled booking frees a place.",
+      "sentence": "When a place opens on a full slot"
+    },
+    "notBack": {
+      "name": "A customer has not come back",
+      "hint": "Counted from their last visit.",
+      "sentence": "When a customer has not come back for {days} days"
+    },
+    "refundAsked": {
+      "name": "A refund is asked for",
+      "hint": "When the counter asks a manager for a refund.",
+      "sentence": "When a refund is asked for"
+    },
+    "stockLow": {
+      "name": "Something runs low in stock",
+      "hint": "When an item reaches its low-stock number.",
+      "sentence": "When something runs low in stock"
+    },
+    "cashShort": {
+      "name": "Cash is short at close",
+      "hint": "When a counter closes with less cash than expected.",
+      "sentence": "When cash is short by {amount} or more at close"
+    },
+    "howLongBefore": "How long before",
+    "howLongAfter": "How long after",
+    "afterDays": "After how many days",
+    "shortBy": "Short by at least",
+    "whichBookings": "Which bookings"
+  },
+  "which": {
+    "every": "Every booking",
+    "some": "Only some",
+    "more": "{name} and {count} more",
+    "choose": "Choose bookings"
+  },
+  "onlyIf": {
+    "label": "Only if",
+    "add": "Add \"only if\"",
+    "none": "Runs for everyone",
+    "people": {
+      "name": "Group size",
+      "atLeast": "Only if the group is {value} or more",
+      "atMost": "Only if the group is {value} or fewer"
+    },
+    "total": {
+      "name": "Sale total",
+      "atLeast": "Only if the sale is {value} or more",
+      "atMost": "Only if the sale is {value} or less"
+    },
+    "visits": {
+      "name": "Times they have come",
+      "atLeast": "Only if they have come {value} times or more",
+      "atMost": "Only if they have come {value} times or fewer"
+    },
+    "where": {
+      "name": "Where it was booked",
+      "online": "Only if it was booked online",
+      "counter": "Only if it was sold at the counter"
+    },
+    "day": {
+      "name": "Day of the visit",
+      "weekend": "Only if the visit is on a Friday or Saturday",
+      "weekday": "Only if the visit is Sunday to Thursday"
+    },
+    "owes": {
+      "name": "Money owed",
+      "yes": "Only if money is still owed",
+      "no": "Only if it is fully paid"
+    }
+  },
+  "iff": {
+    "people": {
+      "atLeast": "If the group is {value} or more",
+      "atMost": "If the group is {value} or fewer"
+    },
+    "total": {
+      "atLeast": "If the sale is {value} or more",
+      "atMost": "If the sale is {value} or less"
+    },
+    "visits": {
+      "atLeast": "If they have come {value} times or more",
+      "atMost": "If they have come {value} times or fewer"
+    },
+    "where": {
+      "online": "If it was booked online",
+      "counter": "If it was sold at the counter"
+    },
+    "day": {
+      "weekend": "If the visit is on a Friday or Saturday",
+      "weekday": "If the visit is Sunday to Thursday"
+    },
+    "owes": {
+      "yes": "If money is still owed",
+      "no": "If it is fully paid"
+    }
+  },
+  "op": {
+    "atLeast": "or more",
+    "atMost": "or less"
+  },
+  "choice": {
+    "online": "Online",
+    "counter": "At the counter",
+    "weekend": "Friday or Saturday",
+    "weekday": "Sunday to Thursday",
+    "yes": "Still owed",
+    "no": "Fully paid"
+  },
+  "step": {
+    "wait": {
+      "name": "Wait",
+      "hint": "Let some time pass before the next step.",
+      "titleFor": "Wait {span}"
+    },
+    "text": {
+      "name": "Send a text",
+      "hint": "A text message to the customer's phone."
+    },
+    "email": {
+      "name": "Send an email",
+      "hint": "An email to the customer."
+    },
+    "team": {
+      "name": "Tell the team",
+      "hint": "A message to your staff, inside Counterfoil.",
+      "titleFor": "Tell {who}"
+    },
+    "note": {
+      "name": "Add a note to the customer",
+      "hint": "Staff see it the next time this customer comes."
+    },
+    "offer": {
+      "name": "Offer the place",
+      "hint": "Text the next person on the waitlist and keep the place for them.",
+      "titleFor": "Offer the place, kept for {span}"
+    },
+    "app": {
+      "name": "Send to another app",
+      "hint": "Pass the details to a web address you give."
+    },
+    "branch": {
+      "name": "If / otherwise",
+      "hint": "Do one thing if something is true, another if not.",
+      "yes": "Yes",
+      "no": "Otherwise"
+    }
+  },
+  "then": {
+    "wait": "wait {span}",
+    "text": "text the customer",
+    "email": "email the customer",
+    "team": "tell the team",
+    "note": "add a note to the customer",
+    "offer": "offer the place to the waitlist",
+    "app": "send it to another app",
+    "branch": "check and decide"
+  },
+  "sentence": {
+    "whole": "{start}, {then}.",
+    "more": "{start}, {then}. Then {count, plural, one {# more step} other {# more steps}}.",
+    "startOnly": "{start}. No steps yet."
+  },
+  "team": {
+    "managers": "managers",
+    "onShift": "everyone on shift",
+    "everyone": "all staff"
+  },
+  "stop": {
+    "label": "Stops if",
+    "none": "Never stops early",
+    "cancelled": {
+      "name": "The booking is cancelled",
+      "sentence": "Stops if the booking is cancelled"
+    },
+    "checkedIn": {
+      "name": "The customer checks in",
+      "sentence": "Stops if the customer checks in"
+    },
+    "paid": {
+      "name": "The balance is paid",
+      "sentence": "Stops if the balance is paid"
+    }
+  },
+  "quiet": {
+    "label": "Quiet hours",
+    "on": "Texts and emails wait until 9 AM if they fall between 9 PM and 9 AM.",
+    "off": "Texts and emails go out at any hour."
+  },
+  "detail": {
+    "firstName": "First name",
+    "customer": "Customer name",
+    "booking": "Booking name",
+    "date": "Date",
+    "time": "Time",
+    "people": "People",
+    "owed": "Amount owed",
+    "amount": "Amount",
+    "venue": "Venue name",
+    "link": "Ticket link",
+    "item": "Item name",
+    "left": "Number left",
+    "staff": "Staff name"
+  },
+  "run": {
+    "status": {
+      "working": "Working",
+      "done": "Done",
+      "stopped": "Stopped",
+      "problem": "Needs a look"
+    },
+    "step": {
+      "done": "Done",
+      "waiting": "Waiting",
+      "next": "Not yet",
+      "skipped": "Skipped",
+      "failed": "Did not go"
+    },
+    "reason": {
+      "noPhone": "No phone number for this customer",
+      "noEmail": "No email for this customer",
+      "noTextYes": "They did not say yes to texts",
+      "noEmailYes": "They did not say yes to emails",
+      "cancelled": "The booking was cancelled",
+      "switchedOff": "The sequence was switched off",
+      "sendFailed": "The message could not be sent"
+    },
+    "stopped": {
+      "cancelled": "Stopped: the booking was cancelled",
+      "checkedIn": "Stopped: the customer checked in",
+      "paid": "Stopped: the balance was paid",
+      "switchedOff": "Stopped: the sequence was switched off"
+    },
+    "held": "Held until 9 AM by quiet hours",
+    "took": {
+      "yes": "Yes",
+      "no": "Otherwise"
+    }
+  },
+  "problem": {
+    "name": "Give it a name",
+    "noSteps": "Add a step",
+    "tooManySteps": "Too many steps. Remove some.",
+    "startSpan": "Say how long",
+    "startDays": "Say how many days",
+    "startAmount": "Enter an amount",
+    "waitLength": "Say how long to wait",
+    "textWords": "Write the text",
+    "emailSubject": "Write the subject",
+    "emailWords": "Write the email",
+    "teamWords": "Write the message",
+    "noteWords": "Write the note",
+    "appAddress": "Enter a web address that starts with https://",
+    "branchEmpty": "Add a step on one side",
+    "endsOnWait": "Add a step after this wait, or remove it"
+  },
+  "ideas": {
+    "group": {
+      "before": "Before the visit",
+      "after": "After the visit",
+      "changes": "When plans change",
+      "team": "Your team"
+    },
+    "reminder": {
+      "name": "Remind customers the day before",
+      "desc": "Fewer people forget, so fewer places go empty.",
+      "text": "Hi {firstName}, see you tomorrow at {time} for {booking}. Your ticket: {link} — {venue}"
+    },
+    "confirm": {
+      "name": "Confirm an online booking by email",
+      "desc": "An email with the ticket, right after they book online.",
+      "subject": "Your booking for {booking} on {date}",
+      "email": "Hello {firstName},\n\nYou are booked for {booking} on {date} at {time}, for {people} people.\n\nYour ticket: {link}\n\nSee you there,\n{venue}"
+    },
+    "balance": {
+      "name": "Ask for the balance before the visit",
+      "desc": "A text with the amount, then a nudge to a manager if it is still unpaid.",
+      "text": "Hi {firstName}, {owed} is still to pay for {booking} on {date}. Pay here: {link}",
+      "team": "{customer} still owes {owed} for {booking} on {date}."
+    },
+    "bigGroup": {
+      "name": "Tell a manager about a big group",
+      "desc": "Know early when a group of 10 or more books.",
+      "team": "{customer} booked {booking} for {people} people on {date} at {time}."
+    },
+    "review": {
+      "name": "Ask for a review after the visit",
+      "desc": "A short thank-you with a link, while the visit is fresh.",
+      "text": "Thank you for coming, {firstName}. How was {booking}? Tell us in one tap: {link}"
+    },
+    "thanks": {
+      "name": "Thank a regular customer",
+      "desc": "A thank-you after their third visit, and a note for your staff.",
+      "text": "{firstName}, thank you for coming back to {venue}. We are glad to see you again.",
+      "note": "Regular customer. Came for {booking} on {date}."
+    },
+    "comeBack": {
+      "name": "Invite customers who have not come back",
+      "desc": "A friendly text after 60 days without a visit.",
+      "text": "Hi {firstName}, it has been a while. Come and see what is new at {venue}: {link}"
+    },
+    "noShow": {
+      "name": "Follow up when someone does not come",
+      "desc": "A kind text an hour later, and a note on new customers.",
+      "text": "We missed you today, {firstName}. Want another time for {booking}? Reply to this text and we will help.",
+      "note": "Did not come to {booking} on {date}."
+    },
+    "waitlist": {
+      "name": "Offer a free place to the waitlist",
+      "desc": "When someone cancels a full slot, the next person in line gets the place.",
+      "team": "A place opened on {booking} at {time}. It was offered to the waitlist."
+    },
+    "sorry": {
+      "name": "Say sorry when a booking is cancelled",
+      "desc": "A short text so the customer knows it is done.",
+      "text": "Hi {firstName}, your booking for {booking} on {date} is cancelled. We hope to see you another day. {venue}"
+    },
+    "stock": {
+      "name": "Tell me when stock runs low",
+      "desc": "A message to managers before something runs out.",
+      "team": "{item} is running low at {venue}. {left} left."
+    },
+    "cash": {
+      "name": "Tell me when cash is short",
+      "desc": "A message to managers when a counter closes short.",
+      "team": "{staff} closed {amount} short at {venue}."
+    },
+    "refund": {
+      "name": "Do not let a refund wait",
+      "desc": "Managers hear at once, and all staff after 4 hr with no answer.",
+      "team": "{customer} asked for a refund of {amount} on {booking}.",
+      "teamAgain": "A refund for {customer} has waited 4 hr for an answer."
+    }
+  },
+  "whoGets": {
+    "text": {
+      "service": "Goes to every customer with a phone number. It is about their own booking.",
+      "yes": "Goes only to customers who said yes to texts."
+    },
+    "email": {
+      "service": "Goes to every customer with an email. It is about their own booking.",
+      "yes": "Goes only to customers who said yes to emails."
+    }
+  }
+}

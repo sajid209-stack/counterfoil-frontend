@@ -475,6 +475,21 @@
       "title": "Nothing assigned to you",
       "body": "A manager adds you to a venue and its counters in Team.",
       "action": "Refresh"
+    },
+    "sequences": {
+      "title": "No sequences yet",
+      "body": "Let Counterfoil send reminders and follow up for you.",
+      "action": "New sequence"
+    },
+    "sequence-new": {
+      "title": "No ideas match",
+      "body": "Try another word, or start with nothing.",
+      "action": "Show all ideas"
+    },
+    "sequence-detail": {
+      "title": "Add the first step",
+      "body": "Choose what starts it, then what Counterfoil should do.",
+      "action": "Back to sequences"
     }
   }
 }

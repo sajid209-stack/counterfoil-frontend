@@ -22,6 +22,7 @@ import {
   UserRound,
   UsersRound,
   Wallet,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 
@@ -97,6 +98,9 @@ export const NAV_MAIN: readonly NavDestination[] = [
     ],
   },
   { href: "/customers", key: "customers", icon: UsersRound },
+  /* Steps Counterfoil does by itself (docs/sequences.md). Beside Customers,
+     because most of them are words sent to a customer. */
+  { href: "/sequences", key: "sequences", icon: Workflow },
   {
     href: "/catalog",
     key: "catalog",
@@ -188,6 +192,7 @@ export const PAGES: readonly PageMeta[] = [
   { prefix: "/finances", key: "finances", icon: Wallet },
   { prefix: "/expenses", key: "expenses", icon: HandCoins },
   { prefix: "/customers", key: "customers", icon: UsersRound },
+  { prefix: "/sequences", key: "sequences", icon: Workflow },
   { prefix: "/catalog", key: "catalog", icon: Ticket },
   { prefix: "/inventory", key: "inventory", icon: Boxes },
   { prefix: "/marketplaces", key: "marketplaces", icon: Globe },

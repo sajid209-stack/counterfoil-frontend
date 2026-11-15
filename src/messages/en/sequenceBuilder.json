@@ -1,0 +1,139 @@
+{
+  "back": "Sequences",
+  "title": {
+    "untitled": "Sequence with no name"
+  },
+  "notFound": "This sequence is not here any more.",
+  "saved": "Saved",
+  "finishFirst": "Finish it first: {problem}",
+  "switchedOn": "Switched on",
+  "switchedOff": "Switched off",
+  "copyName": "Copy of {name}",
+  "copied": "Copied. The copy is off.",
+  "deleted": "Deleted {name}",
+  "copy": "Copy",
+  "delete": "Delete",
+  "tryIt": "Try it",
+  "on": "On",
+  "off": "Off",
+  "menu": "Actions for {name}",
+  "close": "Close",
+  "tabs": {
+    "label": "Sequence",
+    "steps": "Steps",
+    "runs": "Runs"
+  },
+  "name": {
+    "placeholder": "Name this sequence",
+    "label": "Name"
+  },
+  "panel": {
+    "label": "Settings for the chosen card",
+    "up": "Move up",
+    "down": "Move down",
+    "delete": "Delete step",
+    "removed": "Step removed"
+  },
+  "askOff": {
+    "title": "{count, plural, one {# run is waiting} other {# runs are waiting}}. What should happen to them?",
+    "finish": "Let them finish",
+    "stop": "Stop them now"
+  },
+  "flow": {
+    "startsWhen": "Starts when",
+    "addStep": "Add a step here",
+    "addTitle": "Add a step",
+    "max": "{count} steps is the most",
+    "ends": "Ends",
+    "nothing": "Nothing happens",
+    "addFirst": "Add the first step",
+    "quiet": "Quiet at night: texts wait until 9 AM",
+    "after": "after {span}",
+    "stepNumber": "Step {n}"
+  },
+  "cond": {
+    "field": "What to check",
+    "value": "Which one",
+    "op": "How to compare",
+    "number": "Number",
+    "remove": "Remove this line"
+  },
+  "start": {
+    "noBookings": "No bookings yet.",
+    "removed": "Some steps were removed because they do not fit this start.",
+    "days": "days"
+  },
+  "summary": {
+    "title": "Summary",
+    "steps": "{count, plural, one {# step} other {# steps}}",
+    "takes": "Takes {span} from start to end",
+    "toFinish": "To finish",
+    "ready": "Ready to switch on",
+    "tip": "Press a card to change it."
+  },
+  "wait": {
+    "label": "Wait for",
+    "next": "The next step happens {span} later."
+  },
+  "offer": {
+    "label": "Keep the place for",
+    "line": "The next person on the waitlist gets a text. If they do not take it in time, it goes to the next person."
+  },
+  "app": {
+    "address": "Web address",
+    "line": "Counterfoil sends the booking's details to this address each time.",
+    "sent": "What is sent"
+  },
+  "branch": {
+    "line": "Steps under Yes happen when this is true. Otherwise, the other side."
+  },
+  "msg": {
+    "who": "Who gets it",
+    "whoCustomer": "The customer",
+    "subject": "Subject",
+    "words": "Words",
+    "emailWords": "Email words",
+    "addDetail": "Add a detail",
+    "count": "{chars} letters · {parts, plural, one {# text} other {# texts}}",
+    "cost": "Costs {parts} texts each time.",
+    "preview": "Preview",
+    "from": "From {sender}",
+    "teamLine": "Shows in Counterfoil for the people you chose.",
+    "noteLine": "Staff see this on the customer's page.",
+    "placeholder": "Write the words here",
+    "shorter": "The ৳ sign and Bangla letters make a text shorter: 70 letters, not 160.",
+    "previewFor": "Preview for {name}"
+  },
+  "audience": {
+    "managers": "Managers",
+    "onShift": "Everyone on shift",
+    "everyone": "All staff"
+  },
+  "try": {
+    "title": "Try it",
+    "description": "See what would happen for a real booking. Nothing is sent.",
+    "nothingSent": "Nothing is sent.",
+    "unfinished": "This sequence is not finished. Missing parts are left out.",
+    "choose": "Choose a booking",
+    "none": "There is nothing to try it on yet.",
+    "starts": "Starts {day} at {clock}",
+    "blocked": "It would not start for {name}, because \"{rule}\" is not true for them.",
+    "wait": "Wait {span}, until {when}",
+    "checked": "Checked: {answer}",
+    "owes": "owes {owed}",
+    "noPhone": "no phone number",
+    "noText": "said no to texts",
+    "group": "group of {n}"
+  },
+  "runs": {
+    "last14": "Runs started in the last 14 days",
+    "bar": "{count, plural, one {# run} other {# runs}} on {date}",
+    "figures": "{runs} runs in 30 days · {working} working · {problems} need a look"
+  },
+  "unit": {
+    "label": "Unit",
+    "min": "min",
+    "hr": "hr",
+    "day": "days"
+  }
+}

@@ -19725,3 +19725,32 @@ on the iOS sheet curve with the backdrop fading in, the profile + close foot ris
 turning a quarter into place. Reduced motion closes at once. Analytics joins the tab bar (seven tabs:
 48px circles from 430px, 44px from 360px, 40px at 320 with an 8px gutter). Verified: os motion 7/7, v8
 39/39, v9 60/60, v10 24/24.
+
+---
+
+## Sequences (2026-11-15) — steps Counterfoil does by itself
+
+A new OS destination, `/sequences`, under Customers in the rail: the Zapier idea cut down to
+what a venue needs and written in its words. Spec and as-built notes: `docs/sequences.md`.
+Shipped to main the same day.
+
+- **What it is.** "When this happens, do these steps": eleven starts (a booking is made,
+  before / after a visit, cancelled, did not come, money still owed, a place opens, has not
+  come back, refund asked, stock low, cash short), eight steps (wait, text, email, tell the
+  team, note on the customer, offer the place, send to another app, if / otherwise — one
+  level deep), "only if" lines, stop rules and quiet hours.
+- **Three things the ticketing tools do not have:** *Try it* (plays the sequence for a real
+  booking with the real dates and words; nothing is sent), an *outbox* (every run is a row
+  with a step-by-step record), and consent the model understands (a message about your own
+  booking goes to anyone with a phone; an invitation only to customers who said yes).
+- **Screens.** List with a figure band, the sentence each sequence reads as, and the on/off
+  switch in the row · "Sent and waiting" outbox with a run record sheet · thirteen ideas to
+  start from · the builder (a vertical spine, a side panel on desktop / a sheet on phones,
+  words edited with detail chips, a live preview, a text-cost counter).
+- **Contract for the backend lane:** `src/lib/sequences.ts` (types + pure rules, including
+  `walkSequence`) and `src/lib/api/sequences.ts` (`Sequence`, `SequenceInput`, `SequenceRun`).
+  The engine itself is the backend's; runs here are seeded.
+- **Verified:** 280-check contract test, a browser walk of the whole journey, screenshots at
+  1440 and 393 in light, dark and Bangla; tsc, eslint (no new findings), i18n parity and
+  token lint clean.
+- **Open:** native review of the Bangla; the rail now has one more row, so harnesses that count rail rows need updating.
