@@ -7,9 +7,7 @@ import { peekProducts } from "@/lib/api";
 import {
   START_META,
   conditionSentence,
-  elapsedByStep,
   problemsAt,
-  spanWords,
   startSentence,
   stepTitle,
   whichBookings,
@@ -89,13 +87,10 @@ export function StartCard() {
 
 /** "Only if" lines and stop rules, quiet, on the spine. Pressing one opens the start card's panel. */
 export function RulesStrip() {
-  const { form, ts, tb, select } = useBuilder();
-  const customer = START_META[form.start.kind].about === "customer";
-  const lines: { key: string; text: string; moon?: boolean }[] = [
-    ...form.onlyIf.map((c) => ({ key: c.id, text: conditionSentence(ts, c) })),
-    ...(customer ? form.stopIf.map((r) => ({ key: `stop-${r}`, text: ts(`stop.${r}.sentence`) })) : []),
-    ...(customer && form.quietHours ? [{ key: "quiet", text: tb("flow.quiet"), moon: true }] : []),
-  ];
+  const { form, ts, select } = useBuilder();
+  // Only the conditions that change WHO it runs for are drawn on the spine.
+  // Stop rules and quiet hours are safety settings: they live in More options.
+  const lines: { key: string; text: string; moon?: boolean }[] = form.onlyIf.map((c) => ({ key: c.id, text: conditionSentence(ts, c) }));
   if (!lines.length) return null;
   return (
     <div>
@@ -117,30 +112,22 @@ export function RulesStrip() {
 }
 
 export function StepCard({ step, lane = false }: { step: Exclude<SequenceStep, { kind: "wait" } | { kind: "branch" }>; lane?: boolean }) {
-  const { form, ts, tb, problems, selected, select, numbers } = useBuilder();
+  const { ts, problems, selected, select } = useBuilder();
   const probs = problemsAt(problems, step.id);
-  const after = elapsedByStep(form.steps)[step.id] ?? 0;
   const title = stepTitle(ts, step);
-  const n = numbers[step.id];
   return (
     <PressCard
       selected={selected === step.id}
       onPress={() => select(step.id)}
-      label={`${n ? tb("flow.stepNumber", { n }) + ": " : ""}${title}`}
+      label={title}
       className={cn("card-surface w-full py-comfortable pr-section", lane ? "pl-comfortable" : "pl-5")}
     >
       {probs.length > 0 && <ProblemDot />}
       <div className="flex items-center gap-comfortable">
-        {n && (
-          <span aria-hidden className="grid size-5 shrink-0 place-items-center rounded-full bg-subtle text-xs font-medium text-fg-secondary">
-            {n}
-          </span>
-        )}
         <StepTile kind={step.kind} size="sm" />
         <p className="min-w-0 flex-1 break-words text-base font-medium text-fg">{title}</p>
-        {after > 0 && !lane && <span className="hidden shrink-0 text-xs text-muted sm:inline">{tb("flow.after", { span: spanWords(ts, after) })}</span>}
       </div>
-      <div className={cn("mt-tight", !lane && "pl-9")}>
+      <div className={cn("mt-tight", !lane && "pl-10")}>
         {probs.length > 0 ? (
           <Problem code={probs[0]} />
         ) : step.kind === "email" ? (

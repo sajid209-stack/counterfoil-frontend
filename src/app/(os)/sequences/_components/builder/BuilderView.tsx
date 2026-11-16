@@ -13,6 +13,8 @@ import { cn } from "@/lib/cn";
 import { copySequence, deleteSequence, getOperator, getSequence, restoreSequence, setSequenceOn, updateSequence, useSequencesVersion } from "@/lib/api";
 import {
   MAX_STEPS,
+  START_META,
+  blankStart,
   countSteps,
   findStep,
   placedSteps,
@@ -23,6 +25,7 @@ import {
   type Sequence,
   type SequenceInput,
   type Slot,
+  type StartKind,
 } from "@/lib/sequences";
 import { STATE_TONE } from "../kinds";
 import { BuilderProvider, type Selected } from "./context";
@@ -63,7 +66,11 @@ export function BuilderView({ id }: { id: string }) {
   const [draft, setDraft] = useState<SequenceInput | null>(null);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [selected, setSelected] = useState<Selected>(isNew ? "start" : null);
+  const [selected, setSelected] = useState<Selected>(null);
+  /** A new sequence asks "When should it start?" first, once. */
+  const [startPicked, setStartPicked] = useState(false);
+  /** Problems are pointed at once the owner has tried to switch it on, not before. */
+  const [triedOn, setTriedOn] = useState(false);
   const [addSlot, setAddSlot] = useState<Slot | null>(null);
   const [trying, setTrying] = useState(false);
   const [askOff, setAskOff] = useState(false);
@@ -89,6 +96,28 @@ export function BuilderView({ id }: { id: string }) {
     },
     [saved],
   );
+
+  const choosing = isNew && !startPicked && !!form && form.steps.length === 0;
+  const pickStart = (kind: StartKind) => {
+    setStartPicked(true);
+    if (form) {
+      const next = { ...form, start: blankStart(kind) };
+      // Shown at once, kept at once: the draft holds it until the save lands.
+      setDraft(next);
+      setLastSaved(JSON.stringify(next));
+      void updateSequence(id, next).then((res) => {
+        if (res.ok) q.reload();
+        else {
+          setLastSaved(null);
+          toast.error(res.error.message);
+        }
+      });
+    }
+    // Only a start with a setting of its own (how long before, how many days,
+    // how much) opens its panel; the rest go straight to "Add the first step".
+    const m = START_META[kind];
+    setSelected(m.span || m.days || m.amount ? "start" : null);
+  };
 
   const focusName = useCallback(() => {
     setSelected(null);
@@ -144,6 +173,7 @@ export function BuilderView({ id }: { id: string }) {
 
   const turnOn = async () => {
     if (problems.length) {
+      setTriedOn(true);
       toast.error(tb("finishFirst", { problem: ts(`problem.${problems[0].code}`) }));
       goToProblem(problems[0].where);
       return;
@@ -220,11 +250,15 @@ export function BuilderView({ id }: { id: string }) {
     tb: tb as unknown as SeqT,
     venue: op.data?.name ?? "",
     isNew,
+    choosing,
+    pickStart,
     focusName,
   };
 
   const selTitle = sel === "start" ? ts("start.label") : sel ? stepTitle(ts as unknown as SeqT, findStep(form.steps, sel)!.step) : "";
-  const nameProblem = !form.name.trim();
+  // An empty name is not an error while the owner is still building: it turns
+  // red when they try to switch the sequence on (the summary lists it meanwhile).
+  const nameProblem = !form.name.trim() && (triedOn || !isNew);
 
   return (
     <BuilderProvider value={ctx}>
@@ -242,11 +276,11 @@ export function BuilderView({ id }: { id: string }) {
           />
           <div {...tabPanelProps("seq", tab)} className="flex min-w-0 flex-col gap-section outline-none">
             {tab === "steps" ? (
-              <div className="grid gap-section lg:grid-cols-[minmax(0,1fr)_22.5rem] lg:items-start">
+              <div className={cn("grid gap-section lg:items-start", !choosing && "lg:grid-cols-[minmax(0,1fr)_22.5rem]")}>
                 <div className="mx-auto flex w-full max-w-2xl flex-col gap-section">
                   {/* On a phone the two things an owner does most — switch it on, try it —
                       are on the page, not behind "more" with Copy and Delete. */}
-                  {!wide && (
+                  {!wide && !choosing && form.steps.length > 0 && (
                     <div className="card-surface flex items-center justify-between gap-comfortable p-comfortable">
                       {onOff}
                       {tryBtn}
@@ -272,7 +306,7 @@ export function BuilderView({ id }: { id: string }) {
                   </div>
                   <Flow />
                 </div>
-                {lg && (
+                {lg && !choosing && (
                   <aside
                     aria-label={tb("panel.label")}
                     onKeyDown={(e) => e.key === "Escape" && setSelected(null)}

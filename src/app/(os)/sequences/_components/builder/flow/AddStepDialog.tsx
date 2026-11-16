@@ -3,7 +3,7 @@
 import { Modal } from "@/components/ui";
 import { blankStep, insertStep, stepKindsFor, type Slot } from "@/lib/sequences";
 import { useBuilder } from "../context";
-import { StepKindList } from "./Flow";
+import { StepKinds } from "./Flow";
 
 /** "Add a step": the steps that make sense at this place in the flow. */
 export function AddStepDialog({ slot, onClose }: { slot: Slot | null; onClose: () => void }) {
@@ -11,7 +11,7 @@ export function AddStepDialog({ slot, onClose }: { slot: Slot | null; onClose: (
   return (
     <Modal open={!!slot} onClose={onClose} title={tb("flow.addTitle")} size="sm">
       {slot && (
-        <StepKindList
+        <StepKinds
           kinds={stepKindsFor(form.start, !!slot.parentId)}
           onPick={(k) => {
             const step = blankStep(k);

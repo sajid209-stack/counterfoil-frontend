@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { Button, Checkbox, Field, Notice, SegmentedControl, Select, Switch, controlClass } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { listProducts } from "@/lib/api";
@@ -71,6 +71,8 @@ export function StartPanel() {
   const meta = START_META[start.kind];
   const customer = meta.about === "customer";
   const [removed, setRemoved] = useState(false);
+  // Open by itself when something in it is already set beyond the defaults.
+  const [open, setOpen] = useState(form.onlyIf.length > 0);
 
   const setStart = (next: SequenceStart) => change({ start: next });
   const setKind = (kind: string) => {
@@ -147,6 +149,22 @@ export function StartPanel() {
 
       {meta.bookings && <WhichBookings start={start} onChange={setStart} />}
 
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="seq-more"
+        onClick={() => setOpen((v) => !v)}
+        className="flex min-h-11 w-full items-center justify-between gap-tight border-t border-hairline pt-section text-left text-sm font-medium text-fg md:min-h-9"
+      >
+        <span>
+          {tb("start.more")}
+          <span className="block text-sm font-normal text-muted">{tb("start.moreHint")}</span>
+        </span>
+        <ChevronDown size={16} strokeWidth={1.5} aria-hidden className={open ? "rotate-180 text-muted transition-transform duration-quick" : "text-muted transition-transform duration-quick"} />
+      </button>
+
+      {open && (
+      <div id="seq-more" className="flex flex-col gap-major">
       <section className="flex flex-col gap-comfortable" aria-labelledby="seq-onlyif">
         <h3 id="seq-onlyif" className="text-sm font-medium text-muted">
           {ts("onlyIf.label")}
@@ -181,6 +199,8 @@ export function StartPanel() {
       )}
 
       {customer && <Switch label={ts("quiet.label")} description={ts(form.quietHours ? "quiet.on" : "quiet.off")} checked={form.quietHours} onChange={(v) => change({ quietHours: v })} />}
+      </div>
+      )}
     </div>
   );
 }

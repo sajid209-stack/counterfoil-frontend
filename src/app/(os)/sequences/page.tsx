@@ -3,7 +3,7 @@
 import { Suspense, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { StatStrip, Tabs, tabPanelProps, type StatItem } from "@/components/ui";
+import { Notice, Tabs, tabPanelProps } from "@/components/ui";
 import { PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { getSequenceSummary, listSequenceRuns, listSequences, useSequencesVersion } from "@/lib/api";
 import { useApiQuery } from "@/lib/useApi";
@@ -53,32 +53,20 @@ function SequencesView() {
   const rows = listQ.data ?? [];
   const primary: PagePrimary = { label: t("newSequence"), href: "/sequences/new" };
 
+  // No figures: the one number an owner must act on is a run that went wrong,
+  // and that is a notice, shown only while it is true.
   const needLook = summary?.needLook ?? 0;
-  const figures: StatItem[] = [
-    {
-      key: "on",
-      label: t("figures.on"),
-      value: summary?.on ?? 0,
-      context: summary && summary.working > 0 ? t("figures.working", { count: summary.working }) : undefined,
-    },
-    { key: "runsWeek", label: t("figures.runsWeek"), value: summary?.runsWeek ?? 0 },
-    { key: "sent", label: t("figures.sent"), value: summary?.sentWeek ?? 0, context: t("figures.sentContext") },
-    {
-      key: "needLook",
-      label: t("figures.needLook"),
-      value: needLook,
-      tone: needLook > 0 ? "warning" : undefined,
-      context: needLook > 0 ? t("figures.needLookContext") : undefined,
-      onClick: needLook > 0 ? () => go("outbox", { status: "problem" }) : undefined,
-    },
-  ];
 
   const outboxKey = `${sp.get("status") ?? ""}|${sp.get("sequence") ?? ""}`;
 
   return (
     <PageShell title={t("title")} description={t("description")} primary={primary}>
       <div className="flex flex-col gap-section">
-        <StatStrip items={figures} loading={summaryQ.loading && !summary} />
+        {needLook > 0 && (
+          <Notice tone="warning" size="sm" action={{ label: t("needLookShow"), onClick: () => go("outbox", { status: "problem" }) }}>
+            {t("needLookNotice", { count: needLook })}
+          </Notice>
+        )}
         <Tabs
           id="sequences-tabs"
           aria-label={t("tabs.label")}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Workflow } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -8,7 +9,7 @@ import { Copy, ExternalLink, Trash2, TriangleAlert } from "lucide-react";
 import {
   ActionMenu,
   Button,
-  Card,
+  ButtonLink,
   DataTable,
   EmptyState,
   FilterBar,
@@ -22,23 +23,19 @@ import {
 } from "@/components/ui";
 import { PagePrimaryButton, type PagePrimary } from "@/components/ui/PageShell";
 import { MetaParts, PhoneRow } from "@/components/ui/PhoneRow";
-import { QuickTabs } from "@/components/ui/QuickTabs";
 import { copySequence, deleteSequence, restoreSequence, setSequenceOn, type SequenceRow } from "@/lib/api";
 import { formatRelative } from "@/lib/format";
 import { demoNow } from "@/lib/schedule";
-import { SEQUENCE_IDEAS, sequenceProblems, sequenceSentence, stateOf, type SeqT, type SequenceState } from "@/lib/sequences";
+import { sequenceProblems, sequenceSentence, stateOf, type SeqT, type SequenceState } from "@/lib/sequences";
 import { STATE_TONE, StartTile } from "../kinds";
-import { IdeaCard } from "./IdeaCard";
 
 type Quick = "all" | SequenceState;
-const QUICK: Quick[] = ["all", "on", "off", "unfinished"];
-const FIRST_IDEAS = ["reminder", "review", "noShow"];
 
 /**
  * The Sequences tab: every sequence with its sentence, how much it has run, and
  * the switch. A sequence that is not finished says what is missing and cannot
  * be switched on; switching off one that has runs waiting asks what to do with
- * them. With no sequences at all, the page is three ideas, not an empty table.
+ * them. With no sequences at all, the page says what one is and offers to make one.
  */
 export function SequencesTab({ rows, loading, primary }: { rows: SequenceRow[]; loading: boolean; primary: PagePrimary }) {
   const t = useTranslations("sequencesList");
@@ -48,7 +45,7 @@ export function SequencesTab({ rows, loading, primary }: { rows: SequenceRow[]; 
   const toast = useToast();
   const now = useMemo(() => demoNow(), []);
 
-  const [quick, setQuick] = useState<Quick>("all");
+  const quick: Quick = "all";
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [busy, setBusy] = useState<Set<string>>(new Set());
@@ -178,18 +175,6 @@ export function SequencesTab({ rows, loading, primary }: { rows: SequenceRow[]; 
       ),
     },
     {
-      key: "runs",
-      header: t("col.runs"),
-      align: "right",
-      width: "8.5rem",
-      render: (r) => (
-        <span className="flex flex-col items-end">
-          <span className="font-medium text-fg">{r.runs30}</span>
-          {r.working > 0 && <span className="text-sm text-muted">{t("working", { count: r.working })}</span>}
-        </span>
-      ),
-    },
-    {
       key: "last",
       header: t("col.lastRun"),
       width: "8rem",
@@ -219,14 +204,16 @@ export function SequencesTab({ rows, loading, primary }: { rows: SequenceRow[]; 
 
   if (!loading && rows.length === 0) {
     return (
-      <Card as="section" title={t("ideas.title")} actions={<Link href="/sequences/new" className="text-sm font-medium text-fg underline underline-offset-4 hover:no-underline">{t("ideas.all")}</Link>}>
-        <p className="mb-section text-base text-muted">{t("ideas.body")}</p>
-        <div className="grid gap-section sm:grid-cols-2 xl:grid-cols-3">
-          {SEQUENCE_IDEAS.filter((i) => FIRST_IDEAS.includes(i.id)).map((idea) => (
-            <IdeaCard key={idea.id} idea={idea} onChoose={() => router.push("/sequences/new")} />
-          ))}
-        </div>
-      </Card>
+      <EmptyState
+        icon={<Workflow size={24} strokeWidth={1.5} aria-hidden />}
+        title={t("empty.firstTitle")}
+        message={t("empty.firstBody")}
+        action={
+          <ButtonLink href="/sequences/new" variant="primary">
+            {t("newSequence")}
+          </ButtonLink>
+        }
+      />
     );
   }
 
@@ -239,22 +226,29 @@ export function SequencesTab({ rows, loading, primary }: { rows: SequenceRow[]; 
         loading={loading}
         layout="fixed"
         height="page"
-        minWidth="46rem"
+        minWidth="36rem"
         onRowClick={(r) => router.push(`/sequences/${r.id}`)}
         cardVariant="list"
         phoneInset={`calc(var(--spacing-gutter) + 36px + var(--spacing-comfortable))`}
         renderCard={(r) => (
           <PhoneRow
             lead={<StartTile kind={r.start.kind} size="md" />}
-            title={<span className="line-clamp-2 whitespace-normal break-words leading-snug">{nameOf(r)}</span>}
+            title={
+              <span className="flex flex-col gap-inline whitespace-normal">
+                <span className="line-clamp-2 break-words leading-snug">{nameOf(r)}</span>
+                {/* The sentence gets its own lines: on one line with the rest it was cut mid-word. */}
+                <span className="line-clamp-2 break-words text-base font-normal text-muted">{sentenceOf(r)}</span>
+              </span>
+            }
             meta={
-              <MetaParts
-                parts={[
-                  sentenceOf(r),
-                  stateOf(r) === "unfinished" ? <span key="p" className="text-warning">{problemOf(r)}</span> : null,
-                  r.problems > 0 ? needLookLink(r, "text-danger underline underline-offset-4") : null,
-                ]}
-              />
+              stateOf(r) === "unfinished" || r.problems > 0 ? (
+                <MetaParts
+                  parts={[
+                    stateOf(r) === "unfinished" ? <span key="p" className="text-warning">{problemOf(r)}</span> : null,
+                    r.problems > 0 ? needLookLink(r, "text-danger underline underline-offset-4") : null,
+                  ]}
+                />
+              ) : undefined
             }
             pill={stateOf(r) === "unfinished" ? <StatusPill tone={STATE_TONE.unfinished}>{ts("state.unfinished")}</StatusPill> : null}
             trailing={
@@ -268,17 +262,6 @@ export function SequencesTab({ rows, loading, primary }: { rows: SequenceRow[]; 
         toolbar={
           <FilterBar
             pill
-            tabs={
-              <QuickTabs
-                label={t("quick.label")}
-                value={quick}
-                onChange={(v) => {
-                  setQuick(v);
-                  setPage(1);
-                }}
-                options={QUICK.map((v) => ({ value: v, label: t(`quick.${v}`) }))}
-              />
-            }
             search={
               <FilterSearch
                 value={search}
@@ -300,20 +283,14 @@ export function SequencesTab({ rows, loading, primary }: { rows: SequenceRow[]; 
             message={t("empty.message")}
             action={
               filtered ? (
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setSearch("");
-                    setQuick("all");
-                  }}
-                >
+                <Button variant="secondary" onClick={() => setSearch("")}>
                   {t("empty.clear")}
                 </Button>
               ) : undefined
             }
           />
         }
-        pagination={{ page: curPage, pageSize: PAGE_SIZE, total: shown.length, onPageChange: setPage }}
+        pagination={shown.length > PAGE_SIZE ? { page: curPage, pageSize: PAGE_SIZE, total: shown.length, onPageChange: setPage } : undefined}
       />
 
       <Modal

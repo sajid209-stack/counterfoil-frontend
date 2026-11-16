@@ -148,12 +148,12 @@ export function MessagePanel({ step }: { step: MessageStep }) {
           <div className={cn("text-sm", parts.parts >= 2 ? "text-warning" : "text-muted")}>
             <p>{tb("msg.count", { chars: parts.chars, parts: parts.parts })}</p>
             {parts.parts >= 2 && <p>{tb("msg.cost", { parts: parts.parts })}</p>}
-            {short && <p className="text-muted">{tb("msg.shorter")}</p>}
+            {short && parts.parts >= 2 && <p className="text-muted">{tb("msg.shorter")}</p>}
           </div>
         )}
       </div>
 
-      {step.kind !== "note" && (
+      {step.kind !== "note" && step.body.trim() !== "" && (
         <div className="flex flex-col gap-tight">
           <span className="text-sm font-medium text-muted">{filled ? tb("msg.previewFor", { name: filled.name }) : tb("msg.preview")}</span>
           {step.kind === "text" && (

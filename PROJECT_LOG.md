@@ -19754,3 +19754,13 @@ Shipped to main the same day.
   1440 and 393 in light, dark and Bangla; tsc, eslint (no new findings), i18n parity and
   token lint clean.
 - **Open:** native review of the Bangla; the rail now has one more row, so harnesses that count rail rows need updating.
+
+### Sequences, revised (2026-11-16) — no presets, less to read
+
+Owner's call: no ready-made sequences when creating, and a simpler screen. New sequence now
+opens a blank sequence whose first question is "When should it start?"; the ideas page is gone.
+The list dropped its figures, runs column, quick filters and single-page pagination (a notice
+appears only when a run needs a look). The builder dropped step numbers, time notes and the
+safety lines on the spine; Only if, Stops if and Quiet hours sit under one More options; rare
+steps sit behind More steps. Details in docs/sequences.md (§5.2 and "Revision"). Verified: browser
+walk 26/26, contract test 280/280, tsc, eslint, i18n parity, token lint, production build.

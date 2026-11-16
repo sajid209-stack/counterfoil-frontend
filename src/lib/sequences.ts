@@ -853,5 +853,7 @@ export function ideaDraft(t: SeqT, id: string): SequenceInput | null {
   return { name: t(`ideas.${id}.name`), ...idea.build(words) };
 }
 
-/** An empty sequence, for "Start with nothing". */
-export const emptyDraft = (): SequenceInput => ({ name: "", start: blankStart("beforeVisit"), onlyIf: [], steps: [], stopIf: [], quietHours: true, ideaId: null });
+/** An empty sequence: no steps and no name. The two defaults are safety, not
+ *  content — nothing goes to a customer whose booking was cancelled, and
+ *  nothing goes at night. Both are under "More options" in the builder. */
+export const emptyDraft = (): SequenceInput => ({ name: "", start: blankStart("beforeVisit"), onlyIf: [], steps: [], stopIf: ["cancelled"], quietHours: true, ideaId: null });

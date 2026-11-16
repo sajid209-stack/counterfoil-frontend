@@ -1,12 +1,12 @@
 "use client";
 
-import { Fragment } from "react";
-import { Plus } from "lucide-react";
+import { Fragment, useState } from "react";
+import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Skeleton } from "@/components/ui";
-import { MAX_STEPS, stepKindsFor, type SequenceStep } from "@/lib/sequences";
+import { MAX_STEPS, START_KINDS, START_META, stepKindsFor, type SequenceStep, type StepKind } from "@/lib/sequences";
 import { blankStep, insertStep } from "@/lib/sequences";
-import { StepTile } from "../../kinds";
+import { StartTile, StepTile } from "../../kinds";
 import { useBuilder } from "../context";
 import { BranchHeader, LanePill, RulesStrip, StartCard, StepCard, WaitCard } from "./Cards";
 import { Connector, EndMarker, type Inset } from "./Spine";
@@ -70,7 +70,72 @@ function BranchBlock({ step }: { step: Extract<SequenceStep, { kind: "branch" }>
   );
 }
 
-/** The kinds of step, as buttons. Used by the add menu and the empty flow. */
+/** The steps most sequences are made of. The rest sit behind "More steps". */
+const COMMON: StepKind[] = ["text", "email", "wait", "team", "branch", "offer"];
+
+/** The kinds of step, as buttons — the common ones, then the rest behind one
+ *  "More steps" row. Used by the add menu and the empty flow. */
+export function StepKinds({ kinds, onPick, className }: { kinds: StepKind[]; onPick: (k: StepKind) => void; className?: string }) {
+  const { tb } = useBuilder();
+  const [more, setMore] = useState(false);
+  const common = kinds.filter((k) => COMMON.includes(k));
+  const rest = kinds.filter((k) => !COMMON.includes(k));
+  return (
+    <div className={className}>
+      <StepKindList kinds={more ? kinds : common} onPick={onPick} />
+      {!more && rest.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setMore(true)}
+          className="mt-inline flex min-h-11 w-full items-center gap-tight rounded-control px-comfortable text-sm font-medium text-fg-secondary transition-colors duration-quick ease-counterfoil hover:bg-muted-wash hover:text-fg motion-reduce:transition-none md:min-h-9"
+        >
+          <ChevronDown size={16} strokeWidth={1.5} aria-hidden />
+          {tb("flow.moreSteps")}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** "When should it start?" — the first and only question a new sequence asks
+ *  before its steps. Plain answers, grouped by who they are about. */
+function StartChooser() {
+  const { ts, tb, pickStart } = useBuilder();
+  const groups = (["customer", "team"] as const).map((about) => ({ about, kinds: START_KINDS.filter((k) => START_META[k].about === about) }));
+  return (
+    <section aria-labelledby="seq-choose" className="card-surface p-card">
+      <h2 id="seq-choose" className="text-md font-semibold text-fg">
+        {tb("choose.title")}
+      </h2>
+      <p className="mt-inline text-sm text-muted">{tb("choose.body")}</p>
+      {groups.map((g) => (
+        <div key={g.about} className="mt-section">
+          <p className="px-comfortable text-xs font-medium text-muted">{ts(`start.group.${g.about}`)}</p>
+          <ul className="mt-inline flex flex-col">
+            {g.kinds.map((k) => (
+              <li key={k}>
+                <button
+                  type="button"
+                  onClick={() => pickStart(k)}
+                  className="flex min-h-11 w-full items-center gap-comfortable rounded-control p-comfortable text-left transition-colors duration-quick ease-counterfoil hover:bg-muted-wash motion-reduce:transition-none"
+                >
+                  <StartTile kind={k} size="sm" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-base font-medium text-fg">{ts(`start.${k}.name`)}</span>
+                    <span className="block text-sm text-muted">{ts(`start.${k}.hint`)}</span>
+                  </span>
+                  <ChevronRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+/** The kinds of step, as buttons. */
 export function StepKindList({ kinds, onPick, className }: { kinds: ReturnType<typeof stepKindsFor>; onPick: (k: ReturnType<typeof stepKindsFor>[number]) => void; className?: string }) {
   const { ts } = useBuilder();
   return (
@@ -95,12 +160,13 @@ export function StepKindList({ kinds, onPick, className }: { kinds: ReturnType<t
 }
 
 export function Flow() {
-  const { form, tb, canAdd, change, select } = useBuilder();
+  const { form, tb, canAdd, change, select, choosing } = useBuilder();
   const first = (k: ReturnType<typeof stepKindsFor>[number]) => {
     const step = blankStep(k);
     change({ steps: insertStep(form.steps, { parentId: null, side: null, index: 0 }, step) });
     select(step.id);
   };
+  if (choosing) return <StartChooser />;
   return (
     <div className="flex flex-col">
       <StartCard />
@@ -110,7 +176,7 @@ export function Flow() {
           <Connector inset="root" />
           <div className="rounded-card border border-dashed border-line p-card">
             <p className="px-comfortable text-base font-medium text-fg">{tb("flow.addFirst")}</p>
-            <StepKindList kinds={stepKindsFor(form.start)} onPick={first} className="mt-tight" />
+            <StepKinds kinds={stepKindsFor(form.start)} onPick={first} className="mt-tight" />
           </div>
         </>
       ) : (

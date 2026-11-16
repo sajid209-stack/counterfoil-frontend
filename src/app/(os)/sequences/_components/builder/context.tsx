@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { SeqT, SequenceInput, SequenceProblem, Slot } from "@/lib/sequences";
+import type { SeqT, SequenceInput, SequenceProblem, Slot, StartKind } from "@/lib/sequences";
 
 /** "start", a step id, or nothing. */
 export type Selected = "start" | string | null;
@@ -21,6 +21,10 @@ export interface BuilderCtx {
   tb: SeqT;
   venue: string;
   isNew: boolean;
+  /** A new, empty sequence that has not been told when to start yet. */
+  choosing: boolean;
+  /** Answer "When should it start?" for a new sequence. */
+  pickStart: (kind: StartKind) => void;
   /** Puts focus in the name field. */
   focusName: () => void;
 }

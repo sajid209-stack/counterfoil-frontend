@@ -10,30 +10,12 @@
     "sequences": "Sequences",
     "outbox": "Sent and waiting"
   },
-  "figures": {
-    "label": "Sequences at a glance",
-    "on": "On now",
-    "working": "{count} working now",
-    "runsWeek": "Runs this week",
-    "sent": "Messages sent",
-    "sentContext": "this week",
-    "needLook": "Need a look",
-    "needLookContext": "Show these runs"
-  },
-  "quick": {
-    "label": "Show sequences",
-    "all": "All",
-    "on": "On",
-    "off": "Off",
-    "unfinished": "Not finished"
-  },
   "search": {
     "sequences": "Search sequences",
     "runs": "Search by customer, booking or sequence"
   },
   "col": {
     "sequence": "Sequence",
-    "runs": "Runs (30 days)",
     "lastRun": "Last run",
     "on": "On",
     "actions": "Actions",
@@ -42,7 +24,6 @@
     "step": "Step",
     "status": "Status"
   },
-  "working": "{count} working",
   "needLookRuns": "{count, plural, one {# run needs a look} other {# runs need a look}}",
   "notFinishedHint": "Finish this sequence first: {problem}",
   "switchLabel": "Switch {name} on or off",
@@ -73,12 +54,9 @@
   "empty": {
     "title": "No sequences match",
     "message": "Try another word or filter.",
-    "clear": "Clear search"
-  },
-  "ideas": {
-    "title": "Start with an idea",
-    "body": "Pick one. You can change every word.",
-    "all": "See all ideas"
+    "clear": "Clear search",
+    "firstTitle": "No sequences yet",
+    "firstBody": "A sequence does a job for you when something happens, like texting a customer the day before their visit."
   },
   "outbox": {
     "emptyTitle": "Nothing sent yet",
@@ -105,23 +83,16 @@
     "openSequence": "Open sequence",
     "history": "What happened",
     "waitingUntil": "Waiting until {when}",
-    "notYet": "Not yet",
     "checked": "Checked: {took}",
     "tryAgain": "Try again",
-    "loadFailed": "This run could not be opened.",
-    "subject": "Subject"
+    "loadFailed": "This run could not be opened."
   },
   "new": {
     "title": "New sequence",
-    "description": "Start from an idea. You can change every word.",
     "back": "Sequences",
-    "search": "Search ideas",
-    "steps": "{count, plural, one {# step} other {# steps}}",
-    "noneTitle": "Start with nothing",
-    "noneBody": "An empty sequence. You choose what starts it and every step.",
-    "noMatchTitle": "No ideas match",
-    "noMatchBody": "Try another word.",
-    "showAll": "Show all ideas",
-    "failed": "Could not start the sequence. Try again."
-  }
+    "failed": "Could not start the sequence. Try again.",
+    "retry": "Try again"
+  },
+  "needLookNotice": "{count, plural, one {# run needs a look} other {# runs need a look}}",
+  "needLookShow": "Show"
 }

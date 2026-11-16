@@ -47,9 +47,7 @@
     "ends": "Ends",
     "nothing": "Nothing happens",
     "addFirst": "Add the first step",
-    "quiet": "Quiet at night: texts wait until 9 AM",
-    "after": "after {span}",
-    "stepNumber": "Step {n}"
+    "moreSteps": "More steps"
   },
   "cond": {
     "field": "What to check",
@@ -61,7 +59,9 @@
   "start": {
     "noBookings": "No bookings yet.",
     "removed": "Some steps were removed because they do not fit this start.",
-    "days": "days"
+    "days": "days",
+    "more": "More options",
+    "moreHint": "Only for some customers, when to stop, quiet hours"
   },
   "summary": {
     "title": "Summary",
@@ -101,7 +101,7 @@
     "teamLine": "Shows in Counterfoil for the people you chose.",
     "noteLine": "Staff see this on the customer's page.",
     "placeholder": "Write the words here",
-    "shorter": "The ৳ sign and Bangla letters make a text shorter: 70 letters, not 160.",
+    "shorter": "Bangla letters and the ৳ sign fit 70 to a text, not 160.",
     "previewFor": "Preview for {name}"
   },
   "audience": {
@@ -135,5 +135,9 @@
     "min": "min",
     "hr": "hr",
     "day": "days"
+  },
+  "choose": {
+    "title": "When should it start?",
+    "body": "Choose one. You can change it later."
   }
 }
