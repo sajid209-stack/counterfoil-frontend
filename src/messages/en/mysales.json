@@ -16,10 +16,6 @@
   "cashRefunds": "Cash refunds",
   "shouldHave": "Should be in the drawer",
   "drawerNote": "Count the drawer when you end your shift.",
-  "byMethod": "How people paid",
-  "salesShort": "{count, plural, one {# sale} other {# sales}}",
-  "bestSellers": "Best sellers",
-  "soldQty": "{count} sold",
   "recent": "Recent sales",
   "showMore": "Show more",
   "showLess": "Show fewer",
@@ -32,8 +28,6 @@
   "loadError": "Could not load your sales.",
   "retry": "Try again",
   "refundedLine": "Refunded",
-  "noMethods": "Nothing paid in this period.",
-  "share": "{pct}% {method}",
   "printShort": "Print",
   "askRefund": "Ask for a refund",
   "refundAsked": "Refund asked",
@@ -100,5 +94,6 @@
     "amount": "Amount",
     "refunded": "Refunded",
     "status": "Status"
-  }
+  },
+  "cmpSameShort": "Same"
 }
