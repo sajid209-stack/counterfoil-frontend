@@ -6,6 +6,7 @@
   "customers": "Customers",
   "sequences": "Sequences",
   "memberships": "Memberships",
+  "membershipPlans": "Plans",
   "analytics": "Analytics",
   "promotions": "Promotions",
   "pos": "Point of Sale",
@@ -51,7 +52,9 @@
     "issuedOrders": "issued tickets codes booking number qr used unused voided",
     "refunds": "refunds refund money back return returned cancel cancelled give back",
     "writeOffs": "write-offs write-off write off writeoff bad debt owed balance forgive unpaid",
-    "sequences": "sequences sequence automation automatic workflow reminders reminder follow-up messages texts sms email zapier steps outbox"
+    "sequences": "sequences sequence automation automatic workflow reminders reminder follow-up messages texts sms email zapier steps outbox",
+    "memberships": "memberships membership members member plans annual pass season pass card subscription",
+    "membershipPlans": "membership plans tiers prices annual monthly family"
   },
   "inventory": "Inventory",
   "cartFab": "Cart — {count, plural, one {# item} other {# items}}",

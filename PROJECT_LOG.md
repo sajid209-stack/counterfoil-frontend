@@ -19764,3 +19764,31 @@ appears only when a run needs a look). The builder dropped step numbers, time no
 safety lines on the spine; Only if, Stops if and Quiet hours sit under one More options; rare
 steps sit behind More steps. Details in docs/sequences.md (§5.2 and "Revision"). Verified: browser
 walk 26/26, contract test 280/280, tsc, eslint, i18n parity, token lint, production build.
+
+---
+
+## Memberships menu (2026-11-17)
+
+Memberships became their own menu, under Customers, with **Plans** as its
+child, on Shopify's subscriptions model: plans say what members pay and get;
+members are customers who bought one. Spec and as-built: `docs/memberships.md`.
+
+- **Overview** `/memberships`: four figures (Members, Each month, Ending soon,
+  Ended), a plans strip that filters the list, and the members list with
+  Active · Ending soon · Ended · Paused · Cancelled tabs. Each row shows visits
+  left, when it ends and whether it renews by itself; only exceptions get a pill.
+- **One membership** `/memberships/[id]`: a membership card, usage,
+  named people (family plans), benefits, details with the renew switch, and
+  history. Cancelling offers **Stop renewing** first, **Cancel now** with a
+  reason second, and Pause instead.
+- **Add member** `/memberships/new`: customer, plan and start on one page,
+  with a sentence that says exactly what is being sold.
+- **Plans** `/memberships/plans` and the editor, ported out of Settings with a
+  live "What members see" preview. `/settings/memberships` redirects.
+- `FEATURES.memberships` is on, so the till's member pricing and CF-M- scans are live.
+- The membership seed was fixed: it was rebased twice, so ended memberships
+  came back active. Now it is 20 rows written against the real today.
+
+Verified: tsc, eslint, i18n parity, token lint, production build, a 14-step
+browser walk and the 26-step Sequences walk, screens at 1440/393 in light,
+dark and Bangla.

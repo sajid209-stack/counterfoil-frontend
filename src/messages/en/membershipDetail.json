@@ -1,0 +1,118 @@
+{
+  "notFound": "We can't find that membership.",
+  "endsIn": "Ends in {count, plural, one {# day} other {# days}}",
+  "more": "More actions for {name}",
+  "stopRenewing": "Stop renewing",
+  "renewByItself": "Renew by itself",
+  "printCard": "Print card",
+  "openCustomer": "Open customer",
+  "cancelMembership": "Cancel membership",
+  "stoppedRenewing": "It won't renew. It runs until it ends.",
+  "renewsByItself": "It will renew by itself.",
+  "copied": "Code copied.",
+  "peopleSaved": "People saved.",
+  "card": {
+    "label": "Membership card for {name}",
+    "validUntil": "Valid until {date}",
+    "paused": "Paused",
+    "ended": "Ended",
+    "cancelled": "Cancelled"
+  },
+  "usage": {
+    "title": "Usage",
+    "visits": "{used} of {total} used this period",
+    "resets": "Starts again on {date}",
+    "unlimited": "Unlimited entry",
+    "guests": "{used} of {total} guest passes used"
+  },
+  "people": {
+    "title": "People on it",
+    "count": "{count} of {max}",
+    "add": "Add person",
+    "name": "Name",
+    "note": "Note, like Child",
+    "remove": "Remove person {n}",
+    "none": "No one is named yet.",
+    "full": "It covers {max} people. Remove someone to add another."
+  },
+  "benefits": {
+    "title": "What they get",
+    "editPlan": "Edit plan"
+  },
+  "details": {
+    "title": "Details",
+    "plan": "Plan",
+    "started": "Started",
+    "periodEnds": "Current period ends",
+    "renews": "Renews by itself",
+    "renewNotice": "Reminder {count, plural, one {# day} other {# days}} before",
+    "price": "Price",
+    "soldIn": "Sold in",
+    "soldInOrder": "Open the order",
+    "soldInOs": "Added in Counterfoil OS",
+    "code": "Card code",
+    "copyCode": "Copy code"
+  },
+  "history": {
+    "title": "History",
+    "cancelled": "Cancelled",
+    "reason": "Reason: {reason}",
+    "paused": "Paused",
+    "ended": "Ended",
+    "started": "Started",
+    "joined": "Joined"
+  },
+  "cancel": {
+    "title": "Cancel {name}'s membership?",
+    "choose": "What should happen?",
+    "stopTitle": "Stop renewing",
+    "stopBody": "Keeps using it until {date}. It won't renew.",
+    "nowTitle": "Cancel now",
+    "nowBody": "Ends today. Can't be undone.",
+    "pauseLine": "Going away for a while? Pause instead.",
+    "pauseInstead": "Pause instead",
+    "confirmStop": "Stop renewing",
+    "confirmNow": "Cancel now"
+  },
+  "new": {
+    "title": "Add member",
+    "who": {
+      "title": "Who is joining?",
+      "description": "Find a customer, or add a new one.",
+      "search": "Search by name or phone",
+      "none": "No customers match.",
+      "change": "Change",
+      "chosen": "Chosen customer",
+      "newCustomer": "New customer",
+      "name": "Name",
+      "phone": "Phone",
+      "add": "Add customer",
+      "added": "{name} added.",
+      "already": "{name} is already a member: {plan}, until {date}.",
+      "view": "Open that membership"
+    },
+    "plan": {
+      "title": "Which plan?",
+      "description": "Pick what they are buying.",
+      "none": "There are no plans to sell yet.",
+      "create": "Create a plan"
+    },
+    "details": {
+      "title": "Details",
+      "description": "When it starts, and who it covers.",
+      "starts": "Starts",
+      "people": "People on it",
+      "peopleHelp": "Name who it covers, up to {max}. The first is the member.",
+      "person": "Person {n}",
+      "personName": "Name",
+      "personNote": "Note (optional)"
+    },
+    "bar": {
+      "sentence": "{plan} for {name} · {price} · until {date}",
+      "empty": "Choose a customer and a plan.",
+      "payment": "Take payment at the counter.",
+      "submit": "Add member",
+      "added": "{name} is now a member."
+    }
+  }
+}

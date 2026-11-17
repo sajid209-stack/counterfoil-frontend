@@ -1,5 +1,6 @@
 import {
   Activity,
+  BadgeCheck,
   AppWindow,
   Boxes,
   CalendarDays,
@@ -98,6 +99,14 @@ export const NAV_MAIN: readonly NavDestination[] = [
     ],
   },
   { href: "/customers", key: "customers", icon: UsersRound },
+  /* Customers who bought a plan (docs/memberships.md). Beside Customers,
+     because every member is one; its plans are its child, Shopify-style. */
+  {
+    href: "/memberships",
+    key: "memberships",
+    icon: BadgeCheck,
+    children: [{ href: "/memberships/plans", key: "membershipPlans", icon: BadgeCheck }],
+  },
   /* Steps Counterfoil does by itself (docs/sequences.md). Beside Customers,
      because most of them are words sent to a customer. */
   { href: "/sequences", key: "sequences", icon: Workflow },
@@ -198,7 +207,8 @@ export const PAGES: readonly PageMeta[] = [
   { prefix: "/marketplaces", key: "marketplaces", icon: Globe },
   { prefix: "/booking-rules", key: "bookingRules", icon: Gavel },
   { prefix: "/pricing", key: "pricing", icon: Tag },
-  { prefix: "/memberships", key: "memberships", icon: Percent },
+  { prefix: "/memberships/plans", key: "membershipPlans", icon: BadgeCheck },
+  { prefix: "/memberships", key: "memberships", icon: BadgeCheck },
   { prefix: "/promotions", key: "promotions", icon: Percent },
   { prefix: "/analytics", key: "analytics", icon: ChartNoAxesColumn },
   { prefix: "/settings/profile", key: "myProfile", icon: UserRound },

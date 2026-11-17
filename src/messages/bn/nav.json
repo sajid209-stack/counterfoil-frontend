@@ -6,6 +6,7 @@
   "customers": "গ্রাহক",
   "sequences": "সিকোয়েন্স",
   "memberships": "সদস্যপদ",
+  "membershipPlans": "প্ল্যান",
   "analytics": "বিশ্লেষণ",
   "promotions": "প্রোমোশন",
   "pos": "পয়েন্ট অব সেল",
@@ -51,7 +52,9 @@
     "issuedOrders": "ইস্যু টিকিট কোড বুকিং নম্বর ব্যবহার বাতিল issued tickets",
     "refunds": "রিফান্ড টাকা ফেরত ফেরত বাতিল refunds refund money back",
     "writeOffs": "বাকি মাফ মাফ বকেয়া write-offs write-off write off bad debt owed balance",
-    "sequences": "সিকোয়েন্স অটোমেশন নিজে নিজে রিমাইন্ডার মনে করানো মেসেজ এসএমএস ইমেইল ধাপ sequences automation reminders messages"
+    "sequences": "সিকোয়েন্স অটোমেশন নিজে নিজে রিমাইন্ডার মনে করানো মেসেজ এসএমএস ইমেইল ধাপ sequences automation reminders messages",
+    "memberships": "সদস্যপদ সদস্য মেম্বারশিপ প্ল্যান কার্ড memberships members plans",
+    "membershipPlans": "মেম্বারশিপ প্ল্যান দাম বার্ষিক মাসিক পরিবার membership plans"
   },
   "inventory": "ইনভেন্টরি",
   "cartFab": "কার্ট — {count, plural, one {#টি আইটেম} other {#টি আইটেম}}",

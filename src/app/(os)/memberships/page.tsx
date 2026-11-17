@@ -1,311 +1,97 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { PauseCircle, PlayCircle, RefreshCw, Settings2, XCircle } from "lucide-react";
-import {
-  Button,
-  DataTable,
-  EmptyState,
-  FilterSearch,
-  FormField,
-  Modal,
-  StatusPill,
-  Tabs,
-  useToast,
-  type Column,
-  type PillTone,
-} from "@/components/ui";
-import { PageAction, PageShell, PageToolbar } from "@/components/ui/PageShell";
+import { Users } from "lucide-react";
+import { ButtonLink, EmptyState, Notice, Skeleton } from "@/components/ui";
+import { PageShell, type PagePrimary } from "@/components/ui/PageShell";
+import { listMembershipTiers, listMemberships, membershipSummary } from "@/lib/api";
 import { useApiQuery } from "@/lib/useApi";
-import {
-  cancelMembership,
-  listMemberships,
-  membershipCounts,
-  pauseMembership,
-  renewMembership,
-  resumeMembership,
-  type MembershipStatus,
-  type MembershipView,
-} from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { Figures, type ListTab } from "./_components/list/Figures";
+import { MembersTable } from "./_components/list/MembersTable";
+import { PlansStrip } from "./_components/list/PlansStrip";
 
-type Tab = "active" | "expiring" | "lapsed" | "paused" | "cancelled";
-
-const TONE: Record<MembershipStatus, PillTone> = {
-  active: "success",
-  lapsed: "danger",
-  paused: "warning",
-  cancelled: "neutral",
-};
-
+/**
+ * Memberships (docs/memberships.md 4.1): four figures, the plans as a strip you
+ * can filter by, and the members list. Everything that changes a membership
+ * lives in a row menu; the page reloads its figures and list after each write.
+ */
 export default function MembershipsPage() {
-  const t = useTranslations("memberships");
-  const router = useRouter();
-  const toast = useToast();
+  const t = useTranslations("membershipsList");
 
-  const [tab, setTab] = useState<Tab>("active");
+  const [tab, setTab] = useState<ListTab>("active");
   const [search, setSearch] = useState("");
-  const [cancelling, setCancelling] = useState<MembershipView | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [tierId, setTierId] = useState("");
+  const [version, setVersion] = useState(0);
 
-  const filters = useMemo(
-    () =>
-      tab === "expiring"
-        ? { expiringSoon: true }
-        : { effectiveStatus: tab as MembershipStatus },
-    [tab],
-  );
+  const summaryQ = useApiQuery(() => membershipSummary(), [version]);
+  const tiersQ = useApiQuery(() => listMembershipTiers({ pageSize: 100 }), [version]);
 
-  const listQ = useApiQuery(
-    () => listMemberships({ pageSize: 500, search, filters }),
-    [tab, search],
-  );
+  const filters = useMemo(() => {
+    const f: Record<string, string | boolean> = tab === "ending" ? { expiringSoon: true } : { effectiveStatus: tab === "ended" ? "lapsed" : tab };
+    if (tierId) f.tierId = tierId;
+    return f;
+  }, [tab, tierId]);
+  const listQ = useApiQuery(() => listMemberships({ pageSize: 500, search, filters }), [tab, tierId, search, version]);
+
+  const summary = summaryQ.data;
+  const tiers = useMemo(() => (tiersQ.data?.data ?? []).filter((x) => x.status !== "archived"), [tiersQ.data]);
   const rows = useMemo(() => listQ.data?.data ?? [], [listQ.data]);
-  const countsQ = useApiQuery(() => membershipCounts(), [listQ.data]);
-  const counts = countsQ.data ?? {
-    active: 0, expiringSoon: 0, lapsed: 0, paused: 0, cancelled: 0,
-  };
+  const bump = () => setVersion((v) => v + 1);
 
-  const act = async (
-    m: MembershipView,
-    run: () => Promise<{ ok: boolean; error?: { message: string } }>,
-    message: string,
-  ) => {
-    setBusy(m.id);
-    const res = await run();
-    setBusy(null);
-    if (!res.ok) {
-      toast.error(res.error?.message ?? "");
-      return;
-    }
-    toast.success(message);
-    listQ.reload();
-  };
-
-  const columns: Column<MembershipView>[] = [
-    {
-      key: "customer",
-      header: t("colMember"),
-      render: (m) => (
-        <div className="min-w-0">
-          <div className="break-words text-base font-medium">{m.customerName}</div>
-          <div className="font-mono text-xs text-muted">{m.code}</div>
-        </div>
-      ),
-    },
-    {
-      key: "tier",
-      header: t("colTier"),
-      render: (m) => (
-        <div className="min-w-0">
-          <div className="break-words text-sm">{m.tierName}</div>
-          {m.members.length > 1 && (
-            <div className="text-xs text-muted">
-              {t("namedPeople", { count: m.members.length })}
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "status",
-      header: t("colStatus"),
-      render: (m) => (
-        <div className="flex flex-wrap items-center gap-inline">
-          <StatusPill tone={TONE[m.effectiveStatus]}>
-            {t(`status_${m.effectiveStatus}`)}
-          </StatusPill>
-          {m.expiringSoon && (
-            <StatusPill tone="warning">{t("daysLeft", { count: m.daysToExpiry })}</StatusPill>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "visits",
-      header: t("colVisits"),
-      align: "right",
-      render: (m) => (
-        <span className="whitespace-nowrap text-sm tabular-nums">
-          {m.visitsLeft == null ? t("unlimited") : t("visitsLeft", { count: m.visitsLeft })}
-        </span>
-      ),
-    },
-    {
-      key: "expires",
-      header: t("colExpires"),
-      align: "right",
-      render: (m) => (
-        <span className="whitespace-nowrap text-sm tabular-nums text-muted">
-          {formatDate(m.expiresAt)}
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      header: t("colActions"),
-      align: "right",
-      render: (m) => (
-        <div className="flex flex-wrap justify-end gap-inline">
-          {(m.effectiveStatus === "lapsed" || m.expiringSoon) && (
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={<RefreshCw size={14} strokeWidth={1.5} />}
-              loading={busy === m.id}
-              onClick={() => act(m, () => renewMembership(m.id), t("renewed"))}
-            >
-              {t("renew")}
-            </Button>
-          )}
-          {m.effectiveStatus === "active" && (
-            <Button
-              size="sm"
-              variant="tertiary"
-              icon={<PauseCircle size={14} strokeWidth={1.5} />}
-              loading={busy === m.id}
-              onClick={() => act(m, () => pauseMembership(m.id), t("paused"))}
-            >
-              {t("pause")}
-            </Button>
-          )}
-          {m.effectiveStatus === "paused" && (
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={<PlayCircle size={14} strokeWidth={1.5} />}
-              loading={busy === m.id}
-              onClick={() => act(m, () => resumeMembership(m.id), t("resumed"))}
-            >
-              {t("resume")}
-            </Button>
-          )}
-          {m.effectiveStatus !== "cancelled" && (
-            <Button
-              size="sm"
-              variant="tertiary"
-              icon={<XCircle size={14} strokeWidth={1.5} />}
-              onClick={() => setCancelling(m)}
-            >
-              {t("cancelMembership")}
-            </Button>
-          )}
-        </div>
-      ),
-    },
-  ];
-
-  const tabs = [
-    { value: "active", label: t("tabActive"), count: counts.active },
-    { value: "expiring", label: t("tabExpiring"), count: counts.expiringSoon },
-    { value: "lapsed", label: t("tabLapsed"), count: counts.lapsed },
-    { value: "paused", label: t("tabPaused"), count: counts.paused },
-    { value: "cancelled", label: t("tabCancelled"), count: counts.cancelled },
-  ];
+  const primary: PagePrimary = { label: t("addMember"), href: "/memberships/new" };
+  const none = !!summary && summary.active + summary.lapsed + summary.paused + summary.cancelled === 0;
+  const failed = summaryQ.error || listQ.error;
 
   return (
-    <PageShell title={t("title")} description={t("description")}>
-      <div className="flex flex-col gap-section">
-        {/* The first toolbar: the tabs, with Manage tiers at the right of the
-            same rule. There is no header row for it. */}
-        <PageToolbar
-          underline
-          actions={
-            <PageAction
-              label={t("manageTiers")}
-              icon={<Settings2 size={16} strokeWidth={1.5} />}
-              onClick={() => router.push("/settings/memberships")}
-            />
-          }
-        >
-          <Tabs items={tabs} value={tab} onChange={(v) => setTab(v as Tab)} />
-        </PageToolbar>
-        <DataTable
-          columns={columns}
-          rows={rows}
-          getRowId={(m) => m.id}
-          loading={listQ.loading}
-          onRowClick={(m) => router.push(`/customers/${m.customerId}`)}
-          toolbar={
-            <FilterSearch
-              value={search}
-              onChange={setSearch}
-              placeholder={t("searchPlaceholder")}
-              aria-label={t("searchPlaceholder")}
-              className="max-w-full"
-            />
-          }
-          emptyState={<EmptyState title={t(`empty_${tab}`)} message={t("emptyMessage")} />}
-        />
+    <PageShell title={t("title")} description={t("description")} primary={primary}>
+      <div className="flex flex-col gap-major">
+        {failed && (
+          <Notice tone="danger" title={t("loadError")} action={{ label: t("retry"), onClick: bump }} />
+        )}
+        {none ? (
+          <EmptyState
+            icon={<Users size={24} strokeWidth={1.5} aria-hidden />}
+            title={t("empty.title")}
+            message={t("empty.body")}
+            action={
+              <div className="flex flex-wrap justify-center gap-tight">
+                <ButtonLink href="/memberships/new" variant="primary">
+                  {t("addMember")}
+                </ButtonLink>
+                {tiers.length === 0 && (
+                  <ButtonLink href="/memberships/plans/new" variant="secondary">
+                    {t("empty.createPlan")}
+                  </ButtonLink>
+                )}
+              </div>
+            }
+          />
+        ) : (
+          <>
+            <Figures summary={summary} tab={tab} onTab={setTab} />
+            <PlansStrip tiers={summary ? tiers : undefined} summary={summary} selected={tierId} onSelect={setTierId} />
+            {!summary ? (
+              <Skeleton className="h-64 w-full rounded-card" />
+            ) : (
+              <MembersTable
+                rows={rows}
+                loading={listQ.loading && !listQ.data}
+                summary={summary}
+                tiers={tiers}
+                tab={tab}
+                onTab={setTab}
+                search={search}
+                onSearch={setSearch}
+                tierId={tierId}
+                onTierId={setTierId}
+                primary={primary}
+                onChanged={bump}
+              />
+            )}
+          </>
+        )}
       </div>
-
-      <CancelDialog
-        membership={cancelling}
-        onClose={() => setCancelling(null)}
-        onCancelled={() => {
-          setCancelling(null);
-          listQ.reload();
-        }}
-      />
     </PageShell>
-  );
-}
-
-function CancelDialog({
-  membership,
-  onClose,
-  onCancelled,
-}: {
-  membership: MembershipView | null;
-  onClose: () => void;
-  onCancelled: () => void;
-}) {
-  const t = useTranslations("memberships");
-  const toast = useToast();
-  const [reason, setReason] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  const submit = async () => {
-    if (!membership) return;
-    setSaving(true);
-    const res = await cancelMembership(membership.id, reason);
-    setSaving(false);
-    if (!res.ok) {
-      toast.error(res.error.fieldErrors?.reason ?? res.error.message);
-      return;
-    }
-    setReason("");
-    toast.success(t("cancelled"));
-    onCancelled();
-  };
-
-  return (
-    <Modal
-      open={!!membership}
-      onClose={onClose}
-      title={t("cancelTitle", { name: membership?.customerName ?? "" })}
-      description={t("cancelDescription", { expires: formatDate(membership?.expiresAt) })}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            {t("keepIt")}
-          </Button>
-          <Button variant="destructive" onClick={submit} loading={saving}>
-            {t("cancelMembership")}
-          </Button>
-        </>
-      }
-    >
-      <FormField
-        label={t("cancelReason")}
-        variant="textarea"
-        rows={3}
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-        help={t("cancelReasonHelp")}
-      />
-    </Modal>
   );
 }

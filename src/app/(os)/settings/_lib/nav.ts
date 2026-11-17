@@ -1,5 +1,4 @@
 import {
-  BadgeCheck,
   Building2,
   ClipboardList,
   CreditCard,
@@ -101,7 +100,6 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { key: "refunds", href: "/settings/refunds", icon: HandCoins },
       { key: "tax", href: "/settings/tax", icon: Percent },
       { key: "vat", href: "/settings/vat", icon: ReceiptText },
-      ...(FEATURES.memberships ? [{ key: "memberships" as const, href: "/settings/memberships", icon: BadgeCheck }] : []),
       ...(FEATURES.loyalty ? [{ key: "loyalty" as const, href: "/settings/loyalty", icon: Gift }] : []),
     ],
   },

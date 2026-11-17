@@ -158,8 +158,8 @@
     },
     "memberships": {
       "title": "No members yet",
-      "body": "Sell a membership and your members will be listed here.",
-      "action": "Open the counter"
+      "body": "A membership is bought once and used many times, like a yearly pass.",
+      "action": "Add member"
     },
     "pricing": {
       "title": "No price rules yet",
@@ -245,11 +245,6 @@
       "title": "Points are switched off",
       "body": "Turn on points so customers earn rewards when they buy.",
       "action": "Set up points"
-    },
-    "settings-memberships": {
-      "title": "No membership plans yet",
-      "body": "Create a plan, like monthly or yearly, with a price and perks.",
-      "action": "Add a plan"
     },
     "settings-notifications": {
       "title": "No messages set up",
@@ -490,6 +485,31 @@
       "title": "Add the first step",
       "body": "Choose what starts it, then what Counterfoil should do.",
       "action": "Back to sequences"
+    },
+    "membership-new": {
+      "title": "Add a member",
+      "body": "Choose a customer and a plan.",
+      "action": "Add member"
+    },
+    "membership-detail": {
+      "title": "This membership is gone",
+      "body": "It may have been removed.",
+      "action": "Back to memberships"
+    },
+    "membership-plans": {
+      "title": "No plans yet",
+      "body": "A plan says what members pay and what they get.",
+      "action": "New plan"
+    },
+    "membership-plan-new": {
+      "title": "A new plan",
+      "body": "Set the price and what members get.",
+      "action": "Save plan"
+    },
+    "membership-plan-detail": {
+      "title": "This plan is gone",
+      "body": "It may have been removed.",
+      "action": "Back to plans"
     }
   }
 }

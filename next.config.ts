@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
       // places for the party in front of them. The register it used to have
       // was a fourth place to look.
       { source: "/holds", destination: "/calendar", permanent: false },
+      // Membership plans left Settings for their own menu (docs/memberships.md).
+      { source: "/settings/memberships", destination: "/memberships/plans", permanent: false },
       // The catalogue is called Bookings now, and the breadcrumb is derived
       // from the path — so the route had to move with the word. Anything
       // already linked or bookmarked at /products still lands.

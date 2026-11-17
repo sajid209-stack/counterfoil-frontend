@@ -1,0 +1,121 @@
+{
+  "shared": {
+    "per": {
+      "monthly": "মাসে {price}",
+      "quarterly": "৩ মাসে {price}",
+      "annual": "বছরে {price}",
+      "lifetime": "একবার {price}"
+    },
+    "forLife": "আজীবন",
+    "endsToday": "আজ শেষ",
+    "inDays": "{count} দিন পরে",
+    "daysAgo": "{count} দিন আগে",
+    "visits": {
+      "monthly": "মাসে {count} বার আসা",
+      "quarterly": "৩ মাসে {count} বার আসা",
+      "annual": "বছরে {count} বার আসা",
+      "lifetime": "মোট {count} বার আসা"
+    },
+    "covers": "{count} জন পর্যন্ত"
+  },
+  "title": "সদস্যপদ",
+  "description": "কে সদস্য, তারা কী পান, আর কার সদস্যপদ শিগগির শেষ হচ্ছে।",
+  "addMember": "সদস্য যোগ করুন",
+  "plans": "প্ল্যান",
+  "loadError": "সদস্যপদ লোড হয়নি।",
+  "retry": "আবার চেষ্টা করুন",
+  "figures": {
+    "label": "সদস্যপদের সংখ্যা",
+    "members": "সদস্য",
+    "eachMonth": "প্রতি মাসে",
+    "endingSoon": "শিগগির শেষ",
+    "ended": "শেষ হয়েছে",
+    "joined": "এই মাসে +{count}",
+    "fromMembers": "{count, plural, one {# জন সদস্য থেকে} other {# জন সদস্য থেকে}}",
+    "next30": "আগামী ৩০ দিনে",
+    "didNotRenew": "নবায়ন করেননি"
+  },
+  "strip": {
+    "heading": "প্ল্যান",
+    "seeAll": "সব দেখুন",
+    "label": "প্ল্যান",
+    "members": "{count, plural, one {# জন সদস্য} other {# জন সদস্য}}",
+    "share": "চালু সদস্যদের {pct}%",
+    "newPlan": "নতুন প্ল্যান",
+    "filterBy": "{name} প্ল্যানের সদস্যদের দেখুন"
+  },
+  "tabs": {
+    "label": "সদস্যদের দেখুন",
+    "active": "চালু",
+    "ending": "শিগগির শেষ",
+    "ended": "শেষ হয়েছে",
+    "paused": "বিরতিতে",
+    "cancelled": "বাতিল",
+    "withCount": "{label} {count}"
+  },
+  "col": {
+    "member": "সদস্য",
+    "plan": "প্ল্যান",
+    "visits": "ভিজিট",
+    "ends": "শেষ",
+    "status": "অবস্থা",
+    "actions": "কাজ"
+  },
+  "forPeople": "{count} জনের জন্য",
+  "unlimited": "সীমাহীন",
+  "visitsOf": "{total}টির মধ্যে {left}টি বাকি",
+  "visitsMeter": "বাকি ভিজিট",
+  "renewsByItself": "নিজে থেকে নবায়ন হয়",
+  "endsIn": "{count, plural, one {# দিনে শেষ} other {# দিনে শেষ}}",
+  "endsToday": "আজ শেষ",
+  "planFilter": {
+    "label": "প্ল্যান",
+    "all": "সব প্ল্যান"
+  },
+  "row": {
+    "actions": "{name}-এর কাজ",
+    "open": "খুলুন",
+    "renew": "নবায়ন করুন",
+    "pause": "বিরতি দিন",
+    "startAgain": "আবার চালু করুন",
+    "stopRenewing": "নবায়ন বন্ধ করুন",
+    "renewByItself": "নিজে থেকে নবায়ন হোক",
+    "openCustomer": "গ্রাহককে খুলুন",
+    "cancel": "সদস্যপদ বাতিল করুন"
+  },
+  "toast": {
+    "renewed": "আরেক মেয়াদের জন্য নবায়ন হয়েছে।",
+    "paused": "সদস্যপদ বিরতিতে গেছে।",
+    "resumed": "সদস্যপদ আবার চালু হয়েছে।",
+    "autoOff": "আর নিজে থেকে নবায়ন হবে না।",
+    "autoOn": "এখন নিজে থেকে নবায়ন হবে।",
+    "cancelled": "সদস্যপদ বাতিল হয়েছে।",
+    "stopped": "{date}-এ শেষ হবে, আর নবায়ন হবে না।",
+    "failed": "কাজটা হয়নি। আবার চেষ্টা করুন।"
+  },
+  "search": "নাম, কোড বা প্ল্যান",
+  "empty": {
+    "title": "এখনও কোনো সদস্য নেই",
+    "body": "সদস্যপদ হলো এমন কিছু যা গ্রাহক একবার কেনেন আর বহুবার ব্যবহার করেন। প্রথমটা এখানে যোগ করুন, বা কাউন্টারে বিক্রি করুন।",
+    "createPlan": "প্ল্যান বানান",
+    "noMatchTitle": "মেলে এমন সদস্য নেই",
+    "noMatchBody": "অন্য নাম দিয়ে দেখুন, বা খোঁজা মুছে দিন।",
+    "clear": "খোঁজা মুছুন",
+    "clearAll": "সবাইকে দেখান"
+  },
+  "cancel": {
+    "title": "{name}-এর সদস্যপদ বাতিল করবেন?",
+    "choices": "কীভাবে শেষ করবেন",
+    "stopTitle": "নবায়ন বন্ধ করুন",
+    "stopBody": "{date} পর্যন্ত ব্যবহার করা যাবে। আর নবায়ন হবে না।",
+    "nowTitle": "এখনই বাতিল করুন",
+    "nowBody": "আজই শেষ হবে। ফেরানো যাবে না।",
+    "reason": "কেন বাতিল করছেন?",
+    "reasonHelp": "সদস্যরা পরে ফোন করে প্রায়ই জানতে চান।",
+    "pausePrompt": "কিছুদিনের জন্য বাইরে যাচ্ছেন?",
+    "pauseLink": "বরং বিরতি দিন।",
+    "keep": "রেখে দিন",
+    "confirmStop": "নবায়ন বন্ধ করুন",
+    "confirmNow": "সদস্যপদ বাতিল করুন"
+  }
+}

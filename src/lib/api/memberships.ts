@@ -25,6 +25,7 @@ import type {
   MembershipTier,
   MembershipTierInput,
   MembershipView,
+  Minor,
 } from "./types";
 
 const DAY = 86400000;
@@ -153,6 +154,7 @@ export async function listMemberships(
     rows = rows.filter((m) => m.effectiveStatus === filters.effectiveStatus);
   }
   if (filters.expiringSoon === true) rows = rows.filter((m) => m.expiringSoon);
+  if (typeof filters.tierId === "string" && filters.tierId) rows = rows.filter((m) => m.tierId === filters.tierId);
   return ok({ ...res.data, data: rows, page: { ...res.data.page, total: rows.length } });
 }
 
@@ -383,6 +385,65 @@ export async function membershipCountsByTier(): Promise<ApiResult<Record<ID, num
   const out: Record<ID, number> = {};
   for (const m of memberships.peek()) out[m.tierId] = (out[m.tierId] ?? 0) + 1;
   return ok(out);
+}
+
+/** What a plan is worth in one month: a year's price is a twelfth, three
+ *  months' a third. A one-time (lifetime) plan earns nothing each month. */
+export function monthlyValueOf(tier: Pick<MembershipTier, "price" | "billingPeriod">): Minor {
+  if (tier.billingPeriod === "monthly") return tier.price;
+  // Rounded to whole taka: "৳291.67 a month" is false precision for a yearly price.
+  if (tier.billingPeriod === "quarterly") return Math.round(tier.price / 300) * 100;
+  if (tier.billingPeriod === "annual") return Math.round(tier.price / 1200) * 100;
+  return 0;
+}
+
+export interface MembershipPlanStat {
+  tierId: ID;
+  /** Active memberships on the plan. */
+  active: number;
+  /** Every membership on the plan, any state. */
+  total: number;
+}
+
+/** The overview's figures (docs/memberships.md 4.1). Derived on read. */
+export interface MembershipSummary {
+  active: number;
+  expiringSoon: number;
+  lapsed: number;
+  paused: number;
+  cancelled: number;
+  /** Active memberships whose period started in the current month. */
+  joinedThisMonth: number;
+  /** What active memberships are worth each month, in minor units. */
+  monthlyValue: Minor;
+  /** Active memberships that will renew by themselves. */
+  renewing: number;
+  byPlan: MembershipPlanStat[];
+}
+
+export async function membershipSummary(): Promise<ApiResult<MembershipSummary>> {
+  const views = memberships.peek().map(viewOf);
+  const active = views.filter((m) => m.effectiveStatus === "active");
+  const month = todayISO().slice(0, 7);
+  const tierById = new Map(tiers.peek().map((t) => [t.id, t]));
+  const byPlan = tiers
+    .peek()
+    .filter((t) => t.status !== "archived")
+    .map((t) => ({
+      tierId: t.id,
+      active: active.filter((m) => m.tierId === t.id).length,
+      total: views.filter((m) => m.tierId === t.id).length,
+    }));
+  return ok({
+    ...countsOf(),
+    joinedThisMonth: active.filter((m) => m.startedAt.slice(0, 7) === month).length,
+    monthlyValue: active.reduce((s, m) => {
+      const tier = tierById.get(m.tierId);
+      return s + (tier ? monthlyValueOf(tier) : 0);
+    }, 0),
+    renewing: active.filter((m) => m.autoRenew).length,
+    byPlan,
+  });
 }
 
 /** Customers with no membership — who a manager might sell one to. */

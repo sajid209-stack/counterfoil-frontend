@@ -101,7 +101,10 @@ const store: Record<string, Row[]> = {
   coupons: structuredClone(seed.coupons),
   customers: structuredClone(seed.customers),
   membershipTiers: structuredClone(seed.membershipTiers),
-  memberships: structuredClone(seed.memberships),
+  // Not rebased: memberships are written against the real today already (see
+  // dayShift in lib/mock/data). Rebasing moves only records with no future date,
+  // so it shifted the ended ones a second time and they came back active.
+  memberships: structuredClone(seedAsWritten.memberships),
   loyaltyEntries: structuredClone(seed.loyaltyEntries),
   holds: structuredClone(seed.holds),
   events: structuredClone(seed.events),

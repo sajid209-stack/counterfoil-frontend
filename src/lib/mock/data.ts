@@ -38,7 +38,7 @@ import type {
 import { generateSales } from "./generate";
 import { events } from "./events";
 import { productRecordFromEvent } from "@/lib/api/eventModel";
-import { seedDay as demoDay } from "@/lib/schedule";
+import { demoDay as realDay, seedDay as demoDay } from "@/lib/schedule";
 import { buildOrderLines } from "@/lib/orderMath";
 import type { Order } from "@/lib/api/types";
 
@@ -986,14 +986,15 @@ export const membershipTiers: MembershipTier[] = [
   },
 ];
 
-// Dates are written relative to the real today so the states stay true however
-// long this seed lives — a membership seeded as "expiring soon" must not
-// quietly become "lapsed" a month later.
-const dayShift = (days: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-};
+// Membership dates are written relative to the REAL today, so the states stay
+// true however long this seed lives: a membership seeded "ending in 12 days"
+// must not quietly become "ended" a month later. client.ts therefore takes
+// memberships as written, not through rebaseSeed (which moves only records
+// with no future date, and so moved the ended ones twice). The loyalty expiries
+// below are always in the future, so rebaseSeed leaves them as written too.
+const dayShift = (days: number) => realDay(days);
+/** A moment N days from the real today, for the paused / cancelled stamps. */
+const momentShift = (days: number) => `${realDay(days)}T10:00:00+06:00`;
 
 const membershipRow = (
   id: string,
@@ -1050,16 +1051,71 @@ export const memberships: Membership[] = [
   // Paused while the member is abroad; resuming pushes the expiry out.
   membershipRow("mbs_005", 5, "Shirin Akter", "mtr_friend", "Friend of the Museum", -200, 165, {
     status: "paused",
-    pausedAt: new Date(Date.now() - 18 * 86400000).toISOString(),
+    pausedAt: momentShift(-18),
   }),
   // Cancelled with a reason on the record.
   membershipRow("mbs_006", 6, "Sabbir Alam", "mtr_explorer", "Explorer", -300, 40, {
     status: "cancelled",
     autoRenew: false,
-    cancelledAt: new Date(Date.now() - 9 * 86400000).toISOString(),
+    cancelledAt: momentShift(-9),
     cancelReason: "Moving out of Dhaka.",
   }),
+  // The rest of the roster: a venue with members has more than six of them.
+  ...moreMemberships(),
 ];
+
+/* About eighteen more memberships, one per seeded customer who does not hold
+   one yet, so the overview has real numbers. Chosen by index, never by
+   rand(): the seed's PRNG is consumed in strict order by everything else. The
+   pattern spreads them over all three plans and every state the screens show:
+   mostly active, a few ending inside 30 days, a few ended, one paused. */
+function moreMemberships(): Membership[] {
+  const taken = new Set(["Ayesha Siddika", "Zahid Chowdhury", "Nusrat Jahan", "Rafiqul Islam", "Shirin Akter", "Sabbir Alam"]);
+  const plans = [
+    { id: "mtr_friend", name: "Friend of the Museum", period: 365 },
+    { id: "mtr_explorer", name: "Explorer", period: 30 },
+    { id: "mtr_friend", name: "Friend of the Museum", period: 365 },
+    { id: "mtr_family", name: "Family Membership", period: 365 },
+    { id: "mtr_explorer", name: "Explorer", period: 30 },
+  ] as const;
+  // [days since start, days to the end] — the end decides the state.
+  const shapes: [number, number][] = [
+    [-40, 325], [-12, 18], [-210, 155], [-60, 305], [-25, 5],
+    [-300, 65], [-8, 22], [-380, -15], [-120, 245], [-28, 2],
+    [-90, 275], [-35, -5], [-180, 185], [-15, 15], [-330, 35],
+    [-5, 25], [-400, -40], [-45, 320],
+  ];
+  const out: Membership[] = [];
+  // One person per name: the seed holds two unrelated Imran Hossains on purpose
+  // (the duplicate finder's case), and two of them in a member list reads as a mistake.
+  const seen = new Set<string>(taken);
+  const people = cus.filter((c) => {
+    if (seen.has(c.name) || c.status !== "active") return false;
+    seen.add(c.name);
+    return true;
+  });
+  for (let i = 0; i < Math.min(shapes.length, people.length); i++) {
+    const p = plans[i % plans.length];
+    const [start, end] = shapes[i];
+    // Monthly plans run a month at a time: their dates fit one period.
+    const [s, e] = p.period === 30 ? [Math.max(start, -29), Math.min(end, 30)] : [start, end];
+    const name = people[i].name;
+    const surname = name.split(" ").slice(-1)[0];
+    out.push(
+      membershipRow(`mbs_${String(i + 7).padStart(3, "0")}`, i + 7, name, p.id, p.name, s, e, {
+        visitsUsed: p.id === "mtr_explorer" ? (i * 2) % 7 : 0,
+        guestPassesUsed: p.id === "mtr_family" ? i % 3 : p.id === "mtr_friend" ? i % 2 : 0,
+        autoRenew: i % 6 !== 4,
+        ...(p.id === "mtr_family"
+          ? { members: [{ name }, { name: `Rahima ${surname}` }, { name: `Arnob ${surname}`, note: "Child" }] }
+          : {}),
+        ...(i === 8 ? { status: "paused" as const, pausedAt: momentShift(-6) } : {}),
+        createdAt: momentShift(s),
+      }),
+    );
+  }
+  return out;
+}
 
 export const loyaltyProgram: LoyaltyProgram = {
   enabled: true,

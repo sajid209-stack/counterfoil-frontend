@@ -28,8 +28,9 @@
 export const FEATURES = {
   /** Coupons and automatic promotions (the quote engine and /promotions). */
   promotions: false,
-  /** Membership tiers, member pricing, and the CF-M- card at the gate. */
-  memberships: false,
+  /** Membership tiers, member pricing, and the CF-M- card at the gate.
+   *  On since 2026-11-17 (owner's call): its own menu, docs/memberships.md. */
+  memberships: true,
   /** The points ledger, /settings/loyalty, and spending points at the till. */
   loyalty: false,
 } as const;

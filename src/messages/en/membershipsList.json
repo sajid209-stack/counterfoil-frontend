@@ -1,0 +1,121 @@
+{
+  "shared": {
+    "per": {
+      "monthly": "{price} a month",
+      "quarterly": "{price} every 3 months",
+      "annual": "{price} a year",
+      "lifetime": "{price} once"
+    },
+    "forLife": "For life",
+    "endsToday": "Ends today",
+    "inDays": "in {count, plural, one {# day} other {# days}}",
+    "daysAgo": "{count, plural, one {# day} other {# days}} ago",
+    "visits": {
+      "monthly": "{count, plural, one {# visit} other {# visits}} a month",
+      "quarterly": "{count, plural, one {# visit} other {# visits}} every 3 months",
+      "annual": "{count, plural, one {# visit} other {# visits}} a year",
+      "lifetime": "{count, plural, one {# visit} other {# visits}} in all"
+    },
+    "covers": "Covers {count} people"
+  },
+  "title": "Memberships",
+  "description": "Who is a member, what they get, and whose membership ends soon.",
+  "addMember": "Add member",
+  "plans": "Plans",
+  "loadError": "Memberships did not load.",
+  "retry": "Try again",
+  "figures": {
+    "label": "Membership figures",
+    "members": "Members",
+    "eachMonth": "Each month",
+    "endingSoon": "Ending soon",
+    "ended": "Ended",
+    "joined": "+{count} this month",
+    "fromMembers": "from {count, plural, one {# member} other {# members}}",
+    "next30": "in the next 30 days",
+    "didNotRenew": "did not renew"
+  },
+  "strip": {
+    "heading": "Plans",
+    "seeAll": "See all",
+    "label": "Plans",
+    "members": "{count, plural, one {# member} other {# members}}",
+    "share": "{pct}% of active members",
+    "newPlan": "New plan",
+    "filterBy": "Show members on {name}"
+  },
+  "tabs": {
+    "label": "Show members",
+    "active": "Active",
+    "ending": "Ending soon",
+    "ended": "Ended",
+    "paused": "Paused",
+    "cancelled": "Cancelled",
+    "withCount": "{label} {count}"
+  },
+  "col": {
+    "member": "Member",
+    "plan": "Plan",
+    "visits": "Visits",
+    "ends": "Ends",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "forPeople": "For {count} people",
+  "unlimited": "Unlimited",
+  "visitsOf": "{left} of {total} left",
+  "visitsMeter": "Visits left",
+  "renewsByItself": "Renews by itself",
+  "endsIn": "Ends in {count, plural, one {# day} other {# days}}",
+  "endsToday": "Ends today",
+  "planFilter": {
+    "label": "Plan",
+    "all": "All plans"
+  },
+  "row": {
+    "actions": "Actions for {name}",
+    "open": "Open",
+    "renew": "Renew",
+    "pause": "Pause",
+    "startAgain": "Start again",
+    "stopRenewing": "Stop renewing",
+    "renewByItself": "Renew by itself",
+    "openCustomer": "Open customer",
+    "cancel": "Cancel membership"
+  },
+  "toast": {
+    "renewed": "Renewed for another period.",
+    "paused": "Membership paused.",
+    "resumed": "Membership started again.",
+    "autoOff": "It won't renew by itself.",
+    "autoOn": "It will renew by itself.",
+    "cancelled": "Membership cancelled.",
+    "stopped": "It will end on {date} and won't renew.",
+    "failed": "That did not work. Try again."
+  },
+  "search": "Name, code or plan",
+  "empty": {
+    "title": "No members yet",
+    "body": "A membership is something a customer buys once and uses many times. Add the first one here, or sell it at the counter.",
+    "createPlan": "Create a plan",
+    "noMatchTitle": "No members match",
+    "noMatchBody": "Try another name, or clear the search.",
+    "clear": "Clear search",
+    "clearAll": "Show everyone"
+  },
+  "cancel": {
+    "title": "Cancel {name}'s membership?",
+    "choices": "How to end it",
+    "stopTitle": "Stop renewing",
+    "stopBody": "Keeps using it until {date}. It won't renew.",
+    "nowTitle": "Cancel now",
+    "nowBody": "Ends today. Can't be undone.",
+    "reason": "Why is it being cancelled?",
+    "reasonHelp": "Members often call later to ask why.",
+    "pausePrompt": "Going away for a while?",
+    "pauseLink": "Pause instead.",
+    "keep": "Keep it",
+    "confirmStop": "Stop renewing",
+    "confirmNow": "Cancel membership"
+  }
+}
