@@ -14,6 +14,8 @@ import { generateSales as generateAsWritten } from "@/lib/mock/generate";
 import * as doersAsWritten from "@/lib/mock/doers";
 import * as bcdAsWritten from "@/lib/mock/bcd";
 import * as trustherAsWritten from "@/lib/mock/trusther";
+import * as turfsAsWritten from "@/lib/mock/turfs";
+import type { TurfDemoId } from "@/lib/mock/turfs";
 import type { TrustherId } from "@/lib/mock/trusther";
 import { setRegionCurrency } from "@/lib/region";
 import { rebaseSeed } from "@/lib/schedule";
@@ -62,6 +64,7 @@ const seed = rebaseSeed(seedAsWritten);
 const doers = rebaseSeed(doersAsWritten);
 const bcd = rebaseSeed(bcdAsWritten);
 const trusther = rebaseSeed(trustherAsWritten);
+const turfs = rebaseSeed(turfsAsWritten);
 const generateSales = (input: Parameters<typeof generateAsWritten>[0]) => rebaseSeed(generateAsWritten(input));
 
 const store: Record<string, Row[]> = {
@@ -307,6 +310,53 @@ function applyUsBusiness(id: TrustherId): void {
   setRegionCurrency("USD");
 }
 const usBundle = (id: TrustherId) => ({ slug: trusther.TRUSTHER_DEMOS[id].slug, apply: () => applyUsBusiness(id) });
+/* Turf operator training demos (lib/mock/turfs): four Dhaka venues, each a whole
+   business. The generator books a slot per sale but knows nothing of fields, so
+   every generated booking on a turf/court is placed on a field that is free at
+   that time — or dropped if none is — and given its end. Without this the sales
+   would hold no field and the day view would show every turf empty. */
+function applyTurfBusiness(id: TurfDemoId): void {
+  leaveUsBusiness();
+  setRegionCurrency("BDT");
+  const d = turfs.TURF_DEMOS[id];
+  operatorState = { ...structuredClone(seed.operator), ...d.operator };
+  const S = store as Record<string, unknown[]>;
+  S.products = structuredClone(d.products);
+  S.locations = structuredClone(d.locations);
+  S.counters = structuredClone(d.counters);
+  S.devices = structuredClone(seed.devices)
+    .filter((dv) => dv.counterId === "cnt_fort_main")
+    .map((dv) => ({ ...dv, name: `${d.counters[0].name} tablet` }));
+  S.storefronts = structuredClone(d.storefronts);
+  S.resources = structuredClone(d.resources);
+  for (const k of ["inventoryItems", "stockMovements", "holds", "marketplaceConnections", "marketplaceListings", "ticketCredentials", "ticketScans", "refundRequests", "rescheduleRequests", "writeOffRequests"]) S[k] = [];
+  const sales = generateSales({ products: d.products, locations: d.locations, staff: seed.staff, taxRatePct: operatorState.taxRatePct, reducedRatePct: operatorState.reducedRatePct, count: 70 });
+  const byId = new Map(d.products.map((p) => [p.id, p]));
+  const resName = new Map(d.resources.map((r) => [r.id, r.name]));
+  const taken = new Set(d.todayBookings.map((b) => `${b.resourceId}|${Date.parse(b.slotStart)}`));
+  const kept: typeof sales.bookings = [];
+  for (const b of sales.bookings) {
+    const p = byId.get(b.productId);
+    const ids = p?.resourceIds ?? [];
+    if (!ids.length) { kept.push(b); continue; }
+    const field = ids.find((r) => !taken.has(`${r}|${Date.parse(b.slotStart)}`));
+    const order = sales.orders.find((o) => o.id === b.orderId);
+    const line = order?.lines.find((l) => l.productId === b.productId && l.booking);
+    if (!field) { if (line) delete line.booking; continue; }
+    taken.add(`${field}|${Date.parse(b.slotStart)}`);
+    const minutes = p?.schedule?.sessionMinutes ?? 90;
+    const slotEnd = new Date(Date.parse(b.slotStart) + minutes * 60000).toISOString();
+    kept.push({ ...b, resourceId: field, slotEnd, partySize: 1 });
+    if (line?.booking) line.booking = { ...line.booking, resourceId: field, resourceName: resName.get(field), durationMinutes: minutes };
+  }
+  S.orders = sales.orders;
+  S.tickets = sales.tickets;
+  // Today's hand-placed slots that have already started: the team turned up.
+  const now = Date.now();
+  const today = structuredClone(d.todayBookings).map((b) => (Date.parse(b.slotStart) < now ? { ...b, checkedIn: 1 } : b));
+  S.bookings = [...kept, ...today];
+}
+const turfBundle = (id: TurfDemoId) => ({ slug: turfs.TURF_DEMOS[id].slug, apply: () => applyTurfBusiness(id) });
 const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
   doers: {
     slug: "thedoersclub",
@@ -355,6 +405,10 @@ const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
   sweat: usBundle("sweat"),
   velvet: usBundle("velvet"),
   mamajos: usBundle("mamajos"),
+  kickoff: turfBundle("kickoff"),
+  arena: turfBundle("arena"),
+  rally: turfBundle("rally"),
+  greenfield: turfBundle("greenfield"),
 };
 /** Each whole-business demo's catalogue, for telling its item links apart. */
 const BUNDLE_ITEMS: Record<string, () => Product[]> = {
@@ -364,6 +418,10 @@ const BUNDLE_ITEMS: Record<string, () => Product[]> = {
   sweat: () => trusther.TRUSTHER_DEMOS.sweat.products,
   velvet: () => trusther.TRUSTHER_DEMOS.velvet.products,
   mamajos: () => trusther.TRUSTHER_DEMOS.mamajos.products,
+  kickoff: () => turfs.TURF_DEMOS.kickoff.products,
+  arena: () => turfs.TURF_DEMOS.arena.products,
+  rally: () => turfs.TURF_DEMOS.rally.products,
+  greenfield: () => turfs.TURF_DEMOS.greenfield.products,
 };
 
 /** A slug from a name: lower case, words joined by hyphens, Latin letters and
@@ -532,7 +590,7 @@ if (typeof window !== "undefined") {
 export const isBundleDemo = (id: string) => id in BUNDLES;
 /** The catalogues of the whole-business demos, so a server that only holds the default seed can
  *  still tell a demo's item link from a made-up one (see `demoItemAtSlug`). */
-export const bundleProductLists = (): Product[][] => [doers.doersProducts, bcd.bcdProducts, ...Object.values(trusther.TRUSTHER_DEMOS).map((d) => d.products)];
+export const bundleProductLists = (): Product[][] => [doers.doersProducts, bcd.bcdProducts, ...Object.values(trusther.TRUSTHER_DEMOS).map((d) => d.products), ...Object.values(turfs.TURF_DEMOS).map((d) => d.products)];
 /** Load a whole-business demo and remember it for this browser. */
 export function loadBundleDemo(id: string): void {
   clearFreshAccount();

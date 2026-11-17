@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Plus, Landmark, Trophy, Disc3, Flower2, Clapperboard, Coffee, Scissors, Dumbbell, Martini, Soup, type LucideIcon } from "lucide-react";
+import { ArrowRight, Plus, Landmark, Trophy, Disc3, Flower2, Clapperboard, Coffee, Scissors, Dumbbell, Martini, Soup, Goal, Waves, Volleyball, Shield, type LucideIcon } from "lucide-react";
 import { loadDemoBusiness, loadWholeDemo, startFreshBusiness } from "@/lib/api";
 import { DEMOS } from "@/lib/demos";
 import { Logo } from "@/components/ui";
@@ -23,6 +23,10 @@ const DEMO_GLYPH: Record<string, LucideIcon> = {
   sweat: Dumbbell,
   velvet: Martini,
   mamajos: Soup,
+  kickoff: Goal,
+  arena: Waves,
+  rally: Volleyball,
+  greenfield: Shield,
 };
 
 export default function Home() {
@@ -122,6 +126,12 @@ export default function Home() {
         <p className="mt-hero text-sm font-medium text-muted">TrustHer partners · United States</p>
         <div className="mt-tight grid gap-section sm:grid-cols-2 lg:grid-cols-3">
           {DEMOS.filter((d) => d.group === "trusther").map(card)}
+        </div>
+
+        {/* Turf operator training: four Dhaka venues set up the way turfs really run. */}
+        <p className="mt-hero text-sm font-medium text-muted">Turf operator training · Bangladesh</p>
+        <div className="mt-tight grid gap-section sm:grid-cols-2 lg:grid-cols-3">
+          {DEMOS.filter((d) => d.group === "turfs").map(card)}
         </div>
 
         {/* Quiet dev/entry links. */}

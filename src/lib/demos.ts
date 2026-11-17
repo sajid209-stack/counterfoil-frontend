@@ -8,7 +8,7 @@ export interface DemoBusiness {
   /** A whole-business demo with its own venue, shelf and storefront (lib/api/client BUNDLES). */
   bundle?: boolean;
   /** Shown in its own row on the demo wall — "trusther" for the US partner demos. */
-  group?: "trusther";
+  group?: "trusther" | "turfs";
 }
 
 // Five coherent demo businesses. Selecting one swaps the whole mock state so a
@@ -113,5 +113,47 @@ export const DEMOS: DemoBusiness[] = [
     productIds: [],
     bundle: true,
     group: "trusther",
+  },
+  // Turf operator training — four Dhaka venues built the way most turfs run
+  // (lib/mock/turfs): 90-minute turf slots, a pool sold like a ticket.
+  {
+    id: "kickoff",
+    name: "Kickoff Turf",
+    currency: "BDT",
+    tagline: "One turf, booked in 90-minute slots",
+    types: "Single turf · 90-min slots · evening & weekend prices",
+    productIds: [],
+    bundle: true,
+    group: "turfs",
+  },
+  {
+    id: "arena",
+    name: "Arena 360",
+    currency: "BDT",
+    tagline: "Indoor turf, outdoor turf and a swimming pool",
+    types: "2 turfs · indoor costs more · pool sessions sold as tickets",
+    productIds: [],
+    bundle: true,
+    group: "turfs",
+  },
+  {
+    id: "rally",
+    name: "Rally Sports Hub",
+    currency: "BDT",
+    tagline: "A turf, a badminton court and a swimming pool",
+    types: "90-min turf slots · 1-hour court slots · pool tickets",
+    productIds: [],
+    bundle: true,
+    group: "turfs",
+  },
+  {
+    id: "greenfield",
+    name: "Green Field Sports Club",
+    currency: "BDT",
+    tagline: "One turf for football and cricket, and a pool",
+    types: "Shared turf: one booking blocks the other sport · pool tickets",
+    productIds: [],
+    bundle: true,
+    group: "turfs",
   },
 ];
