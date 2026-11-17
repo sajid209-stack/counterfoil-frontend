@@ -19792,3 +19792,30 @@ members are customers who bought one. Spec and as-built: `docs/memberships.md`.
 Verified: tsc, eslint, i18n parity, token lint, production build, a 14-step
 browser walk and the 26-step Sequences walk, screens at 1440/393 in light,
 dark and Bangla.
+
+---
+
+## Turf operator training demos (2026-11-17)
+
+Four Dhaka venues for training turf operators, each a **whole-business demo** (own venue,
+fields, catalogue, storefront and sales, nothing shared with the default seed or the other
+demos). Seed: `src/lib/mock/turfs.ts`; loaded by `applyTurfBusiness` in `client.ts`; a new
+"Turf operator training · Bangladesh" row on the demo wall.
+
+| Demo | Link | Storefront | What it teaches |
+|---|---|---|---|
+| Kickoff Turf | `/demo/kickoff` | `/s/kickoffturf` | one turf, 90-min slots 7:00 AM → last 10:00 PM |
+| Arena 360 | `/demo/arena` | `/s/arena360` | indoor + outdoor turf (indoor +৳1,000 via a resource premium) and a pool |
+| Rally Sports Hub | `/demo/rally` | `/s/rallysportshub` | turf (90 min), badminton court (1-hour slots), pool |
+| Green Field Sports Club | `/demo/greenfield` | `/s/greenfieldclub` | ONE turf shared by Football and Box Cricket — booking one strikes the slot from the other — and a pool |
+
+- Turfs/court are BT-04 exclusive resources, sold per booking; ৳3,000 day / ৳4,000 from 4 PM /
+  ৳4,500 Fri–Sat evenings (court ৳800 / ৳1,000). The pool is BT-03 sold like a ticket: one-hour
+  sessions 6 AM–8 PM, Adult/Child tiers, capacity per session, named sessions (Ladies only,
+  Kids & family, Night swim). Prices illustrative.
+- `generateSales` knows nothing of fields, so the bundle places every generated turf booking
+  on a field free at that instant (compared with `Date.parse`, the seed spells times two ways),
+  drops it if none is, sets `slotEnd`, and counts a whole-field booking as **one place**
+  (partySize 1) so the dashboard's capacity reads as slots, not players.
+- The hydration warning on first load of a whole-business demo is pre-existing (Doers shows it
+  too): the server renders the default seed, the client swaps in the demo.
