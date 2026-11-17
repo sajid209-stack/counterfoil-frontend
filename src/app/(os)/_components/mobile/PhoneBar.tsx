@@ -39,7 +39,7 @@ import { initialsOf } from "./shared";
  *    overlapping the head of the header (it takes no height of its own). It is
  *    invisible and inert until the header has scrolled out of view; then it
  *    fades in with the title centred at 16/600, the back button if the page has
- *    one, and the hairline (`data-scrolled`) — Apple's rule that a bar gains its
+ *    one, and the scroll edge (`shadow-edge`: a hairline and a light falloff) — Apple's rule that a bar gains its
  *    separator only when content passes under it. The state is a fact about the
  *    scroll position, so it is written straight onto the node from the
  *    IntersectionObserver callback: no React state to set.
@@ -96,7 +96,7 @@ export function PhoneBar({ pageName, isSettings }: { pageName: string; isSetting
         ref={bar}
         data-os-bar="phone-compact"
         inert
-        className="group/compact sticky top-0 z-30 -mb-11 grid h-[var(--os-phone-bar)] shrink-0 grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-tight border-b border-transparent bg-card/90 px-gutter opacity-0 backdrop-blur-md transition-[opacity,border-color] duration-standard motion-reduce:transition-none data-[compact]:border-hairline data-[compact]:opacity-100 md:hidden dark:bg-surface/90"
+        className="group/compact sticky top-0 z-30 -mb-11 grid h-[var(--os-phone-bar)] shrink-0 grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-tight border-b border-transparent bg-card/95 px-gutter opacity-0 backdrop-blur-md transition-[opacity,box-shadow] duration-standard motion-reduce:transition-none data-[compact]:opacity-100 data-[compact]:shadow-edge md:hidden dark:bg-surface/95"
       >
         <div id="os-page-back-compact" className="col-start-1 flex items-center empty:hidden" />
         <p

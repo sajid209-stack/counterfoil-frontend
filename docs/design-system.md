@@ -262,6 +262,14 @@ ring. A surface change separates before a border does: no box inside a box.
 Values live in `--elevation-*` (plain CSS); the theme points at them so that
 dark mode and the product can change them. No `shadow-[...]` in components.
 
+**The scroll edge** (`shadow-edge`) is not a level: it is where page content
+passes under fixed chrome. In light it is a 6% hairline and a 12px falloff at 10%; in dark
+it is the 1px line plus a deep falloff. It appears only while something is
+underneath (Apple's scroll-edge appearance, Material's on-scroll top bar) and
+fades in over 200ms: on the phone's compact bar once the large title has
+scrolled away, and on desktop at the frame's top edge (`.os-frame-edge`) once
+the frame has scrolled. A bar at rest stays flat.
+
 ## 9. Motion
 
 `duration-quick` 120ms (hover, press), `duration-standard` 200ms (panels,

@@ -321,6 +321,11 @@
      layer are in THIS product — OS by default, Go under [data-product="go"]. */
   --shadow-card: var(--elev-card);
   --shadow-float: var(--elev-float);
+  /* The scroll edge: where page content passes under fixed chrome. Not a level
+     of its own — it only appears while something is underneath (Apple's
+     scroll-edge appearance, Material's on-scroll top bar), as a hairline and a
+     short, very light falloff. */
+  --shadow-edge: var(--elevation-edge);
 
   /* ── Glass — used only by `.glass` (overlays over a page you keep seeing) */
   --glass-blur: 18px;
@@ -359,6 +364,7 @@
   --elevation-3: 0 16px 48px -12px rgb(20 20 19 / 0.22), 0 0 0 1px rgb(20 20 19 / 0.05);
   --elevation-go: 0 1px 2px rgb(20 20 19 / 0.04), 0 6px 16px -8px rgb(20 20 19 / 0.10);
   --elevation-go-pop: 0 2px 6px rgb(20 20 19 / 0.06), 0 16px 40px -12px rgb(20 20 19 / 0.22);
+  --elevation-edge: 0 1px 0 rgb(20 20 19 / 0.06), 0 4px 12px -2px rgb(20 20 19 / 0.10);
   --elev-card: var(--elevation-1);
   --elev-float: var(--elevation-2);
 }
@@ -806,6 +812,7 @@
   --elevation-3: 0 16px 48px -12px rgb(20 20 19 / 0.22), 0 0 0 1px rgb(20 20 19 / 0.05);
   --elevation-go: 0 1px 2px rgb(20 20 19 / 0.04), 0 6px 16px -8px rgb(20 20 19 / 0.10);
   --elevation-go-pop: 0 2px 6px rgb(20 20 19 / 0.06), 0 16px 40px -12px rgb(20 20 19 / 0.22);
+  --elevation-edge: 0 1px 0 rgb(20 20 19 / 0.06), 0 4px 12px -2px rgb(20 20 19 / 0.10);
   --elev-card: var(--elevation-1);
   --elev-float: var(--elevation-2);
 }
@@ -909,6 +916,8 @@
   --elevation-3: 0 20px 56px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.07);
   --elevation-go: 0 0 0 1px var(--color-line);
   --elevation-go-pop: 0 12px 32px -8px rgb(0 0 0 / 0.6), 0 0 0 1px var(--color-line);
+  /* On near-black the line does the work; the falloff is deeper to be seen at all. */
+  --elevation-edge: 0 1px 0 var(--color-line), 0 4px 12px -4px rgb(0 0 0 / 0.6);
   --elev-card: var(--elevation-1);
   --elev-float: var(--elevation-2);
 }
@@ -1128,7 +1137,26 @@ html[data-motion="reduce"] *::after {
   transition: opacity var(--duration-standard) var(--ease-counterfoil);
 }
 .os-frame-fade[data-more="true"] { opacity: 1; }
-@media (max-width: 47.99rem) { .os-frame-fade { display: none; } }
+
+/* The frame's top edge, the twin of the fade at its foot: flat while the page
+   is at the top, a hairline and a light shadow once content scrolls under the
+   bar. A bar-sized strip sitting just above the frame casts --shadow-edge down
+   into it, the way a real bar would; the frame clips the strip itself and its
+   rounded corners clip the shadow. (A 1px strip cannot carry the falloff: the
+   negative spread shrinks it to nothing.) */
+.os-frame-edge {
+  pointer-events: none;
+  position: absolute;
+  inset: auto 0 100% 0;
+  height: 1rem;
+  z-index: 6;
+  opacity: 0;
+  box-shadow: var(--shadow-edge);
+  transition: opacity var(--duration-standard) var(--ease-counterfoil);
+}
+.os-frame-edge[data-under="true"] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .os-frame-edge { transition: none; } }
+@media (max-width: 47.99rem) { .os-frame-fade, .os-frame-edge { display: none; } }
 
 /* The navigation bars (phone and desktop). Historically translucent glass, hence
    the name; since the calm pass they are plain chrome — solid, with no line

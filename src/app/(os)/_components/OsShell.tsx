@@ -78,6 +78,9 @@ export function OsShell({ children }: { children: React.ReactNode }) {
      below the fold of it, which is what draws the fade at its foot. */
   const frameRef = useRef<HTMLDivElement>(null);
   const [more, setMore] = useState(false);
+  /* `under` is true once the page has scrolled under the bar: the frame's top
+     edge then draws its shadow, so the bar and the page read as two layers. */
+  const [under, setUnder] = useState(false);
 
   useEffect(() => {
     setCollapsed(localStorage.getItem("os_sidebar_collapsed") === "1");
@@ -120,7 +123,10 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const el = frameRef.current;
     if (!el) return;
-    const read = () => setMore(el.scrollHeight - el.scrollTop - el.clientHeight > 4);
+    const read = () => {
+      setMore(el.scrollHeight - el.scrollTop - el.clientHeight > 4);
+      setUnder(el.scrollTop > 0);
+    };
     el.addEventListener("scroll", read, { passive: true });
     const ro = new ResizeObserver(read);
     ro.observe(el);
@@ -281,6 +287,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             >
               {face ?? children}
             </div>
+            <div aria-hidden data-under={under} className="os-frame-edge" />
             <div aria-hidden data-more={more} className="os-frame-fade" />
           </div>
         </main>
