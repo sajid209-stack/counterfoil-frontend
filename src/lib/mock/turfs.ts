@@ -10,8 +10,8 @@
 
    Turfs and the badminton court are exclusive resources sold by the slot
    (BT-04): one booking takes the whole field for that slot. The pool is sold
-   like a ticket (BT-03): a timed session with a headcount, one ticket per
-   swimmer. Prices are illustrative.
+   as a plain entry ticket (BT-01): no date or time, one ticket per
+   swimmer, come any time. Prices are illustrative.
 
    As with doers.ts, the venue keeps the internal ids `loc_fort` and
    `cnt_fort_main` (never shown) because the session's paired counter and the
@@ -103,23 +103,21 @@ function slotProduct(o: {
   };
 }
 
-/** The pool, sold like a ticket: a one-hour session with a headcount, one ticket
- *  per swimmer. Mornings and late afternoons have their own named sessions. */
-function poolProduct(p: string, capacity: number, adult: number, child: number): Product {
+/** The pool, sold as a plain entry ticket: no date, no time slot. Buy it, come any time.
+ *  One ticket per swimmer; it does not expire. */
+function poolProduct(p: string, adult: number, child: number): Product {
   return {
-    id: `prd_${p}_pool`, name: "Swimming Pool — Session Ticket",
-    description: "A one-hour swim session. One ticket per swimmer; pick a session time. Swimwear and cap required; lockers free.",
-    images: imgs(`${p}_pool`, "swim1", "swim2"), bookingType: "BT-03",
+    id: `prd_${p}_pool`, name: "Swimming Pool — Entry Ticket",
+    description: "Buy a ticket and swim any day, any time we are open. No date or time to pick; one ticket per swimmer. Swimwear and cap required; lockers free.",
+    images: imgs(`${p}_pool`, "swim1", "swim2"), bookingType: "BT-01",
     tiers: [
-      { id: `tier_${p}_pool_adult`, name: "Adult", price: tk(adult), active: true },
-      { id: `tier_${p}_pool_child`, name: "Child (under 12)", price: tk(child), active: true },
+      { id: `tier_${p}_pool_adult`, name: "Adult", price: tk(adult), admits: 1, active: true },
+      { id: `tier_${p}_pool_child`, name: "Child (under 12)", price: tk(child), admits: 1, active: true },
     ],
     locationIds: [LOC], channels: ["counter", "online"], status: "active", archivedAt: null,
-    schedule: {
-      slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "20:00",
-      capacityPerSession: capacity, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [],
-    },
-    sessionNames: { "06:00": "Early swim", "10:00": "Ladies only", "11:00": "Ladies only", "16:00": "Kids & family", "20:00": "Night swim" },
+    schedule: null,
+    maxPerOrder: 20,
+    validityMode: "unlimited",
     pricingBasis: "per_person",
     policies: POOL_POLICY,
     createdAt: T, updatedAt: T,
@@ -189,7 +187,7 @@ const arena: TurfDemo = {
       description: "Two turfs: the outdoor turf under floodlights, or the covered, air-cooled indoor turf (৳1,000 more). Pick the turf, then a 90-minute slot.",
       images: imgs("ar", "turf2", "turf4"), resourceIds: ["res_ar_out", "res_ar_in"], price: 3000, eveningPrice: 4000, weekendPrice: 4500, partyMax: 14,
     }),
-    poolProduct("ar", 40, 500, 300),
+    poolProduct("ar", 500, 300),
   ],
   storefronts: [],
   todayBookings: [
@@ -200,7 +198,7 @@ const arena: TurfDemo = {
     booked("bkg_ar_5", "prd_ar_turf", "res_ar_in", 0, "22:00"),
   ],
 };
-arena.storefronts = [storefront("arena360", "Indoor turf, outdoor turf and a pool.", "Arena 360 in Uttara: two turfs booked in 90-minute slots, and a swimming pool sold by the session. Book online and pay with bKash.", ["prd_ar_turf", "prd_ar_pool"], IMG.turf2.url, "blue")];
+arena.storefronts = [storefront("arena360", "Indoor turf, outdoor turf and a pool.", "Arena 360 in Uttara: two turfs booked in 90-minute slots, and a swimming pool with walk-in entry tickets. Book online and pay with bKash.", ["prd_ar_turf", "prd_ar_pool"], IMG.turf2.url, "blue")];
 
 /* ── 3. Rally Sports Hub — turf, badminton court, pool ─────────────────────── */
 
@@ -222,7 +220,7 @@ const rally: TurfDemo = {
       description: "Book the court for an hour. Rackets and shuttles to rent at the desk.",
       images: imgs("ra_bd", "badminton"), resourceIds: ["res_ra_court"], price: 800, eveningPrice: 1000, minutes: 60, first: "07:00", last: "22:00", partyMax: 4,
     }),
-    poolProduct("ra", 30, 450, 250),
+    poolProduct("ra", 450, 250),
   ],
   storefronts: [],
   todayBookings: [
@@ -233,7 +231,7 @@ const rally: TurfDemo = {
     booked("bkg_ra_5", "prd_ra_badminton", "res_ra_court", 0, "21:00", 60),
   ],
 };
-rally.storefronts = [storefront("rallysportshub", "Turf, badminton and a pool, all in one place.", "Rally Sports Hub in Bashundhara: the turf in 90-minute slots, the badminton court by the hour, and the pool by the session.", ["prd_ra_turf", "prd_ra_badminton", "prd_ra_pool"], IMG.turf1.url, "orange")];
+rally.storefronts = [storefront("rallysportshub", "Turf, badminton and a pool, all in one place.", "Rally Sports Hub in Bashundhara: the turf in 90-minute slots, the badminton court by the hour, and pool entry tickets.", ["prd_ra_turf", "prd_ra_badminton", "prd_ra_pool"], IMG.turf1.url, "orange")];
 
 /* ── 4. Green Field Club — one turf for football and cricket, and a pool ───── */
 
@@ -257,7 +255,7 @@ const greenfield: TurfDemo = {
       description: "The whole turf set up for box cricket, 90 minutes. Shares the turf with football. Bat, ball and stumps at the desk.",
       images: imgs("gf_cr", "cricket", "turf4"), resourceIds: ["res_gf_turf"], price: 3500, eveningPrice: 4500, weekendPrice: 5000, partyMax: 16,
     }),
-    poolProduct("gf", 35, 400, 250),
+    poolProduct("gf", 400, 250),
   ],
   storefronts: [],
   todayBookings: [
@@ -267,6 +265,6 @@ const greenfield: TurfDemo = {
     booked("bkg_gf_4", "prd_gf_cricket", "res_gf_turf", 0, "20:30"),
   ],
 };
-greenfield.storefronts = [storefront("greenfieldclub", "Football or cricket, on one turf. And a pool.", "Green Field Sports Club in Mirpur: one turf you can book for football or box cricket in 90-minute slots, and a pool sold by the session.", ["prd_gf_football", "prd_gf_cricket", "prd_gf_pool"], IMG.turf4.url, "green")];
+greenfield.storefronts = [storefront("greenfieldclub", "Football or cricket, on one turf. And a pool.", "Green Field Sports Club in Mirpur: one turf you can book for football or box cricket in 90-minute slots, and a pool with entry tickets.", ["prd_gf_football", "prd_gf_cricket", "prd_gf_pool"], IMG.turf4.url, "green")];
 
 export const TURF_DEMOS: Record<TurfDemoId, TurfDemo> = { kickoff, arena, rally, greenfield };
