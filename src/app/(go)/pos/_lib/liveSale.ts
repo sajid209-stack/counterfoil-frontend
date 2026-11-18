@@ -41,7 +41,9 @@ export type LiveSale = {
    *  the default: the whole amount, or the booking's own advance where one is
    *  required. Held as the CHOICE, not the amount, so it follows the total when
    *  a discount or a code changes it. */
-  payChoice?: "full" | "half" | "minimum";
+  payChoice?: "full" | "minimum" | "custom";
+  /** What was typed into Custom, kept as typed. */
+  payCustom?: string;
   /** The day the wall is selling for (an ISO date). Absent means today. Part of
    *  the sale so a trip to the Schedule and back does not lose it. */
   sellDate?: string;

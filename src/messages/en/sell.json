@@ -102,6 +102,7 @@
     "completeAmount": "Complete {amount}",
     "overLimit": "Needs a manager",
     "needReason": "Add a reason for the discount",
+    "needAmount": "Type the amount paid now",
     "barLabel": "This sale"
   },
   "custom": {

@@ -19819,3 +19819,23 @@ demos). Seed: `src/lib/mock/turfs.ts`; loaded by `applyTurfBusiness` in `client.
   (partySize 1) so the dashboard's capacity reads as slots, not players.
 - The hydration warning on first load of a whole-business demo is pre-existing (Doers shows it
   too): the server renders the default seed, the client swaps in the demo.
+
+---
+
+## POS: Full · Minimum · Custom (2026-11-18)
+
+"How much now" at checkout was Full · Half · Minimum. It is now **Full · Minimum · Custom**, the deposit
+pattern booking systems share (pay in full / pay the deposit / another amount):
+
+- **Full** is the whole total. **Minimum** is the advance rule's least or the booking's deposit, and
+  appears only where there is one. **Custom** opens one field under the tiles, prefilled with the
+  amount that was being taken and selected, so typing replaces it.
+- The typed amount must run from the minimum (or ৳1 where there is none) to the full total. The line
+  under the field gives the range, and turns into the correction when the amount is outside it.
+  Complete sale waits while the amount is invalid, and the big figure shows a dash rather than a
+  total it is not. It accepts "1,500", "৳1500.50" and Bangla digits.
+- **Half** is gone, since Custom covers it. One shared `HowMuchNow` (pos/CheckoutParts) now serves
+  both the till's payment step and the Sell page, which had its own copy. The live sale keeps the
+  typed figure (`payCustom`).
+- Verified: a 48-check browser walk (scratchpad `seq/paywalk.mjs`) at 1440 and 393, light and dark,
+  plus tsc, eslint (PosScreen keeps its two existing effect errors), i18n parity and token lint.

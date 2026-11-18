@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { Check, ChevronRight, TicketPercent, UserRound, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { formatMoney, formatPriceShort } from "@/lib/format";
+import { currencySymbol } from "@/lib/region";
+import { AffixInput } from "@/components/ui";
 import type { AppliedPromotion } from "@/lib/api";
 import type { AttachedCustomer } from "./CustomerPicker";
 import { Tile, TileGrid } from "../_components/Tiles";
@@ -207,41 +209,132 @@ export function PromoCodeRow({
   );
 }
 
-export type PayChoice = "full" | "half" | "minimum";
+/** How much of the total is paid now. Full is the whole total; Minimum is the
+ *  least the business or the booking accepts (offered only where there is one);
+ *  Custom is any figure the cashier types between the two. This is the deposit
+ *  checkout every booking system converges on (FareHarbor, Bookeo, Square's
+ *  split tender): pay in full, pay the deposit, or another amount. A fixed
+ *  "Half" was dropped: Custom covers it and every other figure a customer hands
+ *  over, and a choice that only sometimes appears is one more thing to read. */
+export type PayChoice = "full" | "minimum" | "custom";
 
-/** How much of the total the customer pays now: Full, Half or Minimum.
+/** A typed amount in the main unit → minor units. Accepts "1500", "1,500",
+ *  "৳1500.50" and Bangla digits ("১৫০০"); null when it is not an amount. */
+export function readAmount(text: string): number | null {
+  const s = text
+    .replace(/[০-৯]/g, (d) => String(d.charCodeAt(0) - 0x09e6))
+    .replace(/[^\d.]/g, "");
+  if (!/^\d+(\.\d{0,2})?$/.test(s) && !/^\.\d{1,2}$/.test(s)) return null;
+  return Math.round(parseFloat(s) * 100);
+}
+
+export type CustomCheck = { amount: number | null; error: "empty" | "low" | "high" | null };
+
+/** Whether a typed amount can be taken now: at least `min`, at most `max` (the
+ *  whole total). Anything else says why, so the field can say what to do. */
+export function checkCustomAmount(text: string, min: number, max: number): CustomCheck {
+  const amount = text.trim() ? readAmount(text) : null;
+  if (amount == null || amount <= 0) return { amount: null, error: "empty" };
+  if (amount < min) return { amount: null, error: "low" };
+  if (amount > max) return { amount: null, error: "high" };
+  return { amount, error: null };
+}
+
+/** The amount a Custom field opens on: what was being taken, in whole units
+ *  where it is whole, so the cashier edits a real figure rather than a blank. */
+export const amountText = (minor: number) => (minor % 100 === 0 ? String(minor / 100) : (minor / 100).toFixed(2));
+
+/** How much of the total the customer pays now: Full, Minimum or Custom.
  *
  *  Each choice is its own tile, with the amount under the word, so a cashier who
  *  does not read the word reads the money. The chosen tile is the till's one
  *  look for "chosen": solid orange, white, a tick, the same as a chosen payment
- *  method. */
+ *  method. Custom opens one field right under the tiles, already holding the
+ *  amount that was chosen and selected, so typing replaces it; under it, the
+ *  range it must fall in, which turns into the correction when it does not. */
 export function HowMuchNow({
   options,
   value,
   onChange,
   currency,
+  custom,
 }: {
-  options: { id: PayChoice; label: string; amount: number }[];
+  options: { id: Exclude<PayChoice, "custom">; label: string; amount: number }[];
   value: PayChoice;
   onChange: (c: PayChoice) => void;
   currency: string;
+  custom: { text: string; onText: (text: string) => void; min: number; max: number; check: CustomCheck };
 }) {
   const t = useTranslations("pos");
+  const id = useId();
+  const on = value === "custom";
+  const range = { min: formatMoney(custom.min, currency), max: formatMoney(custom.max, currency) };
+  const message = !on
+    ? null
+    : custom.check.error === "low"
+      ? t("pay.customLow", range)
+      : custom.check.error === "high"
+        ? t("pay.customHigh", range)
+        : custom.check.error === "empty" && custom.text.trim()
+          ? t("pay.customNotAmount")
+          : t("pay.customRange", range);
+  const invalid = on && custom.check.error != null && (custom.check.error !== "empty" || !!custom.text.trim());
+  const tile = "h-[4.25rem] rail:h-13 rail:min-h-13 rail:[&>span:last-child]:text-sm";
   return (
-    <TileGrid cols={options.length >= 3 ? 3 : 2} role="radiogroup" aria-label={t("pay.howMuch")}>
-      {options.map((o) => (
+    <div className="flex flex-col gap-comfortable">
+      <TileGrid cols={options.length + 1 >= 3 ? 3 : 2} role="radiogroup" aria-label={t("pay.howMuch")}>
+        {options.map((o) => (
+          <Tile
+            key={o.id}
+            role="radio"
+            aria-checked={value === o.id}
+            data-pay-choice={o.id}
+            selected={value === o.id}
+            onClick={() => onChange(o.id)}
+            label={o.label}
+            sub={<span className="tabular-nums">{formatPriceShort(o.amount, currency)}</span>}
+            className={tile}
+          />
+        ))}
         <Tile
-          key={o.id}
           role="radio"
-          aria-checked={value === o.id}
-          data-pay-choice={o.id}
-          selected={value === o.id}
-          onClick={() => onChange(o.id)}
-          label={o.label}
-          sub={<span className="tabular-nums">{formatPriceShort(o.amount, currency)}</span>}
-          className="h-[4.25rem] rail:h-13 rail:min-h-13 rail:[&>span:last-child]:text-sm"
+          aria-checked={on}
+          data-pay-choice="custom"
+          selected={on}
+          onClick={() => onChange("custom")}
+          label={t("pay.custom")}
+          sub={on && custom.check.amount != null ? <span className="tabular-nums">{formatPriceShort(custom.check.amount, currency)}</span> : t("pay.customSub")}
+          className={tile}
         />
-      ))}
-    </TileGrid>
+      </TileGrid>
+      {on && (
+        <div className="flex flex-col gap-inline" data-pay-custom>
+          <label htmlFor={id} className="text-sm font-medium text-fg-secondary">
+            {t("pay.customLabel")}
+          </label>
+          <AffixInput
+            id={id}
+            /* The field appears because the Custom tile was just pressed, so the
+               cursor lands where the hand is; the figure is selected so the
+               first key replaces it. */
+            autoFocus
+            onFocus={(e) => e.currentTarget.select()}
+            inputMode="decimal"
+            autoComplete="off"
+            enterKeyHint="done"
+            prefix={currencySymbol(currency)}
+            value={custom.text}
+            onChange={(e) => custom.onText(e.target.value)}
+            invalid={invalid}
+            aria-describedby={`${id}-help`}
+            className="h-12 rail:h-10"
+            inputClassName="text-lg font-semibold tabular-nums rail:text-base"
+          />
+          <p id={`${id}-help`} role={invalid ? "alert" : undefined} className={cn("text-sm", invalid ? "text-danger" : "text-muted")}>
+            {message}
+          </p>
+        </div>
+      )}
+    </div>
   );
 }

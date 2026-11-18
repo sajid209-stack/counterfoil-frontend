@@ -24,7 +24,7 @@ import { FEATURES } from "@/lib/features";
 import { formatClock, formatDay, formatDayRange, formatMoney, formatPriceShort } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer, type PickerAnchor } from "./CustomerPicker";
-import { CustomerRow, HowMuchNow, PromoCodeRow, SaleRow, type PayChoice } from "./CheckoutParts";
+import { amountText, checkCustomAmount, CustomerRow, HowMuchNow, PromoCodeRow, SaleRow, type PayChoice } from "./CheckoutParts";
 import { SellDateBar } from "./SellDate";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
@@ -163,9 +163,11 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const [method, setMethod] = useState<PaymentMethod>("cash");
   /** How much of the total is paid now, chosen in the payment step. null is
    *  the default: all of it — or the booking's own advance, where it needs one.
-   *  Held as the CHOICE rather than an amount, so Half stays half when a
-   *  discount or a code changes the total. */
+   *  Held as the CHOICE rather than an amount, so Minimum follows the total
+   *  when a discount or a code moves it. Custom is the one choice that IS an
+   *  amount: what the cashier typed, kept as typed. */
   const [payChoice, setPayChoice] = useState<PayChoice | null>(restored?.payChoice ?? null);
+  const [customText, setCustomText] = useState(restored?.payCustom ?? "");
   /** The day the wall is selling for. Today unless the cashier picks another;
    *  part of the live sale, so a trip to the Schedule does not lose it. */
   const [sellDate, setSellDate] = useState<string>(restored?.sellDate ?? TODAY);
@@ -272,8 +274,8 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   /* Hold the sale. sessionStorage is an external store, so writing to it is
      what an effect is for — and it is a write, never a setState. */
   useEffect(() => {
-    writeLiveSale({ cart, discountMode, discountPct, discountAmt, discountReason, attached, coupon: appliedCoupon, payChoice: payChoice ?? undefined, sellDate, pointsToSpend });
-  }, [cart, discountMode, discountPct, discountAmt, discountReason, attached, appliedCoupon, payChoice, sellDate, pointsToSpend]);
+    writeLiveSale({ cart, discountMode, discountPct, discountAmt, discountReason, attached, coupon: appliedCoupon, payChoice: payChoice ?? undefined, payCustom: customText || undefined, sellDate, pointsToSpend });
+  }, [cart, discountMode, discountPct, discountAmt, discountReason, attached, appliedCoupon, payChoice, customText, sellDate, pointsToSpend]);
 
   /** Everything about a sale other than its lines: who it is for, what was
    *  taken off, how much is paid now, and the day the wall was set to. A
@@ -281,6 +283,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
    *  not inherit the last one's discount or their Friday. */
   const resetSaleOptions = () => {
     setPayChoice(null);
+    setCustomText("");
     setSellDate(TODAY);
     setDiscOpen(false);
     setDiscountMode("percent"); setDiscountAmt(0); setDiscountPct(0); setDiscountReason("");
@@ -994,16 +997,15 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
 
   /* ── How much is paid now ──────────────────────────────────────────────────
      A booking taken over the phone is usually held on a bKash transfer of
-     part of the money, so the payment step offers Full, Half and Minimum — and
-     only where the business allows paying part now: an advance rule at the
-     counter, or a booking whose own policy asks for a deposit.
+     part of the money, so the payment step offers Full, Minimum and Custom —
+     and only where the business allows paying part now: an advance rule at
+     the counter, or a booking whose own policy asks for a deposit.
 
      Minimum is what the business requires: the advance rule's least, or the
-     booking's deposit if that asks for more. Half is half the total, offered
-     only where it is not below that. Full is the whole total and is where
-     everything starts, unless a booking needs a deposit, in which case Minimum
-     is. The choice is stored, not the amount, so Half stays half when a
-     discount or a code moves the total. */
+     booking's deposit if that asks for more. Custom is any amount the cashier
+     types from that minimum (or ৳1 where there is none) up to the whole total.
+     Full is where everything starts, unless a booking needs a deposit, in
+     which case Minimum is. */
   const advanceRule = advanceQ.data?.counter;
   const advanceAllowed = !!advanceRule?.enabled && cart.length > 0 && total > 0;
   const advanceMin = advanceRule ? advanceMinimum(advanceRule, total) : total;
@@ -1016,20 +1018,31 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   const requiredNow = depositBalance > 0 ? total - depositBalance : 0;
   const minNow = advanceAllowed ? Math.max(advanceMin, requiredNow) : requiredNow;
   const minShown = partAllowed && minNow > 0 && minNow < total;
-  const halfNow = Math.round(total / 2);
-  const halfShown = partAllowed && halfNow < total && halfNow > (minShown ? minNow : 0);
+  /* The least a typed amount may be: the minimum where there is one, else one
+     whole unit — a part payment of nothing is not a payment. */
+  const customMin = minShown ? minNow : Math.min(100, total);
+  const customCheck = checkCustomAmount(customText, customMin, total);
   const choice: PayChoice =
-    payChoice === "half" && halfShown ? "half"
+    payChoice === "custom" && partAllowed ? "custom"
     : payChoice === "minimum" && minShown ? "minimum"
     : payChoice == null && depositBalance > 0 && minShown ? "minimum"
     : "full";
-  const dueNow = !partAllowed ? total : choice === "half" ? halfNow : choice === "minimum" ? minNow : total;
+  /* An unfinished Custom figure charges nothing: the field says what is wrong
+     and Complete sale waits (`customPending`). Until then the sums show the
+     whole total rather than a half-typed number. */
+  const customPending = choice === "custom" && customCheck.amount == null;
+  const dueNow = !partAllowed ? total : choice === "minimum" ? minNow : choice === "custom" && customCheck.amount != null ? customCheck.amount : total;
   const balance = total - dueNow;
-  const payOptions: { id: PayChoice; label: string; amount: number }[] = [
+  const payOptions: { id: "full" | "minimum"; label: string; amount: number }[] = [
     { id: "full", label: t("pay.full"), amount: total },
-    ...(halfShown ? [{ id: "half" as const, label: t("pay.half"), amount: halfNow }] : []),
     ...(minShown ? [{ id: "minimum" as const, label: t("pay.minimum"), amount: minNow }] : []),
   ];
+  /* Choosing Custom opens the field on the amount that was being taken, so
+     the cashier edits a real figure instead of starting from a blank. */
+  const choosePay = (c: PayChoice) => {
+    if (c === "custom" && choice !== "custom") setCustomText(amountText(dueNow));
+    setPayChoice(c);
+  };
 
   // The most points that can usefully go on THIS sale: bounded by the balance,
   // the programme minimum, and what is left to pay once points are excluded.
@@ -1043,7 +1056,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   /** The sale exactly as it stands right now, in the shape the live sale is
    *  held in — taken just before checkout, for the completion screen's
    *  5-second Undo to hand back if the cashier changes their mind. */
-  const snapshotForUndo = (): LiveSale => ({ cart, discountMode, discountPct, discountAmt, discountReason, attached, coupon: appliedCoupon, payChoice: payChoice ?? undefined, sellDate, pointsToSpend });
+  const snapshotForUndo = (): LiveSale => ({ cart, discountMode, discountPct, discountAmt, discountReason, attached, coupon: appliedCoupon, payChoice: payChoice ?? undefined, payCustom: customText || undefined, sellDate, pointsToSpend });
 
   const buildSale = () => {
     // The SAME inputs the live totals were computed from — no drift possible.
@@ -1065,7 +1078,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
      opening the cart first. The sheet opens on the exact amount in cash, so the
      commonest sale finishes with one more tap on the same orange button. */
   const charge = async () => {
-    /* No row, no choice: a stale Half must not outlive the booking that earned it. */
+    /* No row, no choice: a stale Minimum or Custom must not outlive the booking that earned it. */
     if (!partAllowed) setPayChoice(null);
     setTenderTaka("");
     setPadOpen(false);
@@ -1482,7 +1495,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         const changeMinor = tenderedMinor - dueNow;
         const enough = tenderedMinor >= dueNow;
         const exact = tenderedMinor === dueNow;
-        const blocked = overLimit || reasonNeeded;
+        const blocked = overLimit || reasonNeeded || customPending;
         /* A discount that cannot be given opens its own row, so the refusal is
            read where it can be fixed, and cannot be folded away. */
         const discountOpen = discOpen || blocked;
@@ -1496,8 +1509,9 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     code and how much is paid now — all of which come from the
                     sale engine, not from arithmetic here. */}
                 <div className="text-center rail:text-left" data-pay-amount>
-                  <p className="text-base font-medium text-muted rail:text-sm rail:text-fg-secondary">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</p>
-                  <p className="mt-inline text-[clamp(2rem,10vw,2.75rem)] font-bold leading-tight tabular-nums text-fg rail:mt-0 rail:text-[1.75rem]">{formatMoney(dueNow, currency)}</p>{/* ds-exception: the desktop figure is 28px, the one big number in the panel */}
+                  <p className="text-base font-medium text-muted rail:text-sm rail:text-fg-secondary">{balance > 0 || customPending ? t("cash.depositDue") : t("cash.amountDue")}</p>
+                  {/* An unfinished Custom figure shows a dash, never the full total it is not. */}
+                  <p className="mt-inline text-[clamp(2rem,10vw,2.75rem)] font-bold leading-tight tabular-nums text-fg rail:mt-0 rail:text-[1.75rem]">{customPending ? "—" : formatMoney(dueNow, currency)}</p>{/* ds-exception: the desktop figure is 28px, the one big number in the panel */}
                 </div>
         </>);
         const rowsCard = (<>
@@ -1613,10 +1627,16 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     payment, and only the choices that are really different:
                     Minimum is left out when it is the whole amount or there is
                     none. */}
-                {payOptions.length > 1 && (
+                {partAllowed && (
                   <div className="flex flex-col gap-tight">
                     <TileLabel className="rail:text-sm rail:font-medium rail:text-fg-secondary">{t("pay.howMuch")}</TileLabel>
-                    <HowMuchNow options={payOptions} value={choice} onChange={setPayChoice} currency={currency} />
+                    <HowMuchNow
+                      options={payOptions}
+                      value={choice}
+                      onChange={choosePay}
+                      currency={currency}
+                      custom={{ text: customText, onText: setCustomText, min: customMin, max: total, check: customCheck }}
+                    />
                     {balance > 0 && (
                       <p className="text-md font-medium text-fg rail:text-sm rail:font-normal rail:text-muted" data-pay-part>
                         {t("pay.partSummary", { now: formatMoney(dueNow, currency), later: formatMoney(balance, currency) })}
@@ -1754,7 +1774,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
             <button type="button" className={primaryButton("h-11", "w-full rail:text-base rail:font-medium")} onClick={() => void finishPayment(tenderedMinor, changeMinor)} disabled={(cash && !enough) || cashSaving || blocked}>
               <Check size={18} strokeWidth={2.5} aria-hidden />
               <span className="truncate">{cash || method === "card_terminal" ? t("cash.completeSale") : t("pay.next")}</span>
-              {(cash || method === "card_terminal") && <span aria-hidden className="tabular-nums">{formatPriceShort(dueNow, currency)}</span>}
+              {(cash || method === "card_terminal") && !customPending && <span aria-hidden className="tabular-nums">{formatPriceShort(dueNow, currency)}</span>}
             </button>
           </section>
         );

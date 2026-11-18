@@ -60,7 +60,7 @@ import {
 import type { DiscountMode } from "@/components/ui";
 import { CustomerPicker, type AttachedCustomer } from "../pos/CustomerPicker";
 import { HeldSheet } from "../pos/HeldSheet";
-import type { PayChoice } from "../pos/CheckoutParts";
+import { amountText, checkCustomAmount, type PayChoice } from "../pos/CheckoutParts";
 import { ActionBar, secondaryButton } from "../_components/ActionBar";
 import { ActionTile, Tile, TileGrid, TileLabel, GoCard } from "../_components/Tiles";
 import { BookingGlyph } from "../_components/WallTile";
@@ -232,6 +232,8 @@ export default function SellPage() {
   const [couponError, setCouponError] = useState<string | null>(null);
   const [advance, setAdvance] = useState<number | null>(null);
   const [payInFull, setPayInFull] = useState(false);
+  /** Custom: what the cashier typed, kept as typed; null while another choice is on. */
+  const [customText, setCustomText] = useState<string | null>(null);
 
   const operator = opQ.data;
   const currency = operator?.currency ?? "BDT";
@@ -348,40 +350,48 @@ export default function SellPage() {
 
   /* ── Part payment ────────────────────────────────────────────────────────
      A booking's DEPOSIT policy says what the booking requires; an ADVANCE says
-     what this customer actually handed over. Shown as Full · Half · Minimum. */
+     what this customer actually handed over. Shown as Full · Minimum · Custom,
+     the same tiles as the cart till's payment step (CheckoutParts). */
   const depositBalance = items.reduce((sum, e) => sum + itemBalance(e, products), 0);
   const advanceRule = advanceQ.data?.counter;
   const advanceAllowed = !!advanceRule?.enabled && items.length > 0 && totals.total > 0;
   const advanceMin = advanceRule ? advanceMinimum(advanceRule, totals.total) : totals.total;
-  const advanceValid = advance != null && advance >= advanceMin && advance < totals.total;
-  const balance = advanceValid ? totals.total - advance! : payInFull ? 0 : depositBalance;
-  const dueNow = totals.total - balance;
 
   const partAllowed = totals.total > 0 && (advanceAllowed || depositBalance > 0);
   const requiredNow = depositBalance > 0 ? totals.total - depositBalance : 0;
   const minNow = advanceAllowed ? Math.max(advanceMin, requiredNow) : requiredNow;
-  const halfNow = Math.round(totals.total / 2);
-  const payOptions: { id: PayChoice; label: string; amount: number }[] = partAllowed
+  const minShown = minNow > 0 && minNow < totals.total;
+  /* A typed amount runs from the minimum (one whole unit where there is none)
+     to the whole total. */
+  const customMin = minShown ? minNow : Math.min(100, totals.total);
+  const customOn = partAllowed && customText != null;
+  const customCheck = checkCustomAmount(customText ?? "", customMin, totals.total);
+  const advanceValid = advance != null && advance >= advanceMin && advance < totals.total;
+  const balance = customOn
+    ? customCheck.amount != null ? totals.total - customCheck.amount : 0
+    : advanceValid ? totals.total - advance! : payInFull ? 0 : depositBalance;
+  const dueNow = totals.total - balance;
+  /* An unfinished Custom figure takes nothing: the field says what is wrong
+     and the sale waits. */
+  const customPending = customOn && customCheck.amount == null;
+
+  const payOptions: { id: "full" | "minimum"; label: string; amount: number }[] = partAllowed
     ? [
         { id: "full", label: tp("pay.full"), amount: totals.total },
-        ...(advanceAllowed && halfNow >= minNow && halfNow < totals.total ? [{ id: "half" as const, label: tp("pay.half"), amount: halfNow }] : []),
-        ...(minNow > 0 && minNow < totals.total ? [{ id: "minimum" as const, label: tp("pay.minimum"), amount: minNow }] : []),
+        ...(minShown ? [{ id: "minimum" as const, label: tp("pay.minimum"), amount: minNow }] : []),
       ]
     : [];
-  const payChoice: PayChoice = advanceValid
-    ? advance === halfNow && halfNow !== minNow
-      ? "half"
-      : "minimum"
-    : payInFull || depositBalance === 0
-      ? "full"
-      : "minimum";
+  const payChoice: PayChoice = customOn ? "custom" : advanceValid ? "minimum" : payInFull || depositBalance === 0 ? "full" : "minimum";
   const choosePay = (c: PayChoice) => {
+    if (c === "custom") {
+      /* Opens on the amount that was being taken, to edit rather than retype. */
+      if (!customOn) setCustomText(amountText(dueNow));
+      return;
+    }
+    setCustomText(null);
     if (c === "full") {
       setAdvance(null);
       setPayInFull(true);
-    } else if (c === "half") {
-      setAdvance(halfNow);
-      setPayInFull(false);
     } else {
       setPayInFull(false);
       setAdvance(advanceAllowed && minNow >= advanceMin && minNow < totals.total ? minNow : null);
@@ -584,7 +594,7 @@ export default function SellPage() {
   const changeMinor = tenderedMinor - dueNow;
   const cashReady = method !== "cash" || tenderedMinor >= dueNow;
   const walletReady = method !== "bkash" || walletRef.trim().length > 0;
-  const canComplete = payable && !openMissing && cashReady && walletReady && !overLimit && !reasonNeeded;
+  const canComplete = payable && !openMissing && cashReady && walletReady && !overLimit && !reasonNeeded && !customPending;
 
   const footerLabel = openMissing
     ? t(`missing.${openMissing}` as never)
@@ -594,6 +604,8 @@ export default function SellPage() {
         ? t("footer.overLimit")
         : reasonNeeded
           ? t("footer.needReason")
+          : customPending
+            ? t("footer.needAmount")
           : method === "cash" && !cashReady
             ? t("footer.takeAmount", { amount: formatPriceShort(dueNow, currency) })
             : t("footer.completeAmount", { amount: formatPriceShort(dueNow, currency) });
@@ -924,6 +936,7 @@ export default function SellPage() {
               payOptions={payOptions}
               payChoice={payChoice}
               onPayChoice={choosePay}
+              custom={{ text: customText ?? "", onText: setCustomText, min: customMin, max: totals.total, check: customCheck }}
               dueNow={dueNow}
               balance={balance}
             />

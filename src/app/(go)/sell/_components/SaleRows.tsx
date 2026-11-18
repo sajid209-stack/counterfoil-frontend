@@ -13,12 +13,11 @@ import { useTranslations } from "next-intl";
 import { Percent } from "lucide-react";
 import { DiscountInput, Notice, type DiscountMode } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { formatMoney, formatPriceShort } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import type { AppliedPromotion } from "@/lib/api";
 import type { AttachedCustomer } from "../../pos/CustomerPicker";
-import { CustomerRow, PromoCodeRow, SaleRow, type PayChoice } from "../../pos/CheckoutParts";
-import { TileText } from "../../_components/SheetParts";
-import { GoCard, Tile, TileGrid, TileLabel } from "../../_components/Tiles";
+import { CustomerRow, HowMuchNow, PromoCodeRow, SaleRow, type CustomCheck, type PayChoice } from "../../pos/CheckoutParts";
+import { GoCard, TileLabel } from "../../_components/Tiles";
 
 export type RowKey = "customer" | "discount" | "advance";
 
@@ -49,6 +48,7 @@ export function SaleRows({
   payOptions,
   payChoice,
   onPayChoice,
+  custom,
   dueNow,
   balance,
 }: {
@@ -76,7 +76,8 @@ export function SaleRows({
   onRemoveCoupon: () => void;
   /** Already in words. */
   couponError: string | null;
-  payOptions: { id: PayChoice; label: string; amount: number }[];
+  payOptions: { id: "full" | "minimum"; label: string; amount: number }[];
+  custom: { text: string; onText: (text: string) => void; min: number; max: number; check: CustomCheck };
   payChoice: PayChoice;
   onPayChoice: (c: PayChoice) => void;
   dueNow: number;
@@ -150,26 +151,11 @@ export function SaleRows({
 
       {/* How much of it now. Only where the business takes part payment (or a
           booking asks for a deposit), and only the choices that really differ. */}
-      {payOptions.length > 1 && (
+      {payOptions.length > 0 && (
         <div className="flex flex-col gap-tight">
           <TileLabel>{tp("pay.howMuch")}</TileLabel>
-          {/* The same tiles as the cart till's payment step, with the amount at
-              the 13px reading floor (the shared tile's second line is 12px). */}
-          <TileGrid cols={payOptions.length >= 3 ? 3 : 2} role="radiogroup" aria-label={tp("pay.howMuch")}>
-            {payOptions.map((o) => (
-              <Tile
-                key={o.id}
-                role="radio"
-                aria-checked={payChoice === o.id}
-                data-pay-choice={o.id}
-                selected={payChoice === o.id}
-                onClick={() => onPayChoice(o.id)}
-                className="h-[4.25rem]"
-              >
-                <TileText label={o.label} sub={<span className="tabular-nums">{formatPriceShort(o.amount, currency)}</span>} selected={payChoice === o.id} />
-              </Tile>
-            ))}
-          </TileGrid>
+          {/* The cart till's own control: Full, Minimum, and Custom with its field. */}
+          <HowMuchNow options={payOptions} value={payChoice} onChange={onPayChoice} currency={currency} custom={custom} />
           {balance > 0 && (
             <p className="text-md font-medium text-fg">
               {tp("pay.partSummary", { now: formatMoney(dueNow, currency), later: formatMoney(balance, currency) })}

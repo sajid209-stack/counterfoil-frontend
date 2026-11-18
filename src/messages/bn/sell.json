@@ -102,6 +102,7 @@
     "completeAmount": "{amount} সম্পন্ন করুন",
     "overLimit": "ম্যানেজারের অনুমোদন লাগবে",
     "needReason": "ছাড়ের কারণ লিখুন",
+    "needAmount": "এখন কত দিচ্ছেন লিখুন",
     "barLabel": "এই বিক্রি"
   },
   "custom": {
