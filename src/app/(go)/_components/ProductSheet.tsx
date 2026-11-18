@@ -4,7 +4,7 @@ import { currencySymbol } from "@/lib/region";
 import { useEffect, useMemo, useState } from "react";
 import { Check, ChevronLeft, Clock, Lock, Minus, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Avatar, BlockedNotice, Button, FormField, PlanView, ProductThumb, ResourceTimeline, useToast } from "@/components/ui";
+import { BlockedNotice, Button, FormField, PlanView, ProductThumb, ResourceTimeline, useToast } from "@/components/ui";
 import { seatMap } from "@/lib/api";
 import { SessionList } from "./SessionList";
 import { SlotMatrix } from "./SlotMatrix";
@@ -46,7 +46,7 @@ import { planWeekly, type OccurrenceBlock } from "@/lib/recurrence";
 import { formatClock, formatClockMin, formatClockRange, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { ClockCell } from "./Clock";
 import { ActionBar } from "./ActionBar";
-import { DateTiles, FOOT_RAIL, FooterSummary, OptionRow, StickyFoot, TileText, capitalFirst, summaryLead } from "./SheetParts";
+import { DateTiles, FOOT_RAIL, FooterSummary, PersonSelect, StickyFoot, TileText, capitalFirst, summaryLead } from "./SheetParts";
 import { Tile, TileLabel } from "./Tiles";
 import { Stepper } from "./Stepper";
 import { SheetShell } from "./SheetShell";
@@ -1204,28 +1204,31 @@ export function ProductSheet({
         {/* Provider cards + appointment times (conflict-aware per provider) */}
         {provider && (
           <div className="mb-section flex flex-col gap-tight rail:mb-0 rail:flex-1">
-            {/* Stacked full-width rows, not a wrap grid: each row carries a
-                name, when they are next free and what they cost, and those
-                three want a consistent left edge to be comparable. */}
-            <div className="flex flex-col gap-tight">
-              {product.providerPickable && <TileLabel className="rail:text-base">{t("sheet.provider")}</TileLabel>}
-              {product.providerPickable && providers.map((p) => {
-                const nextFree = providerTimes.find((t) => (date !== TODAY || toMinutes(t) >= DEMO_NOW_MINUTES) && isOwnerFree(p.id, date, t, providerDuration));
-                const prem = premiumOf(p.id);
-                return (
-                  <OptionRow
-                    key={p.id}
-                    selected={providerId === p.id}
-                    onClick={() => setProviderId(p.id)}
-                    lead={<Avatar name={p.name} />}
-                    title={p.name}
-                    sub={nextFree ? t("sheet.nextFree", { time: formatClock(nextFree) }) : t("sheet.fullyBooked")}
-                    trail={prem > 0 ? t("sheet.premiumAmount", { amount: formatMoney(prem, currency) }) : t("sheet.standardRate")}
-                  />
-                );
-              })}
-              <OptionRow center selected={!providerId} onClick={() => setProviderId(undefined)} title={t("sheet.firstAvailable")} />
-            </div>
+            {/* One dropdown row, not a card per person: a team grows, and a
+                stack of cards pushes the start times off a phone. The row and
+                each list entry still carry the name, when they are next free
+                and what they add to the price. */}
+            {product.providerPickable && (
+              <div className="flex flex-col gap-tight">
+                <TileLabel className="rail:text-base">{t("sheet.provider")}</TileLabel>
+                <PersonSelect
+                  label={t("sheet.provider")}
+                  value={providerId}
+                  onChange={setProviderId}
+                  any={{ label: t("sheet.firstAvailable") }}
+                  people={providers.map((p) => {
+                    const nextFree = providerTimes.find((t) => (date !== TODAY || toMinutes(t) >= DEMO_NOW_MINUTES) && isOwnerFree(p.id, date, t, providerDuration));
+                    const prem = premiumOf(p.id);
+                    return {
+                      id: p.id,
+                      name: p.name,
+                      sub: nextFree ? t("sheet.nextFree", { time: formatClock(nextFree) }) : t("sheet.fullyBooked"),
+                      trail: prem > 0 ? t("sheet.premiumAmount", { amount: formatMoney(prem, currency) }) : t("sheet.standardRate"),
+                    };
+                  })}
+                />
+              </div>
+            )}
             {providerTimes.length > 0 && <TileLabel className="mt-tight rail:mt-3 rail:text-base">{t("sheet.startTimeDuration", { minutes: providerDuration })}</TileLabel>}
             {providerTimes.length > 0 && (
               <div className="grid grid-cols-4 gap-tight sm:grid-cols-5 rail:grid-cols-6">
@@ -1393,23 +1396,15 @@ export function ProductSheet({
         {guided && slotTime && guides.length > 0 && openToday && (
           <div className="mb-section rail:mb-5 flex flex-col gap-tight">
             <TileLabel className="rail:text-base">{t("sheet.ledBy")}</TileLabel>
-            <div className="flex flex-col gap-tight">
-              {guides.map((g) => {
+            <PersonSelect
+              label={t("sheet.ledBy")}
+              value={guideId}
+              onChange={(id) => id && setGuideId(id)}
+              people={guides.map((g) => {
                 const free = slotGuides.includes(g.id);
-                return (
-                  <OptionRow
-                    key={g.id}
-                    selected={guideId === g.id}
-                    off={!free}
-                    disabled={!free}
-                    onClick={() => setGuideId(g.id)}
-                    lead={<Avatar name={g.name} />}
-                    title={g.name}
-                    sub={free ? t("sheet.guideAvailable") : t("sheet.guideBusy")}
-                  />
-                );
+                return { id: g.id, name: g.name, sub: free ? t("sheet.guideAvailable") : t("sheet.guideBusy"), disabled: !free };
               })}
-            </div>
+            />
           </div>
         )}
 

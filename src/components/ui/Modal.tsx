@@ -70,6 +70,11 @@ export function useDialogBehaviour(
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        /* An open dropdown (the kit Select, portalled to <body>) is the top
+           layer: its own Escape closes the list and leaves the dialog open. A
+           sheet listens in the capture phase and would otherwise run first. */
+        const t = e.target as Element | null;
+        if (t?.closest?.('[data-select-panel], [role="combobox"][aria-expanded="true"]')) return;
         // Capture phase for a sheet, so Escape closes the top layer only.
         if (captureEscape) e.stopPropagation();
         closeRef.current();

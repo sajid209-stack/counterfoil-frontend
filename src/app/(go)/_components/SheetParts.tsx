@@ -1,16 +1,16 @@
 "use client";
 
 import { Fragment, useMemo, useState, type ReactNode } from "react";
-import { CalendarDays, Check } from "lucide-react";
+import { CalendarDays, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { DatePicker } from "@/components/ui";
+import { Avatar, DatePicker, Select, type SelectOption } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { GoCard, TICK, TILE_CHOSEN, TILE_IDLE, TILE_OFF, Tile, TileGrid, tileClass } from "./Tiles";
+import { GoCard, TILE_CHOSEN, TILE_IDLE, TILE_OFF, Tile, TileGrid, tileClass } from "./Tiles";
 
 /**
  * The booking sheets' shared pieces, composed from the till's card language
  * (Tiles.tsx): every choice its own rounded tile with an 8px gap, chosen =
- * orange with a tick, gone = the page colour with a line and struck text. They
+ * orange, gone = the page colour with a line and struck text. They
  * live here rather than in the kit because they are the till's drawing only —
  * the kit's DateStrip keeps its own look for the admin app.
  */
@@ -111,14 +111,21 @@ export function DateTiles({
             </Tile>
           );
         })}
+        {/* The calendar glyph sits IN the label line, before the words — the
+            way a button carries its icon. Pinned in the corner it read as the
+            chosen tick on the tiles beside it. While the calendar is open the
+            tile shows the pressed ground, so it reads as the control that
+            opened it. */}
         <button
           type="button"
           aria-expanded={pickerOpen}
           onClick={() => setPickerOpen((v) => !v)}
-          className={tileClass({ className: "min-h-16 rail:h-10 rail:min-h-10 rail:flex-row rail:gap-1.5 rail:px-3" })}
+          className={tileClass({ className: cn("min-h-16 rail:h-10 rail:min-h-10 rail:flex-row rail:px-3", pickerOpen && "bg-nav-selected rail:bg-nav-selected") })}
         >
-          <CalendarDays size={14} strokeWidth={2} aria-hidden className="absolute right-1.5 top-1.5 text-muted rail:static rail:size-4 rail:shrink-0 rail:text-fg" />
-          <span className="w-full break-words text-base font-semibold leading-tight rail:w-auto rail:whitespace-nowrap rail:font-medium">{labels.pick}</span>
+          <span className="flex w-full items-center justify-center gap-1.5 text-base font-semibold leading-tight rail:w-auto rail:whitespace-nowrap rail:font-medium">
+            <CalendarDays size={16} strokeWidth={2} aria-hidden className="shrink-0" />
+            <span className="min-w-0 break-words">{labels.pick}</span>
+          </span>
           <span className="mt-0.5 w-full break-words text-sm leading-tight text-muted rail:hidden">{tp("dateTiles.pickDay")}</span>
         </button>
       </TileGrid>
@@ -144,7 +151,7 @@ export function DateTiles({
 
 /**
  * One person or one option as a row-card: a picture or avatar, a bold name, a
- * quiet line, something on the right. Chosen = orange with a tick; unavailable
+ * quiet line, something on the right. Chosen = orange; unavailable
  * = the page colour with a line.
  */
 export function OptionRow({
@@ -176,14 +183,84 @@ export function OptionRow({
       onClick={onClick}
       className={rowTileClass({ selected, off, className: cn("items-center gap-comfortable", center && "justify-center text-center") })}
     >
-      {selected && <Check size={14} strokeWidth={2.5} aria-hidden className={cn(TICK, "right-2 top-2")} />}
       {lead}
       <span className={cn("min-w-0", !center && "flex-1")}>
         <span className="block break-words text-md font-semibold leading-snug rail:text-base rail:font-medium rail:leading-tight">{title}</span>
         {sub != null && <span className={cn("block break-words text-sm leading-snug rail:leading-tight", selected ? "text-on-solid" : "text-muted")}>{sub}</span>}
       </span>
-      {trail != null && <span className={cn("shrink-0 whitespace-nowrap text-sm", selected ? "text-on-solid" : "text-fg-secondary", selected ? "mr-5 rail:mr-0" : "")}>{trail}</span>}
+      {trail != null && <span className={cn("shrink-0 whitespace-nowrap text-sm", selected ? "text-on-solid" : "text-fg-secondary")}>{trail}</span>}
     </button>
+  );
+}
+
+export interface PersonChoice {
+  id: string;
+  name: string;
+  /** "next free 4:00 PM", "busy". */
+  sub?: string;
+  /** "+৳500.00 extra", "Normal price". */
+  trail?: string;
+  /** Busy at the chosen time: listed, but cannot be chosen. */
+  disabled?: boolean;
+}
+
+/** The "first free" option's mark: a soft round with people in it, so it sits
+ *  in the avatar column without pretending to be a person. */
+function AnyoneMark() {
+  return (
+    <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-subtle text-fg ring-1 ring-inset ring-line">
+      <Users size={18} strokeWidth={2} />
+    </span>
+  );
+}
+
+/**
+ * Who does it: staff, a provider, a guide. One row showing the current choice
+ * (avatar, name, when they are next free, what they add to the price) that
+ * opens a list.
+ *
+ * A dropdown rather than a row per person because the team grows: three rows
+ * are a list you read, eight push the start times — the next decision — off a
+ * phone screen. The row keeps the same three facts the stacked cards gave, the
+ * list carries them per person, and from five people the list grows a search
+ * field (the kit `Select`'s threshold). Busy people stay in the list, greyed,
+ * so "where is Nadia?" is answered rather than hidden.
+ *
+ * `any` adds the first option — "First free" — with the empty value.
+ */
+export function PersonSelect({
+  label,
+  value,
+  onChange,
+  people,
+  any,
+  placeholder,
+}: {
+  /** The heading above it, as the control's accessible name. */
+  label: string;
+  value: string | undefined;
+  onChange: (id: string | undefined) => void;
+  people: PersonChoice[];
+  any?: { label: string; trail?: string };
+  placeholder?: string;
+}) {
+  const tp = useTranslations("pos");
+  const options: SelectOption[] = [
+    ...(any ? [{ value: "", label: any.label, note: tp("personSelect.anySub"), trail: any.trail, lead: <AnyoneMark /> }] : []),
+    ...people.map((p) => ({ value: p.id, label: p.name, note: p.sub, trail: p.trail, disabled: p.disabled, lead: <Avatar name={p.name} /> })),
+  ];
+  return (
+    <Select
+      size="row"
+      aria-label={label}
+      value={value ?? ""}
+      onChange={(v) => onChange(v || undefined)}
+      options={options}
+      placeholder={placeholder}
+      searchPlaceholder={tp("personSelect.search")}
+      emptyLabel={tp("personSelect.empty")}
+      triggerClassName={cn("rounded-inner", TILE_IDLE)}
+    />
   );
 }
 

@@ -19839,3 +19839,20 @@ pattern booking systems share (pay in full / pay the deposit / another amount):
   typed figure (`payCustom`).
 - Verified: a 48-check browser walk (scratchpad `seq/paywalk.mjs`) at 1440 and 393, light and dark,
   plus tsc, eslint (PosScreen keeps its two existing effect errors), i18n parity and token lint.
+
+## POS sheets: no ticks, inline calendar icon, staff dropdown (2026-11-18)
+
+- **No corner tick on chosen tiles.** The fill (phone) or the ring (desktop) is the mark. The tick sat in
+  the same corner as the "More dates" calendar glyph and read as a second state. Removed from `Tile`,
+  `ActionTile`, `OptionRow` and `SessionList`, and the `TICK` constant is gone.
+- **More dates** carries its calendar icon inline, before the words, like a button's icon. While the
+  calendar is open, the tile shows the pressed ground.
+- **Staff, provider and guide pickers are one dropdown row** (`PersonSelect` in SheetParts), not one
+  card per person: a growing team pushed the start times off a phone. The row and each list entry
+  carry the avatar, the name, next free / busy, and the price extra. "First free" is the first
+  option, with a people mark. Busy people stay listed and greyed. From 5 people, the list has a
+  search field. This applies to the till sheet (staff and guide) and the Sell page (provider and guide).
+- **Kit `Select`** gains `size="row"` (56px, two lines, no box of its own) and option `lead`/`trail`.
+  A row list marks the chosen entry with the tint instead of a tick.
+- **Fix:** Escape in a `Select` open inside a sheet closed the whole sheet, because the sheet
+  captures Escape first. `useDialogBehaviour` now leaves Escape to an open dropdown.

@@ -3,10 +3,9 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { formatClock, formatMoney } from "@/lib/format";
-import { Check } from "lucide-react";
 import { sessionPressure } from "@/lib/schedule";
 import { rowTileClass } from "./SheetParts";
-import { TICK, TILE_CHOSEN } from "./Tiles";
+import { TILE_CHOSEN } from "./Tiles";
 
 export interface SessionRowData {
   time: string;
@@ -107,8 +106,7 @@ export function SessionList({
                 onSelect(s.time);
               }}
             >
-              {on && <Check size={14} strokeWidth={2.5} aria-hidden className={cn(TICK, "right-2 top-2")} />}
-              <span className="flex items-baseline gap-comfortable pr-5 rail:min-w-0 rail:flex-1 rail:pr-0">
+              <span className="flex items-baseline gap-comfortable rail:min-w-0 rail:flex-1">
                 <span className={cn("shrink-0 text-md font-semibold rail:text-base rail:font-medium", full && !on && "line-through")}>{formatClock(s.time)}</span>
                 {s.meta && <span className={cn("min-w-0 flex-1 truncate text-sm", on ? "text-on-solid" : "text-muted")}>{s.meta}</span>}
                 <span className={cn("ml-auto shrink-0 whitespace-nowrap text-sm font-semibold rail:font-medium", tone)}>

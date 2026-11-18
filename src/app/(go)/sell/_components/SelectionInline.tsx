@@ -23,7 +23,7 @@ import { useState } from "react";
 import { useApiQuery } from "@/lib/useApi";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
-import { Avatar, BlockedNotice, SkeletonText } from "@/components/ui";
+import { BlockedNotice, SkeletonText } from "@/components/ui";
 import { availableSeats, explainUnavailable, type Product, type Resource, type Staff } from "@/lib/api";
 import { applyResourceRate } from "@/lib/api";
 import { productDurationPrice } from "@/lib/duration";
@@ -51,7 +51,7 @@ import {
 import { SessionList } from "../../_components/SessionList";
 import { getResourceMatrix } from "@/lib/api";
 import { Stepper } from "../../_components/Stepper";
-import { DateTiles, OptionRow, TileText } from "../../_components/SheetParts";
+import { DateTiles, PersonSelect, TileText } from "../../_components/SheetParts";
 import { Tile, TileGrid, TileLabel } from "../../_components/Tiles";
 
 /** A question's heading. One shape for all of them, so the block reads as a
@@ -224,24 +224,15 @@ export function SelectionInline({
     if (ids.length === 0) return null;
     return (
       <Step label={t("step.guide")}>
-        <div className="flex flex-col gap-tight">
-          {ids.map((id) => {
-            const person = team.find((s) => s.id === id);
+        <PersonSelect
+          label={t("step.guide")}
+          value={draft.guideId}
+          onChange={(id) => id && set({ guideId: id })}
+          people={ids.map((id) => {
             const free = row?.freeGuideIds.includes(id) ?? false;
-            return (
-              <OptionRow
-                key={id}
-                selected={draft.guideId === id}
-                off={!free}
-                disabled={!free}
-                onClick={() => set({ guideId: id })}
-                lead={<Avatar name={person?.name ?? id} />}
-                title={person?.name ?? id}
-                sub={t(free ? "guide.available" : "guide.busy")}
-              />
-            );
+            return { id, name: team.find((s) => s.id === id)?.name ?? id, sub: t(free ? "guide.available" : "guide.busy"), disabled: !free };
           })}
-        </div>
+        />
       </Step>
     );
   })();
@@ -539,27 +530,22 @@ export function SelectionInline({
 
         {draft.slotTime && people.length > 0 && (
           <Step label={t("step.provider")}>
-            <div className="flex flex-col gap-tight">
-              {people.map((pid) => {
-                const who = team.find((x) => x.id === pid);
+            <PersonSelect
+              label={t("step.provider")}
+              value={draft.providerId ?? freeNow[0]}
+              onChange={(id) => id && set({ providerId: id })}
+              people={people.map((pid) => {
                 const free = freeNow.includes(pid);
                 const premium = product.providerPremiums?.[pid] ?? 0;
-                const assigned = (draft.providerId ?? freeNow[0]) === pid;
-                return (
-                  <OptionRow
-                    key={pid}
-                    selected={assigned}
-                    off={!free}
-                    disabled={!free}
-                    onClick={() => set({ providerId: pid })}
-                    lead={<Avatar name={who?.name ?? pid} size={36} />}
-                    title={who?.name ?? pid}
-                    sub={t(free ? "guide.available" : "guide.busy")}
-                    trail={premium > 0 ? t("provider.premium", { amount: formatMoney(premium, currency) }) : t("provider.standard")}
-                  />
-                );
+                return {
+                  id: pid,
+                  name: team.find((x) => x.id === pid)?.name ?? pid,
+                  sub: t(free ? "guide.available" : "guide.busy"),
+                  trail: premium > 0 ? t("provider.premium", { amount: formatMoney(premium, currency) }) : t("provider.standard"),
+                  disabled: !free,
+                };
               })}
-            </div>
+            />
           </Step>
         )}
       </>

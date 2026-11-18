@@ -1,7 +1,6 @@
 "use client";
 
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { Check } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 /**
@@ -14,7 +13,7 @@ import { cn } from "@/lib/cn";
  *   · A choice (a date, a time, a length, a way to pay, a staff member, a
  *     More destination) is its own rounded tile (`Tile`, `ActionTile`) with
  *     an 8px gap around it. Tiles sit on the page or on the sheet's ground.
- *   · Chosen = a solid orange fill with white text and a small tick, the one
+ *   · Chosen = a solid orange fill with white text, the one
  *     meaning orange has as a fill in the till. Not available = the page's own
  *     colour, a line, no shadow and muted text — a place, not a greyed button.
  *   · Headings are 16px semibold, sentence case; no coloured eyebrows above
@@ -79,14 +78,14 @@ export const TILE_IDLE = "bg-card text-fg shadow-card hover:bg-nav-hover active:
  * many solid orange blocks compete with the one orange action on the screen
  * (Add, Take, Complete sale), so a choice there is marked the way Square,
  * Shopify and Toast mark it on a desktop. Text inside the tile that says
- * `text-on-solid` follows it to the brand colour on a desktop, and the tick
- * hides there (the ring is the mark). See docs/pos-desktop.md §8.
+ * `text-on-solid` follows it to the brand colour on a desktop. No tick on
+ * either: the fill (or the ring) is the mark, and a corner tick competed with
+ * the tile's own corner glyphs and read as a second state. See
+ * docs/pos-desktop.md §8.
  */
 export const TILE_CHOSEN =
   "bg-ember-solid text-on-solid shadow-none hover:bg-ember-hover active:bg-ember-active rail:bg-ember-wash rail:text-brand-foreground rail:ring-2 rail:ring-inset rail:ring-ember rail:hover:bg-ember-wash rail:active:bg-ember-wash rail:[&_.text-on-solid]:text-brand-foreground";
 export const TILE_OFF = "bg-transparent text-muted shadow-none ring-1 ring-inset ring-line";
-/** The chosen tick: on a phone only (see TILE_CHOSEN). */
-export const TICK = "absolute right-1.5 top-1.5 rail:hidden";
 /** A desktop control's height: 40px, where a phone's tile is 44 and up. */
 export const RAIL_H = "rail:min-h-10";
 
@@ -100,7 +99,7 @@ export function tileClass({ selected, off, className }: { selected?: boolean; of
 }
 
 /**
- * One choice. `selected` draws the orange fill and the tick; `off` draws a
+ * One choice. `selected` draws the orange fill; `off` draws a
  * place that cannot be chosen (pass `struck` to strike the label too). The
  * caller decides the ARIA: pass `aria-pressed`, or `role="radio"` with
  * `aria-checked`, as the group needs. By default it is a toggle button.
@@ -126,7 +125,6 @@ export function Tile({
   const ariaDefault = rest.role ? {} : { "aria-pressed": selected };
   return (
     <button type="button" {...ariaDefault} {...rest} className={tileClass({ selected, off, className })}>
-      {selected && <Check size={14} strokeWidth={2.5} aria-hidden className={TICK} />}
       {children ?? (
         <>
           {label != null && <span className={cn("text-base font-semibold leading-tight", struck && "line-through")}>{label}</span>}
@@ -161,7 +159,6 @@ export function ActionTile({
       {...rest}
       className={cn(TILE_BASE, withHeight("min-h-[5.5rem]", className), "gap-tight", selected ? TILE_CHOSEN : TILE_IDLE, className)}
     >
-      {selected && <Check size={14} strokeWidth={2.5} aria-hidden className={TICK} />}
       <span
         aria-hidden
         className={cn(

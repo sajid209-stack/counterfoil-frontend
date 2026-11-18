@@ -13,6 +13,10 @@ export interface SelectOption {
   disabled?: boolean;
   /** Options carrying the same group are drawn under one heading. */
   group?: string;
+  /** Drawn before the label — a person's avatar in a staff picker. */
+  lead?: React.ReactNode;
+  /** A short fact on the right of the row: a price, "+৳500 extra". */
+  trail?: string;
 }
 
 /**
@@ -86,11 +90,13 @@ export function Select({
   /**
    * The trigger's height, and the ONLY place it is set: `sm` is a dense
    * toolbar control (44px on touch, 36 from md), `md` the form control (44px),
-   * `lg` the till's 48px touch floor.
+   * `lg` the till's 48px touch floor. `row` is a 56px two-line row — lead,
+   * label over note, trail — that draws no box of its own: the caller's
+   * `triggerClassName` supplies the ground (the till's tile, a card row).
    * Never layer a height through `triggerClassName` — `cn` does not merge
    * conflicting utilities, so `h-11 h-12` is decided by stylesheet order.
    */
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "row";
   /**
    * `bare` draws no box of its own and sizes to what it says — for a control
    * that lives INSIDE a chip or a row that already has a border. A native
@@ -139,6 +145,7 @@ export function Select({
   }, [options, query]);
 
   const selected = options.find((o) => o.value === value);
+  const row = size === "row" && !bare;
 
   /*
    * Opening lands the highlight on what is already chosen, so Enter is a no-op
@@ -320,6 +327,8 @@ export function Select({
             ? "relative h-9 max-w-[14rem] gap-inline rounded-control bg-subtle pl-comfortable pr-tight text-sm font-medium text-fg before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] hover:bg-muted-wash"
             : bare
             ? "max-w-[14rem] gap-tight bg-transparent pl-inline pr-0 text-sm font-medium"
+            : row
+            ? "min-h-14 w-full gap-comfortable px-comfortable py-tight text-base disabled:cursor-not-allowed"
             : /* The chevron sits in a reserved gutter rather than floating at
                  the end of the text: every trigger's arrow then lines up down a
                  column of controls, whatever each one says. */
@@ -333,16 +342,29 @@ export function Select({
               The touch floor still applies on a phone, where the control is
               the whole target; from `sm` it collapses to its own text, which
               is what the native control it replaced did. */
-          bare && pill ? "" : bare ? "min-h-11 sm:min-h-0" : size === "sm" ? "h-11 md:h-9" : size === "lg" ? "h-12" : "h-11",
+          bare && pill ? "" : bare ? "min-h-11 sm:min-h-0" : row ? "" : size === "sm" ? "h-11 md:h-9" : size === "lg" ? "h-12" : "h-11",
           triggerClassName,
         )}
       >
         {/* A glyph in front of the value, where the control has no label
             beside it — the venue switcher in the bar names itself that way. */}
         {icon && <span className="shrink-0 text-muted">{icon}</span>}
-        <span className={cn("min-w-0 truncate", !bare && "flex-1", !selected && "text-muted")}>
-          {selected ? selected.label : (placeholder ?? "")}
-        </span>
+        {row ? (
+          <>
+            {selected?.lead}
+            <span className="min-w-0 flex-1">
+              <span className={cn("block truncate text-md font-semibold leading-snug rail:text-base rail:font-medium", !selected && "text-muted")}>
+                {selected ? selected.label : (placeholder ?? "")}
+              </span>
+              {selected?.note && <span className="block truncate text-sm leading-snug text-muted">{selected.note}</span>}
+            </span>
+            {selected?.trail && <span className="shrink-0 whitespace-nowrap text-sm text-fg-secondary">{selected.trail}</span>}
+          </>
+        ) : (
+          <span className={cn("min-w-0 truncate", !bare && "flex-1", !selected && "text-muted")}>
+            {selected ? selected.label : (placeholder ?? "")}
+          </span>
+        )}
         <ChevronDown
           size={bare ? 14 : 16}
           strokeWidth={1.5}
@@ -427,17 +449,21 @@ export function Select({
                       onMouseEnter={() => !o.disabled && setActive(i)}
                       onClick={() => choose(o)}
                       className={cn(
-                        "flex min-h-11 cursor-pointer items-center gap-tight px-comfortable text-base sm:min-h-9",
+                        "flex cursor-pointer items-center px-comfortable text-base",
+                        row ? "min-h-14 gap-comfortable py-inline" : "min-h-11 gap-tight sm:min-h-9",
                         o.disabled && "cursor-not-allowed text-faint",
-                        !o.disabled && i === active && "bg-muted-wash",
+                        /* A row list marks the chosen one with the tint, not a tick. */
+                        row && on ? "bg-ember-wash" : !o.disabled && i === active && "bg-muted-wash",
                         on && "font-medium",
                       )}
                     >
+                      {o.lead && <span className={cn("shrink-0", o.disabled && "opacity-50")}>{o.lead}</span>}
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate">{o.label}</span>
-                        {o.note && <span className="block truncate text-xs text-muted">{o.note}</span>}
+                        <span className={cn("block truncate", row && "font-semibold rail:font-medium", row && on && "text-brand-foreground")}>{o.label}</span>
+                        {o.note && <span className={cn("block truncate text-muted", row ? "text-sm" : "text-xs")}>{o.note}</span>}
                       </span>
-                      {on && <Check size={15} strokeWidth={2} aria-hidden className="shrink-0 text-brand-foreground" />}
+                      {o.trail && <span className="shrink-0 whitespace-nowrap text-sm text-fg-secondary">{o.trail}</span>}
+                      {on && !row && <Check size={15} strokeWidth={2} aria-hidden className="shrink-0 text-brand-foreground" />}
                     </div>
                   );
                 })}

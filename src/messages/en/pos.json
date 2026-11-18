@@ -700,5 +700,10 @@
   },
   "dateTiles": {
     "pickDay": "Pick a day"
+  },
+  "personSelect": {
+    "anySub": "Whoever is free at the time",
+    "search": "Find a name",
+    "empty": "No one by that name"
   }
 }
