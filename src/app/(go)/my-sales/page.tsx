@@ -52,7 +52,7 @@ const PHONE = "mx-auto w-full max-w-216 pt-tight pb-28 lg:pb-section rail:max-w-
    does. */
 const COLS = "rail:grid-cols-[148px_minmax(0,1fr)_96px_120px_112px_44px]";
 const COLS_RANGE = COLS;
-const ROW_BASE = "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-comfortable gap-y-inline px-comfortable py-comfortable rail:gap-y-0 rail:px-card rail:py-tight rail:min-h-14";
+const ROW_BASE = "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-comfortable gap-y-inline px-comfortable py-comfortable rail:gap-0 rail:px-card rail:py-tight rail:min-h-14";
 
 /** "2× Adult, Child" — short enough for one line. */
 const itemsShort = (o: Order) =>

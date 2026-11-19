@@ -139,13 +139,16 @@ function primaryOn(accent: string, mode: Mode, g: Ground) {
     onFill = contrast(fill, WHITE) >= 4.5 ? WHITE : INK;
   }
   const toward = mode === "light" ? INK : WHITE;
+  /* The soft tint is a ground too: a selected date chip and the "Most
+     popular" badge set the ink on it. Measured against bg and card only, the
+     ink reached 4.26:1 on the tint. */
+  const soft = mix(accent, g.card, mode === "light" ? 0.09 : 0.18);
   let ink = accent;
   for (let i = 0; i <= 20; i++) {
     const c = mix(toward, accent, i / 20);
     ink = c;
-    if (contrast(c, g.bg) >= 4.5 && contrast(c, g.card) >= 4.5 && contrast(c, g.panel) >= 4.5) break;
+    if (contrast(c, g.bg) >= 4.5 && contrast(c, g.card) >= 4.5 && contrast(c, g.panel) >= 4.5 && contrast(c, soft) >= 4.5) break;
   }
-  const soft = mix(accent, g.card, mode === "light" ? 0.09 : 0.18);
   return { fill, onFill, ink, soft };
 }
 

@@ -20,6 +20,7 @@
   "emptyTitle": "No customers yet",
   "emptyMessage": "Attach a customer to a sale at the counter and they appear here.",
   "emptyFiltered": "Nothing matches. Try another search, or show everyone.",
+  "emptyFilteredTitle": "No customers found",
   "cancel": "Cancel",
   "addTitle": "Add a customer",
   "addDescription": "A phone number is what matches them next time they walk up.",

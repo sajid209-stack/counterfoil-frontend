@@ -19924,3 +19924,12 @@ are 28px. The same history takes about half the height. The rules are in docs/ca
 - Second density pass (same day): the At a glance rail is now a full-width summary bar over the
   timeline (Created · Last change · Changes · Status). The timeline runs full width, so nothing is
   left empty beside or under a side rail.
+
+## Full UI audit: OS, POS, storefront, auth (2026-11-19)
+
+A pixel-level audit of every surface on desktop and phone, light and dark: a 372-load measured
+sweep, three surface reviewers, and a re-sweep on a production build. Phone touch targets went from
+142 to 0, contrast outside the brand-orange decision from 17 to 2 artefacts, and no page errors.
+About 30 fixes in the kit (Sheet and Modal header alignment, DataTable numeric headers,
+FilterSearch, PhoneRow meta, PageToolbar phone actions, tap areas) and per surface. The owner kept
+white on #F94A00 (3.5:1). The full list is in docs/ui-audit-2026-11.md.

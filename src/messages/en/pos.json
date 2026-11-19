@@ -384,7 +384,7 @@
     "holdPlaced": "Holding {count, plural, one {# place} other {# places}} for {heldFor}.",
     "counterActor": "Counter",
     "rowHeld": "Held · {name}",
-    "stockLeft": "{unit, select, each {{count} left} other {{count} {unit} left}}",
+    "stockLeft": "{unit, select, each {{count} left} bottle {{count, plural, one {# bottle} other {# bottles}} left} pair {{count, plural, one {# pair} other {# pairs}} left} set {{count, plural, one {# set} other {# sets}} left} box {{count, plural, one {# box} other {# boxes}} left} other {{count} {unit} left}}",
     "stockOut": "None left",
     "stockRefused": "{name} was paid for, but this venue has none in stock. Tell a manager.",
     "buyNowShort": "Buy now",

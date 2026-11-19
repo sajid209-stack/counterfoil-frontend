@@ -139,7 +139,7 @@ export function SettingsChrome({ open, onClose }: { open: boolean; onClose: () =
             {me ? (
               <>
                 <span className={cn("block truncate text-sm leading-tight", profileCurrent ? "font-semibold text-brand-foreground" : "font-medium text-fg")}>{me.name}</span>
-                <span className="mt-0.5 block truncate text-xs leading-tight text-muted">{role ?? me.email ?? ""}</span>
+                <span className={cn("mt-0.5 block truncate text-xs leading-tight", profileCurrent ? "text-fg-secondary" : "text-muted")}>{role ?? me.email ?? ""}</span>
               </>
             ) : (
               <>

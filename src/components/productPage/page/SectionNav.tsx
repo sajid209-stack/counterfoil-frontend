@@ -132,7 +132,7 @@ export function SectionNav({ sentinelRef }: { sentinelRef: RefObject<HTMLDivElem
                     type="button"
                     onClick={() => go(a.id)}
                     aria-current={on ? "location" : undefined}
-                    className="relative inline-flex min-h-11 items-center rounded-[10px] px-3 text-[14px] font-medium transition-colors"
+                    className="relative inline-flex min-h-11 items-center rounded-[var(--ps-radius-control,12px)] px-3 text-[14px] font-medium transition-colors"
                     style={{ color: on ? "var(--pg-ink)" : "var(--pg-muted)" }}
                   >
                     {a.label}

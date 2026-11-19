@@ -32,8 +32,12 @@ export function FilterSearch({
   className?: string;
 }) {
   const pill = useContext(PillContext);
+  const tc = useTranslations("common");
+  const filled = value.length > 0;
   return (
-    <div className={cn("relative min-w-0", className)}>
+    /* On a phone the field takes the row (anything beside it wraps under);
+       from md it keeps its own 256px. */
+    <div className={cn("relative min-w-0 max-md:flex-1 max-md:basis-48", className)}>
       <Search size={16} strokeWidth={1.5} aria-hidden className={cn("pointer-events-none absolute top-1/2 -translate-y-1/2 text-muted", pill ? "left-section" : "left-comfortable")} />
       <input
         type="search"
@@ -42,12 +46,27 @@ export function FilterSearch({
         placeholder={placeholder}
         aria-label={ariaLabel ?? placeholder}
         className={cn(
-          "h-11 w-full min-w-0 transition-colors duration-quick placeholder:text-muted md:h-9 md:w-64",
+          /* The browser's own clear (×) is hidden: Chrome draws it in its own
+             navy, outside the theme. The themed one below replaces it. */
+          "h-11 w-full min-w-0 text-ellipsis transition-colors duration-quick placeholder:text-muted placeholder:text-ellipsis md:h-9 md:w-64 [&::-webkit-search-cancel-button]:appearance-none",
           pill
-            ? "rounded-card border border-line bg-card pl-11 pr-12 text-md focus:border-ember"
-            : "rounded-control border border-line bg-card pl-8 pr-comfortable text-base hover:border-strong focus:border-ember",
+            ? cn("rounded-card border border-line bg-card pl-11 text-md focus:border-ember", filled ? "pr-20" : "pr-12")
+            : cn("rounded-control border border-line bg-card pl-8 text-base hover:border-strong focus:border-ember", filled ? "pr-10" : "pr-comfortable"),
         )}
       />
+      {filled && (
+        <button
+          type="button"
+          aria-label={tc("clear")}
+          onClick={() => onChange("")}
+          className={cn(
+            "absolute top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:h-7 md:w-7",
+            pill ? "right-11" : "right-1",
+          )}
+        >
+          <X size={14} strokeWidth={2} aria-hidden />
+        </button>
+      )}
     </div>
   );
 }

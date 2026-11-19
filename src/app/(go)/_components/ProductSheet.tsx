@@ -1017,7 +1017,7 @@ export function ProductSheet({
           const chosenLaneFree = slotTime ? startState(slotTime, duration, resourceId).ok : false;
 
           return (
-            <div className="mb-section flex flex-col gap-tight rail:mb-0 rail:flex-1">
+            <div className="mb-section flex flex-col gap-tight rail:mb-section rail:flex-1">
 
               {/* Duration is a stepper, not a wall of chips.
                   Nine buttons each carrying their own price was nine prices to
@@ -1111,7 +1111,7 @@ export function ProductSheet({
 
               {flexTimes.length > 0 && <TileLabel className="rail:mt-3 rail:text-base">{t("sheet.startTime")}</TileLabel>}
               {flexTimes.length > 0 && (
-                <div className="grid grid-cols-4 gap-tight sm:grid-cols-6 rail:grid-cols-6">
+                <div className="grid grid-cols-4 gap-tight sm:grid-cols-6 rail:grid-cols-5">
                   {flexTimes.filter((tt) => showEarlier || !(date === TODAY && toMinutes(tt) < DEMO_NOW_MINUTES) || tt === slotTime).map((tt) => {
                     const st = startState(tt, duration, resourceId);
                     if (!st.ok) {
@@ -1219,7 +1219,7 @@ export function ProductSheet({
 
         {/* Provider cards + appointment times (conflict-aware per provider) */}
         {provider && (
-          <div className="mb-section flex flex-col gap-tight rail:mb-0 rail:flex-1">
+          <div className="mb-section flex flex-col gap-tight rail:mb-section rail:flex-1">
             {/* One dropdown row, not a card per person: a team grows, and a
                 stack of cards pushes the start times off a phone. The row and
                 each list entry still carry the name, when they are next free
@@ -1561,6 +1561,7 @@ export function ProductSheet({
                 activeTiers.reduce((a, x) => a + (qty[x.id] ?? 0) * x.price, 0) +
                 addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0);
               return (
+                <div className="mt-section rail:mt-5">
                 <RepeatPicker
                   count={repeatCount}
                   onCount={setRepeatCount}
@@ -1569,6 +1570,7 @@ export function ProductSheet({
                   unitPrice={unit}
                   currency={currency}
                 />
+                </div>
               );
             })()}
             {renderAddOns()}

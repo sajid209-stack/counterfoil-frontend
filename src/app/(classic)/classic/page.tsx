@@ -724,14 +724,14 @@ export default function PosPage() {
     noneLeftToday: t("live.noneLeftToday"),
     busyNow: t("live.busyNow"),
     leftOfTotal: (left: number, total: number) => t("live.leftOfTotal", { left, total }),
-    nextAt: (time: string, left: number) => t("live.nextAt", { time: formatClock(time), left }),
+    nextAt: (time: string, left: number) => t("live.nextAt", { time, left }),
     freeOfTotal: (free: number, total: number) => t("live.freeOfTotal", { free, total }),
-    startsOn: (d: string) => t("live.startsOn", { date: d }),
+    startsOn: (d: string) => t("live.startsOn", { date: formatDay(d) }),
     // The DESIGN here is restored from before the 6 September redesign; the
     // LOGIC layer is current, and posLiveState has gained a phrasing since.
     // Classic follows the logic — it is a visual variant, not a fork of the
     // engine.
-    nextDay: (d: string, time: string) => t("live.nextDay", { day: formatDay(d, { weekday: true }), time: formatClock(time) }),
+    nextDay: (d: string, time: string) => t("live.nextDay", { day: formatDay(d, { weekday: true }), time }),
     providersFree: (free: number, total: number) => t("live.providersFree", { free, total }),
   }), [t]);
   const methodLabel = enumL.method(method);
@@ -1128,7 +1128,7 @@ export default function PosPage() {
                   style={{ width: `calc(${pct}% - 8px)`, left: `calc(${idx * pct}% + 4px)` }}
                 />
                 {availableMethods.map((m) => (
-                  <button key={m.value} type="button" aria-pressed={method === m.value} onClick={() => setMethod(m.value)} className={`relative z-10 text-sm transition-colors duration-quick ${method === m.value ? "font-medium text-on-solid" : "text-muted"}`}>{enumL.method(m.value)}</button>
+                  <button key={m.value} type="button" aria-pressed={method === m.value} onClick={() => setMethod(m.value)} className={`relative z-10 text-sm transition-colors duration-quick ${method === m.value ? "font-medium text-on-solid" : "text-fg-secondary"}`}>{enumL.method(m.value)}</button>
                 ))}
               </div>
             );

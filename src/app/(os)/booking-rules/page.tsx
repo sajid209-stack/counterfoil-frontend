@@ -12,6 +12,7 @@ import {
   type Column,
 } from "@/components/ui";
 import { PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
+import { MetaParts, PhoneRow } from "@/components/ui/PhoneRow";
 import { useApiQuery } from "@/lib/useApi";
 import { listBookingRules, listLocations, listProducts, type BookingRule } from "@/lib/api";
 
@@ -56,6 +57,16 @@ export default function BookingRulesPage() {
         getRowId={(r) => r.id}
         loading={loading}
         onRowClick={(r) => router.push(`/booking-rules/${r.id}`)}
+        cardVariant="list"
+        /* The generic phone row cut this line off mid-word (five parts and a pill). Two parts and the status under it fit; capacity and days are on the rule itself. */
+        renderCard={(r) => (
+          <PhoneRow
+            title={r.name}
+            meta={<MetaParts parts={[productName(r.productId), locationName(r.locationId)]} />}
+            trailing={t("slotMinutes", { minutes: r.slotMinutes })}
+            pill={<StatusPill status={r.status} />}
+          />
+        )}
         sort={sort}
         onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
         toolbar={

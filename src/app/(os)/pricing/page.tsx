@@ -12,6 +12,7 @@ import {
   type Column,
 } from "@/components/ui";
 import { PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
+import { MetaParts, PhoneRow } from "@/components/ui/PhoneRow";
 import { useApiQuery } from "@/lib/useApi";
 import { listLocations, listPriceRules, listProducts, type PriceRule } from "@/lib/api";
 
@@ -70,6 +71,16 @@ export default function PricingPage() {
         getRowId={(r) => r.id}
         loading={loading}
         onRowClick={(r) => router.push(`/pricing/${r.id}`)}
+        cardVariant="list"
+        /* The generic phone row cut this line off mid-word (four parts and a pill). Where it applies and the channel fit; the status sits under them. */
+        renderCard={(r) => (
+          <PhoneRow
+            title={r.name}
+            meta={<MetaParts parts={[scope(r), t(r.channel === "counter" ? "channelCounter" : r.channel === "online" ? "channelOnline" : "channelAll")]} />}
+            trailing={<span className={r.adjustmentPct > 0 ? "text-danger" : r.adjustmentPct < 0 ? "text-success" : "text-muted"}>{r.adjustmentPct > 0 ? "+" : ""}{r.adjustmentPct}%</span>}
+            pill={<StatusPill status={r.status} />}
+          />
+        )}
         sort={sort}
         onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
         toolbar={

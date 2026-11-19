@@ -133,7 +133,7 @@ export function Sheet({
           >
             <X size={18} strokeWidth={1.5} aria-hidden />
           </button>
-          <div className="min-w-0 flex-1 max-md:in-data-[os-shell]:col-start-1 max-md:in-data-[os-shell]:row-start-1">
+          <div className="min-w-0 flex-1 self-center max-md:in-data-[os-shell]:col-start-1 max-md:in-data-[os-shell]:row-start-1">
             {lead}
             {/* Wraps to a second line rather than cutting: a sheet's title is often
                 the name that tells two things apart ("…Walking Tour of Old

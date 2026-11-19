@@ -79,7 +79,7 @@ export function AccountMenu({
           aria-expanded={open}
           aria-label={person.label}
           data-bar-profile
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-inverse text-sm font-semibold text-inverse-fg transition-opacity duration-quick active:opacity-80"
+          className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-inverse before:absolute before:-inset-0.5 before:rounded-full before:content-[''] text-sm font-semibold text-inverse-fg transition-opacity duration-quick active:opacity-80"
         >
           {person.initials}
         </button>

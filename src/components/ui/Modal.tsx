@@ -183,12 +183,13 @@ export function Modal({
           type="button"
           onClick={onClose}
           aria-label={closeLabel ?? t("ui.close")}
-          className="absolute right-section top-section flex h-11 w-11 items-center justify-center rounded-control text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg"
+          className="absolute right-tight top-tight flex h-11 w-11 items-center justify-center rounded-control text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg"
         >
           <X size={18} strokeWidth={1.5} aria-hidden />
         </button>
-        {/* pr-11: the close button is 44px wide, 16 from the edge, so a long
-            title has to stop 60px in or it runs under the close button. */}
+        {/* The close button sits 8px in from the corner, so its centre lines
+            up with the title's first line (it used to hang 16px lower, between
+            the title and the description). pr-11 keeps a long title clear of it. */}
         {title && (
           <h2 id={titleId} className="type-h2 pr-11 text-lg">
             {title}

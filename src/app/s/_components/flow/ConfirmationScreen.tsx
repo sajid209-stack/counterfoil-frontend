@@ -86,7 +86,7 @@ export function ConfirmationScreen({ order, tickets, isPreview }: { order: Order
         </ul>
       )}
 
-      <div className="mx-auto grid max-w-[720px] grid-cols-1 gap-section sm:grid-cols-2">
+      <div className={cn("mx-auto grid grid-cols-1 gap-section", cards.length > 1 ? "max-w-[720px] sm:grid-cols-2" : "max-w-[352px]")}>
         {cards.map((c) => (
           <TicketCard key={c.id} data={c.data} />
         ))}
@@ -99,12 +99,12 @@ export function ConfirmationScreen({ order, tickets, isPreview }: { order: Order
           // hard navigation) opens a fresh, empty one that cannot find the
           // order just created, exactly the pattern `(go)/pos/complete`
           // already follows for its own print buttons.
-          <button type="button" onClick={() => router.push(`/print/order/${order.id}`)} className={sfBtn.secondary}>
+          <button type="button" onClick={() => router.push(`/print/order/${order.id}`)} className={`${sfBtn.secondary} w-full sm:w-auto`}>
             <Download size={18} strokeWidth={1.75} aria-hidden />
             {t("confirm.downloadPrint")}
           </button>
         )}
-        <button type="button" className={sfBtn.primary} onClick={flow.goVenue}>
+        <button type="button" className={`${sfBtn.primary} w-full sm:w-auto`} onClick={flow.goVenue}>
           {t("confirm.bookSomethingElse")}
         </button>
       </div>

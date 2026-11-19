@@ -195,6 +195,9 @@ export function PageToolbar({
        rather than the box running over them. */
     <div className={cn("flex", underline ? "items-stretch" : "flex-wrap items-start gap-tight", className)}>
       <div className={cn("min-w-0 flex-1", !underline && "basis-0 md:basis-[22rem]")}>{children}</div>
+      {/* A phone: the page's create button and "⋯" end this row, as they do on
+          every FilterBar list, instead of a row of their own above it. */}
+      {!underline && <PhoneActionsSlot />}
       {hasEnd && (
         <div className={cn("flex shrink-0 items-center gap-tight", underline ? "border-b border-line pb-px pl-section" : "ml-auto")}>
           {actions}

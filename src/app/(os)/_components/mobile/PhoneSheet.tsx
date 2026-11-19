@@ -170,7 +170,7 @@ export function PhoneSheetHead({
           type="button"
           onClick={onClose}
           aria-label={closeLabel}
-          className="order-last grid h-10 w-10 shrink-0 place-items-center rounded-card bg-subtle text-fg transition-colors duration-quick active:bg-muted-wash"
+          className="relative order-last grid h-10 w-10 shrink-0 before:absolute before:-inset-0.5 before:content-[''] place-items-center rounded-card bg-subtle text-fg transition-colors duration-quick active:bg-muted-wash"
         >
           <X size={18} strokeWidth={1.75} aria-hidden />
         </button>

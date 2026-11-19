@@ -245,7 +245,7 @@ export function SequencesTab({ rows, loading, primary }: { rows: SequenceRow[]; 
                 <MetaParts
                   parts={[
                     stateOf(r) === "unfinished" ? <span key="p" className="text-warning">{problemOf(r)}</span> : null,
-                    r.problems > 0 ? needLookLink(r, "text-danger underline underline-offset-4") : null,
+                    r.problems > 0 ? needLookLink(r, "relative text-danger underline underline-offset-4 before:absolute before:-inset-y-3 before:inset-x-0") : null,
                   ]}
                 />
               ) : undefined

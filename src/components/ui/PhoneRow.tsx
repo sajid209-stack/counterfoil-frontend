@@ -68,9 +68,13 @@ export function MetaParts({ parts }: { parts: React.ReactNode[] }) {
   return (
     <>
       {shown.map((p, i) => (
-        <span key={i} className={cn("flex items-center", i === shown.length - 1 ? "min-w-0 truncate" : "shrink-0")}>
+        /* Every part may shrink and end in an ellipsis. Only the last one did,
+           so a long earlier part ("Everywhere · Busy times") pushed the rest
+           out and was cut mid-word by the row's clip. The last part grows
+           first and shrinks first. */
+        <span key={i} className={cn("flex min-w-0 items-center", i === shown.length - 1 ? "shrink-[2]" : "shrink")}>
           {i > 0 && <span aria-hidden className="mx-tight h-3 w-px shrink-0 bg-line" />}
-          <span className={cn(i === shown.length - 1 && "min-w-0 truncate")}>{p}</span>
+          <span className="min-w-0 truncate">{p}</span>
         </span>
       ))}
     </>

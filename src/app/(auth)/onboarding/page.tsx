@@ -1,11 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, FormField } from "@/components/ui";
+import { Button, Select } from "@/components/ui";
+
+/* A select under the auth label: same fg 14/500 label as AuthField, same 40px (44 on touch) control. */
+function AuthSelect({ label, value, onChange, items }: { label: string; value: string; onChange: (v: string) => void; items: string[] }) {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-sm font-medium text-fg">{label}</label>
+      <Select id={id} value={value} onChange={onChange} options={items.map((c) => ({ value: c, label: c }))} triggerClassName="h-10 max-sm:h-11 [@media(pointer:coarse)]:h-11" />
+    </div>
+  );
+}
 import { getOperatorState, isFreshAccount, markFreshAccount, updateOperator } from "@/lib/api";
-import { authButtonClass } from "../_components/AuthHeading";
+import { AuthHeading, authButtonClass } from "../_components/AuthHeading";
+import { AuthField } from "../_components/AuthField";
 
 const COUNTRIES = ["Bangladesh", "Malaysia", "United States", "Canada"];
 const CURRENCIES = ["BDT", "MYR", "USD", "CAD"];
@@ -36,22 +48,20 @@ export default function OnboardingPage() {
 
   return (
     <div className="w-full">
-      <p className="text-sm font-medium text-brand-foreground">{t("eyebrow")}</p>
-      <h1 className="mt-inline text-2xl font-semibold tracking-title">{t("title")}</h1>
-      <p className="mt-tight text-sm text-muted">{t("lead")}</p>
+      <AuthHeading eyebrow={<p className="text-sm font-medium text-brand-foreground">{t("eyebrow")}</p>} title={t("title")} lead={t("lead")} />
 
       <div className="mt-major flex flex-col gap-section">
-        <FormField
+        <AuthField
           label={t("name")}
           placeholder={t("namePlaceholder")}
           value={name}
           onChange={(e) => { setName(e.target.value); setError(""); }}
           error={error}
         />
-        <FormField label={t("country")} variant="select" value={country} onChange={(e) => setCountry(e.target.value)} options={COUNTRIES.map((c) => ({ value: c, label: c }))} />
+        <AuthSelect label={t("country")} value={country} onChange={setCountry} items={COUNTRIES} />
         <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
-          <FormField label={t("currency")} variant="select" value={currency} onChange={(e) => setCurrency(e.target.value)} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />
-          <FormField label={t("timezone")} variant="select" value={timezone} onChange={(e) => setTimezone(e.target.value)} options={TIMEZONES.map((z) => ({ value: z, label: z }))} />
+          <AuthSelect label={t("currency")} value={currency} onChange={setCurrency} items={CURRENCIES} />
+          <AuthSelect label={t("timezone")} value={timezone} onChange={setTimezone} items={TIMEZONES} />
         </div>
       </div>
 

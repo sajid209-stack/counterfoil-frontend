@@ -365,7 +365,7 @@ export function Sidebar({
           href={d.href}
           data-nav={d.key}
           aria-label={narrow ? (waiting ? `${label}, ${waiting}` : label) : undefined}
-          aria-current={exact ? "page" : undefined}
+          aria-current={exact && opts.selected ? "page" : undefined}
           className={parentRowClass(narrow, opts.selected, !!opts.parentOf)}
         >
           <Icon size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0", opts.selected && NAV_SELECTED_ICON)} />
@@ -385,7 +385,8 @@ export function Sidebar({
 
   const mainItem = (d: NavDestination) => {
     const kids = d.children ?? [];
-    const exact = isAt(d, pathname);
+    /* A matching child (Plans, under Memberships) takes the selected look alone: the parent matches by prefix too, and two filled rows broke the one-selected rule. */
+    const exact = isAt(d, pathname) && !kids.some((c) => isAt(c, pathname));
     const here = group === d;
     if (narrow && kids.length) return <li key={d.key}><RailFlyout d={d} group={group} /></li>;
     /* Collapsed with no children, the parent is the whole group. */

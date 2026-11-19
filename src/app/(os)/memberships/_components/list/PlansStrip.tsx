@@ -33,7 +33,7 @@ export function PlansStrip({
         <h2 id="ms-plans" className="text-md font-semibold text-fg">
           {t("heading")}
         </h2>
-        <Link href="/memberships/plans" className="text-sm text-fg-secondary underline underline-offset-4 hover:text-fg hover:no-underline">
+        <Link href="/memberships/plans" className="inline-flex min-h-11 min-w-11 items-center justify-end text-sm text-fg-secondary underline underline-offset-4 hover:text-fg hover:no-underline md:min-h-0 md:min-w-0">
           {t("seeAll")}
         </Link>
       </div>

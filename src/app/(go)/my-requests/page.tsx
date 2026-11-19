@@ -221,7 +221,7 @@ function RequestCard({ item: i, busy, onTakeBack }: { item: Item; busy: boolean;
             <span />
           )}
           {st.tone === "waiting" && (
-            <Button variant="secondary" size="md" className="h-10! whitespace-nowrap text-sm! font-medium!" loading={busy} onClick={onTakeBack}>
+            <Button variant="secondary" size="md" className="h-11! whitespace-nowrap text-sm! font-medium!" loading={busy} onClick={onTakeBack}>
               {t("pos.status.takeBack")}
             </Button>
           )}

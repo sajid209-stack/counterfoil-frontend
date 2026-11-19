@@ -32,7 +32,7 @@ export function ClockCell({
   const cut = text.lastIndexOf(" ");
   if (cut < 0) return <span className={cn("block text-center", className)}>{text}</span>;
   return (
-    <span className={cn("block min-w-0 text-center leading-tight", className)}>
+    <span className={cn("block min-w-0 whitespace-nowrap text-center leading-tight", className)}>
       {text.slice(0, cut)} <span className={ampmClassName}>{text.slice(cut + 1)}</span>
     </span>
   );

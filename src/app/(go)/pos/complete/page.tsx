@@ -390,7 +390,7 @@ function CompleteView({ info, onUndoing }: { info: CompleteInfo; onUndoing: () =
         {/* ── One header row: what happened on the left, what to do next on the right ── */}
         <div className="flex flex-col gap-major rail:flex-row rail:items-start rail:justify-between rail:gap-major">
           <section className="flex min-w-0 flex-col items-center text-center rail:items-start rail:text-left" aria-labelledby="sale-complete">
-            <div id="sale-status" aria-live="polite" className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rail:justify-start">
+            <div id="sale-status" aria-live="polite" className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rail:min-h-11 rail:justify-start">
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-success-wash text-success">
                 <Check size={16} strokeWidth={2.6} aria-hidden />
               </span>

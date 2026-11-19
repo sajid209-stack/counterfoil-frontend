@@ -1324,7 +1324,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           ) : (
             <div className="flex min-h-12 min-w-0 flex-1 flex-col justify-center">{words}</div>
           )}
-          <span className="shrink-0 text-right">
+          <span className="flex min-h-12 shrink-0 flex-col justify-center text-right">
             <span className={cn("block whitespace-nowrap", T.price)}>{formatMoney(entryTotal(e), currency)}</span>
             {e.items.length === 1 && e.fixedPrice == null && e.items[0].qty > 1 && (
               <span className="block whitespace-nowrap text-sm text-muted">{e.items[0].qty} × {formatMoney(e.items[0].unitPrice, currency)}</span>

@@ -4,7 +4,6 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Mail, MapPin, Phone, ShoppingBag } from "lucide-react";
-import { LogoMark } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getPrivacySettings } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -264,7 +263,7 @@ function FullChrome({
         </div>
         <div className="border-t border-hairline">
           <div className={cn(WRAP, "flex items-center gap-tight py-section text-xs text-muted")}>
-            <LogoMark size={16} />
+            <SfMark size={16} />
             {poweredBy}
             {showPrivacy &&
               (preview ? (
@@ -326,6 +325,16 @@ export function BackLink({
   );
 }
 
+/** Counterfoil mark for the venue page: the page decides light or dark (data-ps-mode), not the OS theme class. */
+function SfMark({ size, className }: { size: number; className?: string }) {
+  return (
+    <span className={cn("relative inline-block shrink-0", className)} style={{ width: size, height: size }} aria-hidden>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/mark-plain.png" alt="" className="sf-logo absolute inset-0 h-full w-full object-contain" />
+    </span>
+  );
+}
+
 /** What a visitor is told when an address does not resolve. Unpublished and
  *  never-existed look identical on purpose: a draft page must not be findable
  *  by guessing, and "not published yet" tells a guesser they are close. */
@@ -333,7 +342,7 @@ export function StorefrontMissing({ title, message }: { title: string; message: 
   return (
     <SfRoot accent={null} className="flex items-center justify-center px-section">
       <div className="max-w-sm text-center">
-        <LogoMark size={28} className="mx-auto" />
+        <SfMark size={28} className="mx-auto" />
         <h1 className="mt-section text-2xl font-semibold tracking-title">{title}</h1>
         <p className="mt-tight text-md text-muted">{message}</p>
       </div>
@@ -469,7 +478,7 @@ function LinkChrome({ storefront, location, poweredBy, showMore, accent, bleed, 
         </div>
         <div className="border-t border-hairline">
           <div className={cn(WRAP, "flex items-center gap-tight py-section text-xs text-muted")}>
-            <LogoMark size={16} />
+            <SfMark size={16} />
             {poweredBy}
           </div>
         </div>

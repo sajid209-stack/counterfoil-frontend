@@ -35,7 +35,7 @@ export function QuickTabs<T extends string>({
             aria-checked={on}
             onClick={() => onChange(o.value)}
             className={cn(
-              "relative h-11 shrink-0 whitespace-nowrap text-base transition-colors duration-quick after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:rounded-full after:content-['']",
+              "relative h-11 shrink-0 whitespace-nowrap before:absolute before:inset-y-0 before:-inset-x-2 before:content-[''] text-base transition-colors duration-quick after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:rounded-full after:content-['']",
               on ? "font-semibold text-fg after:bg-ember-solid" : "font-medium text-muted after:bg-transparent active:text-fg",
             )}
           >

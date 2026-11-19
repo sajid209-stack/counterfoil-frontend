@@ -43,6 +43,7 @@ const PAGE_SIZE = 25;
 export default function CustomersPage() {
   const router = useRouter();
   const t = useTranslations("customers");
+  const tc = useTranslations("common");
   const toast = useToast();
 
   const [search, setSearch] = useState("");
@@ -332,8 +333,15 @@ export default function CustomersPage() {
         )}
         emptyState={
           <EmptyState
-            title={t("emptyTitle")}
+            title={search || segment !== "all" ? t("emptyFilteredTitle") : t("emptyTitle")}
             message={search || segment !== "all" ? t("emptyFiltered") : t("emptyMessage")}
+            action={
+              search || segment !== "all" ? (
+                <Button variant="secondary" onClick={() => { setSearch(""); setSegment("all"); setPage(1); }}>
+                  {tc("clearFilters")}
+                </Button>
+              ) : undefined
+            }
           />
         }
       />

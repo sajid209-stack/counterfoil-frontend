@@ -329,6 +329,10 @@ export function DataTable<T>({
                         className={cn(
                           /* 44px tall on a touch device, dense with a pointer. */
                           "group -mx-1.5 inline-flex items-center gap-1 rounded-inner px-1.5 py-0.5 transition-colors duration-quick hover:text-fg pointer-coarse:min-h-11",
+                          /* On a right-aligned (number) column the glyph goes
+                             before the label, so the label's edge lines up with
+                             the figures under it instead of sitting 17px left. */
+                          col.align === "right" && "flex-row-reverse",
                           activeSort && "text-fg",
                         )}
                       >
