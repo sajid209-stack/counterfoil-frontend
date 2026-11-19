@@ -482,13 +482,6 @@
     "reentrySingleHelp": "A ticket lets them in once.",
     "reentrySameDayHelp": "They can come back in any time that day.",
     "reentryValidHelp": "They can come back in until the ticket stops working.",
-    "payLabel": "How do customers pay?",
-    "payFull": "Full price when they book",
-    "payPart": "Pay part now, rest later",
-    "payFullHelp": "Customers pay the whole price at once.",
-    "payPartHelp": "Customers pay at least {pct}% now, and the rest at the counter or when they arrive.",
-    "advancePct": "Smallest advance payment (%)",
-    "advanceHelp": "Staff can take more, up to the full price.",
     "groupMin": "Smallest group",
     "groupMax": "Largest group",
     "groupHelp": "Each booking can have {min} to {max} people.",
@@ -498,8 +491,8 @@
     "summaryCancel": "Cancel: {answer}",
     "summaryChange": "Change date: {answer}",
     "summaryReentry": "Leave and come back: {answer}",
-    "summaryPay": "Pay: {answer}",
-    "summaryForm": "Safety form needed"
+    "summaryForm": "Safety form needed",
+    "payNowNote": "What customers can pay now is set in <link>Settings → Payment choices</link>."
   },
   "duration": {
     "shortest": "Shortest booking",

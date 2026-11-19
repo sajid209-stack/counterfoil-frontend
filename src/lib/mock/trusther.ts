@@ -74,8 +74,7 @@ export const usPaymentAccounts: PaymentAccount[] = [
 
 const POLICY = {
   salesWindowDays: 60, cutoffMinutes: 120, cancellation: "free_until" as const, cancelHours: 24, cancelFeePct: 0,
-  reschedule: "until" as const, rescheduleHours: 24, reentry: "single" as const, deposit: "full" as const, depositPct: 0,
-  partyMin: 1, partyMax: 6,
+  reschedule: "until" as const, rescheduleHours: 24, reentry: "single" as const, partyMin: 1, partyMax: 6,
 };
 
 const page = (p: Partial<ProductPage> & Pick<ProductPage, "look" | "sections">): ProductPage => ({
@@ -127,7 +126,7 @@ const stylistService = (
   providerIds: STYLISTS, providerNoun: "Stylist", providerPickable: true, flexibleDurations: [minutes],
   providerPremiums: { stf_nadia: 1500 },
   providerDurations: Object.fromEntries(STYLISTS.map((s) => [s, [minutes]])),
-  policies: { ...POLICY, cancellation: "fee", cancelHours: 24, cancelFeePct: 50, deposit: "percent", depositPct: 25, partyMax: 1 },
+  payNow: { options: "full_min", minKind: "percent", minValue: 25 }, policies: { ...POLICY, cancellation: "fee", cancelHours: 24, cancelFeePct: 50, partyMax: 1 },
   createdAt: T, updatedAt: T,
   ...extra,
 });
@@ -435,7 +434,7 @@ const velvetBase: Product[] = [
       pricingModel: "base_extension", basePrice: 50000, extensionPrice: 25000,
       mustEndByClose: true, walkInRoundMinutes: 60, leadTimeMinutes: 0,
     },
-    policies: { ...POLICY, cancellation: "fee", cancelHours: 168, cancelFeePct: 50, deposit: "percent", depositPct: 30, partyMax: 1 },
+    payNow: { options: "full_min", minKind: "percent", minValue: 30 }, policies: { ...POLICY, cancellation: "fee", cancelHours: 168, cancelFeePct: 50, partyMax: 1 },
     createdAt: T, updatedAt: T,
   },
 ];
@@ -602,7 +601,7 @@ const mamajosBase: Product[] = [
     ],
     locationIds: [LOC], channels: ["online"], online: "link", status: "active", archivedAt: null,
     schedule: { slotMinutes: 180, sessionMinutes: 180, startTime: "18:00", endTime: "18:00", capacityPerSession: 1, dailyCapacity: null, openDays: [1, 2, 3, 4], guideIds: [], exceptions: [] },
-    policies: { ...POLICY, deposit: "percent", depositPct: 30, cancelHours: 168, partyMax: 1 },
+    payNow: { options: "full_min", minKind: "percent", minValue: 30 }, policies: { ...POLICY, cancelHours: 168, partyMax: 1 },
     createdAt: T, updatedAt: T,
   },
 ];

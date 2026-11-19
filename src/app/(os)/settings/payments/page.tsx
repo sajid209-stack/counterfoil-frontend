@@ -3,24 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowDown, ArrowUp, Banknote, CreditCard, QrCode, Smartphone, Wallet, type LucideIcon } from "lucide-react";
-import { PageShell, Radio, SegmentedControl, Select, useToast } from "@/components/ui";
+import { ArrowDown, ArrowUp, Banknote, ChevronRight, CreditCard, QrCode, Smartphone, Wallet, type LucideIcon } from "lucide-react";
+import { PageShell, Radio, Select, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import {
-  getAdvancePolicy,
-  getOperator,
-  getPaymentSettings,
-  updateAdvancePolicy,
-  updatePaymentSettings,
-} from "@/lib/api";
-import type {
-  AdvancePolicy,
-  AdvanceRule,
-  PaymentSettings,
-  PayoutSchedule,
-  TillMethod,
-} from "@/lib/api";
+import { getOperator, getPaymentSettings, updatePaymentSettings } from "@/lib/api";
+import type { PaymentSettings, PayoutSchedule, TillMethod } from "@/lib/api";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { formatDay, formatMoney } from "@/lib/format";
 import { PaymentAccounts } from "./_components/PaymentAccounts";
@@ -31,21 +19,10 @@ const METHOD_ICON: Record<TillMethod, LucideIcon> = { cash: Wallet, bkash: Smart
 
 const SCHEDULES: PayoutSchedule[] = ["daily", "weekly", "monthly"];
 
-/** A ৳2,000 booking — round enough to check an advance in your head. */
-const SAMPLE = 200_000;
-
 const arrow =
   "inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent";
 
-interface RuleDraft {
-  enabled: boolean;
-  kind: AdvanceRule["minKind"];
-  value: string;
-}
-
 interface Form {
-  counter: RuleDraft;
-  online: RuleDraft;
   schedule: PayoutSchedule;
   day: number;
   float: string;
@@ -54,15 +31,7 @@ interface Form {
 
 const taka = (minor: number) => (minor / 100).toFixed(minor % 100 ? 2 : 0);
 
-const toRule = (r: AdvanceRule): RuleDraft => ({
-  enabled: r.enabled,
-  kind: r.minKind,
-  value: r.minKind === "percent" ? String(r.minValue) : taka(r.minValue),
-});
-
-const toForm = (a: AdvancePolicy, p: PaymentSettings): Form => ({
-  counter: toRule(a.counter),
-  online: toRule(a.online),
+const toForm = (p: PaymentSettings): Form => ({
   schedule: p.payoutSchedule,
   day: p.payoutDay,
   float: taka(p.defaultFloat),
@@ -74,17 +43,6 @@ function parseAmount(raw: string): number | null {
   const s = raw.replace(/,/g, "").trim();
   if (!/^\d+(\.\d{1,2})?$/.test(s)) return null;
   return Math.round(Number(s) * 100);
-}
-
-/** The least taken up front: a whole percentage from 1 to 100, or an amount above zero. */
-function parseRule(d: RuleDraft): number | null {
-  if (d.kind === "percent") {
-    const s = d.value.trim();
-    const n = Number(s);
-    return /^\d{1,3}$/.test(s) && n >= 1 && n <= 100 ? n : null;
-  }
-  const a = parseAmount(d.value);
-  return a !== null && a > 0 ? a : null;
 }
 
 const isoOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -136,7 +94,6 @@ export default function PaymentsPage() {
   const locale = useLocale();
   const toast = useToast();
 
-  const advanceQ = useApiQuery(() => getAdvancePolicy(), []);
   const settingsQ = useApiQuery(() => getPaymentSettings(), []);
   const opQ = useApiQuery(() => getOperator(), []);
 
@@ -153,7 +110,7 @@ export default function PaymentsPage() {
   const symbol = currencySymbol(currency, locale);
 
   const list = methods ?? settingsQ.data?.methods ?? null;
-  const saved = base ?? (advanceQ.data && settingsQ.data ? toForm(advanceQ.data, settingsQ.data) : null);
+  const saved = base ?? (settingsQ.data ? toForm(settingsQ.data) : null);
   const form = draft ?? saved;
   const dirty = draft !== null && saved !== null && JSON.stringify(draft) !== JSON.stringify(saved);
 
@@ -166,7 +123,6 @@ export default function PaymentsPage() {
   }
 
   const set = (patch: Partial<Form>) => setDraft({ ...form, ...patch });
-  const setRule = (ch: "counter" | "online", patch: Partial<RuleDraft>) => set({ [ch]: { ...form[ch], ...patch } });
 
   // ── methods: immediate, with Undo ──────────────────────────────────────────
   const writeMethods = async (next: PaymentSettings["methods"], undo?: { to: PaymentSettings["methods"]; message: string }) => {
@@ -196,37 +152,22 @@ export default function PaymentsPage() {
   const offered = list.filter((m) => m.method === "cash" || (m.enabled && nonCashOk));
 
   // ── the form ───────────────────────────────────────────────────────────────
-  const ruleErr = (ch: "counter" | "online") =>
-    form[ch].enabled && parseRule(form[ch]) === null
-      ? form[ch].kind === "percent"
-        ? t("advance.invalidPercent")
-        : t("advance.invalidAmount")
-      : undefined;
   const floatMinor = parseAmount(form.float);
   const toleranceMinor = parseAmount(form.tolerance);
   const floatErr = floatMinor === null ? t("cash.invalid") : undefined;
   const toleranceErr = toleranceMinor === null ? t("cash.invalid") : undefined;
-  const invalid = !!(ruleErr("counter") || ruleErr("online") || floatErr || toleranceErr);
+  const invalid = !!(floatErr || toleranceErr);
 
   const save = async () => {
-    if (invalid || floatMinor === null || toleranceMinor === null || !advanceQ.data) return;
+    if (invalid || floatMinor === null || toleranceMinor === null) return;
     setSaving(true);
-    const rule = (ch: "counter" | "online"): AdvanceRule => ({
-      enabled: form[ch].enabled,
-      minKind: form[ch].kind,
-      // A switched-off rule keeps the last minimum that made sense.
-      minValue: parseRule(form[ch]) ?? advanceQ.data![ch].minValue,
-    });
-    const [adv, ps] = await Promise.all([
-      updateAdvancePolicy({ counter: rule("counter"), online: rule("online") }),
-      updatePaymentSettings({ payoutSchedule: form.schedule, payoutDay: form.day, defaultFloat: floatMinor, countTolerance: toleranceMinor }),
-    ]);
+    const ps = await updatePaymentSettings({ payoutSchedule: form.schedule, payoutDay: form.day, defaultFloat: floatMinor, countTolerance: toleranceMinor });
     setSaving(false);
-    if (!adv.ok || !ps.ok) {
-      toast.error((!adv.ok ? adv.error : !ps.ok ? ps.error : null)?.message ?? ts("save.invalid"));
+    if (!ps.ok) {
+      toast.error(ps.error.message ?? ts("save.invalid"));
       return;
     }
-    setBase(toForm(adv.data, ps.data));
+    setBase(toForm(ps.data));
     setDraft(null);
     toast.success(t("saved"));
   };
@@ -317,76 +258,16 @@ export default function PaymentsPage() {
         <PaymentAccounts />
         <PayoutBank />
 
-        <SettingsSection title={t("advance.title")} description={t("advance.description")} divided>
-          {(["counter", "online"] as const).map((ch) => {
-            const r = form[ch];
-            const err = ruleErr(ch);
-            const min = parseRule(r);
-            const minMinor = min === null ? null : r.kind === "percent" ? Math.round((SAMPLE * min) / 100) : Math.min(min, SAMPLE);
-            return (
-              <div key={ch}>
-                <SettingRow label={t(`advance.${ch}`)} description={t(`advance.${ch}Help`)} labelFor={false} trailing>
-                  {({ labelId, describedBy }) => (
-                    <Switch checked={r.enabled} onChange={(on) => setRule(ch, { enabled: on })} labelledBy={labelId} describedBy={describedBy} />
-                  )}
-                </SettingRow>
-                {r.enabled && (
-                  <SettingRow
-                    label={t("advance.least")}
-                    description={
-                      minMinor !== null
-                        ? t("advance.example", { total: formatMoney(SAMPLE, currency), min: formatMoney(minMinor, currency) })
-                        : t("advance.minHelp")
-                    }
-                    error={err}
-                  >
-                    {({ id, describedBy }) => (
-                      <div className="flex gap-tight">
-                        <SegmentedControl
-                          size="sm"
-                          className="shrink-0 self-start"
-                          aria-label={t("advance.minKind")}
-                          value={r.kind}
-                          options={[
-                            { value: "percent", label: "%", ariaLabel: t("advance.percentOfTotal") },
-                            { value: "amount", label: symbol, ariaLabel: t("advance.fixedAmount") },
-                          ]}
-                          // Switching kind offers a sensible starting figure
-                          // rather than an empty field already in error.
-                          onChange={(v) => {
-                            const k = v as AdvanceRule["minKind"];
-                            if (k === r.kind) return;
-                            setRule(ch, { kind: k, value: k === "percent" ? "25" : "500" });
-                          }}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <SuffixInput
-                            id={id}
-                            value={r.value}
-                            onChange={(v) => setRule(ch, { value: v })}
-                            suffix={r.kind === "percent" ? "%" : symbol}
-                            invalid={!!err}
-                            describedBy={describedBy}
-                            inputMode={r.kind === "percent" ? "numeric" : "decimal"}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </SettingRow>
-                )}
-              </div>
-            );
-          })}
-          <div className="flex flex-col gap-tight px-card py-section sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm leading-relaxed text-muted">{t("advance.policiesNote")}</p>
-            <Link
-              href="/catalog?kind=bookings"
-              className="inline-flex min-h-11 shrink-0 items-center self-start rounded-sm text-sm font-medium text-fg underline-offset-2 hover:underline sm:self-center md:min-h-9"
-            >
-              {t("advance.policiesLink")}
-            </Link>
-          </div>
-        </SettingsSection>
+        <Link
+          href="/settings/payment-choices"
+          className="card-surface flex min-h-14 items-center gap-comfortable px-card py-comfortable transition-colors duration-quick hover:bg-muted-wash"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-medium text-fg">{t("payNow.link.title")}</span>
+            <span className="mt-inline block text-sm leading-relaxed text-muted">{t("payNow.link.desc")}</span>
+          </span>
+          <ChevronRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
+        </Link>
 
         <SettingsSection title={t("payouts.title")} description={t("payouts.description")}>
           <div role="radiogroup" aria-label={t("payouts.schedule")} className="grid gap-tight px-card py-section sm:grid-cols-3">

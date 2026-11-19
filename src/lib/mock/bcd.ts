@@ -84,8 +84,7 @@ export const bcdCounters: Counter[] = [
 
 const POLICY = {
   salesWindowDays: 60, cutoffMinutes: 60, cancellation: "none" as const, cancelHours: 0, cancelFeePct: 0,
-  reschedule: "none" as const, rescheduleHours: 0, reentry: "single" as const, deposit: "full" as const, depositPct: 0,
-  partyMin: 1, partyMax: 10,
+  reschedule: "none" as const, rescheduleHours: 0, reentry: "single" as const, partyMin: 1, partyMax: 10,
 };
 
 const baseProducts: Product[] = [
@@ -230,7 +229,7 @@ const baseProducts: Product[] = [
       capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4], guideIds: [], exceptions: [],
     },
     sessionNames: { "09:00": "Your morning" },
-    policies: { ...POLICY, deposit: "percent", depositPct: 30, cancelHours: 168, partyMax: 1 },
+    payNow: { options: "full_min", minKind: "percent", minValue: 30 }, policies: { ...POLICY, cancelHours: 168, partyMax: 1 },
     createdAt: T,
     updatedAt: T,
   },

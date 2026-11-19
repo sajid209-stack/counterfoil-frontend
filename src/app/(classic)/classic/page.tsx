@@ -6,12 +6,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useActiveCounterNow } from "@/lib/activeCounter";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { salePayNowLines } from "@/lib/sale/saleMath";
+import { partPaymentOffered, payNowChoices } from "@/lib/payNow";
 import { useEnumLabels } from "@/lib/labels";
 import { Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui";
 import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "../_ui";
 import { useApiQuery } from "@/lib/useApi";
-import { tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
+import { tillMethods, addOrderPayment, checkout, getPayNowSettings, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime, DEMO_NOW_MINUTES } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
@@ -20,7 +22,6 @@ import { posLiveState } from "@/lib/posState";
 import { taxRateFor } from "@/lib/tax";
 import { FEATURES } from "@/lib/features";
 import { formatClock, formatClockMin, formatDay, formatMoney } from "@/lib/format";
-import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
@@ -111,7 +112,7 @@ export default function PosPage() {
   const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
   const payAcctsQ = useApiQuery(() => listPaymentAccounts({ pageSize: 100 }), []);
   const policyQ = useApiQuery(() => getManualDiscountPolicy(), []);
-  const advanceQ = useApiQuery(() => getAdvancePolicy(), []);
+  const payNowQ = useApiQuery(() => getPayNowSettings(), []);
   // Non-cash tender needs a live PSP account (charges enabled). Cash always works.
   const nonCashOk = (payAcctsQ.data?.data ?? []).some((a) => a.status === "active" && a.chargesEnabled);
   // Which buttons, and in what order, is the business's call — Settings → Payments.
@@ -140,7 +141,6 @@ export default function PosPage() {
      answer is a render-time derivation: what the till WILL charge with is a
      function of what was picked and what is actually available. */
   const [pickedMethod, setMethod] = useState<PaymentMethod>("cash");
-  const [payInFull, setPayInFull] = useState(false);
   /** Minor amount the customer is paying up front, when the cashier sets one. */
   const [advance, setAdvance] = useState<number | null>(null);
   const [discountPct, setDiscountPct] = useState(0);
@@ -597,30 +597,17 @@ export default function PosPage() {
     }
   };
 
-  // ── Deposits: a percent-deposit policy holds part of the entry back until
-  //    arrival; only the minimum deposit is charged now — unless the cashier
-  //    chooses to take the balance in full (payInFull).
-  const entryBalance = (e: CartEntry) => {
-    const pol = productById(e.productId)?.policies;
-    if (pol?.deposit !== "percent" || pol.depositPct <= 0) return 0;
-    const payable = entryTotal(e) - entryCoveredValue(e);
-    return Math.max(0, payable - Math.round((payable * pol.depositPct) / 100));
-  };
-  const depositBalance = cart.reduce((s, e) => s + entryBalance(e), 0);
+  /* ── Part payment ──────────────────────────────────────────────────────────
+     What may be paid now is set per booking (Settings, Payment choices) and
+     read line by line. This older till keeps its own "advance" row: the cashier
+     types an amount (where a booking takes any amount) or taps Minimum, bounded
+     below by the lowest the sale's rules accept and above by the total. */
+  const choices = payNowChoices(salePayNowLines(cart, productsQ.data?.data ?? [], payNowQ.data, total, pass));
+  const advanceAllowed = cart.length > 0 && total > 0 && partPaymentOffered(choices);
+  const advanceMin = choices.customMin ?? choices.minimum ?? total;
+  const advanceValid = advance != null && advance >= advanceMin && advance < total && (choices.customMin != null || advance === choices.minimum);
 
-  /* ── Advance ───────────────────────────────────────────────────────────────
-     A booking taken over the phone is usually held on a bKash transfer of
-     whatever the customer sends, which is not a percentage of anything. So
-     the cashier can type the amount, bounded below by the business rule and
-     above by the total. This sits on top of any per-booking deposit policy:
-     the deposit says what a BOOKING requires, the advance says what this
-     CUSTOMER actually handed over. */
-  const advanceRule = advanceQ.data?.counter;
-  const advanceAllowed = !!advanceRule?.enabled && cart.length > 0 && total > 0;
-  const advanceMin = advanceRule ? advanceMinimum(advanceRule, total) : total;
-  const advanceValid = advance != null && advance >= advanceMin && advance < total;
-
-  const balance = advanceValid ? total - advance : payInFull ? 0 : depositBalance;
+  const balance = advanceValid ? total - advance : 0;
   const dueNow = total - balance;
 
   // The most points that can usefully go on THIS sale: bounded by the balance,
@@ -869,7 +856,6 @@ export default function PosPage() {
                     ) : (e.lineDiscountPct ?? 0) > 0 ? (
                       <div className="text-xs text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>
                     ) : null}
-                    {entryBalance(e) > 0 && <div className="text-xs text-muted">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
                   </div>
                   <button
                     type="button"
@@ -990,7 +976,7 @@ export default function PosPage() {
             >
               <div className="flex flex-col gap-tight">
                 <div className="flex items-center gap-tight">
-                  <input
+                  {choices.customMin != null && <input
                     inputMode="decimal"
                     placeholder={t("advance.placeholder")}
                     aria-label={t("advance.label")}
@@ -1002,7 +988,7 @@ export default function PosPage() {
                       setAdvance(Number.isFinite(n) ? Math.max(0, Math.round(n * 100)) : null);
                     }}
                     className="h-12 min-w-0 flex-1 rounded-sm border border-line bg-card px-comfortable text-right text-base tabular-nums focus:border-ember"
-                  />
+                  />}
                   <button
                     type="button"
                     onClick={() => setAdvance(null)}
@@ -1012,7 +998,7 @@ export default function PosPage() {
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-tight">
-                  {[advanceMin, Math.round(total / 2), total].map((amt, i) => (
+                  {[choices.minimum, choices.customMin != null && Math.round(total / 2) >= choices.customMin ? Math.round(total / 2) : null, total].map((amt, i) => amt == null ? null : (
                     <button
                       key={i}
                       type="button"
@@ -1111,20 +1097,10 @@ export default function PosPage() {
           {creditsValue > 0 && <div className="flex justify-between text-sm text-muted"><span>{t("summary.passCredits", { count: creditsUsed })}</span><span className="text-success">−{formatMoney(creditsValue, currency)}</span></div>}
           <div className="flex justify-between text-sm text-muted"><span>{t("summary.vat")}</span><span className="">{formatMoney(tax, currency)}</span></div>
           <div className="mt-tight flex items-baseline justify-between text-lg font-medium"><span>{t("summary.total")}</span><AnimatedMoney value={total} currency={currency} /></div>
-          {depositBalance > 0 && (
+          {balance > 0 && (
             <>
-              <button type="button" onClick={() => setPayInFull((v) => !v)} className="mt-tight flex w-full items-center justify-between text-sm">
-                <span className="text-muted">{t("summary.payInFull")}</span>
-                <span className={cn("flex h-6 w-10 shrink-0 items-center rounded-full px-0.5 transition-colors duration-quick", payInFull ? "bg-ember" : "bg-strong")}>
-                  <span className={cn("h-5 w-5 rounded-full bg-card transition-transform duration-quick", payInFull && "translate-x-4")} />
-                </span>
-              </button>
-              {balance > 0 && (
-                <>
-                  <div className="flex justify-between text-sm"><span>{t("summary.dueNow")}</span><span className="">{formatMoney(dueNow, currency)}</span></div>
-                  <div className="flex justify-between text-sm text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>
-                </>
-              )}
+              <div className="flex justify-between text-sm"><span>{t("summary.dueNow")}</span><span className="">{formatMoney(dueNow, currency)}</span></div>
+              <div className="flex justify-between text-sm text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>
             </>
           )}
 

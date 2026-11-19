@@ -39,6 +39,7 @@ import {
   Users,
   UsersRound,
   Wallet,
+  CircleDollarSign,
   Workflow,
 } from "lucide-react";
 import type { ScreenEntry } from "./types";
@@ -97,6 +98,7 @@ export const OS_ENTRIES: readonly ScreenEntry[] = [
   { pattern: "/settings/loyalty", surface: "os", shape: "form", empty: { id: "settings-loyalty", icon: Heart, action: "self" } },
   { pattern: "/settings/notifications", surface: "os", shape: "form", empty: { id: "settings-notifications", icon: Bell, action: "self" } },
   { pattern: "/settings/payments", surface: "os", shape: "form", empty: { id: "settings-payments", icon: CreditCard, action: "self" } },
+  { pattern: "/settings/payment-choices", surface: "os", shape: "form", empty: { id: "settings-payment-choices", icon: CircleDollarSign, action: "self" } },
   { pattern: "/settings/preferences", surface: "os", shape: "form", empty: { id: "settings-preferences", icon: Palette, action: "self" } },
   { pattern: "/settings/privacy", surface: "os", shape: "form", empty: { id: "settings-privacy", icon: ShieldCheck, action: "self" } },
   { pattern: "/settings/profile", surface: "os", shape: "form", empty: { id: "settings-profile", icon: UserRound, action: "self" } },

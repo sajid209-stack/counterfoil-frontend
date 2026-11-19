@@ -1,5 +1,6 @@
 import {
   Building2,
+  CircleDollarSign,
   ClipboardList,
   CreditCard,
   Gift,
@@ -35,6 +36,7 @@ export type SettingsItemKey =
   | "storefront"
   | "tickets"
   | "payments"
+  | "paymentChoices"
   | "refunds"
   | "tax"
   | "vat"
@@ -97,6 +99,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     key: "money",
     items: [
       { key: "payments", href: "/settings/payments", icon: CreditCard },
+      { key: "paymentChoices", href: "/settings/payment-choices", icon: CircleDollarSign },
       { key: "refunds", href: "/settings/refunds", icon: HandCoins },
       { key: "tax", href: "/settings/tax", icon: Percent },
       { key: "vat", href: "/settings/vat", icon: ReceiptText },

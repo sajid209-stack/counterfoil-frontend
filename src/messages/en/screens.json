@@ -510,6 +510,11 @@
       "title": "This plan is gone",
       "body": "It may have been removed.",
       "action": "Back to plans"
+    },
+    "settings-payment-choices": {
+      "title": "Payment choices aren't set",
+      "body": "Choose what customers can pay when they book.",
+      "action": "Set payment choices"
     }
   }
 }

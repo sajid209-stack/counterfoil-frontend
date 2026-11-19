@@ -18,6 +18,7 @@ import {
   firstFreeResource,
   freeGuides,
   getDailyRemaining,
+  getPayNowSettings,
   getResourceMatrix,
   getSlots,
   inventoryItem,
@@ -40,6 +41,7 @@ import { cn } from "@/lib/cn";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { DEMO_TODAY, demoDay, isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime, DEMO_NOW_MINUTES } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
+import { payNowRuleFor } from "@/lib/payNow";
 import { durationOptions, formatDuration, formulaPrice, isDealDuration, priceSegments, productDurationPrice } from "@/lib/duration";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { planWeekly, type OccurrenceBlock } from "@/lib/recurrence";
@@ -510,7 +512,18 @@ export function ProductSheet({
     ? (providerId ? providers.find((p) => p.id === providerId) : freeProvidersAt(slotTime)[0])
     : undefined;
 
-  const depositPct = product.policies?.deposit === "percent" ? product.policies.depositPct : 0;
+  /* What can be paid now for this booking (Settings → Payment choices), said
+     once on the sheet so the cashier can tell the guest before the payment
+     step. Only for a booking the guest arrives for later. */
+  const payNowQ = useApiQuery(() => getPayNowSettings(), []);
+  const payRule = payNowRuleFor(product, payNowQ.data);
+  const payLater = !!date && (date > TODAY || (date === TODAY && !!slotTime && toMinutes(slotTime) > DEMO_NOW_MINUTES));
+  const payMinText = payRule.minKind === "percent" ? `${payRule.minValue}%` : formatMoney(payRule.minValue, currency);
+  const payNoteKey =
+    !payLater || payRule.options === "full" ? null
+    : payRule.options === "full_min" ? "sheet.payNoteMin"
+    : payRule.options === "all" ? "sheet.payNoteAll"
+    : payRule.minValue > 0 ? "sheet.payNoteCustomFrom" : "sheet.payNoteCustom";
 
   // Capacity under a date chip: daily-capped remaining, or seats across the
   // day's departures. Ember when ≤20% remains.
@@ -806,7 +819,6 @@ export function ProductSheet({
                   labels={{
                     today: t("sheet.today"),
                     tomorrow: t("sheet.tomorrow"),
-                    pick: t("sheet.moreDates"),
                     previousMonth: tc("previousMonth"),
                     nextMonth: tc("nextMonth"),
                   }}
@@ -1055,28 +1067,32 @@ export function ProductSheet({
                 );
               })()}
 
-              {lanes.length > 1 && <TileLabel className="rail:mt-3 rail:text-base">{lanes[0]?.nounSingular ?? t("sheet.resource")}</TileLabel>}
-              {/* One card of cells, as the Schedule draws its lanes: Any, then
-                  each lane with what it is doing now. Chosen is a tint with a
-                  ring and a tick. */}
-              {lanes.length > 1 && (
-                <div className="grid grid-cols-3 gap-tight sm:grid-cols-5 rail:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))]">
-                  {[null, ...lanes].map((r) => {
-                    const on = r ? resourceId === r.id : !resourceId;
-                    return (
-                      <Tile key={r?.id ?? "any"} selected={on} off={!!r?.outOfService} disabled={!!r?.outOfService} className="min-h-14 rail:h-14 rail:min-h-14 rail:items-stretch rail:px-3 rail:py-1 rail:text-left" title={r ? [liveState(r), rateLabel(r)].filter(Boolean).join(" · ") : undefined} onClick={() => setResourceId(r?.id)}>
-                        <span className={cn("w-full break-words text-base font-semibold leading-tight rail:truncate rail:text-left rail:font-medium", r?.outOfService && "line-through")}>{r ? r.name : t("sheet.any")}</span>
-                        {r && (
-                          <span className="flex w-full min-w-0 flex-col rail:flex-row rail:items-center rail:gap-1.5">
-                            <span className={cn("mt-0.5 w-full break-words text-sm leading-tight rail:mt-0 rail:min-w-0 rail:flex-1 rail:truncate rail:text-left", on ? "text-on-solid" : "text-muted", r.outOfService && "line-through")}>{liveState(r)}</span>
-                            {rateLabel(r) && <span className={cn("mt-0.5 w-full break-words text-sm font-medium leading-tight rail:mt-0 rail:w-auto rail:shrink-0", on ? "text-on-solid" : "text-fg")}>{rateLabel(r)}</span>}
-                          </span>
-                        )}
-                      </Tile>
-                    );
-                  })}
-                </div>
-              )}
+              {/* One dropdown row, like Staff: a venue adds lanes and courts,
+                  and a wrap of tiles with uneven text (Free / 1 booking today /
+                  a rate) never lines up. Each entry keeps its live state and
+                  its rate; an out-of-service lane stays listed, greyed. */}
+              {lanes.length > 1 && (() => {
+                const noun = lanes[0]?.nounSingular ?? t("sheet.resource");
+                return (
+                  <div className="flex flex-col gap-tight">
+                    <TileLabel className="rail:mt-3 rail:text-base">{noun}</TileLabel>
+                    <PersonSelect
+                      kind="place"
+                      label={noun}
+                      value={resourceId}
+                      onChange={setResourceId}
+                      any={{ label: t("personSelect.anyPlace", { noun: noun.toLowerCase() }), note: t("personSelect.anyPlaceSub", { noun: noun.toLowerCase() }) }}
+                      people={lanes.map((r) => ({
+                        id: r.id,
+                        name: r.name,
+                        sub: liveState(r),
+                        trail: rateLabel(r) ?? undefined,
+                        disabled: !!r.outOfService,
+                      }))}
+                    />
+                  </div>
+                );
+              })()}
 
               {/* The lane's day at a glance — selection drawn live on the strip;
                   tapping an occupied block explains, never a dead tap. */}
@@ -1557,9 +1573,9 @@ export function ProductSheet({
             })()}
             {renderAddOns()}
             {renderWaiver()}
-            {depositPct > 0 && (
+            {payNoteKey && (
               <p className="mt-section rail:mt-5 card-surface p-comfortable text-sm text-muted">
-                {t.rich("sheet.depositNote", { pct: depositPct, b: (chunks) => <span className="font-medium text-fg">{chunks}</span> })}
+                {t.rich(payNoteKey, { min: payMinText, b: (chunks) => <span className="font-medium text-fg">{chunks}</span> })}
               </p>
             )}
             <SheetFooter onBack={onClose}

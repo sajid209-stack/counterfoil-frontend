@@ -834,6 +834,11 @@
         "desc": "How customers pay, payouts and the cash drawer.",
         "keywords": "bkash sslcommerz card qr cash payment methods payouts payout advance deposit starting cash float drawer allowed difference tolerance account"
       },
+      "paymentChoices": {
+        "title": "Payment choices",
+        "desc": "What customers can pay when they book.",
+        "keywords": "pay now deposit advance minimum part payment partial full any amount instalment"
+      },
       "tax": {
         "title": "Tax",
         "desc": "The tax added to each sale.",

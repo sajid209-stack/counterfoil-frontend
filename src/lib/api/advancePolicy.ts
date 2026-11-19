@@ -1,12 +1,13 @@
-import { getAdvancePolicyState, ok, patchAdvancePolicyState } from "./client";
-import type { AdvancePolicy, ApiResult } from "./types";
+import { getPayNowState, ok, patchPayNowState } from "./client";
+import type { ApiResult, PayNowSettings } from "./types";
 
-/** Whether this business takes money up front, and how little it will accept.
- *  Singleton, per channel — see the AdvancePolicy contract. */
-export async function getAdvancePolicy(): Promise<ApiResult<AdvancePolicy>> {
-  return ok(structuredClone(getAdvancePolicyState()));
+/** The business default for what can be paid now (Settings → Payment choices).
+ *  A booking's own rule lives on the product (`Product.payNow`) and is written
+ *  with `updateProduct`. The file keeps its old name so imports stay stable. */
+export async function getPayNowSettings(): Promise<ApiResult<PayNowSettings>> {
+  return ok(structuredClone(getPayNowState()));
 }
 
-export async function updateAdvancePolicy(patch: Partial<AdvancePolicy>): Promise<ApiResult<AdvancePolicy>> {
-  return ok(structuredClone(patchAdvancePolicyState(patch)));
+export async function updatePayNowSettings(patch: Partial<PayNowSettings>): Promise<ApiResult<PayNowSettings>> {
+  return ok(structuredClone(patchPayNowState(patch)));
 }

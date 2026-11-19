@@ -18,8 +18,6 @@ export function defaultPolicies(): ProductPolicies {
     reschedule: "until",
     rescheduleHours: 24,
     reentry: "single",
-    deposit: "full",
-    depositPct: 0,
     partyMin: 1,
     partyMax: 20,
   };

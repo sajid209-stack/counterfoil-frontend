@@ -91,7 +91,6 @@
     "moveTitle": "Move",
     "moveTo": "Move: {day}, {time}",
     "moveTomorrow": "Tomorrow",
-    "movePick": "More dates",
     "moveClosed": "Closed this day. Pick another.",
     "moveNow": "Now",
     "movePriceNote": "Same price — nothing to pay or refund.",

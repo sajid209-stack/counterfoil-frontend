@@ -727,7 +727,7 @@ export function MoveSheet({
           today={DEMO_TODAY}
           tomorrow={demoDay(1)}
           min={DEMO_TODAY}
-          labels={{ today: tc("today"), tomorrow: t("sheet.moveTomorrow"), pick: t("sheet.movePick"), previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth") }}
+          labels={{ today: tc("today"), tomorrow: t("sheet.moveTomorrow"), previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth") }}
         />
 
         {times.length === 0 ? (

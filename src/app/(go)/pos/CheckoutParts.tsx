@@ -263,13 +263,14 @@ export function HowMuchNow({
   value: PayChoice;
   onChange: (c: PayChoice) => void;
   currency: string;
-  custom: { text: string; onText: (text: string) => void; min: number; max: number; check: CustomCheck };
+  /** Omitted where the booking's rule offers no typed amount: no Custom tile. */
+  custom?: { text: string; onText: (text: string) => void; min: number; max: number; check: CustomCheck };
 }) {
   const t = useTranslations("pos");
   const id = useId();
-  const on = value === "custom";
-  const range = { min: formatMoney(custom.min, currency), max: formatMoney(custom.max, currency) };
-  const message = !on
+  const on = !!custom && value === "custom";
+  const range = custom ? { min: formatMoney(custom.min, currency), max: formatMoney(custom.max, currency) } : { min: "", max: "" };
+  const message = !on || !custom
     ? null
     : custom.check.error === "low"
       ? t("pay.customLow", range)
@@ -278,11 +279,11 @@ export function HowMuchNow({
         : custom.check.error === "empty" && custom.text.trim()
           ? t("pay.customNotAmount")
           : t("pay.customRange", range);
-  const invalid = on && custom.check.error != null && (custom.check.error !== "empty" || !!custom.text.trim());
+  const invalid = on && !!custom && custom.check.error != null && (custom.check.error !== "empty" || !!custom.text.trim());
   const tile = "h-[4.25rem] rail:h-13 rail:min-h-13 rail:[&>span:last-child]:text-sm";
   return (
     <div className="flex flex-col gap-comfortable">
-      <TileGrid cols={options.length + 1 >= 3 ? 3 : 2} role="radiogroup" aria-label={t("pay.howMuch")}>
+      <TileGrid cols={options.length + (custom ? 1 : 0) >= 3 ? 3 : 2} role="radiogroup" aria-label={t("pay.howMuch")}>
         {options.map((o) => (
           <Tile
             key={o.id}
@@ -296,6 +297,7 @@ export function HowMuchNow({
             className={tile}
           />
         ))}
+        {custom && (
         <Tile
           role="radio"
           aria-checked={on}
@@ -306,8 +308,9 @@ export function HowMuchNow({
           sub={on && custom.check.amount != null ? <span className="tabular-nums">{formatPriceShort(custom.check.amount, currency)}</span> : t("pay.customSub")}
           className={tile}
         />
+        )}
       </TileGrid>
-      {on && (
+      {on && custom && (
         <div className="flex flex-col gap-inline" data-pay-custom>
           <label htmlFor={id} className="text-sm font-medium text-fg-secondary">
             {t("pay.customLabel")}

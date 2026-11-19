@@ -21,8 +21,9 @@
  */
 
 import { buildOrderLines, type LineInput } from "@/lib/orderMath";
-import type { CreditPass, MemberBenefit, Operator, Product } from "@/lib/api";
-import { slotISO, toMinutes } from "@/lib/schedule";
+import type { CreditPass, MemberBenefit, Operator, PayNowSettings, Product } from "@/lib/api";
+import { DEMO_NOW_MINUTES, DEMO_TODAY, slotISO, toMinutes } from "@/lib/schedule";
+import { payNowRuleFor, type PayNowLine } from "@/lib/payNow";
 import { formatClock } from "@/lib/format";
 import { taxRateFor } from "@/lib/tax";
 
@@ -349,12 +350,43 @@ export function priceSale(items: SaleItem[], ctx: SaleContext): SaleTotals {
   };
 }
 
-/** A deposit policy holds part of an item back until arrival. */
-export function itemBalance(e: SaleItem, products: Product[], pass?: CreditPass | null): number {
-  const pol = products.find((p) => p.id === e.productId)?.policies;
-  if (pol?.deposit !== "percent" || pol.depositPct <= 0) return 0;
-  const coverage = passCoverage([e], pass);
-  const covered = e.items.reduce((s, i) => s + (coverage.get(`${e.id}|${i.tierId}`) ?? 0) * i.unitPrice, 0);
-  const payable = itemTotal(e) - covered;
-  return Math.max(0, payable - Math.round((payable * pol.depositPct) / 100));
+/** Is the guest arriving LATER than now — a future date, or later today? Only
+ *  then can part of the money wait for arrival. */
+export function itemIsLater(e: Pick<SaleItem, "slotDate" | "slotTime">): boolean {
+  if (!e.slotDate) return false;
+  if (e.slotDate > DEMO_TODAY) return true;
+  return e.slotDate === DEMO_TODAY && !!e.slotTime && toMinutes(e.slotTime) > DEMO_NOW_MINUTES;
+}
+
+/**
+ * The sale's lines as `payNowChoices` reads them: each item's rule (its own or
+ * the business default), whether it is for later, and its share of the sale
+ * TOTAL. Shares are the item's payable value (less what a pass covers) scaled
+ * to the total, so discounts and tax are carried in proportion and the shares
+ * add up to the total exactly (the last line takes the rounding).
+ */
+export function salePayNowLines(
+  items: Pick<SaleItem, "id" | "productId" | "slotDate" | "slotTime" | "items">[],
+  products: Product[],
+  settings: PayNowSettings | null | undefined,
+  saleTotal: number,
+  pass?: CreditPass | null,
+): PayNowLine[] {
+  const coverage = passCoverage(items as SaleItem[], pass);
+  const payable = items.map((e) => {
+    const covered = e.items.reduce((s, i) => s + (coverage.get(`${e.id}|${i.tierId}`) ?? 0) * i.unitPrice, 0);
+    return Math.max(0, itemTotal(e as SaleItem) - covered);
+  });
+  const sum = payable.reduce((a, b) => a + b, 0);
+  let given = 0;
+  return items.map((e, i) => {
+    const last = i === items.length - 1;
+    const share = sum <= 0 ? (last ? saleTotal : 0) : last ? saleTotal - given : Math.round((saleTotal * payable[i]) / sum);
+    given += share;
+    return {
+      rule: payNowRuleFor(products.find((p) => p.id === e.productId), settings),
+      total: Math.max(0, share),
+      later: itemIsLater(e),
+    };
+  });
 }

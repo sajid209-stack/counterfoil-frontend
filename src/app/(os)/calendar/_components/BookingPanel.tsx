@@ -4,13 +4,14 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "re
 import { Check, Clock3, Minus, Plus, Search, Ticket, TriangleAlert, UserRound, Wallet, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import { Button, Checkbox, DateField, Notice, SegmentedControl, Select, controlClass, controlShellClass } from "@/components/ui";
+import { AffixInput, Button, Checkbox, DateField, Notice, SegmentedControl, Select, controlClass, controlShellClass } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { useEnumLabels } from "@/lib/labels";
 import { formatClock, formatClockMin, formatClockRange, formatMoney, formatPriceShort } from "@/lib/format";
 import {
   canTakeNonCash,
   checkout,
+  getPayNowSettings,
   freeGuides,
   peekBookings,
   listCustomerRows,
@@ -35,7 +36,10 @@ import {
   resolveDraft,
   type Draft,
 } from "@/lib/sale/selection";
-import { itemBalance, itemSeats, itemSlotISO, priceSale, type SaleItem } from "@/lib/sale/saleMath";
+import { itemSeats, itemSlotISO, priceSale, salePayNowLines, type SaleItem } from "@/lib/sale/saleMath";
+import { payNowChoices } from "@/lib/payNow";
+import { amountText, checkCustomAmount } from "@/app/(go)/pos/CheckoutParts";
+import { currencySymbol } from "@/lib/region";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { slotISO, toMinutes, toTime } from "@/lib/schedule";
 import {
@@ -78,7 +82,7 @@ export interface BookingRequest {
   anchor: DOMRect | null;
 }
 
-type Pay = "later" | "deposit" | "full";
+type Pay = "later" | "minimum" | "custom" | "full";
 type Guest = { id: string | null; name: string; phone: string | null };
 
 /** What a panel closed by a click elsewhere hands to the next one. */
@@ -87,6 +91,8 @@ export interface Carry {
   query: string;
   phone: string;
   pay: Pay;
+  /** What was typed in the other-amount field. */
+  custom?: string;
 }
 
 type T = (key: string, values?: Record<string, string | number>) => string;
@@ -479,10 +485,11 @@ function Panel({
       : (resolved?.items ?? []).map((i) => ({ ...i, partySize: party ?? partyMin }));
 
   const totals = priceSale(items, { products, operator });
-  const balanceAtArrival = items.reduce((s, i) => s + itemBalance(i, products), 0);
-  /* The same arithmetic the till uses: the deposit policy says what is held
-     back until arrival, and what is due now is the rest of the total. */
-  const depositNow = Math.max(0, totals.total - balanceAtArrival);
+  /* What may be paid now is the booking's own rule (Settings, Payment
+     choices), read by the same `payNowChoices` the tills use: Full always,
+     Minimum and an any-amount field where the rule offers them. */
+  const payNowQ = useApiQuery(() => getPayNowSettings(), []);
+  const choices = payNowChoices(salePayNowLines(items, products, payNowQ.data, totals.total));
 
   // ── the block on the grid ────────────────────────────────────────────────
   /* What the grid draws for this booking, recomputed from the same choices
@@ -566,10 +573,13 @@ function Panel({
   const [guest, setGuest] = useState<Guest | null>(carry?.guest ?? null);
   const [query, setQuery] = useState(carry?.query ?? "");
   const [phone, setPhone] = useState(carry?.phone ?? "");
-  const [payPick, setPay] = useState<Pay>(carry?.pay ?? "later");
-  const payOptions: Pay[] = ["later", ...(balanceAtArrival > 0 ? (["deposit"] as const) : []), "full"];
-  // A deposit carried over to a booking that takes none is paying later.
-  const pay: Pay = payOptions.includes(payPick) ? payPick : "later";
+  const [payPick, setPay] = useState<Pay>(carry?.pay ?? "full");
+  const [customText, setCustomText] = useState(carry?.custom ?? "");
+  const payOptions: Pay[] = ["full", ...(choices.minimum != null ? (["minimum"] as const) : []), ...(choices.customMin != null ? (["custom"] as const) : []), "later"];
+  // A choice carried over to a booking that does not offer it is paid in full.
+  const pay: Pay = payOptions.includes(payPick) ? payPick : "full";
+  const customCheck = checkCustomAmount(customText, choices.customMin ?? totals.total, totals.total);
+  const tpay = useTranslations("pos");
   const methods = useMemo<TillMethod[]>(() => tillMethods(canTakeNonCash()), []);
   const [method, setMethod] = useState<TillMethod>(methods[0] ?? "cash");
   const [busy, setBusy] = useState(false);
@@ -596,7 +606,9 @@ function Panel({
   const holdQtyNow = Math.min(Math.max(1, holdQty), Math.max(1, holdMax));
 
   const guestName = guest?.name ?? query.trim();
-  const payNow = pay === "later" ? 0 : pay === "deposit" ? depositNow : totals.total;
+  const payNow = pay === "later" ? 0 : pay === "minimum" ? (choices.minimum ?? totals.total) : pay === "custom" ? (customCheck.amount ?? totals.total) : totals.total;
+  const customPending = pay === "custom" && customCheck.amount == null;
+  const customRange = { min: formatMoney(choices.customMin ?? totals.total, operator?.currency), max: formatMoney(totals.total, operator?.currency) };
 
   const missing: "what" | "tickets" | "more" | "room" | "name" | null = !chosen
     ? "what"
@@ -611,7 +623,7 @@ function Panel({
           : null;
 
   const carryNow = (): Carry | null =>
-    guest || query.trim() || phone.trim() || pay !== "later" ? { guest, query, phone, pay } : null;
+    guest || query.trim() || phone.trim() || pay !== "full" ? { guest, query, phone, pay, custom: customText } : null;
 
   const book = async () => {
     if (busy) return;
@@ -625,6 +637,10 @@ function Panel({
         setListOpen(true);
         requestAnimationFrame(() => listRef.current?.querySelector<HTMLElement>('[role="radio"]')?.focus());
       } else detailsRef.current?.querySelector<HTMLElement>("button:not(:disabled), select")?.focus();
+      return;
+    }
+    if (customPending) {
+      setTried(true);
       return;
     }
     setBusy(true);
@@ -1320,17 +1336,74 @@ function Panel({
               <h3 id={`${titleId}-pay`} className="sr-only">
                 {t("book.payment")}
               </h3>
-              <SegmentedControl
-                aria-labelledby={`${titleId}-pay`}
-                size="sm"
-                fullWidth
-                value={pay}
-                onChange={(p) => setPay(p as Pay)}
-                options={payOptions.map((p) => ({
-                  value: p,
-                  label: t(p === "later" ? "book.payLater" : p === "deposit" ? "book.payDeposit" : "book.payFull"),
-                }))}
-              />
+              {(() => {
+                const label = (p: Pay) => t(p === "later" ? "book.payLater" : p === "minimum" ? "book.payMinimum" : p === "custom" ? "book.payCustom" : "book.payFull");
+                const choose = (p: string) => {
+                  if (p === "custom" && pay !== "custom") setCustomText(amountText(payNow));
+                  setPay(p as Pay);
+                };
+                /* Two choices fit side by side; four long ones do not in a
+                   420px panel, so a booking that offers part payment gets a
+                   dropdown that also states each choice's amount. */
+                return payOptions.length <= 2 ? (
+                  <SegmentedControl
+                    aria-labelledby={`${titleId}-pay`}
+                    size="sm"
+                    fullWidth
+                    value={pay}
+                    onChange={choose}
+                    options={payOptions.map((p) => ({ value: p, label: label(p) }))}
+                  />
+                ) : (
+                  <Select
+                    aria-labelledby={`${titleId}-pay`}
+                    value={pay}
+                    onChange={choose}
+                    options={payOptions.map((p) => ({
+                      value: p,
+                      label: label(p),
+                      trail:
+                        p === "full" ? formatMoney(totals.total, cur)
+                        : p === "minimum" ? formatMoney(choices.minimum ?? totals.total, cur)
+                        : p === "custom" ? tpay("pay.customSub")
+                        : formatMoney(0, cur),
+                    }))}
+                  />
+                );
+              })()}
+              {pay === "custom" && (
+                <div className="mt-tight">
+                  <label className="sr-only" htmlFor={`${titleId}-custom`}>
+                    {tpay("pay.customLabel")}
+                  </label>
+                  <AffixInput
+                    id={`${titleId}-custom`}
+                    autoFocus
+                    onFocus={(e) => e.currentTarget.select()}
+                    inputMode="decimal"
+                    autoComplete="off"
+                    prefix={currencySymbol(cur)}
+                    value={customText}
+                    onChange={(e) => setCustomText(e.target.value)}
+                    invalid={customPending && (tried || !!customText.trim())}
+                    aria-describedby={`${titleId}-custom-help`}
+                    inputClassName="tabular-nums"
+                  />
+                  <p
+                    id={`${titleId}-custom-help`}
+                    role={customPending && (tried || !!customText.trim()) ? "alert" : undefined}
+                    className={cn("mt-inline text-xs", customPending && (tried || !!customText.trim()) ? "text-danger" : "text-muted")}
+                  >
+                    {customCheck.error === "low"
+                      ? tpay("pay.customLow", customRange)
+                      : customCheck.error === "high"
+                        ? tpay("pay.customHigh", customRange)
+                        : customCheck.error === "empty" && customText.trim()
+                          ? tpay("pay.customNotAmount")
+                          : tpay("pay.customRange", customRange)}
+                  </p>
+                </div>
+              )}
               {pay !== "later" && methods.length > 1 && (
                 <label className="mt-tight block">
                   <span className="sr-only">{t("book.method")}</span>
@@ -1346,8 +1419,8 @@ function Panel({
               <p className="mt-tight text-xs text-muted">
                 {pay === "later"
                   ? t("book.payLaterNote")
-                  : pay === "deposit"
-                    ? t("book.payDepositNote", { amount: formatMoney(Math.max(0, totals.total - depositNow), cur) })
+                  : pay === "minimum" || pay === "custom"
+                    ? t("book.payPartNote", { amount: formatMoney(Math.max(0, totals.total - payNow), cur) })
                     : t("book.payFullNote")}
               </p>
             </section>
@@ -1390,7 +1463,7 @@ function Panel({
                     totals.tax > 0
                       ? t("book.plusTax", { net: formatMoney(totals.total - totals.tax, cur), tax: formatMoney(totals.tax, cur) })
                       : null,
-                    pay === "deposit" ? t("book.nowShort", { amount: formatMoney(payNow, cur) }) : null,
+                    (pay === "minimum" || pay === "custom") && !customPending ? t("book.nowShort", { amount: formatMoney(payNow, cur) }) : null,
                   ]
                     .filter(Boolean)
                     .join(" · ")}

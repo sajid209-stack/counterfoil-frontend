@@ -5,7 +5,7 @@
    Components talk to `src/lib/api/*` only. Money is minor units (paisa) in BDT.
    ────────────────────────────────────────────────────────────────────────── */
 import type {
-  AdvancePolicy,
+  PayNowSettings,
   BookingRule,
   Counter,
   Customer,
@@ -78,12 +78,11 @@ export const paymentAccounts: PaymentAccount[] = [
   },
 ];
 
-/** The common Bangladeshi shape: the counter takes an advance (most bookings
- *  arrive by phone with a bKash transfer), and will accept as little as a
- *  quarter. Online is stricter here so the two channels visibly differ. */
-export const advancePolicy: AdvancePolicy = {
-  counter: { enabled: true, minKind: "percent", minValue: 25 },
-  online: { enabled: true, minKind: "percent", minValue: 50 },
+/** The common Bangladeshi shape: most bookings arrive by phone with a bKash
+ *  transfer, so by default a booking for later can be paid in full, the
+ *  minimum (a quarter), or any amount above it. */
+export const payNowSettings: PayNowSettings = {
+  default: { options: "all", minKind: "percent", minValue: 25 },
 };
 
 export const taxConfig: TaxConfig = {
@@ -408,7 +407,7 @@ const bookingProducts: Product[] = [
     archivedAt: null,
     schedule: null,
     validityMode: "same_day",
-    policies: { salesWindowDays: 90, cutoffMinutes: 0, cancellation: "free_until", cancelHours: 24, cancelFeePct: 0, reschedule: "until", rescheduleHours: 24, reentry: "same_day", deposit: "full", depositPct: 0, partyMin: 1, partyMax: 20 },
+    policies: { salesWindowDays: 90, cutoffMinutes: 0, cancellation: "free_until", cancelHours: 24, cancelFeePct: 0, reschedule: "until", rescheduleHours: 24, reentry: "same_day", partyMin: 1, partyMax: 20 },
     createdAt: T,
     updatedAt: T,
   },
@@ -476,7 +475,7 @@ const bookingProducts: Product[] = [
     providerPremiums: { stf_karim: 50000 },
     providerDurations: { stf_nadia: [60, 90], stf_karim: [60, 90] },
     addOns: [{ id: "add_ms_oils", name: "Premium oils", price: 30000, perPerson: false, itemId: "inv_oils" }],
-    policies: { salesWindowDays: 60, cutoffMinutes: 60, cancellation: "fee", cancelHours: 12, cancelFeePct: 50, reschedule: "until", rescheduleHours: 12, reentry: "single", deposit: "percent", depositPct: 50, partyMin: 1, partyMax: 2, waiver: true },
+    payNow: { options: "full_min", minKind: "percent", minValue: 50 }, policies: { salesWindowDays: 60, cutoffMinutes: 60, cancellation: "fee", cancelHours: 12, cancelFeePct: 50, reschedule: "until", rescheduleHours: 12, reentry: "single", partyMin: 1, partyMax: 2, waiver: true },
     createdAt: T, updatedAt: T,
   },
   {

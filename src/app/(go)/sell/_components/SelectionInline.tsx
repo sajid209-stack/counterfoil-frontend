@@ -136,7 +136,6 @@ export function SelectionInline({
         labels={{
           today: t("date.today"),
           tomorrow: t("date.tomorrow"),
-          pick: t("date.more"),
           previousMonth: tc("previousMonth"),
           nextMonth: tc("nextMonth"),
         }}

@@ -18,7 +18,6 @@
     "groupOf": "{count} জনের দল",
     "paidWithPass": "{count}টি পাস দিয়ে দেওয়া",
     "lineDiscount": "−{pct}% ছাড়",
-    "depositNow": "এখন {pct}% অগ্রিম · আসার পর {balance}",
     "lineDiscountLabel": "এই আইটেমে ছাড়",
     "remove": "সরান",
     "customerAdd": "যোগ করুন",
@@ -69,7 +68,6 @@
     "total": "মোট",
     "dueNow": "এখন দেবে",
     "balanceAtArrival": "আসার পর দেবে",
-    "payInFull": "এখনই পুরো টাকা",
     "settleBooking": "বুকিংয়ের বাকি নিন",
     "sellMembership": "সদস্যপদ",
     "spendPoints": "পয়েন্ট ব্যবহার ({count})",
@@ -328,7 +326,6 @@
     "donationMin": "যত ইচ্ছা দিন · সর্বনিম্ন {amount}",
     "seatsCount": "{count}টি আসন",
     "premium": "{name} বাড়তি",
-    "depositNote": "অগ্রিম: <b>এখন {pct}%</b>, বাকিটা আসার পর।",
     "joinWaitlistFor": "{time}-এর অপেক্ষার তালিকা",
     "name": "নাম",
     "phone": "ফোন",
@@ -398,7 +395,11 @@
     "showEarlier": "আগের {count}টি সময় দেখান",
     "holdSlotBtn": "স্লট হোল্ড",
     "holdPlaceBtn": "জায়গা হোল্ড",
-    "ticketNoteFull": "{name}: {note}"
+    "ticketNoteFull": "{name}: {note}",
+    "payNoteMin": "পুরো টাকা, অথবা <b>এখন {min}</b> আর বাকিটা আসার দিন।",
+    "payNoteAll": "পুরো টাকা, <b>এখন {min}</b>, অথবা এর মাঝে যেকোনো পরিমাণ।",
+    "payNoteCustom": "পুরো টাকা, অথবা <b>এখন যেকোনো পরিমাণ</b> আর বাকিটা আসার দিন।",
+    "payNoteCustomFrom": "পুরো টাকা, অথবা <b>{min} থেকে যেকোনো পরিমাণ</b> এখন, বাকিটা আসার দিন।"
   },
   "settle": {
     "title": "বুকিংয়ের বাকি নিন",
@@ -699,11 +700,15 @@
     "button": "ধরা"
   },
   "dateTiles": {
-    "pickDay": "দিন বাছুন"
+    "pickDay": "তারিখ বাছুন"
   },
   "personSelect": {
     "anySub": "সময়মতো যিনি খালি থাকবেন",
     "search": "নাম খুঁজুন",
-    "empty": "এই নামে কেউ নেই"
+    "empty": "এই নামে কেউ নেই",
+    "anyPlace": "যেকোনো {noun}",
+    "anyPlaceSub": "আপনার সময়ে প্রথম খালি {noun}",
+    "searchPlace": "নাম দিয়ে খুঁজুন",
+    "emptyPlace": "এই নামে কিছু নেই"
   }
 }

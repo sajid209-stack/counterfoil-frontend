@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { DurationInput, FormField } from "@/components/ui";
 import type { ProductPolicies } from "@/lib/api";
@@ -7,7 +8,7 @@ import { useCatalogFormat } from "../../_lib/useCatalogFormat";
 
 /**
  * The rules a booking sells under: how far ahead, when sales stop, whether a
- * customer can cancel or change the date, leave and come back, pay part now,
+ * customer can cancel or change the date, leave and come back,
  * and whether a signed safety form is needed.
  *
  * Every choice is a question with plain answers, and the line under each
@@ -36,13 +37,11 @@ export function PoliciesField({ value, onChange }: { value: ProductPolicies; onC
   };
   const reentryAnswer = { single: t("reentrySingle"), same_day: t("reentrySameDay"), while_valid: t("reentryValid") };
   const reentryHelp = { single: t("reentrySingleHelp"), same_day: t("reentrySameDayHelp"), while_valid: t("reentryValidHelp") };
-  const payAnswer = { full: t("payFull"), percent: t("payPart") };
 
   const summary = [
     t("summaryCancel", { answer: cancelAnswer[value.cancellation] }),
     t("summaryChange", { answer: rescheduleAnswer[value.reschedule] }),
     t("summaryReentry", { answer: reentryAnswer[value.reentry] }),
-    t("summaryPay", { answer: payAnswer[value.deposit] }),
     value.waiver ? t("summaryForm") : null,
   ]
     .filter(Boolean)
@@ -145,27 +144,15 @@ export function PoliciesField({ value, onChange }: { value: ProductPolicies; onC
           ]}
           help={reentryHelp[value.reentry]}
         />
-        <FormField
-          label={t("payLabel")}
-          variant="select"
-          value={value.deposit}
-          onChange={(e) => set("deposit", e.target.value as ProductPolicies["deposit"])}
-          options={[
-            { value: "full", label: payAnswer.full },
-            { value: "percent", label: payAnswer.percent },
-          ]}
-          help={value.deposit === "percent" ? t("payPartHelp", { pct: value.depositPct }) : t("payFullHelp")}
-        />
-        {value.deposit === "percent" && (
-          <FormField
-            label={t("advancePct")}
-            variant="number"
-            placeholder="30"
-            value={String(value.depositPct)}
-            onChange={(e) => set("depositPct", num(e.target.value))}
-            help={t("advanceHelp")}
-          />
-        )}
+        <p className="text-sm leading-relaxed text-muted sm:col-span-2">
+          {t.rich("payNowNote", {
+            link: (chunks) => (
+              <Link href="/settings/payment-choices" className="font-medium text-fg underline underline-offset-2">
+                {chunks}
+              </Link>
+            ),
+          })}
+        </p>
       </Section>
 
       <Section title={t("section.group")} note={t("groupHelp", { min: value.partyMin, max: value.partyMax })}>

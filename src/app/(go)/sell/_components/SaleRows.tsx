@@ -77,7 +77,8 @@ export function SaleRows({
   /** Already in words. */
   couponError: string | null;
   payOptions: { id: "full" | "minimum"; label: string; amount: number }[];
-  custom: { text: string; onText: (text: string) => void; min: number; max: number; check: CustomCheck };
+  /** Omitted where no booking in the sale takes a typed amount. */
+  custom?: { text: string; onText: (text: string) => void; min: number; max: number; check: CustomCheck };
   payChoice: PayChoice;
   onPayChoice: (c: PayChoice) => void;
   dueNow: number;
@@ -149,8 +150,7 @@ export function SaleRows({
         />
       </GoCard>
 
-      {/* How much of it now. Only where the business takes part payment (or a
-          booking asks for a deposit), and only the choices that really differ. */}
+      {/* How much of it now. Only where a booking in the sale takes part payment, and only the choices that really differ. */}
       {payOptions.length > 0 && (
         <div className="flex flex-col gap-tight">
           <TileLabel>{tp("pay.howMuch")}</TileLabel>

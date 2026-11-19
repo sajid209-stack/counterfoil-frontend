@@ -61,8 +61,7 @@ const field = (id: string, name: string, noun = "Turf", nounPlural = "Turfs", pr
 
 const SLOT_POLICY = {
   salesWindowDays: 30, cutoffMinutes: 0, cancellation: "free_until" as const, cancelHours: 24, cancelFeePct: 0,
-  reschedule: "until" as const, rescheduleHours: 12, reentry: "single" as const, deposit: "full" as const, depositPct: 0,
-  partyMin: 1, partyMax: 22,
+  reschedule: "until" as const, rescheduleHours: 12, reentry: "single" as const, partyMin: 1, partyMax: 22,
 };
 const POOL_POLICY = { ...SLOT_POLICY, cancellation: "none" as const, cancelHours: 0, reschedule: "none" as const, rescheduleHours: 0, partyMax: 10 };
 

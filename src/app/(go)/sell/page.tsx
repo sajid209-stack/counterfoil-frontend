@@ -31,10 +31,9 @@ import { useApiQuery } from "@/lib/useApi";
 import { useActiveCounterNow } from "@/lib/activeCounter";
 import {
   tillMethods,
-  advanceMinimum,
   checkout,
   counterItems,
-  getAdvancePolicy,
+  getPayNowSettings,
   getManualDiscountPolicy,
   getOperator,
   inventoryItem,
@@ -76,7 +75,8 @@ import { SelectionInline } from "./_components/SelectionInline";
 import { Keypad } from "../_components/Keypad";
 import { usePrefs } from "@/lib/prefs";
 import { cn } from "@/lib/cn";
-import { itemBalance, itemSeats, itemSlotISO, itemTotal, priceSale, type SaleItem } from "@/lib/sale/saleMath";
+import { itemSeats, itemSlotISO, itemTotal, priceSale, salePayNowLines, type SaleItem } from "@/lib/sale/saleMath";
+import { partPaymentOffered, payNowChoices } from "@/lib/payNow";
 import { draftFrom, newDraft, patternOf, resolveDraft, type Draft } from "@/lib/sale/selection";
 
 /** A way of paying is recognised as an object, not a word: cash is a note, bKash
@@ -192,7 +192,7 @@ export default function SellPage() {
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
   const payAcctsQ = useApiQuery(() => listPaymentAccounts({ pageSize: 100 }), []);
   const policyQ = useApiQuery(() => getManualDiscountPolicy(), []);
-  const advanceQ = useApiQuery(() => getAdvancePolicy(), []);
+  const payNowQ = useApiQuery(() => getPayNowSettings(), []);
   const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
 
   /* The wall has two homes — a column on a tablet, a section of the scroll on
@@ -230,8 +230,8 @@ export default function SellPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedPromotion | null>(null);
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
-  const [advance, setAdvance] = useState<number | null>(null);
-  const [payInFull, setPayInFull] = useState(false);
+  /** Minimum is on; Full is the default and Custom is its own state. */
+  const [minimumOn, setMinimumOn] = useState(false);
   /** Custom: what the cashier typed, kept as typed; null while another choice is on. */
   const [customText, setCustomText] = useState<string | null>(null);
 
@@ -349,27 +349,21 @@ export default function SellPage() {
   const reasonNeeded = manualDiscount > 0 && !!policyQ.data?.requireReason && !discountReason.trim();
 
   /* ── Part payment ────────────────────────────────────────────────────────
-     A booking's DEPOSIT policy says what the booking requires; an ADVANCE says
-     what this customer actually handed over. Shown as Full · Minimum · Custom,
-     the same tiles as the cart till's payment step (CheckoutParts). */
-  const depositBalance = items.reduce((sum, e) => sum + itemBalance(e, products), 0);
-  const advanceRule = advanceQ.data?.counter;
-  const advanceAllowed = !!advanceRule?.enabled && items.length > 0 && totals.total > 0;
-  const advanceMin = advanceRule ? advanceMinimum(advanceRule, totals.total) : totals.total;
-
-  const partAllowed = totals.total > 0 && (advanceAllowed || depositBalance > 0);
-  const requiredNow = depositBalance > 0 ? totals.total - depositBalance : 0;
-  const minNow = advanceAllowed ? Math.max(advanceMin, requiredNow) : requiredNow;
-  const minShown = minNow > 0 && minNow < totals.total;
-  /* A typed amount runs from the minimum (one whole unit where there is none)
-     to the whole total. */
-  const customMin = minShown ? minNow : Math.min(100, totals.total);
-  const customOn = partAllowed && customText != null;
-  const customCheck = checkCustomAmount(customText ?? "", customMin, totals.total);
-  const advanceValid = advance != null && advance >= advanceMin && advance < totals.total;
+     What may be paid now is set per booking (Settings, Payment choices) and
+     read line by line by `payNowChoices`. Shown as Full · Minimum · Custom,
+     the same tiles as the cart till's payment step (CheckoutParts). Full is
+     where everything starts. */
+  const choices = payNowChoices(salePayNowLines(items, productsQ.data?.data ?? [], payNowQ.data, totals.total));
+  const partAllowed = totals.total > 0 && partPaymentOffered(choices);
+  const minShown = choices.minimum != null;
+  const minNow = choices.minimum ?? totals.total;
+  const customMin = choices.customMin;
+  const customOn = customMin != null && customText != null;
+  const customCheck = checkCustomAmount(customText ?? "", customMin ?? totals.total, totals.total);
+  const minimumChosen = minimumOn && minShown;
   const balance = customOn
     ? customCheck.amount != null ? totals.total - customCheck.amount : 0
-    : advanceValid ? totals.total - advance! : payInFull ? 0 : depositBalance;
+    : minimumChosen ? totals.total - minNow : 0;
   const dueNow = totals.total - balance;
   /* An unfinished Custom figure takes nothing: the field says what is wrong
      and the sale waits. */
@@ -381,7 +375,7 @@ export default function SellPage() {
         ...(minShown ? [{ id: "minimum" as const, label: tp("pay.minimum"), amount: minNow }] : []),
       ]
     : [];
-  const payChoice: PayChoice = customOn ? "custom" : advanceValid ? "minimum" : payInFull || depositBalance === 0 ? "full" : "minimum";
+  const payChoice: PayChoice = customOn ? "custom" : minimumChosen ? "minimum" : "full";
   const choosePay = (c: PayChoice) => {
     if (c === "custom") {
       /* Opens on the amount that was being taken, to edit rather than retype. */
@@ -389,13 +383,7 @@ export default function SellPage() {
       return;
     }
     setCustomText(null);
-    if (c === "full") {
-      setAdvance(null);
-      setPayInFull(true);
-    } else {
-      setPayInFull(false);
-      setAdvance(advanceAllowed && minNow >= advanceMin && minNow < totals.total ? minNow : null);
-    }
+    setMinimumOn(c === "minimum");
   };
 
   /** Seats already spoken for elsewhere in this sale, so a session cannot be
@@ -936,7 +924,7 @@ export default function SellPage() {
               payOptions={payOptions}
               payChoice={payChoice}
               onPayChoice={choosePay}
-              custom={{ text: customText ?? "", onText: setCustomText, min: customMin, max: totals.total, check: customCheck }}
+              custom={customMin != null ? { text: customText ?? "", onText: setCustomText, min: customMin, max: totals.total, check: customCheck } : undefined}
               dueNow={dueNow}
               balance={balance}
             />

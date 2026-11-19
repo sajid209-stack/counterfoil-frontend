@@ -19856,3 +19856,33 @@ pattern booking systems share (pay in full / pay the deposit / another amount):
   A row list marks the chosen entry with the tint instead of a tick.
 - **Fix:** Escape in a `Select` open inside a sheet closed the whole sheet, because the sheet
   captures Escape first. `useDialogBehaviour` now leaves Escape to an open dropdown.
+
+## Payment choices in Settings; date tile and lane dropdown (2026-11-19)
+
+- **Settings → Payment choices** (`/settings/payment-choices`) sets what a customer may pay now for a
+  booking they arrive for later. There are four options: Full only · Full or minimum · Full or any amount
+  · All three. The minimum is a percentage or a fixed amount.
+  - One business default (seed: All three, 25%).
+  - An override per booking, edited in a Modal on desktop and a Sheet on phones.
+  - Contract: `PayNowRule` / `PayNowSettings` / `Product.payNow` in types.ts, `getPayNowSettings` /
+    `updatePayNowSettings`.
+- **Replaced two older systems that answered the same question:**
+  - the Catalog's per-booking deposit (`policies.deposit/depositPct`, removed from the type and the seeds;
+    percent deposits became `payNow: full_min`);
+  - the Payments page's counter/online advance rule (`AdvancePolicy`). The online rule was never read.
+  - The Catalog policies tab and the Payments page now point to the new page.
+- **One calculation**, `lib/payNow.ts` `payNowChoices`, fed by `saleMath.salePayNowLines`. A sale mixes
+  bookings, so its choices are built line by line:
+  - a line not for later is paid in full;
+  - Minimum is offered when some line offers it;
+  - Custom is offered when some line offers any amount, with the summed floors (at least ৳1) as its floor.
+  - Read by the till, the Sell page, the classic till and the OS calendar's new-booking panel. The panel
+    uses a dropdown with amounts when there are more than two choices, because four long labels
+    overflowed its segmented control.
+  - The default choice is always Full (the old "deposit preselects Minimum" is gone). The till sheet
+    states the booking's rule once ("Pay in full, or 50% now and the rest on arrival").
+- **Till sheet:**
+  - The date row is Today · Tomorrow · a calendar tile with the icon above "Pick a date". On desktop the
+    icon sits inline. "More dates" is gone.
+  - Lanes and courts use the same dropdown row as Staff (`PersonSelect kind="place"`): "Any lane" first,
+    live state and rate per entry, out-of-service entries listed but greyed.

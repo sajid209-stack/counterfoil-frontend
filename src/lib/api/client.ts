@@ -21,7 +21,7 @@ import { setRegionCurrency } from "@/lib/region";
 import { rebaseSeed } from "@/lib/schedule";
 import type {
   PaymentMethod,
-  AdvancePolicy,
+  PayNowSettings,
   ApiError,
   ApiResult,
   ListParams,
@@ -177,11 +177,11 @@ function restoreFreshAccount(): void {
 }
 
 // Tax config is a singleton (per settings.v2 tax-config), not a collection.
-let advancePolicyState: AdvancePolicy = structuredClone(seed.advancePolicy);
-export const getAdvancePolicyState = (): AdvancePolicy => advancePolicyState;
-export function patchAdvancePolicyState(patch: Partial<AdvancePolicy>): AdvancePolicy {
-  advancePolicyState = { ...advancePolicyState, ...patch };
-  return advancePolicyState;
+let payNowState: PayNowSettings = structuredClone(seed.payNowSettings);
+export const getPayNowState = (): PayNowSettings => payNowState;
+export function patchPayNowState(patch: Partial<PayNowSettings>): PayNowSettings {
+  payNowState = { ...payNowState, ...patch };
+  return payNowState;
 }
 
 let taxConfigState: TaxConfig = structuredClone(seed.taxConfig);

@@ -18,7 +18,6 @@
     "groupOf": "Group of {count}",
     "paidWithPass": "{count} paid with pass",
     "lineDiscount": "−{pct}% off",
-    "depositNow": "{pct}% advance now · {balance} on arrival",
     "lineDiscountLabel": "Item discount",
     "remove": "Remove",
     "customerAdd": "Add",
@@ -69,7 +68,6 @@
     "total": "Total",
     "dueNow": "Pay now",
     "balanceAtArrival": "Pay on arrival",
-    "payInFull": "Pay in full now",
     "settleBooking": "Take booking payment",
     "sellMembership": "Membership",
     "spendPoints": "Use points ({count})",
@@ -328,7 +326,6 @@
     "donationMin": "Pay what you want · min {amount}",
     "seatsCount": "{count} seats",
     "premium": "{name} extra",
-    "depositNote": "Advance: <b>{pct}% now</b>, rest on arrival.",
     "joinWaitlistFor": "Waitlist for {time}",
     "name": "Name",
     "phone": "Phone",
@@ -398,7 +395,11 @@
     "showEarlier": "Show {count, plural, one {# earlier time} other {# earlier times}}",
     "holdSlotBtn": "Hold slot",
     "holdPlaceBtn": "Hold place",
-    "ticketNoteFull": "{name}: {note}"
+    "ticketNoteFull": "{name}: {note}",
+    "payNoteMin": "Pay in full, or <b>{min} now</b> and the rest on arrival.",
+    "payNoteAll": "Pay in full, <b>{min} now</b>, or any amount in between.",
+    "payNoteCustom": "Pay in full, or <b>any amount now</b> and the rest on arrival.",
+    "payNoteCustomFrom": "Pay in full, or <b>any amount from {min}</b> now and the rest on arrival."
   },
   "settle": {
     "title": "Take booking payment",
@@ -699,11 +700,15 @@
     "button": "Held"
   },
   "dateTiles": {
-    "pickDay": "Pick a day"
+    "pickDay": "Pick a date"
   },
   "personSelect": {
     "anySub": "Whoever is free at the time",
     "search": "Find a name",
-    "empty": "No one by that name"
+    "empty": "No one by that name",
+    "anyPlace": "Any {noun}",
+    "anyPlaceSub": "The first free {noun} at your time",
+    "searchPlace": "Find by name",
+    "emptyPlace": "Nothing by that name"
   }
 }

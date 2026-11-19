@@ -8,13 +8,15 @@ import { useEnumLabels } from "@/lib/labels";
 import { Banknote, Check, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, ChevronRight, CreditCard, Pause, QrCode, Send, Percent, Plus, Search, Ticket, Trash2, Wallet, X, type LucideIcon } from "lucide-react";
 import { ActionMenu, BlockedNotice, Button, DiscountInput, FormField, Modal, Notice, SkeletonText, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { counterEvents, counterItems, eventDays, inventoryItem, inventoryLineId, levelOf, peekTicketCodeSettings, tillMethods, advanceMinimum, checkout, getAdvancePolicy, earnPoints, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isOpenOn, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, placeHold, releaseHold, activeHolds, HOLDS_EVENT, CHECKOUT_HELD_FOR, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type MembershipTier, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord, type HoldView } from "@/lib/api";
+import { counterEvents, counterItems, eventDays, inventoryItem, inventoryLineId, levelOf, peekTicketCodeSettings, tillMethods, checkout, getPayNowSettings, earnPoints, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isOpenOn, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, placeHold, releaseHold, activeHolds, HOLDS_EVENT, CHECKOUT_HELD_FOR, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type MembershipTier, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord, type HoldView } from "@/lib/api";
 import { eventFromPrice as sharedEventFromPrice } from "@/lib/api/eventModel";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_TILL_ID } from "@/lib/session";
 import { useActiveCounterNow } from "@/lib/activeCounter";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, isFlexibleResource, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { flexDurations } from "@/lib/sale/selection";
+import { salePayNowLines } from "@/lib/sale/saleMath";
+import { partPaymentOffered, payNowChoices } from "@/lib/payNow";
 import { resolveProductPrice } from "@/lib/pricing";
 import { productDurationPrice } from "@/lib/duration";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
@@ -139,7 +141,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
   const payAcctsQ = useApiQuery(() => listPaymentAccounts({ pageSize: 100 }), []);
   const policyQ = useApiQuery(() => getManualDiscountPolicy(), []);
-  const advanceQ = useApiQuery(() => getAdvancePolicy(), []);
+  const payNowQ = useApiQuery(() => getPayNowSettings(), []);
   // Non-cash tender needs a live PSP account (charges enabled). Cash always works.
   const nonCashOk = (payAcctsQ.data?.data ?? []).some((a) => a.status === "active" && a.chargesEnabled);
   // Which buttons, and in what order, is the business's call — Settings → Payments.
@@ -162,7 +164,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const [sheet, setSheet] = useState<{ product: Product; initial: CartEntry | null; preset?: { date?: string; time?: string; resourceId?: string } } | null>(null);
   const [method, setMethod] = useState<PaymentMethod>("cash");
   /** How much of the total is paid now, chosen in the payment step. null is
-   *  the default: all of it — or the booking's own advance, where it needs one.
+   *  the default: all of it.
    *  Held as the CHOICE rather than an amount, so Minimum follows the total
    *  when a discount or a code moves it. Custom is the one choice that IS an
    *  amount: what the cashier typed, kept as typed. */
@@ -985,47 +987,21 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     }
   };
 
-  // ── Deposits: a percent-deposit policy holds part of the entry back until
-  //    arrival, so a booking that needs one is not paid in full by default.
-  const entryBalance = (e: CartEntry) => {
-    const pol = productById(e.productId)?.policies;
-    if (pol?.deposit !== "percent" || pol.depositPct <= 0) return 0;
-    const payable = entryTotal(e);
-    return Math.max(0, payable - Math.round((payable * pol.depositPct) / 100));
-  };
-  const depositBalance = cart.reduce((s, e) => s + entryBalance(e), 0);
-
   /* ── How much is paid now ──────────────────────────────────────────────────
-     A booking taken over the phone is usually held on a bKash transfer of
-     part of the money, so the payment step offers Full, Minimum and Custom —
-     and only where the business allows paying part now: an advance rule at
-     the counter, or a booking whose own policy asks for a deposit.
-
-     Minimum is what the business requires: the advance rule's least, or the
-     booking's deposit if that asks for more. Custom is any amount the cashier
-     types from that minimum (or ৳1 where there is none) up to the whole total.
-     Full is where everything starts, unless a booking needs a deposit, in
-     which case Minimum is. */
-  const advanceRule = advanceQ.data?.counter;
-  const advanceAllowed = !!advanceRule?.enabled && cart.length > 0 && total > 0;
-  const advanceMin = advanceRule ? advanceMinimum(advanceRule, total) : total;
-  /* Paying part now and the rest at arrival only means something when the
-     guest arrives LATER: a booking dated after today, or later today than the
-     demo clock. Shop items, custom amounts, event tickets, undated entry
-     tickets and anything starting now never offer it. */
-  const hasLater = cart.some((e) => !!e.slotDate && (e.slotDate > TODAY || (e.slotDate === TODAY && !!e.slotTime && toMinutes(e.slotTime) > DEMO_NOW_MINUTES)));
-  const partAllowed = total > 0 && hasLater && (advanceAllowed || depositBalance > 0);
-  const requiredNow = depositBalance > 0 ? total - depositBalance : 0;
-  const minNow = advanceAllowed ? Math.max(advanceMin, requiredNow) : requiredNow;
-  const minShown = partAllowed && minNow > 0 && minNow < total;
-  /* The least a typed amount may be: the minimum where there is one, else one
-     whole unit — a part payment of nothing is not a payment. */
-  const customMin = minShown ? minNow : Math.min(100, total);
-  const customCheck = checkCustomAmount(customText, customMin, total);
+     What a customer may pay now is set per booking (Settings, Payment
+     choices): Full only, Full or Minimum, Full or Any amount, or all three.
+     A sale mixes bookings, so `payNowChoices` builds the sale's choices line
+     by line; a line that is not for later is always paid in full. Full is
+     where everything starts. */
+  const choices = payNowChoices(salePayNowLines(cart, productsQ.data?.data ?? [], payNowQ.data, total));
+  const partAllowed = total > 0 && partPaymentOffered(choices);
+  const minShown = choices.minimum != null;
+  const minNow = choices.minimum ?? total;
+  const customMin = choices.customMin;
+  const customCheck = checkCustomAmount(customText, customMin ?? total, total);
   const choice: PayChoice =
-    payChoice === "custom" && partAllowed ? "custom"
+    payChoice === "custom" && customMin != null ? "custom"
     : payChoice === "minimum" && minShown ? "minimum"
-    : payChoice == null && depositBalance > 0 && minShown ? "minimum"
     : "full";
   /* An unfinished Custom figure charges nothing: the field says what is wrong
      and Complete sale waits (`customPending`). Until then the sums show the
@@ -1337,7 +1313,6 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         ) : (e.lineDiscountPct ?? 0) > 0 ? (
           <span className="block text-sm text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</span>
         ) : null}
-        {entryBalance(e) > 0 && <span className="block text-sm text-muted">{t("cart.depositNow", { pct: prod?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</span>}
       </>
     );
     return (
@@ -1635,7 +1610,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                       value={choice}
                       onChange={choosePay}
                       currency={currency}
-                      custom={{ text: customText, onText: setCustomText, min: customMin, max: total, check: customCheck }}
+                      custom={customMin != null ? { text: customText, onText: setCustomText, min: customMin, max: total, check: customCheck } : undefined}
                     />
                     {balance > 0 && (
                       <p className="text-md font-medium text-fg rail:text-sm rail:font-normal rail:text-muted" data-pay-part>
@@ -2209,7 +2184,6 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                         ) : (e.lineDiscountPct ?? 0) > 0 ? (
                           <div className="text-sm text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>
                         ) : null}
-                        {entryBalance(e) > 0 && <div className="text-sm text-muted">{t("cart.depositNow", { pct: prod?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
                       </div>
                     </div>
                     {/* What can be done to the line: a stepper where the quantity

@@ -271,8 +271,6 @@ export interface ProductPolicies {
   reschedule: "none" | "until";
   rescheduleHours: number;
   reentry: "single" | "same_day" | "while_valid";
-  deposit: "full" | "percent";
-  depositPct: number;
   partyMin: number;
   partyMax: number;
   waiver?: boolean; // requires waiver acknowledgement at sale
@@ -374,6 +372,9 @@ export interface Product {
   taxClass?: TaxClass; // which tax rate applies (default standard)
   addOns?: AddOn[]; // optional extras offered at POS
   policies?: ProductPolicies; // operational policies (sales window, cancellation…)
+  /** What can be paid now for this booking (Settings → Payment choices).
+   *  Absent = the business default (PayNowSettings.default). */
+  payNow?: PayNowRule;
   layoutId?: ID | null; // BT-07 seated: the seat layout this product sells (M1)
   /** BT-15: what makes an item an event — when it happens, over which days and
    *  where. Absent on every other kind. See docs/catalog.md. */
@@ -1059,36 +1060,33 @@ export interface AccountLink {
 
 // ── settings.v2 · TaxConfig — tenant/location tax mode + rate ────────────────
 export type TaxMode = "inclusive" | "exclusive";
-/* ── advance payments ────────────────────────────────────────────────────────
-   Taking part of the money up front is a business decision, not a property of
-   a product: most bookings arrive by phone with a bKash advance, and the
-   operator decides whether that is allowed, and how little they will accept.
+/* ── payment choices (what can be paid now) ───────────────────────────────────
+   Which amounts a customer may pay when they book. Set in Settings → Payment
+   choices: one business default, and an override per booking. It replaces both
+   the booking's old "deposit" policy (Catalog) and the business advance rule
+   (Payments), which answered the same question in two places.
 
-   It is held PER CHANNEL because the answer genuinely differs — plenty of
-   operators will take an advance online, where the alternative is losing the
-   booking, but insist the counter collects in full. */
-export interface AdvanceRule {
-  enabled: boolean;
-  /** The least that may be collected up front. */
+   Full is always offered: paying everything is never refused. The operator
+   chooses which part payments sit beside it:
+     full         Full only
+     full_min     Full, or the minimum
+     full_custom  Full, or any amount from the minimum (৳1 where none is set)
+     all          Full, the minimum, or any amount
+   Part payment only applies to a booking the guest arrives for LATER; a sale
+   for now is always taken in full (see lib/payNow). */
+export type PayNowOptions = "full" | "full_min" | "full_custom" | "all";
+export interface PayNowRule {
+  options: PayNowOptions;
+  /** The least that may be paid now: a percent of the booking, or an amount. */
   minKind: "percent" | "amount";
-  /** Percent 0–100 when minKind is "percent", otherwise a Minor amount. */
+  /** Percent 0–100 when minKind is "percent", otherwise a Minor amount. 0 with
+   *  full_custom means no floor beyond one whole unit. */
   minValue: number;
 }
-export interface AdvancePolicy {
-  counter: AdvanceRule;
-  online: AdvanceRule;
+export interface PayNowSettings {
+  /** What a booking with no rule of its own uses. */
+  default: PayNowRule;
 }
-
-/** The least payable up front under a rule, for a given order total. Returns
- *  the full total when advances are off, so callers can compare without
- *  branching. */
-export const advanceMinimum = (rule: AdvanceRule, total: Minor): Minor => {
-  if (!rule.enabled) return total;
-  const min = rule.minKind === "percent"
-    ? Math.round((total * rule.minValue) / 100)
-    : rule.minValue;
-  return Math.max(0, Math.min(total, min));
-};
 
 export interface TaxConfig {
   mode: TaxMode;

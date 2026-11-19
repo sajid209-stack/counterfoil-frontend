@@ -11,27 +11,6 @@
     "example": "Off by {near}: counts as correct. Off by {far}: the cashier gives a reason.",
     "invalid": "Enter an amount, like 2000, or 0."
   },
-  "advance": {
-    "title": "Advance payments",
-    "description": "Can customers pay part now and the rest later? Set it for the counter and for online separately.",
-    "counter": "At the counter",
-    "counterHelp": "When a cashier takes a phone booking or a walk-in.",
-    "online": "Online",
-    "onlineHelp": "When customers book on your web page.",
-    "minKind": "Set the least amount as",
-    "percentOfTotal": "Part of the total (%)",
-    "fixedAmount": "A fixed amount (৳)",
-    "minPercent": "Least amount",
-    "minAmount": "Least amount",
-    "minHelp": "A cashier can always take more, up to the full amount.",
-    "saved": "Advance payment rules saved.",
-    "least": "Least amount paid now",
-    "example": "On a {total} booking, at least {min} is paid now. The rest is paid later.",
-    "invalidPercent": "Enter a whole number from 1 to 100.",
-    "invalidAmount": "Enter an amount more than 0, like 500.",
-    "policiesNote": "Fees for cancelling or not coming are set on each thing you sell, under Policies.",
-    "policiesLink": "Go to What you sell"
-  },
   "methods": {
     "title": "Ways to pay at the counter",
     "description": "The payment buttons a cashier sees, in this order. Changes reach every counter at once.",
@@ -78,5 +57,77 @@
     "next": "Next payout: {date}.",
     "note": "Your bank may take a working day or more to show it."
   },
-  "saved": "Payment settings saved"
+  "saved": "Payment settings saved",
+  "payNow": {
+    "title": "Payment choices",
+    "description": "What customers can pay when they book for a later date: the full amount, a minimum, or any amount.",
+    "default": {
+      "title": "Default for every booking",
+      "description": "Used by every booking that does not have its own rule."
+    },
+    "group": "What customers can pay now",
+    "options": {
+      "full": {
+        "title": "Full only",
+        "desc": "The whole amount when they book."
+      },
+      "full_min": {
+        "title": "Full or minimum",
+        "desc": "They can pay the minimum now and the rest on arrival."
+      },
+      "full_custom": {
+        "title": "Full or any amount",
+        "desc": "They can pay any amount from the minimum up."
+      },
+      "all": {
+        "title": "All three",
+        "desc": "Full, the minimum, or any amount in between."
+      }
+    },
+    "short": {
+      "full": "Full only",
+      "full_min": "Full or minimum",
+      "full_custom": "Full or any amount",
+      "all": "Full, minimum or any amount"
+    },
+    "minKind": "Set the minimum as",
+    "percentOfTotal": "Percent of the booking",
+    "fixedAmount": "A fixed amount",
+    "leastMin": "Minimum they can pay",
+    "leastCustom": "Least they can pay",
+    "helpMin": "Taken now when they choose the minimum.",
+    "helpCustom": "0 means any amount from {symbol}1.",
+    "invalidPercent": "Enter a whole number from 1 to 100.",
+    "invalidPercentZero": "Enter a whole number from 0 to 100.",
+    "invalidAmount": "Enter an amount more than 0, like 500.",
+    "invalidAmountZero": "Enter an amount, like 500, or 0.",
+    "example": "On a {total} booking: {choices}",
+    "exFull": "Full {amount}",
+    "exMin": "Minimum {amount}",
+    "exAny": "Any amount from {amount}",
+    "saved": "Payment choices saved.",
+    "withMin": "{answer} ({min})",
+    "defaultAnswer": "Default · {answer}",
+    "ownAnswer": "Own rule · {answer}",
+    "perBooking": {
+      "title": "Per booking",
+      "description": "A booking can follow the default or have its own rule.",
+      "search": "Search bookings",
+      "empty": "No bookings to set yet.",
+      "noMatch": "No bookings match your search.",
+      "edit": "Change payment choices for {name}"
+    },
+    "editor": {
+      "title": "Payment choices for {name}",
+      "useDefault": "Use the business default",
+      "useDefaultHelp": "Currently: {answer}",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saved": "{name} saved."
+    },
+    "link": {
+      "title": "Payment choices",
+      "desc": "Set what customers can pay now"
+    }
+  }
 }

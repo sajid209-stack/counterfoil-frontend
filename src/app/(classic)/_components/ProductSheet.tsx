@@ -383,7 +383,6 @@ export function ProductSheet({
     ? (providerId ? providers.find((p) => p.id === providerId) : freeProvidersAt(slotTime)[0])
     : undefined;
 
-  const depositPct = product.policies?.deposit === "percent" ? product.policies.depositPct : 0;
 
   // Capacity under a date chip: daily-capped remaining, or seats across the
   // day's departures. Ember when ≤20% remains.
@@ -1213,11 +1212,6 @@ export function ProductSheet({
                 </div>
               );
             })()}
-            {depositPct > 0 && (
-              <p className="mt-section rounded-sm border border-line bg-card p-comfortable text-sm text-muted">
-                {t.rich("sheet.depositNote", { pct: depositPct, b: (chunks) => <span className="font-medium text-fg">{chunks}</span> })}
-              </p>
-            )}
             <SheetFooter
               disabled={hasLayout ? selectedSeats.length === 0 || !waiverOk : !canAddTiered}
               // Offered only once the sheet has something to sell — a Buy now

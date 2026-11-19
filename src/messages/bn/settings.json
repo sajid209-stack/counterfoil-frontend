@@ -834,6 +834,11 @@
         "desc": "গ্রাহক কীভাবে টাকা দেন, পেআউট আর ক্যাশ ড্রয়ার।",
         "keywords": "বিকাশ কার্ড কিউআর নগদ ক্যাশ পেমেন্ট পেআউট অগ্রিম শুরুর নগদ ড্রয়ার অনুমোদিত পার্থক্য bkash sslcommerz payment payouts advance float drawer"
       },
+      "paymentChoices": {
+        "title": "পেমেন্টের বিকল্প",
+        "desc": "বুক করার সময় গ্রাহক কত দিতে পারবেন।",
+        "keywords": "এখন পেমেন্ট অগ্রিম ন্যূনতম আংশিক পুরোটা যেকোনো পরিমাণ deposit advance minimum part payment"
+      },
       "tax": {
         "title": "কর",
         "desc": "প্রতিটি বিক্রিতে যে কর যোগ হয়।",
