@@ -50,3 +50,4 @@ export * from "./rescheduleRequests";
 export * from "./sequences";
 // reports.ts has an older, series-based AnalyticsQuery; the page contract wins here.
 export type { AnalyticsQuery } from "./analytics";
+export * from "./catalogHistory";

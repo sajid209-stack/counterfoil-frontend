@@ -33,6 +33,7 @@ import {
   type ProductCtx,
 } from "../booking/ProductForm";
 import { endsAtOf } from "../event/eventContent";
+import { HistoryTab } from "../history/HistoryTab";
 import { Overview } from "./Overview";
 import { ticketSales } from "./overviewData";
 import { PageTab, WhereTab, whereProblem } from "./parts";
@@ -49,7 +50,7 @@ export interface RecordEnv {
   currency: string;
 }
 
-const TABS: TabId[] = ["overview", "details", "when", "prices", "where", "page", "rules", "support"];
+const TABS: TabId[] = ["overview", "details", "when", "prices", "where", "page", "rules", "support", "history"];
 
 /**
  * THE record page: one design for every booking (docs/catalog.md §10.4).
@@ -263,6 +264,23 @@ export function BookingRecord({ product, env, onChanged }: { product: Product; e
     },
     { id: "rules", label: ti("tab.rules"), node: card(<RulesTab ctx={ctx} />) },
     { id: "support", label: ti("tab.support"), node: card(<SupportRows code={product.bookingType} id={product.id} createdAt={product.createdAt} updatedAt={product.updatedAt} />) },
+    {
+      id: "history",
+      label: ti("tab.history"),
+      node: (
+        <HistoryTab
+          product={product}
+          currency={env.currency}
+          onOpenTab={setTab}
+          onChanged={(next) => {
+            /* An undo saved the booking: the form follows it, not the old draft. */
+            setState(fromProduct(next, summaryOf));
+            setErrors({});
+            onChanged(next);
+          }}
+        />
+      ),
+    },
   ];
 
   return (

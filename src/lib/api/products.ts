@@ -1,3 +1,4 @@
+import { recordProductChange } from "./catalogHistory";
 import { bundleProductLists, createResource, isCreatedInThisBrowser, slugFromName, fail, validationError } from "./client";
 import type {
   ApiResult,
@@ -86,11 +87,23 @@ export function updateProduct(
   const { tiers, ...rest } = patch;
   const next: Partial<Product> = { ...rest };
   if (tiers) next.tiers = assembleTiers(tiers);
-  return resource.update(id, next);
+  const before = resource.peek().find((p) => p.id === id);
+  const snapshot = before ? structuredClone(before) : null;
+  return resource.update(id, next).then((res) => {
+    // Every save is one history revision (docs/catalog-history.md).
+    if (res.ok && snapshot) recordProductChange(snapshot, res.data);
+    return res;
+  });
 }
 
-export const archiveProduct = (id: string): Promise<ApiResult<Product>> =>
-  resource.archive(id);
+export function archiveProduct(id: string): Promise<ApiResult<Product>> {
+  const before = resource.peek().find((p) => p.id === id);
+  const snapshot = before ? structuredClone(before) : null;
+  return resource.archive(id).then((res) => {
+    if (res.ok && snapshot) recordProductChange(snapshot, res.data);
+    return res;
+  });
+}
 
 export const peekProducts = () => resource.peek();
 

@@ -19886,3 +19886,30 @@ pattern booking systems share (pay in full / pay the deposit / another amount):
     icon sits inline. "More dates" is gone.
   - Lanes and courts use the same dropdown row as Staff (`PersonSelect kind="place"`): "Any lane" first,
     live state and rate per entry, out-of-service entries listed but greyed.
+
+## Catalog history (2026-11-19)
+
+A **History** tab on every catalog record (`/catalog/<id>` → History). The spec and handover are in
+docs/catalog-history.md: a review of the production History screen (11 problems), the patterns
+borrowed (Google Docs/Notion sessions, Linear one-sentence changes, Shopify/Stripe day separators
+and typed diffs, Contentful restore), and the backend data contract.
+
+- **Contract** (`lib/api/catalogHistory.ts`):
+  - one `CatalogRevision` per save, carrying every field change;
+  - sub-object names (tickets) snapshotted;
+  - typed values (money, status, number with a unit, payNow…), never sentences or raw enums;
+  - a nullable actor for bookings made before tracking.
+- **Recording:** `updateProduct` / `archiveProduct` diff before and after and record the revision, so
+  every edit path (the record, the list's on/off switch, Payment choices, Undo toasts) is logged.
+- **Seeded past:** each booking gets a deterministic past, written backwards from its values. It is
+  frozen on first read or first edit, so it never contradicts a live revision.
+- **UI** (`catalog/_components/history/`):
+  - Saves by one person within 15 minutes become a session, showing the net change. Edits made and
+    taken back become a quiet "Also renamed … and changed it back."
+  - Each session is a sentence ("changed the price of Per hour from ৳950 to ৳800") with a typed diff
+    (muted before → after, a signed money delta).
+  - Day headings; milestones for publishing and creation; the creation item last.
+  - Two filter dropdowns (area with counts, person). An area filter is not a second tab bar under
+    the record's tabs.
+  - An At a glance rail on desktop; one summary line on phones.
+  - Undo previews `current → will be`, applies in one save and is logged as "undid changes from …".

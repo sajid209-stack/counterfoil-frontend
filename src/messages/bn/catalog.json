@@ -1097,7 +1097,8 @@
       "where": "কোথায় বিক্রি হয়",
       "page": "পেজ",
       "rules": "নিয়ম",
-      "support": "সাপোর্টের জন্য"
+      "support": "সাপোর্টের জন্য",
+      "history": "ইতিহাস"
     },
     "saved": "{name} সেভ হয়েছে।",
     "notFound": "এই আইটেমটি পাওয়া যাচ্ছে না",
@@ -1246,5 +1247,174 @@
   "quick": {
     "label": "দ্রুত ফিল্টার",
     "all": "সব"
+  },
+  "history": {
+    "title": "ইতিহাস",
+    "loading": "ইতিহাস লোড হচ্ছে",
+    "error": {
+      "title": "ইতিহাস লোড করা যায়নি",
+      "retry": "আবার চেষ্টা করুন"
+    },
+    "filter": {
+      "area": "ক্ষেত্র অনুযায়ী ফিল্টার",
+      "person": "ব্যক্তি অনুযায়ী ফিল্টার",
+      "everyone": "সবাই"
+    },
+    "area": {
+      "all": "সব পরিবর্তন",
+      "status": "প্রকাশ",
+      "prices": "দাম ও টিকিট",
+      "details": "বিবরণ",
+      "rules": "নিয়ম",
+      "where": "যেখানে বিক্রি",
+      "payment": "পেমেন্ট"
+    },
+    "tag": {
+      "status": "প্রকাশ",
+      "prices": "দাম",
+      "details": "বিবরণ",
+      "rules": "নিয়ম",
+      "where": "যেখানে বিক্রি",
+      "payment": "পেমেন্ট"
+    },
+    "day": {
+      "today": "আজ",
+      "yesterday": "গতকাল"
+    },
+    "ago": {
+      "justNow": "এইমাত্র",
+      "min": "{count} মিনিট আগে",
+      "hr": "{count} ঘণ্টা আগে",
+      "day": "{count} দিন আগে"
+    },
+    "someone": "কেউ",
+    "sentence": {
+      "price": "<b>{name}</b> <b>{ticket}</b>-এর দাম {from} থেকে {to} করেছেন",
+      "rename": "<b>{name}</b> <b>{from}</b>-এর নাম বদলে <b>{to}</b> করেছেন",
+      "field": "<b>{name}</b> <b>{field}</b> বদলেছেন",
+      "tierOn": "<b>{name}</b> <b>{ticket}</b> টিকিট বিক্রির জন্য চালু করেছেন",
+      "tierOff": "<b>{name}</b> <b>{ticket}</b> টিকিটের বিক্রি বন্ধ করেছেন",
+      "tierAdded": "<b>{name}</b> <b>{ticket}</b> টিকিট যোগ করেছেন",
+      "tierRemoved": "<b>{name}</b> <b>{ticket}</b> টিকিট বাদ দিয়েছেন",
+      "statusOn": "<b>{name}</b> প্রকাশ করেছেন",
+      "statusOff": "<b>{name}</b> প্রকাশ বন্ধ করেছেন",
+      "archived": "<b>{name}</b> এটি সরিয়ে রেখেছেন",
+      "several": "<b>{name}</b> <b>{count, plural, one {#টি পরিবর্তন} other {#টি পরিবর্তন}}</b> করেছেন",
+      "revert": "<b>{name}</b> {when}-এর পরিবর্তনগুলো ফিরিয়ে নিয়েছেন",
+      "netZero": "<b>{name}</b> কিছু বদলে আবার আগের অবস্থায় ফিরিয়েছেন"
+    },
+    "created": {
+      "by": "<b>{name}</b> তৈরি করেছেন",
+      "on": "{when}-এ তৈরি হয়েছে",
+      "untracked": "কে তৈরি করেছেন তা রেকর্ড করা হয়নি। পরিবর্তন ট্র্যাক করা শুরুর আগে এটি তৈরি হয়েছিল।"
+    },
+    "netZero": {
+      "rename": "এছাড়া {ticket}-এর নাম বদলে আবার আগেরটাই করা হয়েছে।",
+      "price": "এছাড়া {ticket}-এর দাম বদলে আবার আগেরটাই করা হয়েছে।",
+      "tier": "এছাড়া {ticket} বদলে আবার আগের অবস্থায় ফেরানো হয়েছে।",
+      "field": "এছাড়া {field} বদলে আবার আগের অবস্থায় ফেরানো হয়েছে।"
+    },
+    "diff": {
+      "show": "{count, plural, one {#টি পরিবর্তন দেখান} other {#টি পরিবর্তন দেখান}}",
+      "hide": "পরিবর্তন লুকান",
+      "list": "যা বদলেছে"
+    },
+    "showFull": "পুরো লেখা দেখান",
+    "showLess": "কম দেখান",
+    "menu": {
+      "label": "আরও কাজ",
+      "undo": "এই পরিবর্তনগুলো ফিরিয়ে নিন…",
+      "open": "{tab} ট্যাব খুলুন"
+    },
+    "rail": {
+      "title": "এক নজরে",
+      "created": "তৈরি: {date}",
+      "by": "{name}",
+      "untracked": "পরিবর্তন ট্র্যাক করার আগে",
+      "last": "শেষ পরিবর্তন {when}",
+      "counts": "{changes, plural, one {#টি পরিবর্তন} other {#টি পরিবর্তন}} · {people, plural, one {#জন} other {#জন}}",
+      "since": "{date} থেকে {state}"
+    },
+    "summary": {
+      "text": "{people, plural, one {#জনের} other {#জনের}} {changes, plural, one {#টি পরিবর্তন} other {#টি পরিবর্তন}} · শেষ পরিবর্তন {when}",
+      "none": "এখনও কোনো পরিবর্তন নেই"
+    },
+    "empty": {
+      "area": "{area}-এ এখনও কোনো পরিবর্তন নেই।",
+      "person": "{name}-এর কোনো পরিবর্তন এখনও নেই।",
+      "both": "{name}-এর {area}-এ কোনো পরিবর্তন এখনও নেই।",
+      "showAll": "সব পরিবর্তন দেখান",
+      "only": "পরিবর্তনগুলো এখানে দেখা যাবে।"
+    },
+    "older": "পুরনো পরিবর্তন দেখান",
+    "field": {
+      "status": "অবস্থা",
+      "name": "নাম",
+      "description": "বিবরণ",
+      "photos": "ছবি",
+      "minAge": "সর্বনিম্ন বয়স",
+      "maxPerOrder": "প্রতি অর্ডারে সর্বোচ্চ টিকিট",
+      "locations": "লোকেশন",
+      "channels": "যেখানে বিক্রি হয়",
+      "policies": {
+        "salesWindowDays": "বিক্রির সময়সীমা",
+        "cutoffMinutes": "বিক্রি বন্ধের সময়",
+        "cancellation": "বাতিলের নিয়ম",
+        "cancelHours": "বাতিলের সময়সীমা",
+        "partyMin": "সবচেয়ে ছোট দল",
+        "partyMax": "সবচেয়ে বড় দল",
+        "waiver": "দায়মুক্তি ফর্ম"
+      },
+      "payNow": "পেমেন্টের বিকল্প",
+      "tier": {
+        "added": "যোগ করা হয়েছে",
+        "removed": "বাদ দেওয়া হয়েছে",
+        "name": "নাম",
+        "price": "দাম",
+        "onSale": "বিক্রির জন্য চালু"
+      }
+    },
+    "val": {
+      "none": "নেই",
+      "yes": "হ্যাঁ",
+      "no": "না",
+      "onSale": "বিক্রির জন্য চালু",
+      "offSale": "বিক্রি বন্ধ",
+      "required": "দরকার",
+      "notRequired": "দরকার নেই",
+      "unit": {
+        "hours": "{count, plural, one {# ঘণ্টা} other {# ঘণ্টা}}",
+        "days": "{count, plural, one {# দিন} other {# দিন}}",
+        "minutes": "{count, plural, one {# মিনিট} other {# মিনিট}}",
+        "people": "{count, plural, one {# জন} other {# জন}}",
+        "years": "{count, plural, one {# বছর} other {# বছর}}",
+        "tickets": "{count, plural, one {#টি টিকিট} other {#টি টিকিট}}",
+        "photos": "{count, plural, one {#টি ছবি} other {#টি ছবি}}"
+      },
+      "channel": {
+        "counter": "কাউন্টারে",
+        "online": "অনলাইনে"
+      },
+      "cancellation": {
+        "none": "বাতিল করা যায় না",
+        "free_until": "বাতিলের সময়সীমা পর্যন্ত বিনা খরচে",
+        "fee": "ফি প্রযোজ্য"
+      },
+      "payNowDefault": "ব্যবসার ডিফল্ট",
+      "payNowMin": "{option}, সর্বনিম্ন {min}"
+    },
+    "undo": {
+      "title": "এই পরিবর্তনগুলো ফিরিয়ে নেবেন?",
+      "intro": "এগুলো আগের অবস্থায় ফিরবে, একবারেই সেভ হবে। অন্য কিছু বদলাবে না।",
+      "field": "বিষয়",
+      "now": "এখন",
+      "willBe": "হবে",
+      "again": "এরপর আবার বদলেছে",
+      "notUndone": "ফেরানো হবে না",
+      "notUndoneBody": "যোগ বা বাদ দেওয়া টিকিট, ছবি আর লোকেশন এখান থেকে ফেরানো যায় না। দরকার হলে বুকিংয়ে গিয়ে বদলান।",
+      "nothing": "ফেরানোর কিছু নেই। সবকিছু আগের অবস্থাতেই আছে।",
+      "confirm": "পরিবর্তন ফিরিয়ে নিন",
+      "done": "পরিবর্তন ফিরিয়ে নেওয়া হয়েছে"
+    }
   }
 }

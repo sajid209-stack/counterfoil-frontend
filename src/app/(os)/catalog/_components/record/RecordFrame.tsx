@@ -10,7 +10,7 @@ import type { CatalogState } from "@/lib/catalog";
 import type { Blocker } from "@/lib/sellable";
 
 /** The record's tabs, in the order a person works through an item. */
-export type TabId = "overview" | "details" | "when" | "prices" | "where" | "page" | "rules" | "support";
+export type TabId = "overview" | "details" | "when" | "prices" | "where" | "page" | "rules" | "support" | "history";
 
 export const STATE_TONE: Record<CatalogState, PillTone> = {
   onSale: "success",

@@ -1097,7 +1097,8 @@
       "where": "Where it's sold",
       "page": "Page",
       "rules": "Rules",
-      "support": "For support"
+      "support": "For support",
+      "history": "History"
     },
     "saved": "{name} saved.",
     "notFound": "We can't find this item",
@@ -1246,5 +1247,174 @@
   "quick": {
     "label": "Quick filters",
     "all": "All"
+  },
+  "history": {
+    "title": "History",
+    "loading": "Loading history",
+    "error": {
+      "title": "Couldn't load the history",
+      "retry": "Retry"
+    },
+    "filter": {
+      "area": "Filter by area",
+      "person": "Filter by person",
+      "everyone": "Everyone"
+    },
+    "area": {
+      "all": "All changes",
+      "status": "Publishing",
+      "prices": "Prices & tickets",
+      "details": "Details",
+      "rules": "Rules",
+      "where": "Where sold",
+      "payment": "Payment"
+    },
+    "tag": {
+      "status": "Publishing",
+      "prices": "Prices",
+      "details": "Details",
+      "rules": "Rules",
+      "where": "Where sold",
+      "payment": "Payment"
+    },
+    "day": {
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
+    "ago": {
+      "justNow": "just now",
+      "min": "{count} min ago",
+      "hr": "{count} h ago",
+      "day": "{count} d ago"
+    },
+    "someone": "Someone",
+    "sentence": {
+      "price": "<b>{name}</b> changed the price of <b>{ticket}</b> from {from} to {to}",
+      "rename": "<b>{name}</b> renamed <b>{from}</b> to <b>{to}</b>",
+      "field": "<b>{name}</b> changed the <b>{field}</b>",
+      "tierOn": "<b>{name}</b> put the <b>{ticket}</b> ticket on sale",
+      "tierOff": "<b>{name}</b> took the <b>{ticket}</b> ticket off sale",
+      "tierAdded": "<b>{name}</b> added the <b>{ticket}</b> ticket",
+      "tierRemoved": "<b>{name}</b> removed the <b>{ticket}</b> ticket",
+      "statusOn": "<b>{name}</b> published it",
+      "statusOff": "<b>{name}</b> unpublished it",
+      "archived": "<b>{name}</b> archived it",
+      "several": "<b>{name}</b> made <b>{count, plural, one {# change} other {# changes}}</b>",
+      "revert": "<b>{name}</b> undid changes from {when}",
+      "netZero": "<b>{name}</b> made changes and undid them"
+    },
+    "created": {
+      "by": "Created by <b>{name}</b>",
+      "on": "Created on {when}",
+      "untracked": "Who created it wasn't recorded. It was made before changes were tracked."
+    },
+    "netZero": {
+      "rename": "Also renamed {ticket} and changed it back.",
+      "price": "Also changed the price of {ticket} and changed it back.",
+      "tier": "Also changed {ticket} and changed it back.",
+      "field": "Also changed the {field} and changed it back."
+    },
+    "diff": {
+      "show": "Show {count, plural, one {# change} other {# changes}}",
+      "hide": "Hide changes",
+      "list": "What changed"
+    },
+    "showFull": "Show full text",
+    "showLess": "Show less",
+    "menu": {
+      "label": "More actions",
+      "undo": "Undo these changes…",
+      "open": "Open {tab} tab"
+    },
+    "rail": {
+      "title": "At a glance",
+      "created": "Created {date}",
+      "by": "by {name}",
+      "untracked": "Before changes were tracked",
+      "last": "Last change {when}",
+      "counts": "{changes, plural, one {# change} other {# changes}} · {people, plural, one {# person} other {# people}}",
+      "since": "{state} since {date}"
+    },
+    "summary": {
+      "text": "{changes, plural, one {# change} other {# changes}} by {people, plural, one {# person} other {# people}} · last change {when}",
+      "none": "No changes yet"
+    },
+    "empty": {
+      "area": "No changes to {area} yet.",
+      "person": "No changes by {name} yet.",
+      "both": "No changes to {area} by {name} yet.",
+      "showAll": "Show all changes",
+      "only": "Changes will appear here."
+    },
+    "older": "Show older changes",
+    "field": {
+      "status": "Status",
+      "name": "Name",
+      "description": "Description",
+      "photos": "Photos",
+      "minAge": "Minimum age",
+      "maxPerOrder": "Most tickets per order",
+      "locations": "Locations",
+      "channels": "Where it's sold",
+      "policies": {
+        "salesWindowDays": "Sales window",
+        "cutoffMinutes": "Sales cut-off",
+        "cancellation": "Cancellation",
+        "cancelHours": "Cancellation window",
+        "partyMin": "Smallest group",
+        "partyMax": "Largest group",
+        "waiver": "Waiver"
+      },
+      "payNow": "Payment choices",
+      "tier": {
+        "added": "Added",
+        "removed": "Removed",
+        "name": "Name",
+        "price": "Price",
+        "onSale": "On sale"
+      }
+    },
+    "val": {
+      "none": "None",
+      "yes": "Yes",
+      "no": "No",
+      "onSale": "On sale",
+      "offSale": "Off sale",
+      "required": "Required",
+      "notRequired": "Not required",
+      "unit": {
+        "hours": "{count, plural, one {# hour} other {# hours}}",
+        "days": "{count, plural, one {# day} other {# days}}",
+        "minutes": "{count, plural, one {# minute} other {# minutes}}",
+        "people": "{count, plural, one {# person} other {# people}}",
+        "years": "{count, plural, one {# year} other {# years}}",
+        "tickets": "{count, plural, one {# ticket} other {# tickets}}",
+        "photos": "{count, plural, one {# photo} other {# photos}}"
+      },
+      "channel": {
+        "counter": "At the counter",
+        "online": "Online"
+      },
+      "cancellation": {
+        "none": "No cancellations",
+        "free_until": "Free until the cancellation window",
+        "fee": "A fee applies"
+      },
+      "payNowDefault": "Business default",
+      "payNowMin": "{option}, minimum {min}"
+    },
+    "undo": {
+      "title": "Undo these changes?",
+      "intro": "This puts these back as they were, in one save. Nothing else changes.",
+      "field": "Field",
+      "now": "Now",
+      "willBe": "Will be",
+      "again": "changed again since",
+      "notUndone": "Not undone",
+      "notUndoneBody": "Tickets that were added or removed, photos and locations can't be put back here. Change them on the booking if you need to.",
+      "nothing": "Nothing to undo. Everything here is already as it was.",
+      "confirm": "Undo changes",
+      "done": "Changes undone"
+    }
   }
 }
