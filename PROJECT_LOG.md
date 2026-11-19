@@ -19921,3 +19921,6 @@ entry takes two lines: the sentence (status pill inline) and the meta (time · a
 A diff appears only under summary sentences, inline and without a toggle row, as a content-width
 label | before → after list. Long text sits on one row behind "Show full text". Avatars and markers
 are 28px. The same history takes about half the height. The rules are in docs/catalog-history.md §10.
+- Second density pass (same day): the At a glance rail is now a full-width summary bar over the
+  timeline (Created · Last change · Changes · Status). The timeline runs full width, so nothing is
+  left empty beside or under a side rail.

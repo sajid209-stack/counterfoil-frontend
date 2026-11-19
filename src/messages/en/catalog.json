@@ -1327,12 +1327,9 @@
     },
     "rail": {
       "title": "At a glance",
-      "created": "Created {date}",
       "by": "by {name}",
       "untracked": "Before changes were tracked",
-      "last": "Last change {when}",
-      "counts": "{changes, plural, one {# change} other {# changes}} · {people, plural, one {# person} other {# people}}",
-      "since": "{state} since {date}"
+      "counts": "{changes, plural, one {# change} other {# changes}} · {people, plural, one {# person} other {# people}}"
     },
     "summary": {
       "text": "{changes, plural, one {# change} other {# changes}} by {people, plural, one {# person} other {# people}} · last change {when}",
@@ -1414,6 +1411,13 @@
       "nothing": "Nothing to undo. Everything here is already as it was.",
       "confirm": "Undo changes",
       "done": "Changes undone"
+    },
+    "bar": {
+      "created": "Created",
+      "last": "Last change",
+      "changes": "Changes",
+      "state": "Status",
+      "since": "since {date}"
     }
   }
 }

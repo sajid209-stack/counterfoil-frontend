@@ -222,3 +222,9 @@ meta line:
 
 The result: the same history takes about half the height, and a whole booking's history fits on
 one 900px screen.
+
+**Second density pass.** The At a glance rail became a **summary bar** across the top (Created ·
+Last change · Changes · Status), with the timeline full width under it. A 280px side rail left an
+empty column beside the timeline and an empty block under the rail. A bar costs one row and leaves
+no dead space at any width. The people are named in the Changes cell rather than shown as an
+avatar stack: at bar size the initials clipped. Phones keep the one summary line.

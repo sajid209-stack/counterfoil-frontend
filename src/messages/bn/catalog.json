@@ -1327,12 +1327,9 @@
     },
     "rail": {
       "title": "এক নজরে",
-      "created": "তৈরি: {date}",
       "by": "{name}",
       "untracked": "পরিবর্তন ট্র্যাক করার আগে",
-      "last": "শেষ পরিবর্তন {when}",
-      "counts": "{changes, plural, one {#টি পরিবর্তন} other {#টি পরিবর্তন}} · {people, plural, one {#জন} other {#জন}}",
-      "since": "{date} থেকে {state}"
+      "counts": "{changes, plural, one {#টি পরিবর্তন} other {#টি পরিবর্তন}} · {people, plural, one {#জন} other {#জন}}"
     },
     "summary": {
       "text": "{people, plural, one {#জনের} other {#জনের}} {changes, plural, one {#টি পরিবর্তন} other {#টি পরিবর্তন}} · শেষ পরিবর্তন {when}",
@@ -1414,6 +1411,13 @@
       "nothing": "ফেরানোর কিছু নেই। সবকিছু আগের অবস্থাতেই আছে।",
       "confirm": "পরিবর্তন ফিরিয়ে নিন",
       "done": "পরিবর্তন ফিরিয়ে নেওয়া হয়েছে"
+    },
+    "bar": {
+      "created": "তৈরি",
+      "last": "শেষ পরিবর্তন",
+      "changes": "পরিবর্তন",
+      "state": "অবস্থা",
+      "since": "{date} থেকে"
     }
   }
 }

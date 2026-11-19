@@ -320,9 +320,37 @@ export function HistoryTab({
   const state = stateOf(product.status);
 
   return (
-    <div className="grid gap-section md:grid-cols-[minmax(0,46rem)_17.5rem] md:items-start">
+    <div className="flex min-w-0 flex-col gap-section">
       <div className="flex min-w-0 flex-col gap-section">
         <h2 className="sr-only">{t("title")}</h2>
+
+        {/* At a glance, as one summary bar across the top (md and up). As a
+            side rail it left a column of empty page beside and under it; as a
+            bar it costs one row and the timeline gets the full width. */}
+        <section aria-label={t("rail.title")} className="card-surface hidden grid-cols-4 divide-x divide-hairline md:grid">
+          {created && (
+            <div className="flex min-w-0 flex-col gap-0.5 px-card py-comfortable">
+              <span className="text-xs text-muted">{t("bar.created")}</span>
+              <span className="truncate text-sm font-medium text-fg">{formatDayRange([dayOf(created.at)], { year: true })}</span>
+              <span className="truncate text-xs text-muted">{created.actor ? t("rail.by", { name: created.actor.name }) : t("rail.untracked")}</span>
+            </div>
+          )}
+          <div className="flex min-w-0 flex-col gap-0.5 px-card py-comfortable">
+            <span className="text-xs text-muted">{t("bar.last")}</span>
+            <span className="truncate text-sm font-medium text-fg">{stats.last ? ago(stats.last.at) : t("summary.none")}</span>
+            {stats.last && <span className="truncate text-xs text-muted">{stats.last.actor ? t("rail.by", { name: stats.last.actor.name }) : t("someone")}</span>}
+          </div>
+          <div className="flex min-w-0 flex-col gap-0.5 px-card py-comfortable">
+            <span className="text-xs text-muted">{t("bar.changes")}</span>
+            <span className="truncate text-sm font-medium text-fg">{t("rail.counts", { changes: stats.changes, people: stats.people.length })}</span>
+            {stats.people.length > 0 && <span className="truncate text-xs text-muted">{stats.people.map((x) => x.name).join(", ")}</span>}
+          </div>
+          <div className="flex min-w-0 flex-col gap-0.5 px-card py-comfortable">
+            <span className="text-xs text-muted">{t("bar.state")}</span>
+            <span className="truncate text-sm font-medium text-fg">{tc(`state.${state}`)}</span>
+            {since && <span className="truncate text-xs text-muted">{t("bar.since", { date: formatDay(dayOf(since)) })}</span>}
+          </div>
+        </section>
 
         {/* One toolbar row of two dropdowns (what, who), GitHub audit-log style.
             Not a second tab bar: under the record's own tabs a row of area
@@ -395,38 +423,6 @@ export function HistoryTab({
         )}
       </div>
 
-      <div className="hidden md:sticky md:top-section md:block">
-        <Card as="aside" title={t("rail.title")} headingLevel={3}>
-          <div className="flex flex-col gap-comfortable text-sm">
-            {created && (
-              <div className="flex flex-col">
-                <span className="text-fg">{t("rail.created", { date: formatDayRange([dayOf(created.at)], { year: true }) })}</span>
-                <span className="text-muted">{created.actor ? t("rail.by", { name: created.actor.name }) : t("rail.untracked")}</span>
-              </div>
-            )}
-            {stats.last && (
-              <div className="flex flex-col">
-                <span className="text-fg">{t("rail.last", { when: ago(stats.last.at) })}</span>
-                <span className="text-muted">{stats.last.actor ? t("rail.by", { name: stats.last.actor.name }) : t("someone")}</span>
-              </div>
-            )}
-            <div className="flex flex-col gap-tight">
-              <span className="text-fg">{t("rail.counts", { changes: stats.changes, people: stats.people.length })}</span>
-              {stats.people.length > 0 && (
-                <ul className="flex items-center">
-                  {stats.people.map((p, i) => (
-                    <li key={p.id} title={p.name} className={cn("rounded-full ring-2 ring-card", i > 0 && "-ml-inline")}>
-                      <Avatar name={p.name} size={28} soft />
-                      <span className="sr-only">{p.name}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            {since && <span className="text-fg">{t("rail.since", { state: tc(`state.${state}`), date: formatDay(dayOf(since)) })}</span>}
-          </div>
-        </Card>
-      </div>
 
       {undoing && (
         <UndoDialog
