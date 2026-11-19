@@ -19913,3 +19913,11 @@ and typed diffs, Contentful restore), and the backend data contract.
     the record's tabs.
   - An At a glance rail on desktop; one summary line on phones.
   - Undo previews `current → will be`, applies in one save and is logged as "undid changes from …".
+
+## Catalog history, density pass (2026-11-19)
+
+The owner found the History tab wasteful. The timeline column is now 46rem beside the rail. A simple
+entry takes two lines: the sentence (status pill inline) and the meta (time · area · price delta).
+A diff appears only under summary sentences, inline and without a toggle row, as a content-width
+label | before → after list. Long text sits on one row behind "Show full text". Avatars and markers
+are 28px. The same history takes about half the height. The rules are in docs/catalog-history.md §10.

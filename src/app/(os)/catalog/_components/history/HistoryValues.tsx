@@ -101,21 +101,26 @@ export function Change({ c, currency }: { c: CatalogFieldChange; currency: strin
   if (c.field === "tier.added") return <Value v={c.after} c={c} currency={currency} strong />;
   if (c.field === "tier.removed") return <Value v={c.before} c={c} currency={currency} />;
 
+  /* Long text sits on the same row as everything else (before → after),
+     each side clamped to one line until "Show full text". Stacked, a one-word
+     edit to a description took five lines. */
   const long = c.before?.type === "longText" || c.after?.type === "longText";
   if (long) {
-    const clamp = full ? "" : "line-clamp-2";
-    const overflowing = (c.before?.type === "longText" && c.before.value.length > 120) || (c.after?.type === "longText" && c.after.value.length > 120);
+    const clamp = full ? "" : "line-clamp-1";
+    const overflowing = (c.before?.type === "longText" && c.before.value.length > 60) || (c.after?.type === "longText" && c.after.value.length > 60);
     return (
-      <div className="flex min-w-0 flex-col gap-inline">
-        <p className={cn("text-sm text-muted", clamp)}>{text(c.before, c)}</p>
-        <ArrowRight aria-hidden size={14} strokeWidth={1.5} className="shrink-0 rotate-90 text-muted" />
-        <p className={cn("text-sm font-medium text-fg", clamp)}>{text(c.after, c)}</p>
+      <span className="flex min-w-0 flex-col items-start gap-0.5 text-sm">
+        <span className="flex min-w-0 max-w-full flex-wrap items-baseline gap-x-tight">
+          <span className={cn("min-w-0 max-w-full text-muted", clamp)}>{text(c.before, c)}</span>
+          <ArrowRight aria-hidden size={14} strokeWidth={1.5} className="shrink-0 self-center text-muted" />
+          <span className={cn("min-w-0 max-w-full font-medium text-fg", clamp)}>{text(c.after, c)}</span>
+        </span>
         {overflowing && (
-          <button type="button" aria-expanded={full} onClick={() => setFull((x) => !x)} className="-my-tight self-start py-tight text-sm font-medium text-brand-foreground underline underline-offset-2">
+          <button type="button" aria-expanded={full} onClick={() => setFull((x) => !x)} className="-my-tight py-tight text-xs font-medium text-brand-foreground hover:underline">
             {full ? t("showLess") : t("showFull")}
           </button>
         )}
-      </div>
+      </span>
     );
   }
 

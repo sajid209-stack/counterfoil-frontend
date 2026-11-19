@@ -195,3 +195,30 @@ Rules the backend must keep:
 - Filters by area and by person; the count in the summary follows the filter.
 - Undo previews, applies in one save, and appears as a revert entry.
 - Phone at 393px: no sideways scroll, all targets at least 44px, light and dark.
+
+## 10. Density revision (2026-11-19)
+
+Owner review: the first build wasted space. Each entry's sentence hugged the left of a full-width
+column, its time sat 1,000px away at the far right, the diff boxes stretched the whole width with
+their values on the left, and three of an entry's five rows repeated the sentence. Revised
+following GitHub's PR timeline and Linear's activity feed, where a simple event is one line plus a
+meta line:
+
+- **Reading width.** The timeline column is capped at 46rem with the At a glance rail beside it, so
+  the time and ⋯ sit next to what they belong to. Extra space on very wide screens falls outside
+  the content, not inside it.
+- **Two lines per simple entry.** Line 1 is the sentence; a status change carries its pill inline.
+  Line 2 is the meta: `time · area · price delta · note`. The separate area row, the time column
+  and the "Hide changes" row are gone.
+- **A diff only where the sentence is a summary.** "changed the price of X from ৳9,600 to ৳8,000"
+  already says everything, so it gets no diff. "made 2 changes" and "changed the cancellation
+  window" get their rows inline, with no toggle. More than 4 rows show 3 and "Show N more".
+- **A compact diff.** No box: a `label | before → after` list as wide as its content, set off by a
+  1px rule. Long text sits on the same row, each side clamped to one line, behind "Show full text".
+- **A smaller rail.** 28px avatars and markers (24px made the initials about 8px, under the 12px
+  floor), and a tighter gap between entries than between days.
+- **Creation in two lines.** "Created" over "8 May 2026, 10:00 AM · creator not recorded…". The date
+  appears once, not in the sentence and again in a time column.
+
+The result: the same history takes about half the height, and a whole booking's history fits on
+one 900px screen.

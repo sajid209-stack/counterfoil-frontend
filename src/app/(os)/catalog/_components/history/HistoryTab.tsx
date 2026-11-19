@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { Archive, ChevronDown, EyeOff, Globe, Sparkles, UserRound, type LucideIcon } from "lucide-react";
+import { Archive, EyeOff, Globe, Sparkles, UserRound, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ActionMenu, Avatar, Button, Card, Notice, Select, Skeleton, StatusPill, type ActionMenuItem } from "@/components/ui";
 import { canRevert, listCatalogHistory, type CatalogArea, type CatalogFieldChange, type CatalogRevision, type Product } from "@/lib/api";
@@ -10,7 +10,7 @@ import { formatClockOf, formatDate, formatDateTime, formatDay, formatDayRange } 
 import { demoNow } from "@/lib/schedule";
 import { useApiQuery } from "@/lib/useApi";
 import { STATE_TONE, type TabId } from "../record/RecordFrame";
-import { Change, lowerFirst, useHistoryWords } from "./HistoryValues";
+import { Change, lowerFirst, moneyDelta, useHistoryWords } from "./HistoryValues";
 import { UndoDialog } from "./UndoDialog";
 import {
   actorsOf,
@@ -30,7 +30,6 @@ const AREAS: AreaFilter[] = ["all", "status", "prices", "details", "rules", "whe
 /** Sessions shown before "Show older changes", and how many each press adds. */
 const PAGE = 20;
 /** The newest this many sessions open their diff on their own. */
-const OPEN_NEWEST = 3;
 
 /** The tab that edits each area. Payment choices read best next to the rules. */
 const TAB_OF: Record<CatalogArea, TabId> = {
@@ -96,14 +95,8 @@ export function HistoryTab({
   const yesterdayKey = dayOf(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString());
 
   /* The newest sessions with something to show open their diff on their own. */
-  const rankOf = useMemo(() => {
-    const m = new Map<string, number>();
-    let n = 0;
-    for (const s of shown) if (s.kind !== "created" && s.kind !== "milestone" && s.net.length > 0) m.set(s.id, n++);
-    return m;
-  }, [shown]);
 
-  const full = (iso: string) => `${formatDate(iso)}, ${formatClockOf(iso)}`;
+  const full = (iso: string) => `${formatDayRange([dayOf(iso)], { year: true })}, ${formatClockOf(iso)}`;
   const ago = (iso: string): string => {
     const mins = Math.round((now.getTime() - Date.parse(iso)) / 60000);
     if (mins < 1) return t("ago.justNow");
@@ -186,112 +179,103 @@ export function HistoryTab({
     if (kind) {
       const { Icon, tone } = MARKER[kind];
       return (
-        <span aria-hidden className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full", tone)}>
-          <Icon size={16} strokeWidth={1.5} />
+        <span aria-hidden className={cn("relative grid h-7 w-7 shrink-0 place-items-center rounded-full", tone)}>
+          <Icon size={14} strokeWidth={1.75} />
         </span>
       );
     }
-    if (s.actor) return <Avatar name={s.actor.name} size={32} soft />;
+    if (s.actor) return <span className="relative"><Avatar name={s.actor.name} size={28} soft /></span>;
     return (
-      <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-subtle text-muted ring-1 ring-inset ring-line">
-        <UserRound size={16} strokeWidth={1.5} />
+      <span aria-hidden className="relative grid h-7 w-7 shrink-0 place-items-center rounded-full bg-subtle text-muted ring-1 ring-inset ring-line">
+        <UserRound size={14} strokeWidth={1.75} />
       </span>
     );
   };
 
+  /* Sentences that already carry the values ("from ৳9,600 to ৳8,000", "renamed
+     A to B", "published it"): a diff under them would only repeat them. */
+  const SELF_DESCRIBING = new Set(["price", "rename", "tierOn", "tierOff", "tierAdded", "tierRemoved", "statusOn", "statusOff", "archived", "netZero"]);
+  /** Diffs longer than this show their first rows and a "Show N more". */
+  const DIFF_ROWS = 4;
+
   const item = (s: Session) => {
     const hid = `hist-${s.id}`;
     const isCreated = s.kind === "created";
-    const hasDiff = !isCreated && s.kind !== "milestone" && s.net.length > 0;
-    const expanded = hasDiff && (open[s.id] ?? (rankOf.get(s.id) ?? Infinity) < OPEN_NEWEST);
+    const headline = isCreated ? null : headlineOf(s);
+    const showDiff = !!headline && !SELF_DESCRIBING.has(headline.type) && s.net.length > 0;
+    const allRows = open[s.id] ?? false;
+    const rows = showDiff ? (allRows || s.net.length <= DIFF_ROWS ? s.net : s.net.slice(0, DIFF_ROWS - 1)) : [];
     const areas = isCreated ? [] : areasOf(s);
-    const quiet = s.kind === "edit" && s.net.length === 0;
+    const quiet = headline?.type === "netZero";
     const menu = isCreated ? [] : menuFor(s);
-    const milestoneState = s.kind === "milestone" ? stateOf(s.net.find((c) => c.field === "status")?.after?.type === "status" ? (s.net.find((c) => c.field === "status")!.after as { value: string }).value : "inactive") : null;
-    const time = (
-      <time dateTime={s.at} title={full(s.at)} className="shrink-0 text-xs text-muted">
-        {formatClockOf(s.at)}
-      </time>
-    );
+    const statusChange = s.kind === "milestone" ? s.net.find((c) => c.field === "status") : undefined;
+    const milestoneState = statusChange ? stateOf(statusChange.after?.type === "status" ? statusChange.after.value : "inactive") : null;
+    const priceDelta = headline?.type === "price" ? moneyDelta(headline.change, currency) : null;
+    const dot = <span aria-hidden className="px-1.5">·</span>;
 
     return (
-      <li key={s.id} className="relative flex gap-comfortable pb-section">
-        {s.id !== lastId && <span aria-hidden className="absolute bottom-0 left-4 top-8 w-px bg-line" />}
+      <li key={s.id} className="relative flex gap-tight pb-comfortable last:pb-0">
+        {s.id !== lastId && <span aria-hidden className="absolute bottom-0 left-3.5 top-7 w-px bg-line" />}
         {marker(s)}
-        <article aria-labelledby={hid} className="flex min-w-0 flex-1 flex-col gap-inline">
-          <header className="flex items-start gap-tight">
-            <h4 id={hid} className={cn("min-w-0 flex-1 break-words pt-inline text-sm font-normal", quiet ? "text-muted" : "text-fg")}>
-              {isCreated ? (s.actor ? t.rich("created.by", { name: s.actor.name, b }) : t("created.on", { when: full(s.at) })) : sentence(s)}
+        <article aria-labelledby={hid} className="flex min-w-0 flex-1 flex-col gap-0.5">
+          {/* Line 1: the sentence (a status change carries its pill inline), and
+              the actions at the end of the same line. */}
+          <header className="flex min-w-0 items-start gap-tight">
+            <h4 id={hid} className={cn("min-w-0 flex-1 break-words pt-1 text-sm font-normal leading-snug", quiet ? "text-muted" : "text-fg")}>
+              {isCreated ? (s.actor ? t.rich("created.by", { name: s.actor.name, b }) : t("created.title")) : sentence(s)}
+              {milestoneState && (
+                <span className="ml-tight inline-flex align-middle">
+                  <StatusPill tone={STATE_TONE[milestoneState]} shape={milestoneState === "onSale" ? "transaction" : "record"}>
+                    {tc(`state.${milestoneState}`)}
+                  </StatusPill>
+                </span>
+              )}
             </h4>
-            <span className="hidden pt-inline md:inline">{time}</span>
             {menu.length > 0 && (
-              <span className="-my-inline shrink-0">
+              <span className="-my-1.5 shrink-0">
                 <ActionMenu label={t("menu.label")} items={menu} />
               </span>
             )}
           </header>
 
-          {isCreated && !s.actor && <p className="text-sm text-muted">{t("created.untracked")}</p>}
-          {isCreated && s.actor && <p className="text-xs text-muted md:hidden">{time}</p>}
+          {/* Line 2: when, what part, and anything the sentence leaves out. */}
+          <p className="flex flex-wrap items-center text-xs leading-relaxed text-muted">
+            <time dateTime={s.at} title={full(s.at)}>{isCreated ? full(s.at) : formatClockOf(s.at)}</time>
+            {areas.length > 0 && !milestoneState && <>{dot}<span>{areas.map((x) => t(`tag.${x}`)).join(", ")}</span></>}
+            {priceDelta && <>{dot}<span className="font-medium text-fg-secondary">{priceDelta}</span></>}
+            {isCreated && !s.actor && <>{dot}<span>{t("created.untrackedShort")}</span></>}
+          </p>
 
-          {(areas.length > 0 || milestoneState) && (
-            <p className="flex flex-wrap items-center gap-x-tight gap-y-inline text-xs text-muted">
-              <span className="md:hidden">{time}</span>
-              {milestoneState && (
-                <StatusPill tone={STATE_TONE[milestoneState]} shape={milestoneState === "onSale" ? "transaction" : "record"}>
-                  {tc(`state.${milestoneState}`)}
-                </StatusPill>
+          {/* A summary sentence ("made 3 changes") gets its rows, inline:
+              label and before → after, as wide as they need and no wider. */}
+          {showDiff && (
+            <dl aria-label={t("diff.list")} className="mt-tight grid w-fit max-w-full grid-cols-1 gap-y-1.5 border-l border-line pl-comfortable sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-x-section">
+              {rows.map((c) => (
+                <div key={`${c.field}|${c.subject?.id ?? ""}`} className="contents">
+                  <dt className="min-w-0 break-words text-sm text-muted">{fieldLabel(c)}</dt>
+                  <dd className="min-w-0 pb-1 sm:pb-0">
+                    <Change c={c} currency={currency} />
+                  </dd>
+                </div>
+              ))}
+              {rows.length < s.net.length && (
+                <button
+                  type="button"
+                  onClick={() => setOpen((o) => ({ ...o, [s.id]: true }))}
+                  className="-my-tight self-start py-tight text-left text-sm font-medium text-brand-foreground hover:underline sm:col-span-2"
+                >
+                  {t("diff.more", { count: s.net.length - rows.length })}
+                </button>
               )}
-              {!milestoneState && areas.length > 0 && (
-                <span>
-                  <span aria-hidden className="md:hidden">· </span>
-                  {areas.map((a) => t(`tag.${a}`)).join(" · ")}
-                </span>
-              )}
-            </p>
+            </dl>
           )}
 
-          {quiet && s.zero.length > 0 && (
-            <ul className="flex flex-col gap-inline text-sm text-muted">
+          {s.zero.length > 0 && (
+            <ul className="text-xs text-muted">
               {s.zero.map((z) => (
                 <li key={`${z.field}|${z.subject?.id ?? ""}`}>{zeroNote(z)}</li>
               ))}
             </ul>
-          )}
-
-          {hasDiff && (
-            <>
-              <Button
-                variant="tertiary"
-                size="sm"
-                aria-expanded={expanded}
-                aria-controls={`${hid}-diff`}
-                onClick={() => setOpen((o) => ({ ...o, [s.id]: !expanded }))}
-                icon={<ChevronDown aria-hidden size={14} strokeWidth={1.5} className={cn("transition-transform duration-quick", expanded && "rotate-180")} />}
-                className="-ml-comfortable self-start"
-              >
-                {expanded ? t("diff.hide") : t("diff.show", { count: s.net.length })}
-              </Button>
-              {expanded && (
-                <div id={`${hid}-diff`} className="flex flex-col gap-tight">
-                  <dl aria-label={t("diff.list")} className="flex flex-col divide-y divide-hairline rounded-inner border border-hairline">
-                    {s.net.map((c) => (
-                      <div key={`${c.field}|${c.subject?.id ?? ""}`} className="flex flex-col gap-inline px-comfortable py-tight md:grid md:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] md:gap-comfortable">
-                        <dt className="min-w-0 break-words text-sm text-muted">{fieldLabel(c)}</dt>
-                        <dd className="min-w-0">
-                          <Change c={c} currency={currency} />
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                  {s.zero.map((z) => (
-                    <p key={`${z.field}|${z.subject?.id ?? ""}`} className="text-sm text-muted">
-                      {zeroNote(z)}
-                    </p>
-                  ))}
-                </div>
-              )}
-            </>
           )}
         </article>
       </li>
@@ -336,7 +320,7 @@ export function HistoryTab({
   const state = stateOf(product.status);
 
   return (
-    <div className="grid gap-section md:grid-cols-[minmax(0,1fr)_17.5rem] md:items-start">
+    <div className="grid gap-section md:grid-cols-[minmax(0,46rem)_17.5rem] md:items-start">
       <div className="flex min-w-0 flex-col gap-section">
         <h2 className="sr-only">{t("title")}</h2>
 
@@ -390,14 +374,14 @@ export function HistoryTab({
           <Card className="flex flex-col">
             {onlyCreation && <p className="pb-section text-sm text-muted">{t("empty.only")}</p>}
             {days.map(({ day, sessions: items }) => (
-              <section key={day} aria-labelledby={`hist-day-${day}`} className="flex flex-col">
+              <section key={day} aria-labelledby={`hist-day-${day}`} className="flex flex-col pb-section last:pb-0">
                 <h3
                   id={`hist-day-${day}`}
-                  className="sticky top-[var(--os-phone-bar)] z-10 bg-card py-tight text-sm font-semibold text-muted md:top-0"
+                  className="sticky top-[var(--os-phone-bar)] z-10 bg-card pb-tight text-xs font-semibold text-muted md:top-0"
                 >
                   {dayLabel(day)}
                 </h3>
-                <ol className="flex flex-col pt-tight">{items.map(item)}</ol>
+                <ol className="flex flex-col">{items.map(item)}</ol>
               </section>
             ))}
             {filtered.length > limit && (

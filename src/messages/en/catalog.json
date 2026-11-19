@@ -1305,8 +1305,8 @@
     },
     "created": {
       "by": "Created by <b>{name}</b>",
-      "on": "Created on {when}",
-      "untracked": "Who created it wasn't recorded. It was made before changes were tracked."
+      "title": "Created",
+      "untrackedShort": "creator not recorded (made before changes were tracked)"
     },
     "netZero": {
       "rename": "Also renamed {ticket} and changed it back.",
@@ -1315,9 +1315,8 @@
       "field": "Also changed the {field} and changed it back."
     },
     "diff": {
-      "show": "Show {count, plural, one {# change} other {# changes}}",
-      "hide": "Hide changes",
-      "list": "What changed"
+      "list": "What changed",
+      "more": "Show {count} more"
     },
     "showFull": "Show full text",
     "showLess": "Show less",
