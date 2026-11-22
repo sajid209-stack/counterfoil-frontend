@@ -180,5 +180,91 @@
     "count": "{count, plural, one {# deposit} other {# deposits}}",
     "none": "None yet"
   },
-  "balances": "Balances"
+  "balances": "Balances",
+  "export": {
+    "title": "Finances statement",
+    "bankTransfer": "Bank transfer",
+    "netMovement": "Net movement",
+    "total": "Total",
+    "sheet": {
+      "ledger": "Statement"
+    },
+    "note": {
+      "ledger": "One row per transaction. Amounts are signed: money in is positive, money out is negative.",
+      "byType": "Biggest movement first. Money in is positive, money out is negative.",
+      "byDay": "Oldest day first. A day is clearing while any of its money is still on its way.",
+      "byMethod": "Online payments Counterfoil collected, by how the guest paid."
+    },
+    "col": {
+      "order": "Order",
+      "reference": "Bank or provider reference",
+      "date": "Date",
+      "time": "Time",
+      "type": "Type",
+      "description": "Description",
+      "method": "Paid by",
+      "who": "Bank or person",
+      "feeBase": "Fee charged on",
+      "feeRate": "Fee rate",
+      "amount": "Amount",
+      "status": "Status",
+      "lines": "Lines",
+      "moneyIn": "Money in",
+      "moneyOut": "Money out",
+      "net": "Net",
+      "payments": "Payments"
+    },
+    "kind": {
+      "sale": "Online payment",
+      "refund": "Refund",
+      "platform_fee": "Counterfoil fee",
+      "processing_fee": "Processing fee",
+      "payout": "Payout",
+      "withdrawal": "Withdrawal",
+      "deposit": "Deposit"
+    },
+    "table": {
+      "byType": "What moved, by type",
+      "byDay": "By day",
+      "byMethod": "Online payments by method"
+    },
+    "kpi": {
+      "available": "Available balance",
+      "availableNote": "Next payout {amount} on {date}.",
+      "availableNone": "Nothing to pay out yet.",
+      "unsettled": "Still clearing",
+      "unsettledNote": "Online money clears by {date}.",
+      "unsettledNone": "Nothing is clearing.",
+      "moneyIn": "Money in",
+      "moneyInNote": "Includes {deposits} deposited.",
+      "fees": "Fees",
+      "feesNote": "Counterfoil and payment processing.",
+      "refunds": "Refunds",
+      "refundsNote": "Given back from online payments.",
+      "paidOut": "Paid out",
+      "paidOutNote": "{payouts} payouts and {withdrawals} withdrawals."
+    },
+    "term": {
+      "available": "Available balance",
+      "unsettled": "Still clearing",
+      "moneyIn": "Money in",
+      "fees": "Fees",
+      "refunds": "Refunds",
+      "paidOut": "Paid out",
+      "amount": "Amount",
+      "status": "Status",
+      "filter": "Filters"
+    },
+    "def": {
+      "available": "Cleared money after fees and payouts, as at the moment of the export. It can be negative: the venue then owes Counterfoil that much and a deposit covers it.",
+      "unsettled": "Online payments that have not cleared into the available balance yet.",
+      "moneyIn": "Online payments collected plus deposits, in the period you chose.",
+      "fees": "What Counterfoil and the payment company charged in the period.",
+      "refunds": "Money given back from online payments in the period.",
+      "paidOut": "Automatic payouts to your bank plus withdrawals you asked for, in the period.",
+      "amount": "Signed from your balance's side: money coming in is positive, money going out is negative.",
+      "status": "Clearing = not yet in the available balance or on its way. Cleared, Paid and Received = settled. Fee = taken off the balance.",
+      "filter": "The key figures at the top (balances and the period's totals) follow the dates you chose only. The tables and the statement sheet also follow the type and search filters, so they list exactly what was on screen."
+    }
+  }
 }

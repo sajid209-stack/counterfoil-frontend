@@ -123,7 +123,37 @@ let operatorState: Operator = structuredClone(seed.operator);
 export const getOperatorState = (): Operator => operatorState;
 export function patchOperatorState(patch: Partial<Operator>): Operator {
   operatorState = { ...operatorState, ...patch, updatedAt: new Date().toISOString() };
+  saveOperatorPatch(patch);
   return operatorState;
+}
+
+/* The business profile is kept per demo, like the catalogue: a logo uploaded in
+   Settings must still be there after a reload, or the receipt it was uploaded
+   for never prints it. Only what was changed is kept, laid over the demo's own. */
+const OPERATOR_KEY = "cf_operator_v1";
+function readOperatorPatches(): Record<string, Partial<Operator>> {
+  try {
+    return JSON.parse(localStorage.getItem(OPERATOR_KEY) ?? "{}") as Record<string, Partial<Operator>>;
+  } catch {
+    return {};
+  }
+}
+function saveOperatorPatch(patch: Partial<Operator>): void {
+  if (typeof window === "undefined") return;
+  const all = readOperatorPatches();
+  const { updatedAt: _u, createdAt: _c, id: _i, ...rest } = patch as Operator;
+  void _u; void _c; void _i;
+  all[savedScope] = { ...(all[savedScope] ?? {}), ...rest };
+  try {
+    localStorage.setItem(OPERATOR_KEY, JSON.stringify(all));
+  } catch {
+    window.dispatchEvent(new Event(SAVE_FAILED_EVENT));
+  }
+}
+function overlayOperator(scope: string): void {
+  if (typeof window === "undefined") return;
+  const p = readOperatorPatches()[scope];
+  if (p) operatorState = { ...operatorState, ...p };
 }
 
 /* ── A new account stays new ───────────────────────────────────────────────
@@ -214,7 +244,7 @@ export function loadBusiness(name: string, currency: string, productIds: string[
   leaveUsBusiness();
   setRegionCurrency(currency);
   // Contact details belong to the seeded business; another demo prints none.
-  operatorState = { ...structuredClone(seed.operator), name, currency, contactPhone: undefined, contactEmail: undefined, website: undefined };
+  operatorState = { ...structuredClone(seed.operator), name, currency, contactPhone: undefined, contactEmail: undefined, website: undefined, logo: null };
   // Events are catalogue items (BT-15) and stay whichever demo business is shown,
   // as the separate events collection did before them.
   (store as Record<string, unknown[]>).products = structuredClone(seed.products).filter((p) => productIds.includes(p.id) || p.bookingType === "BT-15");
@@ -284,7 +314,7 @@ function applyUsBusiness(id: TrustherId): void {
   const S = store as Record<string, unknown[]>;
   if (!usBackup) usBackup = { rows: Object.fromEntries(US_KEYS.map((k) => [k, S[k]])), tax: taxConfigState };
   const seedStaff = usBackup.rows.staff as typeof seed.staff;
-  operatorState = { ...structuredClone(seed.operator), ...d.operator };
+  operatorState = { ...structuredClone(seed.operator), logo: null, ...d.operator };
   S.products = structuredClone(d.products);
   S.locations = structuredClone(d.locations);
   S.counters = structuredClone(d.counters);
@@ -319,7 +349,7 @@ function applyTurfBusiness(id: TurfDemoId): void {
   leaveUsBusiness();
   setRegionCurrency("BDT");
   const d = turfs.TURF_DEMOS[id];
-  operatorState = { ...structuredClone(seed.operator), ...d.operator };
+  operatorState = { ...structuredClone(seed.operator), logo: null, ...d.operator };
   const S = store as Record<string, unknown[]>;
   S.products = structuredClone(d.products);
   S.locations = structuredClone(d.locations);
@@ -363,7 +393,7 @@ const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
     apply: () => {
       leaveUsBusiness();
       setRegionCurrency("BDT");
-      operatorState = { ...structuredClone(seed.operator), ...doers.doersOperator };
+      operatorState = { ...structuredClone(seed.operator), logo: null, ...doers.doersOperator };
       const S = store as Record<string, unknown[]>;
       S.products = structuredClone(doers.doersProducts);
       S.locations = structuredClone(doers.doersLocations);
@@ -384,7 +414,7 @@ const BUNDLES: Record<string, { slug: string; apply: () => void }> = {
     apply: () => {
       leaveUsBusiness();
       setRegionCurrency("BDT");
-      operatorState = { ...structuredClone(seed.operator), ...bcd.bcdOperator };
+      operatorState = { ...structuredClone(seed.operator), logo: "/demo/bcd/logo-ink.png", ...bcd.bcdOperator };
       const S = store as Record<string, unknown[]>;
       S.products = structuredClone(bcd.bcdProducts);
       S.locations = structuredClone(bcd.bcdLocations);
@@ -501,6 +531,7 @@ function rebaseSaved(scope: string): void {
   savedBaseline = new Map();
   for (const c of SAVED_COLLECTIONS) for (const row of store[c]) savedBaseline.set(savedKey(c, row.id), JSON.stringify(row));
   overlaySaved(readSaved()[scope]);
+  overlayOperator(scope);
 }
 
 function writeSaved(): void {
@@ -528,6 +559,11 @@ function writeSaved(): void {
 /* Another tab wrote: lay its rows over this store and tell the screens. */
 if (typeof window !== "undefined") {
   window.addEventListener("storage", (e) => {
+    if (e.key === OPERATOR_KEY) {
+      overlayOperator(savedScope);
+      window.dispatchEvent(new Event(STORE_SYNC_EVENT));
+      return;
+    }
     if (e.key !== SAVED_KEY) return;
     overlaySaved(readSaved()[savedScope]);
     window.dispatchEvent(new Event(STORE_SYNC_EVENT));
@@ -648,7 +684,7 @@ if (typeof window !== "undefined") {
 export function startFresh(): void {
   leaveUsBusiness();
   setRegionCurrency("BDT");
-  operatorState = { ...structuredClone(seed.operator), name: "" };
+  operatorState = { ...structuredClone(seed.operator), name: "", logo: null };
   for (const k of ["products", "orders", "tickets", "ticketCredentials", "ticketScans", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries", "holds", "inventoryItems", "stockMovements", "financeLines", "expenses"]) {
     (store as Record<string, unknown[]>)[k] = [];
   }

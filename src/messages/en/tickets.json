@@ -156,6 +156,74 @@
       "variant": "Variant name",
       "issued": "Issued",
       "order": "Order"
+    },
+    "report": {
+      "title": "Issued tickets",
+      "sheet": "Tickets",
+      "kpiIssued": "Tickets issued",
+      "kpiIssuedNote": "Everything in this list",
+      "kpiUsed": "Checked in",
+      "kpiUsedNote": "Fully used",
+      "kpiPart": "Part checked in",
+      "kpiPartNote": "Some of the group is in",
+      "kpiUnused": "Unused",
+      "kpiUnusedNote": "Still waiting to be used",
+      "kpiVoid": "Voided",
+      "kpiVoidNote": "Cancelled or refunded",
+      "kpiRate": "Check-in rate",
+      "kpiRateNote": "Of tickets that can still be used",
+      "kpiPeople": "People through the gate",
+      "kpiPeopleNote": "Of {total, number} admitted by these tickets",
+      "kpiOrders": "Orders",
+      "kpiOrdersNote": "That these tickets came from",
+      "tableState": "By status",
+      "tableBooking": "By booking",
+      "tableDay": "Issued by day",
+      "colState": "Status",
+      "colBooking": "Booking",
+      "colDay": "Day issued",
+      "colTickets": "Tickets",
+      "colUsed": "Checked in",
+      "colShare": "Share",
+      "colCode": "Booking number",
+      "colOrder": "Order",
+      "colIssuedDate": "Issued on",
+      "colIssuedTime": "Issued at",
+      "colCustomer": "Customer",
+      "colVariant": "Variant",
+      "colVisitDate": "Visit date",
+      "colVisitTime": "Visit time",
+      "colAdmits": "Admits",
+      "colIn": "In so far",
+      "colStatus": "Status",
+      "gloss": {
+        "unused": {
+          "t": "Unused",
+          "d": "Issued and not yet through the gate."
+        },
+        "part": {
+          "t": "Part used",
+          "d": "A group ticket where some of the people are in and others are still to come."
+        },
+        "used": {
+          "t": "Used (checked in)",
+          "d": "Everyone the ticket admits has gone through."
+        },
+        "void": {
+          "t": "Voided",
+          "d": "The ticket can no longer be used, because the order was cancelled or refunded."
+        },
+        "rate": {
+          "t": "Check-in rate",
+          "d": "Checked-in and part-checked-in tickets as a share of tickets that were not voided."
+        },
+        "admits": {
+          "t": "Admits / In so far",
+          "d": "How many people the ticket lets in (a Family ticket may admit 4), and how many have gone through."
+        }
+      },
+      "total": "Total",
+      "searchedFor": "Search: {q}"
     }
   },
   "detailsTitle": "Ticket details",

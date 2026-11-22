@@ -1,15 +1,18 @@
 "use client";
 
-import { Building2, Clock, Coins, Globe, Lock, Mail, MessageSquareText, Phone, ReceiptText } from "lucide-react";
-import { useState } from "react";
+import { Building2, Clock, Coins, Globe, ImagePlus, Lock, Mail, MessageSquareText, Phone, Printer, QrCode, ReceiptText, Ruler, ScanLine, Trash2, UserRound, UsersRound } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { PageShell, Select, controlClass, useToast } from "@/components/ui";
+import { Button, PageShell, SegmentedControl, Select, Switch, controlClass, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { ReceiptFooter, ReceiptHeader } from "@/components/ReceiptParts";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getTaxConfig, listLocations, updateOperator, type Operator } from "@/lib/api";
+import type { ReceiptSettings } from "@/lib/api/types";
 import { DEMO_TODAY } from "@/lib/schedule";
-import { formatDay } from "@/lib/format";
+import { fileToStoredImage } from "@/lib/imageUpload";
+import { receiptSettingsOf } from "@/lib/receipt";
+import { buildSampleOrder } from "@/components/receipt/sample";
+import { ReceiptSheet } from "@/app/print/_components/ReceiptSheet";
 import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, SuffixInput, controlCls } from "../_components/SettingsKit";
 import { TIMEZONES, zoneLabel } from "../_lib/zones";
 
@@ -28,9 +31,14 @@ interface Draft {
   currency: string;
   timezone: string;
   lockDays: string;
+  /** A stored image (data URL) or a path; null = no logo. */
+  logo: string | null;
+  receipt: ReceiptSettings;
 }
 
 const toDraft = (op: Operator): Draft => ({
+  logo: op.logo ?? null,
+  receipt: receiptSettingsOf(op),
   name: op.name,
   phone: op.contactPhone ?? "",
   email: op.contactEmail ?? "",
@@ -90,6 +98,40 @@ export default function BusinessProfilePage() {
     if (form) setDraft({ ...form, [key]: value });
   };
 
+  const setReceipt = <K extends keyof ReceiptSettings>(key: K, value: ReceiptSettings[K]) => {
+    if (form) setDraft({ ...form, receipt: { ...form.receipt, [key]: value } });
+  };
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [logoError, setLogoError] = useState(false);
+  // SVG stays a vector (a canvas would flatten it to pixels); everything else is shrunk to a JPEG that fits in the browser's storage.
+  const onLogoFile = async (file: File | undefined) => {
+    if (!file || !form) return;
+    setLogoError(false);
+    try {
+      const url =
+        file.type === "image/svg+xml"
+          ? await new Promise<string>((resolve, reject) => {
+              const r = new FileReader();
+              r.onload = () => resolve(String(r.result));
+              r.onerror = () => reject(r.error);
+              r.readAsDataURL(file);
+            })
+          : await fileToStoredImage(file, 600, 0.92);
+      set("logo", url);
+    } catch {
+      setLogoError(true);
+    }
+  };
+  const sample = useMemo(
+    () =>
+      buildSampleOrder(
+        { product: t("business.sampleProduct"), adult: t("business.sampleAdult"), permit: t("business.samplePhoto"), customer: t("business.sampleCustomer") },
+        DEMO_TODAY,
+      ),
+    [t],
+  );
+  const initials = (form?.name ?? "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "—";
+
   const nameErr = form && !form.name.trim() ? t("business.nameRequired") : undefined;
   const phoneErr = form && !optional(form.phone, PHONE) ? t("business.phoneInvalid") : undefined;
   const emailErr = form && !optional(form.email, EMAIL) ? t("business.emailInvalid") : undefined;
@@ -123,6 +165,8 @@ export default function BusinessProfilePage() {
       currency: form.currency,
       defaultTimezone: form.timezone,
       pastEditLockDays: form.lockDays.trim() === "" ? null : Number(form.lockDays),
+      logo: form.logo,
+      receipt: form.receipt,
     });
     setSaving(false);
     if (res.ok) {
@@ -185,6 +229,83 @@ export default function BusinessProfilePage() {
           </SettingsSection>
 
           <SettingsSection title={t("business.receiptsTitle")} description={t("business.receiptsDesc")}>
+            <SettingRow icon={ImagePlus} label={t("business.logoLabel")} description={t("business.logoDesc")} layout="stack" labelFor={false} error={logoError ? t("business.logoError") : undefined}>
+              {() => (
+                <div className="flex flex-wrap items-center gap-section">
+                  <div className={cn("flex h-20 w-32 shrink-0 items-center justify-center overflow-hidden rounded-control border bg-card p-tight", form.logo ? "border-line" : "border-dashed border-strong")}>
+                    {form.logo ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- a stored data URL or a path
+                      <img src={form.logo} alt={form.name} className="max-h-full max-w-full object-contain" />
+                    ) : (
+                      <span aria-hidden className="text-xl font-semibold text-muted">{initials}</span>
+                    )}
+                  </div>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    className="sr-only"
+                    tabIndex={-1}
+                    aria-label={t("business.logoUpload")}
+                    onChange={(e) => {
+                      void onLogoFile(e.target.files?.[0]);
+                      e.target.value = "";
+                    }}
+                  />
+                  <div className="flex flex-wrap gap-tight">
+                    <Button variant="secondary" icon={<ImagePlus size={16} strokeWidth={1.5} />} onClick={() => fileRef.current?.click()}>
+                      {form.logo ? t("business.logoReplace") : t("business.logoUpload")}
+                    </Button>
+                    {form.logo && (
+                      <Button variant="tertiary" icon={<Trash2 size={16} strokeWidth={1.5} />} onClick={() => set("logo", null)}>
+                        {t("business.logoRemove")}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </SettingRow>
+            <SettingRow icon={Printer} label={t("business.showLogo")} description={t("business.showLogoDesc")} trailing>
+              {({ id, describedBy }) => <Switch id={id} describedBy={describedBy} aria-label={t("business.showLogo")} checked={form.receipt.showLogo} onChange={(v) => setReceipt("showLogo", v)} />}
+            </SettingRow>
+            <SettingRow icon={Ruler} label={t("business.logoSize")} labelFor={false}>
+              {() => (
+                <SegmentedControl
+                  aria-label={t("business.logoSize")}
+                  value={form.receipt.logoSize}
+                  onChange={(v) => setReceipt("logoSize", v as ReceiptSettings["logoSize"])}
+                  options={[
+                    { value: "small", label: t("business.sizeSmall") },
+                    { value: "medium", label: t("business.sizeMedium") },
+                    { value: "large", label: t("business.sizeLarge") },
+                  ]}
+                />
+              )}
+            </SettingRow>
+            <SettingRow icon={ScanLine} label={t("business.paper")} description={t("business.paperDesc")}>
+              {({ id, describedBy }) => (
+                <Select
+                  id={id}
+                  value={form.receipt.paper}
+                  onChange={(v) => setReceipt("paper", v as ReceiptSettings["paper"])}
+                  aria-describedby={describedBy}
+                  options={[
+                    { value: "80mm", label: t("business.paper80") },
+                    { value: "58mm", label: t("business.paper58") },
+                    { value: "a4", label: t("business.paperA4") },
+                  ]}
+                />
+              )}
+            </SettingRow>
+            <SettingRow icon={UsersRound} label={t("business.showCashier")} description={t("business.showCashierDesc")} trailing>
+              {({ id, describedBy }) => <Switch id={id} describedBy={describedBy} aria-label={t("business.showCashier")} checked={form.receipt.showCashier} onChange={(v) => setReceipt("showCashier", v)} />}
+            </SettingRow>
+            <SettingRow icon={UserRound} label={t("business.showCustomer")} description={t("business.showCustomerDesc")} trailing>
+              {({ id, describedBy }) => <Switch id={id} describedBy={describedBy} aria-label={t("business.showCustomer")} checked={form.receipt.showCustomer} onChange={(v) => setReceipt("showCustomer", v)} />}
+            </SettingRow>
+            <SettingRow icon={QrCode} label={t("business.showQr")} description={t("business.showQrDesc")} trailing>
+              {({ id, describedBy }) => <Switch id={id} describedBy={describedBy} aria-label={t("business.showQr")} checked={form.receipt.showLookupQr} onChange={(v) => setReceipt("showLookupQr", v)} />}
+            </SettingRow>
             <SettingRow icon={MessageSquareText} label={t("business.footer")} description={t("business.footerDesc")} layout="stack">
               {({ id, describedBy }) => (
                 <>
@@ -206,18 +327,29 @@ export default function BusinessProfilePage() {
             </SettingRow>
             <SettingRow icon={ReceiptText} label={t("business.receiptPreview")} description={t("business.receiptPreviewDesc")} layout="stack" labelFor={false}>
               {() => (
-                <div className="max-w-xs rounded-control bg-muted-wash px-section py-major">
-                  <ReceiptHeader
-                    operator={{ name: form.name.trim() || "—", contactPhone: form.phone.trim(), website: form.website.trim() }}
-                    place={place}
-                    tax={taxQ.data}
-                  >
-                    <p className="mt-inline text-xs text-muted">
-                      <span className="font-mono">CF-2026-000123</span> · {formatDay(DEMO_TODAY)}
-                    </p>
-                  </ReceiptHeader>
-                  <p className="border-y border-dashed border-line py-section text-center text-xs text-muted">{t("business.receiptItems")}</p>
-                  <ReceiptFooter message={form.footer} />
+                <div className="overflow-x-auto rounded-control bg-muted-wash px-section py-major">
+                  {/* The real receipt, not a drawing of one. A4 is 210 mm wide, so it is shown at half size. */}
+                  <div style={form.receipt.paper === "a4" ? { zoom: 0.5 } : undefined}>
+                    <ReceiptSheet
+                      printStyle={false}
+                      data={{
+                        order: sample,
+                        operator: {
+                          name: form.name.trim() || "—",
+                          contactPhone: form.phone.trim(),
+                          website: form.website.trim(),
+                          logo: form.logo,
+                          receiptFooter: form.footer.trim(),
+                        },
+                        place,
+                        tax: taxQ.data,
+                        settings: form.receipt,
+                        cashier: t("business.sampleStaff"),
+                        counter: t("business.sampleCounter"),
+                        customerPhone: "01712-345678",
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </SettingRow>

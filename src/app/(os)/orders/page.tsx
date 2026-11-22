@@ -4,8 +4,12 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, DataTable, EmptyState, Notice, PageShell, Pagination, useToast } from "@/components/ui";
-import { NO_ONE, orderMethodOf } from "@/lib/api";
-import { formatDateTime, formatDay } from "@/lib/format";
+import { NO_ONE, listCustomers, orderMethodOf } from "@/lib/api";
+import { downloadReportCsv, downloadXlsx } from "@/lib/report";
+import { useReportLabels, useReportMeta } from "@/lib/useReportLabels";
+import { useReportPrep } from "@/lib/useReportPrep";
+import { useApiQuery } from "@/lib/useApi";
+import { formatDay } from "@/lib/format";
 import { demoNow } from "@/lib/schedule";
 import { RefundRequests } from "@/components/RefundRequests";
 import { OrderCard, firstDirection, useOrderColumns } from "./_components/columns";
@@ -14,7 +18,7 @@ import { OrdersToolbar, type FacetOptions } from "./_components/OrdersToolbar";
 import { SalesFigures } from "./_components/SalesFigures";
 import { SummarySheet } from "./_components/SummarySheet";
 import type { ChipOption } from "./_components/chip";
-import { downloadCsv, reportFileName, salesCsv, summaryCsv, type Tr } from "./_lib/csv";
+import { buildSalesReport, localDay, reportFileBase, type Tr } from "./_lib/report";
 import { CHANNELS, METHODS, PAGE_SIZES, STATUSES, activeCount, cleared, parseFilters, toSearch, type SalesFilters } from "./_lib/filters";
 import { TOGGLEABLE, useHiddenColumns } from "./_lib/columns";
 import { useSalesLabels } from "./_lib/labels";
@@ -174,15 +178,51 @@ function OrdersPageInner() {
   const venueName = report.venue?.name ?? "";
   const filterText = L.describe(f, venueName).join(" · ");
   const tr: Tr = (key, values) => t(key as never, values as never);
-  const context = () => ({ t: tr, L, dir, venueName, filterText, generated: formatDateTime(new Date().toISOString()) });
+  const prep = useReportPrep();
+  const reportLabels = useReportLabels();
+  const reportMeta = useReportMeta();
+  const customersQ = useApiQuery(() => listCustomers({ pageSize: 2000 }), []);
   const printHref = (kind: "summary" | "list") => `/print/orders/${kind}?${toSearch({ ...f, page: 1 }, { venue: report.venueId })}`;
 
-  const onExport = () => {
-    downloadCsv(reportFileName("sales", venueName, f, rows), salesCsv(rows, summary, context()));
+  /* The one report every export reads: Excel, CSV and the summary-only workbook
+     are this object drawn three ways, and it is built from the same rows and
+     summary the figures above the table are. */
+  const makeReport = (kind: "sales" | "sales-summary") => {
+    const phones = new Map((customersQ.data?.data ?? []).map((c) => [c.id, c.phone ?? ""]));
+    /* With no dates chosen, the period is the span the orders themselves cover. */
+    const days = rows.map((o) => localDay(o.createdAt)).sort();
+    const period = f.from && f.to ? L.range(f.from, f.to) : days.length ? L.range(days[0], days[days.length - 1]) : "";
+    /* The filter line names everything but the venue and the dates, which have rows of their own. */
+    const allDates = tr("describe.allDates");
+    const narrowing = L.describe({ ...f, from: "", to: "" }, "").filter((x) => x !== allDates);
+    return buildSalesReport(
+      rows,
+      summary,
+      {
+        t: tr,
+        L,
+        dir,
+        labels: reportLabels,
+        business: prep.business,
+        venueName,
+        currency: prep.currency,
+        fileBase: reportFileBase(kind, venueName, f, rows),
+        meta: reportMeta({ venue: f.customerId ? undefined : venueName, period, filters: narrowing.join(" · "), preparedBy: prep.preparedBy, currency: prep.currency }),
+        phoneOf: (id) => (id ? (phones.get(id) ?? "") : ""),
+      },
+      { summaryOnly: kind === "sales-summary" },
+    );
+  };
+  const onExcel = () => {
+    downloadXlsx(makeReport("sales"));
+    toast.success(t("exported", { count: rows.length }));
+  };
+  const onCsv = () => {
+    downloadReportCsv(makeReport("sales"));
     toast.success(t("exported", { count: rows.length }));
   };
   const onDownloadSummary = () => {
-    downloadCsv(reportFileName("sales-summary", venueName, f, rows), summaryCsv(summary, context()));
+    downloadXlsx(makeReport("sales-summary"));
     toast.success(t("summary.downloaded"));
   };
 
@@ -212,7 +252,8 @@ function OrdersPageInner() {
       onQuery={onSearch}
       disabled={firstLoad}
       onSummary={() => setSheet(true)}
-      onExport={onExport}
+      onExcel={onExcel}
+      onCsv={onCsv}
       onPrint={() => router.push(printHref("list"))}
       columns={{
         options: allColumns.filter((c) => TOGGLEABLE.includes(c.key as never)).map((c) => ({ value: c.key, label: String(c.header) })),

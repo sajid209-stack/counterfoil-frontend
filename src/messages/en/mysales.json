@@ -142,5 +142,81 @@
     "addOn": "Add-on",
     "ticketsLabel": "Tickets"
   },
-  "ofOnly": "of {total}"
+  "ofOnly": "of {total}",
+  "report": {
+    "title": "My sales",
+    "sheetSales": "Sales",
+    "sheetItems": "Items",
+    "kpiSales": "Sales",
+    "kpiCount": "Number of sales",
+    "kpiAvg": "Average sale",
+    "kpiItems": "Items sold",
+    "kpiRefunds": "Refunds",
+    "kpiCash": "Cash taken",
+    "kpiCashNote": "Cash refunded {amount}",
+    "kpiDue": "Due collected",
+    "kpiDueNote": "{count, plural, one {# balance payment} other {# balance payments}}",
+    "kpiOwed": "Still owed",
+    "kpiOwedNote": "{count, plural, one {# sale} other {# sales}} not fully paid",
+    "byMethod": "Sales by payment method",
+    "byDay": "Sales by day",
+    "dueByMethod": "Balances collected, by payment method",
+    "colDay": "Day",
+    "colMethod": "Method",
+    "colSales": "Sales",
+    "colPayments": "Payments",
+    "colAmount": "Amount",
+    "colShare": "Share",
+    "colBooking": "Booking",
+    "colTier": "Ticket type",
+    "colQty": "Qty",
+    "colUnit": "Unit price",
+    "colDiscount": "Discount",
+    "colVat": "VAT",
+    "colLineTotal": "Line total",
+    "filterTab": "List: {name}",
+    "filterSearch": "Search: {q}",
+    "filterAll": "All sales",
+    "gloss": {
+      "sales": {
+        "t": "Sales",
+        "d": "What your sales came to (VAT included). Cancelled and fully refunded sales are left out."
+      },
+      "amount": {
+        "t": "Amount",
+        "d": "On the Sales sheet: the figure of the list you exported. On the All list that is the sale total; on a payment method it is what that method took; on Due collected it is the balance taken; on Still owed it is what is left to pay."
+      },
+      "refunded": {
+        "t": "Refunded",
+        "d": "Money given back to the customer on that sale."
+      },
+      "due": {
+        "t": "Owed",
+        "d": "What the customer has still to pay on that sale."
+      },
+      "cash": {
+        "t": "Cash taken",
+        "d": "Cash received from customers, before cash refunds. Cash refunds are shown beside it."
+      },
+      "dueCollected": {
+        "t": "Due collected",
+        "d": "Balances you collected after the sale, on any sale of yours."
+      },
+      "avg": {
+        "t": "Average sale",
+        "d": "Sales divided by the number of sales."
+      },
+      "share": {
+        "t": "Share",
+        "d": "The row's part of the total in its table."
+      }
+    },
+    "total": "Total",
+    "printTitle": "My sales — {name} — {period}",
+    "printWhen": "Date & time",
+    "printReceipt": "Receipt no.",
+    "printMethod": "Method",
+    "printTotalRow": "{count, plural, one {Total · # sale} other {Total · # sales}}",
+    "printEmpty": "There are no sales to print for these dates."
+  }
 }

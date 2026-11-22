@@ -2,22 +2,25 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { Download, Plus } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { Plus } from "lucide-react";
 import { Button, DateRangePicker, FilterBar, FilterSearch, Modal, PageShell, formatRange, useToast, type FilterSpec } from "@/components/ui";
-import { PageAction } from "@/components/ui/PageShell";
+import { ExportMenu } from "@/components/ExportMenu";
 import { DATE_PILL_PHONE } from "@/components/ui/PeriodPill";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { MD, useMediaQuery } from "@/lib/useMedia";
+import { downloadReportCsv, downloadXlsx, slugify } from "@/lib/report";
+import { useReportLabels, useReportMeta } from "@/lib/useReportLabels";
+import { reportContext, type T } from "@/lib/reports/context";
+import { buildExpensesReport } from "@/lib/reports/expenses";
 import { formatMoney } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
 import {
   EXPENSE_CATEGORIES,
   PAID_FROM,
   deleteExpense,
-  expensesCsv,
   getExpenseSummary,
   listExpensePayees,
   listExpenses,
@@ -75,7 +78,6 @@ const SORT_KEYS: ExpenseSortKey[] = ["date", "ref", "title", "category", "paidFr
 const firstDirection = (k: ExpenseSortKey): Sort["order"] => (["ref", "title", "category", "paidFrom", "recordedBy"].includes(k) ? "asc" : "desc");
 
 const listOf = <V extends string>(raw: string | null, allowed: readonly V[]): V[] => (raw ? raw.split(",").filter((x): x is V => (allowed as readonly string[]).includes(x)) : []);
-const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "venue";
 
 /**
  * Expenses — what the venue spends, written down where it happened.
@@ -247,22 +249,37 @@ function ExpensesView({ locationId, venueName, pending, locations }: { locationI
     });
   };
 
-  // ── the spreadsheet: exactly what is filtered, every page ──
-  const downloadCsv = () => {
-    const csv = expensesCsv(query, {
-      headers: [t("csv.ref"), t("csv.date"), t("csv.title"), t("csv.payee"), t("csv.category"), t("csv.paidFrom"), t("csv.counter"), t("csv.items"), t("csv.total"), t("csv.by"), t("csv.note")],
-      categories: Object.fromEntries(EXPENSE_CATEGORIES.map((c) => [c, labels.category(c)])),
-      paidFrom: Object.fromEntries(PAID_FROM.map((p) => [p, labels.paidFrom(p)])),
+  // ── the report: exactly what is filtered, every page ──
+  const reportLabels = useReportLabels();
+  const reportMeta = useReportMeta();
+  const locale = useLocale();
+  const buildReport = async () => {
+    const res = await listExpenses({ ...query, page: 1, pageSize: 1_000_000 });
+    if (!res.ok) return null;
+    const ctx = reportContext();
+    const period = formatRange(range.from, range.to);
+    const filterText = [
+      cats.length ? `${t("toolbar.category")}: ${cats.map((c) => labels.category(c)).join(", ")}` : "",
+      paid.length ? `${t("toolbar.paidFrom")}: ${paid.map((p) => labels.paidFrom(p)).join(", ")}` : "",
+      q ? `“${q}”` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    return buildExpensesReport({
+      rows: res.data.data,
+      t: t as unknown as T,
+      category: (c) => labels.category(c as ExpenseCategory),
+      paidFrom: (p) => labels.paidFrom(p as PaidFrom),
+      month: (ym) => new Date(`${ym}-15T12:00:00`).toLocaleDateString(locale, { month: "long", year: "numeric" }),
+      labels: reportLabels,
+      business: ctx.business,
+      currency: ctx.currency,
+      fileBase: `expenses-${slugify(venueName)}-${range.from}_${range.to}`,
+      meta: reportMeta({ venue: venueName, period, filters: filterText, preparedBy: ctx.preparedBy, currency: ctx.currency }),
     });
-    // A byte-order mark so a spreadsheet reads Bangla correctly.
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `expenses-${slug(venueName)}-${range.from}_${range.to}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
+  const exportExcel = () => void buildReport().then((r) => r && downloadXlsx(r));
+  const exportCsv = () => void buildReport().then((r) => r && downloadReportCsv(r));
 
   const presets = PRESETS.map((p) => ({ value: p.value, label: t(`period.${p.value}` as "period.30d"), range: p.range }));
   const periodLabel = PRESETS.some((p) => p.value === range.preset) ? t(`period.${range.preset}` as "period.30d") : formatRange(range.from, range.to);
@@ -312,12 +329,6 @@ function ExpensesView({ locationId, venueName, pending, locations }: { locationI
     },
   ];
 
-  const download = (
-    <Button variant="secondary" size="sm" icon={<Download size={15} strokeWidth={1.5} aria-hidden />} onClick={downloadCsv}>
-      {t("toolbar.download")}
-    </Button>
-  );
-
   return (
     <PageShell title={t("title")} primary={wide ? undefined : { label: t("add"), onClick: () => open("new") }}>
       <div className="flex flex-col gap-section">
@@ -361,21 +372,14 @@ function ExpensesView({ locationId, venueName, pending, locations }: { locationI
                 }}
                 className={cn("min-w-0 flex-1 md:w-auto md:flex-none", DATE_PILL_PHONE, "max-sm:flex-initial")}
               />
-              {!wide && (
-                <PageAction
-                  label={t("toolbar.download")}
-                  icon={<Download size={15} strokeWidth={1.5} aria-hidden />}
-                  onClick={downloadCsv}
-                  className="max-sm:relative max-sm:h-9 max-sm:w-9 max-sm:rounded-full max-sm:border-transparent max-sm:bg-subtle max-sm:before:absolute max-sm:before:-inset-1.5 max-sm:before:content-['']"
-                />
-              )}
+              {!wide && <ExportMenu onExcel={exportExcel} onCsv={exportCsv} compact />}
             </div>
           }
           filters={filters}
           actions={
             wide ? (
               <>
-                {download}
+                <ExportMenu onExcel={exportExcel} onCsv={exportCsv} />
                 <Button size="sm" icon={<Plus size={16} strokeWidth={1.75} aria-hidden />} onClick={() => open("new")}>
                   {t("add")}
                 </Button>

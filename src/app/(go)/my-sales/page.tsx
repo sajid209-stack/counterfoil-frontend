@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowDown, ArrowUp, Download, Printer, ReceiptText, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ReceiptText, Search } from "lucide-react";
 import { Button, DateRangePicker, formatRange, Notice, Skeleton, type DateRangeValue } from "@/components/ui";
-import { saveCsv, toCsv } from "@/lib/csv";
+import { ExportMenu } from "@/components/ExportMenu";
+import { downloadReportCsv, downloadXlsx } from "@/lib/report";
+import { useReportLabels, useReportMeta } from "@/lib/useReportLabels";
 import { AffixInput } from "@/components/ui/Field";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -23,8 +24,9 @@ import { R } from "../_components/railType";
 import { T } from "../_components/type";
 import { RefundFlowSheet } from "../_components/RefundFlowSheet";
 import { useActor } from "../schedule/_lib/actor";
-import { daysIn, orderDay, previousRange, rangeLength, salesRows, shiftIso, summarise, viewMethods, type SalesView } from "./_lib/summary";
-import { byMethod, itemsShort, SaleList, type SaleListContext } from "./_components/SaleList";
+import { daysIn, previousRange, rangeLength, salesRows, shiftIso, summarise, viewMethods, type SalesView } from "./_lib/summary";
+import { itemsShort, SaleList, type SaleListContext } from "./_components/SaleList";
+import { buildMySalesReport } from "./_lib/report";
 
 const PAGE = 10;
 
@@ -143,6 +145,8 @@ export default function MySalesPage() {
   const customersQ = useApiQuery(() => listCustomers({ pageSize: 2000 }), []);
   const staffQ = useApiQuery(() => listStaff({ pageSize: 500 }), []);
   const countersQ = useApiQuery(() => listCounters({ pageSize: 200 }), []);
+  const reportLabels = useReportLabels();
+  const reportMeta = useReportMeta();
   const currency = opQ.data?.currency ?? "BDT";
   const money = (m: number) => formatMoney(m, currency);
 
@@ -277,59 +281,49 @@ export default function MySalesPage() {
     { key: "refunds", label: t("kpiRefunds"), value: money(cur.refunds), note: <p className={T.meta}>{t("refundCount", { count: cur.refundCount })}</p> },
   ];
 
-  /* Export: the sales in these dates (and any search), one row each, as a CSV a
-     spreadsheet opens. Amounts in major units with two decimals, so a sum in
-     the spreadsheet is the sum on screen. */
-  const exportCsv = () => {
-    const head = [t("csv.date"), t("csv.time"), t("csv.code"), t("csv.items"), t("csv.method"), t("csv.amount"), t("csv.refunded"), t("csv.status"), t("csv.customer"), t("csv.phone"), t("csv.payments"), t("csv.due")];
-    const body = found.map((r) => {
-      const o = r.order;
-      const parts = byMethod(r);
-      const back = o.payments.filter((p) => p.status === "confirmed" && p.amount < 0).reduce((n, p) => n - p.amount, 0);
-      const w = whoOf(o);
-      return [
-        orderDay(o),
-        formatClockOf(r.at),
-        o.reference,
-        itemsShort(o),
-        parts.map((p) => labels.method(p.method)).join(" + "),
-        (r.amount / 100).toFixed(2),
-        (back / 100).toFixed(2),
-        labels.status(o.status),
-        w.name,
-        w.phone ?? "",
-        parts.map((p) => `${labels.method(p.method)} ${(p.amount / 100).toFixed(2)}`).join(" + "),
-        (r.due / 100).toFixed(2),
-      ];
+  /* Export: the same report three ways. Excel is the whole story for these
+     dates (figures, breakdowns, the sales, their items); CSV is the sales of the
+     list that is open, one row each. Amounts are numbers, never "৳1,234" text,
+     so a sum in the spreadsheet is the sum on screen. */
+  const makeReport = () => {
+    const tabName = view === "all" ? t("tabAll") : view === "dueCollected" ? t("tabDue") : view === "owed" ? t("tabOwed") : labels.method(view);
+    const filters = [view !== "all" ? t("report.filterTab", { name: tabName }) : "", q ? t("report.filterSearch", { q: query.trim() }) : ""].filter(Boolean).join(" · ") || t("report.filterAll");
+    return buildMySalesReport({
+      t: (key, values) => t(key as never, values as never),
+      methodName: labels.method,
+      statusName: labels.status,
+      money,
+      labels: reportLabels,
+      business: opQ.data?.name ?? "Counterfoil",
+      currency,
+      fileBase: `my-sales_${view}_${range.from}_${range.to}`,
+      meta: reportMeta({ period: rangeName, filters, preparedBy: meQ.data?.name ?? "", currency }),
+      cur,
+      prev,
+      hasPrev,
+      refName,
+      all: lists.all ?? [],
+      dueCollected: lists.dueCollected ?? [],
+      owed: lists.owed ?? [],
+      found,
+      who: whoOf,
     });
-    saveCsv(`my-sales_${view}_${range.from}_${range.to}.csv`, toCsv([head, ...body]));
   };
-  /* Print every sale in the range, not the first page of the list: the list is
-     opened in full first (flushSync, so it is in the page before the dialog
-     takes its snapshot), and stays open afterwards. */
+  const exportXlsx = () => downloadXlsx(makeReport());
+  const exportCsv = () => downloadReportCsv(makeReport());
+  /* Print is its own A4 document: /print/my-sales opens with the dates, list and
+     search that are on screen, and prints every sale in them. */
   const printAll = () => {
-    flushSync(() => setShown(Number.POSITIVE_INFINITY));
-    window.print();
+    const p = new URLSearchParams({ from: range.from, to: range.to, view });
+    if (query.trim()) p.set("q", query.trim());
+    router.push(`/print/my-sales?${p.toString()}`);
   };
 
   return (
     <GoPage width="wide">
-      {/* The shell's bars are not part of a printed summary; the page's own
-          title is (it carries data-page-head). */}
-      <style>{`@media print { header:not([data-page-head] header), nav { display: none !important; } }`}</style>
-
       <div className={PHONE}>
         <div data-page-head>
-          <GoPageHeader
-            title={t("title")}
-            subtitle={
-              <>
-                <span className="print:hidden">{t("subtitle")}</span>
-                <span className="hidden print:inline">{t("printedFor", { name: meQ.data?.name ?? "", date: formatRange(range.from, range.to) })}</span>
-              </>
-            }
-            className="mb-comfortable! rail:mb-section!"
-          />
+          <GoPageHeader title={t("title")} subtitle={t("subtitle")} className="mb-comfortable! rail:mb-section!" />
         </div>
 
         <main className="flex flex-col gap-section rail:gap-major">
@@ -361,14 +355,7 @@ export default function MySalesPage() {
               className="min-w-0 flex-1 rail:w-auto rail:flex-none"
             />
             <span className="hidden flex-1 rail:block" />
-            <Button variant="secondary" size="sm" className={`w-11 shrink-0 px-0 rail:w-auto rail:px-comfortable ${R.button}`} aria-label={t("exportAria")} title={t("exportAria")} onClick={exportCsv} disabled={found.length === 0}>
-              <Download size={16} strokeWidth={1.75} aria-hidden />
-              <span className="sr-only rail:not-sr-only">{t("export")}</span>
-            </Button>
-            <Button variant="secondary" size="sm" className={`w-11 shrink-0 px-0 rail:w-auto rail:px-comfortable ${R.button}`} aria-label={t("print")} title={t("print")} onClick={printAll}>
-              <Printer size={16} strokeWidth={1.75} aria-hidden />
-              <span className="sr-only rail:not-sr-only">{t("printShort")}</span>
-            </Button>
+            <ExportMenu shape="go" size="md" compact onExcel={exportXlsx} onCsv={exportCsv} onPrint={printAll} disabled={found.length === 0} />
           </div>
 
           <Figures items={figures} labelledBy="ms-hero" />

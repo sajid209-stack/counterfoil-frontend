@@ -199,5 +199,66 @@
   },
   "loadFailed": "Could not load the activity log.",
   "retry": "Try again",
-  "by": "By {name}"
+  "by": "By {name}",
+  "report": {
+    "title": "Activity log report",
+    "total": "Total",
+    "kpi": {
+      "events": "Events",
+      "eventsNote": "Across {days, plural, one {# day} other {# days}}.",
+      "needsLook": "Worth a look",
+      "needsLookNote": "Warnings and serious events. {serious} serious.",
+      "people": "People",
+      "peopleNote": "Most active: {name}, {n, plural, one {# event} other {# events}}.",
+      "busiest": "Busiest day",
+      "busiestNote": "{n, plural, one {# event} other {# events}}."
+    },
+    "table": {
+      "byAction": "By action",
+      "byPerson": "By person",
+      "byType": "By type",
+      "byDay": "By day"
+    },
+    "note": {
+      "byAction": "What happened most, first.",
+      "byPerson": "Who did the most, first. System means nobody signed in did it.",
+      "byDay": "Oldest day first."
+    },
+    "sheet": {
+      "log": "Activity log"
+    },
+    "col": {
+      "events": "Events",
+      "share": "Share",
+      "action": "Action",
+      "person": "Person",
+      "type": "Type",
+      "date": "Date",
+      "needsLook": "Worth a look",
+      "when": "When",
+      "subject": "About",
+      "details": "What happened",
+      "counter": "Counter",
+      "device": "Device",
+      "venue": "Venue",
+      "importance": "Importance"
+    },
+    "term": {
+      "event": "Event",
+      "action": "Action",
+      "person": "Person",
+      "type": "Type",
+      "importance": "Importance",
+      "needsLook": "Worth a look"
+    },
+    "def": {
+      "event": "One thing that happened, with the time, the person, and where. The log is newest first.",
+      "action": "The kind of thing that happened, such as Signed in, Ticket scanned or Refund approved.",
+      "person": "The team member who did it, as signed in at the time.",
+      "type": "The group the action belongs to: sign-ins and shifts, gate and tickets, sales and refunds, bookings and holds, devices, settings and team.",
+      "importance": "Info is routine. Warning is worth a glance, such as a wrong PIN or a refused ticket. Serious needs attention, such as a lock-out or a cash shortage.",
+      "needsLook": "Events marked Warning or Serious.",
+      "system": "Things the system did itself with nobody signed in, such as a hold that ran out or a ticket refused at the gate."
+    }
+  }
 }

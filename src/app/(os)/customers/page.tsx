@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Download, Mail, Smartphone } from "lucide-react";
+import { Mail, Smartphone } from "lucide-react";
 import {
   Button,
   DataTable,
@@ -20,7 +20,11 @@ import {
 import { PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { MetaParts, PhoneRow } from "@/components/ui/PhoneRow";
 import { QuickTabs } from "@/components/ui/QuickTabs";
-import { ToolbarMenu } from "../orders/_components/ToolbarMenu";
+import { ExportMenu } from "@/components/ExportMenu";
+import { downloadReportCsv, downloadXlsx } from "@/lib/report";
+import { useReportLabels, useReportMeta } from "@/lib/useReportLabels";
+import { useReportPrep } from "@/lib/useReportPrep";
+import { buildCustomersReport } from "./_lib/report";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -79,33 +83,31 @@ export default function CustomersPage() {
   );
   const group = useMemo(() => groupQ.data?.data ?? [], [groupQ.data]);
 
-  // §63.10 — a group built from the filters above, exported as it stands.
-  const exportGroup = useCallback(() => {
-    const header = "Name,Phone,Email,Bookings,Spent,Visits,No-shows,Last seen,Email consent,SMS consent,Tags";
-    const body = group.map((c) =>
-      [
-        `"${c.name}"`,
-        `"${c.phone ?? ""}"`,
-        `"${c.email ?? ""}"`,
-        c.stats.orders,
-        (c.stats.spent / 100).toFixed(2),
-        c.stats.visits,
-        c.stats.noShows,
-        c.stats.lastSeen?.slice(0, 10) ?? "",
-        hasConsent(c, "email") ? "yes" : "no",
-        hasConsent(c, "sms") ? "yes" : "no",
-        `"${c.tags.join(" ")}"`,
-      ].join(","),
-    );
-    const blob = new Blob([[header, ...body].join("\n")], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `customers-${segment}-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  // §63.10 — a group built from the filters above, exported as it stands: an
+  // Excel workbook with the figures first, or plain rows for another system.
+  const prep = useReportPrep();
+  const reportLabels = useReportLabels();
+  const reportMeta = useReportMeta();
+  const segmentName = segment === "email" ? t("segEmail") : segment === "sms" ? t("segSms") : "";
+  const makeReport = useCallback(() => {
+    const filtersText = [segmentName, search.trim() ? t("report.searchedFor", { q: search.trim() }) : ""].filter(Boolean).join(" · ");
+    return buildCustomersReport(group, {
+      t: (key, values) => t(key as never, values as never),
+      labels: reportLabels,
+      business: prep.business,
+      currency: prep.currency,
+      fileBase: `customers-${segment}-${new Date().toISOString().slice(0, 10)}`,
+      meta: reportMeta({ period: t("report.lifetime"), filters: filtersText || undefined, preparedBy: prep.preparedBy, currency: prep.currency }),
+    });
+  }, [group, segment, segmentName, search, t, reportLabels, reportMeta, prep.business, prep.currency, prep.preparedBy]);
+  const exportExcel = () => {
+    downloadXlsx(makeReport());
     toast.success(t("exported", { count: group.length }));
-  }, [group, segment, t, toast]);
+  };
+  const exportCsv = () => {
+    downloadReportCsv(makeReport());
+    toast.success(t("exported", { count: group.length }));
+  };
 
   const columns: Column<CustomerWithStats>[] = [
     {
@@ -290,18 +292,7 @@ export default function CustomersPage() {
             actions={
               <>
                 <PagePrimaryButton primary={primary} />
-                <ToolbarMenu
-                  label={t("moreActions")}
-                  items={[
-                    {
-                      key: "export",
-                      label: t("exportGroup"),
-                      icon: <Download size={15} strokeWidth={1.5} aria-hidden />,
-                      onSelect: exportGroup,
-                      disabled: group.length === 0,
-                    },
-                  ]}
-                />
+                <ExportMenu onExcel={exportExcel} onCsv={exportCsv} disabled={group.length === 0} compact />
               </>
             }
           />

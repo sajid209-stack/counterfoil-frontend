@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Download } from "lucide-react";
-import { AreaChart, Button, HeatmapChart, formatRange, type ChartPoint } from "@/components/ui";
+import { AreaChart, HeatmapChart, formatRange, type ChartPoint } from "@/components/ui";
 import type { AnalyticsOverview, TimePoint } from "@/lib/api";
 import { useEnumLabels } from "@/lib/labels";
 import { formatClock, formatDay, formatMoney, formatMoneyCompact } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
-import { csvCell, major, num, pad2, percent, saveCsv, wholeShares } from "./helpers";
+import { ExportMenu } from "@/components/ExportMenu";
+import { num, pad2, percent, wholeShares } from "./helpers";
+import { useAnalyticsExports } from "../_lib/useAnalyticsExports";
 import {
   BarList,
   CardSkeleton,
@@ -91,7 +92,7 @@ function SwatchLegend({ items }: { items: { label: string; color: string }[] }) 
   );
 }
 
-export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: string }) {
+export function Cards({ o, venueName, venueId }: { o: AnalyticsOverview; venueName: string; venueId: string }) {
   const t = useTranslations("analytics");
   const tn = useTranslations("nav");
   const locale = useLocale();
@@ -451,14 +452,8 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
 
   // ── VAT ──
   const rate_ = (r: number) => `${Math.round(r * 1000) / 10}%`;
-  const downloadVat = () => {
-    const rows: (string | number)[][] = [
-      [t("vat.class"), t("vat.rate"), t("vat.net"), t("vat.vat"), t("vat.gross"), t("vat.lines")],
-      ...o.tax.rows.map((r) => [r.taxClass, rate_(r.rate), major(r.net), major(r.tax), major(r.gross), r.lineCount]),
-      [t("vat.total"), "", major(o.tax.net), major(o.tax.tax), major(o.tax.gross), o.tax.rows.reduce((s, r) => s + r.lineCount, 0)],
-    ];
-    saveCsv(`vat-${venueName}-${o.from}_${o.to}.csv`, "﻿" + rows.map((r) => r.map(csvCell).join(",")).join("\r\n") + "\r\n");
-  };
+  // The VAT working paper: summary by rate, by day and by invoice.
+  const vatExport = useAnalyticsExports(o, venueName, venueId);
   const lines = o.tax.rows.reduce((s, r) => s + r.lineCount, 0);
 
   const emptyWithEarlier = (text: string, earlier: number | null, fmt: (n: number) => string) =>
@@ -843,9 +838,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
         sub={t("vat.note")}
         summary={sum.vat}
         actions={
-          <Button variant="secondary" size="sm" icon={<Download size={16} strokeWidth={1.75} aria-hidden />} onClick={downloadVat} disabled={o.tax.rows.length === 0} className="shrink-0">
-            {t("vat.download")}
-          </Button>
+          <ExportMenu onExcel={vatExport.vatExcel} onCsv={vatExport.vatCsv} disabled={o.tax.rows.length === 0} />
         }
       >
         {o.tax.rows.length === 0 ? (

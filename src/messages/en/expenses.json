@@ -204,5 +204,78 @@
     "total": "Total",
     "by": "Added by",
     "note": "Note"
+  },
+  "export": {
+    "title": "Expenses report",
+    "total": "Total",
+    "yes": "Yes",
+    "no": "No",
+    "kpi": {
+      "total": "Total spent",
+      "totalNote": "Average {avg} per expense.",
+      "count": "Expenses",
+      "countNote": "{items, plural, one {# item line} other {# item lines}} across them.",
+      "topCategory": "Biggest category",
+      "topCategoryNote": "{share}% of the spending, {amount}.",
+      "biggest": "Biggest expense"
+    },
+    "table": {
+      "byCategory": "By category",
+      "byMonth": "By month",
+      "byPaidFrom": "By how it was paid",
+      "topPayees": "Top payees"
+    },
+    "note": {
+      "byCategory": "Biggest first.",
+      "byMonth": "Oldest first, so a trend reads left to right.",
+      "byPaidFrom": "Where the money came from.",
+      "topPayees": "The eight people or businesses paid the most.",
+      "lines": "One row per item on an itemised expense."
+    },
+    "sheet": {
+      "expenses": "Expenses",
+      "lines": "Items"
+    },
+    "col": {
+      "spent": "Spent",
+      "share": "Share",
+      "expenses": "Expenses",
+      "category": "Category",
+      "month": "Month",
+      "paidFrom": "Paid from",
+      "payee": "Paid to",
+      "ref": "Reference",
+      "date": "Date",
+      "title": "Title",
+      "addedBy": "Added by",
+      "counter": "Counter",
+      "items": "Items",
+      "total": "Total",
+      "receipt": "Receipt attached",
+      "note": "Note",
+      "item": "Item",
+      "qty": "Quantity",
+      "unit": "Unit",
+      "unitPrice": "Price each",
+      "lineTotal": "Item total"
+    },
+    "term": {
+      "total": "Total spent",
+      "expense": "Expense",
+      "category": "Category",
+      "paidFrom": "Paid from",
+      "items": "Items",
+      "share": "Share",
+      "receipt": "Receipt attached"
+    },
+    "def": {
+      "total": "The sum of every expense listed. It equals the total on the Expenses page for the same dates and filters.",
+      "expense": "One cost written down: what it was for, who was paid, on which day, and how.",
+      "category": "The group the cost belongs to, such as Wages, Bills or Repairs.",
+      "paidFrom": "Where the money came out of: a counter's cash drawer, the bank, bKash or a card.",
+      "items": "The number of item lines on an itemised expense. An expense written down as one amount has none.",
+      "share": "A row's part of the total spent, as a percentage. Shares add up to 100%.",
+      "receipt": "Whether a photo or file of the receipt was attached to the expense."
+    }
   }
 }

@@ -55,6 +55,7 @@ export const operator: Operator = {
   contactEmail: "hello@lalbagh.example",
   website: "lalbagh.example",
   receiptFooter: "Thank you for visiting. Tickets are valid only on the date shown.",
+  logo: "/demo/logos/lalbagh.svg",
   createdAt: T,
   updatedAt: T,
 };

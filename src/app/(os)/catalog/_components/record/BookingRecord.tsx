@@ -38,7 +38,10 @@ import { Overview } from "./Overview";
 import { ticketSales } from "./overviewData";
 import { PageTab, WhereTab, whereProblem } from "./parts";
 import { RecordFrame, useRecordTab, type RecordTab, type TabId } from "./RecordFrame";
-import { downloadCsv, settlementCsv } from "./settlement";
+import { buildSettlementReport } from "./settlement";
+import { downloadReportCsv, downloadXlsx } from "@/lib/report";
+import { useReportLabels, useReportMeta } from "@/lib/useReportLabels";
+import { reportContext, type T } from "@/lib/reports/context";
 import { useRecordActions } from "./actions";
 
 export interface RecordEnv {
@@ -71,6 +74,9 @@ export function BookingRecord({ product, env, onChanged }: { product: Product; e
   const tevw = useTranslations("catalog.eventWizard");
   const te = useTranslations("events");
   const tr = useTranslations("catalog.eventRecord");
+  const trs = useTranslations("catalog.settleReport");
+  const reportLabels = useReportLabels();
+  const reportMeta = useReportMeta();
   const toast = useToast();
   const subtitle = useBehaviourSubtitle();
   const summaryOf = (code: Product["bookingType"]) => ts(`summary.${summaryKeyOf(code)}`);
@@ -193,15 +199,33 @@ export function BookingRecord({ product, env, onChanged }: { product: Product; e
     if (!isEvent) return actions.menu;
     const view = eventView(product);
     const settlement = eventSettlement(view, (n) => tr("days.nth", { n }));
+    const report = () => {
+      const ctx = reportContext();
+      return buildSettlementReport(view, settlement, {
+        t: trs as unknown as T,
+        channel: (c) => tr(`settle.channel.${c}` as never),
+        labels: reportLabels,
+        meta: (m) => reportMeta({ ...m, preparedBy: ctx.preparedBy, currency: ctx.currency }),
+        business: ctx.business,
+        currency: ctx.currency,
+        fileBase: `sales-summary-${view.slug}`,
+      });
+    };
+    const excel = {
+      key: "xlsx",
+      label: tr("settle.exportExcel"),
+      icon: <Download size={14} strokeWidth={1.5} />,
+      onSelect: () => downloadXlsx(report()),
+    };
     const csv = {
       key: "csv",
       label: tr("settle.export"),
       icon: <Download size={14} strokeWidth={1.5} />,
-      onSelect: () => downloadCsv(`sales-${view.slug}.csv`, settlementCsv(view, settlement, tr as never)),
+      onSelect: () => downloadReportCsv(report()),
     };
     /* Before the destructive item, which the shared menu always puts last. */
-    return [...actions.menu.slice(0, actions.menu.length - 1), csv, ...actions.menu.slice(-1)];
-  }, [isEvent, actions.menu, product, tr]);
+    return [...actions.menu.slice(0, actions.menu.length - 1), excel, csv, ...actions.menu.slice(-1)];
+  }, [isEvent, actions.menu, product, tr, trs, reportLabels, reportMeta]);
 
   const tabs: RecordTab[] = [
     {

@@ -193,7 +193,7 @@
   },
   "summary": {
     "title": "Sales summary",
-    "download": "Download summary (CSV)",
+    "download": "Download summary (Excel)",
     "print": "Print summary",
     "downloaded": "Summary downloaded.",
     "totals": "Totals",
@@ -253,7 +253,8 @@
   },
   "print": {
     "listTitle": "Sales",
-    "generated": "Generated {at}"
+    "generated": "Generated {at}",
+    "totalRow": "Total · {count, plural, one {# order} other {# orders}}"
   },
   "facts": {
     "title": "Order information",
@@ -332,5 +333,101 @@
     "unpaid": "Unpaid",
     "refunds": "Refunds",
     "cancelled": "Cancelled"
+  },
+  "report": {
+    "title": "Sales report",
+    "sheetOrders": "Orders",
+    "sheetItems": "Order items",
+    "kpiSales": "Sales",
+    "kpiSalesNote": "After refunds · {count, plural, one {# order counted} other {# orders counted}}",
+    "kpiOrders": "Orders",
+    "kpiOrdersNote": "{count, plural, one {# more is cancelled or refunded} other {# more are cancelled or refunded}}",
+    "kpiOrdersNone": "None cancelled or fully refunded",
+    "kpiAov": "Average order value",
+    "kpiAovNote": "Sales divided by orders counted",
+    "kpiItems": "Items sold",
+    "kpiItemsNote": "Tickets and add-ons on counted orders",
+    "kpiRefunds": "Refunds",
+    "kpiRefundsNote": "{count, plural, one {# order has a refund} other {# orders have refunds}}",
+    "kpiOwed": "Outstanding",
+    "kpiOwedNote": "{count, plural, one {# order still owes a balance} other {# orders still owe a balance}}",
+    "kpiOwedWrittenOff": "{count, plural, one {# order owes} other {# orders owe}} · written off {amount}",
+    "kpiDiscounts": "Discounts",
+    "kpiDiscountsNote": "{pct} of gross sales",
+    "kpiVat": "VAT",
+    "kpiVatNote": "Already included in sales",
+    "tableByDay": "Sales by day",
+    "colDay": "Day",
+    "colSales": "Sales",
+    "colShare": "Share",
+    "colTime": "Time",
+    "colPhone": "Phone",
+    "colGross": "Gross",
+    "colRefunded": "Refunded",
+    "colDue": "Owed",
+    "colWrittenOff": "Written off",
+    "colBooking": "Booking",
+    "colTier": "Ticket type",
+    "colVisit": "Visit date",
+    "colUnit": "Unit price",
+    "colLineTotal": "Line total",
+    "gloss": {
+      "sales": {
+        "t": "Sales",
+        "d": "What the orders are worth: the order total (VAT included) less anything refunded on its lines. Cancelled and fully refunded orders count as zero. This is the headline figure on every sheet."
+      },
+      "gross": {
+        "t": "Gross",
+        "d": "The full price of everything sold, before any discount or VAT."
+      },
+      "discounts": {
+        "t": "Discounts",
+        "d": "Money taken off at the till, on a single line or on the whole sale."
+      },
+      "net": {
+        "t": "Net",
+        "d": "Gross less discounts: what the sale came to before VAT."
+      },
+      "vat": {
+        "t": "VAT",
+        "d": "Tax charged on the discounted prices. It is already inside Total and Sales."
+      },
+      "total": {
+        "t": "Total",
+        "d": "What the customer was asked to pay: net plus VAT."
+      },
+      "paid": {
+        "t": "Paid",
+        "d": "Money received on the order, less any refunds paid back."
+      },
+      "refunded": {
+        "t": "Refunded",
+        "d": "Money handed back to the customer on the order, in full or in part."
+      },
+      "owed": {
+        "t": "Owed",
+        "d": "What the customer still has to pay: Sales less Paid less Written off."
+      },
+      "writtenOff": {
+        "t": "Written off",
+        "d": "A balance the business chose not to collect (bad debt, dispute or goodwill). It is no longer owed."
+      },
+      "aov": {
+        "t": "Average order value",
+        "d": "Sales divided by the number of orders counted."
+      },
+      "items": {
+        "t": "Items sold",
+        "d": "The number of tickets, bookings and add-ons on orders that count."
+      },
+      "counted": {
+        "t": "Orders counted",
+        "d": "Orders that are not cancelled and not refunded in full. Only these feed Sales, Orders and the breakdowns' money."
+      },
+      "share": {
+        "t": "Share",
+        "d": "The row's part of the total Sales for the same period."
+      }
+    }
   }
 }

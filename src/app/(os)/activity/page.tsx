@@ -2,7 +2,8 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Download, Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { Button, EmptyState, FilterBar, FilterSearch, PageShell, Select, Skeleton, formatRange, type FilterSpec } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -10,9 +11,12 @@ import { useActiveLocation } from "@/lib/activeLocation";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { formatClockOf, formatDay } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
+import { downloadReportCsv, downloadXlsx, slugify } from "@/lib/report";
+import { useReportLabels, useReportMeta } from "@/lib/useReportLabels";
+import { reportContext, type T } from "@/lib/reports/context";
+import { buildActivityReport } from "@/lib/reports/activity";
 import {
   ACTIVITY_GROUPS,
-  activityCsv,
   filterActivity,
   listActivity,
   listActivityPeople,
@@ -118,23 +122,33 @@ function ActivityView() {
     return formatDay(day, { weekday: true });
   };
 
-  const download = () => {
-    const rows = filterActivity({ ...query });
-    const csv = activityCsv(rows, {
-      headers: [t("csv.when"), t("csv.type"), t("csv.person"), t("csv.what"), t("csv.venue"), t("csv.counter"), t("csv.device"), t("csv.importance")],
+  const reportLabels = useReportLabels();
+  const reportMeta = useReportMeta();
+  const buildReport = () => {
+    const ctx = reportContext();
+    const filterText = [
+      group !== "all" ? `${t("filter.type")}: ${x.groupLabel(group)}` : "",
+      actorId ? `${t("filter.person")}: ${peopleQ.data?.find((p) => p.staffId === actorId)?.name ?? actorId}` : "",
+      severity !== "all" ? `${t("filter.importance")}: ${severity === "warning" ? t("filter.warnings") : t("filter.serious")}` : "",
+      q ? `“${q}”` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    const dates = formatRange(range.from, range.to);
+    const period = PRESETS.some((p) => p.value === rangePreset) ? `${t(`period.${rangePreset}`)} (${dates})` : dates;
+    return buildActivityReport({
+      events: filterActivity({ ...query }),
+      t: t as unknown as T,
       kind: x.kindLabel,
-      text: x.plain,
-      severity: (e) => x.severityLabel(e.severity),
+      group: x.groupLabel,
+      severity: x.severityLabel,
+      sentence: x.plain,
+      labels: reportLabels,
+      business: ctx.business,
+      currency: ctx.currency,
+      fileBase: `activity-${slugify(location?.name ?? "") || "venue"}-${range.from}_${range.to}`,
+      meta: reportMeta({ venue: location?.name ?? "", period, filters: filterText, preparedBy: ctx.preparedBy }),
     });
-    /* A byte-order mark so a spreadsheet reads Bangla correctly. */
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    const slug = (location?.name ?? "venue").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "venue";
-    a.download = `${t("exportFile")}-${slug}-${range.from}_${range.to}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const filters: FilterSpec[] = [
@@ -246,11 +260,7 @@ function ActivityView() {
           }
           filters={filters}
           /* The one action. On a phone it is the download glyph beside Filters. */
-          actions={
-            <Button variant="secondary" size="sm" icon={<Download size={15} strokeWidth={1.5} aria-hidden />} onClick={download} title={t("export")} className="max-md:w-11 max-md:px-0">
-              <span className="max-md:sr-only">{t("export")}</span>
-            </Button>
-          }
+          actions={<ExportMenu onExcel={() => downloadXlsx(buildReport())} onCsv={() => downloadReportCsv(buildReport())} compact />}
         />
 
         <p className="text-sm text-muted" aria-live="polite">

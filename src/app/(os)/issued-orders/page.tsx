@@ -4,18 +4,23 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Download, RotateCcw, SearchX, TicketCheck, TriangleAlert } from "lucide-react";
+import { RotateCcw, SearchX, TicketCheck, TriangleAlert } from "lucide-react";
 import { Button, DataTable, EmptyState, FilterBar, FilterSearch, PageShell, Pagination, StatusPill, formatRange, useToast, type Column, type FilterSpec, type PillTone } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
+import { ExportMenu } from "@/components/ExportMenu";
+import { downloadReportCsv, downloadXlsx, slugify } from "@/lib/report";
+import { useReportLabels, useReportMeta } from "@/lib/useReportLabels";
+import { useReportPrep } from "@/lib/useReportPrep";
+import { buildIssuedReport } from "./_lib/report";
 import { formatClock, formatDateTime, formatDay } from "@/lib/format";
 import {
   ISSUED_STATES,
-  issuedTicketsCsv,
   listIssuedBookings,
   listIssuedTickets,
   listLocations,
+  matchIssuedTickets,
   type IssuedQuery,
   type IssuedSortKey,
   type IssuedState,
@@ -42,7 +47,6 @@ const DEFAULT_SIZE = 20;
 
 const listOf = <V extends string>(raw: string | null, allowed?: readonly V[]): V[] =>
   raw ? raw.split(",").filter((x): x is V => !!x && (!allowed || (allowed as readonly string[]).includes(x))) : [];
-const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "venue";
 
 /** Unused is the only state that is still waiting to happen, so it is the quiet
  *  outline; the other three are tinted by what became of the ticket. */
@@ -152,23 +156,36 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
   const stateLabel = (s: IssuedState) => t(`state.${s}`);
   const startText = (r: IssuedTicket) => (r.startTime ? `${formatDay(r.startDate)}, ${formatClock(r.startTime)}` : formatDay(r.startDate));
 
-  // The spreadsheet is exactly what is filtered, every page.
-  const download = () => {
-    const csv = issuedTicketsCsv(query, {
-      headers: [t("csv.code"), t("csv.status"), t("csv.start"), t("csv.customer"), t("csv.booking"), t("csv.variant"), t("csv.issued"), t("csv.order")],
-      state: stateLabel,
+  // The workbook is exactly what is filtered, every page: Excel opens on the
+  // gate figures, CSV is one row per ticket.
+  const prep = useReportPrep();
+  const reportLabels = useReportLabels();
+  const reportMeta = useReportMeta();
+  const makeReport = () => {
+    const rowsAll = matchIssuedTickets(query);
+    const names = new Map((bookingsQ.data ?? []).map((b) => [b.id, b.name]));
+    const filtersText = [
+      states.length ? `${t("filters.status")}: ${states.map(stateLabel).join(", ")}` : "",
+      products.length ? `${t("filters.booking")}: ${products.map((id) => names.get(id) ?? id).join(", ")}` : "",
+      q ? t("report.searchedFor", { q }) : "",
+    ].filter(Boolean).join(" · ");
+    return buildIssuedReport(rowsAll, {
+      t: (key, values) => t(key as never, values as never),
+      stateName: stateLabel,
       walkIn: t("walkIn"),
-      start: startText,
-      issued: (r) => formatDateTime(r.issuedAt),
+      labels: reportLabels,
+      business: prep.business,
+      currency: prep.currency,
+      fileBase: `issued-orders-${slugify(venueName)}-${range.from}_${range.to}`,
+      meta: reportMeta({ venue: venueName, period: formatRange(range.from, range.to), filters: filtersText, preparedBy: prep.preparedBy, currency: prep.currency }),
     });
-    // A byte-order mark so a spreadsheet reads Bangla correctly.
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `issued-orders-${slug(venueName)}-${range.from}_${range.to}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  };
+  const download = () => {
+    downloadXlsx(makeReport());
+    toast.success(t("exported", { count: summary?.issued ?? 0 }));
+  };
+  const downloadCsv = () => {
+    downloadReportCsv(makeReport());
     toast.success(t("exported", { count: summary?.issued ?? 0 }));
   };
 
@@ -359,17 +376,7 @@ function IssuedView({ locationId, venueName, pending }: { locationId: string; ve
       }
       filters={filters}
       actions={
-        <Button
-          variant="secondary"
-          size="sm"
-          icon={<Download size={15} strokeWidth={1.5} aria-hidden />}
-          onClick={download}
-          disabled={!summary || summary.issued === 0}
-          title={t("export")}
-          className="max-md:w-11 max-md:px-0"
-        >
-          <span className="max-md:sr-only">{t("export")}</span>
-        </Button>
+        <ExportMenu onExcel={download} onCsv={downloadCsv} disabled={!summary || summary.issued === 0} compact />
       }
     />
   );

@@ -3,15 +3,21 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronsDownUp, ChevronsUpDown, Download, Landmark } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown, Landmark } from "lucide-react";
 import { ActionMenu, DateRangePicker, FilterBar, FilterSearch, Select, formatRange, type ActionMenuItem } from "@/components/ui";
-import { PageAction, PageShell } from "@/components/ui/PageShell";
+import { PageShell } from "@/components/ui/PageShell";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { MD, SM, useMediaQuery } from "@/lib/useMedia";
 import { DATE_PILL_PHONE } from "@/components/ui/PeriodPill";
 import { cn } from "@/lib/cn";
-import { formatClockOf, formatMoney } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
+import { useEnumLabels } from "@/lib/labels";
+import { downloadReportCsv, downloadXlsx, slugify } from "@/lib/report";
+import { useReportLabels, useReportMeta } from "@/lib/useReportLabels";
+import { reportContext, type T } from "@/lib/reports/context";
+import { buildFinancesReport } from "@/lib/reports/finances";
 import { DEMO_TODAY } from "@/lib/schedule";
 import {
   getFinanceExtras,
@@ -62,13 +68,6 @@ const rangeFrom = (from: string | null, to: string | null) => {
   const [a, b] = PRESETS[3].range();
   return { preset: "30d", from: a, to: b };
 };
-
-/** One CSV cell: quoted when it holds a comma, a quote or a line break. */
-const cell = (v: string | number) => {
-  const s = String(v);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
-const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "venue";
 
 /**
  * Finances — the venue's money with Counterfoil as one balance. One row of
@@ -201,28 +200,33 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
     document.getElementById("fin-activity")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  /** Exactly what is on screen: the same filter, range and search, every day. */
-  const downloadStatement = async () => {
-    const res = await listFinanceActivity(locationId, { from: range.from, to: range.to, filter, search: q, page: 1, pageSize: 100000 });
-    if (!res.ok) return;
-    const head = ["Date", "Time", "Type", "Description", "Reference", "Status", "Amount"];
-    const body = res.data.days.flatMap((d) =>
-      d.lines.map((l) => {
-        const x = describe(l);
-        return [d.date, formatClockOf(l.at), l.kind, x.ref ? `${x.text} · ${x.ref}` : x.text, l.reference ?? l.orderReference ?? "", l.status, (l.amount / 100).toFixed(2)]
-          .map(cell)
-          .join(",");
-      }),
-    );
-    // A byte-order mark so a spreadsheet reads Bangla descriptions correctly.
-    const blob = new Blob(["﻿" + [head.join(","), ...body].join("\r\n")], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `finances-${slug(venueName)}-${range.from}_${range.to}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  /** The report is exactly what is on screen: the same filter, range and search, every day. */
+  const enumL = useEnumLabels();
+  const reportLabels = useReportLabels();
+  const reportMeta = useReportMeta();
+  const buildReport = async () => {
+    const [res, sum] = await Promise.all([
+      listFinanceActivity(locationId, { from: range.from, to: range.to, filter, search: q, page: 1, pageSize: 100000 }),
+      getFinanceSummary(locationId, range.from, range.to),
+    ]);
+    if (!res.ok || !sum.ok) return null;
+    const ctx = reportContext();
+    const filterText = [filter !== "all" ? t(`filter.${filter}`) : "", q ? `“${q}”` : ""].filter(Boolean).join(" · ");
+    return buildFinancesReport({
+      days: res.data.days,
+      summary: sum.data,
+      t: t as unknown as T,
+      describe: (l) => describe(l).text,
+      method: enumL.method,
+      labels: reportLabels,
+      business: ctx.business,
+      currency: sum.data.currency || ctx.currency,
+      fileBase: `finances-${slugify(venueName)}-${range.from}_${range.to}`,
+      meta: reportMeta({ venue: venueName, period: formatRange(range.from, range.to), filters: filterText, preparedBy: ctx.preparedBy, currency: sum.data.currency || ctx.currency }),
+    });
   };
+  const exportExcel = () => void buildReport().then((r) => r && downloadXlsx(r));
+  const exportCsv = () => void buildReport().then((r) => r && downloadReportCsv(r));
 
   const presets = PRESETS.map((p) => ({ value: p.value, label: t(`period.${p.value}`), range: p.range }));
 
@@ -267,7 +271,6 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
   /* Two buttons and an overflow, no more: the statement is the one thing most
      visits want to take away; the rest of what this table can do waits in the menu. */
   const menu: ActionMenuItem[] = [
-    ...(phone ? [{ key: "download", label: t("activity.download"), icon: <Download size={16} strokeWidth={1.5} />, onSelect: () => void downloadStatement() }] : []),
     {
       key: "expand",
       label: t(allOpen ? "activity.collapseAll" : "activity.expandAll"),
@@ -306,7 +309,7 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
             <div className="flex items-center justify-between gap-tight">
               <h2 id="fin-activity-title" className="min-w-0 text-md font-semibold">{t("activity.title")}</h2>
               <div className="flex shrink-0 items-center gap-tight">
-                {!phone && <PageAction label={t("activity.download")} icon={<Download size={15} strokeWidth={1.5} />} onClick={() => void downloadStatement()} />}
+                <ExportMenu onExcel={exportExcel} onCsv={exportCsv} compact />
                 <ActionMenu label={t("menu.more")} items={menu} />
               </div>
             </div>

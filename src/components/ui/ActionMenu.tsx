@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { ChevronDown, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { buttonClass } from "./Button";
 
 export interface ActionMenuItem {
   key: string;
@@ -45,9 +46,14 @@ export function ActionMenu({
   items,
   label,
   shape = "default",
+  trigger: button,
 }: {
   items: ActionMenuItem[];
   label: string;
+  /** A labelled trigger ("Export ▾") instead of the ⋯ glyph — for a menu
+   *  that IS the toolbar's action rather than an overflow of it. `compact`
+   *  hides the text below md, leaving the icon. */
+  trigger?: { text: string; icon?: React.ReactNode; size?: "sm" | "md"; compact?: boolean; disabled?: boolean };
   /** `go` is the till: round, and 44px at EVERY width, because Go is touch on
    *  a phone and on a counter tablet alike. The OS default keeps its denser
    *  desktop row. */
@@ -133,20 +139,33 @@ export function ActionMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? id : undefined}
-        aria-label={label}
+        aria-label={button ? undefined : label}
+        disabled={button?.disabled}
         onClick={() => (open ? setOpen(false) : openMenu("first"))}
         onKeyDown={(e) => {
           if (open) return;
           if (e.key === "ArrowDown") { e.preventDefault(); openMenu("first"); }
           else if (e.key === "ArrowUp") { e.preventDefault(); openMenu("last"); }
         }}
-        className={cn(
-          "flex items-center justify-center text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg",
-          shape === "go" ? "h-11 w-11 rounded-full border border-line" : "h-11 w-11 rounded-control max-sm:text-fg-secondary md:h-8 md:w-8",
-          open && "bg-muted-wash text-fg",
-        )}
+        className={
+          button
+            ? cn(buttonClass({ variant: "secondary", size: button.size ?? "sm" }), "gap-inline", button.compact && "max-md:w-11 max-md:px-0", open && "bg-btn-secondary-hover")
+            : cn(
+                "flex items-center justify-center text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg",
+                shape === "go" ? "h-11 w-11 rounded-full border border-line" : "h-11 w-11 rounded-control max-sm:text-fg-secondary md:h-8 md:w-8",
+                open && "bg-muted-wash text-fg",
+              )
+        }
       >
-        <MoreHorizontal size={shape === "go" ? 18 : 16} strokeWidth={1.5} />
+        {button ? (
+          <>
+            {button.icon}
+            <span className={cn(button.compact && "max-md:sr-only")}>{button.text}</span>
+            <ChevronDown size={14} strokeWidth={1.5} aria-hidden className={cn("text-muted", button.compact && "max-md:hidden")} />
+          </>
+        ) : (
+          <MoreHorizontal size={shape === "go" ? 18 : 16} strokeWidth={1.5} />
+        )}
       </button>
 
       {open && (
@@ -157,7 +176,9 @@ export function ActionMenu({
           aria-orientation="vertical"
           aria-label={label}
           className={cn(
-            "absolute right-0 z-30 min-w-[11rem] max-w-[17rem] border border-hairline bg-card py-inline shadow-lg",
+            "absolute right-0 z-30 border border-hairline bg-card py-inline shadow-lg",
+            // A labelled menu carries a hint under each choice; it needs the width to read in two lines, not four.
+            button ? "w-72 max-w-[calc(100vw-2rem)]" : "min-w-[11rem] max-w-[17rem]",
             shape === "go" ? "rounded-go" : "rounded-card",
             up ? "bottom-[calc(100%+4px)]" : "top-[calc(100%+4px)]",
           )}

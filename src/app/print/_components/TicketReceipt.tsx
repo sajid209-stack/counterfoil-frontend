@@ -1,57 +1,51 @@
 "use client";
 
-import type { ComponentProps } from "react";
 import { useTranslations } from "next-intl";
 import { Qr } from "@/components/ui";
 import type { TicketCardData } from "@/components/ui/TicketCard";
-import { OrderLinesDetail } from "@/components/OrderLinesDetail";
-import { ReceiptFooter, ReceiptHeader } from "@/components/ReceiptParts";
-import type { Order } from "@/lib/api/types";
-import { formatClockOf, formatDate } from "@/lib/format";
-
-type Header = ComponentProps<typeof ReceiptHeader>;
+import { ReceiptBottom, ReceiptItems, ReceiptPayments, ReceiptRule, ReceiptTop, ReceiptTotals } from "@/components/ReceiptParts";
+import { ReceiptPrintStyle } from "@/components/receipt/PrintStyle";
+import { stripMetrics, type ReceiptData } from "@/components/receipt/types";
+import { cn } from "@/lib/cn";
 
 /** A tear across the strip: a dashed rule between two bites in the page's own colour, with an optional word in the middle. */
-function Tear({ label }: { label?: string }) {
+function Tear({ label, pad }: { label?: string; pad: number }) {
   const bite = "absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[var(--page)] print:bg-white";
   return (
-    <div className="relative -mx-6 flex items-center gap-3 px-6 py-section">
+    <div className="relative flex items-center gap-tight py-section" style={{ marginInline: `-${pad}mm`, paddingInline: `${pad}mm` }}>
       <span aria-hidden className={`${bite} left-0 -translate-x-1/2`} />
       <span aria-hidden className={`${bite} right-0 translate-x-1/2`} />
-      <span aria-hidden className="h-0 flex-1 border-t border-dashed border-strong" />
+      <span aria-hidden className="h-0 flex-1 border-t border-dashed border-fg-secondary" />
       {label && (
         <>
-          <span className="shrink-0 text-xs font-medium uppercase tracking-[0.08em] text-muted">{label}</span>
-          <span aria-hidden className="h-0 flex-1 border-t border-dashed border-strong" />
+          <span className="shrink-0 text-xs font-medium uppercase tracking-widest">{label}</span>
+          <span aria-hidden className="h-0 flex-1 border-t border-dashed border-fg-secondary" />
         </>
       )}
     </div>
   );
 }
 
-/** One ticket on the strip: the QR the gate scans beside what it is for, stacked on the narrowest phones. */
+/** One ticket on the strip: the QR the gate scans, then what it is for. The roll is narrow, so it stacks and centres. */
 function Stub({ card, referenceLabel }: { card: TicketCardData; referenceLabel: string }) {
   return (
-    <div className="flex break-inside-avoid flex-col items-center gap-3 text-center @min-[19rem]:flex-row @min-[19rem]:items-start @min-[19rem]:gap-4 @min-[19rem]:text-left">
-      <span className="shrink-0">
-        <Qr value={card.code} size={96} />
-      </span>
-      <div className="w-full min-w-0 flex-1">
-        {/* Centred with the rest of the stub when it stacks; name and "1 of 2" at opposite ends beside the QR. */}
-        <div className="flex flex-wrap items-baseline justify-center gap-x-2 @min-[19rem]:flex-nowrap @min-[19rem]:justify-between">
-          <p className="min-w-0 break-words text-md font-semibold leading-snug text-fg">{card.productName}</p>
-          {card.indexLabel && <span className="shrink-0 text-xs text-muted">{card.indexLabel}</span>}
+    <div className="flex break-inside-avoid flex-col items-center gap-tight text-center">
+      <Qr value={card.code} size={104} />
+      <div className="w-full min-w-0">
+        <div className="flex flex-wrap items-baseline justify-center gap-x-tight">
+          <p className="min-w-0 break-words text-base font-semibold leading-snug">{card.productName}</p>
+          {card.indexLabel && <span className="shrink-0 text-xs">{card.indexLabel}</span>}
         </div>
-        {card.tierName && <p className="text-sm text-muted">{card.tierName}</p>}
-        <dl className="mt-1.5 flex flex-col gap-0.5 text-sm">
+        {card.tierName && <p className="text-sm">{card.tierName}</p>}
+        <dl className="mt-inline flex flex-col gap-0.5 text-sm">
           {card.fields.map((field) => (
-            <div key={field.label} className="flex justify-center gap-1.5 @min-[19rem]:justify-start">
+            <div key={field.label} className="flex justify-center gap-inline">
               <dt className="shrink-0 text-muted">{field.label}</dt>
-              <dd className="min-w-0 break-words font-medium text-fg">{field.value}</dd>
+              <dd className="min-w-0 break-words font-medium">{field.value}</dd>
             </div>
           ))}
         </dl>
-        <p className="mt-1.5 break-all font-mono text-sm text-fg">
+        <p className="mt-inline break-all font-mono text-sm">
           <span className="sr-only">{referenceLabel}: </span>
           {card.code}
         </p>
@@ -64,64 +58,53 @@ function Stub({ card, referenceLabel }: { card: TicketCardData; referenceLabel: 
  * The ticket receipt: one strip of paper that is both the receipt and every
  * ticket the order issued.
  *
- * It reads the way receipts are read, top to bottom — who sold it, which sale
- * and when, what was bought, the totals, how it was paid — and then tears into
- * the tickets: a dashed rule that says how many, and one stub per ticket with
- * the QR the gate scans. The receipt half is the same header and line detail
- * the receipt page prints, so the two can never disagree about the money.
+ * It reads the way receipts are read, top to bottom — logo and business, the
+ * sale, what was bought, the totals, how it was paid — and then tears into the
+ * tickets: a dashed rule that says how many, and one stub per ticket with the
+ * QR the gate scans. The receipt half is the same top, items, totals and
+ * payments the receipt page prints, so the two can never disagree about the
+ * money. There is no lookup QR here: every stub already carries a code, and a
+ * second one on the same strip is one more thing for the gate to scan wrongly.
  *
- * `paper` pins the light colours, so it stays dark type on white in either
- * theme and prints as it appears. The page supplies `--page`, the colour the
- * notches are cut in.
+ * It is always a roll (A4 is a receipt-only layout). `paper` pins the light
+ * colours, so it stays dark type on white in either theme; the page supplies
+ * `--page`, the colour the notches are cut in.
  */
-export function TicketReceipt({
-  order,
-  operator,
-  place,
-  tax,
-  footer,
-  cards,
-}: {
-  order: Order;
-  operator: Header["operator"];
-  place: Header["place"];
-  tax: Header["tax"];
-  footer?: ComponentProps<typeof ReceiptFooter>["message"];
-  cards: { id: string; data: TicketCardData }[];
-}) {
+export function TicketReceipt({ data, cards }: { data: ReceiptData; cards: { id: string; data: TicketCardData }[] }) {
   const t = useTranslations("ticket");
-  const time = formatClockOf(order.createdAt);
+  const roll: ReceiptData = { ...data, settings: { ...data.settings, paper: data.settings.paper === "58mm" ? "58mm" : "80mm", showLookupQr: false } };
+  const { column, pad } = stripMetrics(roll.settings.paper);
   return (
-    <article
-      aria-label={t("printAllTitle")}
-      className="paper @container relative mx-auto w-full max-w-[380px] overflow-hidden rounded-go bg-white px-6 pb-6 pt-7 text-fg shadow-[0_1px_2px_rgba(20,20,19,0.05),0_18px_40px_-18px_rgba(20,20,19,0.22)] print:rounded-none print:border print:border-neutral-300 print:shadow-none"
-    >
-      <ReceiptHeader operator={operator} place={place} tax={tax}>
-        {/* Two groups that each stay whole, so a narrow strip wraps between the reference and the date, never inside either. */}
-        <p className="mt-tight flex flex-wrap justify-center gap-x-3 font-mono text-xs text-muted">
-          <span className="whitespace-nowrap">{order.reference}</span>
-          <span className="whitespace-nowrap">
-            {formatDate(order.createdAt)} · {time}
-          </span>
-        </p>
-      </ReceiptHeader>
+    <>
+      <ReceiptPrintStyle paper={roll.settings.paper} />
+      <article
+        aria-label={t("printAllTitle")}
+        className={cn("paper rcpt-strip relative mx-auto overflow-hidden rounded-inner bg-white text-fg shadow-float", roll.settings.paper === "58mm" ? "text-xs" : "text-sm")}
+        style={{ width: `${column + pad * 2}mm`, maxWidth: "100%", padding: `6mm ${pad}mm` }}
+      >
+        <ReceiptTop data={roll} />
+        <ReceiptRule className="my-comfortable" />
+        <ReceiptItems data={roll} />
+        <ReceiptRule className="my-comfortable" />
+        <ReceiptTotals data={roll} />
+        <ReceiptRule className="my-comfortable" />
+        <ReceiptPayments data={roll} />
 
-      <OrderLinesDetail order={order} />
+        {cards.length > 0 && (
+          <>
+            <Tear label={t("ticketsCount", { count: cards.length })} pad={pad} />
+            {cards.map((card, i) => (
+              <div key={card.id}>
+                {i > 0 && <Tear pad={pad} />}
+                <Stub card={card.data} referenceLabel={t("referenceLabel")} />
+              </div>
+            ))}
+            <p className="mt-section text-center text-sm">{t("gateHint")}</p>
+          </>
+        )}
 
-      {cards.length > 0 && (
-        <>
-          <Tear label={t("ticketsCount", { count: cards.length })} />
-          {cards.map((card, i) => (
-            <div key={card.id}>
-              {i > 0 && <Tear />}
-              <Stub card={card.data} referenceLabel={t("referenceLabel")} />
-            </div>
-          ))}
-          <p className="mt-section text-center text-sm text-muted">{t("gateHint")}</p>
-        </>
-      )}
-
-      <ReceiptFooter message={footer} />
-    </article>
+        <ReceiptBottom data={roll} />
+      </article>
+    </>
   );
 }

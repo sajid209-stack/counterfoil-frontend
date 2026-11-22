@@ -680,7 +680,7 @@
       "nth": "Day {n}"
     },
     "settle": {
-      "export": "Download CSV",
+      "export": "Export sales summary (CSV)",
       "capacity": "Total tickets",
       "sold": "Sold",
       "unsoldCol": "Not sold",
@@ -694,7 +694,8 @@
         "counter": "At the counter",
         "online": "Online",
         "opening": "Before Counterfoil"
-      }
+      },
+      "exportExcel": "Export sales summary (Excel)"
     }
   },
   "eventCanvas": {
@@ -1418,6 +1419,69 @@
       "changes": "Changes",
       "state": "Status",
       "since": "since {date}"
+    }
+  },
+  "settleReport": {
+    "title": "Sales summary",
+    "metaEvent": "Booking",
+    "total": "Total",
+    "sheet": {
+      "tickets": "Tickets",
+      "days": "Days"
+    },
+    "note": {
+      "tickets": "One row per ticket type, highest price first.",
+      "byChannel": "What was taken, by where the ticket was bought.",
+      "days": "Places and sales for each day the booking runs."
+    },
+    "table": {
+      "byChannel": "Where it was bought"
+    },
+    "col": {
+      "ticket": "Ticket",
+      "price": "Price today",
+      "capacity": "Total tickets",
+      "sold": "Sold",
+      "unsold": "Not sold",
+      "faceValue": "Value at today's prices",
+      "gross": "Money before refunds",
+      "refunded": "Refunded",
+      "taken": "Money taken",
+      "channel": "Where it was bought",
+      "share": "Share",
+      "day": "Day",
+      "date": "Date",
+      "filled": "Filled"
+    },
+    "kpi": {
+      "sold": "Tickets sold",
+      "soldNote": "Of {capacity} tickets in all.",
+      "taken": "Money taken",
+      "takenNote": "After refunds, as recorded by Counterfoil.",
+      "refunded": "Refunded",
+      "refundedNote": "Out of {gross} taken before refunds.",
+      "unsold": "Tickets left",
+      "unsoldNote": "Worth {value} at today's prices."
+    },
+    "term": {
+      "sold": "Sold",
+      "taken": "Money taken",
+      "refunded": "Refunded",
+      "unsold": "Not sold",
+      "faceValue": "Value at today's prices",
+      "gross": "Money before refunds",
+      "channel": "Where it was bought",
+      "opening": "Before Counterfoil"
+    },
+    "def": {
+      "sold": "Tickets sold, including any sold before you started using Counterfoil.",
+      "taken": "Money Counterfoil recorded for the tickets, after refunds. It is what was paid by guests; fees and payouts are on the Finances page.",
+      "refunded": "Money given back for refunded tickets.",
+      "unsold": "Total tickets less tickets sold.",
+      "faceValue": "Tickets sold multiplied by each ticket's price today. A guide only: it ignores earlier prices, discounts and refunds.",
+      "gross": "Money taken plus money refunded.",
+      "channel": "At the counter, online, or before Counterfoil.",
+      "opening": "Tickets sold before Counterfoil was recording them. They count as sold, but carry no money here, because nothing recorded how much was paid."
     }
   }
 }

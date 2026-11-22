@@ -262,5 +262,194 @@
       "year": "the same days last year",
       "range": "in {range}"
     }
+  },
+  "export": {
+    "title": "Analytics report",
+    "total": "Total",
+    "points": "pts",
+    "metaCompare": "Compared with",
+    "comparedWith": "{range}",
+    "moreRows": "Everything else",
+    "note": {
+      "orders": "Paid orders in the period.",
+      "average": "Revenue divided by orders.",
+      "guests": "Guests booked to come in the period.",
+      "capacity": "Places sold out of places on offer.",
+      "refunds": "Money given back, VAT included.",
+      "channels": "Revenue by where the sale was made.",
+      "payments": "Money taken, by how the guest paid.",
+      "series": "One row per period. Revenue is after discounts and refunds, before VAT. Guests are placed on the day of their time slot.",
+      "channelDetail": "Each channel's own rows: counters, the top bookings sold online, and marketplaces."
+    },
+    "col": {
+      "channel": "Channel",
+      "revenue": "Revenue",
+      "share": "Share",
+      "orders": "Orders",
+      "previousRevenue": "Previous revenue",
+      "change": "Change",
+      "method": "Payment method",
+      "amount": "Amount",
+      "payments": "Payments",
+      "previousAmount": "Previous amount",
+      "measure": "Figure",
+      "thisPeriod": "This period",
+      "previous": "Previous period",
+      "when": "When",
+      "previousWhen": "Previous period: when",
+      "guestsBooked": "Guests booked",
+      "checkedIn": "Guests checked in",
+      "newCustomers": "New customers",
+      "returningCustomers": "Returning customers",
+      "booking": "Booking",
+      "ticketType": "Ticket type",
+      "quantity": "Quantity",
+      "previousQuantity": "Previous quantity",
+      "source": "Counter, booking or marketplace",
+      "shareOfChannel": "Share of channel",
+      "commission": "Marketplace commission",
+      "venueKeeps": "You keep",
+      "weekday": "Weekday",
+      "hour": "Hour",
+      "guests": "Guests",
+      "bookings": "Bookings",
+      "startTime": "Start time",
+      "placesOffered": "Places offered",
+      "filled": "Filled",
+      "sold": "Sold",
+      "places": "Places",
+      "previousFilled": "Previous filled",
+      "leadTime": "Booked how far ahead",
+      "previousShare": "Previous share"
+    },
+    "guests": {
+      "booked": "Guests booked",
+      "new": "New customers",
+      "returning": "Returning customers"
+    },
+    "sheet": {
+      "hourly": "Hourly",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "topBookings": "Top bookings",
+      "ticketTypes": "Ticket types",
+      "channelDetail": "Channel detail",
+      "salesByChannel": "Sales by channel",
+      "paymentsByDay": "Payments by method",
+      "busyTimes": "Busy times",
+      "timeSlots": "Time slots",
+      "capacity": "Capacity",
+      "leadTime": "Booking lead time"
+    },
+    "weekday": {
+      "0": "Monday",
+      "1": "Tuesday",
+      "2": "Wednesday",
+      "3": "Thursday",
+      "4": "Friday",
+      "5": "Saturday",
+      "6": "Sunday"
+    },
+    "term": {
+      "revenue": "Revenue",
+      "orders": "Orders",
+      "average": "Average order",
+      "guests": "Guests",
+      "capacity": "Capacity filled",
+      "refunds": "Refunds",
+      "share": "Share",
+      "change": "Change",
+      "previous": "Previous period",
+      "checkedIn": "Guests checked in",
+      "customers": "New and returning customers",
+      "channels": "Channels",
+      "vat": "VAT",
+      "series": "Hourly, Daily, Weekly"
+    },
+    "def": {
+      "revenue": "Sales after discounts and refunds, before VAT, on the day each order was made. It is the same figure the Analytics page shows.",
+      "orders": "Orders that were paid and not fully refunded.",
+      "average": "Revenue divided by the number of orders.",
+      "guests": "Guests who were booked to come, counted on the day of their time slot, not the day they bought.",
+      "capacity": "Places sold divided by places on offer, for bookings that have a schedule. Shown as a percentage.",
+      "refunds": "Money given back to guests in the period, VAT included.",
+      "share": "A row's part of the total, as a percentage. Shares add up to 100%.",
+      "change": "How far this period is from the previous one: (this − previous) ÷ previous. Empty when there is nothing earlier to compare with.",
+      "previous": "The comparison you chose on the page: the period before, the same dates a year ago, or your own dates. Only drawn where your records reach back that far.",
+      "checkedIn": "Guests who have arrived, counted on the day and hour of the time slot they booked.",
+      "customers": "Customers with a name on their order, each counted once, on the day of their first order in the period. New means their first order ever at this venue.",
+      "channels": "Counter = sold at a till. Own website = sold online without a marketplace. Marketplaces = sold through partners; commission is what the marketplace kept.",
+      "vat": "VAT charged on each line at the rate it was sold at, after discounts and refunds. The VAT export has the full working paper.",
+      "series": "The first sheet is one row per hour, day or week, depending on how long the period is. Previous-period columns line up by position."
+    },
+    "vat": {
+      "title": "VAT return working paper",
+      "metaTax": "Tax",
+      "metaRegistration": "Registration number",
+      "total": "Total",
+      "sheet": {
+        "byDay": "By day",
+        "byInvoice": "By invoice"
+      },
+      "table": {
+        "taxable": "Taxable sales and output VAT, by rate",
+        "taxableTotal": "Total taxable",
+        "exempt": "Exempt sales",
+        "exemptTotal": "Total exempt",
+        "returnTotal": "Totals for the return"
+      },
+      "note": {
+        "taxable": "Sales charged VAT, after discounts and refunds. The VAT column is the output VAT to declare.",
+        "exempt": "Sales that carry no VAT.",
+        "returnTotal": "Everything in the period, and the share that refunds already took back out of it.",
+        "invoice": "One row per invoice and VAT rate. An invoice with two rates has two rows."
+      },
+      "col": {
+        "net": "Net sales",
+        "measure": "Figure",
+        "date": "Date",
+        "invoices": "Invoices",
+        "invoice": "Invoice",
+        "customer": "Customer"
+      },
+      "row": {
+        "allSales": "All sales in the period",
+        "refunded": "Already deducted for refunds"
+      },
+      "kpi": {
+        "outputVat": "Output VAT",
+        "outputVatNote": "VAT to declare for the period.",
+        "taxable": "Taxable sales",
+        "taxableNote": "Net sales charged VAT.",
+        "exempt": "Exempt sales",
+        "exemptNote": "Net sales with no VAT.",
+        "gross": "Total including VAT",
+        "grossNote": "What guests paid.",
+        "invoices": "Invoices",
+        "invoicesNote": "Paid orders in the period.",
+        "refundedVat": "VAT refunded",
+        "refundedVatNote": "Already taken off Output VAT."
+      },
+      "term": {
+        "outputVat": "Output VAT",
+        "taxable": "Taxable sales",
+        "exempt": "Exempt sales",
+        "net": "Net sales",
+        "gross": "Total including VAT",
+        "refunds": "Refunds",
+        "invoice": "Invoice",
+        "reconcile": "How it adds up"
+      },
+      "def": {
+        "outputVat": "VAT charged to guests on the period's sales, worked out line by line at the rate each was sold at, after discounts and refunds.",
+        "taxable": "Net sales (before VAT) that were charged VAT at a rate above zero.",
+        "exempt": "Net sales that carried no VAT: the exempt class, or a zero rate.",
+        "net": "The amount VAT was charged on: price less discounts, less the refunded share.",
+        "gross": "Net sales plus VAT.",
+        "refunds": "A refund takes the same share of net and VAT back. Refunds are deducted from the day of the original sale, not the day the refund was made.",
+        "invoice": "An order's reference. Only paid and part-refunded orders are included; cancelled and fully refunded ones are not.",
+        "reconcile": "The By day and By invoice totals equal the Summary totals and the VAT figure on the Analytics page."
+      }
+    }
   }
 }

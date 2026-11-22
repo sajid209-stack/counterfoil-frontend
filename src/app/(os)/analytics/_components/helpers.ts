@@ -29,24 +29,6 @@ export function wholeShares(parts: number[]): number[] {
 }
 
 export const pad2 = (n: number) => String(n).padStart(2, "0");
-export const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-
-/** One CSV cell: quoted when it holds a comma, a quote or a line break. */
-export const csvCell = (v: string | number) => {
-  const s = String(v);
-  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
-export const major = (minor: number) => (minor / 100).toFixed(2);
-
-export function saveCsv(name: string, csv: string) {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 /** The relative change between two figures, whole percent; null where there is
  *  nothing to say (no earlier figure, or it did not move). */

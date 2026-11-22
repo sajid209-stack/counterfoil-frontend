@@ -184,5 +184,79 @@
     "all": "All",
     "email": "Email consent",
     "sms": "SMS consent"
+  },
+  "report": {
+    "title": "Customers",
+    "sheet": "Customers",
+    "lifetime": "All time (lifetime totals)",
+    "kpiCustomers": "Customers",
+    "kpiCustomersNote": "In this list",
+    "kpiEmail": "Agreed to email",
+    "kpiEmailNote": "{pct} of customers",
+    "kpiSms": "Agreed to SMS",
+    "kpiSmsNote": "{pct} of customers",
+    "kpiSpend": "Total spend",
+    "kpiSpendNote": "Across {count, plural, one {# order} other {# orders}}",
+    "kpiAvg": "Average spend",
+    "kpiAvgNote": "Per customer",
+    "kpiOwing": "Owing",
+    "kpiOwingNote": "{count, plural, one {# customer owes a balance} other {# customers owe a balance}}",
+    "kpiVisits": "Visits",
+    "kpiVisitsNote": "Bookings they turned up to",
+    "kpiNoShows": "No-shows",
+    "kpiNoShowsNote": "Bookings they missed",
+    "tableConsent": "Marketing consent",
+    "tableTop": "Top customers by spend",
+    "tableTopNote": "The ten who spent most",
+    "consentBoth": "Email and SMS",
+    "consentEmail": "Email only",
+    "consentSms": "SMS only",
+    "consentNone": "Neither",
+    "colConsent": "Agreed to",
+    "colCustomers": "Customers",
+    "colShare": "Share",
+    "colSpend": "Spend",
+    "colName": "Name",
+    "colPhone": "Phone",
+    "colEmail": "Email",
+    "colTags": "Tags",
+    "colEmailConsent": "Email consent",
+    "colSmsConsent": "SMS consent",
+    "colOrders": "Orders",
+    "colVisits": "Visits",
+    "colNoShows": "No-shows",
+    "colOwing": "Owing",
+    "colFirst": "First seen",
+    "colLast": "Last seen",
+    "yes": "Yes",
+    "no": "No",
+    "gloss": {
+      "spend": {
+        "t": "Spend",
+        "d": "What the customer has paid across their orders, VAT included, less refunds."
+      },
+      "owing": {
+        "t": "Owing",
+        "d": "Balances the customer still has to pay on orders and bookings."
+      },
+      "visits": {
+        "t": "Visits",
+        "d": "Bookings the customer actually turned up to."
+      },
+      "noShows": {
+        "t": "No-shows",
+        "d": "Bookings the customer did not turn up to."
+      },
+      "consent": {
+        "t": "Consent",
+        "d": "Whether the customer has agreed to be contacted by email or SMS, by their latest decision. Only contact people who said yes."
+      },
+      "seen": {
+        "t": "First seen / Last seen",
+        "d": "The dates of the customer's first and most recent order or visit."
+      }
+    },
+    "total": "Total",
+    "searchedFor": "Search: {q}"
   }
 }

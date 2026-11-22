@@ -3,9 +3,9 @@
 import { Suspense, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Download, Gauge, Receipt, ShoppingBag, Undo2, Users, Wallet } from "lucide-react";
-import { Button, DateRangePicker, DeltaPill, Notice, PageShell, StatStrip, formatRange, type StatItem } from "@/components/ui";
-import { analyticsCsv, comparisonRange, getAnalyticsOverview, listLocations, type AnalyticsOverview } from "@/lib/api";
+import { Gauge, Receipt, ShoppingBag, Undo2, Users, Wallet } from "lucide-react";
+import { DateRangePicker, DeltaPill, Notice, PageShell, StatStrip, formatRange, type StatItem } from "@/components/ui";
+import { comparisonRange, getAnalyticsOverview, listLocations, type AnalyticsOverview } from "@/lib/api";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { useApiQuery } from "@/lib/useApi";
 import { formatDay, formatMoney } from "@/lib/format";
@@ -15,7 +15,9 @@ import { MD, useMediaQuery } from "@/lib/useMedia";
 import { MetricChips } from "../dashboard/_components/MetricStrip";
 import { ComparePicker, type CompareValue } from "./_components/ComparePicker";
 import { Cards, Skeletons } from "./_components/Cards";
-import { num, percent, saveCsv, slugify } from "./_components/helpers";
+import { ExportMenu } from "@/components/ExportMenu";
+import { num, percent } from "./_components/helpers";
+import { useAnalyticsExports } from "./_lib/useAnalyticsExports";
 
 /* ── The page, in the order a manager asks ─────────────────────────────────
  *
@@ -126,7 +128,6 @@ function AnalyticsInner() {
   // Content stays while a new period loads; a skeleton is for the first load.
   const o = q.data;
   const first = !o && !q.error;
-  const venueName = location ? slugify(location.name) || location.id : venueId;
 
   const rangeLabels = {
     choose: t("range.choose"),
@@ -141,9 +142,7 @@ function AnalyticsInner() {
     pickEnd: t("range.pickEnd"),
   };
 
-  const downloadAll = () => {
-    if (o) saveCsv(`analytics-${venueName}-${range.from}_${range.to}.csv`, analyticsCsv(o));
-  };
+  const exports = useAnalyticsExports(o, location?.name ?? "", venueId);
 
   /* The period and what it is compared with: the two controls this page has,
      and nothing else. On a phone they share ONE row with the download, each
@@ -172,16 +171,9 @@ function AnalyticsInner() {
         calendarLabels={rangeLabels}
         className="min-w-0 flex-1 md:flex-none"
       />
-      <Button
-        variant="secondary"
-        size="sm"
-        icon={<Download size={16} strokeWidth={1.75} aria-hidden />}
-        onClick={downloadAll}
-        disabled={!o}
-        className="shrink-0 max-md:w-11 max-md:px-0 md:ml-auto"
-      >
-        <span className="max-md:sr-only">{t("toolbar.download")}</span>
-      </Button>
+      <div className="shrink-0 md:ml-auto">
+        <ExportMenu onExcel={exports.excel} onCsv={exports.csv} disabled={!o} compact />
+      </div>
     </div>
   );
 
@@ -240,7 +232,7 @@ function AnalyticsInner() {
           />
         )}
 
-        {first ? <Skeletons /> : o && <Cards o={o} venueName={venueName} />}
+        {first ? <Skeletons /> : o && <Cards o={o} venueName={location?.name ?? ""} venueId={venueId} />}
       </div>
     </PageShell>
   );

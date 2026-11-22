@@ -240,6 +240,7 @@ export function FilterBar({
   };
   const onTabsKey = (e: React.KeyboardEvent) => {
     const keys = folded.map((f) => f.key);
+    if (!cur) return;
     const i = keys.indexOf(cur.key);
     const n = { ArrowDown: (i + 1) % keys.length, ArrowUp: (i - 1 + keys.length) % keys.length, Home: 0, End: keys.length - 1 }[e.key as "Home"];
     if (n !== undefined) {
@@ -423,7 +424,8 @@ export function FilterBar({
 
   /* Desktop, three or more folded filters: categories on the left, the chosen
      one's control on the right. The right pane is the panel's only scroller. */
-  const desktopPanes = (
+  /* No folded filters (a page that shows them all inline) means no panes. */
+  const desktopPanes = cur && (
     <FilterPanelContext value={true}>
       <div className="flex min-h-0 flex-1">
         <div

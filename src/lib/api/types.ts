@@ -103,12 +103,34 @@ export interface Operator {
   website?: string;
   /** Printed under the total on every receipt — returns, opening hours, a thank-you. */
   receiptFooter?: string;
+  /** The business's logo: a stored image (data URL) or a path. Printed at the
+   *  top of receipts and on the letterhead of A4 reports. Absent = none. */
+  logo?: string | null;
+  /** How receipts print. Absent = `DEFAULT_RECEIPT_SETTINGS` (lib/receipt). */
+  receipt?: ReceiptSettings;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
 export type OperatorPatch = Partial<
-  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct" | "reducedRatePct" | "smsTemplate" | "emailSubject" | "emailTemplate" | "pastEditLockDays" | "contactPhone" | "contactEmail" | "website" | "receiptFooter">
+  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct" | "reducedRatePct" | "smsTemplate" | "emailSubject" | "emailTemplate" | "pastEditLockDays" | "contactPhone" | "contactEmail" | "website" | "receiptFooter" | "logo" | "receipt">
 >;
+
+/** The receipt's own options, set once in Settings → Business profile. The
+ *  print screen can switch the logo off for one print without changing these. */
+export interface ReceiptSettings {
+  /** Print the business logo at the top. Ignored while there is no logo. */
+  showLogo: boolean;
+  /** How large the logo prints: small 24mm, medium 36mm, large 48mm wide at most. */
+  logoSize: "small" | "medium" | "large";
+  /** Roll width of the receipt printer; `a4` prints a full-page invoice. */
+  paper: "80mm" | "58mm" | "a4";
+  /** "Served by Nadia" under the reference. */
+  showCashier: boolean;
+  /** The customer's name and phone, when the sale has one. */
+  showCustomer: boolean;
+  /** A QR of the order reference at the foot, for returns and look-ups. */
+  showLookupQr: boolean;
+}
 
 export type TaxClass = "standard" | "reduced" | "exempt";
 

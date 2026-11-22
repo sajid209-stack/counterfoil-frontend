@@ -1,8 +1,9 @@
 "use client";
 
-import { BarChart3, Columns3, Download, Printer } from "lucide-react";
+import { BarChart3, Columns3 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button, FilterBar, FilterSearch, type FilterSpec } from "@/components/ui";
+import { FilterBar, FilterSearch, type FilterSpec } from "@/components/ui";
+import { ExportMenu } from "@/components/ExportMenu";
 import { QuickTabs } from "@/components/ui/QuickTabs";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import type { SalesFilters } from "../_lib/filters";
@@ -47,7 +48,8 @@ export function OrdersToolbar({
   query,
   onQuery,
   onSummary,
-  onExport,
+  onExcel,
+  onCsv,
   onPrint,
   columns,
   disabled,
@@ -60,7 +62,8 @@ export function OrdersToolbar({
   query: string;
   onQuery: (v: string) => void;
   onSummary: () => void;
-  onExport: () => void;
+  onExcel: () => void;
+  onCsv: () => void;
   onPrint: () => void;
   /** Which columns of the table are on show, and how to change that. */
   columns?: { options: ChipOption[]; value: string[]; onChange: (next: string[]) => void; onReset: () => void };
@@ -111,8 +114,8 @@ export function OrdersToolbar({
 
   const search = <FilterSearch value={query} onChange={onQuery} placeholder={to("searchPlaceholder")} aria-label={to("filterResults")} />;
 
-  /* Desktop: the columns, the summary, printing. Phone: the table is a list of
-     rows with no columns to choose, and Export is here with the rest. */
+  /* Desktop: the columns and the summary. Phone: the table is a list of rows
+     with no columns to choose. Export (Excel, CSV, print) is its own menu. */
   const items: ToolbarMenuItem[] = wide
     ? [
         ...(columns
@@ -133,19 +136,14 @@ export function OrdersToolbar({
             ]
           : []),
         { key: "summary", label: t("summary"), icon: <BarChart3 size={15} strokeWidth={1.5} aria-hidden />, onSelect: onSummary, disabled },
-        { key: "print", label: t("print"), icon: <Printer size={15} strokeWidth={1.5} aria-hidden />, onSelect: onPrint, disabled },
       ]
     : [
         { key: "summary", label: t("summary"), icon: <BarChart3 size={15} strokeWidth={1.5} aria-hidden />, onSelect: onSummary, disabled },
-        { key: "export", label: t("export"), icon: <Download size={15} strokeWidth={1.5} aria-hidden />, onSelect: onExport, disabled },
-        { key: "print", label: t("print"), icon: <Printer size={15} strokeWidth={1.5} aria-hidden />, onSelect: onPrint, disabled },
       ];
 
   const actions = (
     <>
-      <Button variant="secondary" size="sm" disabled={disabled} icon={<Download size={15} strokeWidth={1.5} aria-hidden />} onClick={onExport} className="max-md:hidden">
-        {t("export")}
-      </Button>
+      <ExportMenu onExcel={onExcel} onCsv={onCsv} onPrint={onPrint} disabled={disabled} compact />
       <ToolbarMenu label={to("moreActions")} items={items} />
     </>
   );

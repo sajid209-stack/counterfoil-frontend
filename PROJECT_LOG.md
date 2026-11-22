@@ -19997,3 +19997,16 @@ white on #F94A00 (3.5:1). The full list is in docs/ui-audit-2026-11.md.
     staff" inside a category. The ×, the backdrop and Escape close the sheet.
 - **Checklist.** Search above 8 options ("Find a staff member"), with ticked options pinned while
   searching. No fold, no inner scroll.
+
+---
+
+## Receipts, prints and exports rebuilt (2026-11-22)
+
+Spec: `docs/exports-and-receipts.md`.
+
+- **Receipt** rebuilt to the standard thermal anatomy (logo → business → RECEIPT / TAX INVOICE + number, date, counter, cashier, customer → items with meta and `qty × unit … amount` → subtotal, discounts, VAT per rate, TOTAL → payments with tendered/change/balance → look-up QR → footer). 80 mm, 58 mm and an A4 invoice layout. `ReceiptParts.tsx` + `src/components/receipt/`.
+- **Logo**: `Operator.logo` + `Operator.receipt` (`ReceiptSettings`) on the contract. Settings → Business profile uploads/replaces/removes it and sets print-logo, size, paper, cashier, customer, QR; the preview is the real receipt. The print screen's toolbar has a Logo switch and Paper choice for that print only. Business-profile edits now persist per demo (`cf_operator_v1` in client.ts). Demo logo `public/demo/logos/lalbagh.svg`; BCD uses its own; other demos have none.
+- **Excel**: `src/lib/xlsx.ts` (dependency-free .xlsx writer) + `src/lib/report.ts` (Summary · data sheets with typed columns, frozen header, autofilter, SUBTOTAL totals, print setup · About). CSV = first data sheet, clean. Every export (orders, order summary, my sales, customers, issued tickets, analytics, VAT, expenses, finances, activity, catalog settlement) goes through it via `src/components/ExportMenu.tsx` (Excel / CSV / Print).
+- **A4 documents** share `src/app/print/_components/PrintDocument.tsx` (logo letterhead, @page footer with page X / Y). Orders list/summary prints and a new `/print/my-sales` use it.
+- Fixed: FilterBar crashed when a page folds no filters (`/finances` at desktop).
+- Open: `/print/tickets` cards have no logo (shared `TicketCard`); dates in Bangla files are still en-GB (`format.ts`); new Bangla strings need a native review.
