@@ -81,10 +81,11 @@ const withHistory = (o: Order, who: string, text: string) => [
 ];
 
 /** Take a further payment against an order (deposits, counter balances). */
-export async function addOrderPayment(orderId: string, method: PaymentMethod, amount: Minor, who = "Counter"): Promise<ApiResult<Order>> {
+export async function addOrderPayment(orderId: string, method: PaymentMethod, amount: Minor, who = "Counter", staffId: string | null = null): Promise<ApiResult<Order>> {
   const o = resource.peek().find((x) => x.id === orderId);
   if (!o) return resource.get(orderId);
-  const payments: Order["payments"] = [...o.payments, { id: `${o.reference}-P${o.payments.length}`, method, amount, status: "confirmed", createdAt: new Date().toISOString() }];
+  // A payment after the sale is a balance (due) collected, filed under whoever took it.
+  const payments: Order["payments"] = [...o.payments, { id: `${o.reference}-P${o.payments.length}`, method, amount, status: "confirmed", createdAt: new Date().toISOString(), staffId, balance: true }];
   const paid = payments.reduce((s, p) => s + p.amount, 0);
   return resource.update(orderId, {
     payments,
@@ -401,6 +402,7 @@ export async function checkout(
       ? { tendered: input.amountTendered, change: Math.max(0, input.amountTendered - payNow) }
       : {}),
     ...(input.paymentReference ? { reference: input.paymentReference } : {}),
+    staffId: input.staffId,
   };
 
   const reserveOnly = payNow <= 0 && total > 0;

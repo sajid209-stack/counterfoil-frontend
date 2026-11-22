@@ -4,8 +4,8 @@ import { useMemo, useState, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowDown, ArrowUp, Download, Printer, ReceiptText, RotateCcw, Search } from "lucide-react";
-import { ActionMenu, Button, DateRangePicker, formatRange, Notice, Skeleton, StatusPill, type DateRangeValue } from "@/components/ui";
+import { ArrowDown, ArrowUp, Download, Printer, ReceiptText, Search } from "lucide-react";
+import { Button, DateRangePicker, formatRange, Notice, Skeleton, type DateRangeValue } from "@/components/ui";
 import { saveCsv, toCsv } from "@/lib/csv";
 import { AffixInput } from "@/components/ui/Field";
 import { cn } from "@/lib/cn";
@@ -14,7 +14,8 @@ import { useEnumLabels } from "@/lib/labels";
 import { formatClockOf, formatMoney } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { DEMO_STAFF_ID } from "@/lib/session";
-import { getOperator, getStaff, listOrders, peekPaymentSettings, type Order } from "@/lib/api";
+import { QuickTabs } from "@/components/ui/QuickTabs";
+import { getOperator, getStaff, listCounters, listCustomers, listOrders, listStaff, orderDue, peekPaymentSettings, type Order } from "@/lib/api";
 import { goodwillMaxFor, pendingRefundForOrder, useRefundVersion } from "@/lib/api/refundRequests";
 import { GoCard } from "../_components/Tiles";
 import { GoPage, GoPageHeader } from "../_components/GoPage";
@@ -22,7 +23,8 @@ import { R } from "../_components/railType";
 import { T } from "../_components/type";
 import { RefundFlowSheet } from "../_components/RefundFlowSheet";
 import { useActor } from "../schedule/_lib/actor";
-import { daysIn, orderDay, previousRange, rangeLength, shiftIso, summarise } from "./_lib/summary";
+import { daysIn, orderDay, previousRange, rangeLength, salesRows, shiftIso, summarise, viewMethods, type SalesView } from "./_lib/summary";
+import { byMethod, itemsShort, SaleList, type SaleListContext } from "./_components/SaleList";
 
 const PAGE = 10;
 
@@ -44,25 +46,6 @@ const PRESETS: { value: string; range: () => [string, string] }[] = [
 /* The phone body, exactly as it was before the page sat in GoPage (16px above,
    room for the tab bar below); on a desktop GoPage's own rhythm takes over. */
 const PHONE = "mx-auto w-full max-w-216 pt-tight pb-28 lg:pb-section rail:max-w-none rail:pt-0 rail:pb-0";
-
-/* One row of the sales list. Phone: time and code over the amount, the items
-   under them, the status and the menu at the right. Desktop: one line of
-   columns, the same ones as the header row. The first column holds the time
-   on one day, or "8 Nov · 11:05 AM" over several, so it widens when the range
-   does. */
-const COLS = "rail:grid-cols-[148px_minmax(0,1fr)_96px_120px_112px_44px]";
-const COLS_RANGE = COLS;
-const ROW_BASE = "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-comfortable gap-y-inline px-comfortable py-comfortable rail:gap-0 rail:px-card rail:py-tight rail:min-h-14";
-
-/** "2× Adult, Child" — short enough for one line. */
-const itemsShort = (o: Order) =>
-  o.lines
-    .filter((l) => !l.parentLineId)
-    .map((l) => (l.quantity > 1 ? `${l.quantity}× ${l.productName}` : l.productName))
-    .join(", ");
-
-/** What was paid with: the first method that took money. */
-const methodOf = (o: Order) => o.payments.find((p) => p.amount > 0)?.method;
 
 /**
  * "▲ ৳9,384 more than yesterday" — only when there is a previous figure.
@@ -146,6 +129,8 @@ export default function MySalesPage() {
   const [range, setRange] = useState<DateRangeValue>({ preset: "today", from: DEMO_TODAY, to: DEMO_TODAY });
   const [query, setQuery] = useState("");
   const [shown, setShown] = useState(PAGE);
+  const [view, setView] = useState<SalesView>("all");
+  const [openId, setOpenId] = useState<string | null>(null);
   /* A sale the cashier is asking to give money back on. There is no booking
      behind a sale here, so the sheet offers some tickets or an amount. */
   const [refundOrder, setRefundOrder] = useState<Order | null>(null);
@@ -155,6 +140,9 @@ export default function MySalesPage() {
   const ordersQ = useApiQuery(() => listOrders({ pageSize: 2000 }), []);
   const opQ = useApiQuery(() => getOperator(), []);
   const meQ = useApiQuery(() => getStaff(DEMO_STAFF_ID), []);
+  const customersQ = useApiQuery(() => listCustomers({ pageSize: 2000 }), []);
+  const staffQ = useApiQuery(() => listStaff({ pageSize: 500 }), []);
+  const countersQ = useApiQuery(() => listCounters({ pageSize: 200 }), []);
   const currency = opQ.data?.currency ?? "BDT";
   const money = (m: number) => formatMoney(m, currency);
 
@@ -167,6 +155,18 @@ export default function MySalesPage() {
     const [a, b] = previousRange(range.from, range.to);
     return summarise(orders, DEMO_STAFF_ID, daysIn(a, b));
   }, [orders, range.from, range.to]);
+
+  const dayList = useMemo(() => daysIn(range.from, range.to), [range.from, range.to]);
+  const methods = viewMethods();
+  const lists = useMemo(() => {
+    const out = {} as Record<SalesView, ReturnType<typeof salesRows>>;
+    if (!orders) return out;
+    for (const v of ["all", ...viewMethods(), "dueCollected", "owed"] as SalesView[]) out[v] = salesRows(orders, DEMO_STAFF_ID, dayList, v, orderDue);
+    return out;
+  }, [orders, dayList]);
+  const customerMap = useMemo(() => new Map((customersQ.data?.data ?? []).map((c) => [c.id, c])), [customersQ.data]);
+  const staffMap = useMemo(() => new Map((staffQ.data?.data ?? []).map((m) => [m.id, m.name])), [staffQ.data]);
+  const counterMap = useMemo(() => new Map((countersQ.data?.data ?? []).map((c) => [c.id, c.name])), [countersQ.data]);
 
   if (ordersQ.error) {
     return (
@@ -206,8 +206,53 @@ export default function MySalesPage() {
   const avg = cur.orders > 0 ? Math.round(cur.total / cur.orders) : null;
   const prevAvg = prev.orders > 0 ? Math.round(prev.total / prev.orders) : 0;
   const q = query.trim().toLocaleLowerCase();
-  const found = q ? cur.recent.filter((o) => o.reference.toLocaleLowerCase().includes(q) || itemsShort(o).toLocaleLowerCase().includes(q)) : cur.recent;
+  const whoOf = (o: Order) => {
+    const c = o.customerId ? customerMap.get(o.customerId) : undefined;
+    return { name: c?.name ?? o.customerName ?? t("walkIn"), phone: c?.phone ?? null, email: c?.email ?? null };
+  };
+  const digits = q.replace(/\D/g, "");
+  const listRows = lists[view] ?? [];
+  const found = q
+    ? listRows.filter(({ order: o }) => {
+        const w = whoOf(o);
+        return (
+          o.reference.toLocaleLowerCase().includes(q) ||
+          itemsShort(o).toLocaleLowerCase().includes(q) ||
+          w.name.toLocaleLowerCase().includes(q) ||
+          (w.phone != null && (w.phone.toLocaleLowerCase().includes(q) || (digits.length > 2 && w.phone.replace(/\D/g, "").includes(digits))))
+        );
+      })
+    : listRows;
   const rows = found.slice(0, shown);
+  const anySales = (lists.all?.length ?? 0) + (lists.dueCollected?.length ?? 0) > 0;
+  const sum = listRows.reduce((n, r) => n + r.amount, 0);
+  const viewName = view === "all" || view === "dueCollected" || view === "owed" ? "" : labels.method(view);
+  const summaryLine =
+    view === "all"
+      ? t("sumAll", { count: listRows.length, amount: money(sum) })
+      : view === "dueCollected"
+        ? t("sumDue", { count: listRows.length, amount: money(sum) })
+        : view === "owed"
+          ? t("sumOwed", { count: listRows.length, amount: money(sum) })
+          : t("sumMethod", { count: listRows.length, amount: money(sum), method: viewName });
+  const tabs: { value: SalesView; label: string }[] = [
+    { value: "all", label: `${t("tabAll")} ${lists.all?.length ?? 0}` },
+    ...methods.map((m) => ({ value: m as SalesView, label: `${labels.method(m)} ${lists[m]?.length ?? 0}` })),
+    { value: "dueCollected", label: `${t("tabDue")} ${lists.dueCollected?.length ?? 0}` },
+    { value: "owed", label: `${t("tabOwed")} ${lists.owed?.length ?? 0}` },
+  ];
+  const ctx: SaleListContext = {
+    view,
+    oneDay,
+    currency,
+    who: whoOf,
+    staffName: (id) => (id ? (staffMap.get(id) ?? null) : null),
+    counterName: (id) => (id ? (counterMap.get(id) ?? null) : null),
+    asked: (o) => !!pendingRefundForOrder(o.id),
+    canAsk: (o) => !pendingRefundForOrder(o.id) && !actor.loading && actor.refundMode !== "off" && goodwillMaxFor(o.id) > 0,
+    onAsk: setRefundOrder,
+    onReprint: (o) => router.push(`/print/receipt/${o.id}`),
+  };
 
   const figures: Figure[] = [
     {
@@ -236,13 +281,28 @@ export default function MySalesPage() {
      spreadsheet opens. Amounts in major units with two decimals, so a sum in
      the spreadsheet is the sum on screen. */
   const exportCsv = () => {
-    const head = [t("csv.date"), t("csv.time"), t("csv.code"), t("csv.items"), t("csv.method"), t("csv.amount"), t("csv.refunded"), t("csv.status")];
-    const body = found.map((o) => {
-      const m = methodOf(o);
+    const head = [t("csv.date"), t("csv.time"), t("csv.code"), t("csv.items"), t("csv.method"), t("csv.amount"), t("csv.refunded"), t("csv.status"), t("csv.customer"), t("csv.phone"), t("csv.payments"), t("csv.due")];
+    const body = found.map((r) => {
+      const o = r.order;
+      const parts = byMethod(r);
       const back = o.payments.filter((p) => p.status === "confirmed" && p.amount < 0).reduce((n, p) => n - p.amount, 0);
-      return [orderDay(o), formatClockOf(o.createdAt), o.reference, itemsShort(o), m ? labels.method(m) : "", (o.total / 100).toFixed(2), (back / 100).toFixed(2), labels.status(o.status)];
+      const w = whoOf(o);
+      return [
+        orderDay(o),
+        formatClockOf(r.at),
+        o.reference,
+        itemsShort(o),
+        parts.map((p) => labels.method(p.method)).join(" + "),
+        (r.amount / 100).toFixed(2),
+        (back / 100).toFixed(2),
+        labels.status(o.status),
+        w.name,
+        w.phone ?? "",
+        parts.map((p) => `${labels.method(p.method)} ${(p.amount / 100).toFixed(2)}`).join(" + "),
+        (r.due / 100).toFixed(2),
+      ];
     });
-    saveCsv(`my-sales_${range.from}_${range.to}.csv`, toCsv([head, ...body]));
+    saveCsv(`my-sales_${view}_${range.from}_${range.to}.csv`, toCsv([head, ...body]));
   };
   /* Print every sale in the range, not the first page of the list: the list is
      opened in full first (flushSync, so it is in the page before the dialog
@@ -320,9 +380,8 @@ export default function MySalesPage() {
               <div className="flex flex-col gap-tight rail:flex-row rail:items-center rail:justify-between rail:gap-comfortable">
                 <h2 id="ms-recent" className={T.card}>
                   {t("recent")}
-                  {cur.recent.length > 0 && <span className={`ms-tight ${T.meta} font-normal`}>{cur.recent.length}</span>}
                 </h2>
-                {cur.recent.length > 0 && (
+                {anySales && (
                   <AffixInput
                     type="search"
                     value={query}
@@ -333,81 +392,53 @@ export default function MySalesPage() {
                     placeholder={t("searchPlaceholder")}
                     aria-label={t("searchLabel")}
                     prefix={<Search size={16} strokeWidth={1.75} aria-hidden />}
-                    className="rail:h-10 rail:w-72 print:hidden"
+                    className="rail:h-10 rail:w-80 print:hidden"
                     inputClassName={T.body}
                   />
                 )}
               </div>
 
-              {cur.recent.length === 0 ? (
+              {!anySales ? (
                 <GoCard className="items-center py-major text-center">
                   <ReceiptText size={32} strokeWidth={1.5} aria-hidden className="text-muted" />
                   <p className={T.card}>{isToday ? t("empty") : oneDay ? t("emptyDay") : t("emptyRange")}</p>
                   <p className={T.meta}>{isToday ? t("emptyHint") : oneDay ? t("emptyDayHint") : t("emptyRangeHint")}</p>
                 </GoCard>
-              ) : found.length === 0 ? (
-                <GoCard className="items-center py-major text-center">
-                  <Search size={28} strokeWidth={1.5} aria-hidden className="text-muted" />
-                  <p className={T.card}>{t("noMatch", { query: query.trim() })}</p>
-                  <Button variant="secondary" size="lg" className={`rail:h-10! ${R.button}`} onClick={() => setQuery("")}>
-                    {t("clearSearch")}
-                  </Button>
-                </GoCard>
               ) : (
-                <div className="overflow-hidden rounded-card bg-card shadow-card">
-                  <div aria-hidden className={`hidden border-b border-line px-card py-comfortable ${T.label} rail:grid rail:items-center rail:gap-0 ${oneDay ? COLS : COLS_RANGE}`}>
-                    <span>{t("colCode")}</span>
-                    <span>{t("colItems")}</span>
-                    <span>{t("colMethod")}</span>
-                    <span className="text-right">{t("colAmount")}</span>
-                    <span className="pl-section">{t("colStatus")}</span>
-                    <span />
+                <>
+                  <div className="print:hidden">
+                    <QuickTabs
+                      value={view}
+                      label={t("listsLabel")}
+                      options={tabs}
+                      onChange={(v) => {
+                        setView(v);
+                        setShown(PAGE);
+                        setOpenId(null);
+                      }}
+                    />
                   </div>
-                  <ul className="divide-y divide-line">
-                    {rows.map((o) => {
-                      const method = methodOf(o);
-                      /* Money is held on this sale and nobody has asked for it back yet. */
-                      const asked = !!pendingRefundForOrder(o.id);
-                      const canAsk = !asked && !actor.loading && actor.refundMode !== "off" && goodwillMaxFor(o.id) > 0;
-                      return (
-                        <li key={o.id} className={`${ROW_BASE} ${oneDay ? COLS : COLS_RANGE}`}>
-                          {/* Phone: the time, then the code, on one line. Desktop: the code over its time. */}
-                          <div className="col-start-1 row-start-1 flex min-w-0 items-baseline gap-tight rail:col-auto rail:row-auto rail:flex-col-reverse rail:items-start rail:gap-0">
-                            <span className={`${T.meta} whitespace-nowrap tabular-nums`}>{oneDay ? formatClockOf(o.createdAt) : `${formatRange(orderDay(o), orderDay(o)).replace(/ \d{4}$/, "")} · ${formatClockOf(o.createdAt)}`}</span>
-                            <span className={`truncate font-mono ${T.meta} font-medium text-fg-secondary`}>{o.reference}</span>
-                          </div>
-                          <span className={`col-start-1 row-start-2 truncate ${T.body} rail:col-auto rail:row-auto rail:pr-section`} title={itemsShort(o)}>
-                            {itemsShort(o)}
-                            {method && <span className={`${T.meta} rail:hidden`}> · {labels.method(method)}</span>}
-                          </span>
-                          <span className={`hidden ${T.body} text-fg-secondary rail:block`}>{method ? labels.method(method) : "—"}</span>
-                          <span className={`${T.price} col-start-2 row-start-1 text-right rail:col-auto rail:row-auto`}>{money(o.total)}</span>
-                          <div className="col-start-2 row-start-2 flex items-center justify-end gap-tight rail:contents">
-                            <span className="flex flex-col items-end gap-inline rail:items-start rail:pl-section">
-                              <StatusPill status={o.status} size="md" />
-                              {asked && (
-                                <span data-refund-asked className="inline-flex w-fit items-center gap-1 rounded-full bg-warning-wash px-tight py-0.5 text-xs font-medium text-fg">
-                                  <RotateCcw size={12} strokeWidth={2.25} aria-hidden />
-                                  {t("refundAsked")}
-                                </span>
-                              )}
-                            </span>
-                            <span className="flex justify-end print:hidden">
-                              <ActionMenu
-                                shape="go"
-                                label={t("rowActions", { code: o.reference })}
-                                items={[
-                                  ...(canAsk ? [{ key: "refund", label: t("askRefund"), icon: <RotateCcw size={16} strokeWidth={2} aria-hidden />, onSelect: () => setRefundOrder(o) }] : []),
-                                  { key: "reprint", label: t("reprint"), icon: <Printer size={16} strokeWidth={1.75} aria-hidden />, onSelect: () => router.push(`/print/receipt/${o.id}`) },
-                                ]}
-                              />
-                            </span>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+                  <p className={T.label} aria-live="polite">
+                    {summaryLine}
+                  </p>
+                  {listRows.length === 0 ? (
+                    <GoCard className="items-center py-major text-center">
+                      <ReceiptText size={28} strokeWidth={1.5} aria-hidden className="text-muted" />
+                      <p className={T.card}>{t("emptyView")}</p>
+                      <p className={T.meta}>{t("emptyViewHint")}</p>
+                    </GoCard>
+                  ) : found.length === 0 ? (
+                    <GoCard className="items-center py-major text-center">
+                      <Search size={28} strokeWidth={1.5} aria-hidden className="text-muted" />
+                      <p className={T.card}>{t("noMatch", { query: query.trim() })}</p>
+                      <Button variant="secondary" size="lg" className={`rail:h-10! ${R.button}`} onClick={() => setQuery("")}>
+                        {t("clearSearch")}
+                      </Button>
+                    </GoCard>
+                  ) : (
+                    <SaleList rows={rows} ctx={ctx} openId={openId} onOpen={setOpenId} />
+                  )}
+                </>
               )}
               {found.length > PAGE && (
                 <div className="print:hidden">

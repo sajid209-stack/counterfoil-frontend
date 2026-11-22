@@ -21,6 +21,7 @@
  * DATA layer (lib/api, lib/orderMath, lib/duration) and nothing else.
  */
 
+import { DEMO_STAFF_ID } from "@/lib/session";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -645,7 +646,7 @@ export default function SellPage() {
       channel: "counter",
       locationId: tillLocationId,
       counterId: activeCounter.counter?.id ?? null,
-      staffId: null,
+      staffId: DEMO_STAFF_ID,
       customerName: attached?.name ?? null,
       customerId: attached?.id ?? null,
       lines,

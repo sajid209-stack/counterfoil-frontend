@@ -448,7 +448,7 @@ export default function SchedulePage() {
       }
     }
     if (opts.payAmount > 0 && opts.method) {
-      const pres = await addOrderPayment(takeOrder.id, opts.method, opts.payAmount, actor.name);
+      const pres = await addOrderPayment(takeOrder.id, opts.method, opts.payAmount, actor.name, DEMO_STAFF_ID);
       if (!pres.ok) {
         setBusy(false);
         toast.error(pres.error.message);

@@ -19933,3 +19933,24 @@ sweep, three surface reviewers, and a re-sweep on a production build. Phone touc
 About 30 fixes in the kit (Sheet and Modal header alignment, DataTable numeric headers,
 FilterSearch, PhoneRow meta, PageToolbar phone actions, tap areas) and per surface. The owner kept
 white on #F94A00 (3.5:1). The full list is in docs/ui-audit-2026-11.md.
+
+## POS ↔ OS sales sync; My sales redesign (2026-11-22)
+
+- **Sync.** Orders, tickets, reservations, customers and refund requests are now kept in the
+  browser like the catalogue (only the difference from the seed, per demo). A till sale survives a
+  reload and appears in OS Orders in another tab without a reload: the `storage` event lays the
+  other tab's rows over the store, and `useApiQuery` reloads on `cf-store-sync`. OS Orders shows
+  one venue at a time; the demo till sells at Lalbagh Fort.
+- **Who sold it.** Counter checkouts (till, Sell, classic, Check-In, quick pass) stamp the signed-in
+  staff. `addOrderPayment` takes the staff and marks the payment `balance: true` (a due collected).
+  `Payment` gains `staffId?` and `balance?`.
+- **My sales** (POS):
+  - Separate lists, each with a count and a summary line: All sales, one per payment method,
+    Due collected, and Still owed.
+  - Rows carry the customer's name and phone, items, how it was paid (split shown), the due and
+    the status.
+  - A row expands into the full sale: customer with a tel: link and email, items with booking
+    times, payments with references and who took them, totals with paid and due, counter, tickets,
+    and Reprint / Ask for a refund.
+  - The export carries the customer, phone, payments and due.
+  - The ⋯ menu on the last rows was clipped by the card (`overflow-hidden`); it now opens in full.

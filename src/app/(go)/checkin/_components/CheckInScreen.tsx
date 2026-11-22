@@ -1,5 +1,6 @@
 "use client";
 
+import { DEMO_STAFF_ID } from "@/lib/session";
 import { Fragment, Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -250,7 +251,7 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
       if (!d.ok) { setBusy(false); toast.error(d.error.message); return; }
     }
     if (r.payAmount > 0 && r.method) {
-      const res = await addOrderPayment(payOrder.id, r.method, r.payAmount, actor.name);
+      const res = await addOrderPayment(payOrder.id, r.method, r.payAmount, actor.name, DEMO_STAFF_ID);
       if (!res.ok) { setBusy(false); toast.error(res.error.message); return; }
     }
     const fresh = peekOrders().find((o) => o.id === payOrder.id);
@@ -368,7 +369,7 @@ function CheckInScreen({ forceMode }: { forceMode?: PhoneMode }) {
     const tier = p?.tiers.find((x) => x.active);
     if (!p || !tier) return;
     const res = await checkout({
-      channel: "counter", locationId: venueId || (p.locationIds[0] ?? "loc_fort"), counterId: activeCounter.counter?.id ?? null, staffId: null,
+      channel: "counter", locationId: venueId || (p.locationIds[0] ?? "loc_fort"), counterId: activeCounter.counter?.id ?? null, staffId: DEMO_STAFF_ID,
       customerName: walkInName.trim() || t("walkInDefaultName"),
       lines: [{ productId: p.id, productName: p.name, tierId: tier.id, tierName: tier.name, admits: tier.admits ?? 1, quantity: walkInParty, unitPrice: tier.price }],
       bookings: [{ productId: p.id, slotStart: `${date}T${toTime(DEMO_NOW_MINUTES)}:00+06:00`, partySize: walkInParty }],

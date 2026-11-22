@@ -119,3 +119,57 @@ export function summarise(all: Order[], staffId: string, days: string[]): Summar
     recent: [...mine].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
   };
 }
+
+/* ── The sales lists ─────────────────────────────────────────────────────────
+   My sales shows the cashier's sales as separate lists: all of them, one per
+   way of paying, the due (balance) payments they collected later, and the
+   sales of theirs still owing. Each list says what its money is: a method's
+   list shows what that method took on each sale, a due list what was
+   collected or what is still owed. */
+
+export type SalesView = "all" | PaymentMethod | "dueCollected" | "owed";
+
+/** Was this payment a balance collected after the sale? Marked so since the
+ *  till stamps it; for older records, any money taken after the first. */
+export const isBalancePayment = (o: Order, p: Order["payments"][number]): boolean =>
+  p.balance ?? (p.amount > 0 && o.payments.slice(0, o.payments.indexOf(p)).some((q) => q.amount > 0 && q.status === "confirmed"));
+
+export interface SaleRow {
+  order: Order;
+  /** The figure this list is about: the sale total, a method's take, the due collected or still owed. */
+  amount: Minor;
+  /** The payments this row stands for (all of them, a method's, or the balance ones). */
+  payments: Order["payments"];
+  /** What is still owed on the sale. */
+  due: Minor;
+  /** When this row happened: the sale, or the balance payment collected. */
+  at: string;
+}
+
+export function salesRows(all: Order[], staffId: string, days: string[], view: SalesView, dueOf: (o: Order) => Minor): SaleRow[] {
+  const inDays = (iso: string) => days.includes(ymd(new Date(iso)));
+  const rows: SaleRow[] = [];
+  for (const o of all) {
+    const confirmed = o.payments.filter((p) => p.status === "confirmed");
+    if (view === "dueCollected") {
+      /* Balance payments this person took in these days, on anyone's sale. */
+      const mineBal = confirmed.filter((p) => p.amount > 0 && isBalancePayment(o, p) && inDays(p.createdAt) && (p.staffId === staffId || (p.staffId == null && isMine(o, staffId))));
+      if (mineBal.length) rows.push({ order: o, amount: mineBal.reduce((s, p) => s + p.amount, 0), payments: mineBal, due: dueOf(o), at: mineBal[mineBal.length - 1].createdAt });
+      continue;
+    }
+    if (!isMine(o, staffId) || !days.includes(orderDay(o))) continue;
+    const due = dueOf(o);
+    if (view === "all") rows.push({ order: o, amount: o.total, payments: confirmed, due, at: o.createdAt });
+    else if (view === "owed") {
+      if (due > 0) rows.push({ order: o, amount: due, payments: confirmed, due, at: o.createdAt });
+    } else {
+      /* A method's list: what that method took at the sale (balances are their own list). */
+      const taken = confirmed.filter((p) => p.method === view && p.amount > 0 && !isBalancePayment(o, p));
+      if (taken.length) rows.push({ order: o, amount: taken.reduce((s, p) => s + p.amount, 0), payments: taken, due, at: o.createdAt });
+    }
+  }
+  return rows.sort((a, b) => b.at.localeCompare(a.at));
+}
+
+/** The ways of paying this till shows lists for, in till order. */
+export const viewMethods = (): PaymentMethod[] => (isUsRegion() ? US_SUMMARY_METHODS : SUMMARY_METHODS);

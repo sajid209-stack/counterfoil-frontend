@@ -1,5 +1,6 @@
 "use client";
 
+import { DEMO_STAFF_ID } from "@/lib/session";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Wallet, X } from "lucide-react";
@@ -205,7 +206,7 @@ export function ScanPanel({
       return;
     }
     setBusy(true);
-    const res = await addOrderPayment(outcome.balance.orderId, method, outcome.balance.amount, "Gate");
+    const res = await addOrderPayment(outcome.balance.orderId, method, outcome.balance.amount, "Gate", DEMO_STAFF_ID);
     if (!res.ok) {
       setBusy(false);
       return;

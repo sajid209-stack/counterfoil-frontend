@@ -1,5 +1,6 @@
 "use client";
 
+import { DEMO_STAFF_ID } from "@/lib/session";
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CircleCheck } from "lucide-react";
@@ -59,7 +60,7 @@ export default function QuickPassPage() {
       channel: "counter",
       locationId: activeCounter.locationId || (passProduct?.locationIds[0] ?? "loc_fort"),
       counterId: activeCounter.counter?.id ?? null,
-      staffId: null,
+      staffId: DEMO_STAFF_ID,
       lines: [{ productId: passProduct?.id ?? "quick_pass", productName: `${passProduct?.name ?? t("passFallback")} · ${formatDuration(duration)}`, tierName: identifier || t("passFallback"), admits: 1, quantity: 1, unitPrice: minor, taxRate: 0 }],
       taxPct: 0,
       method: "cash",

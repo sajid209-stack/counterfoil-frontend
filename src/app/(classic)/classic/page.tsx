@@ -1,5 +1,6 @@
 "use client";
 
+import { DEMO_STAFF_ID } from "@/lib/session";
 import { isUsRegion } from "@/lib/region";
 import { currencySymbol } from "@/lib/region";
 import { useEffect, useMemo, useState } from "react";
@@ -185,7 +186,7 @@ export default function PosPage() {
   const takeSettle = async () => {
     if (!settleOrder || settleOutstanding <= 0) return;
     setSettling(true);
-    const res = await addOrderPayment(settleOrder.id, settleMethod, settleOutstanding);
+    const res = await addOrderPayment(settleOrder.id, settleMethod, settleOutstanding, "Counter", DEMO_STAFF_ID);
     setSettling(false);
     if (res.ok) { setSettleOrder(res.data); toast.success(t("settle.settled", { amount: formatMoney(settleOutstanding, currency) })); }
     else toast.error(res.error.message);
@@ -690,7 +691,7 @@ export default function PosPage() {
   // Non-cash settle: no change step; runs after the wallet flow confirms.
   const settleInline = async (txnNote?: string, txnRef?: string) => {
     const { lines, bookings, credits, payload, receipt } = buildSale();
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: activeCounter.counter?.id ?? null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow, credits });
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: activeCounter.counter?.id ?? null, staffId: DEMO_STAFF_ID, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow, credits });
     if (res.ok) {
       if (txnNote) await logOrderAction(res.data.order.id, txnNote);
       await settleMemberEffects(res.data.order.id, dueNow);
@@ -703,7 +704,7 @@ export default function PosPage() {
   const completeCash = async (tenderedMinor: number, changeMinor: number) => {
     const { lines, bookings, credits, payload, receipt } = buildSale();
     setCashSaving(true);
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: activeCounter.counter?.id ?? null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method: "cash", amountTendered: tenderedMinor, payNow: dueNow, credits });
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: activeCounter.counter?.id ?? null, staffId: DEMO_STAFF_ID, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method: "cash", amountTendered: tenderedMinor, payNow: dueNow, credits });
     setCashSaving(false);
     if (res.ok) {
       await settleMemberEffects(res.data.order.id, dueNow);

@@ -11,7 +11,7 @@ import { useApiQuery } from "@/lib/useApi";
 import { counterEvents, counterItems, eventDays, inventoryItem, inventoryLineId, levelOf, peekTicketCodeSettings, tillMethods, checkout, getPayNowSettings, earnPoints, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isOpenOn, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, placeHold, releaseHold, activeHolds, HOLDS_EVENT, CHECKOUT_HELD_FOR, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type MembershipTier, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord, type HoldView } from "@/lib/api";
 import { eventFromPrice as sharedEventFromPrice } from "@/lib/api/eventModel";
 import { buildOrderLines } from "@/lib/orderMath";
-import { DEMO_TILL_ID } from "@/lib/session";
+import { DEMO_TILL_ID, DEMO_STAFF_ID } from "@/lib/session";
 import { useActiveCounterNow } from "@/lib/activeCounter";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, isFlexibleResource, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { flexDurations } from "@/lib/sale/selection";
@@ -1155,7 +1155,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   // Non-cash settle: no change step; runs after the wallet flow confirms.
   const settleInline = async (txnNote?: string, txnRef?: string) => {
     const { lines, bookings, payload, receipt } = buildSale();
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: activeCounter.counter?.id ?? null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow });
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: activeCounter.counter?.id ?? null, staffId: DEMO_STAFF_ID, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow });
     if (res.ok) {
       if (txnNote) await logOrderAction(res.data.order.id, txnNote);
       sayIfStockRefused(res.data.stockRefused);
@@ -1184,7 +1184,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   const completeCash = async (tenderedMinor: number, changeMinor: number) => {
     const { lines, bookings, payload, receipt } = buildSale();
     setCashSaving(true);
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: activeCounter.counter?.id ?? null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method: "cash", amountTendered: tenderedMinor, payNow: dueNow });
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: activeCounter.counter?.id ?? null, staffId: DEMO_STAFF_ID, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method: "cash", amountTendered: tenderedMinor, payNow: dueNow });
     setCashSaving(false);
     if (res.ok) {
       sayIfStockRefused(res.data.stockRefused);

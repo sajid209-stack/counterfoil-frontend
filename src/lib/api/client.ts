@@ -449,12 +449,18 @@ export function slugFromName(name: string): string {
    localStorage on each change and laid back over the store on load, one set per
    demo, because a Doers Club item means nothing in the museum's catalogue. Only
    the difference is kept, so seed changes still arrive for everything untouched.
-   Orders and tickets stay per tab, as they were; this is about what is on sale.
+   Sales are kept the same way (orders, tickets, reservations, customers and
+   refund requests): a sale taken at the till must still be there after a
+   refresh, and must appear in the OS Orders list open in another tab. Another
+   tab's write arrives through the `storage` event and is laid over this tab's
+   store; screens reading through `useApiQuery` reload on `STORE_SYNC_EVENT`.
 
    This is the swap point's other half: with a real backend, all of it goes. */
 const SAVED_KEY = "cf_saved_catalog_v1";
 export const SAVE_FAILED_EVENT = "cf-catalog-save-failed";
-const SAVED_COLLECTIONS = ["products", "resources", "seatLayouts"];
+/** Fired when another tab changed the kept data and this tab's store was updated. */
+export const STORE_SYNC_EVENT = "cf-store-sync";
+const SAVED_COLLECTIONS = ["products", "resources", "seatLayouts", "orders", "tickets", "bookings", "customers", "refundRequests"];
 type SavedRows = Record<string, Row[]>;
 let savedScope = "default";
 let savedBaseline = new Map<string, string>();
@@ -517,6 +523,15 @@ function writeSaved(): void {
     window.dispatchEvent(new Event(SAVE_FAILED_EVENT));
   }
   for (const fn of catalogueWriteListeners) fn();
+}
+
+/* Another tab wrote: lay its rows over this store and tell the screens. */
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key !== SAVED_KEY) return;
+    overlaySaved(readSaved()[savedScope]);
+    window.dispatchEvent(new Event(STORE_SYNC_EVENT));
+  });
 }
 
 const catalogueWriteListeners = new Set<() => void>();

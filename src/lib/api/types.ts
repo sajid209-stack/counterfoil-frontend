@@ -831,6 +831,10 @@ export interface Payment {
   reference?: string; // bKash txn id etc.
   status: PaymentStatus;
   createdAt: ISODateTime;
+  /** Who took it (a till's signed-in staff). Absent on online and seeded payments. */
+  staffId?: ID | null;
+  /** A balance collected after the sale (a due payment), not part of the sale itself. */
+  balance?: boolean;
 }
 
 export interface Order {
