@@ -98,6 +98,9 @@ function slotProduct(o: {
       { id: `${o.id}_pr_eve`, days: [], fromTime: "16:00", toTime: "23:59", price: tk(o.eveningPrice) },
     ],
     policies: { ...SLOT_POLICY, partyMax: o.partyMax ?? 22 },
+    // Part payment with no minimum: a team can pay the whole slot, or any amount now
+    // and the rest at the field. The tills still take at least ৳1 (lib/payNow).
+    payNow: { options: "full_custom", minKind: "percent", minValue: 0 },
     createdAt: T, updatedAt: T,
   };
 }

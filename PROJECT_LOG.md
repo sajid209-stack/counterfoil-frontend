@@ -19819,6 +19819,12 @@ demos). Seed: `src/lib/mock/turfs.ts`; loaded by `applyTurfBusiness` in `client.
   (partySize 1) so the dashboard's capacity reads as slots, not players.
 - The hydration warning on first load of a whole-business demo is pre-existing (Doers shows it
   too): the server renders the default seed, the client swaps in the demo.
+- **Part payment, minimum zero (2026-11-22).** Every turf/court/cricket slot carries its own
+  `payNow: { options: "full_custom", minKind: "percent", minValue: 0 }`, so a booking for later
+  offers **Full or Custom (any amount from ৳1)** at the till and the rest is collected on
+  arrival. Set per product rather than as the business default, so it cannot leak into the
+  other demos. The pool is undated, so it is always paid in full. Verified on `/demo/arena`:
+  ৳500 of ৳3,450 → "Collect ৳2,950.00 on arrival".
 
 ---
 
