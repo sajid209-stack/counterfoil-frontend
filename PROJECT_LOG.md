@@ -19967,3 +19967,17 @@ white on #F94A00 (3.5:1). The full list is in docs/ui-audit-2026-11.md.
   and into the revenue chart's own card, as on every other paired chart. The strip sat outside the
   card language, and on a phone its first line was cut by the edge. The key reads "This period"
   and the previous dates, since the card's subtitle already names the current range.
+
+## Filter panels that would not scroll (2026-11-22)
+
+- **The bug.** The Filters popover (Orders, Issued orders), the Calendar filter panel, the Orders
+  toolbar menu and the kit Select all re-place themselves on every scroll event, so they can follow
+  their trigger. The listener also caught the panel's OWN scroll. `place()` clears the height cap
+  to measure, which unclipped the list for an instant and snapped every scroll back to the top.
+  These panels now ignore scroll events from inside themselves.
+- **Nested scroll.** Each long checklist (Staff) was a 208px scroll box inside the scrolling Filters
+  panel. The wheel moved the inner list first, its scrollbar sat as a dead strip, and the list was
+  cut mid-name. Checklists no longer scroll. A list over 6 shows the first 5, plus anything ticked,
+  and "Show all N" opens the rest in place.
+- **The panel.** One scroll area, with `.scroll-y-hint` edge fades (shown only when there is more
+  that way) and a scrollbar gutter on both sides, so a classic scrollbar keeps the panel symmetric.

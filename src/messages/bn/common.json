@@ -59,5 +59,7 @@
       "showAll": "{count, plural, one {হিসাবটি দেখান} other {সব {count} টি দেখান}}",
       "showFewer": "কম দেখান"
     }
-  }
+  },
+  "showAllCount": "সব {count}টি দেখুন",
+  "showFewer": "কম দেখুন"
 }

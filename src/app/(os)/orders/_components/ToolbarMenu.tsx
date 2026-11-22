@@ -68,10 +68,17 @@ export function ToolbarMenu({ items, label }: { items: ToolbarMenuItem[]; label:
     };
     place();
     window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
+    /* Follow the page as it scrolls, but not the panel's own list: place()
+       clears the height cap to measure, which unclipped the list for an
+       instant and snapped every scroll inside it back to the top. */
+    const onScroll = (e: Event) => {
+      if (e.target instanceof Node && el.contains(e.target)) return;
+      place();
+    };
+    window.addEventListener("scroll", onScroll, true);
     return () => {
       window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("scroll", onScroll, true);
     };
   }, [open, expanded]);
 

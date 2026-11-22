@@ -223,10 +223,17 @@ export function FilterBar({
     };
     place();
     window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
+    /* Follow the page as it scrolls, but not the panel's own list: place()
+       clears the height cap to measure, which unclipped the list for an
+       instant and snapped every scroll inside it back to the top. */
+    const onScroll = (e: Event) => {
+      if (e.target instanceof Node && el.contains(e.target)) return;
+      place();
+    };
+    window.addEventListener("scroll", onScroll, true);
     return () => {
       window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("scroll", onScroll, true);
     };
   }, [open, wide, count]);
 
@@ -416,7 +423,7 @@ export function FilterBar({
             onKeyDown={onPanelKey}
             className="fixed z-50 flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-md border border-hairline bg-card shadow-lg"
           >
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{body}</div>
+            <div className="scroll-y-hint min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-gutter:stable_both-edges]">{body}</div>
             <div className="flex shrink-0 items-center gap-tight border-t border-hairline px-tight py-inline">
               {count > 0 && (
                 <button
