@@ -28,7 +28,8 @@ export default function PrintOrderPage() {
 
   const { order } = d;
   const ready = d.ready && !ticketsQ.loading;
-  const cards = ticketCards(order, ticketsQ.data?.data ?? [], d.operator?.name ?? "Counterfoil", labels);
+  // Each stub tears off and travels alone, so each carries the logo too — on the same switch as the receipt's.
+  const cards = ticketCards(order, ticketsQ.data?.data ?? [], d.operator?.name ?? "Counterfoil", labels, opts.settings.showLogo ? d.operator?.logo : null);
 
   // Open the print dialog once, when the receipt and every ticket are loaded. The toolbar stays live after it closes.
   const printed = useRef(false);

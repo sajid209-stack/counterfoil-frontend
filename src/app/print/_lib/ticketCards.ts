@@ -38,7 +38,14 @@ export function useTicketLabels(): TicketLabels {
  * the tickets page and the tickets-and-receipt page, so the two can never
  * describe the same ticket differently.
  */
-export function ticketCards(order: Order | undefined, tickets: Ticket[], business: string, labels: TicketLabels): { id: string; data: TicketCardData }[] {
+export function ticketCards(
+  order: Order | undefined,
+  tickets: Ticket[],
+  business: string,
+  labels: TicketLabels,
+  /** The business logo to print at the top of each ticket; null leaves it off. */
+  logo?: string | null,
+): { id: string; data: TicketCardData }[] {
   const sorted = [...tickets].sort((a, b) => a.code.localeCompare(b.code));
   /* Read once for the whole order rather than per ticket: every ticket in one
      print job carries the same code, and a setting read twice is a setting
@@ -78,6 +85,7 @@ export function ticketCards(order: Order | undefined, tickets: Ticket[], busines
       id: ticket.id,
       data: {
         business,
+        logo: logo ?? null,
         productName,
         tierName: line && !says(ticket.tierName) ? ticket.tierName : undefined,
         fields,

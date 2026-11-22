@@ -30,6 +30,10 @@ function Tear({ label, pad }: { label?: string; pad: number }) {
 function Stub({ card, referenceLabel }: { card: TicketCardData; referenceLabel: string }) {
   return (
     <div className="flex break-inside-avoid flex-col items-center gap-tight text-center">
+      {card.logo && (
+        // eslint-disable-next-line @next/next/no-img-element -- a stored data URL or a path; next/image adds nothing on paper
+        <img data-ticket-logo src={card.logo} alt={card.business} className="h-8 w-auto max-w-full object-contain grayscale" />
+      )}
       <Qr value={card.code} size={104} />
       <div className="w-full min-w-0">
         <div className="flex flex-wrap items-baseline justify-center gap-x-tight">

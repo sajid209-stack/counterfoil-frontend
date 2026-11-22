@@ -8,6 +8,9 @@ export interface TicketField {
 
 export interface TicketCardData {
   business: string;
+  /** The business's logo (Settings → Business profile), printed at the top of
+   *  the ticket. Absent or null = the ticket opens on its tier and title. */
+  logo?: string | null;
   productName: string;
   /** The tier, only when the booking's own name does not already say it ("Adult"). */
   tierName?: string;
@@ -62,10 +65,20 @@ export function TicketCard({ data, className }: { data: TicketCardData; classNam
       {/* What it is for */}
       {/* ds-exception: the printed ticket is a physical object with its own 24px corner (docs §12, print) */}
       <div style={bite("bottom")} className={`@container rounded-t-[24px] bg-white px-6 pb-6 pt-6 ${PRINT_EDGE} print:border-b-0`}>
-        {(data.tierName || data.indexLabel) && (
+        {/* Whose ticket it is: the logo across the top, with "1 of 3" beside it.
+            A ticket travels on its own, away from the receipt, so it carries the
+            business's mark itself. */}
+        {data.logo && (
+          <div className="mb-5 flex items-center justify-between gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element -- a stored data URL or a path; next/image adds nothing on paper */}
+            <img data-ticket-logo src={data.logo} alt={data.business} className="h-12 w-auto max-w-[70%] object-contain object-left grayscale" />
+            {data.indexLabel && <span className="shrink-0 text-xs font-medium text-neutral-600">{data.indexLabel}</span>}
+          </div>
+        )}
+        {(data.tierName || (data.indexLabel && !data.logo)) && (
           <div className="mb-4 flex items-center justify-between gap-3">
             {data.tierName ? <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium">{data.tierName}</span> : <span />}
-            {data.indexLabel && <span className="shrink-0 text-xs font-medium text-neutral-600">{data.indexLabel}</span>}
+            {data.indexLabel && !data.logo && <span className="shrink-0 text-xs font-medium text-neutral-600">{data.indexLabel}</span>}
           </div>
         )}
         <h2 className="break-words text-2xl font-semibold leading-tight tracking-title [text-wrap:balance]">{data.productName}</h2>

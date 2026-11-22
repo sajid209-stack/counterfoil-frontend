@@ -41,7 +41,8 @@ export function ConfirmationScreen({ order, tickets, isPreview }: { order: Order
   const t = useTranslations("storefront");
   const labels = useTicketLabels();
   const business = flow.operator?.name ?? flow.location.name;
-  const cards = ticketCards(order, tickets, business, labels);
+  // The ticket a guest keeps on their phone carries the venue's mark: the storefront's own logo, else the business's.
+  const cards = ticketCards(order, tickets, business, labels, flow.storefront?.logo ?? flow.operator?.logo ?? null);
   const datedLines = order.lines.filter((l) => l.booking?.date && !l.parentLineId);
 
   return (

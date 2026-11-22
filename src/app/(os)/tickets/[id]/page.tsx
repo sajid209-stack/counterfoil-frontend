@@ -44,6 +44,7 @@ import {
   type TicketEvent,
 } from "@/lib/api";
 import { useTicketLabels, ticketCards } from "@/app/print/_lib/ticketCards";
+import { receiptSettingsOf } from "@/lib/receipt";
 import { useEnumLabels } from "@/lib/labels";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 
@@ -150,7 +151,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
      and this one has to be trustworthy enough to read a code off over the
      phone. */
   const siblings = siblingsQ.data?.data ?? [];
-  const card = ticketCards(order, siblings.length ? siblings : [ticket], opQ.data?.name ?? "", cardLabels).find(
+  const card = ticketCards(order, siblings.length ? siblings : [ticket], opQ.data?.name ?? "", cardLabels, receiptSettingsOf(opQ.data).showLogo ? opQ.data?.logo : null).find(
     (c) => c.id === ticket.id,
   );
 
