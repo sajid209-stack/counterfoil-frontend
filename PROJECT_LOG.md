@@ -19954,3 +19954,16 @@ white on #F94A00 (3.5:1). The full list is in docs/ui-audit-2026-11.md.
     and Reprint / Ask for a refund.
   - The export carries the customer, phone, payments and due.
   - The ⋯ menu on the last rows was clipped by the card (`overflow-hidden`); it now opens in full.
+
+## My sales details and the Analytics legend (2026-11-22)
+
+- **My sales, open sale.** The open row no longer turns a second ground (beige on white). It stays on
+  the card's white, marked by a 2px brand bar at its edge.
+  - The details are three columns on desktop: items (widest); payments and totals as a receipt in
+    a soft outlined box; customer and where, as label-over-value facts.
+  - The actions sit on their own row. A phone stacks customer, items, payment, then actions.
+  - Before this, "Counter … Fort Main Gate" stretched label and value across the full panel width.
+- **Analytics.** The solid / dashed key moved out of the strip between the controls and the figures
+  and into the revenue chart's own card, as on every other paired chart. The strip sat outside the
+  card language, and on a phone its first line was cut by the edge. The key reads "This period"
+  and the previous dates, since the card's subtitle already names the current range.

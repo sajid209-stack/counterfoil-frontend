@@ -143,7 +143,27 @@ function Line({ label, value, strong, tone }: { label: ReactNode; value: ReactNo
   );
 }
 
-/** Everything about one sale, opened under its row. */
+/** A fact with its label above it: for the narrow customer column, where a
+ *  label and a value pushed to opposite edges read as two unrelated words. */
+function Fact({ label, value }: { label: ReactNode; value: ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-col">
+      <dt className={T.meta}>{label}</dt>
+      <dd className={cn(T.body, "break-words text-fg")}>{value}</dd>
+    </div>
+  );
+}
+
+/**
+ * Everything about one sale, opened under its row, on the same white as the
+ * list (a second ground under an open row read as a different surface).
+ *
+ * Desktop: three columns by what the cashier is checking. What was sold
+ * (widest); the money, as a receipt (payments, then the totals) in a soft
+ * outlined box; who and where, as stacked label-over-value facts. The actions
+ * end the panel on their own row. Phone: one column in that same order, with
+ * the customer first because that is who is on the phone.
+ */
 function Details({ row, ctx, id }: { row: SaleRow; ctx: SaleListContext; id: string }) {
   const { t, labels, money } = useParts(ctx);
   const o = row.order;
@@ -152,106 +172,111 @@ function Details({ row, ctx, id }: { row: SaleRow; ctx: SaleListContext; id: str
   const net = confirmed.reduce((s, p) => s + p.amount, 0);
   const counter = ctx.counterName(o.counterId);
   const tickets = o.lines.filter((l) => !l.parentLineId).reduce((s, l) => s + l.quantity, 0);
-  return (
-    <div id={id} className="grid gap-section border-t border-line bg-subtle px-comfortable py-comfortable rail:grid-cols-2 rail:gap-x-major rail:px-card">
-      <Section title={t("d.customer")}>
-        <p className={cn(T.item)}>{who.name}</p>
-        {who.phone || who.email ? (
-          <div className={cn("flex flex-col", T.body)}>
-            {who.phone && (
-              <a href={`tel:${who.phone.replace(/[^\d+]/g, "")}`} className="inline-flex min-h-11 w-fit items-center font-medium text-brand-foreground underline-offset-2 hover:underline rail:min-h-8">
+
+  const customer = (
+    <Section title={t("d.customer")}>
+      <dl className="flex flex-col gap-tight">
+        <div className="flex min-w-0 flex-col">
+          <dt className="sr-only">{t("d.customer")}</dt>
+          <dd className={cn(T.item, "break-words")}>{who.name}</dd>
+          {who.phone && (
+            <dd>
+              <a href={`tel:${who.phone.replace(/[^\d+]/g, "")}`} className="inline-flex min-h-11 w-fit items-center font-medium text-brand-foreground underline-offset-2 hover:underline rail:min-h-0">
                 {who.phone}
               </a>
-            )}
-            {who.email && <span className="break-all text-fg-secondary">{who.email}</span>}
-          </div>
-        ) : (
-          <p className={T.meta}>{t("d.noContact")}</p>
-        )}
-      </Section>
-
-      <Section title={t("d.where")}>
-        <dl className="flex flex-col gap-inline">
-          <Line label={t("d.counter")} value={counter ?? "—"} />
-          <Line label={t("d.channel")} value={o.channel === "online" ? t("d.channelOnline") : t("d.channelCounter")} />
-          <Line label={t("d.ticketsLabel")} value={String(tickets)} />
-        </dl>
-      </Section>
-
-      <Section title={t("d.items")}>
-        <ul className="flex flex-col gap-tight">
-          {o.lines.map((l) => (
-            <li key={l.id} className={cn("flex items-start justify-between gap-comfortable", l.parentLineId && "ps-section")}>
-              <div className="min-w-0">
-                <p className={cn(T.body, "break-words")}>
-                  {l.quantity}× {l.productName}
-                  {l.tierName && l.tierName !== l.productName ? <span className="text-muted"> · {l.tierName}</span> : null}
-                </p>
-                {l.booking && (
-                  <p className={T.meta}>
-                    {[formatDay(l.booking.date, { weekday: true }), l.booking.startTime ? formatClock(l.booking.startTime) : null, l.booking.resourceName ?? l.booking.providerName].filter(Boolean).join(" · ")}
-                  </p>
-                )}
-              </div>
-              <span className={cn(T.price, "shrink-0 whitespace-nowrap")}>{money(l.total)}</span>
-            </li>
-          ))}
-        </ul>
-      </Section>
-
-      <Section title={t("d.payments")}>
-        {confirmed.length === 0 ? (
-          <p className={T.meta}>{t("d.noPayments")}</p>
-        ) : (
-          <ul className="flex flex-col gap-tight">
-            {confirmed.map((p) => {
-              const staff = ctx.staffName(p.staffId);
-              const bal = isBalancePayment(o, p);
-              return (
-                <li key={p.id} className="flex items-start justify-between gap-comfortable">
-                  <div className="min-w-0">
-                    <p className={cn(T.body, "break-words")}>
-                      {p.amount < 0 ? t("d.refund") + " · " : ""}
-                      {labels.method(p.method)}
-                      {bal && <span className="ms-tight inline-flex rounded-full bg-warning-wash px-tight py-0.5 align-middle text-sm font-medium text-fg">{t("d.duePayment")}</span>}
-                    </p>
-                    <p className={cn(T.meta, "break-words")}>
-                      {[formatClockOf(p.createdAt), p.reference ? t("d.ref", { ref: p.reference }) : null, staff ? t("d.takenBy", { name: staff }) : null].filter(Boolean).join(" · ")}
-                    </p>
-                  </div>
-                  <span className={cn(T.price, "shrink-0 whitespace-nowrap", p.amount < 0 && "text-danger")}>{money(p.amount)}</span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </Section>
-
-      <Section title={t("d.totals")}>
-        <dl className="flex flex-col gap-inline tabular-nums">
-          <Line label={t("d.subtotal")} value={money(o.subtotal)} />
-          {o.discountTotal > 0 && <Line label={t("d.discount")} value={`−${money(o.discountTotal)}`} />}
-          <Line label={t("d.vat")} value={money(o.taxTotal)} />
-          <Line label={t("d.total")} value={money(o.total)} strong />
-          <Line label={t("d.paid")} value={money(net)} />
-          <Line label={t("d.due")} value={money(row.due)} tone={row.due > 0 ? "warning" : undefined} />
-        </dl>
-      </Section>
-
-      <Section title={t("d.actions")}>
-        <div className="flex flex-wrap gap-tight">
-          <Button variant="secondary" size="lg" className={`rail:h-10! ${R.button}`} onClick={() => ctx.onReprint(o)}>
-            <Printer size={16} strokeWidth={1.75} aria-hidden />
-            {t("reprint")}
-          </Button>
-          {ctx.canAsk(o) && (
-            <Button variant="secondary" size="lg" className={`rail:h-10! ${R.button}`} onClick={() => ctx.onAsk(o)}>
-              <RotateCcw size={16} strokeWidth={2} aria-hidden />
-              {t("askRefund")}
-            </Button>
+            </dd>
           )}
+          {who.email && <dd className={cn(T.meta, "break-all")}>{who.email}</dd>}
+          {!who.phone && !who.email && <dd className={T.meta}>{t("d.noContact")}</dd>}
         </div>
-      </Section>
+        <Fact label={t("d.counter")} value={counter ?? "—"} />
+        <div className="grid grid-cols-2 gap-tight">
+          <Fact label={t("d.channel")} value={o.channel === "online" ? t("d.channelOnline") : t("d.channelCounter")} />
+          <Fact label={t("d.ticketsLabel")} value={String(tickets)} />
+        </div>
+      </dl>
+    </Section>
+  );
+
+  return (
+    <div id={id} className="border-t border-line">
+      <div className="grid gap-section px-comfortable py-section rail:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,0.85fr)] rail:gap-x-major rail:px-card">
+        <div className="rail:hidden">{customer}</div>
+
+        <Section title={t("d.items")}>
+          <ul className="flex flex-col gap-tight">
+            {o.lines.map((l) => (
+              <li key={l.id} className={cn("flex items-start justify-between gap-comfortable", l.parentLineId && "ps-section")}>
+                <div className="min-w-0">
+                  <p className={cn(T.body, "break-words text-fg")}>
+                    {l.quantity}× {l.productName}
+                    {l.tierName && l.tierName !== l.productName ? <span className="text-muted"> · {l.tierName}</span> : null}
+                  </p>
+                  {l.booking && (
+                    <p className={T.meta}>
+                      {[formatDay(l.booking.date, { weekday: true }), l.booking.startTime ? formatClock(l.booking.startTime) : null, l.booking.resourceName ?? l.booking.providerName].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                </div>
+                <span className={cn(T.price, "shrink-0 whitespace-nowrap")}>{money(l.total)}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+
+        <Section title={t("d.payments")}>
+          <div className="flex flex-col gap-comfortable rounded-inner p-comfortable ring-1 ring-inset ring-line">
+            {confirmed.length === 0 ? (
+              <p className={T.meta}>{t("d.noPayments")}</p>
+            ) : (
+              <ul className="flex flex-col gap-tight">
+                {confirmed.map((p) => {
+                  const staff = ctx.staffName(p.staffId);
+                  const bal = isBalancePayment(o, p);
+                  return (
+                    <li key={p.id} className="flex items-start justify-between gap-comfortable">
+                      <div className="min-w-0">
+                        <p className={cn(T.body, "break-words text-fg")}>
+                          {p.amount < 0 ? t("d.refund") + " · " : ""}
+                          {labels.method(p.method)}
+                          {bal && <span className="ms-tight inline-flex rounded-full bg-warning-wash px-tight py-0.5 align-middle text-sm font-medium text-fg">{t("d.duePayment")}</span>}
+                        </p>
+                        <p className={cn(T.meta, "break-words")}>
+                          {[formatClockOf(p.createdAt), p.reference ? t("d.ref", { ref: p.reference }) : null, staff ? t("d.takenBy", { name: staff }) : null].filter(Boolean).join(" · ")}
+                        </p>
+                      </div>
+                      <span className={cn(T.price, "shrink-0 whitespace-nowrap", p.amount < 0 && "text-danger")}>{money(p.amount)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <dl className="flex flex-col gap-inline border-t border-line pt-comfortable tabular-nums">
+              <Line label={t("d.subtotal")} value={money(o.subtotal)} />
+              {o.discountTotal > 0 && <Line label={t("d.discount")} value={`−${money(o.discountTotal)}`} />}
+              <Line label={t("d.vat")} value={money(o.taxTotal)} />
+              <Line label={t("d.total")} value={money(o.total)} strong />
+              <Line label={t("d.paid")} value={money(net)} />
+              <Line label={t("d.due")} value={money(row.due)} tone={row.due > 0 ? "warning" : undefined} />
+            </dl>
+          </div>
+        </Section>
+
+        <div className="hidden rail:block">{customer}</div>
+      </div>
+
+      <div className="flex flex-wrap gap-tight border-t border-line px-comfortable py-comfortable rail:justify-end rail:px-card">
+        <Button variant="secondary" size="lg" className={`rail:h-10! ${R.button}`} onClick={() => ctx.onReprint(o)}>
+          <Printer size={16} strokeWidth={1.75} aria-hidden />
+          {t("reprint")}
+        </Button>
+        {ctx.canAsk(o) && (
+          <Button variant="secondary" size="lg" className={`rail:h-10! ${R.button}`} onClick={() => ctx.onAsk(o)}>
+            <RotateCcw size={16} strokeWidth={2} aria-hidden />
+            {t("askRefund")}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -267,7 +292,9 @@ function SaleItem({ row, ctx, open, onToggle }: { row: SaleRow; ctx: SaleListCon
   const detailsId = `sale-${o.id}-${ctx.view}`;
   const canAsk = ctx.canAsk(o);
   return (
-    <li className={cn("relative", open && "bg-subtle", "[&:last-child]:rounded-b-card")}>
+    <li className={cn("relative", "[&:last-child]:rounded-b-card")}>
+      {/* The open row is marked by a brand bar at its edge, not a second ground. */}
+      {open && <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-0.5 bg-ember-solid" />}
       <div className={cn(OUTER, "px-comfortable py-comfortable rail:px-card rail:py-tight rail:min-h-14")}>
         {/* The whole row opens its details. A button laid under the row's
             text, so the phone link and the menu (which sit above it) can be
@@ -300,7 +327,7 @@ function SaleItem({ row, ctx, open, onToggle }: { row: SaleRow; ctx: SaleListCon
           <p className={cn("truncate", T.meta)}>{items}</p>
           {bookingText && <p className={cn(T.meta, "font-medium text-fg")}>{bookingText}</p>}
           <div className="flex flex-wrap items-center gap-tight">
-            <span className={cn("inline-flex w-fit max-w-full items-center rounded-full bg-subtle px-tight py-0.5 text-sm font-medium text-fg-secondary ring-1 ring-inset ring-line", open && "bg-card")}>{paidWith(row)}</span>
+            <span className={cn("inline-flex w-fit max-w-full items-center rounded-full bg-subtle px-tight py-0.5 text-sm font-medium text-fg-secondary ring-1 ring-inset ring-line")}>{paidWith(row)}</span>
             <Pills row={row} ctx={ctx} />
           </div>
         </div>

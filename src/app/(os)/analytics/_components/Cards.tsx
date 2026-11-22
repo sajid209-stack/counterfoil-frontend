@@ -473,6 +473,10 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
           <Empty>{t("revenue.empty")}</Empty>
         ) : (
           <>
+            {/* The key sits in the chart's own card, as on every other paired
+                chart here: what the solid and the dashed line are is a fact
+                about this chart, not a strip floating over the whole page. */}
+            {showCompare && <PairLegend kind="line" now={t("revenue.thisPeriod")} then={rangeText} />}
             <AreaChart
               points={revenuePoints}
               fmt={(x) => formatMoney(x)}
@@ -565,7 +569,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
                   <BarList rows={pay} />
                 ) : (
                   <>
-                    {showCompare && <PairLegend kind="line" {...periodNames} />}
+                    {showCompare && <PairLegend kind="line" now={t("revenue.thisPeriod")} then={rangeText} />}
                     <MiniMultiples panels={payPanels} fmt={formatMoney} caption={(max) => t("mode.sameScale", { max })} />
                     {seriesTable(
                       t("pay.title"),

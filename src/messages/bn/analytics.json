@@ -48,7 +48,8 @@
     "series": "আয়",
     "previous": "আগের সময়",
     "weekOf": "{day} থেকে সপ্তাহ",
-    "empty": "এই সময়ে কোনো বিক্রি নেই।"
+    "empty": "এই সময়ে কোনো বিক্রি নেই।",
+    "thisPeriod": "এই সময়"
   },
   "sells": {
     "title": "কী বিক্রি হয়",
@@ -133,10 +134,6 @@
     "customShort": "নিজের তারিখ",
     "previousShort": "আগের সময়",
     "noneShort": "তুলনা নেই"
-  },
-  "legend": {
-    "solid": "গাঢ় রেখা:",
-    "dashed": "ড্যাশ রেখা:"
   },
   "noCompareEmpty": "তুলনা নেই। এখনো কোনো বিক্রির রেকর্ড নেই।",
   "compareWithPrevious": "আগের সময়ের সাথে তুলনা করুন",

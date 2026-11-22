@@ -192,24 +192,9 @@ function AnalyticsInner() {
 
   const notices = o && (
     <>
-      {o.previous && (
-        <p data-legend className="flex flex-wrap items-center gap-x-section gap-y-inline text-xs text-muted">
-          <span className="flex items-center gap-tight">
-            <svg width="20" height="4" aria-hidden className="shrink-0">
-              <line x1="0" x2="20" y1="2" y2="2" stroke="var(--color-ember)" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
-            <span className="sr-only">{t("legend.solid")} </span>
-            <span className="font-medium tabular-nums text-fg">{formatRange(o.from, o.to)}</span>
-          </span>
-          <span className="flex items-center gap-tight">
-            <svg width="20" height="4" aria-hidden className="shrink-0">
-              <line x1="0" x2="20" y1="2" y2="2" stroke="var(--color-muted)" strokeWidth="2" strokeDasharray="4 3" />
-            </svg>
-            <span className="sr-only">{t("legend.dashed")} </span>
-            <span className="tabular-nums text-fg">{formatRange(o.previous.from, o.previous.to)}</span>
-          </span>
-        </p>
-      )}
+      {/* The solid / dashed key lives in each chart's own card (Cards.tsx). As
+          a strip between the controls and the figures it floated outside the
+          card language, and on a phone its first line was cut by the edge. */}
       {asked && o.previous === null && (
         <div data-no-compare>
           <Notice
