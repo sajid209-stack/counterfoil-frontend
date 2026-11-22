@@ -15,6 +15,7 @@ import { ToolbarMenu, type ToolbarMenuItem } from "./ToolbarMenu";
 export interface FacetOptions {
   counters: ChipOption[];
   staff: ChipOption[];
+  products: ChipOption[];
   channels: ChipOption[];
   methods: ChipOption[];
   statuses: ChipOption[];
@@ -72,12 +73,12 @@ export function OrdersToolbar({
   const wide = useMediaQuery(MD);
 
   const dateSet = !!(f.from && f.to);
-  const check = (key: string, label: string, opts: ChipOption[], value: string[], onChange: (next: string[]) => void, empty?: string): FilterSpec => ({
+  const check = (key: string, label: string, opts: ChipOption[], value: string[], onChange: (next: string[]) => void, empty?: string, find?: string): FilterSpec => ({
     key,
     label,
     active: checklistSummary(opts, value),
     onClear: () => onChange([]),
-    control: <Checklist label={label} options={opts} value={value} onChange={onChange} empty={empty} />,
+    control: <Checklist label={label} options={opts} value={value} onChange={onChange} empty={empty} find={find} />,
   });
 
   /* The quick filters of a phone are shortcuts onto the status filter: the one
@@ -100,8 +101,9 @@ export function OrdersToolbar({
       onClear: () => set({ from: "", to: "" }),
       control: <DateChip from={f.from} to={f.to} onChange={(from, to) => set({ from, to })} className="w-full md:w-auto" />,
     },
+    check("booking", tf("booking"), options.products, f.products, (products) => set({ products }), tf("noOptions")),
     check("counter", tf("counter"), options.counters, f.counters, (counters) => set({ counters }), tf("noOptions")),
-    check("staff", tf("staff"), options.staff, f.staff, (staff) => set({ staff }), tf("noOptions")),
+    check("staff", tf("staff"), options.staff, f.staff, (staff) => set({ staff }), tf("noOptions"), tf("findStaff")),
     check("channel", tf("channel"), options.channels, f.channels, (channels) => set({ channels: channels as SalesFilters["channels"] })),
     check("method", tf("method"), options.methods, f.methods, (methods) => set({ methods: methods as SalesFilters["methods"] }), tf("noOptions")),
     check("status", tf("status"), options.statuses, f.statuses, (statuses) => set({ statuses: statuses as SalesFilters["statuses"] })),

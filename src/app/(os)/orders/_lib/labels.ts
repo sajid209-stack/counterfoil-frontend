@@ -44,6 +44,7 @@ export function useSalesLabels(dir: Directory) {
     parts.push(f.from && f.to ? range(f.from, f.to) : t("describe.allDates"));
     if (f.counters.length) parts.push(f.counters.map(counter).join(", "));
     if (f.staff.length) parts.push(t("describe.staff", { names: f.staff.map(staff).join(", ") }));
+    if (f.products.length) parts.push(t("describe.booking", { names: f.products.map((id) => dir.productName(id) || id).join(", ") }));
     if (f.channels.length) parts.push(f.channels.map(channel).join(", "));
     if (f.methods.length) parts.push(f.methods.map(method).join(", "));
     if (f.statuses.length) parts.push(f.statuses.map(status).join(", "));

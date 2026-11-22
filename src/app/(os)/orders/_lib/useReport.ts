@@ -6,6 +6,7 @@ import {
   filterSalesOrders,
   listCounters,
   listLocations,
+  listProducts,
   listSalesOrders,
   listStaff,
   sortSalesOrders,
@@ -28,15 +29,20 @@ export function useDirectory() {
   const staffQ = useApiQuery(() => listStaff({ pageSize: 500 }), []);
   const countersQ = useApiQuery(() => listCounters({ pageSize: 500 }), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
+  const productsQ = useApiQuery(() => listProducts({ pageSize: 500, filters: { status: "all" } }), []);
   const staff = useMemo(() => staffQ.data?.data ?? [], [staffQ.data]);
   const counters = useMemo(() => countersQ.data?.data ?? [], [countersQ.data]);
   const locations = useMemo(() => locationsQ.data?.data ?? [], [locationsQ.data]);
+  const products = useMemo(() => productsQ.data?.data ?? [], [productsQ.data]);
   const ready = !staffQ.loading && !countersQ.loading && !locationsQ.loading;
 
   const staffName = useCallback((id: string | null): string => (id ? (staff.find((s) => s.id === id)?.name ?? (ready ? id : "")) : ""), [staff, ready]);
   const counterName = useCallback((id: string | null): string => (id ? (counters.find((c) => c.id === id)?.name ?? (ready ? id : "")) : ""), [counters, ready]);
   const locationName = useCallback((id: string | null): string => (id ? (locations.find((l) => l.id === id)?.name ?? (ready ? id : "")) : ""), [locations, ready]);
-  return { ready, staff, counters, locations, staffName, counterName, locationName };
+  /* A booking by its catalog name; one since removed from the catalog falls back
+     to the name its order lines were sold under (see the Booking filter). */
+  const productName = useCallback((id: string): string => products.find((p) => p.id === id)?.name ?? "", [products]);
+  return { ready, staff, counters, locations, staffName, counterName, locationName, productName };
 }
 export type Directory = ReturnType<typeof useDirectory>;
 
@@ -70,7 +76,7 @@ export function useSalesReport(f: SalesFilters, venueOverride?: string) {
     () => sortSalesOrders(filterSalesOrders(scope, toQuery(f, venueId)), f.sort, f.dir, { staff: dir.staffName, counter: dir.counterName }),
     // The page and size do not change which rows match.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [scope, venueId, f.from, f.to, f.q, f.counters, f.staff, f.channels, f.methods, f.statuses, f.customerId, f.sort, f.dir, dir.staffName, dir.counterName],
+    [scope, venueId, f.from, f.to, f.q, f.counters, f.staff, f.channels, f.methods, f.statuses, f.products, f.customerId, f.sort, f.dir, dir.staffName, dir.counterName],
   );
   const summary = useMemo(() => summariseSales(rows), [rows]);
   return {

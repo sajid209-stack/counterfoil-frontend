@@ -2,13 +2,18 @@
 
 import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ListFilter, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListFilter, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { MD, SM, useMediaQuery } from "@/lib/useMedia";
 import { Button } from "./Button";
+import { NAV_IDLE, NAV_SELECTED } from "./navStyles";
 import { PhoneActionsSlot } from "./PageShell";
 import { Sheet } from "./Sheet";
+
+/** What can take focus inside the panel. A roving-tabindex tab that is not the
+ *  selected one is skipped, as the browser skips it. */
+const TABBABLE = 'button:not([disabled]):not([tabindex="-1"]), input:not([disabled]), [tabindex="0"]';
 
 /**
  * The search field every list opens with, drawn once so the lists cannot drift
@@ -193,9 +198,58 @@ export function FilterBar({
   const set = folded.filter((f) => f.active);
   const count = set.length;
 
+  /* Three or more folded filters read better as categories than as one long
+     stack: a list on the left, the chosen filter's control on the right (a
+     drill-in on a phone). One or two stay as the stacked panel. */
+  const twoPane = folded.length >= 3;
+  /* The category shown on the right, chosen when the panel opens (the first one
+     that is set, else the first) and then kept: clearing a filter must not
+     make the pane jump to another. `level` is the phone's drilled-in category. */
+  const [pick, setPick] = useState<string | null>(null);
+  const [level, setLevel] = useState<string | null>(null);
+  const cur = folded.find((f) => f.key === pick) ?? set[0] ?? folded[0];
+  const drilled = folded.find((f) => f.key === level) ?? null;
+  const paneId = `${panelId}-pane`;
+  const tabId = (key: string) => `${panelId}-tab-${key}`;
+
   const close = (focus = true) => {
     setOpenFor(null);
     if (focus) trigger.current?.focus();
+  };
+  const toggle = () => {
+    if (open) return close(false);
+    setPick((set[0] ?? folded[0])?.key ?? null);
+    setLevel(null);
+    setOpenFor(wide);
+  };
+  /* Back one level on a phone; close from the list. */
+  const sheetBack = () => {
+    if (!drilled) return close();
+    const key = drilled.key;
+    setLevel(null);
+    requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-cat-row="${key}"]`)?.focus());
+  };
+  const drillIn = (key: string) => {
+    setLevel(key);
+    requestAnimationFrame(() => document.querySelector<HTMLElement>("[data-cat-back]")?.focus());
+  };
+  const focusPane = () => {
+    const pane = panel.current?.querySelector<HTMLElement>(`#${CSS.escape(paneId)}`);
+    const first = pane?.querySelector<HTMLElement>("[data-filter-scroll] :is(input, button, [tabindex='0'])");
+    (first ?? pane)?.focus();
+  };
+  const onTabsKey = (e: React.KeyboardEvent) => {
+    const keys = folded.map((f) => f.key);
+    const i = keys.indexOf(cur.key);
+    const n = { ArrowDown: (i + 1) % keys.length, ArrowUp: (i - 1 + keys.length) % keys.length, Home: 0, End: keys.length - 1 }[e.key as "Home"];
+    if (n !== undefined) {
+      e.preventDefault();
+      setPick(keys[n]);
+      requestAnimationFrame(() => panel.current?.querySelector<HTMLElement>(`[data-cat-row="${keys[n]}"]`)?.focus());
+    } else if (e.key === "Enter" || e.key === "ArrowRight") {
+      e.preventDefault();
+      focusPane();
+    }
   };
 
   /* The desktop popover is portalled to <body> and placed in viewport
@@ -219,7 +273,12 @@ export function FilterBar({
       const flip = r.height + pad > below && a.top > below;
       el.style.left = `${Math.round(x)}px`;
       el.style.top = `${Math.round(flip ? Math.max(pad, a.top - r.height - 4) : a.bottom + 4)}px`;
-      el.style.maxHeight = `${Math.round(Math.max(200, (flip ? a.top : below) - pad - 8))}px`;
+      /* The room there is, and for the two panes never more than 26rem: they
+         hug their content (the category list or the chosen control, whichever
+         is taller) up to that, rather than always standing 26rem tall with an
+         empty pane under three short chip rows. */
+      const room = Math.max(200, (flip ? a.top : below) - pad - 8);
+      el.style.maxHeight = `${Math.round(el.dataset.twoPane ? Math.min(416, room) : room)}px`;
     };
     place();
     window.addEventListener("resize", place);
@@ -235,7 +294,7 @@ export function FilterBar({
       window.removeEventListener("resize", place);
       window.removeEventListener("scroll", onScroll, true);
     };
-  }, [open, wide, count]);
+  }, [open, wide, count, twoPane]);
 
   useEffect(() => {
     if (!open || !wide) return;
@@ -258,7 +317,8 @@ export function FilterBar({
     /* Land inside the panel, on its first control, so a keyboard user opening
        it is already in it. */
     const f = requestAnimationFrame(() => {
-      panel.current?.querySelector<HTMLElement>('button:not([disabled]), input:not([disabled]), [tabindex="0"]')?.focus();
+      const el = panel.current?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]') ?? panel.current?.querySelector<HTMLElement>(TABBABLE);
+      el?.focus();
     });
     return () => {
       document.removeEventListener("keydown", esc);
@@ -276,7 +336,7 @@ export function FilterBar({
     const root = panel.current;
     const active = document.activeElement;
     if (!root || !active || !root.contains(active)) return;
-    const items = Array.from(root.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), [tabindex="0"]'));
+    const items = Array.from(root.querySelectorAll<HTMLElement>(TABBABLE));
     const edge = e.shiftKey ? items[0] : items[items.length - 1];
     if (active === edge) {
       e.preventDefault();
@@ -295,7 +355,7 @@ export function FilterBar({
       aria-haspopup="dialog"
       aria-expanded={open}
       aria-label={count ? t("filtersApplied", { count }) : t("filters")}
-      onClick={() => (open ? close(false) : setOpenFor(wide))}
+      onClick={toggle}
       className={cn(
         "absolute right-0 top-0 grid h-11 w-11 place-items-center rounded-card text-fg transition-colors duration-quick active:bg-nav-hover",
         (open || count > 0) && "bg-nav-selected",
@@ -318,7 +378,7 @@ export function FilterBar({
       aria-expanded={open}
       aria-controls={open && wide ? panelId : undefined}
       aria-label={count ? t("filtersApplied", { count }) : t("filters")}
-      onClick={() => (open ? close(false) : setOpenFor(wide))}
+      onClick={toggle}
       className={cn(
         "flex h-11 shrink-0 items-center gap-tight rounded-sm border px-comfortable text-sm font-medium transition-colors duration-quick md:h-9",
         // Open, or holding a filter: the accent (soft selection). Otherwise
@@ -351,6 +411,102 @@ export function FilterBar({
       ))}
     </div>
     </FilterPanelContext>
+  );
+
+  /* A category's own header: what it is, and Clear while it is set. */
+  const clearButton = (f: FilterSpec, cls: string) =>
+    f.active ? (
+      <button type="button" onClick={f.onClear} className={cn("rounded-sm text-sm font-medium text-brand-foreground transition-colors duration-quick hover:bg-muted-wash", cls)}>
+        {t("clear")}
+      </button>
+    ) : null;
+
+  /* Desktop, three or more folded filters: categories on the left, the chosen
+     one's control on the right. The right pane is the panel's only scroller. */
+  const desktopPanes = (
+    <FilterPanelContext value={true}>
+      <div className="flex min-h-0 flex-1">
+        <div
+          role="tablist"
+          aria-orientation="vertical"
+          aria-label={t("filters")}
+          onKeyDown={onTabsKey}
+          className="flex w-48 shrink-0 flex-col gap-px overflow-y-auto border-r border-hairline p-inline"
+        >
+          {folded.map((f) => {
+            const on = f.key === cur.key;
+            return (
+              <button
+                key={f.key}
+                type="button"
+                role="tab"
+                id={tabId(f.key)}
+                data-cat-row={f.key}
+                aria-selected={on}
+                aria-controls={paneId}
+                tabIndex={on ? 0 : -1}
+                onClick={() => setPick(f.key)}
+                className={cn(
+                  "flex min-h-10 w-full shrink-0 flex-col justify-center rounded-sm px-comfortable text-left text-sm leading-tight transition-colors duration-quick",
+                  on ? NAV_SELECTED : cn(NAV_IDLE, "font-medium"),
+                )}
+              >
+                <span className="truncate">{f.label}</span>
+                {f.active && <span className="truncate text-xs font-normal text-brand-foreground">{f.active}</span>}
+              </button>
+            );
+          })}
+        </div>
+        <div role="tabpanel" id={paneId} aria-labelledby={tabId(cur.key)} tabIndex={-1} className="flex min-h-0 min-w-0 flex-1 flex-col outline-none">
+          <div className="flex h-10 shrink-0 items-center justify-between gap-tight px-comfortable pt-inline">
+            <span className="truncate text-sm text-muted">{cur.label}</span>
+            {clearButton(cur, "h-8 px-tight")}
+          </div>
+          <div data-filter-scroll className="scroll-y-hint min-h-0 flex-1 overflow-y-auto overscroll-contain px-comfortable pb-comfortable pt-inline [scrollbar-gutter:stable_both-edges]">
+            {cur.control}
+          </div>
+        </div>
+      </div>
+    </FilterPanelContext>
+  );
+
+  /* Phone: level one is the list of categories, level two is one control. */
+  const phoneList = (
+    <div className="flex flex-col">
+      {folded.map((f) => (
+        <button
+          key={f.key}
+          type="button"
+          data-cat-row={f.key}
+          onClick={() => drillIn(f.key)}
+          className="flex min-h-12 w-full items-center gap-tight border-b border-hairline px-card py-tight text-left transition-colors duration-quick last:border-0 active:bg-muted-wash"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-base font-medium text-fg">{f.label}</span>
+            {f.active && <span className="block truncate text-sm text-brand-foreground">{f.active}</span>}
+          </span>
+          <ChevronRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
+        </button>
+      ))}
+    </div>
+  );
+  const phoneDrill = drilled && (
+    <FilterPanelContext value={true}>
+      {/* This category's Clear lives in the footer ("Clear staff"), not on a
+          row of its own above the list. */}
+      <div className="p-card">{drilled.control}</div>
+    </FilterPanelContext>
+  );
+  const backButton = drilled && (
+    <button
+      type="button"
+      data-cat-back
+      onClick={sheetBack}
+      className="-ml-tight flex h-11 items-center gap-inline rounded-control pl-tight pr-comfortable text-sm font-medium text-brand-foreground transition-colors duration-quick active:bg-muted-wash"
+    >
+      <ChevronLeft size={18} strokeWidth={1.75} aria-hidden />
+      {t("back")}
+    </button>
   );
 
   return (
@@ -420,10 +576,18 @@ export function FilterBar({
             id={panelId}
             role="dialog"
             aria-label={t("filters")}
+            data-two-pane={twoPane || undefined}
             onKeyDown={onPanelKey}
-            className="fixed z-50 flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-md border border-hairline bg-card shadow-lg"
+            className={cn(
+              "fixed z-50 flex max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-md border border-hairline bg-card shadow-lg",
+              twoPane ? "w-[36rem]" : "w-[22rem]",
+            )}
           >
-            <div className="scroll-y-hint min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-gutter:stable_both-edges]">{body}</div>
+            {twoPane ? (
+              desktopPanes
+            ) : (
+              <div className="scroll-y-hint min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-gutter:stable_both-edges]">{body}</div>
+            )}
             <div className="flex shrink-0 items-center gap-tight border-t border-hairline px-tight py-inline">
               {count > 0 && (
                 <button
@@ -449,15 +613,26 @@ export function FilterBar({
       {!wide && (
         <Sheet
           open={open}
+          /* The ×, the backdrop and Escape close the sheet, as every sheet
+             does; going up a level is the Back button's job. */
           onClose={() => close()}
-          title={t("filters")}
+          title={twoPane && drilled ? drilled.label : t("filters")}
+          lead={twoPane ? backButton : undefined}
           closeLabel={t("close")}
           footer={
             <>
-              {count > 0 && (
-                <Button variant="tertiary" onClick={clearAll}>
-                  {t("clearFilters")}
-                </Button>
+              {twoPane && drilled ? (
+                drilled.active && (
+                  <Button variant="tertiary" onClick={drilled.onClear}>
+                    {t("clearFilter", { name: drilled.label.toLowerCase() })}
+                  </Button>
+                )
+              ) : (
+                count > 0 && (
+                  <Button variant="tertiary" onClick={clearAll}>
+                    {t("clearFilters")}
+                  </Button>
+                )
               )}
               <Button variant="primary" className="ml-auto" onClick={() => close()}>
                 {t("done")}
@@ -465,7 +640,7 @@ export function FilterBar({
             </>
           }
         >
-          {body}
+          {twoPane ? (drilled ? phoneDrill : phoneList) : body}
         </Sheet>
       )}
     </div>

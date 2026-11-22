@@ -157,7 +157,8 @@
     "customerAnon": "একজন গ্রাহকের অর্ডার",
     "allDates": "সব তারিখ",
     "staff": "বিক্রি করেছেন {names}",
-    "search": "“{q}”"
+    "search": "“{q}”",
+    "booking": "বুকিং: {names}"
   },
   "filters": {
     "counter": "কাউন্টার",
@@ -165,7 +166,9 @@
     "channel": "বিক্রির মাধ্যম",
     "method": "পেমেন্টের ধরন",
     "status": "অবস্থা",
-    "noOptions": "বাছার মতো কিছু নেই"
+    "noOptions": "বাছার মতো কিছু নেই",
+    "booking": "বুকিং",
+    "findStaff": "কর্মী খুঁজুন"
   },
   "toolbar": {
     "date": "তারিখ",

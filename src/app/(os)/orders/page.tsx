@@ -141,7 +141,19 @@ function OrdersPageInner() {
       ...(scope.some((o) => !o.staffId) ? [{ value: NO_ONE, label: L.staff(NO_ONE) }] : []),
     ];
     const used = new Set<string>(scope.map(orderMethodOf));
+    /* Bookings this venue's orders actually sold, most sold first: a cashier
+       looking for "the Futsal sales" finds it near the top. Add-ons are lines of
+       their own product and are left out; they are filtered through their booking. */
+    const sold = new Map<string, { label: string; n: number }>();
+    for (const o of scope) for (const l of o.lines) {
+      if (l.parentLineId) continue;
+      const cur = sold.get(l.productId) ?? { label: dir.productName(l.productId) || l.productName, n: 0 };
+      cur.n += l.quantity;
+      sold.set(l.productId, cur);
+    }
+    const products = [...sold.entries()].sort((a, b) => b[1].n - a[1].n || a[1].label.localeCompare(b[1].label)).map(([value, v]) => ({ value, label: v.label }));
     return {
+      products: ensure(products, f.products, (id) => dir.productName(id) || id),
       counters: ensure(counters, f.counters, L.counter),
       staff: ensure(staff, f.staff, L.staff),
       channels: CHANNELS.map((c) => ({ value: c, label: L.channel(c) })),
@@ -149,7 +161,7 @@ function OrdersPageInner() {
       statuses: STATUSES.map((s) => ({ value: s, label: L.status(s) })),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [report.scope, report.venueId, dir.counters, dir.staffName, f.counters, f.staff, f.methods, f.customerId]);
+  }, [report.scope, report.venueId, dir.counters, dir.staffName, dir.productName, f.counters, f.staff, f.methods, f.products, f.customerId]);
 
   /* ── The page of rows on screen ───────────────────────────────────────── */
   const pages = Math.max(1, Math.ceil(rows.length / f.size));

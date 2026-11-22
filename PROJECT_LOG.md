@@ -19981,3 +19981,19 @@ white on #F94A00 (3.5:1). The full list is in docs/ui-audit-2026-11.md.
   and "Show all N" opens the rest in place.
 - **The panel.** One scroll area, with `.scroll-y-hint` edge fades (shown only when there is more
   that way) and a scrollbar gutter on both sides, so a classic scrollbar keeps the panel symmetric.
+
+## Filters: Booking filter and a two-pane panel (2026-11-22)
+
+- **Booking filter on Orders.** `SalesQuery.products` and URL `booking=`. An order matches when
+  any line sells one of the bookings. The options are the bookings the venue's orders actually
+  sold, most sold first (add-ons excluded). It appears in the active chip, the export and print
+  descriptions, and the summary.
+- **Kit FilterBar, 3 or more folded filters (two panes).** One or two keep the stacked panel.
+  - Desktop: categories on the left (vertical tablist, sidebar selection style, each showing what
+    is set) and the chosen category on the right as the one scroller.
+  - The panel hugs its content up to 26rem, instead of a fixed 26rem that left dead space under
+    short chip filters (/catalog).
+  - Phone: a category list that drills in, with a Back button. The footer's Clear becomes "Clear
+    staff" inside a category. The ×, the backdrop and Escape close the sheet.
+- **Checklist.** Search above 8 options ("Find a staff member"), with ticked options pinned while
+  searching. No fold, no inner scroll.

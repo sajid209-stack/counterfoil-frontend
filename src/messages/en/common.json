@@ -60,6 +60,6 @@
       "showFewer": "Show fewer"
     }
   },
-  "showAllCount": "Show all {count}",
-  "showFewer": "Show fewer"
+  "findA": "Find a {label}",
+  "noMatch": "No match"
 }

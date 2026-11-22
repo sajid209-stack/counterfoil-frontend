@@ -628,6 +628,8 @@ export interface SalesQuery {
   channels?: OrderChannel[];
   methods?: OrderMethod[];
   statuses?: OrderStatus[];
+  /** Booking (catalog item) ids: an order matches when any of its lines sells one. */
+  products?: string[];
 }
 
 const startOfDay = (ymd: string) => Date.parse(`${ymd}T00:00:00`);
@@ -659,6 +661,7 @@ export function filterSalesOrders(all: Order[], q: SalesQuery = {}): Order[] {
     if (q.channels?.length && !q.channels.includes(orderChannelOf(o))) return false;
     if (q.methods?.length && !q.methods.includes(orderMethodOf(o))) return false;
     if (q.statuses?.length && !q.statuses.includes(o.status)) return false;
+    if (q.products?.length && !o.lines.some((l) => q.products!.includes(l.productId))) return false;
     return true;
   });
 }

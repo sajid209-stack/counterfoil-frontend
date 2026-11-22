@@ -157,7 +157,8 @@
     "customerAnon": "One customer's orders",
     "allDates": "All dates",
     "staff": "Sold by {names}",
-    "search": "“{q}”"
+    "search": "“{q}”",
+    "booking": "Bookings: {names}"
   },
   "filters": {
     "counter": "Counter",
@@ -165,7 +166,9 @@
     "channel": "Channel",
     "method": "Payment method",
     "status": "Status",
-    "noOptions": "Nothing to choose from"
+    "noOptions": "Nothing to choose from",
+    "booking": "Booking",
+    "findStaff": "Find a staff member"
   },
   "toolbar": {
     "date": "Date",

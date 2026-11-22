@@ -60,6 +60,6 @@
       "showFewer": "কম দেখান"
     }
   },
-  "showAllCount": "সব {count}টি দেখুন",
-  "showFewer": "কম দেখুন"
+  "findA": "{label} খুঁজুন",
+  "noMatch": "কিছু মেলেনি"
 }

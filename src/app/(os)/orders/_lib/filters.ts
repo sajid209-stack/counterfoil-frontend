@@ -32,6 +32,8 @@ export interface SalesFilters {
   channels: OrderChannel[];
   methods: OrderMethod[];
   statuses: OrderStatus[];
+  /** Bookings sold on the order (catalog item ids). */
+  products: string[];
   /** One customer's orders — at every venue — from the customer's page. */
   customerId: string;
   /** Their name, only to say whose orders these are. */
@@ -68,6 +70,7 @@ export function parseFilters(sp: Params): SalesFilters {
     channels: list(sp.get("channel"), CHANNELS),
     methods: list(sp.get("method"), METHODS),
     statuses: list(sp.get("status"), STATUSES),
+    products: list(sp.get("booking")),
     customerId: ID.test(sp.get("customerId") ?? "") ? sp.get("customerId")! : "",
     customer: (sp.get("customer") ?? "").slice(0, 120),
     sort: /^[a-zA-Z]+$/.test(sp.get("sort") ?? "") ? sp.get("sort")! : DEFAULT_SORT,
@@ -91,6 +94,7 @@ export function toSearch(f: SalesFilters, extra: Record<string, string> = {}): s
   if (f.channels.length) p.set("channel", f.channels.join(","));
   if (f.methods.length) p.set("method", f.methods.join(","));
   if (f.statuses.length) p.set("status", f.statuses.join(","));
+  if (f.products.length) p.set("booking", f.products.join(","));
   if (f.customerId) p.set("customerId", f.customerId);
   if (f.customerId && f.customer) p.set("customer", f.customer);
   if (f.sort !== DEFAULT_SORT || f.dir !== "desc") {
@@ -105,7 +109,7 @@ export function toSearch(f: SalesFilters, extra: Record<string, string> = {}): s
 
 /** How many of the facets are narrowing the list (the date counts as one). */
 export const activeCount = (f: SalesFilters): number =>
-  (f.from ? 1 : 0) + (f.counters.length ? 1 : 0) + (f.staff.length ? 1 : 0) + (f.channels.length ? 1 : 0) + (f.methods.length ? 1 : 0) + (f.statuses.length ? 1 : 0) + (f.q.trim() ? 1 : 0);
+  (f.from ? 1 : 0) + (f.counters.length ? 1 : 0) + (f.staff.length ? 1 : 0) + (f.channels.length ? 1 : 0) + (f.methods.length ? 1 : 0) + (f.statuses.length ? 1 : 0) + (f.products.length ? 1 : 0) + (f.q.trim() ? 1 : 0);
 
 /** The question the filters ask of the orders. The venue is the console's lens,
  *  not a filter: one person's orders ignore it, as the customer page promises. */
@@ -119,6 +123,7 @@ export function toQuery(f: SalesFilters, locationId: string): SalesQuery {
     channels: f.channels,
     methods: f.methods,
     statuses: f.statuses,
+    products: f.products,
     customerId: f.customerId || undefined,
     locationId: f.customerId ? undefined : locationId || undefined,
   };
@@ -127,7 +132,7 @@ export function toQuery(f: SalesFilters, locationId: string): SalesQuery {
 /** Everything cleared except whose orders these are and how they are ordered. */
 export const cleared = (f: SalesFilters): SalesFilters => ({
   ...f,
-  from: "", to: "", q: "", counters: [], staff: [], channels: [], methods: [], statuses: [], page: 1,
+  from: "", to: "", q: "", counters: [], staff: [], channels: [], methods: [], statuses: [], products: [], page: 1,
 });
 
 /* ── Date ranges ───────────────────────────────────────────────────────────
