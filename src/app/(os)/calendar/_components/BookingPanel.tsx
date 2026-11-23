@@ -45,6 +45,7 @@ import { slotISO, toMinutes, toTime } from "@/lib/schedule";
 import {
   anytimeOptions,
   openHours,
+  optionsInRange,
   openSlotsFor,
   optionsInHour,
   sessionLaneId,
@@ -216,6 +217,11 @@ function Panel({
   const atRequest = date === request.date && hour === request.hour;
   const reqLane = atRequest ? request.lane : undefined;
   const wantMinutes = atRequest ? request.minutes : undefined;
+  /* A drag across the grid is a question about the whole span it covers —
+     "anything from 2:00 to 4:15?" — not about the hour it began in. The list
+     then offers what fits that span, each row at the length it fits. */
+  const rangeFrom = wantMinutes && request.startMinutes != null ? request.startMinutes : null;
+  const rangeTo = rangeFrom != null && wantMinutes ? rangeFrom + wantMinutes : null;
 
   // ── what is open ─────────────────────────────────────────────────────────
   const slots = useMemo(() => openSlotsFor(products, date, today, nowMin), [products, date, today, nowMin]);
@@ -224,8 +230,13 @@ function Panel({
     [products, slots, date, today, nowMin, openHour, closeHour],
   );
   const timed = useMemo(
-    () => (hour == null ? [] : optionsInHour(products, slots, date, hour, today, nowMin)),
-    [products, slots, date, hour, today, nowMin],
+    () =>
+      hour == null
+        ? []
+        : rangeFrom != null && rangeTo != null
+          ? optionsInRange(products, slots, date, rangeFrom, rangeTo, today, nowMin)
+          : optionsInHour(products, slots, date, hour, today, nowMin),
+    [products, slots, date, hour, today, nowMin, rangeFrom, rangeTo],
   );
   const anytime = useMemo(() => anytimeOptions(products, date, today), [products, date, today]);
   /* With no hour chosen — a click on a day in the month, or "Any time" — the
@@ -350,7 +361,10 @@ function Panel({
     const list = o ? lengthsOf(o).filter((m) => lengthFits(o, m)) : [];
     if (!list.length) return null;
     if (!wantMinutes) return list[0];
-    const fit = list.filter((m) => m <= wantMinutes);
+    // The room left in the span after THIS option starts: a lane that can only
+    // start at 2:30 in a 2:00 – 4:15 drag has 1 hr 45 min, not 2 hr 15 min.
+    const room = rangeTo != null && o?.time ? rangeTo - toMinutes(o.time) : wantMinutes;
+    const fit = list.filter((m) => m <= room);
     return fit.length ? fit[fit.length - 1] : list[0];
   };
   const [length, setLength] = useState<number | null>(() => lengthFor(all.find((x) => x.key === presetKey) ?? null));
@@ -835,8 +849,22 @@ function Panel({
       : m > 60
         ? t("book.hoursMinutes", { h: Math.floor(m / 60), m: m % 60 })
         : t("book.minutes", { count: m });
+  /** A field over a dragged span is priced for the hours it runs, on the
+   *  cheapest field that can take them — "2 hrs" beside a one-hour price
+   *  quoted half the booking. Lanes already carry their span's price. */
+  const listPrice = (o: OpenOption): number | undefined => {
+    if (rangeTo == null || o.kind !== "slot") return undefined;
+    const m = lengthFor(o);
+    if (!m) return undefined;
+    const places = placesOf(o).filter((r) => fits(o, r, m));
+    return places.length ? Math.min(...places.map((r) => priceFor(o, r, m))) : undefined;
+  };
   /** The shortest a booking runs for its from-price. */
   const durationOf = (o: OpenOption): number | null => {
+    // Over a dragged span, a lane or a field is offered for as much of it as
+    // it can take — the row says that length, not the shortest it sells.
+    if (rangeTo != null && (o.kind === "slot" || o.kind === "flexible")) return lengthFor(o) ?? o.minutes ?? null;
+    if (o.minutes) return o.minutes;
     if (o.kind === "slot") return slotSpan(o);
     if (o.kind === "flexible") return flexDurations(o.product)[0] ?? null;
     if (o.kind === "session") return o.product.schedule?.sessionMinutes || o.product.schedule?.slotMinutes || null;
@@ -1012,7 +1040,9 @@ function Panel({
                         : t("book.allDay")
                       : reqLane?.resourceId && here.length > 0
                         ? t("book.whatOn", { lane: laneNameOf(reqLane.resourceId, here) ?? "" })
-                        : t("book.whatAt", { count: timed.length, time: formatClockMin(hour * 60) })}
+                        : rangeFrom != null && rangeTo != null
+                          ? t("book.whatBetween", { count: timed.length, from: formatClockMin(rangeFrom), to: formatClockMin(rangeTo) })
+                          : t("book.whatAt", { count: timed.length, time: formatClockMin(hour * 60) })}
                   </h3>
                   {tried && missing === "what" && <Hint>{t("book.needWhat")}</Hint>}
 
@@ -1022,7 +1052,11 @@ function Panel({
                        booking page offers the next available time rather than
                        a refusal. */
                     <div className="rounded-control border border-dashed border-line px-comfortable py-comfortable">
-                      <p className="text-sm text-fg">{t("book.nothingAt", { time: formatClockMin(hour * 60) })}</p>
+                      <p className="text-sm text-fg">
+                        {rangeFrom != null && rangeTo != null
+                          ? t("book.nothingBetween", { from: formatClockMin(rangeFrom), to: formatClockMin(rangeTo) })
+                          : t("book.nothingAt", { time: formatClockMin(hour * 60) })}
+                      </p>
                       {nearest(hours, hour).length > 0 && (
                         <div className="mt-tight flex flex-wrap gap-tight">
                           {nearest(hours, hour).map((h) => (
@@ -1086,7 +1120,7 @@ function Panel({
                   )}
 
                   {leading.length > 0 && (
-                    <OptionList options={leading} chosenKey={chosenKey} onChoose={choose} cur={cur} t={t} atLane={reqLane?.resourceId} durationOf={durationOf} lengthLabel={lengthText} />
+                    <OptionList options={leading} chosenKey={chosenKey} onChoose={choose} cur={cur} t={t} atLane={reqLane?.resourceId} durationOf={durationOf} priceOf={listPrice} lengthLabel={lengthText} />
                   )}
                   {elsewhere.length > 0 &&
                     (elsewhereOpen || elsewhere.some((o) => o.key === chosenKey) ? (
@@ -1094,7 +1128,7 @@ function Panel({
                         <h4 className="mb-tight text-xs font-medium text-muted">
                           {t("book.elsewhere", { time: formatClockMin((hour ?? 0) * 60) })}
                         </h4>
-                        <OptionList options={elsewhere} chosenKey={chosenKey} onChoose={choose} cur={cur} t={t} durationOf={durationOf} lengthLabel={lengthText} />
+                        <OptionList options={elsewhere} chosenKey={chosenKey} onChoose={choose} cur={cur} t={t} durationOf={durationOf} priceOf={listPrice} lengthLabel={lengthText} />
                       </div>
                     ) : (
                       <MoreLine onClick={() => setElsewhereOpen(true)}>
@@ -1589,10 +1623,13 @@ function OptionList({
   t,
   atLane,
   durationOf,
+  priceOf,
   lengthLabel,
 }: {
   /** The field that was clicked: an option that can go there says so. */
   atLane?: string;
+  /** What the row costs for the length it shows, where that differs from its from-price. */
+  priceOf?: (o: OpenOption) => number | undefined;
   options: OpenOption[];
   chosenKey: string | null;
   onChoose: (o: OpenOption) => void;
@@ -1612,6 +1649,7 @@ function OptionList({
           cur={cur}
           t={t}
           atLane={atLane}
+          priceNow={priceOf?.(o)}
           durationOf={durationOf}
           lengthLabel={lengthLabel}
         />
@@ -1692,7 +1730,13 @@ function OptionRow({
         <span className="block text-xs leading-snug text-muted">
           {/* A show at a quarter past, under an hour that was clicked on the
               hour, says so in colour as well as in digits. */}
-          {o.time && <span className={cn("tabular-nums", offHour && "font-medium text-brand-foreground")}>{formatClock(o.time)}</span>}
+          {/* The time it runs, start to end, so a row says exactly what the
+              booking would take: "2:00 – 4:15 PM · 2 hr 15 min". */}
+          {o.time && (
+            <span className={cn("tabular-nums", offHour && "font-medium text-brand-foreground")}>
+              {minutes ? `${formatClockMin(toMinutes(o.time))} – ${formatClockMin(toMinutes(o.time) + minutes)}` : formatClock(o.time)}
+            </span>
+          )}
           {[minutes ? lengthLabel?.(minutes) : null, where, left]
             .filter(Boolean)
             .map((x) => ` · ${x}`)

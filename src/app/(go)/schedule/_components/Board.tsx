@@ -9,8 +9,9 @@ import { pendingWriteOffFor, useWriteOffVersion } from "@/lib/api/writeOffReques
 import { pendingRescheduleFor, useRescheduleVersion } from "@/lib/api/rescheduleRequests";
 import { cn } from "@/lib/cn";
 import { useMediaQuery } from "@/lib/useMedia";
-import { formatClock, formatClockMin, formatPriceShort } from "@/lib/format";
-import { type Block, type Column, type Group } from "../_lib/board";
+import { formatClock, formatClockMin, formatClockRange } from "@/lib/format";
+import { freeRuns, QUARTER, runAt, snapDown, snapNearest, type Block, type Column, type Group } from "../_lib/board";
+import { drawnSel, naturalSel, type DraftSel, type Ghost } from "../_lib/fluid";
 
 /** One hour. Tall enough that an hour is a thumb target on its own. */
 export const HOUR_PX = 64;
@@ -28,7 +29,7 @@ const HEADER = 52;
 /** The Go tab bar's clearance plus breathing room: what a phone keeps free
  *  under the board. A tablet held in landscape has a rail instead. */
 const TAB_RESERVE = 96;
-const RAIL = "(min-width: 64rem) and (orientation: landscape)";
+export const RAIL = "(min-width: 64rem) and (orientation: landscape)";
 /* On a desktop (`rail`) the board is denser: 48px hours so ten or more fit a
    768px-tall screen, a 56px gutter that holds "10 AM" on one line, a 40px head
    (docs/pos-desktop.md section 8). */
@@ -48,8 +49,10 @@ const HEADER_RAIL = 40;
  * column of free hours read as a stack of pills rather than as a day.
  *
  * Three grounds, and no more:
- *   · white   — an hour you can sell. The cell IS the button: tap it and it
- *               turns solid orange with a tick. Tap more to take several.
+ *   · white   — time you can sell, as free as the calendar it sits on: press and
+ *               drag (mouse, pen), or tap and stretch the handles (touch), or
+ *               Enter then Shift+Arrow (keyboard) — any length in quarter hours,
+ *               stopping at the next booking. It is drawn as a solid orange block.
  *   · orange  — booked, with the customer's name; striped with a lock when it
  *               is on hold; a show carries its seats left.
  *   · grey    — cannot be booked (gone, closed, between departures).
@@ -61,9 +64,10 @@ const HEADER_RAIL = 40;
 export function Board({
   group,
   nowMinutes,
-  selected,
-  focusKey,
-  onFree,
+  deadBefore,
+  sel,
+  ghost,
+  onSelect,
   onBooking,
   onHold,
   onSession,
@@ -71,6 +75,7 @@ export function Board({
   corner,
   hideKey = false,
   notice,
+  className,
 }: {
   group: Group;
   /** The day being shown — weekday and date — in the grid's own top-left
@@ -87,11 +92,14 @@ export function Board({
   notice?: React.ReactNode;
   /** Null when the day shown is not today. */
   nowMinutes: number | null;
-  /** Keys of the free hours that are currently taken for the sale. */
-  selected: Set<string>;
-  /** The hour tapped last, kept in view when the action bar arrives. */
-  focusKey: string | null;
-  onFree: (column: Column, block: Extract<Block, { type: "free" }>) => void;
+  /** The first minute of this day that can still be sold (0 on a future day,
+   *  now today, a whole day for a day gone). */
+  deadBefore: number;
+  /** The span drawn on the board, and what the draft block shows. */
+  sel: DraftSel | null;
+  ghost: Ghost | null;
+  onSelect: (sel: DraftSel | null) => void;
+  className?: string;
   onBooking: (column: Column, block: Extract<Block, { type: "booking" }>) => void;
   onHold: (column: Column, block: Extract<Block, { type: "hold" }>) => void;
   onSession: (column: Column, block: Extract<Block, { type: "session" }>) => void;
@@ -109,8 +117,36 @@ export function Board({
   const height = hours.length * hp;
   const y = (m: number) => ((m - group.from) / 60) * hp;
   const showNow = nowMinutes !== null && nowMinutes >= group.from && nowMinutes <= group.to;
-  const hasSelection = selected.size > 0;
+  const hasSelection = sel !== null;
+  const fluid = !group.isSessions;
+  /* Where the drawn block is, kept for the layout effects below: the board
+     scrolls to show it when the panel takes its room. */
+  const shown = ghost && ghost.columnId ? ghost : sel && sel.columnId ? { ...sel, title: null as string | null } : null;
+  const shownRef = useRef(shown);
+  useLayoutEffect(() => {
+    shownRef.current = shown;
+  });
+  const lastType = useRef<string>("mouse");
+  const drag = useRef<
+    | { kind: "draw"; col: Column; run: [number, number]; anchor: number; moved: boolean }
+    | { kind: "top" | "bottom"; col: Column; run: [number, number]; start: number; end: number }
+    | null
+  >(null);
+  const minuteAt = (el: Element, clientY: number) => group.from + ((clientY - el.getBoundingClientRect().top) / hp) * 60;
+  const runsOf = (c: Column) => freeRuns(group, c, deadBefore ?? 0);
 
+  /* Keep the drawn block in view when the panel takes its room (a tap near the
+     bottom of the day, then the sheet rising over it). */
+  const reveal = () => {
+    const el = box.current;
+    const g = shownRef.current;
+    if (!el || !g || drag.current) return;
+    const top = y(g.start);
+    const bottom = y(g.end);
+    const view = el.clientHeight - header;
+    if (bottom > el.scrollTop + view) el.scrollTop = Math.min(top - 8, bottom - view + 24);
+    else if (top < el.scrollTop) el.scrollTop = Math.max(0, top - 24);
+  };
   /* The board fills the screen below the controls, like a calendar app, and
      scrolls inside itself. The page does not scroll at all on a phone: two
      scrolls, one inside the other, is the thing a thumb gets caught in, and
@@ -128,6 +164,8 @@ export function Board({
       const top = el.getBoundingClientRect().top + window.scrollY;
       const bar = document.getElementById("sched-bar");
       const floor = 240;
+      /* With a panel beside it a desktop board is never shorter than the panel needs. */
+      const roomy = hasSelection && window.matchMedia(RAIL).matches ? 560 : 0;
       const onRail = window.matchMedia(RAIL).matches;
       if (bar && !onRail) {
         const limit = bar.getBoundingClientRect().top + window.scrollY - 12;
@@ -145,7 +183,7 @@ export function Board({
       const foot = el.querySelector<HTMLElement>("[data-board-foot]");
       const noteEl = el.querySelector<HTMLElement>("[data-board-notice]");
       const natural = (onRail ? HEADER_RAIL : HEADER) + height + (foot && !foot.hidden ? foot.offsetHeight : 0) + (noteEl ? noteEl.offsetHeight : 0) + 2;
-      let h = Math.min(natural, Math.max(floor, window.innerHeight - top - reserve));
+      let h = Math.min(Math.max(natural, roomy), Math.max(floor, window.innerHeight - top - reserve));
       el.style.height = `${h}px`;
       /* Whatever else the device keeps (a home indicator) shows up as the
          page still scrolling; take exactly that back. */
@@ -156,27 +194,31 @@ export function Board({
       }
     };
     fit();
+    /* On a phone the panel takes the lower half, so the board comes up to the top
+       of the screen: the days and the tabs above it are not what is being worked on. */
+    if (hasSelection && !window.matchMedia(RAIL).matches) {
+      el.scrollIntoView({ block: "start", behavior: "instant" });
+      fit();
+    }
     window.addEventListener("resize", fit);
-    return () => window.removeEventListener("resize", fit);
+    /* The phone's panel changes height as the list folds and unfolds; the
+       board ends above it, so it follows. */
+    const panel = typeof ResizeObserver !== "undefined" ? document.getElementById("sched-bar") : null;
+    const ro = panel ? new ResizeObserver(() => { fit(); reveal(); }) : null;
+    if (panel && ro) ro.observe(panel);
+    return () => {
+      window.removeEventListener("resize", fit);
+      ro?.disconnect();
+    };
     // `height` follows from group.from/to, which are listed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasSelection, group.key, group.from, group.to, rail]);
 
-  /* Keep the hour just tapped in view once the bar has taken its space. */
   useLayoutEffect(() => {
-    const el = box.current;
-    if (!el || !focusKey) return;
-    const cell = el.querySelector<HTMLElement>(`[data-key="${CSS.escape(focusKey)}"]`);
-    if (!cell) return;
-    const b = el.getBoundingClientRect();
-    const c = cell.getBoundingClientRect();
-    /* Land on a whole hour, so the row at the top of the board still carries
-       its time — a slice of a row with no label is an hour nobody can name. */
-    const snap = (v: number) => Math.max(0, Math.round(v / hp) * hp);
-    if (c.bottom > b.bottom) el.scrollTop = snap(el.scrollTop + c.bottom - b.bottom + hp / 2);
-    else if (c.top < b.top + header) el.scrollTop = snap(el.scrollTop - (b.top + header - c.top));
+    reveal();
+    // Only when a selection appears or moves to another column.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusKey, hasSelection]);
+  }, [hasSelection, sel?.columnId, sel?.start, sel?.end]);
 
   /* Open where the counter is: an hour before now, or at the top of the day
      on any other date. A board that opens at 06:00 at lunchtime makes the
@@ -196,8 +238,87 @@ export function Board({
   const cols = columns.length;
   const hourLines = `repeating-linear-gradient(to bottom, transparent 0, transparent ${hp - 1}px, var(--color-line) ${hp - 1}px, var(--color-line) ${hp}px)`;
 
+
+  /* ── drawing on the board ─────────────────────────────────────────────────
+     A mouse or a pen presses on empty time and drags: the span follows in
+     quarter hours and stops where the free time stops. A finger cannot do that
+     and still scroll, so a tap selects the column's natural length and the
+     block's handles stretch it. A key takes a cell with Enter and stretches it
+     with Shift+Arrow. */
+  const beginDraw = (e: React.PointerEvent<HTMLDivElement>, c: Column) => {
+    lastType.current = e.pointerType;
+    if (e.pointerType === "touch" || e.button !== 0) return;
+    const hit = (e.target as HTMLElement).closest("button");
+    if (hit && !hit.hasAttribute("data-free")) return;
+    if ((e.target as HTMLElement).closest("[data-handle]")) return;
+    const m = snapDown(minuteAt(e.currentTarget, e.clientY));
+    const run = runAt(runsOf(c), m);
+    if (!run) {
+      onSelect(null);
+      return;
+    }
+    drag.current = { kind: "draw", col: c, run, anchor: m, moved: false };
+    e.currentTarget.setPointerCapture(e.pointerId);
+    onSelect({ columnId: c.id, start: m, end: Math.min(run[1], m + QUARTER) });
+  };
+  const moveDraw = (e: React.PointerEvent<HTMLDivElement>, c: Column) => {
+    const d = drag.current;
+    if (!d || d.kind !== "draw" || d.col.id !== c.id) return;
+    const cur = snapDown(Math.min(d.run[1] - QUARTER, Math.max(d.run[0], minuteAt(e.currentTarget, e.clientY))));
+    if (cur !== d.anchor) d.moved = true;
+    onSelect(drawnSel(c, d.run, d.anchor, cur));
+  };
+  const endDraw = (e: React.PointerEvent<HTMLDivElement>, c: Column) => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d || d.kind !== "draw") return;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+    /* A click without a drag is not a quarter hour: it is the natural length. */
+    if (!d.moved) onSelect(naturalSel(c, d.run, d.anchor));
+  };
+  const tapFree = (e: React.MouseEvent, c: Column, runs: [number, number][], cellStart: number) => {
+    /* A mouse already acted on pointer-down; this is a finger or a key. */
+    if (lastType.current !== "touch" && e.detail !== 0) return;
+    const col = (e.currentTarget as HTMLElement).closest("[data-col]");
+    const at = e.detail === 0 || !col ? cellStart : minuteAt(col, e.clientY);
+    const m = snapDown(Math.max(at, cellStart));
+    const run = runAt(runs, m);
+    if (run) onSelect(naturalSel(c, run, m));
+  };
+  const keyFree = (e: React.KeyboardEvent, c: Column, runs: [number, number][]) => {
+    if (!sel || sel.columnId !== c.id) return;
+    const run = runAt(runs, sel.start);
+    if (!run) return;
+    if (e.shiftKey && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      e.preventDefault();
+      const end = Math.min(run[1], Math.max(sel.start + QUARTER, sel.end + (e.key === "ArrowDown" ? QUARTER : -QUARTER)));
+      onSelect({ ...sel, end });
+    }
+  };
+  const beginHandle = (e: React.PointerEvent, c: Column, which: "top" | "bottom", g: { start: number; end: number }) => {
+    const run = runAt(runsOf(c), g.start);
+    if (!run) return;
+    e.stopPropagation();
+    drag.current = { kind: which, col: c, run, start: g.start, end: g.end };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const moveHandle = (e: React.PointerEvent, c: Column) => {
+    const d = drag.current;
+    if (!d || d.kind === "draw" || d.col.id !== c.id) return;
+    const colEl = (e.currentTarget as HTMLElement).closest("[data-col]");
+    if (!colEl) return;
+    const m = snapNearest(minuteAt(colEl, e.clientY));
+    if (d.kind === "top") d.start = Math.max(d.run[0], Math.min(m, d.end - QUARTER));
+    else d.end = Math.min(d.run[1], Math.max(m, d.start + QUARTER));
+    onSelect({ columnId: c.id, start: d.start, end: d.end });
+  };
+  const endHandle = (e: React.PointerEvent) => {
+    drag.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+  };
+
   return (
-    <div ref={card} className="card-surface flex min-h-[240px] flex-col overflow-hidden">
+    <div ref={card} data-fluid-board className={cn("card-surface flex min-h-[240px] flex-col overflow-hidden", className)}>
       {/* On a desktop what is not an hour (bookings with no place) is a quiet row above the board. */}
       {rail && notice ? <div data-board-notice className="shrink-0 border-b border-line">{notice}</div> : null}
       <div
@@ -272,31 +393,53 @@ export function Board({
 
             {columns.map((c) => {
               const list = group.blocks.get(c.id) ?? [];
+              const runs = fluid ? runsOf(c) : [];
+              const covered: [number, number][] = [...runs, ...list.map((x) => [x.start, x.end] as [number, number])];
+              const mine = shown && shown.columnId === c.id ? shown : null;
               return (
-                <div key={c.id} className="relative min-w-[60px] flex-1 border-l border-line bg-card">
+                <div
+                  key={c.id}
+                  data-col={c.id}
+                  className="relative min-w-[60px] flex-1 border-l border-line bg-card"
+                  onPointerDown={fluid ? (e) => beginDraw(e, c) : undefined}
+                  onPointerMove={fluid ? (e) => moveDraw(e, c) : undefined}
+                  onPointerUp={fluid ? (e) => endDraw(e, c) : undefined}
+                  onPointerCancel={fluid ? () => { drag.current = null; } : undefined}
+                  onClick={fluid ? (e) => { if (e.target === e.currentTarget && lastType.current === "touch") onSelect(null); } : undefined}
+                >
                   {/* Time nobody can book is the grey ground. Everything else
                       is drawn on white — so there is no grey BETWEEN things,
                       only where there is nothing to be had. It is the PAGE's
                       colour, so closed time recedes behind what can be sold —
                       in dark too, where the page is darker than the card.
-                      (`subtle` IS the card colour in dark, and closed time
+                      (subtle IS the card colour in dark, and closed time
                       looked exactly like time for sale.) */}
-                  {deadRuns(list, group.from, group.to).map(([a, b]) => (
+                  {deadRuns(covered, group.from, group.to).map(([a, b]) => (
                     <div key={`dead|${a}`} aria-hidden className="absolute inset-x-0 bg-surface" style={{ top: y(a), height: y(b) - y(a) }} />
                   ))}
-                  {list.map((b) =>
-                    b.type === "free" ? (
-                      <FreeCell
-                        key={b.key}
-                        block={b}
-                        column={c}
-                        top={y(Math.max(b.start, group.from))}
-                        height={y(Math.min(b.end, group.to)) - y(Math.max(b.start, group.from))}
-                        selected={selected.has(b.key)}
-                        onFree={onFree}
-                      />
-                    ) : null,
-                  )}
+                  {/* Free time, one focusable cell per hour of it. The pointer
+                      draws across them (below); a keyboard or a finger takes
+                      the cell. */}
+                  {runs.flatMap(([ra, rb]) => {
+                    const cells: React.ReactNode[] = [];
+                    for (let h = Math.floor(ra / 60) * 60; h < rb; h += 60) {
+                      const a = Math.max(ra, h, group.from);
+                      const z = Math.min(rb, h + 60, group.to);
+                      if (z <= a) continue;
+                      cells.push(
+                        <FreeCell
+                          key={`free|${c.id}|${a}`}
+                          column={c}
+                          start={a}
+                          top={y(a)}
+                          height={y(z) - y(a)}
+                          onTap={(e, start) => tapFree(e, c, runs, start)}
+                          onKeys={(e) => keyFree(e, c, runs)}
+                        />,
+                      );
+                    }
+                    return cells;
+                  })}
                   {/* Hour rules over the ground and the free cells, under
                       everything that is booked. */}
                   {/* ds-exception: z-1..3 layers live inside one column and must stay under the z-10 sticky gutter */}
@@ -315,6 +458,16 @@ export function Board({
                         onSession={onSession}
                       />
                     ),
+                  )}
+                  {mine && (
+                    <DraftBlock
+                      ghost={mine}
+                      top={y(mine.start)}
+                      height={y(mine.end) - y(mine.start)}
+                      onHandle={(e, which) => beginHandle(e, c, which, mine)}
+                      onMoveHandle={(e) => moveHandle(e, c)}
+                      onEndHandle={(e) => endHandle(e)}
+                    />
                   )}
                 </div>
               );
@@ -356,6 +509,7 @@ export function Board({
           </span>
           {t("board.onHold")}
         </li>
+        <li className="flex items-center gap-1"><span aria-hidden className="h-4 w-4 rounded-sm bg-ember-solid" />{t("fluid.keyDraft")}</li>
         <li className="flex items-center gap-1"><span aria-hidden className="h-4 w-4 border border-line bg-surface" />{t("board.keyClosed")}</li>
       </ul>
       </div>
@@ -365,11 +519,11 @@ export function Board({
 
 /** The stretches of a column that nothing covers — not free, not booked, not
  *  held, no departure. That is the grey. */
-function deadRuns(list: Block[], from: number, to: number): [number, number][] {
-  const spans = list.map((b) => [Math.max(from, b.start), Math.min(to, b.end)] as const).filter(([a, b]) => b > a).sort((p, q) => p[0] - q[0]);
+function deadRuns(spans: [number, number][], from: number, to: number): [number, number][] {
+  const sorted = spans.map(([a, b]) => [Math.max(from, a), Math.min(to, b)] as const).filter(([a, b]) => b > a).sort((p, q) => p[0] - q[0]);
   const out: [number, number][] = [];
   let at = from;
-  for (const [a, b] of spans) {
+  for (const [a, b] of sorted) {
     if (a > at) out.push([at, a]);
     at = Math.max(at, b);
   }
@@ -377,54 +531,115 @@ function deadRuns(list: Block[], from: number, to: number): [number, number][] {
   return out;
 }
 
-/** A free hour. The cell is the button — flush to its neighbours, no card. */
+/** One hour (or what is left of it) of free time. It is the keyboard's and the
+ *  finger's way in; the pointer draws across it from the column. */
 function FreeCell({
-  block: b,
   column,
+  start,
   top,
   height,
-  selected,
-  onFree,
+  onTap,
+  onKeys,
 }: {
-  block: Extract<Block, { type: "free" }>;
   column: Column;
+  start: number;
   top: number;
   height: number;
-  selected: boolean;
-  onFree: (column: Column, block: Extract<Block, { type: "free" }>) => void;
+  onTap: (e: React.MouseEvent, start: number) => void;
+  onKeys: (e: React.KeyboardEvent) => void;
 }) {
   const t = useTranslations("schedule");
-  const place = column.kind === "unassigned" ? t("board.noPlace") : column.name;
   return (
     <button
       type="button"
-      data-key={b.key}
-      aria-pressed={selected}
-      onClick={() => onFree(column, b)}
-      aria-label={t("board.freeAria", { place, time: formatClock(b.time), price: formatPriceShort(b.price) })}
+      data-free
+      data-key={`free|${column.id}|${start}`}
+      onClick={(e) => onTap(e, start)}
+      onKeyDown={onKeys}
+      aria-label={t("board.freeAria", { place: column.name, time: formatClockMin(start) })}
       data-focus-inset
       className={cn(
         // ds-exception: in-column layer z-1 (free cells) under the z-10 sticky gutter
-        "group/cell absolute inset-x-0 z-[1] flex flex-col items-center justify-center gap-0.5 transition-colors duration-quick rail:flex-row rail:gap-1.5",
-        selected ? "bg-ember-solid text-on-solid rail:bg-card rail:text-brand-foreground" : "bg-card text-fg hover:bg-muted-wash active:bg-muted-wash",
+        "group/cell absolute inset-x-0 z-[1] flex items-center justify-center bg-card text-muted transition-colors duration-quick hover:bg-muted-wash active:bg-muted-wash",
       )}
-      style={{ top, height }}
+      style={{ top, height, touchAction: "pan-y" }}
     >
-      {/* A desktop draws the chosen hour as a rounded, tinted box inset 3px from the grid lines. */}
-      {/* ds-exception: 3px inset from the grid lines, matching the booked blocks */}
-      {selected && <span aria-hidden className="absolute inset-0 hidden rail:block"><span className="absolute inset-[3px] rounded-inner bg-ember-wash ring-2 ring-inset ring-ember" /></span>}
-      {selected ? (
-        <Check size={20} strokeWidth={3} aria-hidden className="rail:hidden" />
-      ) : (
-        /* A desktop shows the plus and the price only under the pointer or the
-           keyboard focus: a column of identical prices is noise, the hour rules
-           already say free, and the price is in the accessible name. */
-        <Plus size={18} strokeWidth={2.5} className="text-muted rail:size-3.5 rail:opacity-0 rail:group-hover/cell:opacity-100 rail:group-focus-visible/cell:opacity-100" aria-hidden />
-      )}
-      {height >= 44 && (
-        <span className={cn("relative text-sm tabular-nums", selected ? "font-semibold rail:text-base" : "font-medium rail:text-xs rail:text-muted rail:opacity-0 rail:group-hover/cell:opacity-100 rail:group-focus-visible/cell:opacity-100")}>{formatPriceShort(b.price)}</span>
-      )}
+      <Plus size={16} strokeWidth={2.5} aria-hidden className="opacity-0 group-hover/cell:opacity-100 group-focus-visible/cell:opacity-100" />
     </button>
+  );
+}
+
+/**
+ * The draft block: solid ember, drawn exactly where the booking would go and
+ * following every change made in the panel. Its two handles stretch it in
+ * quarter hours; each is a 44px target that sits outside the block, so a
+ * 15-minute block still has two handles a thumb can find.
+ */
+function DraftBlock({
+  ghost,
+  top,
+  height,
+  onHandle,
+  onMoveHandle,
+  onEndHandle,
+}: {
+  ghost: { start: number; end: number; title: string | null; hold?: boolean };
+  top: number;
+  height: number;
+  onHandle: (e: React.PointerEvent, which: "top" | "bottom") => void;
+  onMoveHandle: (e: React.PointerEvent) => void;
+  onEndHandle: (e: React.PointerEvent) => void;
+}) {
+  const t = useTranslations("schedule");
+  const range = formatClockRange(ghost.start, ghost.end);
+  const label = ghost.title ?? t("fluid.newBooking");
+  const knob = (which: "top" | "bottom") => (
+    <span
+      data-handle={which}
+      role="separator"
+      aria-orientation="horizontal"
+      aria-label={which === "top" ? t("fluid.handleTop") : t("fluid.handleBottom")}
+      onPointerDown={(e) => onHandle(e, which)}
+      onPointerMove={onMoveHandle}
+      onPointerUp={onEndHandle}
+      onPointerCancel={onEndHandle}
+      className={cn(
+        // ds-exception: the draft's handles sit above the booked blocks (z-3) and under the z-10 sticky gutter
+        "pointer-events-auto absolute inset-x-0 z-[4] flex h-11 cursor-ns-resize touch-none",
+        which === "top" ? "-top-10 items-end justify-end pr-3" : "-bottom-10 items-start justify-start pl-3",
+      )}
+    >
+      <span aria-hidden className="size-4 rounded-full bg-card ring-2 ring-ember-solid rail:size-3.5" style={{ marginBottom: which === "top" ? -8 : 0, marginTop: which === "bottom" ? -8 : 0 }} />
+    </span>
+  );
+  return (
+    <div
+      data-draft
+      className={cn(
+        // ds-exception: the draft block sits above the booked blocks (z-3) and under the z-10 sticky gutter
+        "pointer-events-none absolute inset-x-1 z-[4]",
+      )}
+      style={{ top: top + 1, height: Math.max(12, height - 2) }}
+    >
+      <div
+        className={cn(
+          "absolute inset-0 overflow-hidden rounded-sm px-1.5 pb-0.5 pt-2 text-on-solid shadow-sm",
+          ghost.hold ? "border border-dashed border-on-solid" : "",
+        )}
+        style={{
+          background: ghost.hold
+            ? "repeating-linear-gradient(135deg, var(--color-ember-solid) 0 6px, color-mix(in srgb, var(--color-ember-solid) 82%, white) 6px 12px)"
+            : "var(--color-ember-solid)",
+        }}
+      >
+        {height >= 28 && <span className="block line-clamp-2 text-sm font-semibold leading-tight rail:text-xs">{label}</span>}
+        {height >= 44 && <span className="block text-sm leading-tight tabular-nums opacity-90 rail:text-xs">{range}</span>}
+        {height < 44 && height >= 20 && height < 28 && <span className="block truncate text-xs leading-tight tabular-nums">{range}</span>}
+      </div>
+      {knob("top")}
+      {knob("bottom")}
+      <span className="sr-only" aria-live="polite">{label} · {range}</span>
+    </div>
   );
 }
 

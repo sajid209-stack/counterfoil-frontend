@@ -20016,3 +20016,11 @@ Spec: `docs/exports-and-receipts.md`.
 - **A4 documents** share `src/app/print/_components/PrintDocument.tsx` (logo letterhead, @page footer with page X / Y). Orders list/summary prints and a new `/print/my-sales` use it.
 - Fixed: FilterBar crashed when a page folds no filters (`/finances` at desktop).
 - Open: `/print/tickets` cards have no logo (shared `TicketCard`); dates in Bangla files are still en-GB (`format.ts`); new Bangla strings need a native review.
+
+---
+
+## Calendar span booking + POS Schedule fluid booking (2026-11-23)
+
+- **OS calendar**: a drag across the grid (e.g. 2:00 – 4:15) now lists what fits the WHOLE span, through the new shared `optionsInRange` in `calendar/_components/openSlots.ts`: lanes for the longest length that fits on every lane free for all of it, a field's run of free hours, every show that starts and ends inside it, an appointment when a provider is free. Each row reads "2:00 – 4:15 PM · 2 hr 15 min" and is priced for that length; the header says "8 open 2:00 PM – 4:15 PM".
+- **POS Schedule**: fluid selection (mouse drag snapped to 15 min; touch tap + 44px resize handles; Enter / Shift+Arrows), a docked New booking panel (`_components/NewBookingPanel.tsx`, `_lib/fluid.ts`, `src/lib/sale/rangeBooking.ts`) built on the same engine, an Appointments group (one column per provider), "+ New booking" in the header and an All day section for entry/passes/day-capped products. Seat-map/section products hand off to the till.
+- Known: flexible lanes start on the schedule's grid times inside a span; Bangla copy needs a native read; a Bangla-only hydration warning in the DayStrip predates this.

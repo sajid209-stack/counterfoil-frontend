@@ -14,6 +14,7 @@ import {
   flexTimes,
   freeProvidersAt,
   patternOf,
+  providerMinutes,
   providerTimes,
 } from "@/lib/sale/selection";
 import { productDurationPrice } from "@/lib/duration";
@@ -55,6 +56,10 @@ export interface OpenOption {
   /** Sessions and day-capped products: places left. */
   remaining?: number;
   capacity?: number;
+  /** How long this option runs as offered: a show's own length, an
+   *  appointment's, or — for a time range — the longest a lane can take inside
+   *  it. Undefined where the panel decides (a field's run of hours). */
+  minutes?: number;
 }
 
 /** One open slot drawn on the grid: a field-hour or a departure with room. */
@@ -230,6 +235,112 @@ export function optionsInHour(
     }
   }
   return mergeLanes(out).sort(
+    (a, b) => toMinutes(a.time ?? "00:00") - toMinutes(b.time ?? "00:00") || a.product.name.localeCompare(b.product.name),
+  );
+}
+
+/**
+ * Everything bookable INSIDE a span of one day — what a drag across the grid
+ * asks. "2:00 – 4:15" is a question about the whole of it, not about the hour
+ * it started in:
+ *
+ * - a lane sold by the length (bowling, a court) starts at the first time it
+ *   can inside the span and is offered for the longest length it sells that
+ *   still fits, on every lane free for ALL of it;
+ * - a field sold in fixed hours starts at its first free hour in the span (the
+ *   panel then runs it across the following free hours on the same field);
+ * - a show or a tour is offered for each departure that starts and ends inside
+ *   the span — a 45-minute show at 4:00 does not fit a span that ends at 4:15;
+ * - an appointment, at the first time a provider is free for the whole of it.
+ *
+ * Each option carries the length it is offered at, so the list can say
+ * "2:00 – 4:15 PM · 2 hr 15 min" instead of every row quoting one hour.
+ */
+export function optionsInRange(
+  products: Product[],
+  slots: OpenSlot[],
+  date: string,
+  from: number,
+  to: number,
+  today: string,
+  nowMin: number,
+): OpenOption[] {
+  const out: OpenOption[] = [];
+  const firstSlot = new Map<string, number>();
+  for (const s of slots) {
+    if (s.date !== date || s.minutes < from || s.minutes >= to) continue;
+    for (const o of s.options) {
+      if (o.kind === "session") {
+        // Inside the span, or the only thing at its very start.
+        if (s.minutes + s.span <= to || s.minutes === from) out.push({ ...o, minutes: s.span });
+      } else if (o.kind === "slot") {
+        // One row per booking and place: its FIRST free hour in the span. The
+        // hours after it are the run the panel books on the same field.
+        const k = `${o.product.id}|${o.resourceId}`;
+        const at = firstSlot.get(k);
+        if (at == null || s.minutes < at) firstSlot.set(k, s.minutes);
+        out.push(o);
+      }
+      // Flexible lanes are asked about the whole span below.
+    }
+  }
+  const slotRows = out.filter((o) => o.kind !== "slot" || firstSlot.get(`${o.product.id}|${o.resourceId}`) === toMinutes(o.time ?? "00:00"));
+
+  for (const p of products.filter(sellable)) {
+    const pattern = patternOf(p);
+    if (pattern === "flexible") {
+      const time = flexTimes(p, date).find((t) => {
+        const m = toMinutes(t);
+        return m >= from && m < to && !isPast(date, m, today, nowMin);
+      });
+      if (!time) continue;
+      const start = toMinutes(time);
+      const all = flexDurations(p);
+      if (!all.length) continue;
+      // Longest first, down to the shortest it sells; a span shorter than the
+      // shortest still offers the shortest, as a click would.
+      const fit = all.filter((m) => m <= to - start);
+      const tryLengths = (fit.length ? fit : [all[0]]).slice().reverse();
+      const lanes = getResourceMatrix(p, date).map((r) => r.resource).filter((r) => !r.outOfService);
+      for (const m of tryLengths) {
+        const free = lanes.filter((lane) => isResourceFreeFor(lane.id, date, time, m, p.bufferMinutes ?? 0));
+        if (!free.length) continue;
+        for (const lane of free) {
+          slotRows.push({
+            key: `${p.id}|${lane.id}|${time}|${m}`,
+            product: p,
+            kind: "flexible",
+            date,
+            time,
+            resourceId: lane.id,
+            laneName: lane.name,
+            noun: lane.nounSingular,
+            minutes: m,
+            price: applyResourceRate(productDurationPrice(p, date, time, m, cheapest(p)), m, lane),
+          });
+        }
+        break;
+      }
+    } else if (pattern === "provider") {
+      const len = providerMinutes(p);
+      const times = providerTimes(p, date).filter((t) => {
+        const m = toMinutes(t);
+        return m >= from && m < to && !isPast(date, m, today, nowMin) && freeProvidersAt(p, date, t).length > 0;
+      });
+      const time = times.find((t) => toMinutes(t) + len <= to) ?? times[0];
+      if (!time) continue;
+      slotRows.push({
+        key: `${p.id}|prov|${time}`,
+        product: p,
+        kind: "provider",
+        date,
+        time,
+        minutes: len,
+        price: resolveProductPrice(p, date, time, cheapest(p)),
+      });
+    }
+  }
+  return mergeLanes(slotRows).sort(
     (a, b) => toMinutes(a.time ?? "00:00") - toMinutes(b.time ?? "00:00") || a.product.name.localeCompare(b.product.name),
   );
 }

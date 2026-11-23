@@ -37,6 +37,7 @@ export function DayStrip({
   load,
   onChange,
   middle,
+  action,
 }: {
   /** The page's title, drawn on the header's one line from the desktop up
    *  (below it the page keeps its screen-reader-only heading). */
@@ -48,6 +49,8 @@ export function DayStrip({
   onChange: (iso: string) => void;
   /** Sits between the month and the buttons from lg up (the group tabs). */
   middle?: React.ReactNode;
+  /** The header's one primary action ("New booking"), last on the band. */
+  action?: React.ReactNode;
 }) {
   const t = useTranslations("schedule");
   const format = useFormatter();
@@ -211,6 +214,7 @@ export function DayStrip({
             </div>
           )}
         </div>
+        {action ? <div className="shrink-0 rail:order-7 rail:ml-auto">{action}</div> : null}
       </div>
 
       <div className="rail:flex rail:items-center rail:gap-2">

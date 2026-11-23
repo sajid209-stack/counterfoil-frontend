@@ -1,16 +1,17 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
-import { Check, ChevronRight, Lock, MapPinOff, ShoppingBag, X } from "lucide-react";
-import { Button, Checkbox, EmptyState, FormField, Modal, Notice, ProductThumb, Skeleton, useToast } from "@/components/ui";
+import { ChevronRight, MapPinOff, Plus } from "lucide-react";
+import { Button, EmptyState, FormField, Modal, Skeleton, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClockMin, formatClockRange, formatDay, formatMoney } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { useApiQuery } from "@/lib/useApi";
 import { LG, useMediaQuery } from "@/lib/useMedia";
+import { formatDuration } from "@/lib/duration";
 import { DEMO_STAFF_ID, DEMO_TILL_ID } from "@/lib/session";
 import { useActiveCounterNow } from "@/lib/activeCounter";
 import {
@@ -39,21 +40,21 @@ import {
   type Resource,
 } from "@/lib/api";
 import { appendToLiveSale, setReturnTo } from "../pos/_lib/liveSale";
-import { buildOrderLines } from "@/lib/orderMath";
-import { taxRateFor } from "@/lib/tax";
-import { buildBoard, dayLoad, toTimeOfDay, type Block, type Column } from "./_lib/board";
-import { entriesFor, entryPrice, guideFor, holdEntries, needsWaiver, productsIn, sessionEntry, spansOf, type Pick } from "./_lib/toCart";
+import { buildBoard, dayLoad, freeRuns, runAt, toTimeOfDay, type Block, type Column } from "./_lib/board";
+import { guideFor, holdEntries, sessionEntry } from "./_lib/toCart";
+import type { DraftSel, Ghost } from "./_lib/fluid";
 import { useActor } from "./_lib/actor";
 import { RefundFlowSheet } from "../_components/RefundFlowSheet";
 import { WriteOffSheet } from "../_components/WriteOffSheet";
 import { pendingWriteOffFor, useWriteOffVersion } from "@/lib/api/writeOffRequests";
-import { Board } from "./_components/Board";
+import { Board, RAIL } from "./_components/Board";
+import { NewBookingPanel, type PanelAdd, type PanelHold } from "./_components/NewBookingPanel";
 import { BlockSheet, HoldSheet, MoveSheet, SessionSheet, TakeBalanceSheet, type HoldRequest } from "./_components/Sheets";
 import { pendingRefundFor, refundableFor, refundRequestsForOrder } from "@/lib/api/refundRequests";
-import { ActionBar, BarSummary } from "../_components/ActionBar";
 import { Tile, TileGrid } from "../_components/Tiles";
 import { GoPage } from "../_components/GoPage";
 import { DayStrip } from "./_components/DayStrip";
+import type { CartEntry } from "../_components/ProductSheet";
 
 type SessionBlock = Extract<Block, { type: "session" }>;
 type SessionPick = {
@@ -86,15 +87,18 @@ function remember(k: string, v: string) {
 /**
  * The counter's schedule: the day as a board of places and hours.
  *
- * Tap free hours to choose them — they turn orange — and a bar comes up with
- * the two things a counter does with them: **Hold** on the left, **Add to
- * sale** on the right. Add to sale puts them straight into the cart; nothing
- * asks again for the day, the field or the time that was just tapped.
+ * Draw on it. A mouse or a pen presses on empty time and drags a span in
+ * quarter hours; a finger taps and stretches the block by its handles; a key
+ * takes a cell and stretches it with Shift+Arrow. The span is a question — what
+ * can I sell here, now? — and the New booking panel answers it with everything
+ * that fits (a lane for 2 hr 15 min, a field, a show, an appointment with a
+ * person), and "+ New booking" in the header adds what has no time at all (an
+ * entry ticket, a pass). Add to sale puts it straight into the cart; nothing
+ * asks again for the day, the field or the time that was just drawn.
  *
- * That is the pattern court and turf systems settled on (a multi-select grid
- * with a sticky bar, contiguous hours merged into one booking), and it is the
- * one a cashier under pressure can work from memory: tap the hours, tap the
- * orange button.
+ * It is the quick-create pattern calendars settled on (Google Calendar's draft
+ * block, Square and Mindbody's staff columns), on the board a counter already
+ * knows.
  */
 export default function SchedulePage() {
   const router = useRouter();
@@ -107,19 +111,16 @@ export default function SchedulePage() {
      Saturday's lanes is how a second sale gets rung up on the wrong day. */
   const [date, setDateState] = useState<string>(() => remembered("date") ?? DEMO_TODAY);
   const [groupKey, setGroupState] = useState<string | null>(() => remembered("group"));
-  /* What is chosen belongs to what is on screen: a different day or group is
-     a different question, and a choice nobody can see any more must not be
-     sold by the next tap. */
-  const [picks, setPicks] = useState<Pick[]>([]);
-  const [choice, setChoice] = useState<string | null>(null);
-  const [waiverOk, setWaiverOk] = useState(false);
-  const [waiverMissing, setWaiverMissing] = useState(false);
-  const [lastKey, setLastKey] = useState<string | null>(null);
-  const clearPicks = () => { setPicks([]); setChoice(null); setWaiverOk(false); setWaiverMissing(false); setLastKey(null); };
-  const setDate = (d: string) => { setDateState(d); remember("date", d); clearPicks(); };
-  const setGroupKey = (g: string) => { setGroupState(g); remember("group", g); clearPicks(); };
+  /* What is drawn belongs to what is on screen: a different day or group is
+     a different question, and a span nobody can see any more must not be sold
+     by the next tap. */
+  const [sel, setSel] = useState<DraftSel | null>(null);
+  const [ghost, setGhost] = useState<Ghost | null>(null);
+  const clearSel = () => { setSel(null); setGhost(null); };
+  const setDate = (d: string) => { setDateState(d); remember("date", d); clearSel(); };
+  const setGroupKey = (g: string) => { setGroupState(g); remember("group", g); clearSel(); };
 
-  const [holdOpen, setHoldOpen] = useState(false);
+  const [holdReq, setHoldReq] = useState<PanelHold | null>(null);
   const [sessionPick, setSessionPick] = useState<SessionPick | null>(null);
   const [blockPick, setBlockPick] = useState<BlockPick | null>(null);
   const [busy, setBusy] = useState(false);
@@ -178,10 +179,12 @@ export default function SchedulePage() {
         locationId,
         sessionsLabel: t("board.shows"),
         placesLabel: t("board.places"),
+        staff,
+        providersLabel: t("board.appointments"),
       }),
     // `version` is the store's change signal.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [productsQ.data, resourcesQ.data, date, locationId, version, t],
+    [productsQ.data, resourcesQ.data, staffQ.data, date, locationId, version, t],
   );
   const group = groups.find((g) => g.key === groupKey) ?? groups[0] ?? null;
 
@@ -193,40 +196,61 @@ export default function SchedulePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationId, version]);
 
-  // ── what is chosen, and what it becomes ───────────────────────────────
-  const selected = useMemo(() => new Set(picks.map((p) => p.block.key)), [picks]);
-  const offered = useMemo(() => productsIn(picks), [picks]);
-  const entries = useMemo(() => entriesFor(picks, choice, date), [picks, choice, date]);
-  /* What the till will ask for, VAT included — worked out by the till's own
-     order engine, so the number the cashier reads out here is the number on
-     the Take-payment button a moment later. */
-  const total = useMemo(() => {
-    const op = operatorQ.data;
-    const byId = new Map((productsQ.data?.data ?? []).map((p) => [p.id, p]));
-    return buildOrderLines(
-      entries.map((e) => {
-        const p = byId.get(e.productId);
-        return { productId: e.productId, productName: e.productName, tierName: e.productName, quantity: 1, unitPrice: entryPrice(e), taxRate: p ? taxRateFor(p, op) / 100 : 0 };
-      }),
-      0,
-      "quote",
-    ).totals.total;
-  }, [entries, operatorQ.data, productsQ.data]);
-  const chosenMinutes = picks.reduce((s, p) => s + (p.block.end - p.block.start), 0);
-  const chosenCount = chosenMinutes % 60 === 0 ? t("bar.hours", { count: chosenMinutes / 60 }) : t("bar.minutes", { count: chosenMinutes });
-  const spans = useMemo(() => spansOf(picks, choice), [picks, choice]);
-  const waiver = needsWaiver(spans.map((s) => s.product));
-  /* "Indoor Field 12:00 – 1:00 PM, 3:00 – 4:00 PM" — each place named once. */
-  const chosenLine = useMemo(() => {
-    const byPlace = new Map<string, string[]>();
-    for (const s of spans) byPlace.set(s.column.name, [...(byPlace.get(s.column.name) ?? []), formatClockRange(s.start, s.end)]);
-    return [...byPlace].map(([name, r]) => `${name} ${r.join(", ")}`).join(" · ");
-  }, [spans]);
+  // ── what is drawn, and what it becomes ───────────────────────────────
+  const rail = useMediaQuery(RAIL);
+  const productsHere = useMemo(
+    () =>
+      (productsQ.data?.data ?? []).filter(
+        (p) => p.status === "active" && p.tiers.some((x) => x.active) && p.channels.includes("counter") && p.locationIds.includes(locationId),
+      ),
+    [productsQ.data, locationId],
+  );
+  const allColumns = useMemo(() => groups.flatMap((g) => g.columns), [groups]);
+  /* The first minute of this day that can still be sold. */
+  const deadBefore = date < DEMO_TODAY ? 24 * 60 : date === DEMO_TODAY ? DEMO_NOW_MINUTES : 0;
+  /* The free time the span may stretch within: the run it sits in. */
+  const bounds = useMemo<[number, number]>(() => {
+    if (!sel) return [0, 24 * 60];
+    const g = groups.find((x) => x.columns.some((c) => c.id === sel.columnId));
+    const c = g?.columns.find((x) => x.id === sel.columnId);
+    if (g && c) {
+      const run = runAt(freeRuns(g, c, deadBefore), sel.start);
+      if (run) return run;
+    }
+    return [Math.max(deadBefore, 0), 24 * 60];
+  }, [sel, groups, deadBefore]);
 
-  const toggleFree = (column: Column, block: Extract<Block, { type: "free" }>) => {
-    setPicks((p) => (p.some((x) => x.block.key === block.key) ? p.filter((x) => x.block.key !== block.key) : [...p, { column, block }]));
-    setLastKey(block.key);
+  /* "+ New booking": the next quarter hour with no place chosen, so the panel
+     offers everything open in the hour after it, and everything with no time. */
+  const openNew = () => {
+    const first = isToday ? Math.ceil(DEMO_NOW_MINUTES / 15) * 15 : Math.max(group?.from ?? 600, 600);
+    setGhost(null);
+    setSel({ columnId: null, start: first, end: first + 60 });
   };
+
+  /* Escape or a tap outside puts the draft away — unless a dialog is open
+     above it, which has already taken the key. */
+  useEffect(() => {
+    if (!sel) return;
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return;
+      clearSel();
+    };
+    const outside = (e: PointerEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (!el || el.closest("[data-fluid-board],[data-new-booking],[data-new-booking-trigger],[role=dialog],[role=tablist]")) return;
+      clearSel();
+    };
+    window.addEventListener("keydown", key);
+    document.addEventListener("pointerdown", outside);
+    return () => {
+      window.removeEventListener("keydown", key);
+      document.removeEventListener("pointerdown", outside);
+    };
+    // clearSel only sets two pieces of state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sel === null]);
 
   // ── actions ────────────────────────────────────────────────────────────
   /* Only for what the board cannot sell itself (a seat map, sections): the
@@ -239,7 +263,7 @@ export default function SchedulePage() {
 
   /* Into the sale, and on to the cart. The till is not mounted here, so the
      lines go where it looks for them when it opens. */
-  const toCart = (lines: typeof entries) => {
+  const toCart = (lines: CartEntry[]) => {
     appendToLiveSale(lines);
     /* Paid, the next guest in this queue is asking about another hour — so
        New sale comes back here rather than to the sell wall. */
@@ -247,54 +271,60 @@ export default function SchedulePage() {
     router.push("/pos/cart");
   };
 
-  const addPicks = () => {
-    if (!entries.length) return;
-    if (waiver && !waiverOk) {
-      setWaiverMissing(true);
-      return;
+  const addFromPanel = async (add: PanelAdd) => {
+    if (!add.items.length) return;
+    if (add.session) {
+      /* The till holds the places while its cart is open, so a second till
+         cannot sell them out from under this sale. */
+      setBusy(true);
+      await placeCheckoutHold({
+        productId: add.session.product.id,
+        productName: add.session.product.name,
+        locationId,
+        date,
+        slotStart: slotISO(date, add.session.time),
+        quantity: Math.max(1, add.session.seats),
+        placedBy: DEMO_TILL_ID,
+      });
+      setBusy(false);
     }
-    const lines = entries;
-    clearPicks();
-    toCart(lines);
+    clearSel();
+    toCart(add.items);
   };
 
   const lengthToExpiry = (length: HoldRequest["length"]) =>
     length === "day" ? null : new Date(Date.now() + length * 60000).toISOString();
 
-  const holdPicks = async (req: HoldRequest) => {
+  const holdSelection = async (req: HoldRequest) => {
+    if (!holdReq) return;
     setBusy(true);
-    const placed: string[] = [];
-    for (const s of spans) {
-      const res = await placeHold({
-        productId: s.product.id,
-        productName: s.product.name,
-        locationId,
-        kind: "resource",
-        date,
-        slotStart: slotISO(date, toTimeOfDay(s.start)),
-        slotEnd: slotISO(date, toTimeOfDay(s.end)),
-        quantity: 1,
-        resourceId: s.column.id,
-        resourceName: s.column.name,
-        heldFor: req.heldFor,
-        placedBy: me,
-        expiresAt: lengthToExpiry(req.length),
-      });
-      if (!res.ok) {
-        toast.error(res.error.message);
-        break;
-      }
-      placed.push(res.data.id);
-    }
+    const res = await placeHold({
+      productId: holdReq.product.id,
+      productName: holdReq.product.name,
+      locationId,
+      kind: "resource",
+      date,
+      slotStart: slotISO(date, toTimeOfDay(holdReq.start)),
+      slotEnd: slotISO(date, toTimeOfDay(holdReq.end)),
+      quantity: 1,
+      resourceId: holdReq.resourceId,
+      resourceName: holdReq.resourceName,
+      heldFor: req.heldFor,
+      placedBy: me,
+      expiresAt: lengthToExpiry(req.length),
+    });
     setBusy(false);
-    if (!placed.length) return;
-    setHoldOpen(false);
-    clearPicks();
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    setHoldReq(null);
+    clearSel();
     setVersion((v) => v + 1);
     toast.success(t("toast.held", { name: req.heldFor }), {
       label: t("toast.undo"),
       run: async () => {
-        for (const id of placed) await releaseHold(id);
+        await releaseHold(res.data.id);
         setVersion((v) => v + 1);
       },
     });
@@ -535,7 +565,7 @@ export default function SchedulePage() {
     if (res.ok) {
       toast.success(outOfService ? t("markedOut", { name: oos.name }) : t("backInService", { name: oos.name }));
       setOos(null);
-      clearPicks();
+      clearSel();
       setVersion((v) => v + 1);
       productsQ.reload();
     } else toast.error(res.error.message);
@@ -569,8 +599,8 @@ export default function SchedulePage() {
     <TileGrid
       role="tablist"
       aria-label={t("board.whatLabel")}
-      className={cn(frame, "rail:inline-flex rail:w-auto rail:shrink-0 rail:items-center rail:gap-1 rail:rounded-full rail:bg-subtle rail:p-1 rail:ring-1 rail:ring-inset rail:ring-line")}
-      style={{ gridTemplateColumns: `repeat(${Math.min(groups.length, 4)}, minmax(0, 1fr))` }}
+      className={cn(frame, groups.length > 4 && "overflow-x-auto [scrollbar-width:none]", "rail:inline-flex rail:w-auto rail:shrink-0 rail:items-center rail:gap-1 rail:rounded-full rail:bg-subtle rail:p-1 rail:ring-1 rail:ring-inset rail:ring-line")}
+      style={groups.length > 4 ? { gridAutoFlow: "column", gridAutoColumns: "minmax(max-content, 1fr)", gridTemplateColumns: "none" } : { gridTemplateColumns: `repeat(${groups.length}, minmax(0, 1fr))` }}
     >
       {groups.map((g) => {
         const on = g.key === group?.key;
@@ -582,7 +612,7 @@ export default function SchedulePage() {
             selected={on}
             aria-label={t("board.groupAria", { name: g.label, count: g.freeCount })}
             onClick={() => setGroupKey(g.key)}
-            className="min-h-12 px-1 text-base font-semibold leading-tight rail:h-8 rail:min-h-8 rail:shrink-0 rail:whitespace-nowrap rail:rounded-full rail:px-3.5 rail:font-medium rail:aria-[selected=false]:bg-transparent rail:aria-[selected=false]:text-fg-secondary rail:aria-[selected=false]:shadow-none rail:aria-[selected=false]:ring-0 rail:aria-[selected=false]:hover:bg-secondary-hover rail:aria-[selected=true]:bg-card rail:aria-[selected=true]:text-fg rail:aria-[selected=true]:shadow-sm rail:aria-[selected=true]:ring-0 rail:aria-[selected=true]:hover:bg-card rail:aria-[selected=true]:active:bg-card"
+            className={cn(groups.length > 4 ? "px-3" : "px-1", "min-h-12 text-base font-semibold leading-tight rail:h-8 rail:min-h-8 rail:shrink-0 rail:whitespace-nowrap rail:rounded-full rail:px-3.5 rail:font-medium rail:aria-[selected=false]:bg-transparent rail:aria-[selected=false]:text-fg-secondary rail:aria-[selected=false]:shadow-none rail:aria-[selected=false]:ring-0 rail:aria-[selected=false]:hover:bg-secondary-hover rail:aria-[selected=true]:bg-card rail:aria-[selected=true]:text-fg rail:aria-[selected=true]:shadow-sm rail:aria-[selected=true]:ring-0 rail:aria-[selected=true]:hover:bg-card rail:aria-[selected=true]:active:bg-card")}
           >
             {g.label}
           </Tile>
@@ -608,6 +638,18 @@ export default function SchedulePage() {
           load={hydrated ? loadOf : () => 0}
           onChange={setDate}
           middle={showTabs && wide ? groupTabs("") : undefined}
+          action={
+            <button
+              type="button"
+              data-new-booking-trigger
+              onClick={openNew}
+              aria-label={t("fluid.newBooking")}
+              className="inline-flex h-11 min-w-11 items-center justify-center gap-tight rounded-full bg-ember-solid px-3 text-base font-semibold text-on-solid transition-transform duration-quick active:scale-[0.98] sm:px-comfortable rail:h-9 rail:rounded-control rail:px-3 rail:font-medium"
+            >
+              <Plus size={18} strokeWidth={2.5} aria-hidden />
+              <span className="hidden sm:inline">{t("fluid.newButton")}</span>
+            </button>
+          }
         />
       </section>
 
@@ -619,13 +661,17 @@ export default function SchedulePage() {
         <EmptyState title={t("board.emptyTitle")} message={t("board.emptyMessage")} />
       ) : (
         <>
+        <div className="flex min-h-0 flex-col rail:flex-row rail:items-stretch rail:gap-comfortable">
         <Board
+          className="rail:min-w-0 rail:flex-1"
           group={group}
           nowMinutes={nowMinutes}
-          selected={selected}
-          focusKey={lastKey}
+          deadBefore={deadBefore}
+          sel={sel}
+          ghost={ghost}
+          onSelect={(next) => { setGhost(null); setSel(next); }}
           corner={[format.dateTime(dayDate, { weekday: "short" }), format.dateTime(dayDate, { day: "numeric", ...latn })]}
-          hideKey={picks.length > 0}
+          hideKey={!!sel && !rail}
           notice={unassigned.length > 0 && (
           <div className="flex flex-wrap items-center gap-tight px-comfortable pt-tight rail:gap-x-4 rail:py-1">
             {unassigned.slice(0, 3).map(({ column, block }) => (
@@ -647,104 +693,47 @@ export default function SchedulePage() {
             {unassigned.length > 3 && <span className="text-base text-muted rail:text-sm">{t("board.noPlaceMore", { count: unassigned.length - 3 })}</span>}
           </div>
         )}
-          onFree={toggleFree}
           onSession={openSession}
           onBooking={(column, block) => setBlockPick({ column, block })}
           onHold={(column, block) => setBlockPick({ column, block })}
           onColumn={(c) => { if (c.resource) { setOos(c.resource); setOosReason(c.resource.outOfServiceReason ?? ""); } }}
         />
+        {sel && (
+          <NewBookingPanel
+            layout={rail ? "side" : "sheet"}
+            date={date}
+            dayLabel={dayLabel}
+            today={DEMO_TODAY}
+            nowMin={DEMO_NOW_MINUTES}
+            products={productsHere}
+            resources={resourcesQ.data?.data ?? []}
+            staff={staff}
+            operator={operatorQ.data}
+            columns={allColumns}
+            sel={sel}
+            bounds={bounds}
+            onSel={(next) => { setGhost(null); setSel(next); }}
+            onGhost={setGhost}
+            onClose={clearSel}
+            onAdd={addFromPanel}
+            onHold={setHoldReq}
+            onOpenTill={(id, time, rid) => openTill(id, time ?? "", rid)}
+            busy={busy}
+          />
+        )}
+        </div>
+        {/* Room to scroll the board up to the top of a phone while the panel holds the lower half. */}
+        {sel && !rail && <div aria-hidden className="h-dvh shrink-0" />}
         </>
       )}
 
-      {/* ── what is chosen: Hold on the left, Add to sale on the right ──
-          Fixed above the tab bar, and the board ends above it, so no hour is
-          ever under a button. Only there while something is chosen. */}
-      {picks.length > 0 && (
-        <ActionBar
-          id="sched-bar"
-          row
-          label={t("bar.label")}
-          summary={
-            <BarSummary
-              lead={chosenCount}
-              /* Wraps rather than truncating: a touch screen has no hover to
-                 show the rest. The day is in the board's corner already. */
-              sub={chosenLine}
-              money={formatMoney(total)}
-              moneySub={t("bar.withVat")}
-              trailing={
-                <button
-                  type="button"
-                  onClick={clearPicks}
-                  aria-label={t("bar.clearAria")}
-                  className="-mr-1 -mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-muted-wash rail:m-0 rail:size-8 rail:rounded-control rail:order-last"
-                >
-                  <X size={20} strokeWidth={2} aria-hidden />
-                </button>
-              }
-            />
-          }
-          secondary={{ label: t("bar.hold"), icon: <Lock size={20} strokeWidth={2} aria-hidden />, onClick: () => setHoldOpen(true) }}
-          primary={{ label: t("bar.add"), icon: <ShoppingBag size={20} strokeWidth={2} aria-hidden />, onClick: addPicks }}
-        >
-          {offered.length > 1 && (
-            <div role="radiogroup" aria-label={t("bar.sellAs")} className="flex flex-wrap items-center gap-tight rail:order-first rail:w-full">
-              <span className="text-sm font-semibold text-muted">{t("bar.sellAs")}</span>
-              {offered.map((p) => {
-                const on = (choice ?? spans[0]?.product.id) === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => setChoice(p.id)}
-                    className={cn(
-                      "inline-flex h-11 items-center gap-tight rounded-full pl-1 pr-comfortable text-md font-semibold rail:h-9 rail:rounded-control rail:text-base",
-                      on ? "bg-ember-solid text-on-solid rail:bg-ember-wash rail:text-brand-foreground rail:ring-2 rail:ring-inset rail:ring-ember" : "bg-card text-fg shadow-card rail:shadow-none rail:ring-1 rail:ring-inset rail:ring-line",
-                    )}
-                  >
-                    {/* The booking's own picture, so the choice can be made by
-                        someone who does not read the name. */}
-                    {p.images?.length ? (
-                      <span className="h-8 w-8 shrink-0 overflow-hidden rounded-full">
-                        <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="chip" className="h-8 w-8" />
-                      </span>
-                    ) : (
-                      /* No photograph: its first letters, not the fallback
-                         glyph — a map pin beside a cricket photo read as a
-                         picture that failed to load. */
-                      <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-inverse text-sm font-semibold text-inverse-fg">
-                        {p.name.slice(0, 2)}
-                      </span>
-                    )}
-                    {p.name}
-                    {on && <Check size={16} strokeWidth={3} aria-hidden />}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {waiver && (
-            <Checkbox
-              checked={waiverOk}
-              onCheckedChange={(c) => { setWaiverOk(c); setWaiverMissing(false); }}
-              invalid={waiverMissing}
-              label={t("bar.waiver")}
-            />
-          )}
-          {waiverMissing && <Notice tone="danger" size="sm">{t("bar.waiverMissing")}</Notice>}
-        </ActionBar>
-      )}
-
-      {holdOpen && (
+      {holdReq && (
         <HoldSheet
           open
-          onClose={() => setHoldOpen(false)}
-          title={t("sheet.holdTitle", { what: chosenCount })}
-          when={`${dayLabel} · ${chosenLine}`}
-          onHold={holdPicks}
+          onClose={() => setHoldReq(null)}
+          title={t("sheet.holdTitle", { what: formatDuration(holdReq.end - holdReq.start) })}
+          when={`${dayLabel} · ${holdReq.resourceName} ${formatClockRange(holdReq.start, holdReq.end)}`}
+          onHold={holdSelection}
           busy={busy}
         />
       )}
