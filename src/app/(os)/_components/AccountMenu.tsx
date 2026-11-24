@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ChevronDown, LogOut, Settings as SettingsIcon, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AppearancePicker } from "@/components/ThemeProvider";
-import { LanguagePicker } from "@/components/LocaleProvider";
 import { cn } from "@/lib/cn";
 
 /**
@@ -18,9 +17,10 @@ import { cn } from "@/lib/cn";
  * opens onto both of them, which is where every mature admin product keeps
  * them.
  *
- * Nothing is duplicated to get this: it opens the same `AppearancePicker` and
- * `LanguagePicker` that Settings → Preferences and the Go shift menu already
- * render, so the three places agree by construction. Unlike the old header
+ * Nothing is duplicated to get this: it opens the same `AppearancePicker`
+ * that Settings → Preferences and the Go shift menu already render, so the
+ * places agree by construction. Language was here too and moved out at the
+ * owner's request (2026-11-24): it is in Settings → Preferences only. Unlike the old header
  * button it also offers **System**, which the one-tap flip could not express.
  *
  * `person` is the phone's variant (docs/mobile.md section 8, v9): the trigger
@@ -133,9 +133,10 @@ export function AccountMenu({
           <p className="truncate text-base font-semibold text-fg">{(person ? person.name : name) ?? "Counterfoil"}</p>
           <p className="mt-inline truncate text-xs text-muted">{person ? person.sub : t("workspace")}</p>
 
+          {/* Appearance only. Language is a setting made once, so it lives in
+              Settings → Preferences rather than in a menu opened all day. */}
           <div className="mt-section flex flex-col gap-section border-t border-hairline pt-section">
             <AppearancePicker />
-            <LanguagePicker />
           </div>
 
           {/* The person's own page first: this is an account menu, and
